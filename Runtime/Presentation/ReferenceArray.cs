@@ -10,7 +10,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
-    [NativeContainer]
+    [NativeContainer, Obsolete("Use FixedReferenceList64", true)]
     public struct ReferenceArray<T> : IValidation, IDisposable
         where T : unmanaged, IReference
     {

@@ -20,6 +20,10 @@ namespace Syadeu.Presentation.TurnTable
 
         private int m_CurrentActionPoint;
 
+        private FixedReferenceList64<TriggerAction> m_OnStartTurnActions;
+        private FixedReferenceList64<TriggerAction> m_OnEndTurnActions;
+        private FixedReferenceList64<TriggerAction> m_OnResetTurnActions;
+
         public float TurnSpeed => m_TurnSpeed;
         public bool ActivateTurn { get; set; }
         public int MaxActionPoint => m_MaxActionPoint;
@@ -47,6 +51,10 @@ namespace Syadeu.Presentation.TurnTable
 
         public bool IsMyTurn { get; internal set; }
 
+        public FixedReferenceList64<TriggerAction> OnStartTurnActions => m_OnStartTurnActions;
+        public FixedReferenceList64<TriggerAction> OnEndTurnActions => m_OnEndTurnActions;
+        public FixedReferenceList64<TriggerAction> OnResetTurnActions => m_OnResetTurnActions;
+
         internal TurnPlayerComponent(TurnPlayerAttribute turnPlayer, int hashCode)
         {
             m_Parent = turnPlayer.Parent;
@@ -59,6 +67,10 @@ namespace Syadeu.Presentation.TurnTable
 
             ActivateTurn = turnPlayer.m_ActivateOnCreate;
             IsMyTurn = false;
+
+            m_OnStartTurnActions = turnPlayer.m_OnStartTurnActions.ToFixedList64();
+            m_OnEndTurnActions = turnPlayer.m_OnEndTurnActions.ToFixedList64();
+            m_OnResetTurnActions = turnPlayer.m_OnResetTurnActions.ToFixedList64();
         }
 
         public override int GetHashCode() => m_HashCode;

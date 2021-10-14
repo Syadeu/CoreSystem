@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.Actor
 
         internal Entity<ActorEntity> m_Parent;
         internal InstanceArray<ActorProviderBase> m_InstanceProviders;
-        internal ReferenceArray<Reference<ParamAction<IActorEvent>>> m_OnEventReceived;
+        internal FixedReferenceList64<ParamAction<IActorEvent>> m_OnEventReceived;
 
         public bool IsBusy()
         {
@@ -229,7 +229,6 @@ namespace Syadeu.Presentation.Actor
             }
 
             m_InstanceProviders.Dispose();
-            m_OnEventReceived.Dispose();
         }
         private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
         {

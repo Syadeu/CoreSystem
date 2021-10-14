@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class ParamActionBase<T> : ActionBase where T : ActionBase
     {
-        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
+        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
 
         internal override sealed void InternalTerminate()
         {
@@ -22,14 +23,14 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction(Reference<T> other)
+        public static T GetAction(FixedReference<T> other)
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {
                 return null;
             }
 
-            if (!other.IsValid())
+            if (other.IsEmpty())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     "Trying to get null action");

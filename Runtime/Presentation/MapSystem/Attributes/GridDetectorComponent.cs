@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Linq;
@@ -12,9 +13,12 @@ namespace Syadeu.Presentation.Map
         internal int m_MaxDetectionRange;
         internal FixedList4096Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
-        //internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+        
         internal FixedReferenceList64<EntityBase> m_TriggerOnly;
         internal bool m_TriggerOnlyInverse;
+
+        internal FixedReferenceList64<TriggerPredicateAction> m_OnDetectedPredicate;
+        internal FixedLogicTriggerAction8 m_OnDetected;
 
         // i found
         internal FixedList512Bytes<EntityShortID> m_Detected;

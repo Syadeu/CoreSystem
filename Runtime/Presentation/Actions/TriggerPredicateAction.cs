@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerPredicateAction : ActionBase
     {
-        private static readonly Dictionary<Reference, Stack<ActionBase>> m_Pool = new Dictionary<Reference, Stack<ActionBase>>();
+        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
 
         [Header("Debug")]
         [JsonProperty(Order = 9999, PropertyName = "DebugText")]
@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Actions
 
             base.InternalTerminate();
         }
-        public static T GetAction<T>(Reference<T> other) where T : TriggerPredicateAction
+        public static T GetAction<T>(FixedReference<T> other) where T : TriggerPredicateAction
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {

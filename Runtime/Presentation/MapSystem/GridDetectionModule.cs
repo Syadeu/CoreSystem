@@ -88,14 +88,14 @@ namespace Syadeu.Presentation.Map
 
             FixedList512Bytes<EntityShortID>
                     newDetected = new FixedList512Bytes<EntityShortID>();
-            GridDetectorAttribute detectorAtt = entity.GetAttribute<GridDetectorAttribute>();
+            //GridDetectorAttribute detectorAtt = entity.GetAttribute<GridDetectorAttribute>();
 
             for (int i = 0; i < count; i++)
             {
                 m_GridObservers.Add(buffer[i], entity.Idx);
                 detector.m_ObserveIndices.Add(buffer[i]);
 
-                Detection(entity, in detectorAtt, ref detector, in buffer[i], ref newDetected);
+                Detection(entity, ref detector, in buffer[i], ref newDetected);
             }
 
             for (int i = 0; i < detector.m_Detected.Length; i++)
@@ -120,7 +120,7 @@ namespace Syadeu.Presentation.Map
 
             detector.m_Detected = newDetected;
         }
-        private void Detection(Entity<IEntity> entity, in GridDetectorAttribute detectorAtt, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
+        private void Detection(Entity<IEntity> entity, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
         {
             if (!System.GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
             {
@@ -144,7 +144,7 @@ namespace Syadeu.Presentation.Map
                     myDat = entity.As<IEntity, IEntityData>(),
                     targetDat = target.As<IEntity, IEntityData>();
 
-                detectorAtt.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
+                detector.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
                 if (!predicate)
                 {
                     "predicate failed".ToLog();
@@ -155,9 +155,9 @@ namespace Syadeu.Presentation.Map
                 newDetected.Add(targetShortID);
                 m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, true));
 
-                for (int i = 0; i < detectorAtt.m_OnDetected.Length; i++)
+                for (int i = 0; i < detector.m_OnDetected.Length; i++)
                 {
-                    detectorAtt.m_OnDetected[i].Execute(myDat, targetDat);
+                    detector.m_OnDetected[i].Execute(myDat, targetDat);
                 }
 
                 //"detect".ToLog();

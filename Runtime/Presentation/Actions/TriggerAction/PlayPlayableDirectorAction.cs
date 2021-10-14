@@ -94,13 +94,13 @@ namespace Syadeu.Presentation.Actions
                 m_StartDelay = m_StartDelay,
                 m_EndDelay = m_EndDelay,
 
-                m_Conditional = m_Conditional.ToBuffer(Allocator.Persistent),
+                m_Conditional = m_Conditional.ToFixedList64(),
 
-                m_OnStart = m_OnStart.ToBuffer(Allocator.Persistent),
-                m_OnStartAction = m_OnStartAction.ToBuffer(Allocator.Persistent),
+                m_OnStart = m_OnStart.ToFixedList64(),
+                m_OnStartAction = m_OnStartAction.ToFixedList64(),
 
-                m_OnEnd = m_OnEnd.ToBuffer(Allocator.Persistent),
-                m_OnEndAction = m_OnEndAction.ToBuffer(Allocator.Persistent)
+                m_OnEnd = m_OnEnd.ToFixedList64(),
+                m_OnEndAction = m_OnEndAction.ToFixedList64()
             };
 
             m_CoroutineSystem.PostSequenceIterationJob(job);
@@ -120,13 +120,13 @@ namespace Syadeu.Presentation.Actions
             public float m_StartDelay;
             public float m_EndDelay;
 
-            public ReferenceArray<Reference<TriggerPredicateAction>> m_Conditional;
+            public FixedReferenceList64<TriggerPredicateAction> m_Conditional;
 
-            public ReferenceArray<Reference<TriggerAction>> m_OnStart;
-            public ReferenceArray<Reference<TriggerAction>> m_OnEnd;
+            public FixedReferenceList64<TriggerAction> m_OnStart;
+            public FixedReferenceList64<TriggerAction> m_OnEnd;
 
-            public ReferenceArray<Reference<InstanceAction>> m_OnStartAction;
-            public ReferenceArray<Reference<InstanceAction>> m_OnEndAction;
+            public FixedReferenceList64<InstanceAction> m_OnStartAction;
+            public FixedReferenceList64<InstanceAction> m_OnEndAction;
 
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.Default;
 
@@ -138,11 +138,11 @@ namespace Syadeu.Presentation.Actions
                 m_Data = Reference<TimelineData>.Empty;
                 m_Executer = EntityData<IEntityData>.Empty;
 
-                m_Conditional.Dispose();
-                m_OnStart.Dispose();
-                m_OnEnd.Dispose();
-                m_OnStartAction.Dispose();
-                m_OnEndAction.Dispose();
+                //m_Conditional.Dispose();
+                //m_OnStart.Dispose();
+                //m_OnEnd.Dispose();
+                //m_OnStartAction.Dispose();
+                //m_OnEndAction.Dispose();
             }
             public IEnumerator Execute()
             {

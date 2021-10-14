@@ -195,7 +195,7 @@ namespace Syadeu.Presentation.Actions
             m_CurrentAction.Clear();
         }
 
-        public bool ExecuteInstanceAction<T>(Reference<T> temp)
+        public bool ExecuteInstanceAction<T>(FixedReference<T> temp)
             where T : InstanceAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -233,7 +233,19 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(Reference<T> temp, EntityData<IEntityData> entity)
+        public void ScheduleInstanceAction<T>(FixedReference<T> action)
+            where T : InstanceAction
+        {
+            Payload payload = new Payload
+            {
+                actionType = ActionType.Instance,
+                action = action.As<ActionBase>()
+            };
+
+            m_ScheduledActions.Add(payload);
+            m_EventSystem.TakeQueueTicket(this);
+        }
+        public bool ExecuteTriggerAction<T>(FixedReference<T> temp, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -262,7 +274,7 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        public void ScheduleTriggerAction<T>(Reference<T> action, EntityData<IEntityData> entity)
+        public void ScheduleTriggerAction<T>(FixedReference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             Payload payload = new Payload
@@ -306,7 +318,7 @@ namespace Syadeu.Presentation.Actions
         private class Payload
         {
             public ActionType actionType;
-            public Reference<ActionBase> action;
+            public FixedReference<ActionBase> action;
             public EntityData<IEntityData> entity;
 
             public bool played;

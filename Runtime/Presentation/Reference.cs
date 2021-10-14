@@ -8,6 +8,9 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// Editor Only Reference. In Runtime use <see cref="FixedReference"/>
+    /// </summary>
     [Serializable]
     public struct Reference : IReference, IEquatable<Reference>
     {
@@ -44,6 +47,10 @@ namespace Syadeu.Presentation
         public static implicit operator ObjectBase(Reference a) => EntityDataList.Instance.m_Objects[a.m_Hash];
         public static implicit operator Hash(Reference a) => a.m_Hash;
     }
+    /// <summary>
+    /// Editor Only Reference. In Runtime use <see cref="FixedReference{T}"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public struct Reference<T> : IReference<T>, IEquatable<Reference<T>>
         where T : class, IObject
@@ -130,11 +137,12 @@ namespace Syadeu.Presentation
         public static implicit operator T(Reference<T> a) => a.GetObject();
         public static implicit operator Hash(Reference<T> a) => a.m_Hash;
         public static implicit operator Reference(Reference<T> a) => new Reference(a.m_Hash);
+        public static implicit operator FixedReference<T>(Reference<T> a) => new FixedReference<T>(a.m_Hash);
 
         [Preserve]
         static void AOTCodeGeneration()
         {
-            AotHelper.EnsureType<ReferenceArray<Reference<T>>>();
+            //AotHelper.EnsureType<ReferenceArray<Reference<T>>>();
             AotHelper.EnsureType<Reference<T>>();
             AotHelper.EnsureList<Reference<T>>();
 

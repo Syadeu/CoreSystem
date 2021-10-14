@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace Syadeu.Presentation.Actions
         protected string p_DebugText = string.Empty;
 
         [JsonIgnore] private bool m_Terminated = true;
-        [JsonIgnore] public Reference m_Reference;
+        [JsonIgnore] public FixedReference m_Reference;
 
         [JsonIgnore] public bool Terminated => m_Terminated;
 

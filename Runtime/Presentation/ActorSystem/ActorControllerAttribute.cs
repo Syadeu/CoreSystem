@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.Actor
                 , NativeArrayOptions.UninitializedMemory
 #endif
                 );
-            component.m_OnEventReceived = attribute.m_OnEventReceived.ToBuffer(Allocator.Persistent);
+            component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {

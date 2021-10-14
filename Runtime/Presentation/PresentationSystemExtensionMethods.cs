@@ -10,22 +10,29 @@ namespace Syadeu.Presentation
 {
     public static class PresentationSystemExtensionMethods
     {
-        public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
-            where T : unmanaged, IReference
-        {
-            return new ReferenceArray<T>(t, allocator);
-        }
-        public static FixedReferenceList64<T> ToFixedList<T>(this IEnumerable<Reference<T>> t)
+        //public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
+        //    where T : unmanaged, IReference
+        //{
+        //    return new ReferenceArray<T>(t, allocator);
+        //}
+        public static FixedReferenceList64<T> ToFixedList64<T>(this IEnumerable<Reference<T>> t)
             where T : class, IObject
         {
             FixedReferenceList64<T> list = new FixedReferenceList64<T>();
             foreach (var item in t)
             {
-                list.Add(item);
+                FixedReference<T> temp = item;
+                list.Add(temp);
             }
             return list;
         }
+        public static FixedReference<T> As<T>(this IFixedReference reference)
+            where T : class, IObject
+        {
+            return new FixedReference<T>(reference.Hash);
+        }
 
+        [Obsolete("Use FixedReferenceList64", true)]
         public static T[] ToArray<T>(this ReferenceArray<T> t)
             where T : unmanaged, IReference
         {
@@ -36,6 +43,7 @@ namespace Syadeu.Presentation
             }
             return array;
         }
+        [Obsolete("Use FixedReferenceList64", true)]
         public static List<T> ToList<T>(this ReferenceArray<T> t)
             where T : unmanaged, IReference
         {
@@ -76,6 +84,18 @@ namespace Syadeu.Presentation
                 value is T target)
             {
                 return target;
+            }
+            return null;
+        }
+        public static ObjectBase GetObject(this FixedReference t)
+        {
+            if (t.IsEmpty())
+            {
+                return null;
+            }
+            else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value))
+            {
+                return value;
             }
             return null;
         }

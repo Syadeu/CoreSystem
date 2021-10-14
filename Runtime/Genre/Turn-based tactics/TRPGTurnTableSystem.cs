@@ -153,7 +153,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
+            player.OnEndTurnActions.Schedule(entity);
 
             OnStartTurn?.Invoke(entity);
         }
@@ -165,7 +166,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.End));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnEndTurnActions.Schedule(entity);
+            player.OnEndTurnActions.Schedule(entity);
 
             OnEndTurn?.Invoke(entity);
         }
@@ -178,7 +180,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Reset));
 
-            entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+            //entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+            player.OnResetTurnActions.Schedule(entity);
 
             return ref player;
         }
