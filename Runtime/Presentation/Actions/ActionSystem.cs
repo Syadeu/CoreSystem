@@ -47,7 +47,11 @@ namespace Syadeu.Presentation.Actions
 
         public override void OnDispose()
         {
-            //m_ScheduledActions.Dispose();
+            foreach (var action in m_Actions)
+            {
+                action.Value.Object.InternalTerminate();
+            }
+
             m_Actions.Dispose();
 
             base.OnDispose();
@@ -73,6 +77,16 @@ namespace Syadeu.Presentation.Actions
         }
 
         #endregion
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            foreach (var action in m_Actions)
+            {
+                action.Value.Object.InternalCreate();
+            }
+
+            return base.OnStartPresentation();
+        }
 
         public Instance<ActionBase> GetAction(FixedReference<ActionBase> reference)
         {

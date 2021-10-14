@@ -147,9 +147,10 @@ namespace Syadeu.Presentation.Map
 
                 if (entity.HasComponent<GridDetectorComponent>())
                 {
-                    GetModule<GridDetectionModule>().UpdateGridDetection(entity, in component);
+                    GetModule<GridDetectionModule>().UpdateGridDetection(entity, in component, postEvent);
                     //CheckGridDetectionAndPost(entity, in component.positions);
                 }
+                GetModule<GridDetectionModule>().CheckObservers(entity, in component, postEvent);
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -220,7 +221,7 @@ namespace Syadeu.Presentation.Map
 
         public override void OnDispose()
         {
-            ClearUICell();
+            //ClearUICell();
 
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
 
