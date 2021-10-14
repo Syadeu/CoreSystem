@@ -28,16 +28,33 @@ namespace Syadeu.Presentation.Actor
         private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
         private readonly EventContainer m_CurrentEvent = new EventContainer();
 
+        private NativeStream NativeStream;
+
         public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
 
         #region Presentation Methods
+
+        protected override PresentationResult OnInitialize()
+        {
+            //NativeStream = new NativeStream(1024, AllocatorManager.Persistent);
+
+            //var wr = NativeStream.AsWriter();
+            //wr.BeginForEachIndex(0);
+
+            //wr.Write(Entity<IEntity>.Empty);
+
+            ////var rdr = NativeStream.AsReader();
+            ////rdr.
+            //UnsafeStream unsafeStream;
+            return base.OnInitialize();
+        }
         protected override PresentationResult OnInitializeAsync()
         {
-            RequestSystem<EntitySystem>(Bind);
-            RequestSystem<EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitializeAsync();
         }
@@ -47,26 +64,7 @@ namespace Syadeu.Presentation.Actor
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
-            //m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
-            //m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        //private void M_EntitySystem_OnEntityCreated(EntityData<IEntityData> obj)
-        //{
-        //    if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
-
-        //    //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
-
-        //    //m_PlayerHashMap.Add(obj.Idx, obj.As<IEntityData, ActorEntity>());
-        //}
-        //private void M_EntitySystem_OnEntityDestroy(EntityData<IEntityData> obj)
-        //{
-        //    if (!TypeHelper.TypeOf<ActorEntity>.Type.IsAssignableFrom(obj.Type)) return;
-
-        //    //Entity<ActorEntity> entity = obj.As<IEntityData, ActorEntity>();
-
-        //    //m_PlayerHashMap.Remove(obj.Idx);
-        //}
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
