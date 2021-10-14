@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.Components
             ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
             
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-            temp.Initialize(runtimeTypeInfo, runtimeTypeInfo.Size, runtimeTypeInfo.Align);
+            temp.Initialize(runtimeTypeInfo);
 
             return temp;
         }
@@ -792,16 +792,16 @@ namespace Syadeu.Presentation.Components
         public bool IsCreated => m_ComponentBuffer != null;
         public int Length => m_Length;
 
-        public void Initialize(in TypeInfo typeInfo, in int size, in int align)
+        public void Initialize(in TypeInfo typeInfo)
         {
             long
                 occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
                 idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * c_InitialCount,
-                bufferSize = size * c_InitialCount;
+                bufferSize = typeInfo.Size * c_InitialCount;
             void*
                 occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
                 idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<EntityData<IEntityData>>(), Allocator.Persistent),
-                buffer = UnsafeUtility.Malloc(bufferSize, align, Allocator.Persistent);
+                buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
 
             UnsafeUtility.MemClear(occBuffer, occSize);
             // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
