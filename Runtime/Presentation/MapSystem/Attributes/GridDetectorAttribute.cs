@@ -185,9 +185,7 @@ namespace Syadeu.Presentation.Map
                 m_ObserveIndices = new FixedList4096Bytes<int>(),
                 m_IgnoreLayers = ignores,
 
-                m_TriggerOnly = 
-                    attribute.m_TriggerOnly.Length == 0 ? 
-                        ReferenceArray<Reference<EntityBase>>.Empty : attribute.m_TriggerOnly.ToBuffer(Allocator.Persistent),
+                m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList(),
                 m_TriggerOnlyInverse = attribute.m_Inverse,
 
                 m_Detected = new FixedList512Bytes<EntityShortID>(),

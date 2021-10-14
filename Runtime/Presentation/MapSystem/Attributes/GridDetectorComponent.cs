@@ -12,7 +12,8 @@ namespace Syadeu.Presentation.Map
         internal int m_MaxDetectionRange;
         internal FixedList4096Bytes<int> m_ObserveIndices;
         internal FixedList128Bytes<int> m_IgnoreLayers;
-        internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+        //internal ReferenceArray<Reference<EntityBase>> m_TriggerOnly;
+        internal FixedReferenceList64<EntityBase> m_TriggerOnly;
         internal bool m_TriggerOnlyInverse;
 
         // i found
@@ -50,10 +51,10 @@ namespace Syadeu.Presentation.Map
                 targetDetector.m_Detected.Remove(m_MyShortID);
             }
 
-            if (m_TriggerOnly.IsValid())
-            {
-                m_TriggerOnly.Dispose();
-            }
+            //if (m_TriggerOnly.IsValid())
+            //{
+            //    m_TriggerOnly.Dispose();
+            //}
 
             m_ObserveIndices.Clear();
             m_IgnoreLayers.Clear();
