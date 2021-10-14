@@ -126,14 +126,15 @@ namespace Syadeu.Presentation.Map
             return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.HasDirection(in position.index, in direction, out target);
         }
 
-        public bool GetPath64(in int to, ref GridPath64 path, in int maxIteration = 32)
+        public bool GetPath64(in int to, ref GridPath64 path, in int maxIteration = 32, in bool avoidEntity = true)
         {
             return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
                 positions[0].index, 
                 in to, 
                 ref path, 
                 m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, 
-                in maxIteration);
+                in maxIteration,
+                in avoidEntity);
         }
 
         public GridPosition GetGridPosition(in int index)

@@ -25,6 +25,9 @@ namespace Syadeu.Presentation.Map
         // ive spotted
         internal FixedList512Bytes<EntityShortID> m_TargetedBy;
 
+        public FixedList512Bytes<EntityShortID> Detected => m_Detected;
+        public FixedList512Bytes<EntityShortID> TargetedBy => m_TargetedBy;
+
         public int MaxDetectionIndicesCount
         {
             get

@@ -13,6 +13,7 @@ namespace Syadeu.Presentation.TurnTable
         //internal int m_TargetCount;
 
         public int m_AttackRange;
+        public int m_SearchRange;
         public int m_ConsumeAP;
 
         public FixedList512Bytes<EntityID> m_Targets;

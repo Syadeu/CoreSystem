@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
+using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -16,8 +17,10 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGActorAttackProvider : ActorAttackProvider,
         INotifyComponent<TRPGActorAttackComponent>
     {
-        [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange;
-        [JsonProperty(Order = 1, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
+        [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange = 1;
+        [Tooltip("GridDetector 가 있으면 이 값은 무시됩니다.")]
+        [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
+        [JsonProperty(Order = 2, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
 
         [JsonIgnore] private NativeList<int> m_TempGetRange;
         //[JsonIgnore] public int AttackRange => m_AttackRange;
@@ -43,6 +46,7 @@ namespace Syadeu.Presentation.TurnTable
                 //m_HasTarget = false,
 
                 m_AttackRange = m_AttackRange,
+                m_SearchRange = m_SearchRange,
                 m_ConsumeAP = m_DefaultConsumeAP,
 
                 m_Targets = new FixedList512Bytes<EntityID>()
@@ -57,7 +61,26 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         public FixedList512Bytes<EntityID> GetTargetsInRange()
-            => GetTargetsWithin(in Parent.GetComponent<TRPGActorAttackComponent>().m_AttackRange);
+        {
+            if (Parent.HasComponent<GridDetectorComponent>())
+            {
+                var temp = Parent.GetComponentReadOnly<GridDetectorComponent>();
+                FixedList512Bytes<EntityID> list = new FixedList512Bytes<EntityID>();
+                for (int i = 0; i < temp.Detected.Length; i++)
+                {
+                    list.Add(temp.Detected[i].GetEntityID());
+                }
+
+                ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
+                att.m_Targets = list;
+
+                return list;
+            }
+            else
+            {
+                return GetTargetsWithin(in Parent.GetComponent<TRPGActorAttackComponent>().m_SearchRange);
+            }
+        }
         public FixedList512Bytes<EntityID> GetTargetsWithin(in int range)
         {
             if (!Parent.HasComponent<GridSizeComponent>())
@@ -85,6 +108,8 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     foreach (var target in iter)
                     {
+                        if (Parent.Idx.Equals(target)) continue;
+
                         att.m_Targets.Add(target);
                     }
                 }

@@ -26,6 +26,11 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();
 
+        public override string ToString()
+        {
+            return m_Hash.ToString();
+        }
+
         public static implicit operator InstanceID(Hash hash) => new InstanceID(hash);
         public static implicit operator InstanceID(EntityID hash) => new InstanceID(hash.Hash);
         //public static implicit operator Hash(InstanceID id) => id.m_Idx;

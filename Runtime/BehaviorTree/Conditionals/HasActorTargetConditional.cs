@@ -1,4 +1,5 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
+using Syadeu.Collections;
 using Syadeu.Presentation.TurnTable;
 
 namespace Syadeu.Presentation.BehaviorTree
@@ -18,6 +19,7 @@ namespace Syadeu.Presentation.BehaviorTree
 
             if (Entity.GetComponentReadOnly<TRPGActorAttackComponent>().TargetCount > 0)
             {
+                $"has target {Entity.GetComponentReadOnly<TRPGActorAttackComponent>().m_Targets[0].GetEntity<IEntity>().Name}".ToLog();
                 return TaskStatus.Success;
             }
 

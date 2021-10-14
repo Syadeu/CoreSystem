@@ -415,6 +415,13 @@ namespace Syadeu.Presentation.Map
             }
             public IEnumerator Execute()
             {
+                if (m_Positions.Length == 0)
+                {
+                    "no path".ToLog();
+
+                    yield break;
+                }
+
                 EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
                 NavAgentAttribute navAgent = m_Entity.GetAttribute<NavAgentAttribute>();
                 Entity<IEntity> entity = m_Entity.As<IEntityData, IEntity>();

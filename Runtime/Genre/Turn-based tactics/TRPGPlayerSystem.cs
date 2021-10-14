@@ -249,6 +249,7 @@ namespace Syadeu.Presentation.TurnTable
         private void TRPGEndTurnEventHandler(TRPGEndTurnEvent ev)
         {
             m_TurnTableSystem.NextTurn();
+            "next turn ev".ToLog();
         }
         private void OnTurnStateChangedEventHandler(OnTurnStateChangedEvent ev)
         {

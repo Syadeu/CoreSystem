@@ -37,6 +37,7 @@ namespace Syadeu.Presentation.BehaviorTree
             TRPGActorAttackComponent att = Entity.GetComponentReadOnly<TRPGActorAttackComponent>();
             if (att.TargetCount == 0)
             {
+                "no target".ToLog();
                 return TaskStatus.Failure;
             }
 
