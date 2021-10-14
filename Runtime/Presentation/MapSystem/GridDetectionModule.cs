@@ -13,6 +13,7 @@ namespace Syadeu.Presentation.Map
 {
     internal unsafe sealed class GridDetectionModule : PresentationSystemModule<GridSystem>
     {
+        private UnsafeMultiHashMap<int, EntityID> m_GridEntities;
         private UnsafeMultiHashMap<int, EntityID> m_GridObservers;
 
         private EventSystem m_EventSystem;
@@ -39,9 +40,13 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public void UpdateHashMap(int length)
+        public void UpdateHashMap(UnsafeMultiHashMap<int, EntityID> gridEntities, int length)
         {
-            m_GridObservers.Dispose();
+            m_GridEntities = gridEntities;
+            if (m_GridObservers.IsCreated)
+            {
+                m_GridObservers.Dispose();
+            }
             m_GridObservers = new UnsafeMultiHashMap<int, EntityID>(length, AllocatorManager.Persistent);
         }
         public void ClearHashMap()
@@ -122,7 +127,7 @@ namespace Syadeu.Presentation.Map
         }
         private void Detection(Entity<IEntity> entity, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected)
         {
-            if (!System.GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
+            if (!m_GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
             {
                 return;
             }
@@ -172,7 +177,7 @@ namespace Syadeu.Presentation.Map
                     }
                 }
 
-            } while (System.GridEntities.TryGetNextValue(out targetID, ref iter));
+            } while (m_GridEntities.TryGetNextValue(out targetID, ref iter));
         }
 
         private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)

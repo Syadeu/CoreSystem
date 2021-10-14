@@ -44,8 +44,6 @@ namespace Syadeu.Presentation.Map
         private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
 
-        internal UnsafeMultiHashMap<int, EntityID> GridEntities => m_GridEntities;
-
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
 
@@ -410,7 +408,7 @@ namespace Syadeu.Presentation.Map
                     m_GridEntities.Dispose();
                     m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
 
-                    GetModule<GridDetectionModule>().UpdateHashMap(m_MainGrid.Length);
+                    GetModule<GridDetectionModule>().UpdateHashMap(m_GridEntities, m_MainGrid.Length);
                 }
 
                 if (m_MainGrid.Length > m_PlacedCellUIEntities.Capacity)
