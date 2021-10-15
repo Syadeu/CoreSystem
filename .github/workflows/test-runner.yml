@@ -26,11 +26,15 @@ jobs:
         with:
           unityVersion: ${{ matrix.unityVersion }}
           projectPath: ${{ matrix.projectPath }}
-      - run: |
+      - name: Add Manifest
+        run: |
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
-          echo.>>manifest.json
+          while read -r line; do
+          # Reading each line
+            echo $line
+          done < manifest.json
       - uses: actions/cache@v2
         with:
           path: ${{ matrix.projectPath }}/Library
