@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -37,8 +38,6 @@ namespace Syadeu.Presentation.Map
         internal int[] m_ObstacleLayers = Array.Empty<int>();
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
-
-        [JsonIgnore] internal NativeHashSet<int> ObstacleLayers { get; set; }
     }
 
     [Preserve]
@@ -48,7 +47,11 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnInitialize()
         {
-            RequestSystem<GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_GridSystem = null;
         }
         private void Bind(GridSystem other)
         {
@@ -57,27 +60,10 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
-            attribute.ObstacleLayers = new NativeHashSet<int>(4096, Allocator.Persistent);
-            
-            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
+            GridSizeComponent component = new GridSizeComponent
             {
-                int[] indices = m_GridSystem.GetLayer(attribute.m_ObstacleLayers[i]);
-                foreach (var item in indices)
-                {
-                    attribute.ObstacleLayers.Add(item);
-                }
-            }
-
-            GridSizeComponent component = new GridSizeComponent();
-
-            FixedList32Bytes<int> obstacleLayers = new FixedList32Bytes<int>();
-            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
-            {
-                obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
-            }
-
-            component.m_Parent = e;
-            component.m_ObstacleLayers = obstacleLayers;
+                m_ObstacleLayers = m_GridSystem.GetLayer(attribute.m_ObstacleLayers)
+            };
 
             e.AddComponent(component);
 
@@ -85,49 +71,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.ObstacleLayers.Dispose();
-
             m_GridSystem.UnregisterGridSize(attribute);
         }
-
-        //protected override void OnInitialize()
-        //{
-        //    EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
-        //}
-        //private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
-        //{
-        //    GridSizeAttribute att = ev.entity.GetAttribute<GridSizeAttribute>();
-        //    if (att == null) return;
-
-        //    int[] prev = att.CurrentGridIndices;
-        //    att.UpdateGridCell();
-
-        //    if (prev.Length != att.CurrentGridIndices.Length)
-        //    {
-        //        EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
-        //        return;
-        //    }
-        //    for (int i = 0; i < prev.Length; i++)
-        //    {
-        //        if (prev[i] != att.CurrentGridIndices[i])
-        //        {
-        //            EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
-        //            break;
-        //        }
-        //    }
-        //}
-        //protected override void OnDispose()
-        //{
-        //    EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
-        //}
-
-        //protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
-        //{
-        //    GridSystem gridSystem = PresentationSystem<GridSystem>.System;
-        //    if (gridSystem == null) throw new System.Exception("System null");
-        //    if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
-
-        //    gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
-        //}
     }
 }

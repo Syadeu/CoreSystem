@@ -23,6 +23,8 @@ namespace Syadeu.Presentation
         internal override sealed void InternalTerminate()
         {
             OnTerminate();
+
+            EntitySystem = null;
             m_Pool.Enqueue((TEvent)this);
         }
 

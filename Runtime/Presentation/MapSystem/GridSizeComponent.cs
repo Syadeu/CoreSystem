@@ -4,19 +4,26 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
-    public struct GridSizeComponent : IEntityComponent
+    public struct GridSizeComponent : IEntityComponent, IDisposable
     {
-        //internal PresentationSystemID<GridSystem> m_GridSystem;
-        internal EntityData<IEntityData> m_Parent;
+        //internal EntityData<IEntityData> m_Parent;
 
-        internal FixedList128Bytes<int> m_ObstacleLayers;
+        internal GridLayerChain m_ObstacleLayers;
+        //internal UnsafeHashSet<int> m_ObstacleLayerIndicesHashSet;
+        //internal GridLayerChain m_ObstacleLayers;
         public FixedList512Bytes<GridPosition> positions;
 
         public float CellSize => PresentationSystem<DefaultPresentationGroup, GridSystem>.System.CellSize;
+
+        void IDisposable.Dispose()
+        {
+            //m_ObstacleLayerIndicesHashSet.Dispose();
+        }
 
         public float3 IndexToPosition(in int index)
         {
@@ -54,33 +61,25 @@ namespace Syadeu.Presentation.Map
         /// <param name="range"></param>
         public void GetRange(ref NativeList<int> list, in int range)
         {
-            //GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-            //grid.GetRange(ref list, positions[0].index, in range, m_ObstacleLayers);
+            int bufferLength = CalculateMaxiumIndicesInRangeCount(in range);
 
-            int 
-                height = ((range * 2) + 1),
-                bufferSize = height * height;
             unsafe
             {
-                int* buffer = stackalloc int[bufferSize];
-                GetRange(in buffer, in bufferSize, in range, out int count);
+                int* buffer = stackalloc int[bufferLength];
+                GetRange(in buffer, in bufferLength, in range, out int count);
 
                 list.Clear();
                 list.AddRange(buffer, count);
             }
         }
-        public void GetRange(ref NativeList<int> list, in int range, in FixedList128Bytes<int> ignoreLayers)
+        public void GetRange(ref NativeList<int> list, in int range, in GridLayerChain ignoreLayers)
         {
-            //GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-            //grid.GetRange(ref list, positions[0].index, in range, ignoreLayers);
+            int bufferLength = CalculateMaxiumIndicesInRangeCount(in range);
 
-            int
-                height = ((range * 2) + 1),
-                bufferSize = height * height;
             unsafe
             {
-                int* buffer = stackalloc int[bufferSize];
-                GetRange(in buffer, in bufferSize, in range, in ignoreLayers, out int count);
+                int* buffer = stackalloc int[bufferLength];
+                GetRange(in buffer, in bufferLength, in range, in ignoreLayers, out int count);
 
                 list.Clear();
                 list.AddRange(buffer, count);
@@ -88,10 +87,12 @@ namespace Syadeu.Presentation.Map
         }
         public void GetRange(ref FixedList4096Bytes<int> list, in int range)
         {
+            int bufferLength = CalculateMaxiumIndicesInRangeCount(in range);
+
             unsafe
             {
-                int* buffer = stackalloc int[1024];
-                GetRange(in buffer, 1024, in range, out int count);
+                int* buffer = stackalloc int[bufferLength];
+                GetRange(in buffer, bufferLength, in range, out int count);
 
                 list.Clear();
                 list.AddRange(buffer, count);
@@ -101,9 +102,9 @@ namespace Syadeu.Presentation.Map
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
-            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range,in m_ObstacleLayers, out count);
+            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range, in m_ObstacleLayers, out count);
         }
-        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
+        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, in GridLayerChain ignoreLayers, out int count)
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
@@ -115,10 +116,10 @@ namespace Syadeu.Presentation.Map
         {
             return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.HasPath(
                 positions[0].index, 
-                to, 
-                out pathCount, 
-                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers,
-                maxIteration);
+                in to, 
+                out pathCount,
+                in m_ObstacleLayers,
+                in maxIteration);
         }
 
         public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
@@ -131,8 +132,8 @@ namespace Syadeu.Presentation.Map
             return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
                 positions[0].index, 
                 in to, 
-                ref path, 
-                m_Parent.GetAttribute<GridSizeAttribute>().ObstacleLayers, 
+                ref path,
+                in m_ObstacleLayers, 
                 in maxIteration,
                 in avoidEntity);
         }
@@ -140,6 +141,12 @@ namespace Syadeu.Presentation.Map
         public GridPosition GetGridPosition(in int index)
         {
             return new GridPosition(index, PresentationSystem<DefaultPresentationGroup, GridSystem>.System.IndexToLocation(index));
+        }
+
+        public static int CalculateMaxiumIndicesInRangeCount(in int range)
+        {
+            int height = ((range * 2) + 1);
+            return height * height;
         }
     }
 }

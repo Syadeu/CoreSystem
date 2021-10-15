@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.Map
         internal EntityShortID m_MyShortID;
         internal int m_MaxDetectionRange;
         internal FixedList4096Bytes<int> m_ObserveIndices;
-        internal FixedList128Bytes<int> m_IgnoreLayers;
+        internal GridLayerChain m_IgnoreLayers;
         
         internal FixedReferenceList64<EntityBase> m_TriggerOnly;
         internal bool m_TriggerOnlyInverse;
@@ -28,14 +28,7 @@ namespace Syadeu.Presentation.Map
         public FixedList512Bytes<EntityShortID> Detected => m_Detected;
         public FixedList512Bytes<EntityShortID> TargetedBy => m_TargetedBy;
 
-        public int MaxDetectionIndicesCount
-        {
-            get
-            {
-                int height = ((m_MaxDetectionRange * 2) + 1);
-                return height * height;
-            }
-        }
+        public int MaxDetectionIndicesCount => GridSizeComponent.CalculateMaxiumIndicesInRangeCount(m_MaxDetectionRange);
 
         void IDisposable.Dispose()
         {
@@ -58,13 +51,7 @@ namespace Syadeu.Presentation.Map
                 targetDetector.m_Detected.Remove(m_MyShortID);
             }
 
-            //if (m_TriggerOnly.IsValid())
-            //{
-            //    m_TriggerOnly.Dispose();
-            //}
-
             m_ObserveIndices.Clear();
-            m_IgnoreLayers.Clear();
             m_Detected.Clear();
             m_TargetedBy.Clear();
         }
@@ -73,18 +60,5 @@ namespace Syadeu.Presentation.Map
         {
             return m_ObserveIndices.Contains(gridIndex);
         }
-
-        //internal void RemoveDetected(in int gridIndex)
-        //{
-        //    for (int i = m_Detected.Length - 1; i >= 0; i--)
-        //    {
-        //        var temp = m_Detected[i].GetEntity<IEntity>().GetComponent<GridSizeComponent>();
-        //        if (temp.IsMyIndex(gridIndex))
-        //        {
-        //            m_Detected.RemoveAt(i);
-        //            continue;
-        //        }
-        //    }
-        //}
     }
 }
