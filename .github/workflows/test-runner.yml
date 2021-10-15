@@ -1,0 +1,69 @@
+name: Test project
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+jobs:
+  testAllModes:
+    name: Test in ${{ matrix.testMode }}, ${{ matrix.unityVersion }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        projectPath:
+          - test-project
+        unityVersion:
+          - 2020.3.14f1
+        testMode:
+          - playmode
+          #- editmode
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Unity - Create Empty Project
+        uses: jbltx/unity-create@v1.2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: ${{ matrix.unityVersion }}
+          projectPath: ${{ matrix.projectPath }}
+      - name: Add Manifest
+        run: |
+          echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
+          cd ${{ matrix.projectPath }}
+          cd Packages
+          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' manifest.json
+          # Reading each line
+          n=0
+          while IFS= read -r line; do
+            echo $line
+            n=$((n+1))
+          done < manifest.json
+      - uses: actions/cache@v2
+        with:
+          path: ${{ matrix.projectPath }}/Library
+          key: Library-${{ matrix.projectPath }}
+          restore-keys: |
+            Library-
+      - name: Unity - Run ${{ matrix.testMode }} Tests
+        uses: game-ci/unity-test-runner@v2
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          customImage: 'unityci/editor:${{ matrix.unityVersion }}-base-0'
+          projectPath: ${{ matrix.projectPath }}
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: ${{ matrix.testMode }}-artifacts
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: ${{ matrix.testMode }} Test Results
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: Test results for ${{ matrix.testMode }}
+          path: ${{ steps.tests.outputs.artifactsPath }}
