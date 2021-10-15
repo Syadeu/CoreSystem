@@ -1,6 +1,12 @@
 name: Test project
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
 jobs:
   testAllModes:
     name: Test in ${{ matrix.testMode }}, ${{ matrix.unityVersion }}
