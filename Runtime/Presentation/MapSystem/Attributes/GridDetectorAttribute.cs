@@ -194,7 +194,7 @@ namespace Syadeu.Presentation.Map
 
                 m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList64(),
                 m_TriggerOnlyInverse = attribute.m_Inverse,
-ha
+
                 m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
                 m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
 
