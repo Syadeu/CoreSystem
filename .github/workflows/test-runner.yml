@@ -33,24 +33,25 @@ jobs:
           cd Packages
           # Reading each line
           n=0
-          while read -r line; do
+          while IFS= read -r line; do
             if [ $n = 2 ]
             then
-              echo 'found $line'
-              echo $'"syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' >> manifest.json
-              echo $'\n' >> manifest.json
+              echo $line
+              sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' manifest.json
+              break
             else
-              echo 'notfound $line'
+              echo "notfound $line"
             fi
             n=$((n+1))
           done < manifest.json
-      - uses: actions/cache@v2
-        with:
-          path: ${{ matrix.projectPath }}/Library
-          key: Library-${{ matrix.projectPath }}
-          restore-keys: |
-            Library-
-      - uses: game-ci/unity-test-runner@v2
+#      - uses: actions/cache@v2
+#        with:
+#          path: ${{ matrix.projectPath }}/Library
+#          key: Library-${{ matrix.projectPath }}
+#          restore-keys: |
+#            Library-
+      - name: Unity - Run ${{ matrix.testMode }} Tests
+        uses: game-ci/unity-test-runner@v2
         id: tests
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
