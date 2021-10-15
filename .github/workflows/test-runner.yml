@@ -19,13 +19,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           lfs: true
-#      - name: Unity - Create Empty Project
-#        uses: jbltx/unity-create@v1.2
-#        env:
-#          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-#        with:
-#          unityVersion: ${{ matrix.unityVersion }}
-#          projectPath: ${{ matrix.projectPath }}
+      - name: Unity - Create Empty Project
+        uses: jbltx/unity-create@v1.2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: ${{ matrix.unityVersion }}
+          projectPath: ${{ matrix.projectPath }}
       - run: |
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
