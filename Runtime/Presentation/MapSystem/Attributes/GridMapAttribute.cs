@@ -72,10 +72,10 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public int LayerCount => m_Layers.Length;
         [JsonIgnore] private BinaryGrid Grid { get; set; }
         [JsonIgnore] private BinaryGrid[] SubGrids { get; set; }
-        [JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
+        //[JsonIgnore] private NativeHashSet<int>[] Layers { get; set; }
 
-        [JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
-        [JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
+        //[JsonIgnore] public List<int> m_ObstacleLayerIndices = new List<int>();
+        //[JsonIgnore] public NativeHashSet<int> ObstacleLayer { get; private set; }
         [JsonIgnore] public int Length
         {
             get
@@ -95,15 +95,15 @@ namespace Syadeu.Presentation.Map
         public void CreateGrid()
         {
             Grid = new BinaryGrid(m_Center, m_Size, m_CellSize);
-            Layers = new NativeHashSet<int>[m_Layers.Length];
-            for (int i = 0; i < m_Layers.Length; i++)
-            {
-                Layers[i] = new NativeHashSet<int>(m_Layers[i].m_Indices.Length, Allocator.Persistent);
-                for (int a = 0; a < m_Layers[i].m_Indices.Length; a++)
-                {
-                    Layers[i].Add(m_Layers[i].m_Indices[a]);
-                }
-            }
+            //Layers = new NativeHashSet<int>[m_Layers.Length];
+            //for (int i = 0; i < m_Layers.Length; i++)
+            //{
+            //    Layers[i] = new NativeHashSet<int>(m_Layers[i].m_Indices.Length, Allocator.Persistent);
+            //    for (int a = 0; a < m_Layers[i].m_Indices.Length; a++)
+            //    {
+            //        Layers[i].Add(m_Layers[i].m_Indices[a]);
+            //    }
+            //}
 
             if (m_SubGrids.Length == 0)
             {
@@ -164,147 +164,57 @@ namespace Syadeu.Presentation.Map
         {
             //if (Grid == null) throw new Exception();
 
-            for (int i = 0; i < Layers.Length; i++)
-            {
-                Layers[i].Dispose();
-            }
-            Layers = null;
+            //for (int i = 0; i < Layers.Length; i++)
+            //{
+            //    Layers[i].Dispose();
+            //}
+            //Layers = null;
 
-            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
+            //if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
 
             //Grid.Dispose();
             //Grid = null;
         }
-        public void SetObstacleLayers(params int[] layers)
-        {
-            if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
-            ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
-            m_ObstacleLayerIndices.Clear();
-            for (int i = 0; i < layers.Length; i++)
-            {
-                m_ObstacleLayerIndices.Add(layers[i]);
-            }
+        //public void SetObstacleLayers(params int[] layers)
+        //{
+        //    if (ObstacleLayer.IsCreated) ObstacleLayer.Dispose();
+        //    ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
+        //    m_ObstacleLayerIndices.Clear();
+        //    for (int i = 0; i < layers.Length; i++)
+        //    {
+        //        m_ObstacleLayerIndices.Add(layers[i]);
+        //    }
 
-            for (int i = 0; i < layers.Length; i++)
-            {
-                foreach (var item in m_Layers[layers[i]].m_Indices)
-                {
-                    ObstacleLayer.Add(item);
-                }
-            }
-        }
-        public void AddObstacleLayers(params int[] layers)
-        {
-            if (!ObstacleLayer.IsCreated)
-            {
-                ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
-            }
+        //    for (int i = 0; i < layers.Length; i++)
+        //    {
+        //        foreach (var item in m_Layers[layers[i]].m_Indices)
+        //        {
+        //            ObstacleLayer.Add(item);
+        //        }
+        //    }
+        //}
+        //public void AddObstacleLayers(params int[] layers)
+        //{
+        //    if (!ObstacleLayer.IsCreated)
+        //    {
+        //        ObstacleLayer = new NativeHashSet<int>(4096, Allocator.Persistent);
+        //    }
 
-            for (int i = 0; i < layers.Length; i++)
-            {
-                if (m_ObstacleLayerIndices.Contains(layers[i]))
-                {
-                    "already added".ToLogError();
-                    continue;
-                }
+        //    for (int i = 0; i < layers.Length; i++)
+        //    {
+        //        if (m_ObstacleLayerIndices.Contains(layers[i]))
+        //        {
+        //            "already added".ToLogError();
+        //            continue;
+        //        }
 
-                m_ObstacleLayerIndices.Add(layers[i]);
-                foreach (var item in m_Layers[layers[i]].m_Indices)
-                {
-                    ObstacleLayer.Add(item);
-                }
-            }
-        }
-
-        #region Filter
-
-        public void FilterByLayer1024(in int layer, ref FixedList4096Bytes<int> indices)
-        {
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        indices.RemoveAt(i);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        indices.RemoveAt(i);
-                        continue;
-                    }
-                }
-            }
-        }
-
-        public void FilterByLayer(in int layer, ref NativeList<int> indices)
-        {
-            for (int i = indices.Length - 1; i >= 0; i--)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        indices.RemoveAt(i);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        //filtered.Add(indices[i]);
-                        indices.RemoveAt(i);
-                        continue;
-                    }
-                }
-            }
-        }
-
-        [Obsolete]
-        public int[] FilterByLayer(int layer, int[] indices, out int[] filteredIndices)
-        {
-            List<int> temp = new List<int>();
-            List<int> filtered = new List<int>();
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (m_Layers[layer].m_Inverse)
-                {
-                    if (!Layers[layer].Contains(indices[i]))
-                    {
-                        filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (Layers[layer].Contains(indices[i]))
-                    {
-                        filtered.Add(indices[i]);
-                        continue;
-                    }
-                }
-
-                temp.Add(indices[i]);
-            }
-            filteredIndices = filtered.Count == 0 ? Array.Empty<int>() : filtered.ToArray();
-            return temp.ToArray();
-        }
-        [Obsolete]
-        public int[] FilterByLayer(Hash layer, int[] indices, out int[] filteredIndices)
-            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
-        [Obsolete]
-        public int[] FilterByLayer(string layer, int[] indices, out int[] filteredIndices)
-            => FilterByLayer(GetLayer(layer), indices, out filteredIndices);
-
-        #endregion
+        //        m_ObstacleLayerIndices.Add(layers[i]);
+        //        foreach (var item in m_Layers[layers[i]].m_Indices)
+        //        {
+        //            ObstacleLayer.Add(item);
+        //        }
+        //    }
+        //}
 
         #region Gets
 
@@ -354,7 +264,7 @@ namespace Syadeu.Presentation.Map
 
             return output;
         }
-        private BinaryGrid GetTargetGrid(in int index, out int targetIndex)
+        public BinaryGrid GetTargetGrid(in int index, out int targetIndex)
         {
             CalculateSubGridIndex(in index, out int gridIdx, out targetIndex);
 
@@ -481,75 +391,6 @@ namespace Syadeu.Presentation.Map
         public int[] GetLayer(in int layer)
         {
             return m_Layers[layer].m_Indices;
-        }
-        public int GetLayer(Hash hash)
-        {
-            for (int i = 0; i < m_Layers.Length; i++)
-            {
-                if (m_Layers[i].m_Hash.Equals(hash)) return i;
-            }
-            return -1;
-        }
-        public int GetLayer(string name)
-        {
-            for (int i = 0; i < m_Layers.Length; i++)
-            {
-                if (m_Layers[i].m_Name.Equals(name)) return i;
-            }
-            return -1;
-        }
-
-        public bool LayerContains(in int layer, in int index)
-        {
-            return Layers[layer].Contains(index);
-        }
-
-        #endregion
-
-        #region Get Ranges
-
-        [Obsolete]
-        public int[] GetRange(int idx, int range, params int[] ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            // TODO : 임시. 이후 gridsize 에 맞춰서 인덱스 반환
-            int[] temp = grid.GetRange(in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers?.Length; i++)
-            {
-                temp = FilterByLayer(ignoreLayers[i], temp, out _);
-            }
-
-            return temp;
-        }
-        public void GetRange(ref NativeList<int> list, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-
-            grid.GetRange(ref list, in targetIdx, in range);
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                FilterByLayer(ignoreLayers[i], ref list);
-            }
-        }
-        unsafe public void GetRange(in int* buffer, in int bufferLength, in int idx, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
-        {
-            var grid = GetTargetGrid(in idx, out int targetIdx);
-            
-            grid.GetRange(in buffer, in bufferLength, in targetIdx, in range, out count);
-            FixedList4096Bytes<int> temp = new FixedList4096Bytes<int>();
-            temp.AddRange(buffer, count);
-
-            for (int i = 0; i < ignoreLayers.Length; i++)
-            {
-                FilterByLayer1024(ignoreLayers[i], ref temp);
-            }
-
-            for (int i = 0; i < temp.Length; i++)
-            {
-                buffer[i] = temp[i];
-            }
-            count = temp.Length;
         }
 
         #endregion

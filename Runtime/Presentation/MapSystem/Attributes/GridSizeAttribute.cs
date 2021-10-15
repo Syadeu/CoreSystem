@@ -38,8 +38,6 @@ namespace Syadeu.Presentation.Map
         internal int[] m_ObstacleLayers = Array.Empty<int>();
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
-
-        //[JsonIgnore] internal NativeHashSet<int> ObstacleLayers { get; set; }
     }
 
     [Preserve]
@@ -51,6 +49,10 @@ namespace Syadeu.Presentation.Map
         {
             RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
         }
+        protected override void OnDispose()
+        {
+            m_GridSystem = null;
+        }
         private void Bind(GridSystem other)
         {
             m_GridSystem = other;
@@ -58,34 +60,9 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
-            int[][] obstacleIndexArr = new int[attribute.m_ObstacleLayers.Length][];
-            int calculateHashSetSize = 0;
-            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
-            {
-                int[] indices = m_GridSystem.GetLayer(attribute.m_ObstacleLayers[i]);
-                calculateHashSetSize += indices.Length;
-                obstacleIndexArr[i] = indices;
-            }
-            UnsafeHashSet<int> layerHashSet = new UnsafeHashSet<int>(calculateHashSetSize, AllocatorManager.Persistent);
-            for (int i = 0; i < obstacleIndexArr.Length; i++)
-            {
-                for (int j = 0; j < obstacleIndexArr[i].Length; j++)
-                {
-                    layerHashSet.Add(obstacleIndexArr[i][j]);
-                }
-            }
-
-            FixedList32Bytes<int> obstacleLayers = new FixedList32Bytes<int>();
-            for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
-            {
-                obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
-            }
-
             GridSizeComponent component = new GridSizeComponent
             {
-                //m_Parent = e,
-                m_ObstacleLayers = obstacleLayers,
-                m_ObstacleLayerIndicesHashSet = layerHashSet
+                m_ObstacleLayers = m_GridSystem.GetLayer(attribute.m_ObstacleLayers)
             };
 
             e.AddComponent(component);
@@ -94,49 +71,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
         {
-            //attribute.ObstacleLayers.Dispose();
-
             m_GridSystem.UnregisterGridSize(attribute);
         }
-
-        //protected override void OnInitialize()
-        //{
-        //    EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
-        //}
-        //private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
-        //{
-        //    GridSizeAttribute att = ev.entity.GetAttribute<GridSizeAttribute>();
-        //    if (att == null) return;
-
-        //    int[] prev = att.CurrentGridIndices;
-        //    att.UpdateGridCell();
-
-        //    if (prev.Length != att.CurrentGridIndices.Length)
-        //    {
-        //        EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
-        //        return;
-        //    }
-        //    for (int i = 0; i < prev.Length; i++)
-        //    {
-        //        if (prev[i] != att.CurrentGridIndices[i])
-        //        {
-        //            EventSystem.PostEvent(OnGridPositionChangedEvent.GetEvent(ev.entity, prev, att.CurrentGridIndices));
-        //            break;
-        //        }
-        //    }
-        //}
-        //protected override void OnDispose()
-        //{
-        //    EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
-        //}
-
-        //protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> entity)
-        //{
-        //    GridSystem gridSystem = PresentationSystem<GridSystem>.System;
-        //    if (gridSystem == null) throw new System.Exception("System null");
-        //    if (gridSystem.GridMap == null) throw new System.Exception("Grid null");
-
-        //    gridSystem.UpdateGridEntity(entity, attribute.GetCurrentGridCells());
-        //}
     }
 }

@@ -159,6 +159,21 @@ namespace Syadeu.Presentation.Map
     }
     internal sealed class GridDetectorProcessor : AttributeProcessor<GridDetectorAttribute>
     {
+        private GridSystem m_GridSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_GridSystem = null;
+        }
+        private void Bind(GridSystem other)
+        {
+            m_GridSystem = other;
+        }
+
         protected override void OnCreated(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
         {
             attribute.m_EventSystem = EventSystem;
@@ -170,24 +185,16 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            FixedList128Bytes<int> ignores = new FixedList128Bytes<int>();
-            unsafe
-            {
-                fixed (int* temp = attribute.m_IgnoreLayers)
-                {
-                    ignores.AddRange(temp, attribute.m_IgnoreLayers.Length);
-                }
-            }
             GridDetectorComponent component = new GridDetectorComponent()
             {
                 m_MyShortID = entity.Idx.GetShortID(),
                 m_MaxDetectionRange = attribute.m_MaxDetectionRange,
                 m_ObserveIndices = new FixedList4096Bytes<int>(),
-                m_IgnoreLayers = ignores,
+                m_IgnoreLayers = m_GridSystem.GetLayer(attribute.m_IgnoreLayers),
 
                 m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList64(),
                 m_TriggerOnlyInverse = attribute.m_Inverse,
-
+ha
                 m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
                 m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
 

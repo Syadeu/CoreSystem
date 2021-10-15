@@ -13,15 +13,16 @@ namespace Syadeu.Presentation.Map
     {
         //internal EntityData<IEntityData> m_Parent;
 
-        internal FixedList128Bytes<int> m_ObstacleLayers;
-        internal UnsafeHashSet<int> m_ObstacleLayerIndicesHashSet;
+        internal GridLayerChain m_ObstacleLayers;
+        //internal UnsafeHashSet<int> m_ObstacleLayerIndicesHashSet;
+        //internal GridLayerChain m_ObstacleLayers;
         public FixedList512Bytes<GridPosition> positions;
 
         public float CellSize => PresentationSystem<DefaultPresentationGroup, GridSystem>.System.CellSize;
 
         void IDisposable.Dispose()
         {
-            m_ObstacleLayerIndicesHashSet.Dispose();
+            //m_ObstacleLayerIndicesHashSet.Dispose();
         }
 
         public float3 IndexToPosition(in int index)
@@ -71,7 +72,7 @@ namespace Syadeu.Presentation.Map
                 list.AddRange(buffer, count);
             }
         }
-        public void GetRange(ref NativeList<int> list, in int range, in FixedList128Bytes<int> ignoreLayers)
+        public void GetRange(ref NativeList<int> list, in int range, in GridLayerChain ignoreLayers)
         {
             int bufferLength = CalculateMaxiumIndicesInRangeCount(in range);
 
@@ -101,9 +102,9 @@ namespace Syadeu.Presentation.Map
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
-            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range,in m_ObstacleLayers, out count);
+            grid.GetRange(in buffer, in bufferSize, positions[0].index, in range, in m_ObstacleLayers, out count);
         }
-        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, in FixedList128Bytes<int> ignoreLayers, out int count)
+        unsafe public void GetRange(in int* buffer, in int bufferSize, in int range, in GridLayerChain ignoreLayers, out int count)
         {
             GridSystem grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
 
@@ -115,10 +116,10 @@ namespace Syadeu.Presentation.Map
         {
             return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.HasPath(
                 positions[0].index, 
-                to, 
+                in to, 
                 out pathCount,
-                m_ObstacleLayerIndicesHashSet,
-                maxIteration);
+                in m_ObstacleLayers,
+                in maxIteration);
         }
 
         public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
@@ -132,7 +133,7 @@ namespace Syadeu.Presentation.Map
                 positions[0].index, 
                 in to, 
                 ref path,
-                m_ObstacleLayerIndicesHashSet, 
+                in m_ObstacleLayers, 
                 in maxIteration,
                 in avoidEntity);
         }
