@@ -23,7 +23,8 @@ using UnityEngine;
 namespace Syadeu.Presentation.Map
 {
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>,
-        INotifySystemModule<GridDetectionModule>
+        INotifySystemModule<GridDetectionModule>,
+        INotifySystemModule<ObstacleLayerModule>
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -1265,5 +1266,83 @@ namespace Syadeu.Presentation.Map
         }
         private int GetSqrMagnitude(int index) => GetSqrMagnitude(IndexToLocation(index));
         private static int GetSqrMagnitude(int2 location) => (location.x * location.x) + (location.y * location.y);
+    }
+
+    internal sealed class ObstacleLayerModule : PresentationSystemModule<GridSystem>
+    {
+        private NativeHashMap<GridLayer, UnsafeHashSet<int>> m_Layers;
+
+        public void Initialize(GridMapAttribute grid)
+        {
+            if (m_Layers.IsCreated)
+            {
+                m_Layers.Dispose();
+            }
+
+            m_Layers = new NativeHashMap<GridLayer, UnsafeHashSet<int>>(grid.m_Layers.Length, AllocatorManager.Persistent);
+
+            for (int i = 0; i < grid.m_Layers.Length; i++)
+            {
+                GridLayer layer = new GridLayer(i, grid);
+                UnsafeHashSet<int> set = new UnsafeHashSet<int>(grid.m_Layers[i].m_Indices.Length, Allocator.Persistent);
+                for (int j = 0; j < grid.m_Layers[i].m_Indices.Length; j++)
+                {
+                    set.Add(grid.m_Layers[i].m_Indices[j]);
+                }
+
+                m_Layers.Add(layer, set);
+            }
+        }
+        protected override void OnDispose()
+        {
+            if (m_Layers.IsCreated)
+            {
+                foreach (var item in m_Layers)
+                {
+                    item.Value.Dispose();
+                }
+
+                m_Layers.Dispose();
+            }
+        }
+    }
+
+    public readonly struct GridLayer : IEquatable<GridLayer>
+    {
+        private readonly int m_Hash;
+
+        public int Hash => m_Hash;
+
+        public GridLayer(int layerIndex, GridMapAttribute grid)
+        {
+            m_Hash = unchecked(layerIndex * 397 ^ grid.m_HashCode);
+        }
+
+        public bool Equals(GridLayer other) => m_Hash.Equals(other.m_Hash);
+
+        public static GridLayerChain operator ^(GridLayer a0, GridLayer a1)
+        {
+            return new GridLayerChain(a0, a1);
+        }
+    }
+    public readonly struct GridLayerChain : IEquatable<GridLayerChain>
+    {
+        private readonly int m_Hash;
+
+        private GridLayerChain(GridLayerChain a0, GridLayer a1)
+        {
+            m_Hash = a0.m_Hash ^ a1.Hash;
+        }
+        public GridLayerChain(GridLayer a0, GridLayer a1)
+        {
+            m_Hash = a0.Hash ^ a1.Hash;
+        }
+
+        public bool Equals(GridLayerChain other) => m_Hash.Equals(other.m_Hash);
+
+        public static GridLayerChain operator ^(GridLayerChain a0, GridLayer a1)
+        {
+            return new GridLayerChain(a0, a1);
+        }
     }
 }
