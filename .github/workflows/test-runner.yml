@@ -31,9 +31,15 @@ jobs:
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
-          while read -r line; do
           # Reading each line
-            echo $line
+          n=0
+          while read -r line; do
+            if [ $n = 2 ]
+            then
+              echo 'found $line'
+            else
+              echo 'notfound $line'
+            n=$((n+1))
           done < manifest.json
       - uses: actions/cache@v2
         with:
