@@ -2,7 +2,6 @@
 #define DEBUG_MODE
 #endif
 
-
 namespace Syadeu.Presentation.Map
 {
     public static class GridLayerExtensionMethods
