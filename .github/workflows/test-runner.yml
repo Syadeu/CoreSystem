@@ -31,25 +31,19 @@ jobs:
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
+          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' manifest.json
           # Reading each line
           n=0
           while IFS= read -r line; do
-            if [ $n = 2 ]
-            then
-              echo $line
-              sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' manifest.json
-              break
-            else
-              echo "notfound $line"
-            fi
+            echo $line
             n=$((n+1))
           done < manifest.json
-#      - uses: actions/cache@v2
-#        with:
-#          path: ${{ matrix.projectPath }}/Library
-#          key: Library-${{ matrix.projectPath }}
-#          restore-keys: |
-#            Library-
+      - uses: actions/cache@v2
+        with:
+          path: ${{ matrix.projectPath }}/Library
+          key: Library-${{ matrix.projectPath }}
+          restore-keys: |
+            Library-
       - name: Unity - Run ${{ matrix.testMode }} Tests
         uses: game-ci/unity-test-runner@v2
         id: tests
@@ -62,8 +56,8 @@ jobs:
           artifactsPath: ${{ matrix.testMode }}-artifacts
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: ${{ matrix.testMode }} Test Results
-#      - uses: actions/upload-artifact@v2
-#        if: always()
-#        with:
-#          name: Test results for ${{ matrix.testMode }}
-#          path: ${{ steps.tests.outputs.artifactsPath }}
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: Test results for ${{ matrix.testMode }}
+          path: ${{ steps.tests.outputs.artifactsPath }}
