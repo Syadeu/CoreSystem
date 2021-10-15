@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Map
             return true;
         }
 
-        public void UpdateGridDetection(Entity<IEntity> entity, in GridSizeComponent gridSize, bool sendEvent)
+        public void UpdateGridDetection(Entity<IEntity> entity, in GridSizeComponent gridSize, bool postEvent)
         {
             //"in".ToLog();
             ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.Map
                 m_GridObservers.Add(buffer[i], entity.Idx);
                 detector.m_ObserveIndices.Add(buffer[i]);
 
-                Detection(entity, ref detector, in buffer[i], ref newDetected, sendEvent);
+                Detection(entity, ref detector, in buffer[i], ref newDetected, postEvent);
             }
 
             for (int i = 0; i < detector.m_Detected.Length; i++)
@@ -141,7 +141,7 @@ namespace Syadeu.Presentation.Map
                     m_TargetedEntities.Remove(targetID, entity.Idx);
                 }
                 
-                if (sendEvent)
+                if (postEvent)
                 {
                     m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, false));
                 }
@@ -149,7 +149,68 @@ namespace Syadeu.Presentation.Map
 
             detector.m_Detected = newDetected;
         }
-        public void CheckObservers(Entity<IEntity> entity, in GridSizeComponent gridSize, bool sendEvent)
+        private void Detection(Entity<IEntity> entity, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected, bool postEvent)
+        {
+            if (!m_GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
+            {
+                return;
+            }
+
+            do
+            {
+                Entity<IEntity> target = targetID.GetEntity<IEntity>();
+                if (targetID.Equals(entity.Idx) || !IsDetectorTriggerable(in detector, target)) continue;
+
+                EntityShortID targetShortID = targetID.GetShortID();
+
+                if (detector.m_Detected.Contains(targetShortID))
+                {
+                    newDetected.Add(targetShortID);
+                    continue;
+                }
+
+                EntityData<IEntityData>
+                    myDat = entity.As<IEntity, IEntityData>(),
+                    targetDat = target.As<IEntity, IEntityData>();
+
+                detector.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
+                if (!predicate)
+                {
+                    "predicate failed".ToLog();
+                    continue;
+                }
+
+                //detector.m_Detected.Add(targetShortID);
+                newDetected.Add(targetShortID);
+
+                if (postEvent)
+                {
+                    m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, true));
+                }
+                
+                m_TargetedEntities.Add(targetID, entity.Idx);
+
+                for (int i = 0; i < detector.m_OnDetected.Length; i++)
+                {
+                    detector.m_OnDetected[i].Execute(myDat, targetDat);
+                }
+
+                //$"1. detect {entity.Name} spot {target.Name}".ToLog();
+                if (target.HasComponent<GridDetectorComponent>())
+                {
+                    ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+                    EntityShortID myShortID = entity.Idx.GetShortID();
+
+                    if (!targetDetector.m_TargetedBy.Contains(myShortID))
+                    {
+                        targetDetector.m_TargetedBy.Add(myShortID);
+                    }
+                }
+
+            } while (m_GridEntities.TryGetNextValue(out targetID, ref iter));
+        }
+
+        public void UpdateDetectPosition(Entity<IEntity> entity, in GridSizeComponent gridSize, bool postEvent)
         {
             //$"{entity.Name} check observers".ToLog();
 
@@ -158,7 +219,7 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < gridSize.positions.Length; i++)
             {
-                CheckObservers(entity, gridSize.positions[i].index, ref detectors, sendEvent);
+                CheckObservers(entity, gridSize.positions[i].index, ref detectors, postEvent);
             }
 
             bool entityHasDetector = entity.HasComponent<GridDetectorComponent>();
@@ -190,11 +251,11 @@ namespace Syadeu.Presentation.Map
                 ref var detector = ref detectorID.GetEntity<IEntity>().GetComponent<GridDetectorComponent>();
                 detector.m_Detected.Remove(myShortID);
 
-                if (sendEvent)
+                if (postEvent)
                 {
                     m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(detectorID.GetEntity<IEntity>(), entity, false));
                 }
-                
+
                 unDetectors.Add(detectorID);
             }
 
@@ -212,7 +273,7 @@ namespace Syadeu.Presentation.Map
                 }
             }
         }
-        private void CheckObservers(Entity<IEntity> entity, in int index, ref FixedList512Bytes<EntityID> detectors, bool sendEvent)
+        private void CheckObservers(Entity<IEntity> entity, in int index, ref FixedList512Bytes<EntityID> detectors, bool postEvent)
         {
             if (!m_GridObservers.TryGetFirstValue(index, out EntityID observerID, out var iter))
             {
@@ -247,11 +308,11 @@ namespace Syadeu.Presentation.Map
                 detector.m_Detected.Add(targetShortID);
                 detectors.Add(observerID);
 
-                if (sendEvent)
+                if (postEvent)
                 {
                     m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(observerID.GetEntity<IEntity>(), entity, true));
                 }
-                
+
                 m_TargetedEntities.Add(entity.Idx, observerID);
 
                 for (int i = 0; i < detector.m_OnDetected.Length; i++)
@@ -263,7 +324,7 @@ namespace Syadeu.Presentation.Map
                 if (targetData.HasComponent<GridDetectorComponent>())
                 {
                     ref var targetDetector = ref targetData.GetComponent<GridDetectorComponent>();
-                
+
                     if (!targetDetector.m_TargetedBy.Contains(targetShortID))
                     {
                         targetDetector.m_TargetedBy.Add(targetShortID);
@@ -271,66 +332,6 @@ namespace Syadeu.Presentation.Map
                 }
 
             } while (m_GridObservers.TryGetNextValue(out observerID, ref iter));
-        }
-        private void Detection(Entity<IEntity> entity, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected, bool sendEvent)
-        {
-            if (!m_GridEntities.TryGetFirstValue(index, out EntityID targetID, out var iter))
-            {
-                return;
-            }
-
-            do
-            {
-                Entity<IEntity> target = targetID.GetEntity<IEntity>();
-                if (targetID.Equals(entity.Idx) || !IsDetectorTriggerable(in detector, target)) continue;
-
-                EntityShortID targetShortID = targetID.GetShortID();
-
-                if (detector.m_Detected.Contains(targetShortID))
-                {
-                    newDetected.Add(targetShortID);
-                    continue;
-                }
-
-                EntityData<IEntityData>
-                    myDat = entity.As<IEntity, IEntityData>(),
-                    targetDat = target.As<IEntity, IEntityData>();
-
-                detector.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
-                if (!predicate)
-                {
-                    "predicate failed".ToLog();
-                    continue;
-                }
-
-                //detector.m_Detected.Add(targetShortID);
-                newDetected.Add(targetShortID);
-
-                if (sendEvent)
-                {
-                    m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, true));
-                }
-                
-                m_TargetedEntities.Add(targetID, entity.Idx);
-
-                for (int i = 0; i < detector.m_OnDetected.Length; i++)
-                {
-                    detector.m_OnDetected[i].Execute(myDat, targetDat);
-                }
-
-                //$"1. detect {entity.Name} spot {target.Name}".ToLog();
-                if (target.HasComponent<GridDetectorComponent>())
-                {
-                    ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
-                    EntityShortID myShortID = entity.Idx.GetShortID();
-
-                    if (!targetDetector.m_TargetedBy.Contains(myShortID))
-                    {
-                        targetDetector.m_TargetedBy.Add(myShortID);
-                    }
-                }
-
-            } while (m_GridEntities.TryGetNextValue(out targetID, ref iter));
         }
 
         private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)

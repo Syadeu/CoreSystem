@@ -28,14 +28,7 @@ namespace Syadeu.Presentation.Map
         public FixedList512Bytes<EntityShortID> Detected => m_Detected;
         public FixedList512Bytes<EntityShortID> TargetedBy => m_TargetedBy;
 
-        public int MaxDetectionIndicesCount
-        {
-            get
-            {
-                int height = ((m_MaxDetectionRange * 2) + 1);
-                return height * height;
-            }
-        }
+        public int MaxDetectionIndicesCount => GridSizeComponent.CalculateMaxiumIndicesInRangeCount(m_MaxDetectionRange);
 
         void IDisposable.Dispose()
         {
@@ -73,18 +66,5 @@ namespace Syadeu.Presentation.Map
         {
             return m_ObserveIndices.Contains(gridIndex);
         }
-
-        //internal void RemoveDetected(in int gridIndex)
-        //{
-        //    for (int i = m_Detected.Length - 1; i >= 0; i--)
-        //    {
-        //        var temp = m_Detected[i].GetEntity<IEntity>().GetComponent<GridSizeComponent>();
-        //        if (temp.IsMyIndex(gridIndex))
-        //        {
-        //            m_Detected.RemoveAt(i);
-        //            continue;
-        //        }
-        //    }
-        //}
     }
 }

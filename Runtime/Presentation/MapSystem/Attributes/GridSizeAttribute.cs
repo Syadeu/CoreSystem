@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -38,7 +39,7 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
 
-        [JsonIgnore] internal NativeHashSet<int> ObstacleLayers { get; set; }
+        //[JsonIgnore] internal NativeHashSet<int> ObstacleLayers { get; set; }
     }
 
     [Preserve]
@@ -48,7 +49,7 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnInitialize()
         {
-            RequestSystem<GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
         }
         private void Bind(GridSystem other)
         {
@@ -57,18 +58,22 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
-            attribute.ObstacleLayers = new NativeHashSet<int>(4096, Allocator.Persistent);
-            
+            int[][] obstacleIndexArr = new int[attribute.m_ObstacleLayers.Length][];
+            int calculateHashSetSize = 0;
             for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
             {
                 int[] indices = m_GridSystem.GetLayer(attribute.m_ObstacleLayers[i]);
-                foreach (var item in indices)
+                calculateHashSetSize += indices.Length;
+                obstacleIndexArr[i] = indices;
+            }
+            UnsafeHashSet<int> layerHashSet = new UnsafeHashSet<int>(calculateHashSetSize, AllocatorManager.Persistent);
+            for (int i = 0; i < obstacleIndexArr.Length; i++)
+            {
+                for (int j = 0; j < obstacleIndexArr[i].Length; j++)
                 {
-                    attribute.ObstacleLayers.Add(item);
+                    layerHashSet.Add(obstacleIndexArr[i][j]);
                 }
             }
-
-            GridSizeComponent component = new GridSizeComponent();
 
             FixedList32Bytes<int> obstacleLayers = new FixedList32Bytes<int>();
             for (int i = 0; i < attribute.m_ObstacleLayers.Length; i++)
@@ -76,8 +81,12 @@ namespace Syadeu.Presentation.Map
                 obstacleLayers.Add(attribute.m_ObstacleLayers[i]);
             }
 
-            component.m_Parent = e;
-            component.m_ObstacleLayers = obstacleLayers;
+            GridSizeComponent component = new GridSizeComponent
+            {
+                //m_Parent = e,
+                m_ObstacleLayers = obstacleLayers,
+                m_ObstacleLayerIndicesHashSet = layerHashSet
+            };
 
             e.AddComponent(component);
 
@@ -85,7 +94,7 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
         {
-            attribute.ObstacleLayers.Dispose();
+            //attribute.ObstacleLayers.Dispose();
 
             m_GridSystem.UnregisterGridSize(attribute);
         }
