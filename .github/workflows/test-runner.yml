@@ -37,8 +37,11 @@ jobs:
             if [ $n = 2 ]
             then
               echo 'found $line'
+              echo $'"syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' >> manifest.json
+              echo $'\n' >> manifest.json
             else
               echo 'notfound $line'
+            fi
             n=$((n+1))
           done < manifest.json
       - uses: actions/cache@v2
