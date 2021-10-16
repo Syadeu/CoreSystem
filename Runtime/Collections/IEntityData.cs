@@ -20,11 +20,11 @@ namespace Syadeu.Collections
         /// 이 엔티티가 가지고 있는 <see cref="AttributeBase"/> 배열입니다.
         /// </summary>
         [JsonIgnore] IAttribute[] Attributes { get; }
-        /// <summary>
-        /// 이 엔티티가 <see cref="EntitySystem"/>을 통해 생성된 객체인지 반환합니다.<br/>
-        /// <see langword="false"/> 일 경우, raw 데이터를 의미합니다.
-        /// </summary>
-        [JsonIgnore] bool isCreated { get; }
+        ///// <summary>
+        ///// 이 엔티티가 <see cref="EntitySystem"/>을 통해 생성된 객체인지 반환합니다.<br/>
+        ///// <see langword="false"/> 일 경우, raw 데이터를 의미합니다.
+        ///// </summary>
+        //[JsonIgnore] bool isCreated { get; }
 
         bool HasAttribute(Hash attributeHash);
         bool HasAttribute(Type attributeType);

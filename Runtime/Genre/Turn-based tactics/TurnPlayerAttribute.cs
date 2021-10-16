@@ -69,9 +69,10 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
         {
-            TurnPlayerComponent component = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
+            entity.AddComponent<TurnPlayerComponent>();
+            ref var com = ref entity.GetComponent<TurnPlayerComponent>();
 
-            entity.AddComponent(in component);
+            com = new TurnPlayerComponent(attribute, EntitySystem.CreateHashCode());
             
             if (m_TurnTableSystem == null)
             {

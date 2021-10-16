@@ -36,6 +36,10 @@ namespace Syadeu.Presentation.Events
 #if DEBUG_MODE
         private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
 #endif
+        private Unity.Profiling.ProfilerMarker
+            m_ExecuteSystemTicketMarker = new Unity.Profiling.ProfilerMarker("Execute System Tickets"),
+            m_ExecuteUpdateEventMarker = new Unity.Profiling.ProfilerMarker("Execute Update Events"),
+            m_ExecuteDelegateEventMarker = new Unity.Profiling.ProfilerMarker("Execute Update Delegates");
 
         private SceneSystem m_SceneSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -117,46 +121,55 @@ namespace Syadeu.Presentation.Events
         {
             if (m_LoadingLock) return base.OnPresentation();
 
-            if (!m_PausedScheduledEvent)
+            using (m_ExecuteSystemTicketMarker.Auto())
             {
-                ExecuteSystemTickets();
+                if (!m_PausedScheduledEvent)
+                {
+                    ExecuteSystemTickets();
+                }
             }
 
-            int eventCount = m_UpdateEvents.Count;
-            for (int i = 0; i < eventCount; i++)
+            using (m_ExecuteUpdateEventMarker.Auto())
             {
-                SynchronizedEventBase ev = m_UpdateEvents.Dequeue();
-                if (!ev.IsValid()) continue;
-                try
+                int eventCount = m_UpdateEvents.Count;
+                for (int i = 0; i < eventCount; i++)
                 {
-                    ev.InternalPost();
-                    ev.InternalTerminate();
+                    SynchronizedEventBase ev = m_UpdateEvents.Dequeue();
+                    if (!ev.IsValid()) continue;
+                    try
+                    {
+                        ev.InternalPost();
+                        ev.InternalTerminate();
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Event,
+                            $"Invalid event({ev.GetType().Name}) has been posted");
+                        UnityEngine.Debug.LogException(ex);
+                    }
+                    CoreSystem.Logger.Log(Channel.Event,
+                        $"Posted event : {ev.GetType().Name}");
                 }
-                catch (Exception ex)
-                {
-                    CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.GetType().Name}) has been posted");
-                    UnityEngine.Debug.LogException(ex);
-                }
-                CoreSystem.Logger.Log(Channel.Event,
-                    $"Posted event : {ev.GetType().Name}");
             }
-
+            
             #region Delegate Executer
 
-            int actionCount = m_PostedActions.Count;
-            for (int i = 0; i < actionCount; i++)
+            using (m_ExecuteDelegateEventMarker.Auto())
             {
-                Action action = m_PostedActions.Dequeue();
-                try
+                int actionCount = m_PostedActions.Count;
+                for (int i = 0; i < actionCount; i++)
                 {
-                    action.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Invalid action has been posted");
-                    UnityEngine.Debug.LogException(ex);
+                    Action action = m_PostedActions.Dequeue();
+                    try
+                    {
+                        action.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation,
+                            $"Invalid action has been posted");
+                        UnityEngine.Debug.LogException(ex);
+                    }
                 }
             }
 

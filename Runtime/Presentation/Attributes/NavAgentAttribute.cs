@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.Attributes
     {
         protected override void OnCreated(NavAgentAttribute attribute, EntityData<IEntityData> entity)
         {
-            entity.AddComponent(new NavAgentComponent());
+            entity.AddComponent<NavAgentComponent>();
         }
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

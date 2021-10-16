@@ -25,11 +25,12 @@ namespace Syadeu.Presentation.Actor
 
         protected override sealed void OnCreated(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem)
         {
-            ActorOverlayUIComponent uiComponent = new ActorOverlayUIComponent()
+            entity.AddComponent<ActorOverlayUIComponent>();
+            ref var com = ref entity.GetComponent<ActorOverlayUIComponent>();
+            com = new ActorOverlayUIComponent()
             {
                 m_OpenedUI = new FixedList512Bytes<Reference<ActorOverlayUIEntry>>()
             };
-            entity.AddComponent(uiComponent);
 
             for (int i = 0; i < m_UIEntries.Length; i++)
             {

@@ -102,14 +102,12 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
-#if DEBUG_MODE
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
                     return null;
                 }
-#endif
                 if (s_EntitySystem.IsNull())
                 {
                     s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;

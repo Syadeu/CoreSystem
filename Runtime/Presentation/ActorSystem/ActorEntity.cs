@@ -77,13 +77,16 @@ namespace Syadeu.Presentation.Actor
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
 
-            entity.AddComponent<ActorFactionComponent>(new ActorFactionComponent()
+            entity.AddComponent<ActorFactionComponent>();
+            ref var com = ref entity.GetComponent<ActorFactionComponent>();
+            com = (new ActorFactionComponent()
             {
                 m_FactionType = factionType,
                 m_Hash = factionHash,
                 m_Allies = allies,
                 m_Enemies = enemies
             });
+
             actor.m_OnCreated.Execute(entity);
         }
         protected override void OnDestroy(ActorEntity actor)

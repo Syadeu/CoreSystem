@@ -71,8 +71,15 @@ namespace Syadeu.Presentation.Actor
         {
             OnProxyRemoved(monoObj);
         }
-        protected override void OnDispose()
+        //protected override void OnDispose()
+        //{
+        //    m_Initialized = false;
+        //    m_Parent = EntityData<IEntityData>.Empty;
+        //}
+        protected override void Reserve()
         {
+            base.Reserve();
+
             m_Initialized = false;
             m_Parent = EntityData<IEntityData>.Empty;
         }

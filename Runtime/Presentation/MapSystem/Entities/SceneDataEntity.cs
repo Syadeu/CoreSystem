@@ -128,7 +128,10 @@ namespace Syadeu.Presentation.Map
         {
             IReadOnlyList<Reference<MapDataEntity>> mapData = sceneDataEntity.MapData;
 
-            SceneDataComponent sceneData = new SceneDataComponent();
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
+            entity.AddComponent<SceneDataComponent>();
+
+            ref SceneDataComponent sceneData = ref entity.GetComponent<SceneDataComponent>();
             sceneData.m_Created = true;
 
             sceneData.m_CreatedMapData = new InstanceArray<MapDataEntity>(mapData.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
@@ -152,9 +155,6 @@ namespace Syadeu.Presentation.Map
             {
                 sceneData.m_CreatedTerrains[i].Object.Create(null);
             }
-
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
-            entity.AddComponent(sceneData);
         }
         protected override void OnDestroy(SceneDataEntity entity)
         {

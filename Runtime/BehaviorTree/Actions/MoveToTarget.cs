@@ -1,4 +1,8 @@
-﻿using BehaviorDesigner.Runtime.Tasks;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.TurnTable;
@@ -11,6 +15,7 @@ namespace Syadeu.Presentation.BehaviorTree
     {
         public override TaskStatus OnUpdate()
         {
+#if DEBUG_MODE
             if (!Entity.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -41,7 +46,7 @@ namespace Syadeu.Presentation.BehaviorTree
                     $"{Entity.RawName} doesn\'t have any {nameof(GridSizeComponent)}.");
                 return TaskStatus.Failure;
             }
-
+#endif
             TRPGActorAttackComponent att = Entity.GetComponentReadOnly<TRPGActorAttackComponent>();
             if (att.TargetCount == 0)
             {

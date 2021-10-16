@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            entity.AddComponent(new ActorControllerComponent());
+            entity.AddComponent<ActorControllerComponent>();
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
 
             Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
@@ -95,8 +95,6 @@ namespace Syadeu.Presentation.Actor
                 ActorLifetimeChangedEvent ev = new ActorLifetimeChangedEvent(ActorLifetimeChangedEvent.State.Alive);
                 component.PostEvent(ev);
             }
-
-            entity.AddComponent(component);
         }
         protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {

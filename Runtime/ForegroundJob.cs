@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Syadeu.Job;
 using Syadeu.Entities;
 using Syadeu.Collections;
+using System.Diagnostics;
 
 namespace Syadeu
 {
@@ -35,11 +36,14 @@ namespace Syadeu
         public bool IsRunning { get; internal set; } = false;
         public bool Faild { get; internal set; } = false;
         internal string CalledFrom { get; set; } = null;
-        public Action Action { get; set; }
+        internal StackTrace CalledStackTrace { get; set; } = null;
+        private Action Action { get; set; }
         public IJob MainJob { get; set; }
 
         internal List<IJob> ConnectedJobs;
         internal bool IsPool = false;
+
+        private Unity.Profiling.ProfilerMarker m_Marker;
 
         public ForegroundJob(Action action)
         {
@@ -47,7 +51,13 @@ namespace Syadeu
             ConnectedJobs = new List<IJob>();
             MainJob = null;
 
-            CalledFrom = Environment.StackTrace;
+            if (action != null)
+            {
+                CalledFrom = Environment.StackTrace;
+                CalledStackTrace = new StackTrace(0);
+
+                m_Marker = new Unity.Profiling.ProfilerMarker($"{action.Method.DeclaringType.Name}.{action.Method.Name}");
+            }
         }
         internal void Clear()
         {
@@ -55,6 +65,7 @@ namespace Syadeu
             Action = null;
             MainJob = null;
             ConnectedJobs.Clear();
+            CalledStackTrace = null;
         }
 
         public IJob Start()
@@ -134,6 +145,33 @@ namespace Syadeu
                 if (CoreSystem.IsThisMainthread()) break;
 
                 StaticManagerEntity.ThreadAwaiter(10);
+            }
+        }
+
+        public void SetAction(Action action)
+        {
+            Action = action;
+
+            m_Marker = new Unity.Profiling.ProfilerMarker($"{action.Method.DeclaringType.Name}.{action.Method.Name}");
+            CalledStackTrace = new StackTrace(0);
+            CalledFrom = Environment.StackTrace;
+        }
+        public bool Invoke(out Exception ex)
+        {
+            using (m_Marker.Auto())
+            {
+                try
+                {
+                    Action.Invoke();
+
+                    ex = null;
+                    return true;
+                }
+                catch (Exception exception)
+                {
+                    ex = exception;
+                    return false;
+                }
             }
         }
     }

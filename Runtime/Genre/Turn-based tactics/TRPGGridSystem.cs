@@ -1,4 +1,8 @@
-﻿using Syadeu.Collections;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -29,6 +33,11 @@ namespace Syadeu.Presentation.TurnTable
         private bool 
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
+
+        private Unity.Profiling.ProfilerMarker
+            m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
+            m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
+            m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
@@ -61,6 +70,8 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridPathlineRenderer.numCapVertices = 1;
                 m_GridPathlineRenderer.alignment = LineAlignment.View;
                 m_GridPathlineRenderer.textureMode = LineTextureMode.Tile;
+                m_GridPathlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                m_GridPathlineRenderer.receiveShadows = false;
 
                 m_GridPathlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
                 m_GridPathlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
@@ -104,50 +115,57 @@ namespace Syadeu.Presentation.TurnTable
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
-            if (!entity.HasComponent<TRPGActorMoveComponent>())
+            using (m_DrawUICellMarker.Auto())
             {
-                "error".ToLogError();
-                return;
+                if (!entity.HasComponent<TRPGActorMoveComponent>())
+                {
+                    "error".ToLogError();
+                    return;
+                }
+
+                if (m_IsDrawingGrids)
+                {
+                    ClearUICell();
+                }
+
+                TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
+                move.GetMoveablePositions(ref m_GridTempMoveables, out int count);
+                move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines, count);
+
+                m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
+                m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
+
+                GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
+
+                for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                {
+                    PlaceUICell(in gridSize, m_GridTempMoveables[i]);
+                }
+
+                m_IsDrawingGrids = true;
             }
-
-            if (m_IsDrawingGrids)
-            {
-                ClearUICell();
-            }
-
-            TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-            move.GetMoveablePositions(ref m_GridTempMoveables);
-            move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines);
-            
-            m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
-            m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
-
-            GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
-
-            for (int i = 0; i < m_GridTempMoveables.Length; i++)
-            {
-                PlaceUICell(in gridSize, m_GridTempMoveables[i]);
-            }
-
-            m_IsDrawingGrids = true;
         }
         private void PlaceUICell(in GridSizeComponent gridSize, in GridPosition position)
         {
-            if (gridSize.IsMyIndex(position.index)) return;
+            using (m_PlaceUICellMarker.Auto())
+            {
+                if (gridSize.IsMyIndex(position.index)) return;
 
-            Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
-
-
+                Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
+            }
         }
         public void ClearUICell()
         {
-            if (!m_IsDrawingGrids) return;
+            using (m_ClearUICellMarker.Auto())
+            {
+                if (!m_IsDrawingGrids) return;
 
-            m_GridSystem.ClearUICell();
+                m_GridSystem.ClearUICell();
 
-            m_GridOutlineRenderer.positionCount = 0;
+                m_GridOutlineRenderer.positionCount = 0;
 
-            m_IsDrawingGrids = false;
+                m_IsDrawingGrids = false;
+            }
         }
 
         public void DrawUIPath(in GridPath64 path, float heightOffset = .5f)

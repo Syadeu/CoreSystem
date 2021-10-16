@@ -185,7 +185,9 @@ namespace Syadeu.Presentation.Map
                 return;
             }
 
-            GridDetectorComponent component = new GridDetectorComponent()
+            entity.AddComponent<GridDetectorComponent>();
+            ref var com = ref entity.GetComponent<GridDetectorComponent>();
+            com = new GridDetectorComponent()
             {
                 m_MyShortID = entity.Idx.GetShortID(),
                 m_MaxDetectionRange = attribute.m_MaxDetectionRange,
@@ -201,8 +203,6 @@ namespace Syadeu.Presentation.Map
                 m_Detected = new FixedList512Bytes<EntityShortID>(),
                 m_TargetedBy = new FixedList512Bytes<EntityShortID>()
             };
-            
-            entity.AddComponent(component);
 
             //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }

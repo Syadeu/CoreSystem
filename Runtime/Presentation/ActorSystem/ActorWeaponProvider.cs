@@ -58,7 +58,8 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
-            ActorWeaponComponent component = new ActorWeaponComponent();
+            Parent.AddComponent<ActorWeaponComponent>();
+            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
             component.m_Parent = entity;
             component.m_Provider = new Instance<ActorWeaponProvider>(Idx);
 
@@ -103,7 +104,7 @@ namespace Syadeu.Presentation.Actor
                 component.SelectWeapon(0);
             }
 
-            Parent.AddComponent(component);
+            //Parent.AddComponent(component);
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
@@ -114,7 +115,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void ActorWeaponEquipEventHandler(IActorWeaponEquipEvent ev)
         {
-            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
 
             if (!component.IsEquipable(ev.Weapon))
             {
@@ -207,8 +208,6 @@ namespace Syadeu.Presentation.Actor
                         $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Object.Name}).");
                 }
             }
-
-            Parent.AddComponent(component);
         }
 
         protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
@@ -225,15 +224,13 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
         {
-            ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
+            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
 
             if (!component.m_WeaponPoser.IsNull() &&
                 component.m_WeaponPoser.IsValid())
             {
                 component.m_WeaponPoser.Stop();
                 component.m_WeaponPoser = CoroutineJob.Null;
-
-                Parent.AddComponent(component);
             }
         }
 

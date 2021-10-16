@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Events
 
             if (tr is ProxyTransform proxyTr)
             {
-                InstanceID entityIdx = temp.EntitySystem.m_EntityGameObjects[proxyTr.m_Hash];
+                InstanceID entityIdx = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_EntityGameObjects[proxyTr.m_Hash];
                 temp.entity = Entity<IEntity>.GetEntity(entityIdx);
             }
             else if (tr is UnityTransform unityTr)

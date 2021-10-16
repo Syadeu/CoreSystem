@@ -12,11 +12,9 @@ namespace Syadeu.Presentation.TurnTable
     {
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
-            TRPGActorMoveComponent component = new TRPGActorMoveComponent();
-
-            component.m_Parent = entity.As<ActorEntity, IEntityData>();
-
-            entity.AddComponent(component);
+            entity.AddComponent<TRPGActorMoveComponent>();
+            ref var com = ref entity.GetComponent<TRPGActorMoveComponent>();
+            com.m_Parent = entity.As<ActorEntity, IEntityData>();
         }
     }
 }

@@ -106,7 +106,6 @@ namespace Syadeu.Internal
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
-        [System.Diagnostics.Conditional("DEBUG_MODE")]
         public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
         {
             if (channel != Channel.Editor &&
@@ -115,12 +114,25 @@ namespace Syadeu.Internal
                 if (result == ResultFlag.Normal) return;
             }
 
-            Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+            if (result == ResultFlag.Error)
+            {
+                Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+            }
+            else
+            {
+                LogOnDebug(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+            }
         }
+
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
         [System.Diagnostics.Conditional("DEBUG_MODE")]
+        public static void LogOnDebug(string channel, ResultFlag result, string msg, bool logThread)
+            => Log(channel, result, msg, logThread);
+#if DEBUG_MODE
+        [System.Diagnostics.DebuggerHidden]
+#endif
         public static void Log(string channel, ResultFlag result, string msg, bool logThread)
         {
             string text = string.Empty;

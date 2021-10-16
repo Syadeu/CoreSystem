@@ -19,11 +19,13 @@ namespace Syadeu.Presentation.TurnTable
     {
         protected override void OnCreated(TRPGSelectionAttribute attribute, EntityData<IEntityData> entity)
         {
-            TRPGSelectionComponent selection = new TRPGSelectionComponent()
+            entity.AddComponent<TRPGSelectionComponent>();
+            ref var com = ref entity.GetComponent<TRPGSelectionComponent>();
+
+            com = new TRPGSelectionComponent()
             {
                 m_Selected = false
             };
-            entity.AddComponent(selection);
         }
     }
 }

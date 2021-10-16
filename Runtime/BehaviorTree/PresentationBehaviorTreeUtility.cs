@@ -93,12 +93,12 @@ namespace Syadeu.Presentation.BehaviorTree
             T component = other.Value.GetComponent<T>();
             return component;
         }
-        public static T AddComponent<T>(this SharedEntity other, T component)
-            where T : unmanaged, IEntityComponent
+        public static void AddComponent<TComponent>(this SharedEntity other)
+            where TComponent : unmanaged, IEntityComponent
         {
-            if (!other.IsValid()) return default(T);
+            if (!other.IsValid()) return;
 
-            return other.Value.AddComponent(component);
+            other.Value.AddComponent<TComponent>();
         }
         public static bool HasComponent<T>(this SharedEntity other)
             where T : unmanaged, IEntityComponent

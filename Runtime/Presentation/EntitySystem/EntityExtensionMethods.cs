@@ -337,7 +337,7 @@ namespace Syadeu.Presentation
         /// <typeparam name="TComponent"></typeparam>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static TComponent AddComponent<TComponent>(this IEntityDataID t, in TComponent data)
+        public static void AddComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -361,7 +361,8 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
 #endif
-            return EntityComponentSystem.Constants.SystemID.System.AddComponent(entity, in data);
+            EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(entity);
+            //return ref EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(entity);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
@@ -646,7 +647,14 @@ namespace Syadeu.Presentation
             where T : class, IEntityData
         {
             ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
-
+#if DEBUG_MODE
+            if (target == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target Not Found.");
+                return EntityData<T>.Empty;
+            }
+#endif
             return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
     }

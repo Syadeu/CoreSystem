@@ -60,6 +60,7 @@ namespace Syadeu.Presentation.Map
         }
         public GridLayerChain GetLayerChain(params int[] indices)
         {
+            if (indices.Length == 0) return GridLayerChain.Empty;
             GridLayerChain chain;
 
             unsafe
