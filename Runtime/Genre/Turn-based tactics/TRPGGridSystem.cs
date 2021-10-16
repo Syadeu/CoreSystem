@@ -70,6 +70,8 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridPathlineRenderer.numCapVertices = 1;
                 m_GridPathlineRenderer.alignment = LineAlignment.View;
                 m_GridPathlineRenderer.textureMode = LineTextureMode.Tile;
+                m_GridPathlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                m_GridPathlineRenderer.receiveShadows = false;
 
                 m_GridPathlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
                 m_GridPathlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
@@ -127,8 +129,8 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-                move.GetMoveablePositions(ref m_GridTempMoveables);
-                move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines);
+                move.GetMoveablePositions(ref m_GridTempMoveables, out int count);
+                move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines, count);
 
                 m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
                 m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
