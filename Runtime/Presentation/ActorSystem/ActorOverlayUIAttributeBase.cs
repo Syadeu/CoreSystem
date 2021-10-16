@@ -1,20 +1,33 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
+using System;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
     [AttributeAcceptOnly(typeof(UIObjectEntity))]
     public abstract class ActorOverlayUIAttributeBase : AttributeBase
     {
+        [Header("CanvasGroup")]
+        [Tooltip("Target 은 Parent Actor 입니다.")]
+        [JsonProperty(Order = 1, PropertyName = "OnParentEventReceived")]
+        private LogicTriggerAction[] m_OnParentEventReceived = Array.Empty<LogicTriggerAction>();
+
+        [JsonIgnore] FixedLogicTriggerAction8 m_OnParentEventReceived8;
+
         /// <summary>
         /// 이 Overlay UI 의 부모 <see cref="ActorEntity"/> 입니다.
         /// </summary>
-        [JsonIgnore] public Entity<ActorEntity> ParentEntity { get; private set; }
+        [JsonIgnore] public Entity<ActorEntity> ParentActor { get; private set; }
 
         internal void UICreated(Entity<ActorEntity> parent)
         {
-            ParentEntity = parent;
+            ParentActor = parent;
+            m_OnParentEventReceived8 = new FixedLogicTriggerAction8(m_OnParentEventReceived);
+
             OnUICreated(parent);
         }
         internal void EventReceived<TEvent>(TEvent ev)
@@ -25,6 +38,12 @@ namespace Syadeu.Presentation.Actor
 #endif
         {
             OnEventReceived(ev);
+
+            var actor = ParentActor.As<ActorEntity, IEntityData>();
+            for (int i = 0; i < m_OnParentEventReceived8.Length; i++)
+            {
+                m_OnParentEventReceived8[i].Execute(Parent, actor);
+            }
         }
 
         /// <summary>

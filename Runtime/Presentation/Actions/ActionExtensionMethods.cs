@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.Actions
         const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
+        const string c_ErrorTriggerActionCompletedWithFailed = "Execution ({0}) at {1} completed with failed.";
 
         public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity)
             where T : TriggerAction
@@ -121,7 +122,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
             return !isFailed;
@@ -150,7 +151,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
             predicate = !isFalse;
@@ -231,7 +232,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
             return !isFailed;
@@ -260,7 +261,7 @@ namespace Syadeu.Presentation.Actions
             if (isFailed)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
+                    string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
             predicate = !isFalse;
@@ -370,7 +371,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleTriggerAction(actions[i], entity);
             }
         }
-        [Obsolete("Use FixedReferenceList64")]
+        //[Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions)
             where T : InstanceAction
         {
@@ -382,7 +383,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
-        [Obsolete("Use FixedReferenceList64")]
+        //[Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions, EntityData<IEntityData> entity)
             where T : TriggerAction
         {

@@ -35,7 +35,9 @@ namespace Syadeu.Presentation.Attributes
 
         [Space, Header("TriggerActions")]
         [JsonProperty(Order = 6, PropertyName = "OnMoveActions")]
-        public Reference<TriggerAction>[] m_OnMoveActions = Array.Empty<Reference<TriggerAction>>();
+        internal Reference<TriggerAction>[] m_OnMoveActions = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 7, PropertyName = "UpdateTRSWhile")]
+        internal Reference<TriggerPredicateAction>[] m_UpdateTRSWhile = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [JsonIgnore] public NavMeshAgent NavMeshAgent { get; internal set; }
     }
@@ -46,6 +48,9 @@ namespace Syadeu.Presentation.Attributes
         protected override void OnCreated(NavAgentAttribute attribute, EntityData<IEntityData> entity)
         {
             entity.AddComponent<NavAgentComponent>();
+            ref var com = ref entity.GetComponent<NavAgentComponent>();
+            com.m_OnMoveActions = attribute.m_OnMoveActions.ToFixedList64();
+            com.m_UpdateTRSWhile = attribute.m_UpdateTRSWhile.ToFixedList64();
         }
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

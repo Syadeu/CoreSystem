@@ -40,6 +40,7 @@ namespace Syadeu.Presentation.TurnTable
 
         public bool Enabled => m_TurnTableEnabled;
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
+        public IReadOnlyList<EntityData<IEntityData>> Players => m_Players;
 
         #region Presentation Methods
 

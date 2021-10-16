@@ -11,10 +11,6 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
 
-        [Header("Debug")]
-        [JsonProperty(Order = 9999, PropertyName = "DebugText")]
-        public string m_DebugText = string.Empty;
-
         internal override sealed void InternalInitialize()
         {
             OnInitialize();
@@ -23,9 +19,9 @@ namespace Syadeu.Presentation.Actions
         internal bool InternalExecute(EntityData<IEntityData> entity, out bool predicate)
         {
             predicate = false;
-            if (!string.IsNullOrEmpty(m_DebugText))
+            if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, m_DebugText);
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
             }
 
             if (!entity.IsValid())

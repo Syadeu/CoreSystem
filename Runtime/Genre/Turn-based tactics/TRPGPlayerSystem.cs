@@ -40,6 +40,7 @@ namespace Syadeu.Presentation.TurnTable
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
+        private WorldCanvasSystem m_WorldCanvasSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
@@ -56,6 +57,8 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             //RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGGridSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
@@ -69,7 +72,6 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
-            m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.RemoveEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
 
@@ -79,6 +81,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = null;
             //m_InputSystem = null;
             m_EntityRaycastSystem = null;
+            m_WorldCanvasSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
@@ -103,6 +106,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
         }
 
         private void Bind(EntityRaycastSystem other)
@@ -132,7 +139,6 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
-            m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.AddEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
 
@@ -201,6 +207,8 @@ namespace Syadeu.Presentation.TurnTable
                     m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
                     m_CurrentShortcut = ShortcutType.Move;
 
+                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
+
                     break;
                 case ShortcutType.Attack:
                     if (!ctr.HasProvider<TRPGActorAttackProvider>())
@@ -211,6 +219,7 @@ namespace Syadeu.Presentation.TurnTable
                         return;
                     }
 
+                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
                     m_TRPGCanvasUISystem.SetFire(false);
 
                     Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
@@ -257,13 +266,6 @@ namespace Syadeu.Presentation.TurnTable
             if (faction.FactionType != FactionType.Player || ev.State != OnTurnStateChangedEvent.TurnState.Start) return;
 
             m_TRPGCanvasUISystem.SetPlayerUI(true);
-        }
-        private void OnTurnTableStateChangedEventHandler(OnTurnTableStateChangedEvent ev)
-        {
-            if (!ev.Enabled)
-            {
-                m_TRPGCanvasUISystem.SetPlayerUI(false);
-            }
         }
 
         private void OnPlayerFactionStateChangedEventHandler(OnPlayerFactionStateChangedEvent ev)
@@ -335,7 +337,7 @@ namespace Syadeu.Presentation.TurnTable
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = m_LastPath.Length;
 
-            turnPlayer.ActionPoint -= requireAp;
+            turnPlayer.ActionPoint -= requireAp - 1;
         }
 
         private readonly Queue<Action> m_ScheduledActions = new Queue<Action>();

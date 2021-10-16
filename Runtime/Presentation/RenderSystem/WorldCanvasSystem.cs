@@ -1,9 +1,13 @@
-﻿using Syadeu.Collections;
+﻿#if CORESYSTEM_DOTWEEN
+using DG.Tweening;
+#endif
+using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -153,7 +157,12 @@ namespace Syadeu.Presentation.Render
             UIObjectEntity uiObject = (UIObjectEntity)entityBase;
             var ui = entity.GetComponent<UIObjectCanvasGroupComponent>();
 
-            cg.blocksRaycasts = ui.Enabled;
+            cg.blocksRaycasts = ui.m_Enabled;
+
+#if CORESYSTEM_DOTWEEN
+            cg.DOKill();
+#endif
+            cg.alpha = ui.Alpha;
 
             if (!uiObject.m_EnableAutoFade) return;
         }
@@ -175,6 +184,66 @@ namespace Syadeu.Presentation.Render
         }
 
         #region Actor Overlay UI
+
+        private readonly List<Entity<UIObjectEntity>> m_AllActorOverlayUI = new List<Entity<UIObjectEntity>>();
+
+        public void SetAlphaActorOverlayUI(float alpha)
+        {
+            for (int i = 0; i < m_AllActorOverlayUI.Count; i++)
+            {
+                Entity<UIObjectEntity> uiEntity = m_AllActorOverlayUI[i];
+                uiEntity.GetComponent<UIObjectCanvasGroupComponent>().Alpha = alpha;
+            }
+        }
+        public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, float alpha)
+        {
+            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
+                    out Entity<UIObjectEntity> uiEntity, out var iterator))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Unexpected error");
+                return;
+            }
+
+            do
+            {
+                uiEntity.GetComponent<UIObjectCanvasGroupComponent>().Alpha = alpha;
+            } while (m_AttachedUIHashMap.TryGetNextValue(out uiEntity, ref iterator));
+        }
+        public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry, float alpha)
+        {
+            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
+                    out Entity<UIObjectEntity> uiEntity, out var iterator))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Unexpected error");
+                return;
+            }
+
+            Hash targetUI = uiEntry.GetObject().m_Prefab.Hash;
+            bool found = false;
+
+            do
+            {
+                if (uiEntity.Hash.Equals(targetUI))
+                {
+                    found = true;
+                    break;
+                }
+
+            } while (m_AttachedUIHashMap.TryGetNextValue(out uiEntity, ref iterator));
+
+            if (!found)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Unexpected error");
+                return;
+            }
+
+            uiEntity.GetComponent<UIObjectCanvasGroupComponent>().Alpha = alpha;
+        }
 
         public void RegisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
         {
@@ -208,7 +277,9 @@ namespace Syadeu.Presentation.Render
             ActorOverlayUpdateJob updateJob = new ActorOverlayUpdateJob(entity, uiEntry);
             m_AttachedUIHashMap.Add(entity.Cast<ActorEntity, IEntity>(), updateJob.UIInstance);
 
-            if (setting.m_UpdateType != UpdateType.Manual)
+            m_AllActorOverlayUI.Add(updateJob.UIInstance);
+
+            if (setting.m_UpdateType != Actor.UpdateType.Manual)
             {
                 m_CoroutineSystem.PostCoroutineJob(updateJob);
             }
@@ -255,6 +326,8 @@ namespace Syadeu.Presentation.Render
 
             m_AttachedUIHashMap.Remove(targetEntity, uiEntity);
             uiEntity.Destroy();
+
+            m_AllActorOverlayUI.Remove(uiEntity);
         }
 
         public void PostActorOverlayUIEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
@@ -298,6 +371,7 @@ namespace Syadeu.Presentation.Render
             public void Dispose()
             {
             }
+
             public IEnumerator Execute()
             {
                 ITransform
@@ -318,50 +392,50 @@ namespace Syadeu.Presentation.Render
                     }
                     camTr = renderSystem.Camera.transform;
 
-                    if ((setting.m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                    if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                     {
                         uiTr.position = entityTr.position + setting.m_Offset;
                     }
-                    else if ((setting.m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                    else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                     {
                         uiTr.position
                             = math.lerp(uiTr.position, entityTr.position + setting.m_Offset, Time.deltaTime * setting.m_UpdateSpeed);
                     }
 
                     Quaternion offset = Quaternion.Euler(setting.m_OrientationOffset);
-                    if ((setting.m_UpdateType & UpdateType.SyncCameraOrientation) == UpdateType.SyncCameraOrientation)
+                    if ((setting.m_UpdateType & Actor.UpdateType.SyncCameraOrientation) == Actor.UpdateType.SyncCameraOrientation)
                     {
                         Quaternion orientation = Quaternion.LookRotation(camTr.forward, Vector3.up);
 
-                        if ((setting.m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                        if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                         {
                             uiTr.rotation = orientation * offset;
                         }
-                        else if ((setting.m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                        else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                         {
                             uiTr.rotation = Quaternion.Lerp(uiTr.rotation, orientation * offset, Time.deltaTime * setting.m_UpdateSpeed);
                         }
                     }
-                    else if ((setting.m_UpdateType & UpdateType.SyncParentOrientation) == UpdateType.SyncParentOrientation)
+                    else if ((setting.m_UpdateType & Actor.UpdateType.SyncParentOrientation) == Actor.UpdateType.SyncParentOrientation)
                     {
                         Quaternion orientation = entityTr.rotation;
 
-                        if ((setting.m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                        if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                         {
                             uiTr.rotation = orientation * offset;
                         }
-                        else if ((setting.m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                        else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                         {
                             uiTr.rotation = Quaternion.Lerp(uiTr.rotation, orientation * offset, Time.deltaTime * setting.m_UpdateSpeed);
                         }
                     }
                     else
                     {
-                        if ((setting.m_UpdateType & UpdateType.Instant) == UpdateType.Instant)
+                        if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                         {
                             uiTr.rotation = offset;
                         }
-                        else if ((setting.m_UpdateType & UpdateType.Lerp) == UpdateType.Lerp)
+                        else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                         {
                             uiTr.rotation = Quaternion.Lerp(uiTr.rotation, offset, Time.deltaTime * setting.m_UpdateSpeed);
                         }

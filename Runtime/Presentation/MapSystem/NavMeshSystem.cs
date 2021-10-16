@@ -413,6 +413,7 @@ namespace Syadeu.Presentation.Map
                 ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_Direction = dir;
             }
+
             public IEnumerator Execute()
             {
                 if (m_Positions.Length == 0)
@@ -423,9 +424,12 @@ namespace Syadeu.Presentation.Map
                 }
 
                 EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
-                NavAgentAttribute navAgent = m_Entity.GetAttribute<NavAgentAttribute>();
+                NavAgentComponent navAgent = m_Entity.GetComponentReadOnly<NavAgentComponent>();
                 Entity<IEntity> entity = m_Entity.As<IEntityData, IEntity>();
                 ProxyTransform tr = (ProxyTransform)entity.transform;
+
+                var animator = m_Entity.GetAttribute<AnimatorAttribute>();
+                bool rootMotion = animator != null && animator.AnimatorComponent.RootMotion;
 
                 SetDestination(m_Positions[m_Positions.Length - 1]);
 
@@ -448,8 +452,16 @@ namespace Syadeu.Presentation.Map
                         entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
 
                 NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
-                agent.updatePosition = false;
-                //agent.updateRotation = false;
+                if (rootMotion)
+                {
+                    agent.updatePosition = false;
+                    agent.updateRotation = false;
+                }
+                else
+                {
+                    agent.updatePosition = false;
+                    //agent.updateRotation = false;
+                }
 
                 if (!agent.isOnNavMesh)
                 {
@@ -495,10 +507,17 @@ namespace Syadeu.Presentation.Map
                     }
 
                     float3 dir = (float3)agent.nextPosition - tr.position;
-                    SetDirection(dir);
+                    SetDirection(agent.desiredVelocity);
 
-                    tr.position = agent.nextPosition;
-                    tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                    if (!rootMotion)
+                    {
+                        tr.position = agent.nextPosition;
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                    }
+                    else
+                    {
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
+                    }
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -510,10 +529,17 @@ namespace Syadeu.Presentation.Map
                 while (tr.hasProxy && agent.remainingDistance > .1f)
                 {
                     float3 dir = (float3)agent.nextPosition - tr.position;
-                    SetDirection(dir);
+                    SetDirection(agent.desiredVelocity);
 
-                    tr.position = agent.nextPosition;
-                    tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                    if (!rootMotion)
+                    {
+                        tr.position = agent.nextPosition;
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                    }
+                    else
+                    {
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
+                    }
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
@@ -523,8 +549,25 @@ namespace Syadeu.Presentation.Map
                 }
 
                 SetDirection(0);
-                tr.position = agent.nextPosition;
-                tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+
+                do
+                {
+                    if (!rootMotion)
+                    {
+                        tr.position = agent.nextPosition;
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                    }
+                    else
+                    {
+                        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
+                    }
+
+                    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
+                    navAgent.m_OnMoveActions.Execute(m_Entity);
+
+                    yield return null;
+                } while (navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
 
                 SetIsMoving(false);
                 agent.ResetPath();
@@ -654,6 +697,9 @@ namespace Syadeu.Presentation.Map
         internal float3 m_Direction;
         internal float3 m_PreviousTarget, m_Destination;
         internal CoroutineJob m_MoveJob;
+
+        internal FixedReferenceList64<TriggerAction> m_OnMoveActions;
+        internal FixedReferenceList64<TriggerPredicateAction> m_UpdateTRSWhile;
 
         public bool IsMoving => m_IsMoving;
         public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));

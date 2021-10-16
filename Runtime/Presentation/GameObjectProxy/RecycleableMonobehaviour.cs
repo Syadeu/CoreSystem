@@ -221,6 +221,8 @@ namespace Syadeu.Presentation.Proxy
             if (!Activated) throw new Exception("not initialized");
 
             OnTerminate();
+
+            m_Entity = Entity<IEntity>.Empty;
             Activated = false;
         }
 
@@ -260,6 +262,8 @@ namespace Syadeu.Presentation.Proxy
         }
         private void OnParticleSystemStopped()
         {
+            if (!IsValid()) return;
+
             OnParticleStopped?.Invoke(m_Entity, this);
         }
 

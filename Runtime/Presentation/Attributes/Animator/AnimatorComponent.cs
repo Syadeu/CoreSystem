@@ -15,12 +15,19 @@ namespace Syadeu.Presentation.Attributes
     public sealed class AnimatorComponent : MonoBehaviour
     {
         [SerializeField] private bool m_EnableRootMotion = true;
+        [SerializeField] private bool m_ManualRootMotionUpdate = false;
 
         [NonSerialized] internal ITransform m_Transform;
         [NonSerialized] internal AnimatorAttribute m_AnimatorAttribute;
         [NonSerialized] internal Animator m_Animator;
 
         public Animator Animator => m_Animator;
+        public bool RootMotion => m_EnableRootMotion;
+        public bool ManualRootMotionUpdate
+        {
+            get => m_ManualRootMotionUpdate;
+            set => m_ManualRootMotionUpdate = value;
+        }
 
         private void Awake()
         {
@@ -50,13 +57,10 @@ namespace Syadeu.Presentation.Attributes
         }
         private void OnAnimatorMove()
         {
-            if (m_AnimatorAttribute == null) return;
+            if (m_AnimatorAttribute == null || !m_EnableRootMotion || m_ManualRootMotionUpdate) return;
 
-            if (m_EnableRootMotion)
-            {
-                m_Transform.position += (float3)m_Animator.deltaPosition;
-                m_Transform.rotation *= m_Animator.deltaRotation;
-            }
+            m_Transform.position += (float3)m_Animator.deltaPosition;
+            m_Transform.rotation *= m_Animator.deltaRotation;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+                CoreSystem.Logger.LogError(Channel.Presentation, ex);
                 result = false;
             }
 
