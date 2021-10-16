@@ -55,7 +55,7 @@ namespace Syadeu
                     m_Instance = Resources.Load<T>($"{path}/" + typeof(T).Name);
                     if (m_Instance == null)
                     {
-                        LogManager.Log(TypeHelper.Enum<Channel>.ToString(Channel.Core),
+                        LogManager.LogOnDebug(TypeHelper.Enum<Channel>.ToString(Channel.Core),
                             ResultFlag.Normal,
                             $"Creating new static setting<{typeof(T).Name}> asset", true);
                         m_Instance = CreateInstance<T>();
