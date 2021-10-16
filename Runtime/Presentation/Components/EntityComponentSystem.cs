@@ -52,7 +52,6 @@ namespace Syadeu.Presentation.Components
 
         private Unity.Mathematics.Random m_Random;
 
-#if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
             s_AddComponentMarker = new Unity.Profiling.ProfilerMarker("set_AddComponent"),
             s_RemoveComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveComponent"),
@@ -60,7 +59,6 @@ namespace Syadeu.Presentation.Components
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
             s_GetComponentReadOnlyMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentReadOnly"),
             s_GetComponentPointerMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentPointer");
-#endif
 
         public int BufferLength => m_ComponentArrayBuffer.Length;
 
@@ -369,9 +367,7 @@ namespace Syadeu.Presentation.Components
 
         public void AddComponent<TComponent>(in EntityData<IEntityData> entity) where TComponent : unmanaged, IEntityComponent
         {
-#if DEBUG_MODE
             s_AddComponentMarker.Begin();
-#endif
 
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
@@ -412,10 +408,7 @@ namespace Syadeu.Presentation.Components
             CoreSystem.Logger.Log(Channel.Component,
                 $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
 
-#if DEBUG_MODE
             s_AddComponentMarker.End();
-#endif
-            //return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
         }
         public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
             where TComponent : unmanaged, IEntityComponent
@@ -447,9 +440,7 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
-#if DEBUG_MODE
             s_RemoveComponentMarker.Begin();
-#endif
 
             int2 index = GetIndex(componentType, entity);
 #if DEBUG_MODE
@@ -477,15 +468,11 @@ namespace Syadeu.Presentation.Components
 
             //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
 
-#if DEBUG_MODE
             s_RemoveComponentMarker.End();
-#endif
         }
         public void RemoveComponent(EntityData<IEntityData> entity, TypeInfo componentType)
         {
-#if DEBUG_MODE
             s_RemoveComponentMarker.Begin();
-#endif
 
             int2 index = GetIndex(componentType, entity);
 #if DEBUG_MODE
@@ -513,9 +500,7 @@ namespace Syadeu.Presentation.Components
 
             //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
 
-#if DEBUG_MODE
             s_RemoveComponentMarker.End();
-#endif
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
@@ -534,18 +519,14 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveNotifiedComponents(IObject obj, Action<EntityData<IEntityData>, Type> onRemove = null)
         {
-#if DEBUG_MODE
             using (s_RemoveNotifiedComponentMarker.Auto())
-#endif
             {
                 GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
             }
         }
         public void RemoveNotifiedComponents(EntityData<IEntityData> entity, Action<EntityData<IEntityData>, Type> onRemove = null)
         {
-#if DEBUG_MODE
             using (s_RemoveNotifiedComponentMarker.Auto())
-#endif
             {
                 GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(entity, onRemove);
             }
@@ -600,9 +581,8 @@ namespace Syadeu.Presentation.Components
         public ref TComponent GetComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
-#if DEBUG_MODE
             s_GetComponentMarker.Begin();
-#endif
+
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
@@ -623,17 +603,16 @@ namespace Syadeu.Presentation.Components
             }
 #endif
             IJobParallelForEntitiesExtensions.CompleteAllJobs();
-#if DEBUG_MODE
+
             s_GetComponentMarker.End();
-#endif
+
             return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
         }
         public TComponent GetComponentReadOnly<TComponent>(EntityData<IEntityData> entity)
             where TComponent : unmanaged, IEntityComponent
         {
-#if DEBUG_MODE
             s_GetComponentReadOnlyMarker.Begin();
-#endif
+
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
@@ -654,17 +633,15 @@ namespace Syadeu.Presentation.Components
             }
 #endif
             TComponent boxed = ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
-#if DEBUG_MODE
+
             s_GetComponentReadOnlyMarker.End();
-#endif
             return boxed;
         }
         public TComponent* GetComponentPointer<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
         {
-#if DEBUG_MODE
             s_GetComponentPointerMarker.Begin();
-#endif
+
             int2 index = GetIndex<TComponent>(entity);
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
@@ -684,8 +661,8 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            s_GetComponentPointerMarker.End();
 #endif
+            s_GetComponentPointerMarker.End();
             return ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer) + index.y;
         }
 

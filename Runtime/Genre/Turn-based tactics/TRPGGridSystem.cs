@@ -34,12 +34,10 @@ namespace Syadeu.Presentation.TurnTable
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
 
-#if DEBUG_MODE
         private Unity.Profiling.ProfilerMarker
             m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
             m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
-#endif
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
@@ -115,9 +113,7 @@ namespace Syadeu.Presentation.TurnTable
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
-#if DEBUG_MODE
             using (m_DrawUICellMarker.Auto())
-#endif
             {
                 if (!entity.HasComponent<TRPGActorMoveComponent>())
                 {
@@ -149,9 +145,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void PlaceUICell(in GridSizeComponent gridSize, in GridPosition position)
         {
-#if DEBUG_MODE
             using (m_PlaceUICellMarker.Auto())
-#endif
             {
                 if (gridSize.IsMyIndex(position.index)) return;
 
@@ -160,9 +154,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void ClearUICell()
         {
-#if DEBUG_MODE
             using (m_ClearUICellMarker.Auto())
-#endif
             {
                 if (!m_IsDrawingGrids) return;
 

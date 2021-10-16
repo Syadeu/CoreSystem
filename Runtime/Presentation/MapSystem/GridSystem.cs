@@ -45,13 +45,11 @@ namespace Syadeu.Presentation.Map
         private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
 
-#if DEBUG_MODE
         private Unity.Profiling.ProfilerMarker
             m_UpdateObserver = new Unity.Profiling.ProfilerMarker("Update Observer"),
             m_UpdateObserveTarget = new Unity.Profiling.ProfilerMarker("Update Observe Target"),
 
             m_PlaceUICell = new Unity.Profiling.ProfilerMarker($"{nameof(GridSystem)}.{nameof(PlaceUICell)}");
-#endif
 
         private GridMapAttribute GridMap => m_MainGrid;
         public float CellSize => m_MainGrid.CellSize;
@@ -155,21 +153,20 @@ namespace Syadeu.Presentation.Map
                 UpdateGridEntity(entity, in component.positions);
 
                 GridDetectionModule detectionModule = GetModule<GridDetectionModule>();
-#if DEBUG_MODE
-                m_UpdateObserver.Begin();
-#endif
-                if (entity.HasComponent<GridDetectorComponent>())
+
+                using (m_UpdateObserver.Auto())
                 {
-                    detectionModule.UpdateGridDetection(entity, in component, postEvent);
+                    if (entity.HasComponent<GridDetectorComponent>())
+                    {
+                        detectionModule.UpdateGridDetection(entity, in component, postEvent);
+                    }
                 }
-#if DEBUG_MODE
-                m_UpdateObserver.End();
-                m_UpdateObserveTarget.Begin();
-#endif
-                detectionModule.UpdateDetectPosition(entity, in component, postEvent);
-#if DEBUG_MODE
-                m_UpdateObserveTarget.End();
-#endif
+
+                using (m_UpdateObserveTarget.Auto())
+                {
+                    detectionModule.UpdateDetectPosition(entity, in component, postEvent);
+                }
+
             }
         }
         private void RemoveGridEntity(Entity<IEntity> entity)
@@ -845,9 +842,8 @@ namespace Syadeu.Presentation.Map
         }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
-#if DEBUG_MODE
             m_PlaceUICell.Begin();
-#endif
+
             if (m_PlacedCellUIEntities.TryGetValue(position, out var exist))
             {
                 return exist;
@@ -880,10 +876,7 @@ namespace Syadeu.Presentation.Map
             });
             m_PlacedCellUIEntities.Add(position, entity);
 
-#if DEBUG_MODE
             m_PlaceUICell.End();
-#endif
-
             return entity;
         }
         public void ClearUICell()
