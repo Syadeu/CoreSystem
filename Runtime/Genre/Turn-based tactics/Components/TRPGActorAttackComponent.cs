@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.TurnTable
         //internal NativeArray<Entity<IEntity>>.Enumerator m_CurrentTargets;
         //internal int m_TargetCount;
 
-        public int m_AttackRange;
+        //public int m_AttackRange;
         public int m_SearchRange;
         public int m_ConsumeAP;
 

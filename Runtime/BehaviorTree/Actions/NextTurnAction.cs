@@ -6,6 +6,8 @@ namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
     [TaskCategory("Entity/Actor")]
+    [TaskDescription(
+        "이 Actor 의 턴을 넘깁니다.")]
     public sealed class NextTurnAction : ActionBase
     {
         public override TaskStatus OnUpdate()

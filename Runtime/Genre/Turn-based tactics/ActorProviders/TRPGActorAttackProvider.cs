@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGActorAttackProvider : ActorAttackProvider,
         INotifyComponent<TRPGActorAttackComponent>
     {
-        [JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange = 1;
+        //[JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange = 1;
         [Tooltip("GridDetector 가 있으면 이 값은 무시됩니다.")]
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
         [JsonProperty(Order = 2, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
@@ -37,9 +37,6 @@ namespace Syadeu.Presentation.TurnTable
 
             com = (new TRPGActorAttackComponent()
             {
-                //m_HasTarget = false,
-
-                m_AttackRange = m_AttackRange,
                 m_SearchRange = m_SearchRange,
                 m_ConsumeAP = m_DefaultConsumeAP,
 
@@ -72,7 +69,7 @@ namespace Syadeu.Presentation.TurnTable
             //}
             //else
             {
-                return GetTargetsWithin(in Parent.GetComponent<TRPGActorAttackComponent>().m_SearchRange);
+                return GetTargetsWithin(Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.Object.Range));
             }
         }
         public FixedList512Bytes<EntityID> GetTargetsWithin(in int range)

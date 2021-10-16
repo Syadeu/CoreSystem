@@ -15,6 +15,9 @@ namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
     [TaskCategory("Entity/Actor/TRPG")]
+    [TaskDescription(
+        "AttackOptions 값에 따라 찾은 타겟을 공격합니다." +
+        "FindTargetsAction 이 이전에 먼저 수행되어 타겟을 찾아야됩니다.")]
     public sealed class AttackTargetAction : ActionBase
     {
         public enum AttackOptions

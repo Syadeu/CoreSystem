@@ -11,6 +11,9 @@ namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
     [TaskCategory("Entity/Actor")]
+    [TaskDescription(
+        "찾은 타겟의 근처로 최대한 이동합니다." +
+        "FindTargetsAction 이 이전에 수행되어야됩니다.")]
     public sealed class MoveToTarget : ActionBase
     {
         public override TaskStatus OnUpdate()
@@ -74,7 +77,7 @@ namespace Syadeu.Presentation.BehaviorTree
             TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
             move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
 
-            turnPlayer.ActionPoint -= path.Length;
+            turnPlayer.ActionPoint -= path.Length - 1;
 
             return TaskStatus.Success;
         }
