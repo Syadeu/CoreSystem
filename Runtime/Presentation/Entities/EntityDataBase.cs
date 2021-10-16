@@ -181,11 +181,9 @@ namespace Syadeu.Presentation.Entities
         protected override ObjectBase Copy()
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
-            //if (m_AttributeList == null) m_AttributeList = new List<Hash>();
 
             Reference<AttributeBase>[] copy = new Reference<AttributeBase>[m_AttributeList.Length];
             Array.Copy(m_AttributeList, copy, m_AttributeList.Length);
-            //entity.m_AttributeList = new List<Hash>(m_AttributeList);
             entity.m_AttributeList = copy;
 
             return entity;
@@ -208,7 +206,6 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 AttributeBase clone = (AttributeBase)att.Clone();
-                //clone.ParentEntity = new EntityData<IEntityData>(entity.Idx, entity.GetHashCode(), entity.Name);
                 clone.ParentEntity = entity;
 
                 entity.m_Attributes[i] = clone;
@@ -230,6 +227,24 @@ namespace Syadeu.Presentation.Entities
             }
 
             return entity;
+        }
+        internal override void InternalReserve()
+        {
+            base.InternalReserve();
+
+            for (int i = 0; i < m_Attributes.Length; i++)
+            {
+                m_Attributes[i].InternalReserve();
+            }
+        }
+        internal override void InternalReset()
+        {
+            base.InternalReset();
+
+            for (int i = 0; i < m_Attributes.Length; i++)
+            {
+                m_Attributes[i].InternalReset();
+            }
         }
         public override sealed string ToString() => Name;
 

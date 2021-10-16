@@ -26,8 +26,10 @@ namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>,
         INotifySystemModule<EntityRecycleModule>,
-        INotifySystemModule<EntityIDModule>,
-        INotifySystemModule<EntityDebugModule>
+        INotifySystemModule<EntityIDModule>
+#if DEBUG_MODE
+        , INotifySystemModule<EntityDebugModule>
+#endif
     {
         private const string c_ObjectNotFoundError = "Object({0}) not found.";
         private const string c_EntityNotFoundError = "Entity({0}) not found. Cannot spawn at {1}";
@@ -166,23 +168,25 @@ namespace Syadeu.Presentation
 //                }
 //            }
 
+
 #if DEBUG_MODE
-            string parseName = targetObject.Name;
-            InstanceID parseID = targetObject.Idx;
-            CoreSystem.WaitInvoke(2.5f, () =>
-            {
-                if (Debug_HasComponent(parseID, out int count, out string names))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Entity({parseName}) has " +
-                        $"number of {count} components that didn\'t disposed. {names}");
-                }
-                else
-                {
-                    CoreSystem.Logger.Log(Channel.Entity, 
-                        $"Entity({parseName}) component all checked.");
-                }
-            });
+            //string parseName = targetObject.Name;
+            //InstanceID parseID = targetObject.Idx;
+            //CoreSystem.WaitInvoke(2.5f, () =>
+            //{
+            //    if (Debug_HasComponent(parseID, out int count, out string names))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity,
+            //            $"Entity({parseName}) has " +
+            //            $"number of {count} components that didn\'t disposed. {names}");
+            //    }
+            //    else
+            //    {
+            //        CoreSystem.Logger.Log(Channel.Entity, 
+            //            $"Entity({parseName}) component all checked.");
+            //    }
+            //});
+            GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
 
             GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
@@ -209,18 +213,21 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-//            if (targetObject is Components.INotifyComponent notifyComponent)
-//            {
-//                var notifies = GetComponentInterface(targetObject.GetType());
-//                foreach (var item in notifies)
-//                {
-//                    Type componentType = item.GetGenericArguments()[0];
-//                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-//#if DEBUG_MODE
-//                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-//#endif
-//                }
-//            }
+            //            if (targetObject is Components.INotifyComponent notifyComponent)
+            //            {
+            //                var notifies = GetComponentInterface(targetObject.GetType());
+            //                foreach (var item in notifies)
+            //                {
+            //                    Type componentType = item.GetGenericArguments()[0];
+            //                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
+            //#if DEBUG_MODE
+            //                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
+            //#endif
+            //                }
+            //            }
+#if DEBUG_MODE
+            GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
+#endif
 
             GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
@@ -959,7 +966,7 @@ namespace Syadeu.Presentation
 #line default
 
 #if DEBUG_MODE
-        private readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
+        internal readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
 
         private bool Debug_HasComponent(InstanceID entity, out int count, out string names)
         {
@@ -1259,7 +1266,7 @@ namespace Syadeu.Presentation
                 }
 
                 system.m_ComponentSystem
-                    .RemoveNotifiedComponents(entityData
+                    .RemoveNotifiedComponents(other
 #if DEBUG_MODE
                     , system.Debug_RemoveComponent
 #endif
@@ -1610,66 +1617,5 @@ namespace Syadeu.Presentation
         public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
 
         #endregion
-    }
-    internal sealed class EntityDebugModule : PresentationSystemModule<EntitySystem>
-    {
-        protected override void OnInitialize()
-        {
-            "module in".ToLog();
-        }
-    }
-    internal sealed class EntityRecycleModule : PresentationSystemModule<EntitySystem>
-    {
-        private readonly Dictionary<Hash, Stack<IObject>> m_ReservedObjects
-            = new Dictionary<Hash, Stack<IObject>>();
-
-        public void InsertReservedObject(IObject obj)
-        {
-            ObjectBase temp = (ObjectBase)obj;
-            temp.InternalReserve();
-
-            if (obj is ConvertedEntity)
-            {
-                return;
-            }
-
-            if (!m_ReservedObjects.TryGetValue(obj.Hash, out var list))
-            {
-                list = new Stack<IObject>();
-                m_ReservedObjects.Add(obj.Hash, list);
-            }
-            list.Push(obj);
-        }
-        public T GetOrCreateInstance<T>(IObject original) 
-            where T : class, IObject
-            => (T)GetOrCreateInstance(original);
-        public IObject GetOrCreateInstance(IObject original)
-        {
-            if (TryGetObject(original.Hash, out IObject obj))
-            {
-                ObjectBase temp = (ObjectBase)obj;
-                temp.InternalReset();
-                temp.m_HashCode = System.CreateHashCode();
-
-                return temp;
-            }
-
-            var clone = (ObjectBase)original.Clone();
-            clone.m_HashCode = System.CreateHashCode();
-
-            return clone;
-        }
-        private bool TryGetObject(Hash hash, out IObject obj)
-        {
-            if (m_ReservedObjects.TryGetValue(hash, out var list) &&
-                list.Count > 0)
-            {
-                obj = list.Pop();
-                return true;
-            }
-
-            obj = null;
-            return false;
-        }
     }
 }

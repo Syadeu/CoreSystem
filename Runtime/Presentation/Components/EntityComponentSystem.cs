@@ -55,6 +55,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
             s_RemoveComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveComponent"),
+            s_RemoveNotifiedComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveNotifiedComponent"),
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
             s_GetComponentReadOnlyMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentReadOnly"),
             s_GetComponentPointerMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentPointer");
@@ -288,10 +289,12 @@ namespace Syadeu.Presentation.Components
         private static int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
-            if (idx == 0)
-            {
-                $"err {entity.RawName}: {entity.GetHashCode()}".ToLogError();
-            }
+
+            // 매우 우연의 확률로 나올 수 있는데, 현재 랜덤 시드값에서 좀 자주 발생
+            //if (idx == 0)
+            //{
+            //    $"err {entity.RawName}: {entity.GetHashCode()},{}".ToLogError();
+            //}
             return idx;
         }
         private static int2 GetIndex(Type t, EntityData<IEntityData> entity)
@@ -522,13 +525,21 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveNotifiedComponents(IObject obj, Action<EntityData<IEntityData>, Type> onRemove = null)
         {
-            GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
-
+#if DEBUG_MODE
+            using (s_RemoveNotifiedComponentMarker.Auto())
+#endif
+            {
+                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
+            }
         }
         public void RemoveNotifiedComponents(EntityData<IEntityData> entity, Action<EntityData<IEntityData>, Type> onRemove = null)
         {
-            GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(entity, onRemove);
-
+#if DEBUG_MODE
+            using (s_RemoveNotifiedComponentMarker.Auto())
+#endif
+            {
+                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(entity, onRemove);
+            }
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -876,16 +887,15 @@ namespace Syadeu.Presentation.Components
         }
         public void TryRemoveComponent(IObject obj, Action<EntityData<IEntityData>, Type> onRemove)
         {
-            EntityData<IEntityData> entity;
+            if (!(obj is INotifyComponent notify)) return;
 
             if (m_ZeroNotifiedObjects.Contains(obj.Hash)) return;
             else if (m_NotifiedObjects.TryGetFirstValue(obj.Hash, out TypeInfo typeInfo, out var parsedIter))
             {
-                entity = EntityData<IEntityData>.GetEntityWithoutCheck(obj.Idx);
                 do
                 {
-                    onRemove?.Invoke(entity, typeInfo.Type);
-                    System.RemoveComponent(entity, typeInfo);
+                    onRemove?.Invoke(notify.Parent, typeInfo.Type);
+                    System.RemoveComponent(notify.Parent, typeInfo);
 
                 } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
@@ -899,12 +909,11 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-            entity = EntityData<IEntityData>.GetEntityWithoutCheck(obj.Idx);
             var select = iter.Select(i => i.GenericTypeArguments[0]);
             foreach (var componentType in select)
             {
-                onRemove?.Invoke(entity, componentType);
-                System.RemoveComponent(entity, componentType);
+                onRemove?.Invoke(notify.Parent, componentType);
+                System.RemoveComponent(notify.Parent, componentType);
 
                 m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
             }
@@ -991,7 +1000,7 @@ namespace Syadeu.Presentation.Components
 
         public void Initialize(in TypeInfo typeInfo)
         {
-            long
+            int
                 occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
                 idxSize = UnsafeUtility.SizeOf<EntityData<IEntityData>>() * c_InitialCount,
                 bufferSize = typeInfo.Size * c_InitialCount;

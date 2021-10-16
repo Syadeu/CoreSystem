@@ -313,7 +313,7 @@ namespace Syadeu
             if (action == null) return null;
 
             ForegroundJob job = PoolContainer<ForegroundJob>.Dequeue();
-            job.Action = action;
+            job.SetAction(action);
             job.IsPool = true;
 
             AddForegroundJob(job);
@@ -1544,16 +1544,12 @@ namespace Syadeu
 
                     //sampler.Begin();
 
-                    UnityEngine.Profiling.Profiler.BeginSample($"{job.Action.Method.DeclaringType.Name}{job.Action.Method.Name}");
+                    //UnityEngine.Profiling.Profiler.BeginSample($"{job.Action.Method.DeclaringType.Name}{job.Action.Method.Name}");
 #endif
 
                     job.IsRunning = true;
 
-                    try
-                    {
-                        job.Action.Invoke();
-                    }
-                    catch (Exception ex)
+                    if (!job.Invoke(out var ex))
                     {
                         job.Faild = true;
                         //job.Result = ex.Message;
@@ -1580,7 +1576,7 @@ namespace Syadeu
                     jobCount += 1;
 #if DEBUG_MODE
                     //sampler.End();
-                    UnityEngine.Profiling.Profiler.EndSample();
+                    //UnityEngine.Profiling.Profiler.EndSample();
 #endif
                     if (jobCount % 50 == 0) break;
                 }
