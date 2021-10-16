@@ -35,6 +35,11 @@ namespace Syadeu.Presentation.Events
 
 #if DEBUG_MODE
         private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
+
+        private Unity.Profiling.ProfilerMarker
+            m_ExecuteSystemTicketMarker = new Unity.Profiling.ProfilerMarker("Execute System Tickets"),
+            m_ExecuteUpdateEventMarker = new Unity.Profiling.ProfilerMarker("Execute Update Events"),
+            m_ExecuteDelegateEventMarker = new Unity.Profiling.ProfilerMarker("Execute Update Delegates");
 #endif
 
         private SceneSystem m_SceneSystem;
@@ -117,10 +122,19 @@ namespace Syadeu.Presentation.Events
         {
             if (m_LoadingLock) return base.OnPresentation();
 
+#if DEBUG_MODE
+            m_ExecuteSystemTicketMarker.Begin();
+#endif
+
             if (!m_PausedScheduledEvent)
             {
                 ExecuteSystemTickets();
             }
+
+#if DEBUG_MODE
+            m_ExecuteSystemTicketMarker.End();
+            m_ExecuteUpdateEventMarker.Begin();
+#endif
 
             int eventCount = m_UpdateEvents.Count;
             for (int i = 0; i < eventCount; i++)
@@ -142,8 +156,15 @@ namespace Syadeu.Presentation.Events
                     $"Posted event : {ev.GetType().Name}");
             }
 
+#if DEBUG_MODE
+            m_ExecuteUpdateEventMarker.End();
+#endif
+
             #region Delegate Executer
 
+#if DEBUG_MODE
+            m_ExecuteDelegateEventMarker.Begin();
+#endif
             int actionCount = m_PostedActions.Count;
             for (int i = 0; i < actionCount; i++)
             {
@@ -159,6 +180,9 @@ namespace Syadeu.Presentation.Events
                     UnityEngine.Debug.LogException(ex);
                 }
             }
+#if DEBUG_MODE
+            m_ExecuteDelegateEventMarker.End();
+#endif
 
             #endregion
 

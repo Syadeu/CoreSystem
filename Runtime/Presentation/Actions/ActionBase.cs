@@ -51,10 +51,10 @@ namespace Syadeu.Presentation.Actions
         /// 객체가 처음 생성될떄 실행됩니다.
         /// </summary>
         protected virtual void OnCreated() { }
-        /// <summary>
-        /// 이 액션이 시스템에서 더 이상 사용하지 않을때 실행됩니다.
-        /// </summary>
-        protected override void OnDispose() { }
+        ///// <summary>
+        ///// 이 액션이 시스템에서 더 이상 사용하지 않을때 실행됩니다.
+        ///// </summary>
+        //protected override void OnDispose() { }
 
         public override sealed object Clone()
         {

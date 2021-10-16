@@ -1022,23 +1022,23 @@ namespace Syadeu.Presentation
 
 
         // TODO: Debug, Profiling 을 위해 따로 Wrapping
-        private void AddPreUpdate(Action action)
-        {
-            PreUpdate += action;
-        }
-        private void RemovePreUpdate(Action action)
-        {
-            PreUpdate -= action;
-        }
+        //private void AddPreUpdate(Action action)
+        //{
+        //    PreUpdate += action;
+        //}
+        //private void RemovePreUpdate(Action action)
+        //{
+        //    PreUpdate -= action;
+        //}
 
-        private void AddPostUpdate(Action action)
-        {
+        //private void AddPostUpdate(Action action)
+        //{
 
-        }
-        private void RemovePostUpdate(Action action)
-        {
+        //}
+        //private void RemovePostUpdate(Action action)
+        //{
 
-        }
+        //}
 
         [System.Diagnostics.Conditional("DEBUG_MODE")]
         private static void TestStress()

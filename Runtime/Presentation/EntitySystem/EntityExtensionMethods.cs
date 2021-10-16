@@ -646,7 +646,14 @@ namespace Syadeu.Presentation
             where T : class, IEntityData
         {
             ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
-
+#if DEBUG_MODE
+            if (target == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target Not Found.");
+                return EntityData<T>.Empty;
+            }
+#endif
             return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
     }

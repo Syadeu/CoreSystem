@@ -21,11 +21,11 @@ namespace Syadeu.Presentation.Actor
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
         }
-        protected override void OnDispose()
+        protected override void Reserve()
         {
-            m_CurrentStats = null;
+            base.Reserve();
 
-            base.OnDispose();
+            m_CurrentStats = null;
         }
 
         public T GetOriginalValue<T>(string name) => m_Stats.GetValue<T>(name);

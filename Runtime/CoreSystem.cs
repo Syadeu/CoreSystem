@@ -1263,9 +1263,16 @@ namespace Syadeu
         }
         private IEnumerator UnityWorker()
         {
-#if UNITY_EDITOR
-            Dictionary<string, UnityEngine.Profiling.CustomSampler> samplers = new Dictionary<string, UnityEngine.Profiling.CustomSampler>();
-            UnityEngine.Profiling.CustomSampler sampler;
+#if DEBUG_MODE
+            //Dictionary<string, UnityEngine.Profiling.CustomSampler> samplers = new Dictionary<string, UnityEngine.Profiling.CustomSampler>();
+            //UnityEngine.Profiling.CustomSampler sampler;
+
+            Unity.Profiling.ProfilerMarker
+                m_HandleManagersMarker = new Unity.Profiling.ProfilerMarker("Handle Managers"),
+                m_OnUnityCustomUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle CoreRoutines"),
+                m_OnUnityStartMarker = new Unity.Profiling.ProfilerMarker("On PreUpdate"),
+                m_OnUnityUpdateMarker = new Unity.Profiling.ProfilerMarker("On Update"),
+                m_ForegroundJobMarker = new Unity.Profiling.ProfilerMarker("Handle Foreground Jobs");
 #endif
 
             yield return new WaitUntil(() => Initialized && BackgroundThread != null);
@@ -1286,7 +1293,7 @@ namespace Syadeu
                     UnityEngine.LowLevel.PlayerLoopSystem defaultLoop = UnityEngine.LowLevel.PlayerLoop.GetDefaultPlayerLoop();
                     UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(defaultLoop);
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
                     throw new CoreSystemException(CoreSystemExceptionFlag.Background, 
                             "에러로 인해 백그라운드 스레드가 강제 종료되었습니다");
 #else
@@ -1297,6 +1304,11 @@ namespace Syadeu
                 }
 
                 #region Handle Managers
+
+#if DEBUG_MODE
+                m_HandleManagersMarker.Begin();
+#endif
+
                 while (m_EnforceOrder.Count > 0)
                 {
                     if (m_EnforceOrder.TryDequeue(out var result))
@@ -1329,9 +1341,18 @@ namespace Syadeu
                     }
                     m_CleanupManagers = false;
                 }
+#if DEBUG_MODE
+                m_HandleManagersMarker.End();
+#endif
+
                 #endregion
 
                 #region OnUnityCustomUpdate
+
+#if DEBUG_MODE
+                m_OnUnityCustomUpdateMarker.Begin();
+#endif
+
                 if (OnUnityCustomUpdate.Count > 0)
                 {
                     if (OnUnityCustomUpdate.TryDequeue(out CoreRoutine value))
@@ -1349,14 +1370,14 @@ namespace Syadeu
                         continue;
                     }
 
-#if UNITY_EDITOR
-                    if (!samplers.TryGetValue(item.Value.ToString(), out sampler))
-                    {
-                        sampler = UnityEngine.Profiling.CustomSampler.Create(item.Value.ToString());
-                        samplers.Add(item.Value.ToString(), sampler);
-                    }
-
-                    sampler.Begin();
+#if DEBUG_MODE
+                    //if (!samplers.TryGetValue(item.Value.ToString(), out sampler))
+                    //{
+                    //    sampler = UnityEngine.Profiling.CustomSampler.Create(item.Value.ToString());
+                    //    samplers.Add(item.Value.ToString(), sampler);
+                    //}
+                    UnityEngine.Profiling.Profiler.BeginSample(item.Value.ToString());
+                    //sampler.Begin();
 #endif
 
                     try
@@ -1412,7 +1433,7 @@ namespace Syadeu
                             {
                                 m_CustomUpdates.TryRemove(item.Key, out _);
                                 m_RoutineChanged = true;
-#if UNITY_EDITOR
+#if DEBUG_MODE
                                 throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                                     $"해당 yield return 타입({item.Key.Iterator.Current.GetType().Name})은 지원하지 않습니다", item.Key.ObjectName);
 #else
@@ -1421,37 +1442,37 @@ namespace Syadeu
 #endif
                             }
                         }
-#if UNITY_EDITOR
-                        sampler.End();
-#endif
                     }
                     catch (Exception ex)
                     {
-#if UNITY_EDITOR
+#if DEBUG_MODE
                         throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #else
                         CoreSystemException.SendCrash(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #endif
-                    }   
+                    }
+
+#if DEBUG_MODE
+                    UnityEngine.Profiling.Profiler.EndSample();
+#endif
                 }
 
                 if (m_RoutineChanged)
                 {
                     OnRoutineChanged?.Invoke();
                 }
+
+#if DEBUG_MODE
+                m_OnUnityCustomUpdateMarker.End();
+#endif
+
                 #endregion
 
                 #region OnUnityStart
-#if UNITY_EDITOR
-                if (!samplers.TryGetValue("OnUnityStart", out sampler))
-                {
-                    sampler = UnityEngine.Profiling.CustomSampler.Create("OnUnityStart");
-                    samplers.Add("OnUnityStart", sampler);
-                }
-
-                sampler.Begin();
+#if DEBUG_MODE
+                m_OnUnityStartMarker.Begin();
 #endif
                 if (OnUnityStart != null)
                 {
@@ -1461,7 +1482,7 @@ namespace Syadeu
                     }
                     catch (Exception ex)
                     {
-#if UNITY_EDITOR
+#if DEBUG_MODE
                         throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "Start 문을 실행하는 중 에러가 발생했습니다", ex);
 #else
@@ -1472,29 +1493,25 @@ namespace Syadeu
                     OnUnityStart = null;
                 }
 
-#if UNITY_EDITOR
-                sampler.End();
+#if DEBUG_MODE
+                m_OnUnityStartMarker.End();
 #endif
 
                 #endregion
 
                 #region OnUnityUpdate
+
+#if DEBUG_MODE
+                m_OnUnityUpdateMarker.Begin();
+#endif
+
                 try
                 {
-#if UNITY_EDITOR
-                    if (!samplers.TryGetValue("OnUnityUpdate", out sampler))
-                    {
-                        sampler = UnityEngine.Profiling.CustomSampler.Create("OnUnityUpdate");
-                        samplers.Add("OnUnityUpdate", sampler);
-                    }
-
-                    sampler.Begin();
-#endif
                     OnUnityUpdate?.Invoke();
                 }
                 catch (Exception ex)
                 {
-#if UNITY_EDITOR
+#if DEBUG_MODE
                     throw new CoreSystemException(CoreSystemExceptionFlag.Foreground,
                             "업데이트 문을 실행하는 중 에러가 발생했습니다", ex);
 #else
@@ -1503,29 +1520,35 @@ namespace Syadeu
 #endif
                 }
 
-#if UNITY_EDITOR
-                sampler.End();
+#if DEBUG_MODE
+                m_OnUnityUpdateMarker.End();
 #endif
 
                 #endregion
 
                 #region ForegroundJob
 
+#if DEBUG_MODE
+                m_ForegroundJobMarker.Begin();
+#endif
                 int jobCount = 0;
                 while (m_ForegroundJobs.Count > 0)
                 {
                     if (!m_ForegroundJobs.TryDequeue(out ForegroundJob job)) continue;
-#if UNITY_EDITOR
-                    if (!samplers.TryGetValue("Job_" + job.Action.Method.Name, out sampler))
-                    {
-                        sampler = UnityEngine.Profiling.CustomSampler.Create("Job_" + job.Action.Method.Name);
-                        samplers.Add("Job_" + job.Action.Method.Name, sampler);
-                    }
+#if DEBUG_MODE
+                    //if (!samplers.TryGetValue("Job_" + job.Action.Method.Name, out sampler))
+                    //{
+                    //    sampler = UnityEngine.Profiling.CustomSampler.Create("Job_" + job.Action.Method.Name);
+                    //    samplers.Add("Job_" + job.Action.Method.Name, sampler);
+                    //}
 
-                    sampler.Begin();
+                    //sampler.Begin();
+
+                    UnityEngine.Profiling.Profiler.BeginSample($"{job.Action.Method.DeclaringType.Name}{job.Action.Method.Name}");
 #endif
 
                     job.IsRunning = true;
+
                     try
                     {
                         job.Action.Invoke();
@@ -1535,7 +1558,7 @@ namespace Syadeu
                         job.Faild = true;
                         //job.Result = ex.Message;
 
-#if UNITY_EDITOR
+#if DEBUG_MODE
                         throw new CoreSystemException(CoreSystemExceptionFlag.Jobs, 
                                 "잡을 실행하는 도중 에러가 발생되었습니다", job.CalledFrom, ex);
 #else
@@ -1555,11 +1578,16 @@ namespace Syadeu
                     }
 
                     jobCount += 1;
-#if UNITY_EDITOR
-                    sampler.End();
+#if DEBUG_MODE
+                    //sampler.End();
+                    UnityEngine.Profiling.Profiler.EndSample();
 #endif
                     if (jobCount % 50 == 0) break;
                 }
+
+#if DEBUG_MODE
+                m_ForegroundJobMarker.Begin();
+#endif
 
                 #endregion
 
@@ -1821,12 +1849,13 @@ namespace Syadeu
                 currentTime = startTime;
             AddBackgroundJob(() =>
             {
-                while (currentTime < startTime + seconds)
+                while (currentTime < startTime + seconds && !BlockCreateInstance)
                 {
                     whileWait?.Invoke(currentTime - startTime);
 
                     currentTime = CoreSystem.time;
-                    if (!Instance.m_SimWatcher.WaitOne())
+
+                    if (!Instance.m_SimWatcher.WaitOne(1))
                     {
                         ThreadAwaiter(10);
                     }
@@ -1839,9 +1868,9 @@ namespace Syadeu
         {
             AddBackgroundJob(() =>
             {
-                while (!_true.Invoke())
+                while (!_true.Invoke() && !BlockCreateInstance)
                 {
-                    if (!Instance.m_SimWatcher.WaitOne())
+                    if (!Instance.m_SimWatcher.WaitOne(1))
                     {
                         ThreadAwaiter(10);
                     }
@@ -1854,9 +1883,9 @@ namespace Syadeu
         {
             AddBackgroundJob(() =>
             {
-                while (notNull.Invoke() == null)
+                while (notNull.Invoke() == null && !BlockCreateInstance)
                 {
-                    if (!Instance.m_SimWatcher.WaitOne())
+                    if (!Instance.m_SimWatcher.WaitOne(1))
                     {
                         ThreadAwaiter(10);
                     }
@@ -1869,9 +1898,9 @@ namespace Syadeu
         {
             AddBackgroundJob(() =>
             {
-                while (notNull.Invoke() == null)
+                while (notNull.Invoke() == null && !BlockCreateInstance)
                 {
-                    if (!Instance.m_SimWatcher.WaitOne())
+                    if (!Instance.m_SimWatcher.WaitOne(1))
                     {
                         ThreadAwaiter(10);
                     }

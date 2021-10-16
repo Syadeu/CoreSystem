@@ -12,5 +12,12 @@ namespace Syadeu.Presentation.Attributes
 
         public override sealed string ToString() => Name;
         public override sealed object Clone() => base.Clone();
+
+        internal override void InternalReserve()
+        {
+            base.InternalReserve();
+
+            ParentEntity = null;
+        }
     }
 }

@@ -43,9 +43,15 @@ namespace Syadeu.Presentation.Entities
 
         public override bool IsValid()
         {
-            if (Disposed || !m_IsCreated || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
+            if (Reserved || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
+        }
+        internal override void InternalReserve()
+        {
+            base.InternalReserve();
+
+            transform = null;
         }
 
         [Preserve]

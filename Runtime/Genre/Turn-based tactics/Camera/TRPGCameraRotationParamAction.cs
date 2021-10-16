@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.TurnTable
             CoreSystem.Logger.NotNull(m_Camera);
             CoreSystem.Logger.NotNull(m_Movement);
         }
-        protected override void OnDispose()
+        protected override void Reserve()
         {
             m_Camera = null;
             m_Movement = null;

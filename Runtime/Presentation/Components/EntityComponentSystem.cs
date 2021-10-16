@@ -33,7 +33,8 @@ namespace Syadeu.Presentation.Components
     /// 사용자는 직접 이 시스템을 통하여 컴포넌트 관련 작업을 수행하는 것이 아닌, <seealso cref="EntityData{T}.AddComponent{TComponent}(in TComponent)"/>
     /// 등과 같은 간접 메소드를 통해 작업을 수행할 수 있습니다. 자세한 기능은 <seealso cref="EntityData{T}"/> 를 참조하세요.
     /// </remarks>
-    unsafe internal sealed class EntityComponentSystem : PresentationSystemEntity<EntityComponentSystem>
+    unsafe internal sealed class EntityComponentSystem : PresentationSystemEntity<EntityComponentSystem>,
+        INotifySystemModule<EntityNotifiedComponentModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -53,15 +54,20 @@ namespace Syadeu.Presentation.Components
 
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
+            s_RemoveComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveComponent"),
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
             s_GetComponentReadOnlyMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentReadOnly"),
             s_GetComponentPointerMarker = new Unity.Profiling.ProfilerMarker("get_GetComponentPointer");
 #endif
 
+        public int BufferLength => m_ComponentArrayBuffer.Length;
+
         private EntitySystem m_EntitySystem;
         private SceneSystem m_SceneSystem;
 
         #region Presentation Methods
+
+        private ActionWrapper m_CompleteAllDisposedComponents;
 
         protected override PresentationResult OnInitialize()
         {
@@ -104,7 +110,11 @@ namespace Syadeu.Presentation.Components
 
             ConstructSharedStatics();
 
-            PresentationManager.Instance.PreUpdate += CompleteAllDisposedComponents;
+            m_CompleteAllDisposedComponents = ActionWrapper.GetWrapper();
+            m_CompleteAllDisposedComponents.SetProfiler("CompleteAllDisposedComponents");
+            m_CompleteAllDisposedComponents.SetAction(CompleteAllDisposedComponents);
+
+            PresentationManager.Instance.PreUpdate += m_CompleteAllDisposedComponents.Invoke;
 
             return base.OnInitialize();
         }
@@ -151,7 +161,10 @@ namespace Syadeu.Presentation.Components
         
         public override void OnDispose()
         {
-            PresentationManager.Instance.PreUpdate -= CompleteAllDisposedComponents;
+            PresentationManager.Instance.PreUpdate -= m_CompleteAllDisposedComponents.Invoke;
+            m_CompleteAllDisposedComponents.Reserve();
+            m_CompleteAllDisposedComponents = null;
+
             m_SceneSystem.OnSceneChangeCalled -= CompleteAllDisposedComponents;
 
             int count = m_DisposedComponents.Count;
@@ -257,16 +270,39 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
+        private static int GetComponentIndex(TypeInfo t)
+        {
+            int idx = t.Index;
+#if DEBUG_MODE
+            if (idx == 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({t.Type.Name}) infomation at initializing stage.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+#endif
+            return idx;
+        }
         private static int GetEntityIndex(EntityData<IEntityData> entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
             if (idx == 0)
             {
-                $"err {entity.GetHashCode()}".ToLogError();
+                $"err {entity.RawName}: {entity.GetHashCode()}".ToLogError();
             }
             return idx;
         }
         private static int2 GetIndex(Type t, EntityData<IEntityData> entity)
+        {
+            int
+                cIdx = GetComponentIndex(t),
+                eIdx = GetEntityIndex(entity);
+
+            return new int2(cIdx, eIdx);
+        }
+        private static int2 GetIndex(TypeInfo t, EntityData<IEntityData> entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -399,6 +435,10 @@ namespace Syadeu.Presentation.Components
         }
         public void RemoveComponent(EntityData<IEntityData> entity, Type componentType)
         {
+#if DEBUG_MODE
+            s_RemoveComponentMarker.Begin();
+#endif
+
             int2 index = GetIndex(componentType, entity);
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
@@ -424,6 +464,46 @@ namespace Syadeu.Presentation.Components
             //}
 
             //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
+
+#if DEBUG_MODE
+            s_RemoveComponentMarker.End();
+#endif
+        }
+        public void RemoveComponent(EntityData<IEntityData> entity, TypeInfo componentType)
+        {
+#if DEBUG_MODE
+            s_RemoveComponentMarker.Begin();
+#endif
+
+            int2 index = GetIndex(componentType, entity);
+#if DEBUG_MODE
+            if (!m_ComponentArrayBuffer[index.x].IsCreated)
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Component buffer error. " +
+                    $"Didn\'t collected this component({componentType.Type.Name}) information at initializing stage.");
+
+                return;
+            }
+#endif
+            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
+
+            //if (CoreSystem.BlockCreateInstance)
+            {
+                dispose.Dispose();
+            }
+            //else
+            //{
+            //    m_DisposedComponents.Enqueue(dispose);
+            //    CoreSystem.Logger.Log(Channel.Component,
+            //        $"{TypeHelper.ToString(componentType)} component at {entity.RawName} remove queued.");
+            //}
+
+            //$"entity({entity.RawName}) removed component ({componentType.Name})".ToLog();
+
+#if DEBUG_MODE
+            s_RemoveComponentMarker.End();
+#endif
         }
         /// <summary>
         /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
@@ -438,7 +518,17 @@ namespace Syadeu.Presentation.Components
             //    .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
 
             EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
-            RemoveComponent(entity, interfaceType.GetGenericArguments().First());
+            RemoveComponent(entity, interfaceType.GenericTypeArguments[0]);
+        }
+        public void RemoveNotifiedComponents(IObject obj, Action<EntityData<IEntityData>, Type> onRemove = null)
+        {
+            GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
+
+        }
+        public void RemoveNotifiedComponents(EntityData<IEntityData> entity, Action<EntityData<IEntityData>, Type> onRemove = null)
+        {
+            GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(entity, onRemove);
+
         }
         public bool HasComponent<TComponent>(EntityData<IEntityData> entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -728,6 +818,113 @@ namespace Syadeu.Presentation.Components
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
+
+    internal sealed class EntityNotifiedComponentModule : PresentationSystemModule<EntityComponentSystem>
+    {
+        private NativeHashSet<Hash> m_ZeroNotifiedObjects;
+        private NativeMultiHashMap<Hash, TypeInfo> m_NotifiedObjects;
+
+        protected override void OnInitialize()
+        {
+            m_ZeroNotifiedObjects = new NativeHashSet<Hash>(EntityDataList.Instance.m_Objects.Count,
+                 AllocatorManager.Persistent);
+            m_NotifiedObjects = new NativeMultiHashMap<Hash, TypeInfo>(System.BufferLength, AllocatorManager.Persistent);
+        }
+        protected override void OnDispose()
+        {
+            m_ZeroNotifiedObjects.Dispose();
+            m_NotifiedObjects.Dispose();
+        }
+
+        public void TryRemoveComponent(EntityData<IEntityData> entity, Action<EntityData<IEntityData>, Type> onRemove)
+        {
+            if (m_ZeroNotifiedObjects.Contains(entity.Hash)) return;
+            else if (m_NotifiedObjects.TryGetFirstValue(entity.Hash, out TypeInfo typeInfo, out var parsedIter))
+            {
+                do
+                {
+                    onRemove?.Invoke(entity, typeInfo.Type);
+                    System.RemoveComponent(entity, typeInfo);
+
+                } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
+
+                return;
+            }
+
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Entity({entity.RawName}) is disclosed.");
+                return;
+            }
+
+            var iter = Select(entity.Type);
+            if (!iter.Any())
+            {
+                m_ZeroNotifiedObjects.Add(entity.Hash);
+                return;
+            }
+
+            var select = iter.Select(i => i.GenericTypeArguments[0]);
+            foreach (var componentType in select)
+            {
+                onRemove?.Invoke(entity, componentType);
+                System.RemoveComponent(entity, componentType);
+
+                m_NotifiedObjects.Add(entity.Hash, ComponentType.GetValue(componentType).Data);
+            }
+        }
+        public void TryRemoveComponent(IObject obj, Action<EntityData<IEntityData>, Type> onRemove)
+        {
+            EntityData<IEntityData> entity;
+
+            if (m_ZeroNotifiedObjects.Contains(obj.Hash)) return;
+            else if (m_NotifiedObjects.TryGetFirstValue(obj.Hash, out TypeInfo typeInfo, out var parsedIter))
+            {
+                entity = EntityData<IEntityData>.GetEntityWithoutCheck(obj.Idx);
+                do
+                {
+                    onRemove?.Invoke(entity, typeInfo.Type);
+                    System.RemoveComponent(entity, typeInfo);
+
+                } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
+
+                return;
+            }
+
+            var iter = Select(obj.GetType());
+            if (!iter.Any())
+            {
+                m_ZeroNotifiedObjects.Add(obj.Hash);
+                return;
+            }
+
+            entity = EntityData<IEntityData>.GetEntityWithoutCheck(obj.Idx);
+            var select = iter.Select(i => i.GenericTypeArguments[0]);
+            foreach (var componentType in select)
+            {
+                onRemove?.Invoke(entity, componentType);
+                System.RemoveComponent(entity, componentType);
+
+                m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
+            }
+        }
+
+        private static bool CollectTypes(Type t)
+        {
+            return t.GetInterfaces()
+                .Where(i => i.IsGenericType)
+                .Where(i => i.GetGenericTypeDefinition() == typeof(INotifyComponent<>))
+                .Any();
+        }
+        private static IEnumerable<Type> Select(Type t)
+        {
+            return t.GetInterfaces()
+                .Where(i => i.IsGenericType)
+                .Where(i => i.GetGenericTypeDefinition() == typeof(INotifyComponent<>));
+                //.Select(i => i.GenericTypeArguments[0]);
+        }
+    }
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
     internal unsafe sealed class ComponentBufferAtomicSafety : IDisposable

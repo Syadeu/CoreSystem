@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
     [RequireDerived]
-    public abstract class ObjectBase : IObject, IDisposable, IEquatable<ObjectBase>
+    public abstract class ObjectBase : IObject, IEquatable<ObjectBase>
     {
         const string c_NameBase = "New {0}";
 
@@ -33,7 +33,9 @@ namespace Syadeu.Presentation
         /// </summary>
         [JsonIgnore] public InstanceID Idx { get; private set; } = InstanceID.Empty;
 
-        [JsonIgnore] public bool Disposed { get; private set; } = false;
+        [JsonIgnore] private bool m_Reserved = true;
+
+        [JsonIgnore] public bool Reserved => m_Reserved;
 
         public ObjectBase()
         {
@@ -43,7 +45,7 @@ namespace Syadeu.Presentation
         ~ObjectBase()
         {
             CoreSystem.Logger.Log(Channel.GC, $"Disposing entity object({Name})");
-            Dispose();
+            //Dispose();
         }
 
         /// <summary>
@@ -59,20 +61,36 @@ namespace Syadeu.Presentation
             entity.Name = string.Copy(Name);
             entity.Idx = Hash.NewHash();
 
+            entity.m_Reserved = false;
+
             return entity;
         }
         public virtual object Clone() => Copy();
 
-        public void Dispose()
+        internal virtual void InternalReset()
         {
-            if (Disposed) return;
-            OnDispose();
-            Disposed = true;
+            Idx = Hash.NewHash();
+            m_Reserved = false;
         }
-        /// <summary>
-        /// 이 인스턴스 객체가 메모리에서 제거될때 실행됩니다.
-        /// </summary>
-        protected virtual void OnDispose() { }
+        internal virtual void InternalReserve()
+        {
+            Reserve();
+            m_Reserved = true;
+        }
+        protected virtual void Reserve()
+        {
+            
+        }
+        //public void Dispose()
+        //{
+        //    if (Disposed) return;
+        //    OnDispose();
+        //    Disposed = true;
+        //}
+        ///// <summary>
+        ///// 이 인스턴스 객체가 메모리에서 제거될때 실행됩니다.
+        ///// </summary>
+        //protected virtual void OnDispose() { }
 
         public override sealed int GetHashCode()
         {

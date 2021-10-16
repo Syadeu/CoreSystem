@@ -1,4 +1,8 @@
-﻿using Syadeu.Collections;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -29,6 +33,13 @@ namespace Syadeu.Presentation.TurnTable
         private bool 
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
+
+#if DEBUG_MODE
+        private Unity.Profiling.ProfilerMarker
+            m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker("Draw UI Cell At Entity"),
+            m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker("Place UI Cell"),
+            m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker("Clear UI Cell");
+#endif
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
@@ -104,50 +115,63 @@ namespace Syadeu.Presentation.TurnTable
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
-            if (!entity.HasComponent<TRPGActorMoveComponent>())
+#if DEBUG_MODE
+            using (m_DrawUICellMarker.Auto())
+#endif
             {
-                "error".ToLogError();
-                return;
+                if (!entity.HasComponent<TRPGActorMoveComponent>())
+                {
+                    "error".ToLogError();
+                    return;
+                }
+
+                if (m_IsDrawingGrids)
+                {
+                    ClearUICell();
+                }
+
+                TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
+                move.GetMoveablePositions(ref m_GridTempMoveables);
+                move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines);
+
+                m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
+                m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
+
+                GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
+
+                for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                {
+                    PlaceUICell(in gridSize, m_GridTempMoveables[i]);
+                }
+
+                m_IsDrawingGrids = true;
             }
-
-            if (m_IsDrawingGrids)
-            {
-                ClearUICell();
-            }
-
-            TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-            move.GetMoveablePositions(ref m_GridTempMoveables);
-            move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines);
-            
-            m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
-            m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
-
-            GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
-
-            for (int i = 0; i < m_GridTempMoveables.Length; i++)
-            {
-                PlaceUICell(in gridSize, m_GridTempMoveables[i]);
-            }
-
-            m_IsDrawingGrids = true;
         }
         private void PlaceUICell(in GridSizeComponent gridSize, in GridPosition position)
         {
-            if (gridSize.IsMyIndex(position.index)) return;
+#if DEBUG_MODE
+            using (m_PlaceUICellMarker.Auto())
+#endif
+            {
+                if (gridSize.IsMyIndex(position.index)) return;
 
-            Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
-
-
+                Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
+            }
         }
         public void ClearUICell()
         {
-            if (!m_IsDrawingGrids) return;
+#if DEBUG_MODE
+            using (m_ClearUICellMarker.Auto())
+#endif
+            {
+                if (!m_IsDrawingGrids) return;
 
-            m_GridSystem.ClearUICell();
+                m_GridSystem.ClearUICell();
 
-            m_GridOutlineRenderer.positionCount = 0;
+                m_GridOutlineRenderer.positionCount = 0;
 
-            m_IsDrawingGrids = false;
+                m_IsDrawingGrids = false;
+            }
         }
 
         public void DrawUIPath(in GridPath64 path, float heightOffset = .5f)

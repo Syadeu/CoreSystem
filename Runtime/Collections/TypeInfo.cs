@@ -7,7 +7,7 @@ namespace Syadeu.Collections
     /// <summary>
     /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
     /// </summary>
-    public readonly struct TypeInfo
+    public readonly struct TypeInfo : IValidation, IEquatable<TypeInfo>
     {
         private readonly RuntimeTypeHandle m_TypeHandle;
         private readonly int m_TypeIndex;
@@ -53,5 +53,15 @@ namespace Syadeu.Collections
         }
 
         public override int GetHashCode() => m_HashCode;
+
+        public bool Equals(TypeInfo other) => m_TypeHandle.Equals(other.m_TypeHandle);
+
+        public bool IsValid()
+        {
+            if (m_TypeHandle.Value == IntPtr.Zero ||
+                m_Size == 0 || m_HashCode == 0) return false;
+
+            return true;
+        }
     }
 }

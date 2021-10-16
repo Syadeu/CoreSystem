@@ -21,8 +21,8 @@ namespace Syadeu.Presentation.Entities
     /// </remarks>
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
-        /// <summary><inheritdoc cref="isCreated"/></summary>
-        [JsonIgnore] internal bool m_IsCreated = false;
+        ///// <summary><inheritdoc cref="isCreated"/></summary>
+        //[JsonIgnore] internal bool m_IsCreated = false;
         /// <summary><inheritdoc cref="IEntityData.Attributes"/></summary>
         [JsonIgnore] internal Dictionary<Type, AttributeBase[]> m_AttributesHashMap;
         // TODO : 이거 임시, 나중에 최적화시 지울 것
@@ -36,11 +36,11 @@ namespace Syadeu.Presentation.Entities
 
         [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList;
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
-        [JsonIgnore] public bool isCreated => m_IsCreated;
+        //[JsonIgnore] public bool isCreated => m_IsCreated;
 
         public bool HasAttribute(Hash hash)
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 for (int i = 0; i < m_AttributeList.Length; i++)
                 {
@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.Entities
         }
         public bool HasAttribute(Type attributeType)
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 for (int i = 0; i < m_AttributeList.Length; i++)
                 {
@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.Entities
 
         IAttribute IEntityData.GetAttribute(Type t)
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
@@ -96,7 +96,7 @@ namespace Syadeu.Presentation.Entities
         }
         IAttribute[] IEntityData.GetAttributes(Type t)
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
@@ -117,7 +117,7 @@ namespace Syadeu.Presentation.Entities
         }
         T IEntityData.GetAttribute<T>()
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Entities
         }
         T[] IEntityData.GetAttributes<T>()
         {
-            if (!m_IsCreated)
+            if (Reserved)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
@@ -174,7 +174,7 @@ namespace Syadeu.Presentation.Entities
 
         public virtual bool IsValid()
         {
-            if (Disposed || !m_IsCreated || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
+            if (Reserved || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
 
             return true;
         }
