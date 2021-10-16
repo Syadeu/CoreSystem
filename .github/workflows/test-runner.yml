@@ -43,7 +43,7 @@ jobs:
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
-          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git#{{ steps.extract_branch.outputs.branch }}",' manifest.json
+          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git#${{ steps.extract_branch.outputs.branch }}",' manifest.json
           # Reading each line
           n=0
           while IFS= read -r line; do
