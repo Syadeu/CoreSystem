@@ -32,12 +32,18 @@ jobs:
         with:
           unityVersion: ${{ matrix.unityVersion }}
           projectPath: ${{ matrix.projectPath }}
+      # Extract branch name for next step
+      - name: Extract target branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      # Add CoreSystem in the empty Unity project
       - name: Add Manifest
         run: |
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
-          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git",' manifest.json
+          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git#${{ steps.extract_branch.outputs.branch }}",' manifest.json
           # Reading each line
           n=0
           while IFS= read -r line; do
