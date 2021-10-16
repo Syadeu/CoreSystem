@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.MotionMatching
             {
                 temp.Initialize();
             }
-
+            
             anim.BeginEvent(temp.EventDefinition);
         }
     }

@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_CurrentProxy == null) return;
 
-            ActorStatAttribute stat = ParentEntity.GetAttribute<ActorStatAttribute>();
+            ActorStatAttribute stat = ParentActor.GetAttribute<ActorStatAttribute>();
             if (stat == null)
             {
                 "no stat".ToLogError();
@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 #endif
 
-            Setup(att.ParentEntity, in att);
+            Setup(att.ParentActor, in att);
         }
         public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

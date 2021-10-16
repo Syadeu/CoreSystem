@@ -17,6 +17,7 @@ namespace Syadeu.Presentation.Entities
         [Header("Graphics")]
         [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
+        internal float m_InitialAlpha = 1;
 
         [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntity(Idx);
 
@@ -57,6 +58,8 @@ namespace Syadeu.Presentation.Entities
             entity.AddComponent<UIObjectCanvasGroupComponent>();
             ref var com = ref entity.GetComponent<UIObjectCanvasGroupComponent>();
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
+            com.m_Parent = Entity<IEntity>.GetEntityWithoutCheck(e.Idx);
+            com.Alpha = e.m_InitialAlpha;
         }
 
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)

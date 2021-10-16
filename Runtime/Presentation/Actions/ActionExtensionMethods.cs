@@ -371,7 +371,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleTriggerAction(actions[i], entity);
             }
         }
-        [Obsolete("Use FixedReferenceList64")]
+        //[Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions)
             where T : InstanceAction
         {
@@ -383,7 +383,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
-        [Obsolete("Use FixedReferenceList64")]
+        //[Obsolete("Use FixedReferenceList64")]
         public static void Schedule<T>(this Reference<T>[] actions, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
