@@ -48,7 +48,9 @@ namespace Syadeu.Presentation.Map
 #if DEBUG_MODE
         private Unity.Profiling.ProfilerMarker
             m_UpdateObserver = new Unity.Profiling.ProfilerMarker("Update Observer"),
-            m_UpdateObserveTarget = new Unity.Profiling.ProfilerMarker("Update Observe Target");
+            m_UpdateObserveTarget = new Unity.Profiling.ProfilerMarker("Update Observe Target"),
+
+            m_PlaceUICell = new Unity.Profiling.ProfilerMarker($"{nameof(GridSystem)}.{nameof(PlaceUICell)}");
 #endif
 
         private GridMapAttribute GridMap => m_MainGrid;
@@ -843,6 +845,9 @@ namespace Syadeu.Presentation.Map
         }
         public Entity<IEntity> PlaceUICell(GridPosition position, float heightOffset = .25f)
         {
+#if DEBUG_MODE
+            m_PlaceUICell.Begin();
+#endif
             if (m_PlacedCellUIEntities.TryGetValue(position, out var exist))
             {
                 return exist;
@@ -865,12 +870,19 @@ namespace Syadeu.Presentation.Map
                     1);
 
             m_DrawnCellUIEntities.Add(entity);
-            entity.AddComponent(new GridCellComponent()
+
+            entity.AddComponent<GridCellComponent>();
+            ref var com = ref entity.GetComponent<GridCellComponent>();
+            com = (new GridCellComponent()
             {
                 m_GridPosition = position,
                 m_IsDetectionCell = GetModule<GridDetectionModule>().IsObserveIndex(position.index)
             });
             m_PlacedCellUIEntities.Add(position, entity);
+
+#if DEBUG_MODE
+            m_PlaceUICell.End();
+#endif
 
             return entity;
         }

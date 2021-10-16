@@ -41,7 +41,10 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
-            entity.AddComponent(new TRPGActorAttackComponent()
+            entity.AddComponent<TRPGActorAttackComponent>();
+            ref var com = ref entity.GetComponent<TRPGActorAttackComponent>();
+
+            com = (new TRPGActorAttackComponent()
             {
                 //m_HasTarget = false,
 

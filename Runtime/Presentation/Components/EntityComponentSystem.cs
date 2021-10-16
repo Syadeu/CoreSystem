@@ -54,6 +54,7 @@ namespace Syadeu.Presentation.Components
 
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
+            s_AddComponentMarker = new Unity.Profiling.ProfilerMarker("set_AddComponent"),
             s_RemoveComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveComponent"),
             s_RemoveNotifiedComponentMarker = new Unity.Profiling.ProfilerMarker("set_RemoveNotifiedComponent"),
             s_GetComponentMarker = new Unity.Profiling.ProfilerMarker("get_GetComponent"),
@@ -366,8 +367,12 @@ namespace Syadeu.Presentation.Components
             return (IntPtr)((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
-        public TComponent AddComponent<TComponent>(in EntityData<IEntityData> entity, in TComponent data) where TComponent : unmanaged, IEntityComponent
+        public void AddComponent<TComponent>(in EntityData<IEntityData> entity) where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
+            s_AddComponentMarker.Begin();
+#endif
+
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
             int2 index = GetIndex<TComponent>(entity);
@@ -378,7 +383,7 @@ namespace Syadeu.Presentation.Components
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
-                return data;
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y) &&
@@ -398,7 +403,7 @@ namespace Syadeu.Presentation.Components
                 }
             }
 
-            ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] = data;
+            ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] = default(TComponent);
             m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
             m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
@@ -406,7 +411,11 @@ namespace Syadeu.Presentation.Components
 
             CoreSystem.Logger.Log(Channel.Component,
                 $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Name}), index {index}");
-            return data;
+
+#if DEBUG_MODE
+            s_AddComponentMarker.End();
+#endif
+            //return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
         }
         public void RemoveComponent<TComponent>(EntityData<IEntityData> entity)
             where TComponent : unmanaged, IEntityComponent

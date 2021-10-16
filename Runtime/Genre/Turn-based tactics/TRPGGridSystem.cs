@@ -36,9 +36,9 @@ namespace Syadeu.Presentation.TurnTable
 
 #if DEBUG_MODE
         private Unity.Profiling.ProfilerMarker
-            m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker("Draw UI Cell At Entity"),
-            m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker("Place UI Cell"),
-            m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker("Clear UI Cell");
+            m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
+            m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
+            m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 #endif
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;

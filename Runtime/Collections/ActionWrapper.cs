@@ -12,10 +12,8 @@ namespace Syadeu.Collections
         private static readonly CLRContainer<ActionWrapper> s_Container;
         private Action m_Action;
 
-#if DEBUG_MODE
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
-#endif
 
         static ActionWrapper()
         {
@@ -33,19 +31,14 @@ namespace Syadeu.Collections
         public void Reserve()
         {
             m_Action = null;
-#if DEBUG_MODE
             m_MarkerSet = false;
-#endif
             s_Container.Enqueue(this);
         }
 
-        [Conditional("DEBUG_MODE")]
         public void SetProfiler(string name)
         {
-#if DEBUG_MODE
             m_MarkerSet = true;
             m_Marker = new Unity.Profiling.ProfilerMarker(name);
-#endif
         }
         public void SetAction(Action action)
         {
@@ -53,13 +46,9 @@ namespace Syadeu.Collections
         }
         public void Invoke()
         {
-#if DEBUG_MODE
             if (m_MarkerSet) m_Marker.Begin();
-#endif
             m_Action?.Invoke();
-#if DEBUG_MODE
             if (m_MarkerSet) m_Marker.End();
-#endif
         }
     }
     public sealed class ActionWrapper<T>
@@ -67,10 +56,8 @@ namespace Syadeu.Collections
         private static readonly CLRContainer<ActionWrapper<T>> s_Container;
         private Action<T> m_Action;
 
-#if DEBUG_MODE
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
-#endif
 
         static ActionWrapper()
         {
@@ -88,19 +75,14 @@ namespace Syadeu.Collections
         public void Reserve()
         {
             m_Action = null;
-#if DEBUG_MODE
             m_MarkerSet = false;
-#endif
             s_Container.Enqueue(this);
         }
 
-        [Conditional("DEBUG_MODE")]
         public void SetProfiler(string name)
         {
-#if DEBUG_MODE
             m_MarkerSet = true;
             m_Marker = new Unity.Profiling.ProfilerMarker(name);
-#endif
         }
         public void SetAction(Action<T> action)
         {
@@ -108,13 +90,9 @@ namespace Syadeu.Collections
         }
         public void Invoke(T t)
         {
-#if DEBUG_MODE
             if (m_MarkerSet) m_Marker.Begin();
-#endif
             m_Action?.Invoke(t);
-#if DEBUG_MODE
             if (m_MarkerSet) m_Marker.End();
-#endif
         }
     }
 }

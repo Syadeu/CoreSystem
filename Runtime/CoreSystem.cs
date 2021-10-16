@@ -1838,6 +1838,7 @@ namespace Syadeu
             }
         }
         public static void WaitInvoke(float seconds, Action action) => WaitInvoke(seconds, action, null);
+        public static void WaitInvokeBackground(float seconds, Action action) => WaitInvokeBackground(seconds, action, null);
         public static void WaitInvoke(float seconds, Action action, Action<float> whileWait)
         {
             float 
@@ -1858,6 +1859,28 @@ namespace Syadeu
                 }
                 //ThreadAwaiter((int)seconds * 1000);
                 AddForegroundJob(action);
+            });
+        }
+        public static void WaitInvokeBackground(float seconds, Action action, Action<float> whileWait)
+        {
+            float
+                startTime = Time.time,
+                currentTime = startTime;
+            AddBackgroundJob(() =>
+            {
+                while (currentTime < startTime + seconds && !BlockCreateInstance)
+                {
+                    whileWait?.Invoke(currentTime - startTime);
+
+                    currentTime = CoreSystem.time;
+
+                    if (!Instance.m_SimWatcher.WaitOne(1))
+                    {
+                        ThreadAwaiter(10);
+                    }
+                }
+                //ThreadAwaiter((int)seconds * 1000);
+                action?.Invoke();
             });
         }
         public static void WaitInvoke(Func<bool> _true, Action action)

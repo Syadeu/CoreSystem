@@ -18,10 +18,9 @@ namespace Syadeu.Presentation
         internal static readonly Hash s_Key = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
         private static readonly Queue<TEvent> m_Pool = new Queue<TEvent>();
 
-#if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
             s_Marker = new Unity.Profiling.ProfilerMarker($"Execute Event ({TypeHelper.TypeOf<TEvent>.ToString()})");
-#endif
+
         private static readonly Dictionary<int, ActionWrapper<TEvent>>
             s_EventActions = new Dictionary<int, ActionWrapper<TEvent>>();
 
@@ -59,9 +58,7 @@ namespace Syadeu.Presentation
         
         internal override sealed void InternalPost()
         {
-#if DEBUG_MODE
             using (s_Marker.Auto())
-#endif
             {
                 EventDescriptor<TEvent>.Invoke(s_Key, (TEvent)this);
             }

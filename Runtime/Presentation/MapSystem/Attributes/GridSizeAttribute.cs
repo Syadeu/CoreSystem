@@ -60,12 +60,12 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
         {
-            GridSizeComponent component = new GridSizeComponent
+            e.AddComponent<GridSizeComponent>();
+            ref var com = ref e.GetComponent<GridSizeComponent>();
+            com = new GridSizeComponent
             {
                 m_ObstacleLayers = m_GridSystem.GetLayer(attribute.m_ObstacleLayers)
             };
-
-            e.AddComponent(component);
 
             m_GridSystem.RegisterGridSize(attribute);
         }

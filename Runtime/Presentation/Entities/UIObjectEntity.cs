@@ -54,7 +54,9 @@ namespace Syadeu.Presentation.Entities
         protected override void OnCreated(UIObjectEntity e)
         {
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(e.Idx);
-            entity.AddComponent(new UIObjectCanvasGroupComponent() { m_Enabled = true });
+            entity.AddComponent<UIObjectCanvasGroupComponent>();
+            ref var com = ref entity.GetComponent<UIObjectCanvasGroupComponent>();
+            com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
         }
 
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)

@@ -22,7 +22,7 @@ namespace Syadeu.Presentation
         {
             var handler = PoolContainer<ComponentAtomicSafetyHandler>.Dequeue();
             handler.Initialize(obj);
-            CoreSystem.WaitInvoke(delayed, handler.CheckAllComponentIsDisposed);
+            CoreSystem.WaitInvokeBackground(delayed, handler.CheckAllComponentIsDisposed);
         }
 
         private bool Debug_HasComponent(InstanceID entity, out int count, out string names)
@@ -50,7 +50,7 @@ namespace Syadeu.Presentation
                 c_ComponentIsNotFullDisposed
                     = "Entity({0}) has number of {1} components that didn\'t disposed. {2}",
                 c_ComponentFullDiposed
-                    = "Entity({m_Name}) component all checked.";
+                    = "Entity({0}) component all checked.";
 
             private EntitySystem m_EntitySystem;
 

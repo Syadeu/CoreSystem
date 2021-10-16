@@ -68,6 +68,12 @@ namespace Syadeu.Presentation
         private readonly List<InstanceID> m_DestroyedObjectsInThisFrame = new List<InstanceID>();
         private readonly Queue<Query> m_Queries = new Queue<Query>();
 
+#if DEBUG_MODE
+        private static Unity.Profiling.ProfilerMarker
+            m_CreateEntityMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateEntity)}"),
+            m_CreateEntityDataMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateObject)}");
+#endif
+
         private ActionWrapper m_DestroyedObjectsInThisFrameAction;
 
         internal DataContainerSystem m_DataContainerSystem;
@@ -560,13 +566,23 @@ namespace Syadeu.Presentation
         public Entity<IEntity> CreateEntity(in string name, in float3 position)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+#if DEBUG_MODE
+            m_CreateEntityMarker.Begin();
+#endif
+
             if (!InternalEntityValidation(name, position, out EntityBase temp))
             {
                 return Entity<IEntity>.Empty;
             }
 
             ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
-            return InternalCreateEntity(in temp, in obj);
+            Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+
+#if DEBUG_MODE
+            m_CreateEntityMarker.End();
+#endif
+
+            return entity;
         }
         /// <summary>
         /// <inheritdoc cref="CreateEntity(in Hash, in float3, in quaternion, in float3, in bool)"/>
@@ -577,13 +593,23 @@ namespace Syadeu.Presentation
         public Entity<IEntity> CreateEntity(in Hash hash, in float3 position)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+#if DEBUG_MODE
+            m_CreateEntityMarker.Begin();
+#endif
+
             if (!InternalEntityValidation(in hash, in position, out EntityBase temp))
             {
                 return Entity<IEntity>.Empty;
             }
 
             ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
-            return InternalCreateEntity(in temp, in obj);
+            Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+
+#if DEBUG_MODE
+            m_CreateEntityMarker.End();
+#endif
+
+            return entity;
         }
         /// <summary>
         /// 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/> 입니다.
@@ -596,13 +622,22 @@ namespace Syadeu.Presentation
         public Entity<IEntity> CreateEntity(in string name, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+#if DEBUG_MODE
+            m_CreateEntityMarker.Begin();
+#endif
+
             if (!InternalEntityValidation(in name, in position, out EntityBase temp))
             {
                 return Entity<IEntity>.Empty;
             }
 
             ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
-            return InternalCreateEntity(in temp, in obj);
+            Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+
+#if DEBUG_MODE
+            m_CreateEntityMarker.End();
+#endif
+            return entity;
         }
         /// <summary>
         /// 엔티티를 생성합니다. <paramref name="hash"/>에는 <seealso cref="Reference"/>값으로 대체 가능합니다.
@@ -615,13 +650,23 @@ namespace Syadeu.Presentation
         public Entity<IEntity> CreateEntity(in Hash hash, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+#if DEBUG_MODE
+            m_CreateEntityMarker.Begin();
+#endif
+
             if (!InternalEntityValidation(in hash, in position, out EntityBase temp))
             {
                 return Entity<IEntity>.Empty;
             }
 
             ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
-            return InternalCreateEntity(in temp, in obj);
+            Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+
+#if DEBUG_MODE
+            m_CreateEntityMarker.End();
+#endif
+
+            return entity;
         }
 
         #region Entity Validation
@@ -702,11 +747,21 @@ namespace Syadeu.Presentation
         /// <returns></returns>
         public EntityData<IEntityData> CreateObject(Hash hash)
         {
+#if DEBUG_MODE
+            m_CreateEntityDataMarker.Begin();
+#endif
+
             if (!InternalEntityDataValidation(hash, out EntityDataBase original))
             {
                 return EntityData<IEntityData>.Empty;
             }
-            return InternalCreateObject(original);
+            EntityData<IEntityData> entity = InternalCreateObject(original);
+
+#if DEBUG_MODE
+            m_CreateEntityDataMarker.End();
+#endif
+
+            return entity;
         }
         /// <summary>
         /// 데이터 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/>입니다.
@@ -715,11 +770,21 @@ namespace Syadeu.Presentation
         /// <returns></returns>
         public EntityData<IEntityData> CreateObject(string name)
         {
+#if DEBUG_MODE
+            m_CreateEntityDataMarker.Begin();
+#endif
+
             if (!InternalEntityDataValidation(name, out EntityDataBase original))
             {
                 return EntityData<IEntityData>.Empty;
             }
-            return InternalCreateObject(original);
+            EntityData<IEntityData> entity = InternalCreateObject(original);
+
+#if DEBUG_MODE
+            m_CreateEntityDataMarker.End();
+#endif
+
+            return entity;
         }
 
         #region EntityData Validation
@@ -1101,11 +1166,16 @@ namespace Syadeu.Presentation
 
 #if DEBUG_MODE
         private static Unity.Profiling.ProfilerMarker
-            m_ProcessEntityOnDestoryMarker = new Unity.Profiling.ProfilerMarker("EntitySystem.ProcessEntityOnDestroy");
+            m_ProcessEntityOnCreateMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(ProcessEntityOnCreated)}"),
+            m_ProcessEntityOnDestoryMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(ProcessEntityOnDestroy)}");
 #endif
 
         private static void ProcessEntityOnCreated(EntitySystem system, IEntityData entity)
         {
+#if DEBUG_MODE
+            m_ProcessEntityOnCreateMarker.Begin();
+#endif
+
             CoreSystem.Logger.Log(Channel.Entity,
                 $"Create entity({entity.Name})");
 
@@ -1184,6 +1254,10 @@ namespace Syadeu.Presentation
             #endregion
 
             system.OnEntityCreated?.Invoke(entity);
+
+#if DEBUG_MODE
+            m_ProcessEntityOnCreateMarker.End();
+#endif
         }
 
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
