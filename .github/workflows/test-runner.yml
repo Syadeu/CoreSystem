@@ -1,4 +1,4 @@
-name: Test project
+name: Playmode Test 2020.3.14f1
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         projectPath:
-          - test-project
+          - test-project-${{ matrix.unityVersion }}
         unityVersion:
           - 2020.3.14f1
         testMode:
@@ -25,17 +25,17 @@ jobs:
       - name: Unity - Create Empty Project
         uses: jbltx/unity-create@v1.2
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE_2020_3_14F1 }}
         with:
           unityVersion: ${{ matrix.unityVersion }}
           projectPath: ${{ matrix.projectPath }}
       # Add CoreSystem in the empty Unity project
-      - name: Add Manifest
+      - name: Unity - Add Manifest
         run: |
           echo "::debug::Creating Unity Project At ${{ matrix.projectPath }} of ${{ matrix.unityVersion }}"
           cd ${{ matrix.projectPath }}
           cd Packages
-          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git#${{ github.event.pull_request.base.ref }}",' manifest.json
+          sed -i '3 i "syadeu.coresystem": "https://github.com/Syadeu/CoreSystem.git#${{ github.head_ref }}",' manifest.json
           # Reading each line
           n=0
           while IFS= read -r line; do
@@ -52,7 +52,7 @@ jobs:
         uses: game-ci/unity-test-runner@v2
         id: tests
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE_2020_3_14F1 }}
         with:
           customImage: 'unityci/editor:${{ matrix.unityVersion }}-base-0'
           projectPath: ${{ matrix.projectPath }}
