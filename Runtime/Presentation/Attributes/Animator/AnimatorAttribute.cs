@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Attributes
 {
     [DisplayName("Attribute: Animator")]
     [AttributeAcceptOnly(typeof(EntityBase))]
-    public sealed class AnimatorAttribute : AttributeBase
+    public class AnimatorAttribute : AttributeBase
     {
         const string c_KeyNotFoundError = "This animator at entity({0}) does not have key({1}).";
         const string c_TypeMisMatchError = 
@@ -21,10 +21,10 @@ namespace Syadeu.Presentation.Attributes
             "Expected type of ({2}) but input was ({3}).";
 
         [JsonProperty(Order = 0, PropertyName = "AnimationTrigger")]
-        public Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
+        internal Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
         [JsonIgnore] public bool IsInitialized => Parameters != null;
-        [JsonIgnore] internal AnimatorComponent AnimatorComponent { get; set; }
+        [JsonIgnore] public AnimatorComponent AnimatorComponent { get; internal set; }
         [JsonIgnore] internal Dictionary<int, object> Parameters { get; set; } = null;
         [JsonIgnore] public Dictionary<Hash, List<Reference<AnimationTriggerAction>>> AnimationTriggers { get; internal set; }
 

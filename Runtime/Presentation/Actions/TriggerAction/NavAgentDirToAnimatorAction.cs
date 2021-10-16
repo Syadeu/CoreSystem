@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actions
                     $"{nameof(NavAgentAttribute)} not found at {entity.Name}");
                 return;
             }
-            NavAgentComponent navAgent = entity.GetComponent<NavAgentComponent>();
+            NavAgentComponent navAgent = entity.GetComponentReadOnly<NavAgentComponent>();
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             if (animator == null)
             {
