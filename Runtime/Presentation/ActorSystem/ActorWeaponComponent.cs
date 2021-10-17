@@ -10,17 +10,30 @@ namespace Syadeu.Presentation.Actor
     public struct ActorWeaponComponent : IEntityComponent, IDisposable
     {
         internal Entity<ActorEntity> m_Parent;
-        internal Instance<ActorWeaponProvider> m_Provider;
+        //internal Instance<ActorWeaponProvider> m_Provider;
         internal CoroutineJob m_WeaponPoser;
 
+        internal int m_MaxEquipableCount;
         internal Reference<ActorWeaponData> m_DefaultWeapon;
-        internal Instance<ActorWeaponData> m_DefaultWeaponInstance;
+        //internal Instance<ActorWeaponData> m_DefaultWeaponInstance;
         internal FixedInstanceList16<ActorWeaponData> m_EquipedWeapons;
+
+        internal FixedReferenceList16<ActorWeaponData> m_ExcludeWeapon;
+        internal FixedReferenceList16<ActorWeaponData> m_IncludeWeapon;
+        internal FixedReferenceList16<ActorWeaponTypeData> m_ExcludeWeaponType;
+        internal FixedReferenceList16<ActorWeaponTypeData> m_IncludeWeaponType;
+
+        internal FixedReferenceList16<TriggerAction> m_OnWeaponSelected;
+        internal FixedReferenceList16<TriggerAction> m_OnEquipWeapon;
+        internal FixedReferenceList16<TriggerAction> m_OnUnequipWeapon;
+
         internal int m_SelectedWeaponIndex;
 
-        public ActorWeaponProvider Provider => m_Provider.GetObject();
+        //public ActorWeaponProvider Provider => m_Provider.GetObject();
         public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
         public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
+        public int Selected => m_SelectedWeaponIndex;
+        public int Equiped => m_EquipedWeapons.Length;
         public float WeaponDamage
         {
             get
@@ -44,30 +57,30 @@ namespace Syadeu.Presentation.Actor
 
         public void SelectWeapon(int index)
         {
-            ActorWeaponProvider provider = Provider;
-            if (index < 0 || index >= provider.m_MaxEquipableCount)
+            //ActorWeaponProvider provider = Provider;
+            if (index < 0 || index >= m_MaxEquipableCount)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
                 return;
             }
 
             m_SelectedWeaponIndex = index;
-            Provider.m_OnWeaponSelected.Execute(m_Parent.As<ActorEntity, IEntityData>());
+            m_OnWeaponSelected.Execute(m_Parent.As<ActorEntity, IEntityData>());
         }
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {
             var original = weapon.AsOriginal();
             var weaponObj = weapon.GetObject();
 
-            ActorWeaponProvider provider = Provider;
+            //ActorWeaponProvider provider = Provider;
 
-            if (provider.m_ExcludeWeaponType.Contains(weaponObj.WeaponType))
+            if (m_ExcludeWeaponType.Contains(weaponObj.WeaponType))
             {
-                if (!provider.m_IncludeWeapon.Contains(original)) return false;
+                if (!m_IncludeWeapon.Contains(original)) return false;
             }
-            else if (provider.m_IncludeWeaponType.Contains(weaponObj.WeaponType))
+            else if (m_IncludeWeaponType.Contains(weaponObj.WeaponType))
             {
-                if (provider.m_ExcludeWeapon.Contains(original)) return false;
+                if (m_ExcludeWeapon.Contains(original)) return false;
             }
 
             return true;
@@ -83,16 +96,16 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_EquipedWeapons.Length; i++)
             {
-                if (m_EquipedWeapons[i].IsEmpty()) continue;
+                //if (m_EquipedWeapons[i].IsEmpty()) continue;
 
                 m_EquipedWeapons[i].Destroy();
             }
             //m_EquipedWeapons.Dispose();
 
-            if (m_DefaultWeaponInstance.IsValid())
-            {
-                m_DefaultWeaponInstance.Destroy();
-            }
+            //if (m_DefaultWeaponInstance.IsValid())
+            //{
+            //    m_DefaultWeaponInstance.Destroy();
+            //}
         }
     }
 }

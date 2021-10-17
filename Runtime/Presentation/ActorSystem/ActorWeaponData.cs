@@ -17,8 +17,6 @@ namespace Syadeu.Presentation.Actor
     {
         public enum OverrideOptions
         {
-            None,
-
             Override,
             Addictive
         }
@@ -46,7 +44,7 @@ namespace Syadeu.Presentation.Actor
         public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>
         {
             [JsonProperty(Order = 0, PropertyName = "OverrideOptions")]
-            public OverrideOptions m_OverrideOptions = OverrideOptions.None;
+            public OverrideOptions m_OverrideOptions = OverrideOptions.Override;
             [JsonProperty(Order = 1, PropertyName = "UseBone")]
             public bool m_UseBone = true;
             [JsonProperty(Order = 2, PropertyName = "AttachedBone")]

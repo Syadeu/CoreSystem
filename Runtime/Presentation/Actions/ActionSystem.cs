@@ -250,7 +250,7 @@ namespace Syadeu.Presentation.Actions
             m_CurrentAction.Clear();
         }
 
-        public bool ExecuteInstanceAction<T>(FixedReference<T> temp)
+        public bool ExecuteInstanceAction<T>(IFixedReference<T> temp)
             where T : InstanceAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -288,7 +288,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public void ScheduleInstanceAction<T>(FixedReference<T> action)
+        public void ScheduleInstanceAction<T>(IFixedReference<T> action)
             where T : InstanceAction
         {
             Payload payload = new Payload
@@ -300,7 +300,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(FixedReference<T> temp, EntityData<IEntityData> entity)
+        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -329,7 +329,7 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        public void ScheduleTriggerAction<T>(FixedReference<T> action, EntityData<IEntityData> entity)
+        public void ScheduleTriggerAction<T>(IFixedReference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             Payload payload = new Payload

@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Actions
         protected string p_DebugText = string.Empty;
 
         [JsonIgnore] private bool m_Terminated = true;
-        [JsonIgnore] public FixedReference m_Reference;
+        [JsonIgnore] public IFixedReference m_Reference;
 
         [JsonIgnore] public bool Terminated => m_Terminated;
 

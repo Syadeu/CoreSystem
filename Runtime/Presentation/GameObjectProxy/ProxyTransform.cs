@@ -373,6 +373,8 @@ namespace Syadeu.Presentation.Proxy
 
             if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
+            if (!hasProxy) return;
+
             UnityEngine.Transform tr = proxy.transform;
             if ((option & IProxyTransform.SynchronizeOption.Position) == IProxyTransform.SynchronizeOption.Position)
             {

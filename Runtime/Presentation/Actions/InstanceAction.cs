@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class InstanceAction : ActionBase
     {
-        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
+        private static readonly Dictionary<IFixedReference, Stack<ActionBase>> m_Pool = new Dictionary<IFixedReference, Stack<ActionBase>>();
 
         internal bool InternalExecute()
         {
@@ -47,7 +47,7 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction<T>(FixedReference<T> other) where T : InstanceAction
+        public static T GetAction<T>(IFixedReference<T> other) where T : InstanceAction
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {

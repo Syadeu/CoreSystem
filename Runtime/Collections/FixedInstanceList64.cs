@@ -19,17 +19,17 @@ namespace Syadeu.Collections
         {
             m_Hashes.Clear();
         }
-        public void Add(FixedReference<T> reference)
+        public void Add(Instance<T> reference)
         {
-            m_Hashes.Add(reference.Hash);
+            m_Hashes.Add(reference.Idx);
         }
         public void Add(Hash hash)
         {
             m_Hashes.Add(hash);
         }
-        public void Remove(FixedReference<T> reference)
+        public void Remove(Instance<T> reference)
         {
-            m_Hashes.Remove(reference.Hash);
+            m_Hashes.Remove(reference.Idx);
         }
         public void Remove(Hash hash)
         {

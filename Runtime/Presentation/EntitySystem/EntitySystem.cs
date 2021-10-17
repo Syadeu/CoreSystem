@@ -818,11 +818,11 @@ namespace Syadeu.Presentation
 
         internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
-        internal Instance<T> CreateInstance<T>(FixedReference<T> obj) where T : class, IObject
+        internal Instance<T> CreateInstance<T>(IFixedReference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
         internal Instance CreateInstance(Reference obj)
             => CreateInstance(obj.GetObject());
-        internal Instance CreateInstance(FixedReference obj)
+        internal Instance CreateInstance(IFixedReference obj)
             => CreateInstance(obj.GetObject());
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {

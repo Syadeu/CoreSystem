@@ -21,6 +21,17 @@ namespace Syadeu.Presentation
             }
             return list;
         }
+        public static FixedReferenceList16<T> ToFixedList16<T>(this IEnumerable<Reference<T>> t)
+            where T : class, IObject
+        {
+            FixedReferenceList16<T> list = new FixedReferenceList16<T>();
+            foreach (var item in t)
+            {
+                FixedReference<T> temp = item;
+                list.Add(temp);
+            }
+            return list;
+        }
 
         public static FixedReference<T> As<T>(this IFixedReference reference)
             where T : class, IObject

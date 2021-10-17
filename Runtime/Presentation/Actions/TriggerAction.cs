@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerAction : ActionBase
     {
-        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
+        private static readonly Dictionary<IFixedReference, Stack<ActionBase>> m_Pool = new Dictionary<IFixedReference, Stack<ActionBase>>();
 
         internal override sealed void InternalInitialize()
         {
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction<T>(FixedReference<T> other) where T : TriggerAction
+        public static T GetAction<T>(IFixedReference<T> other) where T : TriggerAction
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {

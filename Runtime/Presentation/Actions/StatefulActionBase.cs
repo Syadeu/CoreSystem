@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actions
         where TState : StateBase<TAction>, ITerminate, new()
         where TAction : StatefulActionBase<TState, TAction>
     {
-        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
+        private static readonly Dictionary<IFixedReference, Stack<ActionBase>> m_Pool = new Dictionary<IFixedReference, Stack<ActionBase>>();
         private TState m_State;
 
         internal override void InternalInitialize()

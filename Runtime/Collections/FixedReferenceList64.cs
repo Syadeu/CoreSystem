@@ -3,13 +3,18 @@ using Unity.Collections;
 
 namespace Syadeu.Collections
 {
-    public struct FixedReferenceList64<T>
+    public struct FixedReferenceList64<T> : IFixedReferenceList<T>
         where T : class, IObject
     {
         private FixedList512Bytes<Hash> m_Hashes;
 
         public int Length => m_Hashes.Length;
 
+        IFixedReference<T> IFixedReferenceList<T>.this[int index]
+        {
+            get => new FixedReference<T>(m_Hashes[index]);
+            set => m_Hashes[index] = value.Hash;
+        }
         public FixedReference<T> this[int index]
         {
             get => new FixedReference<T>(m_Hashes[index]);
@@ -39,6 +44,15 @@ namespace Syadeu.Collections
         public void RemoveAt(int index)
         {
             m_Hashes.RemoveAt(index);
+        }
+
+        public bool Contains(IFixedReference<T> other)
+        {
+            for (int i = 0; i < m_Hashes.Length; i++)
+            {
+                if (m_Hashes[i].Equals(other.Hash)) return true;
+            }
+            return false;
         }
     }
 }
