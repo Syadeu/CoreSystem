@@ -15,11 +15,11 @@ namespace Syadeu.Presentation.Actor
 
         internal Reference<ActorWeaponData> m_DefaultWeapon;
         internal Instance<ActorWeaponData> m_DefaultWeaponInstance;
-        internal InstanceArray<ActorWeaponData> m_EquipedWeapons;
+        internal FixedInstanceList16<ActorWeaponData> m_EquipedWeapons;
         internal int m_SelectedWeaponIndex;
 
         public ActorWeaponProvider Provider => m_Provider.GetObject();
-        public InstanceArray<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
+        public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
         public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
         public float WeaponDamage
         {
@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Actor
 
                 m_EquipedWeapons[i].Destroy();
             }
-            m_EquipedWeapons.Dispose();
+            //m_EquipedWeapons.Dispose();
 
             if (m_DefaultWeaponInstance.IsValid())
             {

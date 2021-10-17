@@ -78,7 +78,12 @@ namespace Syadeu.Presentation.Actor
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
             component.m_DefaultWeapon = m_DefaultWeapon;
-            component.m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
+            //component.m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
+            component.m_EquipedWeapons = new FixedInstanceList16<ActorWeaponData>();
+            for (int i = 0; i < m_MaxEquipableCount; i++)
+            {
+                component.m_EquipedWeapons.Add(Hash.Empty);
+            }
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {

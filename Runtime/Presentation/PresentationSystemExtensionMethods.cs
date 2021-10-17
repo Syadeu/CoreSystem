@@ -10,11 +10,6 @@ namespace Syadeu.Presentation
 {
     public static class PresentationSystemExtensionMethods
     {
-        //public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
-        //    where T : unmanaged, IReference
-        //{
-        //    return new ReferenceArray<T>(t, allocator);
-        //}
         public static FixedReferenceList64<T> ToFixedList64<T>(this IEnumerable<Reference<T>> t)
             where T : class, IObject
         {
@@ -26,6 +21,7 @@ namespace Syadeu.Presentation
             }
             return list;
         }
+
         public static FixedReference<T> As<T>(this IFixedReference reference)
             where T : class, IObject
         {
