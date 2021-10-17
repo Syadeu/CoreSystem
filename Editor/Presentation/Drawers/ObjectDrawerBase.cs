@@ -43,7 +43,7 @@ namespace SyadeuEditor.Presentation
                 return new ValuePairContainerDrawer(parentObject, memberInfo);
             }
 
-            Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ObjectDrawerBase>.Type.IsAssignableFrom(other));
+            Type[] drawerTypes = TypeHelper.GetTypes(other => TypeHelper.TypeOf<ObjectDrawerBase>.Type.IsAssignableFrom(other));
             var iter = drawerTypes.Where((other) =>
             {
                 if (!other.IsAbstract &&
@@ -59,6 +59,11 @@ namespace SyadeuEditor.Presentation
                 {
                     return (ObjectDrawerBase)ctor.Invoke(new object[] { parentObject, memberInfo });
                 }
+            }
+
+            if (TypeHelper.TypeOf<PropertyBlockBase>.Type.IsAssignableFrom(declaredType))
+            {
+                return new ObjectDrawer(parentObject, memberInfo, true);
             }
 
             #region Primitive Types
@@ -159,7 +164,6 @@ namespace SyadeuEditor.Presentation
             #endregion
 
             return new NullDrawer(memberInfo, declaredType);
-            //return new ObjectDrawer(parentObject, memberInfo, true);
         }
     }
     public sealed class NullDrawer : ObjectDrawerBase

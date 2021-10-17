@@ -1,4 +1,6 @@
-﻿namespace Syadeu.Presentation.Actor
+﻿using Syadeu.Collections;
+
+namespace Syadeu.Presentation.Actor
 {
     public interface IActorWeaponEquipEvent
     {

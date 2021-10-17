@@ -47,7 +47,7 @@ namespace Syadeu.Presentation
         public static Reference<T> AsOriginal<T>(this Instance<T> t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Object.Hash);
+            return new Reference<T>(t.GetObject().Hash);
         }
 
         public static T GetObject<T>(this IFixedReference<T> t)

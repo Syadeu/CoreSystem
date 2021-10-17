@@ -132,7 +132,7 @@ namespace Syadeu.Presentation.Actions
 
             public void Dispose()
             {
-                m_Caller.Object.m_KeepWait = false;
+                m_Caller.GetObject().m_KeepWait = false;
 
                 m_Caller = Instance<PlayPlayableDirectorAction>.Empty;
                 m_Data = Reference<TimelineData>.Empty;
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation.Actions
                     }
                 }
 
-                if (m_Caller.Object.m_DestroyTimelineAfterFinished)
+                if (m_Caller.GetObject().m_DestroyTimelineAfterFinished)
                 {
                     entity.Destroy();
                 }

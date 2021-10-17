@@ -66,7 +66,7 @@ namespace Syadeu.Presentation.Entities
             if (parent is ProxyTransform proxy)
             {
                 m_Instance = m_FXEntity.CreateInstance();
-                FXEntity fx = m_Instance.Object;
+                FXEntity fx = m_Instance.GetObject();
                 fx.SetPlayOptions(m_PlayOption);
 
                 coroutineSystem.System.PostCoroutineJob(new FireCoroutine
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_Instance.Object.Stop();
+            m_Instance.GetObject().Stop();
         }
 
         private struct FireCoroutine : ICoroutineJob
@@ -117,7 +117,7 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 //Instance<FXEntity> instance = m_FXEntity.CreateInstance();
-                FXEntity fx = m_FXEntity.Object;
+                FXEntity fx = m_FXEntity.GetObject();
                 //fx.SetPlayOptions(m_PlayOption);
 
                 ITransform tr = fx.transform;
@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Entities
 
                 fx.Play();
 
-                $"{m_FXEntity.Object.Name} fired".ToLog();
+                $"{m_FXEntity.GetObject().Name} fired".ToLog();
 
                 while (fx.IsPlaying && !fx.Stopped)
                 {

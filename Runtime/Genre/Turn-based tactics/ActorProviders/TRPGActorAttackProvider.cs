@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.TurnTable
             //}
             //else
             {
-                return GetTargetsWithin(Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.Object.Range));
+                return GetTargetsWithin(Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range));
             }
         }
         public FixedList512Bytes<EntityID> GetTargetsWithin(in int range)

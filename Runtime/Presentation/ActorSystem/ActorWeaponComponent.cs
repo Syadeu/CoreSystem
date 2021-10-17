@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Actor
         internal InstanceArray<ActorWeaponData> m_EquipedWeapons;
         internal int m_SelectedWeaponIndex;
 
-        public ActorWeaponProvider Provider => m_Provider.Object;
+        public ActorWeaponProvider Provider => m_Provider.GetObject();
         public InstanceArray<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
         public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
         public float WeaponDamage
@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actor
                     return m_DefaultWeapon.GetObject().Damage;
                 }
 
-                return EquipedWeapons[m_SelectedWeaponIndex].Object.Damage;
+                return EquipedWeapons[m_SelectedWeaponIndex].GetObject().Damage;
             }
         }
 
@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actor
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {
             var original = weapon.AsOriginal();
-            var weaponObj = weapon.Object;
+            var weaponObj = weapon.GetObject();
 
             ActorWeaponProvider provider = Provider;
 

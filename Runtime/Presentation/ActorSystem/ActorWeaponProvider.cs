@@ -65,11 +65,11 @@ namespace Syadeu.Presentation.Actor
 
             component.m_WeaponPoser = CoroutineJob.Null;
 
-            if (m_UseBone && !entity.HasAttribute<AnimatorAttribute>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)} but UseBone.");
-            }
+            //if (m_UseBone && !entity.HasAttribute<AnimatorAttribute>())
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)} but UseBone.");
+            //}
 
             if (m_MaxEquipableCount <= 0)
             {
@@ -77,6 +77,7 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
+            component.m_DefaultWeapon = m_DefaultWeapon;
             component.m_EquipedWeapons = new InstanceArray<ActorWeaponData>(m_MaxEquipableCount, Unity.Collections.Allocator.Persistent);
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
@@ -120,7 +121,7 @@ namespace Syadeu.Presentation.Actor
             if (!component.IsEquipable(ev.Weapon))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.Object.Name}) that doesn\'t fit.");
+                    $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.GetObject().Name}) that doesn\'t fit.");
                 return;
             }
 
@@ -128,11 +129,11 @@ namespace Syadeu.Presentation.Actor
             {
                 m_OnUnequipWeapon.Execute(Parent);
 
-                ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
+                ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().GetObject();
                 if (inventory == null)
                 {
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Destroying weapon instance({component.SelectedWeapon.Object.Name}) because there\'s no inventory in this actor({Parent.Name}).");
+                        $"Destroying weapon instance({component.SelectedWeapon.GetObject().Name}) because there\'s no inventory in this actor({Parent.Name}).");
 
                     if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
                     {
@@ -160,7 +161,7 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 CoreSystem.Logger.Log(Channel.Entity,
-                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Object.Name}).");
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
             }
             else
             {
@@ -181,11 +182,11 @@ namespace Syadeu.Presentation.Actor
                     }
                     else if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
                     {
-                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Object;
+                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().GetObject();
                         if (inventory == null)
                         {
                             CoreSystem.Logger.LogError(Channel.Entity,
-                                $"Destroying equip request weapon instance({ev.Weapon.Object.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
+                                $"Destroying equip request weapon instance({ev.Weapon.GetObject().Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
                             ev.Weapon.Destroy();
                         }
                         else
@@ -205,7 +206,7 @@ namespace Syadeu.Presentation.Actor
                     }
 
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Object.Name}).");
+                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
                 }
             }
         }
@@ -215,7 +216,7 @@ namespace Syadeu.Presentation.Actor
             ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
 
             if (component.SelectedWeapon.IsValid() && 
-                component.SelectedWeapon.Object.PrefabInstance.IsValid())
+                component.SelectedWeapon.GetObject().PrefabInstance.IsValid())
             {
                 WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon, 
                     m_UseBone, m_AttachedBone, m_WeaponPosOffset, m_WeaponRotOffset);
@@ -279,8 +280,8 @@ namespace Syadeu.Presentation.Actor
                 AnimatorAttribute animator = m_Entity.GetAttribute<AnimatorAttribute>();
                 if (animator == null) yield break;
 
-                ActorWeaponData.OverrideData overrideData = m_Weapon.Object.Overrides;
-                ITransform weaponTr = m_Weapon.Object.PrefabInstance.transform;
+                ActorWeaponData.OverrideData overrideData = m_Weapon.GetObject().Overrides;
+                ITransform weaponTr = m_Weapon.GetObject().PrefabInstance.transform;
                 Transform targetTr = null;
 
                 while (m_Weapon.IsValid() && m_Entity.IsValid())
@@ -295,11 +296,11 @@ namespace Syadeu.Presentation.Actor
 
                     if (targetTr == null)
                     {
-                        if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                        if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
                         {
-                            if (overrideData.UseBone)
+                            if (overrideData.HolsterUseBone)
                             {
-                                targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.AttachedBone);
+                                targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.HolsterAttachedBone);
                             }
                             else
                             {
@@ -309,7 +310,7 @@ namespace Syadeu.Presentation.Actor
                             if (targetTr == null)
                             {
                                 CoreSystem.Logger.LogError(Channel.Entity,
-                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.AttachedBone)}) in entity({m_Entity.Name}). Force to not use bone.");
+                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.HolsterAttachedBone)}) in entity({m_Entity.Name}). Force to not use bone.");
 
                                 targetTr = animator.AnimatorComponent.transform;
                             }
@@ -336,24 +337,24 @@ namespace Syadeu.Presentation.Actor
                     }
 
                     quaternion targetRot = targetTr.rotation;
-                    if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)
+                    if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.None)
                     {
                         targetRot *= Quaternion.Euler(m_RotOffset);
                     }
-                    else if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                    else if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
                     {
-                        targetRot *= Quaternion.Euler(overrideData.WeaponRotOffset);
+                        targetRot *= Quaternion.Euler(overrideData.HolsterWeaponRotOffset);
                     }
                     weaponTr.rotation = targetRot;
 
                     float3 targetPos = targetTr.position;
-                    if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.None)
+                    if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.None)
                     {
                         targetPos += math.mul(targetRot, m_Offset);
                     }
-                    else if (overrideData.OverrideOptions == ActorWeaponData.OverrideOptions.Override)
+                    else if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
                     {
-                        targetPos += math.mul(targetRot, overrideData.WeaponPosOffset);
+                        targetPos += math.mul(targetRot, overrideData.HolsterWeaponPosOffset);
                     }
                     weaponTr.position = targetPos;
                     

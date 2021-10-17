@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            var list = attProvider.Object.GetTargetsInRange();
+            var list = attProvider.GetObject().GetTargetsInRange();
             CoreSystem.Logger.Log(Channel.Debug,
                 $"Entity({entity.Name}) found {list.Length} targets.");
         }

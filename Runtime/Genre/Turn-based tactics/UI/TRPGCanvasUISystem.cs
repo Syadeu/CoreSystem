@@ -113,7 +113,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Object.UIEntries;
+                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
                 for (int j = 0; j < list.Count; j++)
                 {
                     ActorOverlayUIEntry obj = list[j].GetObject();
@@ -209,7 +209,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Object.UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();
@@ -230,7 +230,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Object.UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();

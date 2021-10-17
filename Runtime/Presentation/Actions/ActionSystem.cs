@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Actions
         {
             foreach (var action in m_Actions)
             {
-                action.Value.Object.InternalTerminate();
+                action.Value.GetObject().InternalTerminate();
             }
 
             m_Actions.Dispose();
@@ -82,7 +82,7 @@ namespace Syadeu.Presentation.Actions
         {
             foreach (var action in m_Actions)
             {
-                action.Value.Object.InternalCreate();
+                action.Value.GetObject().InternalCreate();
             }
 
             return base.OnStartPresentation();
@@ -157,7 +157,7 @@ namespace Syadeu.Presentation.Actions
             {
                 case ActionType.Instance:
                     //InstanceAction action = InstanceAction.GetAction(temp.action);
-                    InstanceAction action = (InstanceAction)GetAction(temp.action).Object;
+                    InstanceAction action = (InstanceAction)GetAction(temp.action).GetObject();
 
                     if (action is IEventSequence sequence)
                     {
@@ -193,7 +193,7 @@ namespace Syadeu.Presentation.Actions
                     return;
                 case ActionType.Trigger:
                     //TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
-                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).Object;
+                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).GetObject();
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {

@@ -642,7 +642,7 @@ namespace SyadeuEditor.Presentation
                         return;
                     }
 
-                    var entity = value.Object;
+                    var entity = value.GetObject();
                     m_SelectedName = entity.Name + EditorUtils.String($": {entity.GetType().Name}", 11);
 
                     MemberInfo[] temp = entity.GetType()
@@ -718,7 +718,7 @@ namespace SyadeuEditor.Presentation
                         return;
                     }
 
-                    ObjectBase obj = m_Selected.Object;
+                    ObjectBase obj = m_Selected.GetObject();
 
                     EditorUtils.StringRich(m_SelectedName, 20);
                     EditorGUILayout.Space(3);

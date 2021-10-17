@@ -5,7 +5,3 @@
         bool IsEmpty();
     }
 }
-
-namespace Syadeu.Collections.Unsafe
-{
-}

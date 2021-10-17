@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                ExecutePostEvent(m_InstanceProviders[i].Object, ev);
+                ExecutePostEvent(m_InstanceProviders[i].GetObject(), ev);
             }
             m_OnEventReceived.Execute(ev);
 
@@ -177,7 +177,7 @@ namespace Syadeu.Presentation.Actor
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
                         return true;
                     }
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].Object is T)
+                if (m_InstanceProviders[i].GetObject() is T)
                 {
                     return true;
                 }
@@ -201,7 +201,7 @@ namespace Syadeu.Presentation.Actor
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
                         return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
                     }
@@ -212,7 +212,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].Object is T)
+                if (m_InstanceProviders[i].GetObject() is T)
                 {
                     return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
                 }
@@ -224,7 +224,7 @@ namespace Syadeu.Presentation.Actor
         {
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                ExecuteOnDestroy(m_InstanceProviders[i].Object, m_Parent);
+                ExecuteOnDestroy(m_InstanceProviders[i].GetObject(), m_Parent);
                 m_EntitySystem.System.DestroyObject(m_InstanceProviders[i]);
             }
 

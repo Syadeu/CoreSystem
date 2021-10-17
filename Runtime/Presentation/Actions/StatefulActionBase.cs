@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.Actions
             m_State.CurrentState = StateBase<TAction>.State.AboutToExecute;
             m_State.Entity = entity;
 
-            PresentationSystem<EventSystem>.System.PostAction(StartAction);
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostAction(StartAction);
             return true;
         }
         private void StartAction()
@@ -86,11 +86,11 @@ namespace Syadeu.Presentation.Actions
             }
             else
             {
-                PresentationSystem<EventSystem>.System.PostAction(StartAction);
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostAction(StartAction);
                 return;
             }
 
-            PresentationSystem<EventSystem>.System.PostAction(InternalTerminate);
+            PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostAction(InternalTerminate);
         }
 
         internal static TAction GetAction(FixedReference<TAction> other)
@@ -105,7 +105,7 @@ namespace Syadeu.Presentation.Actions
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                TAction t = entitySystem.CreateInstance(other).Object;
+                TAction t = entitySystem.CreateInstance(other).GetObject();
                 t.m_Reference = other;
                 t.InternalCreate();
 

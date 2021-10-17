@@ -72,7 +72,7 @@ namespace Syadeu.Presentation.Actions
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                T t = entitySystem.CreateInstance(other).Object;
+                T t = entitySystem.CreateInstance(other).GetObject();
                 t.m_Reference = other;
                 t.InternalCreate();
 

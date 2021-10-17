@@ -353,6 +353,7 @@ namespace Syadeu.Presentation.Render
             private Entity<ActorEntity> m_Entity;
             private Reference<ActorOverlayUIEntry> m_UI;
 
+            private Instance<ActorOverlayUIEntry> m_UISettingInstance;
             private Entity<UIObjectEntity> m_InstanceObject;
 
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.AfterTransform;
@@ -363,13 +364,15 @@ namespace Syadeu.Presentation.Render
                 m_Entity = entity;
                 m_UI = ui;
 
+                m_UISettingInstance = ui.CreateInstance();
                 ActorOverlayUIEntry setting = m_UI.GetObject();
-                m_InstanceObject = Instance<UIObjectEntity>.CreateInstance(setting.m_Prefab);
+                m_InstanceObject = setting.m_Prefab.CreateInstance();
                 m_InstanceObject.transform.position = entity.transform.position + setting.m_Offset;
                 m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(entity);
             }
             public void Dispose()
             {
+                m_UISettingInstance.Destroy();
             }
 
             public IEnumerator Execute()
@@ -378,7 +381,7 @@ namespace Syadeu.Presentation.Render
                     entityTr = m_Entity.transform,
                     uiTr = m_InstanceObject.transform;
 
-                ActorOverlayUIEntry setting = m_UI.GetObject();
+                ActorOverlayUIEntry setting = m_UISettingInstance.GetObject();
                 RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 Transform camTr;
 
