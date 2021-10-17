@@ -76,9 +76,9 @@ namespace Syadeu.Presentation.Actor
         //    m_Initialized = false;
         //    m_Parent = EntityData<IEntityData>.Empty;
         //}
-        protected override void Reserve()
+        protected override void OnReserve()
         {
-            base.Reserve();
+            base.OnReserve();
 
             m_Initialized = false;
             m_Parent = EntityData<IEntityData>.Empty;

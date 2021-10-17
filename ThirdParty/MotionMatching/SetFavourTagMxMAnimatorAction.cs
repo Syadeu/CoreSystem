@@ -10,7 +10,6 @@ using Syadeu.Internal;
 namespace Syadeu.Presentation.MotionMatching
 {
     [DisplayName("TriggerAction: Set FavourTag MxMAnimator")]
-    [ReflectionDescription("없으면 추가하고 있으면 제거합니다.")]
     public sealed class SetFavourTagMxMAnimatorAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Tags")]
@@ -21,11 +20,12 @@ namespace Syadeu.Presentation.MotionMatching
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();
 
-            if ((anim.FavourTags & m_Tags) == m_Tags)
-            {
-                anim.RemoveFavourTags(m_Tags);
-            }
-            else
+            //if ((anim.FavourTags & m_Tags) == m_Tags)
+            //{
+            //    anim.RemoveFavourTags(m_Tags);
+            //}
+            //else
+            anim.ClearFavourTags();
             {
                 anim.AddFavourTags(m_Tags);
             }

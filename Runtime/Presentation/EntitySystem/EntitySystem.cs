@@ -217,18 +217,6 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-            //            if (targetObject is Components.INotifyComponent notifyComponent)
-            //            {
-            //                var notifies = GetComponentInterface(targetObject.GetType());
-            //                foreach (var item in notifies)
-            //                {
-            //                    Type componentType = item.GetGenericArguments()[0];
-            //                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-            //#if DEBUG_MODE
-            //                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-            //#endif
-            //                }
-            //            }
 #if DEBUG_MODE
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
@@ -324,6 +312,9 @@ namespace Syadeu.Presentation
                 {
                     ProcessNonEntityDestroy(entityList[i]);
                 }
+
+                entityList[i].InternalOnDestroy();
+                ((IDisposable)entityList[i]).Dispose();
             }
 
             foreach (var item in m_EntityProcessors)

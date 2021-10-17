@@ -42,6 +42,10 @@ namespace Syadeu.Presentation.Actions
         {
             m_Terminated = true;
         }
+        internal override void InternalOnDestroy()
+        {
+            InternalTerminate();
+        }
         internal void InternalCreate()
         {
             OnCreated();

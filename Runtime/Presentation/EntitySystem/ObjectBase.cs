@@ -14,7 +14,7 @@ namespace Syadeu.Presentation
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
     [RequireDerived]
-    public abstract class ObjectBase : IObject, IEquatable<ObjectBase>
+    public abstract class ObjectBase : IObject, IDisposable, IEquatable<ObjectBase>
     {
         const string c_NameBase = "New {0}";
 
@@ -67,30 +67,47 @@ namespace Syadeu.Presentation
         }
         public virtual object Clone() => Copy();
 
+        void IDisposable.Dispose() { }
+        /// <summary>
+        /// 인스턴스가 정말 파괴될 때 실행됩니다.
+        /// </summary>
+        internal virtual void InternalOnDestroy()
+        {
+            
+        }
+        /// <summary>
+        /// Pool 에서 꺼내져 재사용될때 실행됩니다.
+        /// </summary>
         internal virtual void InternalReset()
         {
             Idx = Hash.NewHash();
             m_Reserved = false;
         }
+        /// <summary>
+        /// Pool 로 돌아갈 때 실행됩니다.
+        /// </summary>
         internal virtual void InternalReserve()
         {
-            Reserve();
+            OnReserve();
             m_Reserved = true;
         }
-        protected virtual void Reserve()
-        {
-            
-        }
-        //public void Dispose()
-        //{
-        //    if (Disposed) return;
-        //    OnDispose();
-        //    Disposed = true;
-        //}
-        ///// <summary>
-        ///// 이 인스턴스 객체가 메모리에서 제거될때 실행됩니다.
-        ///// </summary>
-        //protected virtual void OnDispose() { }
+
+        /// <summary>
+        /// 인스턴스가 정말 파괴될 때 실행됩니다.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ObjectBase"/> 를 상속받는 모든 오브젝트들은 재사용됩니다. 
+        /// 이 메소드는 시스템(게임)이 완전히 종료되거나, 메모리 효율을 위해 파괴될 때 실행됩니다.
+        /// </remarks>
+        protected virtual void OnDestroy() { }
+        /// <summary>
+        /// 인스턴스가 Pool 로 돌아갈 때 실행됩니다.
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="EntityExtensionMethods.Destroy(IEntityDataID)"/> 등과 같은 Destroy 콜이 들어왔을 때 
+        /// 실행됩니다. 인스턴스가 메모리에서 완전히 제거될 때에는 <seealso cref="OnDestroy"/> 를 실행합니다.
+        /// </remarks>
+        protected virtual void OnReserve() { }
 
         public override sealed int GetHashCode()
         {

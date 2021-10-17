@@ -47,11 +47,6 @@ namespace Syadeu.Presentation.Actions
 
         public override void OnDispose()
         {
-            foreach (var action in m_Actions)
-            {
-                action.Value.GetObject().InternalTerminate();
-            }
-
             m_Actions.Dispose();
 
             base.OnDispose();
