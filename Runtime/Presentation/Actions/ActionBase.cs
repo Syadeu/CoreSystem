@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Actions
         }
         internal override void InternalOnDestroy()
         {
-            InternalTerminate();
+
         }
         internal void InternalCreate()
         {

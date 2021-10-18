@@ -57,6 +57,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             for (int i = 0; i < m_Shortcuts.Length; i++)
             {
+                if (m_Shortcuts[i] == null) continue;
+
                 m_TRPGInputSystem.UnbindShortcut(m_Shortcuts[i]);
 
                 m_Shortcuts[i] = null;

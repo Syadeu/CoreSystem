@@ -34,6 +34,12 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
+            foreach (var item in m_ShortcutBindings)
+            {
+                m_InputSystem.RemoveBinding(item.Value);
+            }
+            m_ShortcutBindings.Clear();
+
             m_EventSystem = null;
             m_InputSystem = null;
         }
