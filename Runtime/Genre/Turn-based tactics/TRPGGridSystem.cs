@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridTempOutlines, m_GridTempPathlines;
 
         //private ComputeBuffer m_GridOutlineBuffer;
-        private Mesh m_OutlineMesh;
+        //private Mesh m_OutlineMesh;
 
         private bool 
             m_IsDrawingGrids = false,
@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             //m_GridOutlineBuffer = new ComputeBuffer(128, 12, ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
 
-            m_OutlineMesh = new Mesh();
+            //m_OutlineMesh = new Mesh();
 
             {
                 m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
@@ -122,17 +122,17 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        private bool m_DrawMesh = false;
+        //private bool m_DrawMesh = false;
 
-        protected override PresentationResult AfterPresentation()
-        {
-            if (m_DrawMesh)
-            {
-                Graphics.DrawMesh(m_OutlineMesh, Matrix4x4.identity, CoreSystemSettings.Instance.m_TRPGGridLineMaterial, 0);
-            }
+        //protected override PresentationResult AfterPresentation()
+        //{
+        //    if (m_DrawMesh)
+        //    {
+        //        Graphics.DrawMesh(m_OutlineMesh, Matrix4x4.identity, CoreSystemSettings.Instance.m_TRPGGridLineMaterial, 0);
+        //    }
 
-            return base.AfterPresentation();
-        }
+        //    return base.AfterPresentation();
+        //}
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
@@ -166,8 +166,9 @@ namespace Syadeu.Presentation.TurnTable
                 //}
                 //m_GridOutlineBuffer.EndWrite<float3>(m_GridTempOutlines.Length);
 
-                m_OutlineMesh.SetVertices(m_GridTempOutlines.AsArray());
-                m_DrawMesh = true;
+                //m_OutlineMesh.SetVertices(m_GridTempOutlines.AsArray());
+                //m_OutlineMesh.SetIndices()
+                //m_DrawMesh = true;
 
                 GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
 
