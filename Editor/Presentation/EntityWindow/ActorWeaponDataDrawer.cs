@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;

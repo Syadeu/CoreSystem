@@ -3,7 +3,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Presentation.Proxy
+namespace Syadeu.Collections
 {
     [Serializable]
     public struct TRS
