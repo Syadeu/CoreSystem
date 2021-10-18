@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actor
         public ActorWeaponEquipOptions EquipOptions => m_EquipOptions;
         public Instance<ActorWeaponData> Weapon => m_Weapon;
 
-        public bool BurstCompile => throw new System.NotImplementedException();
+        public bool BurstCompile => false;
 
         public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Instance<ActorWeaponData> weapon)
         {

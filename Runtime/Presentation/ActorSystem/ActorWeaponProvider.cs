@@ -75,11 +75,6 @@ namespace Syadeu.Presentation.Actor
             component.m_OnWeaponSelected = m_OnWeaponSelected.ToFixedList16();
             component.m_OnEquipWeapon = m_OnEquipWeapon.ToFixedList16();
             component.m_OnUnequipWeapon = m_OnUnequipWeapon.ToFixedList16();
-            //if (m_UseBone && !entity.HasAttribute<AnimatorAttribute>())
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        $"This entity({entity.Name}) doesn\'t have any {nameof(AnimatorAttribute)} but UseBone.");
-            //}
 
             if (m_MaxEquipableCount <= 0)
             {
@@ -89,10 +84,6 @@ namespace Syadeu.Presentation.Actor
             }
             
             component.m_EquipedWeapons = new FixedInstanceList16<ActorWeaponData>();
-            for (int i = 0; i < m_MaxEquipableCount; i++)
-            {
-                component.m_EquipedWeapons.Add(Hash.Empty);
-            }
 
             for (int i = 0; i < m_ExcludeWeapon.Length; i++)
             {
