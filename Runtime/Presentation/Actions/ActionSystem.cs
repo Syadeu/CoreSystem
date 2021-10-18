@@ -83,15 +83,28 @@ namespace Syadeu.Presentation.Actions
             return base.OnStartPresentation();
         }
 
-        public Instance<ActionBase> GetAction(FixedReference<ActionBase> reference)
+        public Instance<ActionBase> GetAction(IFixedReference<ActionBase> reference)
         {
-            if (!m_Actions.ContainsKey(reference))
+            var temp = ((FixedReference<ActionBase>)reference);
+            if (!m_Actions.ContainsKey(temp))
             {
                 CoreSystem.Logger.LogError(Channel.Action, "??");
                 return Instance<ActionBase>.Empty;
             }
 
-            return m_Actions[reference];
+            return m_Actions[temp];
+        }
+        public Instance<TAction> GetAction<TAction>(IFixedReference<ActionBase> reference)
+            where TAction : ActionBase
+        {
+            var temp = ((FixedReference<ActionBase>)reference);
+            if (!m_Actions.ContainsKey(temp))
+            {
+                CoreSystem.Logger.LogError(Channel.Action, "??");
+                return Instance<TAction>.Empty;
+            }
+
+            return m_Actions[temp].Cast<ActionBase, TAction>();
         }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
@@ -264,7 +277,7 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            InstanceAction action = InstanceAction.GetAction(temp);
+            InstanceAction action = (InstanceAction)GetAction(temp.As<ActionBase>()).GetObject();
 
             bool result = action.InternalExecute();
             action.InternalTerminate();
@@ -317,7 +330,7 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            TriggerAction triggerAction = TriggerAction.GetAction(temp);
+            TriggerAction triggerAction = (TriggerAction)GetAction(temp.As<ActionBase>()).GetObject();
 
             bool result = triggerAction.InternalExecute(entity);
             triggerAction.InternalTerminate();

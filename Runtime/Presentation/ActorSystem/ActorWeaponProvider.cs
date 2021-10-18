@@ -276,7 +276,7 @@ namespace Syadeu.Presentation.Actor
                 quaternion targetRotation;
                 if (!useBone || !entity.hasProxy)
                 {
-                    var tr = animator.AnimatorComponent.transform;
+                    var tr = entity.transform;
                     targetPosition = tr.position;
                     targetRotation = tr.rotation;
                 }

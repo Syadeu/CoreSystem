@@ -104,6 +104,8 @@ namespace Syadeu.Presentation.Actor
                 $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }
 
+            m_HolsterPosition = m_HolsterPosition.GetProperty();
+            m_DrawPosition = m_DrawPosition.GetProperty();
             //FireFXBounds((FXBounds.TriggerOptions)~0);
         }
         protected override void OnDestroy()
