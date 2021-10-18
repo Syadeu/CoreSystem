@@ -34,7 +34,15 @@ namespace Syadeu.Presentation.Actor
             return false;
         }
 
-        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideCurrent)
+        /// <summary><inheritdoc cref="ScheduleEvent{TEvent}(TEvent)"/></summary>
+        /// <remarks>
+        /// <paramref name="overrideSameEvent"/> 가 true 일 경우에 다음 이벤트가 없을 경우에만 
+        /// 같은 이벤트를 덮어씁니다.
+        /// </remarks>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
+        /// <param name="overrideSameEvent"></param>
+        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideSameEvent)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -42,8 +50,13 @@ namespace Syadeu.Presentation.Actor
 #endif
         {
             ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
-            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideCurrent);
+            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideSameEvent);
         }
+        /// <summary>
+        /// 이벤트를 스케쥴합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         public void ScheduleEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent

@@ -41,9 +41,11 @@ namespace Syadeu.Presentation.Attributes
         public Reference<TriggerAction>[] m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Layer")]
+        [Tooltip("Entity 의 Raycasting Layer 를 지정할 수 있습니다.")]
         [JsonProperty(Order = 7, PropertyName = "Layer")]
         public Reference<TriggerBoundLayer> m_Layer = Reference<TriggerBoundLayer>.Empty;
 
+        // TODO : to component side
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 
         [JsonIgnore] public bool Enabled { get; set; } = true;

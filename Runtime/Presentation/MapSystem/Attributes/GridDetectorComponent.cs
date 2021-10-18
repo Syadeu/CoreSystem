@@ -20,14 +20,24 @@ namespace Syadeu.Presentation.Map
         internal FixedReferenceList64<TriggerPredicateAction> m_OnDetectedPredicate;
         internal FixedLogicTriggerAction8 m_OnDetected;
 
-        // i found
+        /// <summary>
+        /// 이 Detector 가 발견한 Entity 들을 담습니다.
+        /// </summary>
         internal FixedList512Bytes<EntityShortID> m_Detected;
-        // ive spotted
+        /// <summary>
+        /// 이 Detector 가 다른 Entity 의 Detector 에 의해 발견되었으면 해당 발견자를 담습니다.
+        /// </summary>
+        /// <remarks>
+        /// GridDetector 를 상속받는 Entity 만 이 컴포넌트를 사용합니다.
+        /// </remarks>
         internal FixedList512Bytes<EntityShortID> m_TargetedBy;
 
         public FixedList512Bytes<EntityShortID> Detected => m_Detected;
         public FixedList512Bytes<EntityShortID> TargetedBy => m_TargetedBy;
 
+        /// <summary>
+        /// 이 Detector 가 최대로 감시할 수 있는 시스템 연산상 그리드 인덱스의 최대치를 반환합니다.
+        /// </summary>
         public int MaxDetectionIndicesCount => GridSizeComponent.CalculateMaxiumIndicesInRangeCount(m_MaxDetectionRange);
 
         void IDisposable.Dispose()

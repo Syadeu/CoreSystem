@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel;
 using Newtonsoft.Json;
 using Syadeu.Presentation.Data;
-using MxM;
 using UnityEngine;
 
 #if CORESYSTEM_MOTIONMATCHING
+using MxM;
+
 namespace Syadeu.Presentation.MotionMatching
 {
     [DisplayName("Data: MxM Event Definition")]
