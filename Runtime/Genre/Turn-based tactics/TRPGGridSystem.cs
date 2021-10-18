@@ -30,6 +30,8 @@ namespace Syadeu.Presentation.TurnTable
         private NativeList<Vector3> 
             m_GridTempOutlines, m_GridTempPathlines;
 
+        //private ComputeBuffer m_GridOutlineBuffer;
+
         private bool 
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
@@ -47,6 +49,8 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override PresentationResult OnInitialize()
         {
+            //m_GridOutlineBuffer = new ComputeBuffer(128, 12, ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
+
             {
                 m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
                 m_GridOutlineRenderer.numCornerVertices = 1;
@@ -92,6 +96,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
+            //m_GridOutlineBuffer.Release();
+
             m_GridTempMoveables.Dispose();
             m_GridTempOutlines.Dispose();
             m_GridTempPathlines.Dispose();
@@ -132,8 +138,18 @@ namespace Syadeu.Presentation.TurnTable
                 move.GetMoveablePositions(ref m_GridTempMoveables, out int count);
                 move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines, count);
 
+                //Graphics.drawmesh
+
                 m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
                 m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
+                //m_GridOutlineRenderer.Simplify(.5f);
+
+                //var buffer = m_GridOutlineBuffer.BeginWrite<float3>(0, m_GridTempOutlines.Length);
+                //for (int i = 0; i < m_GridTempOutlines.Length; i++)
+                //{
+                //    buffer[i] = m_GridTempOutlines[i];
+                //}
+                //m_GridOutlineBuffer.EndWrite<float3>(m_GridTempOutlines.Length);
 
                 GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
 

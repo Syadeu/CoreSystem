@@ -202,6 +202,13 @@ namespace Syadeu.Presentation.Proxy
                 list.Add(components[i]);
             }
 
+            //MeshFilter[] meshes = GetComponentsInChildren<MeshFilter>(true);
+            //for (int i = 0; i < meshes.Length; i++)
+            //{
+            //    var mesh = meshes[i].sharedMesh;
+            //    mesh.vertices
+            //}
+
             OnCreated();
         }
 
