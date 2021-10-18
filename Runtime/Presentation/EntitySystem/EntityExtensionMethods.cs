@@ -3,16 +3,10 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using Syadeu.ThreadSafe;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
