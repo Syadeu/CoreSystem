@@ -318,7 +318,7 @@ namespace Syadeu.Presentation.Actor
 
                 for (int i = 0; i < weaponComponent.m_EquipedWeapons.Length; i++)
                 {
-                    bool selected = weaponComponent.Selected == i;
+                    bool selected = weaponComponent.Selected == i && weaponComponent.Drawn;
                     SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], selected);
                 }
             }

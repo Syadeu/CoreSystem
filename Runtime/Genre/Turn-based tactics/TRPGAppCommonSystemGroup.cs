@@ -15,7 +15,8 @@ namespace Syadeu.Presentation.TurnTable
         public override void Register()
         {
             RegisterSystem(
-                TypeHelper.TypeOf<TRPGAppIntiailzeSystem>.Type
+                TypeHelper.TypeOf<TRPGAppIntiailzeSystem>.Type,
+                TypeHelper.TypeOf<TRPGInputSystem>.Type
                 );
         }
     }

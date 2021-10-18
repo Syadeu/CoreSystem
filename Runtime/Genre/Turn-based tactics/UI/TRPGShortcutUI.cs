@@ -44,6 +44,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                 m_Button.interactable = value;
             }
         }
+        public int Index => m_Index + 1;
 
         private void Awake()
         {
@@ -68,7 +69,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
                 .System
-                .AuthoringShortcut(this, m_ShortcutType, m_Index + 1);
+                .AuthoringShortcut(this, m_ShortcutType);
         }
         internal void Initialize(TRPGCanvasUISystem uiSystem, Events.EventSystem eventSystem)
         {

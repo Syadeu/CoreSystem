@@ -35,6 +35,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         private WorldCanvasSystem m_WorldCanvasSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
+        private TRPGInputSystem m_TRPGInputSystem;
 
         #region Presentation Methods
 
@@ -45,12 +46,22 @@ namespace Syadeu.Presentation.TurnTable.UI
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, Input.InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+
+            RequestSystem<TRPGAppCommonSystemGroup, TRPGInputSystem>(Bind);
+
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
             return base.OnInitialize();
         }
         public override void OnDispose()
         {
+            for (int i = 0; i < m_Shortcuts.Length; i++)
+            {
+                m_TRPGInputSystem.UnbindShortcut(m_Shortcuts[i]);
+
+                m_Shortcuts[i] = null;
+            }
+
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_TurnTableSystem.RemoveOnStartTurnEvent(CheckStartTurnActorOverlayUI);
@@ -63,7 +74,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem = null;
             m_InputSystem = null;
             m_WorldCanvasSystem = null;
+
             m_TurnTableSystem = null;
+            m_TRPGInputSystem = null;
         }
 
         #region Binds
@@ -86,6 +99,10 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             m_TurnTableSystem.AddOnStartTurnEvent(CheckStartTurnActorOverlayUI);
             m_TurnTableSystem.AddOnEndTurnEvent(CheckEndTurnActorOverlayUI);
+        }
+        private void Bind(TRPGInputSystem other)
+        {
+            m_TRPGInputSystem = other;
         }
 
         #endregion
@@ -135,15 +152,13 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         #region UI Controls
 
-        public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType, int index)
+        public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
         {
             m_Shortcuts[(int)shortcutType] = shortcut;
 
             shortcut.Initialize(this, m_EventSystem);
 
-            InputAction inputAction = m_InputSystem.GetKeyboardBinding(index, false, InputActionType.Button);
-            inputAction.performed += shortcut.OnKeyboardPressed;
-            inputAction.Enable();
+            m_TRPGInputSystem.BindShortcut(shortcut);
 
             shortcut.Hide = m_ShortcutsHide;
         }

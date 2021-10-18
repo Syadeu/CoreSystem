@@ -145,6 +145,13 @@ namespace Syadeu.Presentation.Input
             m_CreatedInputActions.Add(action);
             return action;
         }
+        public void RemoveBinding(InputAction action)
+        {
+            action.Disable();
+            action.Dispose();
+
+            m_CreatedInputActions.Remove(action);
+        }
 
         public static InputControl ToControlType(ControlType controlType)
         {

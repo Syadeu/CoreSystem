@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.Actor
         internal FixedReferenceList16<TriggerAction> m_OnUnequipWeapon;
 
         internal int m_SelectedWeaponIndex;
+        internal bool m_WeaponHolster;
         internal bool m_WeaponDrawn;
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
@@ -35,6 +36,16 @@ namespace Syadeu.Presentation.Actor
         public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
         public int Selected => m_SelectedWeaponIndex;
         public int Equiped => m_EquipedWeapons.Length;
+        public bool Holster
+        {
+            get => m_WeaponHolster;
+            set => m_WeaponHolster = value;
+        }
+        public bool Drawn
+        {
+            get => m_WeaponDrawn;
+            set => m_WeaponDrawn = value;
+        }
         public float WeaponDamage
         {
             get

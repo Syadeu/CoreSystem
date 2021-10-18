@@ -20,6 +20,9 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// TODO : 최적화 대상
+    /// </summary>
     internal sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
     {
         public override bool EnableBeforePresentation => false;
