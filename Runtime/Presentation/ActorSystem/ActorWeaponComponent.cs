@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actor
     {
         internal Entity<ActorEntity> m_Parent;
         //internal Instance<ActorWeaponProvider> m_Provider;
-        internal CoroutineJob m_WeaponPoser;
+        //internal CoroutineJob m_WeaponPoser;
 
         internal int m_MaxEquipableCount;
         internal Reference<ActorWeaponData> m_DefaultWeapon;
@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.Actor
         internal FixedReferenceList16<TriggerAction> m_OnUnequipWeapon;
 
         internal int m_SelectedWeaponIndex;
+        internal bool m_WeaponDrawn;
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
         public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
@@ -88,24 +89,11 @@ namespace Syadeu.Presentation.Actor
 
         void IDisposable.Dispose()
         {
-            if (!m_WeaponPoser.IsNull() && m_WeaponPoser.IsValid())
-            {
-                m_WeaponPoser.Stop();
-                m_WeaponPoser = CoroutineJob.Null;
-            }
-
             for (int i = 0; i < m_EquipedWeapons.Length; i++)
             {
-                //if (m_EquipedWeapons[i].IsEmpty()) continue;
-
                 m_EquipedWeapons[i].Destroy();
             }
-            //m_EquipedWeapons.Dispose();
-
-            //if (m_DefaultWeaponInstance.IsValid())
-            //{
-            //    m_DefaultWeaponInstance.Destroy();
-            //}
+            m_EquipedWeapons.Clear();
         }
     }
 }

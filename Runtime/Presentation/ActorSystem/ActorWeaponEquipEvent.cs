@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -10,6 +11,8 @@ namespace Syadeu.Presentation.Actor
         public ActorWeaponEquipOptions EquipOptions => m_EquipOptions;
         public Instance<ActorWeaponData> Weapon => m_Weapon;
 
+        public bool BurstCompile => throw new System.NotImplementedException();
+
         public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Instance<ActorWeaponData> weapon)
         {
             m_EquipOptions = options;
@@ -19,6 +22,10 @@ namespace Syadeu.Presentation.Actor
         {
             m_EquipOptions = options;
             m_Weapon = weapon.CreateInstance();
+        }
+
+        public void OnExecute(Entity<ActorEntity> from)
+        {
         }
     }
 }

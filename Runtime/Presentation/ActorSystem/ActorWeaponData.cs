@@ -99,8 +99,7 @@ namespace Syadeu.Presentation.Actor
                     return;
                 }
 
-                Instance<ObjectEntity> instance = m_Prefab.CreateInstance();
-                m_PrefabInstance = Entity<ObjectEntity>.GetEntityWithoutCheck(instance.Idx);
+                m_PrefabInstance = m_Prefab.CreateEntity(float3.zero);
 
                 $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }

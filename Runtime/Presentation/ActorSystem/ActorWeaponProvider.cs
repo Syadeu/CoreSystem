@@ -56,14 +56,14 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
         internal Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
+        [JsonIgnore] CoroutineJob m_WeaponPoser;
+
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
             Parent.AddComponent<ActorWeaponComponent>();
             ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
             component.m_Parent = entity;
-            //component.m_Provider = new Instance<ActorWeaponProvider>(Idx);
 
-            component.m_WeaponPoser = CoroutineJob.Null;
             component.m_DefaultWeapon = m_DefaultWeapon;
             component.m_MaxEquipableCount = m_MaxEquipableCount;
 
@@ -113,12 +113,17 @@ namespace Syadeu.Presentation.Actor
 
             if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
             {
+                ActorWeaponEquipEvent ev = new ActorWeaponEquipEvent(
+                    ActorWeaponEquipOptions.SelectWeapon, m_DefaultWeapon);
+                ScheduleEvent(ev);
                 //component.m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
                 //component.m_EquipedWeapons[0] = component.m_DefaultWeaponInstance;
-                m_OnEquipWeapon.Execute(Parent);
-                component.SelectWeapon(0);
+                //m_OnEquipWeapon.Execute(Parent);
+                //component.SelectWeapon(0);
             }
 
+            WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>());
+            m_WeaponPoser = StartCoroutine(weaponPoser);
             //Parent.AddComponent(component);
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
@@ -181,15 +186,6 @@ namespace Syadeu.Presentation.Actor
             }
             else
             {
-                //int emptySpace;
-                //if (component.m_EquipedWeapons[0].Equals(component.m_DefaultWeaponInstance))
-                //{
-                //    component.m_EquipedWeapons[0].Destroy();
-                //    component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
-                //    emptySpace = 0;
-                //}
-                //else emptySpace = GetEmptyEquipSpace(in component);
-
                 if (component.Equiped >= component.m_MaxEquipableCount)
                 {
                     if ((ev.EquipOptions & ActorWeaponEquipOptions.DestroyIfIsFull) == ActorWeaponEquipOptions.DestroyIfIsFull)
@@ -210,6 +206,10 @@ namespace Syadeu.Presentation.Actor
                             inventory.Insert(ev.Weapon.Cast<ActorWeaponData, IObject>());
                         }
                     }
+                    else
+                    {
+                        "unhandled".ToLogError();
+                    }
                 }
                 else
                 {
@@ -228,145 +228,108 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
+        protected override void OnDestroy()
         {
-            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
-
-            if (component.SelectedWeapon.IsValid() && 
-                component.SelectedWeapon.GetObject().PrefabInstance.IsValid())
-            {
-                WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon);
-                component.m_WeaponPoser = StartCoroutine(weaponPoser);
-            }
+            m_WeaponPoser.Stop();
         }
-        protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
-        {
-            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
-
-            if (!component.m_WeaponPoser.IsNull() &&
-                component.m_WeaponPoser.IsValid())
-            {
-                component.m_WeaponPoser.Stop();
-                component.m_WeaponPoser = CoroutineJob.Null;
-            }
-        }
-
-        //private int GetEmptyEquipSpace(in ActorWeaponComponent component)
+        //protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
         //{
-        //    for (int i = 0; i < component.m_EquipedWeapons.Length; i++)
+        //    ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
+
+        //    if (component.SelectedWeapon.IsValid() && 
+        //        component.SelectedWeapon.GetObject().PrefabInstance.IsValid())
         //    {
-        //        if (component.m_EquipedWeapons[i].IsEmpty())
-        //        {
-        //            return i;
-        //        }
+        //        WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon);
+        //        component.m_WeaponPoser = StartCoroutine(weaponPoser);
         //    }
-        //    return -1;
+        //}
+        //protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
+        //{
+        //    ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
+
+        //    if (!component.m_WeaponPoser.IsNull() &&
+        //        component.m_WeaponPoser.IsValid())
+        //    {
+        //        component.m_WeaponPoser.Stop();
+        //        component.m_WeaponPoser = CoroutineJob.Null;
+        //    }
         //}
 
         private struct WeaponPoser : ICoroutineJob
         {
             private Entity<ActorEntity> m_Entity;
-            private Instance<ActorWeaponData> m_Weapon;
 
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.Transform;
 
-            public WeaponPoser(Entity<ActorEntity> entity, Instance<ActorWeaponData> weapon)
+            public WeaponPoser(Entity<ActorEntity> entity)
             {
                 m_Entity = entity;
-                m_Weapon = weapon;
             }
 
             public void Dispose()
             {
             }
+            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Instance<ActorWeaponData> weapon, bool drawn)
+            {
+                ActorWeaponData data = weapon.GetObject();
+                ActorWeaponData.OverrideData overrideData = data.Overrides;
+                ITransform weaponTr = data.PrefabInstance.transform;
+
+                ActorWeaponData.OverrideOptions options = drawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;
+                bool useBone = drawn ? overrideData.DrawUseBone : overrideData.HolsterUseBone;
+                HumanBodyBones attachedBone = drawn ? overrideData.DrawAttachedBone : overrideData.HolsterAttachedBone;
+                float3 posOffset = drawn ? overrideData.DrawWeaponPosOffset : overrideData.HolsterWeaponPosOffset;
+                float3 rotOffset = drawn ? overrideData.DrawWeaponRotOffset : overrideData.HolsterWeaponRotOffset;
+
+                float3 targetPosition;
+                quaternion targetRotation;
+                if (!useBone || !entity.hasProxy)
+                {
+                    var tr = animator.AnimatorComponent.transform;
+                    targetPosition = tr.position;
+                    targetRotation = tr.rotation;
+                }
+                else
+                {
+                    var tr = animator.AnimatorComponent.Animator.GetBoneTransform(attachedBone);
+                    targetPosition = tr.position;
+                    targetRotation = tr.rotation;
+                }
+
+                //
+                if (options == ActorWeaponData.OverrideOptions.Addictive)
+                {
+                    //targetRot *= Quaternion.Euler(m_RotOffset);
+                    "not implements".ToLogError();
+                }
+                else if (options == ActorWeaponData.OverrideOptions.Override)
+                {
+                    targetRotation *= Quaternion.Euler(rotOffset);
+                    targetPosition += math.mul(targetRotation, posOffset);
+                }
+
+                weaponTr.rotation = targetRotation;
+                weaponTr.position = targetPosition;
+                //
+            }
+            private static void SetWeaponPositions(Entity<ActorEntity> entity, in AnimatorAttribute animator)
+            {
+                ref ActorWeaponComponent weaponComponent = ref entity.GetComponent<ActorWeaponComponent>();
+
+                for (int i = 0; i < weaponComponent.m_EquipedWeapons.Length; i++)
+                {
+                    bool selected = weaponComponent.Selected == i;
+                    SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], selected);
+                }
+            }
             public IEnumerator Execute()
             {
-                if (!m_Weapon.IsValid()) yield break;
-
                 AnimatorAttribute animator = m_Entity.GetAttribute<AnimatorAttribute>();
-                if (animator == null) yield break;
 
-                ActorWeaponData.OverrideData overrideData = m_Weapon.GetObject().Overrides;
-                ITransform weaponTr = m_Weapon.GetObject().PrefabInstance.transform;
-                Transform targetTr = null;
-
-                while (m_Weapon.IsValid() && m_Entity.IsValid())
+                while (m_Entity.IsValid())
                 {
-                    if (!m_Entity.hasProxy)
-                    {
-                        targetTr = null;
+                    SetWeaponPositions(m_Entity, in animator);
 
-                        yield return null;
-                        continue;
-                    }
-
-                    if (targetTr == null)
-                    {
-                        if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
-                        {
-                            if (overrideData.HolsterUseBone)
-                            {
-                                targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(overrideData.HolsterAttachedBone);
-                            }
-                            else
-                            {
-                                targetTr = animator.AnimatorComponent.transform;
-                            }
-
-                            if (targetTr == null)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity,
-                                    $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(overrideData.HolsterAttachedBone)}) in entity({m_Entity.Name}). Force to not use bone.");
-
-                                targetTr = animator.AnimatorComponent.transform;
-                            }
-                        }
-                        else
-                        {
-                            "not implements".ToLogError();
-                            //if (m_UseBone)
-                            //{
-                            //    targetTr = animator.AnimatorComponent.Animator.GetBoneTransform(m_TargetBone);
-                            //}
-                            //else
-                            //{
-                            //    targetTr = animator.AnimatorComponent.transform;
-                            //}
-
-                            //if (targetTr == null)
-                            //{
-                            //    CoreSystem.Logger.LogError(Channel.Entity,
-                            //        $"Could not found bone transform({TypeHelper.Enum<HumanBodyBones>.ToString(m_TargetBone)}) in entity({m_Entity.Name}). Force to not use bone.");
-
-                            //    targetTr = animator.AnimatorComponent.transform;
-                            //}
-                        }
-                    }
-
-                    quaternion targetRot = targetTr.rotation;
-                    if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Addictive)
-                    {
-                        //targetRot *= Quaternion.Euler(m_RotOffset);
-                        "not implements".ToLogError();
-                    }
-                    else if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
-                    {
-                        targetRot *= Quaternion.Euler(overrideData.HolsterWeaponRotOffset);
-                    }
-                    weaponTr.rotation = targetRot;
-
-                    float3 targetPos = targetTr.position;
-                    if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Addictive)
-                    {
-                        //targetPos += math.mul(targetRot, m_Offset);
-                        "not implements".ToLogError();
-                    }
-                    else if (overrideData.HolsterOverrideOptions == ActorWeaponData.OverrideOptions.Override)
-                    {
-                        targetPos += math.mul(targetRot, overrideData.HolsterWeaponPosOffset);
-                    }
-                    weaponTr.position = targetPos;
-                    
                     yield return null;
                 }
             }
