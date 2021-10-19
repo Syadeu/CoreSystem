@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using System;
+using Unity.Collections;
 using Unity.Mathematics;
 using AABB = Syadeu.Collections.AABB;
 
@@ -26,6 +27,13 @@ namespace Syadeu.Presentation.Proxy
         public float3 m_Size;
 
         public quaternion m_Rotation;
+
+        #region Hierarchy
+
+        public int m_ParentIndex;
+        public FixedList128Bytes<int> m_ChildIndices;
+
+        #endregion
 
         public bool m_GpuInstanced;
 
@@ -74,6 +82,16 @@ namespace Syadeu.Presentation.Proxy
             set => m_Scale = value;
         }
         //public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+
+        public float4x4 localToWorld
+        {
+            get => float4x4.TRS(m_Translation, m_Rotation, m_Scale);
+        }
+        public float4x4 worldToLocal
+        {
+            get => math.inverse(localToWorld);
+        }
+
 #pragma warning restore IDE1006 // Naming Styles
 
         public AABB GetAABB()

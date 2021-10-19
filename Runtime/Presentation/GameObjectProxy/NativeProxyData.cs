@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Proxy
                 return new ProxyTransform(m_UnsafeList, index, p->m_Generation, p->m_Hash);
             }
         }
-        public UnsafeList List => *m_UnsafeList;
+        public ref UnsafeList List => ref *m_UnsafeList;
 
         public NativeProxyData(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
@@ -199,6 +199,8 @@ namespace Syadeu.Presentation.Proxy
                 m_Center = center,
                 m_Size = size,
 
+                m_ParentIndex = -1,
+
                 m_GpuInstanced = gpuInstanced
             };
             
@@ -206,6 +208,15 @@ namespace Syadeu.Presentation.Proxy
 
             ProxyTransform transform = new ProxyTransform(m_UnsafeList, index, generation, hash);
             return transform;
+        }
+        public ProxyTransform GetTransform(int index)
+        {
+            if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"index of {index} in {m_UnsafeList->m_Length}");
+
+            int gen = m_UnsafeList->m_TransformBuffer[index].m_Generation;
+            Hash hash = m_UnsafeList->m_TransformBuffer[index].m_Hash;
+
+            return new ProxyTransform(m_UnsafeList, index, gen, hash);
         }
         public void Remove(ProxyTransform transform)
         {
@@ -220,6 +231,13 @@ namespace Syadeu.Presentation.Proxy
 
             p->m_IsOccupied = false;
             p->m_DestroyQueued = false;
+
+            p->m_ParentIndex = -1;
+            if (p->m_ChildIndices.Length > 0)
+            {
+                throw new Exception("child has not destroyed.");
+            }
+            p->m_ChildIndices.Clear();
 
             CoreSystem.Logger.Log(Channel.Proxy,
                 $"ProxyTransform({p->m_Prefab.GetObjectSetting().m_Name}) has been destroyed.");

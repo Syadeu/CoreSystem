@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Unity.Collections;
 
 namespace Syadeu.Collections
 {
@@ -34,5 +36,75 @@ namespace Syadeu.Collections
             }
             return list;
         }
+
+        #region Unity.Collections.FixedList
+
+        public static bool RemoveFor<T>(this FixedList32Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i].Equals(value))
+                {
+                    other.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public static bool RemoveFor<T>(this FixedList64Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i].Equals(value))
+                {
+                    other.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public static bool RemoveFor<T>(this FixedList128Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i].Equals(value))
+                {
+                    other.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public static bool RemoveFor<T>(this FixedList512Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i].Equals(value))
+                {
+                    other.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public static bool RemoveFor<T>(this FixedList4096Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i].Equals(value))
+                {
+                    other.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
     }
 }
