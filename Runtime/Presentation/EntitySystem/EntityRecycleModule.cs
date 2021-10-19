@@ -22,19 +22,6 @@ namespace Syadeu.Presentation
                 for (int i = 0; i < count; i++)
                 {
                     ObjectBase targetObject = (ObjectBase)item.Value.Pop();
-                    if (targetObject is IEntityData entityData)
-                    {
-                        System.ProcessEntityDestroy(targetObject, false);
-
-                        //((IDisposable)targetObject).Dispose();
-                    }
-                    else
-                    {
-                        System.ProcessNonEntityDestroy(targetObject, false);
-
-                        //((IDisposable)targetObject).Dispose();
-                        //m_ObjectEntities.Remove(targetObject.Idx);
-                    }
 
                     targetObject.InternalOnDestroy();
                     ((IDisposable)targetObject).Dispose();

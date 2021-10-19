@@ -111,19 +111,17 @@ namespace Syadeu.Presentation
                 {
                     ProcessEntityDestroy(targetObject, true);
 
-                    //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
                 else
                 {
                     ProcessNonEntityDestroy(targetObject, true);
 
-                    //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
         }
-        internal void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
+        private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (!(targetObject is IEntityData))
@@ -163,7 +161,7 @@ namespace Syadeu.Presentation
 #endif
             if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
-        internal void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
+        private void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (targetObject is IEntityData entityData)
