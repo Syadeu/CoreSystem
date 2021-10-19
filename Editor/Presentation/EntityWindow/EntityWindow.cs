@@ -527,9 +527,9 @@ namespace SyadeuEditor.Presentation
             }
             public void Remove(ObjectBase drawer)
             {
-                if (m_Selected.Equals(drawer))
+                if (Selected != null && Selected.Equals(drawer))
                 {
-                    m_Selected = null;
+                    Selected = null;
                 }
 
                 EntityListTreeView.RemoveItem(drawer);

@@ -61,6 +61,7 @@ namespace SyadeuEditor.Presentation
         {
             m_Root.children?.Clear();
             m_Rows.Clear();
+            m_Folders.Clear();
             m_CreationID = 1;
 
             if (Objects != null && Objects.Count > 0)
@@ -140,9 +141,12 @@ namespace SyadeuEditor.Presentation
         }
         public void RemoveItem(ObjectBase entityObj)
         {
-            m_Rows[entityObj.Hash].parent.children.Remove(m_Rows[entityObj.Hash]);
+            m_Folders[entityObj.GetType()].children.Remove(m_Rows[entityObj.Hash]);
+            //m_Rows[entityObj.Hash].parent.children.Remove(m_Rows[entityObj.Hash]);
 
             m_Rows.Remove(entityObj.Hash);
+
+            SetupDepthsFromParentsAndChildren(m_Root);
         }
 
         public override void OnGUI(Rect rect)
@@ -269,8 +273,9 @@ namespace SyadeuEditor.Presentation
                 });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
-                    item.parent.children.Remove(item);
-                    EntityDataList.Instance.m_Objects.Remove(obj.Target.Hash);
+                    //item.parent.children.Remove(item);
+                    //EntityDataList.Instance.m_Objects.Remove(obj.Target.Hash);
+                    EntityWindow.Instance.Remove(obj.Target);
                     //m_Window.Remove(obj.Target);
 
                     Reload();
@@ -290,7 +295,9 @@ namespace SyadeuEditor.Presentation
         }
         public void SetSelection(IFixedReference reference)
         {
-            SetSelection(new int[] { m_Rows[reference.Hash].id });
+            int id = m_Rows[reference.Hash].id;
+            SetSelection(new int[] { id });
+            FrameItem(id);
 
             OnSelect?.Invoke(((ObjectTreeElement)m_Rows[reference.Hash]).Target);
         }
