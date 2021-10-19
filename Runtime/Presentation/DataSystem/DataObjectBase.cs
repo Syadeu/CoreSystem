@@ -6,14 +6,9 @@
         {
             OnCreated();
         }
-        internal virtual void InternalOnDestroy()
-        {
-            OnDestroy();
-        }
 
         public override sealed object Clone() => base.Clone();
 
         protected virtual void OnCreated() { }
-        protected virtual void OnDestroy() { }
     }
 }

@@ -90,6 +90,7 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated()
         {
+            "asdasdasdfhgjghfjghjfghjfghjfgh".ToLog();
             if (!m_Prefab.IsEmpty())
             {
                 if (!m_Prefab.IsValid())
