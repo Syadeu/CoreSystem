@@ -64,8 +64,8 @@ namespace SyadeuEditor
 
         public override void OnInspectorGUI()
         {
-            EditorUtils.StringHeader("Prefab List");
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("Prefab List");
+            EditorUtilities.SectorLine();
 
             if (GUILayout.Button("Build"))
             {

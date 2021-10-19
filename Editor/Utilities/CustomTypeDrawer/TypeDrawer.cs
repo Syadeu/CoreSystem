@@ -4,7 +4,7 @@ using System;
 using System.Reflection;
 using UnityEditor;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class TypeDrawer : ObjectDrawer<Type>
     {

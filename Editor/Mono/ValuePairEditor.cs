@@ -45,13 +45,13 @@ namespace SyadeuEditor
 
             //Color originColor = GUI.backgroundColor;
             //GUI.backgroundColor = Color.cyan;
-            using (new EditorUtils.BoxBlock(Color.cyan))
+            using (new EditorUtilities.BoxBlock(Color.cyan))
             {
                 //GUI.backgroundColor = originColor;
                 #region Header
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorUtils.StringHeader(name, 15);
+                    EditorUtilities.StringHeader(name, 15);
 #if CORESYSTEM_GOOGLE
                     if (!string.IsNullOrEmpty(syncSheetName) && GUILayout.Button("Sync", GUILayout.Width(50)))
                     {

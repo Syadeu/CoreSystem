@@ -1,4 +1,5 @@
 ﻿
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,76 +38,12 @@ namespace SyadeuEditor
         yellow
     }
 
-    public static class EditorUtils
+    public static class EditorUtilities
     {
         #region Init
 
         public const string DefaultPath = "Assets/Resources/Syadeu";
-        public const string Box = "Box";
-        public const string TextField = "textField";
-        public const string MiniButton = "miniButton";
-        public const string FoldoutOpendString = "▼";
-        public const string FoldoutClosedString = "▶";
-
-        static GUIStyle _headerStyle;
-        internal static GUIStyle HeaderStyle
-        {
-            get
-            {
-                if (_headerStyle == null)
-                {
-                    _headerStyle = new GUIStyle
-                    {
-                        richText = true
-                    };
-                }
-                return _headerStyle;
-            }
-        }
-        static GUIStyle _centerStyle;
-        internal static GUIStyle CenterStyle
-        {
-            get
-            {
-                if (_centerStyle == null)
-                {
-                    _centerStyle = new GUIStyle
-                    {
-                        richText = true,
-                        alignment = TextAnchor.MiddleCenter
-                    };
-                }
-                return _centerStyle;
-            }
-        }
-        static GUIStyle _bttStyle;
-        internal static GUIStyle BttStyle
-        {
-            get
-            {
-                if (_bttStyle == null)
-                {
-                    _bttStyle = "Button";
-                    _bttStyle.richText = true;
-                }
-                return _bttStyle;
-            }
-        }
-        static GUIStyle _splitStyle;
-        internal static GUIStyle SplitStyle
-        {
-            get
-            {
-                if (_splitStyle == null)
-                {
-                    _splitStyle = new GUIStyle();
-                    _splitStyle.normal.background = UnityEditor.EditorGUIUtility.whiteTexture;
-                    _splitStyle.margin = new RectOffset(6, 6, 0, 0);
-                }
-                return _splitStyle;
-            }
-        }
-
+        
         static GUIContent _guiContent = null;
         public static GUIContent TempContent(string label, string tooltip = null, Texture2D icon = null)
         {
@@ -122,7 +59,7 @@ namespace SyadeuEditor
 
         public static System.Action onSceneGUIDelegate;
 
-        static EditorUtils()
+        static EditorUtilities()
         {
             SceneView.duringSceneGui -= SceneView_duringSceneGui;
             SceneView.duringSceneGui += SceneView_duringSceneGui;
@@ -154,27 +91,27 @@ namespace SyadeuEditor
             => String(String(text, color), size);
         public static void StringHeader(string text, StringColor color, bool center)
         {
-            EditorGUILayout.LabelField(String(text, color, 20), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, color, 20), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
         public static void StringHeader(string text, int size = 20)
         {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle);
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle);
         }
         public static void StringHeader(string text, int size, bool center)
         {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
         public static void StringHeader(string text, int size, params GUILayoutOption[] options)
         {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), HeaderStyle, options);
+            EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle, options);
         }
         public static void StringHeader(string text, StringColor color, int size = 20)
         {
-            EditorGUILayout.LabelField(String(text, color, size), HeaderStyle);
+            EditorGUILayout.LabelField(String(text, color, size), EditorStyleUtilities.HeaderStyle);
         }
         public static void StringRich(string text, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
         public static void StringRich(string text, GUIStyle style, bool center = false)
         {
@@ -202,15 +139,15 @@ namespace SyadeuEditor
         }
         public static void StringRich(string text, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, color), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, color), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
         public static void StringRich(string text, int size, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black, size), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
         public static void StringRich(string text, int size, StringColor color, bool center = false)
         {
-            EditorGUILayout.LabelField(String(text, color, size), center ? CenterStyle : HeaderStyle);
+            EditorGUILayout.LabelField(String(text, color, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
         }
 
         #endregion
@@ -222,13 +159,13 @@ namespace SyadeuEditor
             GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
 
             GUILayout.Space(8);
-            GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+            GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
             GUILayout.Space(2);
 
             for (int i = 1; i < lines; i++)
             {
                 GUILayout.Space(2);
-                GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
             }
 
             GUI.backgroundColor = old;
@@ -251,13 +188,13 @@ namespace SyadeuEditor
             GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
 
             GUILayout.Space(8);
-            GUILayout.Box(string.Empty, SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
+            GUILayout.Box(string.Empty, EditorStyleUtilities.SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
             GUILayout.Space(2);
 
             for (int i = 1; i < lines; i++)
             {
                 GUILayout.Space(2);
-                GUILayout.Box("", SplitStyle, GUILayout.MaxHeight(1.5f));
+                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
             }
 
             GUI.backgroundColor = old;
@@ -279,7 +216,7 @@ namespace SyadeuEditor
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(m_PrevIndent * 15);
                 GUI.backgroundColor = color;
-                GUILayout.BeginVertical(Box, options);
+                GUILayout.BeginVertical(EditorStyleUtilities.Box, options);
                 GUI.backgroundColor = m_PrevColor;
             }
             public void Dispose()
@@ -374,14 +311,14 @@ namespace SyadeuEditor
 
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
-            string firstKey = foldout ? FoldoutOpendString : FoldoutClosedString;
+            string firstKey = foldout ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
             if (size < 0)
             {
-                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, HeaderStyle);
+                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
             }
             else
             {
-                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, HeaderStyle);
+                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
             }
         }
 

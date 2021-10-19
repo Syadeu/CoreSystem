@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using SyadeuEditor.Utilities;
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
@@ -14,8 +15,8 @@ namespace SyadeuEditor
         
         public bool m_DrawBackground = false;
 
-        private GUIContent GUIContent => EditorUtils.TempContent(EditorUtils.String(m_Text, m_Color, m_FontSize));
-        private GUIStyle Style => m_Center ? EditorUtils.CenterStyle : EditorUtils.HeaderStyle;
+        private GUIContent GUIContent => EditorUtilities.TempContent(EditorUtilities.String(m_Text, m_Color, m_FontSize));
+        private GUIStyle Style => m_Center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle;
 
         public SceneGUILabel(string text)
         {

@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class Float3Drawer : ObjectDrawer<float3>
     {

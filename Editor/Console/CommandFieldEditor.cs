@@ -25,8 +25,8 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.Space();
-            EditorUtils.StringHeader("Command Field", StringColor.grey, true);
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("Command Field", StringColor.grey, true);
+            EditorUtilities.SectorLine();
 
             EditorGUI.BeginChangeCheck();
             Arguments();
@@ -36,7 +36,7 @@ namespace SyadeuEditor
             }
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
@@ -48,7 +48,7 @@ namespace SyadeuEditor
             CommandDefinitionEditor.ShowTypeHelpBox(m_Field.m_Settings);
             m_Field.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Field.m_Settings);
 
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
             //EditorGUILayout.HelpBox("이 변수로 실행할 수 있는 변수들입니다", MessageType.Info);
 

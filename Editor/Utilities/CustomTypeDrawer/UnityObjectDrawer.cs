@@ -1,9 +1,10 @@
-﻿using System;
+﻿using SyadeuEditor.Utilities;
+using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class UnityObjectDrawer : ObjectDrawer<UnityEngine.Object>
     {
@@ -28,8 +29,8 @@ namespace SyadeuEditor.Presentation
 
                     EditorGUI.BeginChangeCheck();
                     m_Open = GUILayout.Toggle(m_Open,
-                                m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                                , EditorUtils.MiniButton, GUILayout.Width(20));
+                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
                     if (EditorGUI.EndChangeCheck())
                     {
                         if (m_Open)

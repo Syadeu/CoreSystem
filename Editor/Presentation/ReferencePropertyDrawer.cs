@@ -1,6 +1,7 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Linq;
@@ -57,7 +58,7 @@ namespace SyadeuEditor.Presentation
 
             position = EditorGUI.IndentedRect(position);
 
-            if (GUI.Button(position, displayName, ReflectionHelperEditor.SelectorStyle))
+            if (GUI.Button(position, displayName, EditorStyleUtilities.SelectorStyle))
             {
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;

@@ -159,7 +159,7 @@ namespace SyadeuEditor.Tree
             if (e.HasChilds)
             {
                 EditorGUI.indentLevel += 1;
-                e.m_Opened = EditorUtils.Foldout(e.m_Opened, e.Name);
+                e.m_Opened = EditorUtilities.Foldout(e.m_Opened, e.Name);
 
                 if (e.m_Opened)
                 {
@@ -186,7 +186,7 @@ namespace SyadeuEditor.Tree
                     EditorGUI.indentLevel += 1;
 
                     EditorGUILayout.BeginHorizontal();
-                    e.m_Opened = EditorUtils.Foldout(e.m_Opened, $"{e.Name}", 12);
+                    e.m_Opened = EditorUtilities.Foldout(e.m_Opened, $"{e.Name}", 12);
                     if (m_DrawRemoveButton && DrawRemoveButton(e))
                     {
                         EditorGUILayout.EndHorizontal();
@@ -200,7 +200,7 @@ namespace SyadeuEditor.Tree
                 }
                 else
                 {
-                    EditorUtils.StringRich($"{e.Name}", 12);
+                    EditorUtilities.StringRich($"{e.Name}", 12);
                 }
 
                 EditorGUI.indentLevel += 1;

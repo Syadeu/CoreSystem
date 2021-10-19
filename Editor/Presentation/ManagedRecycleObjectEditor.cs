@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor.Presentation
 {
@@ -21,8 +22,8 @@ namespace SyadeuEditor.Presentation
         }
         public override void OnInspectorGUI()
         {
-            EditorUtils.StringHeader("Recycle Object");
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("Recycle Object");
+            EditorUtilities.SectorLine();
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(onCreation, new GUIContent("인스턴스 생성 시 한번만 호출할 함수"));
@@ -34,11 +35,11 @@ namespace SyadeuEditor.Presentation
 
             if (!Application.isPlaying) return;
 
-            EditorUtils.Line();
+            EditorUtilities.Line();
 
             if (!Asset.entity.IsValid())
             {
-                EditorUtils.StringRich("Invalid Entity", 13, true);
+                EditorUtilities.StringRich("Invalid Entity", 13, true);
                 return;
             }
 
@@ -56,7 +57,7 @@ namespace SyadeuEditor.Presentation
 
             Rect rect = new Rect(guiPos, new Vector2(180, 60));
 
-            using (new GUI.GroupScope(rect, Asset.entity.Name, EditorUtils.Box))
+            using (new GUI.GroupScope(rect, Asset.entity.Name, EditorStyleUtilities.Box))
             {
                 EditorGUILayout.LabelField("test");
             }

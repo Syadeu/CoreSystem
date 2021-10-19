@@ -176,7 +176,7 @@ namespace SyadeuEditor
 
             if (hastitle)
             {
-                Vector2 ns = TitleStyle.CalcSize(EditorUtils.TempContent(title));
+                Vector2 ns = TitleStyle.CalcSize(EditorUtilities.TempContent(title));
 
                 //if (hasShortcut)
                 //{
@@ -191,11 +191,11 @@ namespace SyadeuEditor
             {
                 if (!hastitle)
                 {
-                    Vector2 sumSize = EditorStyles.wordWrappedLabel.CalcSize(EditorUtils.TempContent(summary));
+                    Vector2 sumSize = EditorStyles.wordWrappedLabel.CalcSize(EditorUtilities.TempContent(summary));
                     total.x = Mathf.Min(sumSize.x, k_MaxWidth);
                 }
 
-                float summaryHeight = EditorStyles.wordWrappedLabel.CalcHeight(EditorUtils.TempContent(summary), total.x);
+                float summaryHeight = EditorStyles.wordWrappedLabel.CalcHeight(EditorUtilities.TempContent(summary), total.x);
                 total.y += summaryHeight;
             }
 
@@ -226,7 +226,7 @@ namespace SyadeuEditor
                 }
 
                 //UI.EditorGUIUtility.DrawSeparator(1, separatorColor);
-                EditorUtils.SectorLine();
+                EditorUtilities.SectorLine();
                 GUILayout.Space(2);
             }
 

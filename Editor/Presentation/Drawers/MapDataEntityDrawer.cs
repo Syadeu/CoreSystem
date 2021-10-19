@@ -1,5 +1,6 @@
 ﻿using Syadeu.Presentation;
 using Syadeu.Presentation.Map;
+using SyadeuEditor.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -65,9 +66,9 @@ namespace SyadeuEditor.Presentation
         }
         private void DrawInvalids()
         {
-            using (new EditorUtils.BoxBlock(ColorPalettes.TriadicColor.Three))
+            using (new EditorUtilities.BoxBlock(ColorPalettes.TriadicColor.Three))
             {
-                m_OpenInvalidList = EditorUtils.Foldout(m_OpenInvalidList, "Invalid Objects Founded", 13);
+                m_OpenInvalidList = EditorUtilities.Foldout(m_OpenInvalidList, "Invalid Objects Founded", 13);
                 if (GUILayout.Button("Remove All"))
                 {
                     List<MapDataEntityBase.Object> temp = Entity.m_Objects.ToList();
@@ -104,7 +105,7 @@ namespace SyadeuEditor.Presentation
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         m_OpenInvalidIndex[i]
-                        = EditorUtils.Foldout(m_OpenInvalidIndex[i], $"Element At {idx}");
+                        = EditorUtilities.Foldout(m_OpenInvalidIndex[i], $"Element At {idx}");
                         if (GUILayout.Button("Remove", GUILayout.Width(100)))
                         {
                             var temp = Entity.m_Objects.ToList();
@@ -139,7 +140,7 @@ namespace SyadeuEditor.Presentation
                         EditorGUI.indentLevel--;
                     }
 
-                    if (i + 1 < m_InvalidIndices.Count) EditorUtils.Line();
+                    if (i + 1 < m_InvalidIndices.Count) EditorUtilities.Line();
                 }
                 EditorGUI.indentLevel--;
             }
@@ -147,12 +148,12 @@ namespace SyadeuEditor.Presentation
         protected override void DrawGUI()
         {
             DrawHeader();
-            EditorUtils.Line();
+            EditorUtilities.Line();
 
             if (m_InvalidIndices.Count > 0)
             {
                 DrawInvalids();
-                EditorUtils.Line();
+                EditorUtilities.Line();
             }
 
             for (int i = 0; i < Drawers.Length; i++)

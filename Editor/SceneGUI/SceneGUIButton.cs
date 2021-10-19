@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using SyadeuEditor.Utilities;
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
@@ -17,8 +18,8 @@ namespace SyadeuEditor
 
         public bool m_DrawBackground = false;
 
-        private GUIContent GUIContent => EditorUtils.TempContent(EditorUtils.String(m_Text, m_Color, m_FontSize));
-        private static GUIStyle Style => EditorUtils.BttStyle;
+        private GUIContent GUIContent => EditorUtilities.TempContent(EditorUtilities.String(m_Text, m_Color, m_FontSize));
+        private static GUIStyle Style => EditorStyleUtilities.BttStyle;
 
         public SceneGUIButton(string text, System.Action onPushsed)
         {

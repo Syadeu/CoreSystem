@@ -4,6 +4,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class EnumDrawer : ObjectDrawer<Enum>
     {
@@ -251,12 +252,35 @@ namespace SyadeuEditor.Presentation
 
         private ObjectDrawerBase GetElementDrawer(IList list, int i)
         {
-            if (m_ElementType.Equals(TypeHelper.TypeOf<Type>.Type))
+            Type[] drawerTypes = TypeHelper.GetTypes(other => TypeHelper.TypeOf<ObjectDrawerBase>.Type.IsAssignableFrom(other));
+            var iter = drawerTypes.Where((other) =>
+            {
+                if (!other.IsAbstract && !other.IsInterface &&
+                    other.BaseType.GenericTypeArguments.Length > 0 &&
+                    other.BaseType.GenericTypeArguments[0].IsAssignableFrom(m_ElementType)) return true;
+                return false;
+            });
+            if (iter.Any())
+            {
+                var ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<IList>.Type, TypeHelper.TypeOf<int>.Type, TypeHelper.TypeOf<Type>.Type);
+
+                if (ctor != null)
+                {
+                    return (ObjectDrawerBase)ctor.Invoke(new object[] { list, i, m_ElementType });
+                }
+            }
+
+            if (TypeHelper.TypeOf<PropertyBlockBase>.Type.IsAssignableFrom(m_ElementType))
+            {
+                return new ObjectDrawer(list[i], m_ElementType, string.Empty);
+            }
+
+            else if (m_ElementType.Equals(TypeHelper.TypeOf<Type>.Type))
             {
                 return new TypeDrawer(list, m_ElementType, (other) => list[i] = other, () => (Type)list[i]);
             }
 
-            if (m_ElementType.IsEnum)
+            else if (m_ElementType.IsEnum)
             {
                 return new EnumDrawer(list, m_ElementType, (other) => list[i] = other, () => (Enum)list[i]);
             }
@@ -297,15 +321,15 @@ namespace SyadeuEditor.Presentation
                 return new ArrayDrawer(list, m_ElementType, (other) => list[i] = other, () => (IList)list[i]);
             }
 
-            else if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(m_ElementType))
-            {
-                return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IFixedReference)list[i]);
-            }
+            //else if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(m_ElementType))
+            //{
+            //    return new ReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IFixedReference)list[i]);
+            //}
 
-            else if (TypeHelper.TypeOf<IPrefabReference>.Type.IsAssignableFrom(m_ElementType))
-            {
-                return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
-            }
+            //else if (TypeHelper.TypeOf<IPrefabReference>.Type.IsAssignableFrom(m_ElementType))
+            //{
+            //    return new PrefabReferenceDrawer(list, m_ElementType, (other) => list[i] = other, () => (IPrefabReference)list[i]);
+            //}
 
             else if (TypeHelper.TypeOf<UnityEngine.Object>.Type.IsAssignableFrom(m_ElementType))
             {
@@ -322,16 +346,16 @@ namespace SyadeuEditor.Presentation
         {
             if (list == null) list = (IList)Activator.CreateInstance(m_DeclaredType);
 
-            using (new EditorUtils.BoxBlock(color3))
+            using (new EditorUtilities.BoxBlock(color3))
             {
                 #region Header
                 EditorGUILayout.BeginHorizontal();
-                m_Open = EditorUtils.Foldout(m_Open, 
+                m_Open = EditorUtilities.Foldout(m_Open, 
                     string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
                     , 13);
 
                 GUILayout.FlexibleSpace();
-                GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
+                GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
 
                 EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
@@ -373,7 +397,7 @@ namespace SyadeuEditor.Presentation
                 if (m_Open && m_ElementDrawers.Count > 0)
                 {
                     EditorGUI.indentLevel++;
-                    using (new EditorUtils.BoxBlock(color2))
+                    using (new EditorUtilities.BoxBlock(color2))
                     {
                         for (int i = 0; i < m_ElementDrawers.Count; i++)
                         {
@@ -400,7 +424,7 @@ namespace SyadeuEditor.Presentation
                             if (!m_ElementOpen[i]) continue;
 
                             EditorGUI.indentLevel++;
-                            using (new EditorUtils.BoxBlock(Color.black))
+                            using (new EditorUtilities.BoxBlock(Color.black))
                             {
                                 EditorGUILayout.BeginHorizontal();
 
@@ -413,7 +437,7 @@ namespace SyadeuEditor.Presentation
                                 }
                                 EditorGUILayout.EndHorizontal();
 
-                                if (i + 1 < m_ElementDrawers.Count) EditorUtils.Line();
+                                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
                             }
                             EditorGUI.indentLevel--;
                         }
@@ -465,12 +489,12 @@ namespace SyadeuEditor.Presentation
             IList list = Getter.Invoke();
 
             EditorGUILayout.BeginHorizontal();
-            m_Open = EditorUtils.Foldout(m_Open,
+            m_Open = EditorUtilities.Foldout(m_Open,
                 string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
                 , 13);
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(EditorUtils.String($"{list.Count}: ", 10), EditorUtils.HeaderStyle);
+            GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
 
             EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
             if (GUILayout.Button("+", GUILayout.Width(20)))
@@ -537,7 +561,7 @@ namespace SyadeuEditor.Presentation
             if (!m_ElementOpen[i]) return;
 
             EditorGUI.indentLevel++;
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 EditorGUILayout.BeginHorizontal();
 
@@ -552,7 +576,7 @@ namespace SyadeuEditor.Presentation
                 }
                 EditorGUILayout.EndHorizontal();
 
-                if (i + 1 < m_ElementDrawers.Count) EditorUtils.Line();
+                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
             }
             EditorGUI.indentLevel--;
         }
@@ -699,11 +723,11 @@ namespace SyadeuEditor.Presentation
         
         public override void OnGUI()
         {
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 if (m_EnableFoldout && FieldCount > 1)
                 {
-                    m_Open = EditorUtils.Foldout(m_Open, Name, 13);
+                    m_Open = EditorUtilities.Foldout(m_Open, Name, 13);
                 }
 
                 if (m_EnableFoldout && FieldCount > 1)

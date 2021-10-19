@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using Syadeu.Collections;
 using Unity.Mathematics;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor.Presentation
 {
@@ -49,7 +50,7 @@ namespace SyadeuEditor.Presentation
         }
         public static void DrawPrefab(EntityBase entity, bool disabled = false)
         {
-            EditorUtils.StringRich("Prefab", 15);
+            EditorUtilities.StringRich("Prefab", 15);
 
             GUIContent enableCullName = entity.m_EnableCull ? new GUIContent("Disable Cull") : new GUIContent("Enable Cull");
             Rect enableCullRect = GUILayoutUtility.GetRect(
@@ -97,9 +98,9 @@ namespace SyadeuEditor.Presentation
         }
         protected new void DrawHeader()
         {
-            EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
+            EditorUtilities.StringRich(Name + EditorUtilities.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);
-            EditorUtils.Line();
+            EditorUtilities.Line();
 
             DrawDescription();
 
@@ -109,7 +110,7 @@ namespace SyadeuEditor.Presentation
             EditorGUI.EndDisabledGroup();
             if (Target is EntityBase entity)
             {
-                using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     DrawPrefab(entity);
 
@@ -136,7 +137,7 @@ namespace SyadeuEditor.Presentation
                     {
                         EditorGUI.indentLevel++;
 
-                        using (new EditorUtils.BoxBlock(Color.white))
+                        using (new EditorUtilities.BoxBlock(Color.white))
                         {
                             EditorGUI.BeginDisabledGroup(entity.Prefab.IsNone() || !entity.Prefab.IsValid());
                             if (GUILayout.Button("Auto"))
@@ -170,8 +171,8 @@ namespace SyadeuEditor.Presentation
                     //}
                 }
             }
-            EditorUtils.Line();
-            using (new EditorUtils.BoxBlock(Color.black))
+            EditorUtilities.Line();
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 attributeListDrawer.OnGUI();
             }
@@ -224,7 +225,7 @@ namespace SyadeuEditor.Presentation
         protected override void DrawGUI()
         {
             DrawHeader();
-            EditorUtils.Line();
+            EditorUtilities.Line();
 
             for (int i = 0; i < Drawers.Length; i++)
             {
