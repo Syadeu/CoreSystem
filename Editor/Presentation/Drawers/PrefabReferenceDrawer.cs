@@ -145,9 +145,8 @@ namespace SyadeuEditor.Presentation
             if (m_Open)
             {
                 using (new GUILayout.VerticalScope())
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    EditorUtilities.BoxBlock box = new EditorUtilities.BoxBlock(Color.black);
-
                     using (new EditorGUI.DisabledGroupScope(true))
                     {
                         m_Editor.DrawHeader();
@@ -160,8 +159,6 @@ namespace SyadeuEditor.Presentation
                         rect = GUILayoutUtility.GetRect(rect.width, 100);
                         m_Editor.DrawPreview(rect);
                     }
-
-                    box.Dispose();
                 }
             }
 

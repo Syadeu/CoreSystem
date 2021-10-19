@@ -153,7 +153,11 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
-            if (currentGroupIdx < 0) return;
+            if (currentGroupIdx < 0)
+            {
+                //EditorGUILayout.LabelField("0 return");
+                return;
+            }
 
             if (foundAssetGroup)
             {
@@ -226,14 +230,62 @@ namespace SyadeuEditor.Presentation
             }
             else
             {
+                EditorUtilities.Line();
+                string headerString = EditorUtilities.String("Entity", 13);
+                headerString += EditorUtilities.String(": Mixed", 10);
+
                 GUILayout.BeginHorizontal();
-                //if (s_ToggleMixed == null)
-                //    s_ToggleMixed = new GUIStyle("ToggleMixed");
-                //if (GUILayout.Toggle(false, s_AddressableAssetToggleText, s_ToggleMixed, GUILayout.ExpandWidth(false)))
-                //    SetAaEntry(AddressableAssetSettingsDefaultObject.GetSettings(true), editor.targets, true);
-                //EditorGUILayout.LabelField(addressableCount + " out of " + editor.targets.Length + " assets are addressable.");
+                EditorUtilities.StringRich(headerString);
+
+                EditorGUI.BeginChangeCheck();
+                currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    List<string> names = new List<string>() { "None" };
+                    names.AddRange(s_EntityGroups.Select((other) => other.Name));
+                    s_EntityGroupNames = names.ToArray();
+
+                    Undo.RecordObject(aaSettings, "AddressableAssetSettings");
+
+                    AddressableAssetGroup
+                        originGroup = entry.parentGroup,
+                        targetGroup = GetIndexToGroup(currentGroupIdx);
+
+                    if (targetGroup != null)
+                    {
+                        SetTargets(aaSettings, editor.targets, targetGroup);
+
+                        targetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, false, true);
+                        aaSettings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, true, false);
+                        
+                        CoreSystem.Logger.Log(Channel.Editor,
+                            $"Assets({Path.GetFileName(entry.AssetPath)} and other {editor.targets.Length - 1}) added to PrefabList({targetGroup.Name}) from {originGroup.Name}");
+                    }
+                }
+
                 GUILayout.EndHorizontal();
             }
         }
+
+        private static void SetTargets(AddressableAssetSettings aaSettings, Object[] targets, AddressableAssetGroup targetGroup)
+        {
+            for (int i = 0; i < targets.Length; i++)
+            {
+                if (GetPathAndGUIDFromTarget(targets[i], out var path, out var guid, out var mainAssetType))
+                {
+                    // Is asset
+                    if (!BuildUtility.IsEditorAssembly(mainAssetType.Assembly) && aaSettings != null)
+                    {
+                        var entry = aaSettings.FindAssetEntry(guid);
+                        if (entry != null && !entry.IsSubAsset)
+                        {
+                            aaSettings.MoveEntry(entry, targetGroup, false, false);
+                        }
+                    }
+                }
+            }
+            //
+        }
+        //
     }
 }

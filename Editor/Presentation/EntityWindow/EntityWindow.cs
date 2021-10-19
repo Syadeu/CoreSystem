@@ -54,10 +54,8 @@ namespace SyadeuEditor.Presentation
 
         #region Entity Window
 
-        //readonly List<ObjectBaseDrawer> ObjectBaseDrawers = new List<ObjectBaseDrawer>();
         public EntityDataListWindow m_DataListWindow;
         public EntityViewWindow m_ViewWindow;
-        //public ObjectBaseDrawer m_SelectedObject = null;
 
         #endregion
 
@@ -131,51 +129,9 @@ namespace SyadeuEditor.Presentation
                 if (!IsDataLoaded) EntityDataList.Instance.LoadData();
             }
 
-            //ObjectBaseDrawers.Clear();
-            //if (EntityDataList.Instance.m_Objects != null)
-            //{
-            //    foreach (var item in EntityDataList.Instance.m_Objects.Values)
-            //    {
-            //        var drawer = ObjectBaseDrawer.GetDrawer(item);
-            //        ObjectBaseDrawers.Add(drawer);
-            //    }
-            //}
-
             m_DataListWindow.Reload();
             CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }
-
-        //public void Select(IFixedReference reference)
-        //{
-        //    var obj = reference.GetObject();
-        //    if (obj == null)
-        //    {
-        //        "reference not found return".ToLog();
-        //        return;
-        //    }
-
-        //    var iter = ObjectBaseDrawers.Where((other) => other.m_TargetObject.Equals(obj));
-        //    if (!iter.Any())
-        //    {
-        //        "reference drawer not found return".ToLog();
-        //        return;
-        //    }
-
-        //    m_SelectedObject = iter.First();
-        //    m_DataListWindow.Select(m_SelectedObject);
-        //}
-        //public void Select(ObjectBaseDrawer drawer)
-        //{
-        //    var iter = ObjectBaseDrawers.Where((other) => other.Equals(drawer));
-        //    if (!iter.Any())
-        //    {
-        //        "reference drawer not found return".ToLog();
-        //        return;
-        //    }
-
-        //    m_SelectedObject = drawer;
-        //    m_DataListWindow.Select(drawer);
-        //}
         public ObjectBase Add(Type objType)
         {
             if (!EntityDataList.IsLoaded)
@@ -186,8 +142,6 @@ namespace SyadeuEditor.Presentation
             ObjectBase ins = (ObjectBase)Activator.CreateInstance(objType);
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            //ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
-            //ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.Add(ins);
 
             IsDirty = true;
@@ -202,12 +156,9 @@ namespace SyadeuEditor.Presentation
 
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            //ObjectBaseDrawer drawer = ObjectBaseDrawer.GetDrawer(ins);
-            //ObjectBaseDrawers.Add(drawer);
             m_DataListWindow.Add(ins);
 
             IsDirty = true;
-            //return drawer;
         }
 
         public void Remove(ObjectBase obj)
@@ -493,32 +444,10 @@ namespace SyadeuEditor.Presentation
             public void Select(IFixedReference reference)
             {
                 EntityListTreeView.SetSelection(reference);
-
-                //var obj = reference.GetObject();
-                //if (obj == null) return;
-
-                //var iter = EntityListTreeView.GetRows().Where((other) => (other is EntityListTreeView.ObjectTreeElement objEle) && objEle.Target.m_TargetObject.Equals(obj));
-
-                //if (!iter.Any()) return;
-
-                //EntityListTreeView.SetSelection(new int[] { iter.First().id });
             }
             public void Select(ObjectBase entityObj)
             {
                 EntityListTreeView.SetSelection(entityObj);
-                //var folder =  EntityListTreeView.GetFolder(drawer.Type);
-                //var iter = folder.children.Where((other) => (other is EntityListTreeView.ObjectTreeElement ele) && ele.Target.Equals(drawer));
-
-                //if (!iter.Any())
-                //{
-                //    "in".ToLog();
-                //    return;
-                //}
-
-                //var ele = iter.First();
-                //EntityListTreeView.SetExpanded(ele.parent.id, true);
-                //EntityListTreeView.FrameItem(ele.id);
-                //EntityListTreeView.SetSelection(new int[] { ele.id });
             }
             public void Add(ObjectBase drawer)
             {
@@ -537,8 +466,6 @@ namespace SyadeuEditor.Presentation
             }
             public void Reload()
             {
-                //if (Drawers.Count == 0) return;
-
                 EntityListTreeView.Reload();
             }
 

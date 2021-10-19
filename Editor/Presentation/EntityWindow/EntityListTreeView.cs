@@ -53,7 +53,6 @@ namespace SyadeuEditor.Presentation
             showBorder = true;
             customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f;
 
-            //if (Objects == null || Objects.Count == 0) return;
             Reload();
         }
 
@@ -66,11 +65,8 @@ namespace SyadeuEditor.Presentation
 
             if (Objects != null && Objects.Count > 0)
             {
-                //ObjectBaseDrawer drawer;
-                foreach (var item in Objects?.Values)
+                foreach (var item in Objects.Values)
                 {
-                    //drawer = ObjectBaseDrawer.GetDrawer(item);
-
                     FolderTreeElement folder = GetFolder(item.GetType());
                     if (folder == null)
                     {
@@ -98,24 +94,6 @@ namespace SyadeuEditor.Presentation
         }
         public FolderTreeElement GetFolder(Type type)
         {
-            //var name = type.GetCustomAttribute<DisplayNameAttribute>();
-            //var iter = m_Rows.Where((other) =>
-            //    {
-            //        if (!(other.Value is FolderTreeElement folder)) return false;
-
-            //        if (folder.Type.Equals(type))
-            //        {
-            //            return true;
-            //        }
-            //        if (name != null && name.DisplayName.Equals(folder.displayName))
-            //        {
-            //            return true;
-            //        }
-
-            //        return false;
-            //    });
-
-            //if (iter.Any()) return (FolderTreeElement)iter.First().Value;
             if (m_Folders.TryGetValue(type, out var folder)) return folder;
             return null;
         }
@@ -142,7 +120,6 @@ namespace SyadeuEditor.Presentation
         public void RemoveItem(ObjectBase entityObj)
         {
             m_Folders[entityObj.GetType()].children.Remove(m_Rows[entityObj.Hash]);
-            //m_Rows[entityObj.Hash].parent.children.Remove(m_Rows[entityObj.Hash]);
 
             m_Rows.Remove(entityObj.Hash);
 
@@ -227,7 +204,6 @@ namespace SyadeuEditor.Presentation
 
                 if (list[i] is ObjectTreeElement obj)
                 {
-                    //SetSelection(obj.Target);
                     OnSelect?.Invoke(obj.Target);
                 }
             }
@@ -247,7 +223,6 @@ namespace SyadeuEditor.Presentation
                 menu.AddItem(new GUIContent("Add"), false, () =>
                 {
                     var drawer = EntityWindow.Instance.Add(folder.Type);
-                    //EntityWindow.Instance.Select(drawer);
 
                     SetSelection(drawer);
                 });
@@ -262,9 +237,6 @@ namespace SyadeuEditor.Presentation
                     clone.Name += "_Clone";
 
                     EntityWindow.Instance.Add(clone);
-                    //EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
-                    //AddItem(clone);
-                    //EntityWindow.Instance.Select(EntityWindow.Instance.Add(clone));
                 });
 
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>
@@ -273,10 +245,7 @@ namespace SyadeuEditor.Presentation
                 });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
-                    //item.parent.children.Remove(item);
-                    //EntityDataList.Instance.m_Objects.Remove(obj.Target.Hash);
                     EntityWindow.Instance.Remove(obj.Target);
-                    //m_Window.Remove(obj.Target);
 
                     Reload();
                 });
