@@ -11,11 +11,11 @@ namespace Syadeu.Presentation.Actions
     {
         private static readonly Dictionary<IFixedReference, Stack<ActionBase>> m_Pool = new Dictionary<IFixedReference, Stack<ActionBase>>();
 
-        internal override sealed void InternalInitialize()
-        {
-            OnInitialize();
-            base.InternalInitialize();
-        }
+        //internal override sealed void InternalInitialize()
+        //{
+        //    OnInitialize();
+        //    base.InternalInitialize();
+        //}
         internal bool InternalExecute(EntityData<IEntityData> entity, out bool predicate)
         {
             predicate = false;
@@ -80,11 +80,11 @@ namespace Syadeu.Presentation.Actions
             }
             else temp = (T)pool.Pop();
 
-            temp.InternalInitialize();
+            //temp.InternalInitialize();
             return temp;
         }
 
-        protected virtual void OnInitialize() { }
+        //protected virtual void OnInitialize() { }
         protected virtual void OnTerminate() { }
         protected abstract bool OnExecute(EntityData<IEntityData> entity);
     }

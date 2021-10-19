@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Actions
             "executed".ToLog();
         }
 
-        protected override void OnInitialize()
+        protected override void OnCreated()
         {
             "initialized".ToLog();
         }

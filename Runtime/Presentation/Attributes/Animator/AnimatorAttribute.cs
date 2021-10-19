@@ -73,7 +73,20 @@ namespace Syadeu.Presentation.Attributes
             if (AnimatorComponent != null) AnimatorComponent.m_Animator.SetFloat(key, value);
         }
         public void SetFloat(string key, float value) => SetFloat(Animator.StringToHash(key), value);
-        public float GetFloat(int key) => (float)Parameters[key];
+        public float GetFloat(int key)
+        {
+            if (Parameters.TryGetValue(key, out var value))
+            {
+                if (value is float floatVal) return floatVal;
+
+                CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) float, but this is not a float type.");
+
+                return 0;
+            }
+
+            CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) but doesn\'t have one.");
+            return 0;
+        }
 
         public void SetBool(int key, bool value)
         {
