@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actor
     [AttributeAcceptOnly(typeof(UIObjectEntity))]
     public abstract class ActorOverlayUIAttributeBase : AttributeBase
     {
-        [Header("CanvasGroup")]
+        [Header("TriggerAction")]
         [Tooltip("Target 은 Parent Actor 입니다.")]
         [JsonProperty(Order = 1, PropertyName = "OnParentEventReceived")]
         private LogicTriggerAction[] m_OnParentEventReceived = Array.Empty<LogicTriggerAction>();

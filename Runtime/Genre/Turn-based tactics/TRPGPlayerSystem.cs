@@ -165,6 +165,7 @@ namespace Syadeu.Presentation.TurnTable
                 case ShortcutType.Attack:
                     m_TRPGCameraMovement.SetNormal();
                     m_TRPGCanvasUISystem.SetFire(true);
+                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
                     break;
             }
 
@@ -223,7 +224,7 @@ namespace Syadeu.Presentation.TurnTable
                     m_TRPGCanvasUISystem.SetFire(false);
 
                     Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
-                    var targets = attProvider.Object.GetTargetsInRange();
+                    var targets = attProvider.GetObject().GetTargetsInRange();
                     var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();

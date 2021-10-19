@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 #endif
-            var temp = ctr.GetProvider<TRPGActorAttackProvider>().Object.GetTargetsInRange();
+            var temp = ctr.GetProvider<TRPGActorAttackProvider>().GetObject().GetTargetsInRange();
             
             if (temp.Length > 0)
             {

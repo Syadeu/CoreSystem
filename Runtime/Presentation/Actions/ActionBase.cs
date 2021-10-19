@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.Actions
         protected string p_DebugText = string.Empty;
 
         [JsonIgnore] private bool m_Terminated = true;
-        [JsonIgnore] public FixedReference m_Reference;
+        [JsonIgnore] public IFixedReference m_Reference;
 
         [JsonIgnore] public bool Terminated => m_Terminated;
 
@@ -41,6 +41,10 @@ namespace Syadeu.Presentation.Actions
         internal virtual void InternalTerminate()
         {
             m_Terminated = true;
+        }
+        internal override void InternalOnDestroy()
+        {
+
         }
         internal void InternalCreate()
         {

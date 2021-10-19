@@ -47,11 +47,6 @@ namespace Syadeu.Presentation.Actions
 
         public override void OnDispose()
         {
-            foreach (var action in m_Actions)
-            {
-                action.Value.Object.InternalTerminate();
-            }
-
             m_Actions.Dispose();
 
             base.OnDispose();
@@ -82,21 +77,34 @@ namespace Syadeu.Presentation.Actions
         {
             foreach (var action in m_Actions)
             {
-                action.Value.Object.InternalCreate();
+                action.Value.GetObject().InternalCreate();
             }
 
             return base.OnStartPresentation();
         }
 
-        public Instance<ActionBase> GetAction(FixedReference<ActionBase> reference)
+        public Instance<ActionBase> GetAction(IFixedReference<ActionBase> reference)
         {
-            if (!m_Actions.ContainsKey(reference))
+            var temp = ((FixedReference<ActionBase>)reference);
+            if (!m_Actions.ContainsKey(temp))
             {
                 CoreSystem.Logger.LogError(Channel.Action, "??");
                 return Instance<ActionBase>.Empty;
             }
 
-            return m_Actions[reference];
+            return m_Actions[temp];
+        }
+        public Instance<TAction> GetAction<TAction>(IFixedReference<ActionBase> reference)
+            where TAction : ActionBase
+        {
+            var temp = ((FixedReference<ActionBase>)reference);
+            if (!m_Actions.ContainsKey(temp))
+            {
+                CoreSystem.Logger.LogError(Channel.Action, "??");
+                return Instance<TAction>.Empty;
+            }
+
+            return m_Actions[temp].Cast<ActionBase, TAction>();
         }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
@@ -157,7 +165,7 @@ namespace Syadeu.Presentation.Actions
             {
                 case ActionType.Instance:
                     //InstanceAction action = InstanceAction.GetAction(temp.action);
-                    InstanceAction action = (InstanceAction)GetAction(temp.action).Object;
+                    InstanceAction action = (InstanceAction)GetAction(temp.action).GetObject();
 
                     if (action is IEventSequence sequence)
                     {
@@ -193,7 +201,7 @@ namespace Syadeu.Presentation.Actions
                     return;
                 case ActionType.Trigger:
                     //TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
-                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).Object;
+                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).GetObject();
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
@@ -250,7 +258,7 @@ namespace Syadeu.Presentation.Actions
             m_CurrentAction.Clear();
         }
 
-        public bool ExecuteInstanceAction<T>(FixedReference<T> temp)
+        public bool ExecuteInstanceAction<T>(IFixedReference<T> temp)
             where T : InstanceAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -269,7 +277,7 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            InstanceAction action = InstanceAction.GetAction(temp);
+            InstanceAction action = (InstanceAction)GetAction(temp.As<ActionBase>()).GetObject();
 
             bool result = action.InternalExecute();
             action.InternalTerminate();
@@ -288,7 +296,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public void ScheduleInstanceAction<T>(FixedReference<T> action)
+        public void ScheduleInstanceAction<T>(IFixedReference<T> action)
             where T : InstanceAction
         {
             Payload payload = new Payload
@@ -300,7 +308,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(FixedReference<T> temp, EntityData<IEntityData> entity)
+        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -322,14 +330,14 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            TriggerAction triggerAction = TriggerAction.GetAction(temp);
+            TriggerAction triggerAction = (TriggerAction)GetAction(temp.As<ActionBase>()).GetObject();
 
             bool result = triggerAction.InternalExecute(entity);
             triggerAction.InternalTerminate();
 
             return result;
         }
-        public void ScheduleTriggerAction<T>(FixedReference<T> action, EntityData<IEntityData> entity)
+        public void ScheduleTriggerAction<T>(IFixedReference<T> action, EntityData<IEntityData> entity)
             where T : TriggerAction
         {
             Payload payload = new Payload

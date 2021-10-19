@@ -49,7 +49,7 @@ namespace SyadeuEditor
         }
     }
 
-    //public sealed class PrefabBuildPreprocessor : IPreprocessBuildWithReport
+    //public sealed class PrefabBuildPreprocessor :  IPreprocessBuildWithReport, IOrderedCallback
     //{
     //    public int callbackOrder => 0;
 

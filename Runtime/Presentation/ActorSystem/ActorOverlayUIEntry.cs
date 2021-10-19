@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Data;
@@ -13,6 +14,16 @@ namespace Syadeu.Presentation.Actor
     [DisplayName("Data: Actor Overlay UI Entry")]
     public sealed class ActorOverlayUIEntry : DataObjectBase
     {
+        public sealed class PositionProperty : PropertyBlock<PositionProperty>
+        {
+            [JsonProperty(Order = 0, PropertyName = "Offset")] public float3 m_Offset = float3.zero;
+
+            [Space]
+            [Tooltip("활성화시 Transform 의 좌표값이 아닌 Animator 의 Bone position 을 기준으로 합니다.")]
+            [JsonProperty(Order = 1, PropertyName = "UseBone")] public bool m_UseBone = false;
+            [JsonProperty(Order = 2, PropertyName = "BoneTarget")] public HumanBodyBones m_BoneTarget = HumanBodyBones.Head;
+        }
+
         [JsonProperty(Order = 0, PropertyName = "EnableAlways")]
         public bool m_EnableAlways = false;
 
@@ -25,8 +36,8 @@ namespace Syadeu.Presentation.Actor
         public float m_UpdateSpeed = 4;
 
         [Space, Header("Position")]
-        [JsonProperty(Order = 4, PropertyName = "Offset")]
-        public float3 m_Offset = float3.zero;
+        [JsonProperty(Order = 4, PropertyName = "PositionOffset")]
+        public PositionProperty m_PositionOffset = new PositionProperty();
 
         [Space, Header("Orientation")]
         [JsonProperty(Order = 5, PropertyName = "OrientationOffset")]

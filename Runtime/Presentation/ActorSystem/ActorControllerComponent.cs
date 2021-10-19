@@ -34,7 +34,15 @@ namespace Syadeu.Presentation.Actor
             return false;
         }
 
-        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideCurrent)
+        /// <summary><inheritdoc cref="ScheduleEvent{TEvent}(TEvent)"/></summary>
+        /// <remarks>
+        /// <paramref name="overrideSameEvent"/> 가 true 일 경우에 다음 이벤트가 없을 경우에만 
+        /// 같은 이벤트를 덮어씁니다.
+        /// </remarks>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
+        /// <param name="overrideSameEvent"></param>
+        public void ScheduleEvent<TEvent>(TEvent ev, bool overrideSameEvent)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -42,8 +50,13 @@ namespace Syadeu.Presentation.Actor
 #endif
         {
             ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
-            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideCurrent);
+            system.ScheduleEvent(m_Parent, PostEvent, ev, overrideSameEvent);
         }
+        /// <summary>
+        /// 이벤트를 스케쥴합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
         public void ScheduleEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -134,7 +147,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                ExecutePostEvent(m_InstanceProviders[i].Object, ev);
+                ExecutePostEvent(m_InstanceProviders[i].GetObject(), ev);
             }
             m_OnEventReceived.Execute(ev);
 
@@ -177,7 +190,7 @@ namespace Syadeu.Presentation.Actor
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
                         return true;
                     }
@@ -188,7 +201,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].Object is T)
+                if (m_InstanceProviders[i].GetObject() is T)
                 {
                     return true;
                 }
@@ -201,7 +214,7 @@ namespace Syadeu.Presentation.Actor
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].Object.GetType()))
+                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
                         return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
                     }
@@ -212,7 +225,7 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].Object is T)
+                if (m_InstanceProviders[i].GetObject() is T)
                 {
                     return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
                 }
@@ -224,7 +237,7 @@ namespace Syadeu.Presentation.Actor
         {
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                ExecuteOnDestroy(m_InstanceProviders[i].Object, m_Parent);
+                ExecuteOnDestroy(m_InstanceProviders[i].GetObject(), m_Parent);
                 m_EntitySystem.System.DestroyObject(m_InstanceProviders[i]);
             }
 

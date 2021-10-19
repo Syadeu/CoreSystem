@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Events;
 using System.Collections;
 using System.ComponentModel;
@@ -63,7 +64,7 @@ namespace Syadeu.Presentation.Actions
             public void Dispose()
             {
                 Time.timeScale = m_TargetTimeScale;
-                m_Caller.Object.m_KeepWait = false;
+                m_Caller.GetObject().m_KeepWait = false;
             }
             public IEnumerator Execute()
             {

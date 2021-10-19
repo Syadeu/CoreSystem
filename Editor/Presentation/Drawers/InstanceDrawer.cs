@@ -19,7 +19,7 @@ namespace SyadeuEditor.Presentation
             IInstance target = Getter.Invoke();
             if (target.IsValid())
             {
-                m_DisplayName = new GUIContent(target.Object.Name);
+                m_DisplayName = new GUIContent(target.GetObject().Name);
             }
             else
             {

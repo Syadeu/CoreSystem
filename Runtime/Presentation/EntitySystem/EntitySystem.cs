@@ -217,18 +217,6 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-            //            if (targetObject is Components.INotifyComponent notifyComponent)
-            //            {
-            //                var notifies = GetComponentInterface(targetObject.GetType());
-            //                foreach (var item in notifies)
-            //                {
-            //                    Type componentType = item.GetGenericArguments()[0];
-            //                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-            //#if DEBUG_MODE
-            //                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-            //#endif
-            //                }
-            //            }
 #if DEBUG_MODE
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
@@ -324,6 +312,9 @@ namespace Syadeu.Presentation
                 {
                     ProcessNonEntityDestroy(entityList[i]);
                 }
+
+                entityList[i].InternalOnDestroy();
+                ((IDisposable)entityList[i]).Dispose();
             }
 
             foreach (var item in m_EntityProcessors)
@@ -818,11 +809,11 @@ namespace Syadeu.Presentation
 
         internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
-        internal Instance<T> CreateInstance<T>(FixedReference<T> obj) where T : class, IObject
+        internal Instance<T> CreateInstance<T>(IFixedReference<T> obj) where T : class, IObject
             => CreateInstance<T>(obj.GetObject());
         internal Instance CreateInstance(Reference obj)
             => CreateInstance(obj.GetObject());
-        internal Instance CreateInstance(FixedReference obj)
+        internal Instance CreateInstance(IFixedReference obj)
             => CreateInstance(obj.GetObject());
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
@@ -909,8 +900,8 @@ namespace Syadeu.Presentation
         public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
-        public void DestroyObject<T>(Instance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
-        public void DestroyObject(Instance instance) => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject<T>(IInstance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(IInstance instance) => InternalDestroyEntity(instance.Idx);
         internal void InternalDestroyEntity(in InstanceID hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))

@@ -21,9 +21,9 @@ namespace Syadeu.Presentation.Actor
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
         }
-        protected override void Reserve()
+        protected override void OnReserve()
         {
-            base.Reserve();
+            base.OnReserve();
 
             m_CurrentStats = null;
         }

@@ -7,7 +7,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class ParamActionBase<T> : ActionBase where T : ActionBase
     {
-        private static readonly Dictionary<FixedReference, Stack<ActionBase>> m_Pool = new Dictionary<FixedReference, Stack<ActionBase>>();
+        private static readonly Dictionary<IFixedReference, Stack<ActionBase>> m_Pool = new Dictionary<IFixedReference, Stack<ActionBase>>();
 
         internal override sealed void InternalTerminate()
         {
@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actions
             base.InternalTerminate();
         }
 
-        public static T GetAction(FixedReference<T> other)
+        public static T GetAction(IFixedReference<T> other)
         {
             if (!TryGetEntitySystem(out EntitySystem entitySystem))
             {
@@ -42,7 +42,7 @@ namespace Syadeu.Presentation.Actions
             if (!m_Pool.TryGetValue(other, out var pool) ||
                 pool.Count == 0)
             {
-                T t = entitySystem.CreateInstance(other).Object;
+                T t = entitySystem.CreateInstance(other).GetObject();
                 t.m_Reference = other;
                 t.InternalCreate();
 

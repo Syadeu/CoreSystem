@@ -17,8 +17,6 @@ namespace Syadeu.Presentation.Actor
     {
         public enum OverrideOptions
         {
-            None,
-
             Override,
             Addictive
         }
@@ -26,16 +24,35 @@ namespace Syadeu.Presentation.Actor
         {
             private readonly Instance<ActorWeaponData> m_Instance;
 
-            public OverrideOptions OverrideOptions => m_Instance.Object.m_OverrideOptions;
-            public bool UseBone => m_Instance.Object.m_UseBone;
-            public HumanBodyBones AttachedBone => m_Instance.Object.m_AttachedBone;
-            public float3 WeaponPosOffset => m_Instance.Object.m_WeaponPosOffset;
-            public float3 WeaponRotOffset => m_Instance.Object.m_WeaponRotOffset;
+            public OverrideOptions HolsterOverrideOptions => m_Instance.GetObject().m_HolsterPosition.m_OverrideOptions;
+            public bool HolsterUseBone => m_Instance.GetObject().m_HolsterPosition.m_UseBone;
+            public HumanBodyBones HolsterAttachedBone => m_Instance.GetObject().m_HolsterPosition.m_AttachedBone;
+            public float3 HolsterWeaponPosOffset => m_Instance.GetObject().m_HolsterPosition.m_WeaponPosOffset;
+            public float3 HolsterWeaponRotOffset => m_Instance.GetObject().m_HolsterPosition.m_WeaponRotOffset;
+
+            public OverrideOptions DrawOverrideOptions => m_Instance.GetObject().m_DrawPosition.m_OverrideOptions;
+            public bool DrawUseBone => m_Instance.GetObject().m_DrawPosition.m_UseBone;
+            public HumanBodyBones DrawAttachedBone => m_Instance.GetObject().m_DrawPosition.m_AttachedBone;
+            public float3 DrawWeaponPosOffset => m_Instance.GetObject().m_DrawPosition.m_WeaponPosOffset;
+            public float3 DrawWeaponRotOffset => m_Instance.GetObject().m_DrawPosition.m_WeaponRotOffset;
 
             public OverrideData(ActorWeaponData data)
             {
                 m_Instance = new Instance<ActorWeaponData>(data.Idx);
             }
+        }
+        public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>
+        {
+            [JsonProperty(Order = 0, PropertyName = "OverrideOptions")]
+            public OverrideOptions m_OverrideOptions = OverrideOptions.Override;
+            [JsonProperty(Order = 1, PropertyName = "UseBone")]
+            public bool m_UseBone = true;
+            [JsonProperty(Order = 2, PropertyName = "AttachedBone")]
+            public HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
+            [JsonProperty(Order = 3, PropertyName = "WeaponPosOffset")]
+            public float3 m_WeaponPosOffset = float3.zero;
+            [JsonProperty(Order = 4, PropertyName = "WeaponRotOffset")]
+            public float3 m_WeaponRotOffset = float3.zero;
         }
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]
@@ -48,16 +65,10 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 3, PropertyName = "Range")] protected float m_Range;
 
         [Space, Header("Weapon Position")]
-        [JsonProperty(Order = 4, PropertyName = "OverrideOptions")]
-        protected OverrideOptions m_OverrideOptions = OverrideOptions.None;
-        [JsonProperty(Order = 5, PropertyName = "UseBone")]
-        protected bool m_UseBone = true;
-        [JsonProperty(Order = 6, PropertyName = "AttachedBone")]
-        protected HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
-        [JsonProperty(Order = 7, PropertyName = "WeaponPosOffset")]
-        protected float3 m_WeaponPosOffset = float3.zero;
-        [JsonProperty(Order = 8, PropertyName = "WeaponRotOffset")]
-        protected float3 m_WeaponRotOffset = float3.zero;
+        [JsonProperty(Order = 4, PropertyName = "HolsterPosition")]
+        protected WeaponPositionProperty m_HolsterPosition = new WeaponPositionProperty();
+        [JsonProperty(Order = 5, PropertyName = "DrawPosition")]
+        protected WeaponPositionProperty m_DrawPosition = new WeaponPositionProperty();
 
         [Space, Header("FX")]
         [JsonProperty(Order = 9, PropertyName = "FXBounds")]
@@ -88,12 +99,13 @@ namespace Syadeu.Presentation.Actor
                     return;
                 }
 
-                Instance<ObjectEntity> instance = m_Prefab.CreateInstance();
-                m_PrefabInstance = Entity<ObjectEntity>.GetEntityWithoutCheck(instance.Idx);
+                m_PrefabInstance = m_Prefab.CreateEntity(float3.zero);
 
                 $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
             }
 
+            m_HolsterPosition = m_HolsterPosition.GetProperty();
+            m_DrawPosition = m_DrawPosition.GetProperty();
             //FireFXBounds((FXBounds.TriggerOptions)~0);
         }
         protected override void OnDestroy()

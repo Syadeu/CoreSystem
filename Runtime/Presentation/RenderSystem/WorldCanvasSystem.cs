@@ -4,6 +4,7 @@ using DG.Tweening;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System.Collections;
@@ -353,7 +354,11 @@ namespace Syadeu.Presentation.Render
             private Entity<ActorEntity> m_Entity;
             private Reference<ActorOverlayUIEntry> m_UI;
 
+            private Instance<ActorOverlayUIEntry> m_UISettingInstance;
             private Entity<UIObjectEntity> m_InstanceObject;
+
+            private bool m_UseBone;
+            private HumanBodyBones m_BoneTarget;
 
             UpdateLoop ICoroutineJob.Loop => UpdateLoop.AfterTransform;
             public Entity<UIObjectEntity> UIInstance => m_InstanceObject;
@@ -363,13 +368,60 @@ namespace Syadeu.Presentation.Render
                 m_Entity = entity;
                 m_UI = ui;
 
+                m_UISettingInstance = ui.CreateInstance();
                 ActorOverlayUIEntry setting = m_UI.GetObject();
-                m_InstanceObject = Instance<UIObjectEntity>.CreateInstance(setting.m_Prefab);
-                m_InstanceObject.transform.position = entity.transform.position + setting.m_Offset;
+
+                m_UseBone = setting.m_PositionOffset.m_UseBone;
+                m_BoneTarget = setting.m_PositionOffset.m_BoneTarget;
+
+                if (m_UseBone && !m_Entity.HasAttribute<AnimatorAttribute>())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Entity({entity.RawName}) use bone but doesn\'t have {nameof(AnimatorAttribute)}.");
+                    m_UseBone = false;
+                }
+
+                m_InstanceObject = setting.m_Prefab.CreateInstance();
+                SetPosition(in setting);
                 m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(entity);
             }
             public void Dispose()
             {
+                m_UISettingInstance.Destroy();
+            }
+
+            private void SetPosition(in ActorOverlayUIEntry setting)
+            {
+                float3 targetPosition;
+
+                if (!m_UseBone || !m_Entity.hasProxy)
+                {
+                    targetPosition = m_Entity.transform.position;
+                }
+                else
+                {
+                    var anim = m_Entity.GetAttribute<AnimatorAttribute>();
+                    Transform tr = anim.AnimatorComponent.Animator.GetBoneTransform(m_BoneTarget);
+                    if (tr == null)
+                    {
+                        $"something went wrong.. missing bone {m_BoneTarget}".ToLogError();
+                        targetPosition = m_Entity.transform.position;
+                    }
+                    else 
+                        targetPosition = tr.position;
+                }
+
+                if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
+                {
+                    m_InstanceObject.transform.position = targetPosition + setting.m_PositionOffset.m_Offset;
+                }
+                else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
+                {
+                    var uiTr = m_InstanceObject.transform;
+
+                    uiTr.position
+                        = math.lerp(uiTr.position, targetPosition + setting.m_PositionOffset.m_Offset, Time.deltaTime * setting.m_UpdateSpeed);
+                }
             }
 
             public IEnumerator Execute()
@@ -378,7 +430,7 @@ namespace Syadeu.Presentation.Render
                     entityTr = m_Entity.transform,
                     uiTr = m_InstanceObject.transform;
 
-                ActorOverlayUIEntry setting = m_UI.GetObject();
+                ActorOverlayUIEntry setting = m_UISettingInstance.GetObject();
                 RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 Transform camTr;
 
@@ -392,15 +444,16 @@ namespace Syadeu.Presentation.Render
                     }
                     camTr = renderSystem.Camera.transform;
 
-                    if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
-                    {
-                        uiTr.position = entityTr.position + setting.m_Offset;
-                    }
-                    else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
-                    {
-                        uiTr.position
-                            = math.lerp(uiTr.position, entityTr.position + setting.m_Offset, Time.deltaTime * setting.m_UpdateSpeed);
-                    }
+                    SetPosition(in setting);
+                    //if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
+                    //{
+                    //    uiTr.position = entityTr.position + setting.m_PositionOffset.m_Offset;
+                    //}
+                    //else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
+                    //{
+                    //    uiTr.position
+                    //        = math.lerp(uiTr.position, entityTr.position + setting.m_Offset, Time.deltaTime * setting.m_UpdateSpeed);
+                    //}
 
                     Quaternion offset = Quaternion.Euler(setting.m_OrientationOffset);
                     if ((setting.m_UpdateType & Actor.UpdateType.SyncCameraOrientation) == Actor.UpdateType.SyncCameraOrientation)

@@ -3,16 +3,10 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Mono;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using Syadeu.ThreadSafe;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
@@ -102,17 +96,26 @@ namespace Syadeu.Presentation
         public static Entity<T> CreateEntity<T>(this Reference<T> other, in float3 pos)
             where T : class, IEntity
         {
-            return Instance<T>.CreateInstance(in other, in pos);
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<IEntity> ins = system.CreateEntity(other, in pos);
+            return ins.Cast<IEntity, T>();
         }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
             where T : class, IEntity
         {
-            return Instance<T>.CreateInstance(in other, in pos, in rot, in localScale);
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<IEntity> ins = system.CreateEntity(other, in pos, in rot, in localScale);
+            return ins.Cast<IEntity, T>();
         }
         public static EntityData<T> CreateEntityData<T>(this Reference<T> other)
             where T : class, IEntityData
         {
-            return Instance<T>.CreateInstance(other).As();
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            EntityData<IEntityData> ins = system.CreateObject(other);
+            return ins.Cast<IEntityData, T>();
         }
 
         public static Entity<T> GetEntity<T>(this EntityID id)
@@ -598,6 +601,93 @@ namespace Syadeu.Presentation
             }
 #endif
             PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.InternalDestroyEntity(t.Idx);
+        }
+
+        #endregion
+
+        #region IInstance
+
+        public static IObject GetObject(this IInstance other)
+        {
+            if (other.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived null instance.");
+                return null;
+            }
+
+            if (!PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_ObjectEntities.TryGetValue(other.Idx, out ObjectBase obj))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Target({other.Idx}) is not exist.");
+                return null;
+            }
+
+            return obj;
+        }
+        public static T GetObject<T>(this IInstance<T> other)
+            where T : class, IObject
+        {
+            if (other.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        "Cannot retrived null instance.");
+                return null;
+            }
+
+            if (!PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_ObjectEntities.TryGetValue(other.Idx, out ObjectBase obj))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Target({other.Idx}) is not exist.");
+                return null;
+            }
+            if (!(obj is T t))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target is not a {TypeHelper.TypeOf<T>.Name}.");
+                return null;
+            }
+
+            return t;
+        }
+        public static bool IsValid(this IInstance other)
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            if (other.IsEmpty()) return false;
+            else if (!system.m_ObjectEntities.ContainsKey(other.Idx)) return false;
+
+            return true;
+        }
+        public static bool IsValid<T>(this IInstance<T> other)
+            where T : class, IObject
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            if (other.IsEmpty()) return false;
+            else if (!system.m_ObjectEntities.ContainsKey(other.Idx)) return false;
+            else if (!(system.m_ObjectEntities[other.Idx] is T))
+            {
+                return false;
+            }
+            else if (system.IsDestroyed(other.Idx) ||
+                    system.IsMarkedAsDestroyed(other.Idx))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public static void Destroy(this IInstance other)
+        {
+            if (other.IsEmpty())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "Cannot destroy an empty instance");
+                return;
+            }
+
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyObject(other);
         }
 
         #endregion

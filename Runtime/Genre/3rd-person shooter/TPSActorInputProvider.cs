@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -43,8 +44,8 @@ public partial class SimplePlayerController
 
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
-            m_InputSystem = PresentationSystem<InputSystem>.System;
-            m_RenderSystem = PresentationSystem<RenderSystem>.System;
+            m_InputSystem = PresentationSystem<DefaultPresentationGroup, InputSystem>.System;
+            m_RenderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
             
 
             m_Update = new UpdateJob(entity, this);
@@ -83,12 +84,12 @@ public partial class SimplePlayerController
             }
             public IEnumerator Execute()
             {
-                var inputSystem = PresentationSystem<InputSystem>.System;
-                var renderSystem = PresentationSystem<RenderSystem>.System;
+                var inputSystem = PresentationSystem<DefaultPresentationGroup, InputSystem>.System;
+                var renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 var animator = m_Entity.GetAttribute<AnimatorAttribute>();
                 if (animator == null) yield break;
 
-                var input = m_InputProvider.Object;
+                var input = m_InputProvider.GetObject();
                 var tr = m_Entity.transform;
 
                 while (!animator.IsInitialized)

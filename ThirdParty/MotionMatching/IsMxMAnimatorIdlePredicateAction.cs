@@ -17,31 +17,11 @@ namespace Syadeu.Presentation.MotionMatching
         protected override bool OnExecute(EntityData<IEntityData> entity)
         {
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
+            if (animator.AnimatorComponent == null) return true;
+
             var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();
             
             return anim.IsIdle == m_DesireValue;
-        }
-    }
-
-    [DisplayName("TriggerAction: Execute MxMAnimator Event")]
-    public sealed class ExecuteMxMAnimatorEventAction : TriggerAction
-    {
-        [JsonProperty(Order = 0, PropertyName = "EventID")]
-        private Reference<MxMEventDefinitionData> m_EventData = Reference<MxMEventDefinitionData>.Empty;
-
-        protected override void OnExecute(EntityData<IEntityData> entity)
-        {
-            AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
-            var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();
-
-            var temp = m_EventData.GetObject();
-
-            if (temp.EventDefinition == null)
-            {
-                temp.Initialize();
-            }
-            
-            anim.BeginEvent(temp.EventDefinition);
         }
     }
 }

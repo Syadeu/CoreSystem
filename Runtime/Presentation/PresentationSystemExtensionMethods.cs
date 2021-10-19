@@ -10,11 +10,6 @@ namespace Syadeu.Presentation
 {
     public static class PresentationSystemExtensionMethods
     {
-        //public static ReferenceArray<T> ToBuffer<T>(this T[] t, Allocator allocator)
-        //    where T : unmanaged, IReference
-        //{
-        //    return new ReferenceArray<T>(t, allocator);
-        //}
         public static FixedReferenceList64<T> ToFixedList64<T>(this IEnumerable<Reference<T>> t)
             where T : class, IObject
         {
@@ -26,6 +21,18 @@ namespace Syadeu.Presentation
             }
             return list;
         }
+        public static FixedReferenceList16<T> ToFixedList16<T>(this IEnumerable<Reference<T>> t)
+            where T : class, IObject
+        {
+            FixedReferenceList16<T> list = new FixedReferenceList16<T>();
+            foreach (var item in t)
+            {
+                FixedReference<T> temp = item;
+                list.Add(temp);
+            }
+            return list;
+        }
+
         public static FixedReference<T> As<T>(this IFixedReference reference)
             where T : class, IObject
         {
@@ -47,7 +54,7 @@ namespace Syadeu.Presentation
         public static Reference<T> AsOriginal<T>(this Instance<T> t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Object.Hash);
+            return new Reference<T>(t.GetObject().Hash);
         }
 
         public static T GetObject<T>(this IFixedReference<T> t)

@@ -153,7 +153,7 @@ namespace Syadeu.Presentation.Map
             sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneDataEntity.m_TerrainData, Allocator.Persistent);
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
             {
-                sceneData.m_CreatedTerrains[i].Object.Create(null);
+                sceneData.m_CreatedTerrains[i].GetObject().Create(null);
             }
         }
         protected override void OnDestroy(SceneDataEntity entity)
