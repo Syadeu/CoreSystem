@@ -73,7 +73,6 @@ namespace Syadeu.Presentation.Proxy
         public Queue<int>
             m_OverrideRequestProxies = new Queue<int>();
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static readonly Unity.Profiling.ProfilerMarker
             s_HandleOverrideProxyRequestsMarker = new Unity.Profiling.ProfilerMarker("Handle Override Proxy Requests"),
             s_HandleCreateProxiesMarker = new Unity.Profiling.ProfilerMarker("Handle Create Proxies"),
@@ -87,7 +86,6 @@ namespace Syadeu.Presentation.Proxy
             s_HandleJobsMarker = new Unity.Profiling.ProfilerMarker("Handle Jobs"),
             s_HandleScheduleClusterUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Cluster Update"),
             s_HandleScheduleProxyUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Proxy Update");
-#endif
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -210,20 +208,43 @@ namespace Syadeu.Presentation.Proxy
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
             if (!(ev.transform is ProxyTransform transform)) return;
-            
-            if (transform.isDestroyed || transform.isDestroyQueued) return;
 
-            if (!transform.Pointer->clusterID.Equals(ClusterID.Requested))
+            ProxyTransformData* data = m_ProxyData.List[transform.m_Index];
+            if (!data->m_IsOccupied || data->m_DestroyQueued) return;
+
+            //UpdateProxyTransform(in data);
+
+            //if (transform.isDestroyed || transform.isDestroyQueued) return;
+
+            if (!data->clusterID.Equals(ClusterID.Requested))
             {
                 m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
             }
 
-            if (!transform.hasProxy || transform.hasProxyQueued) return;
+            if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
+                !data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+            {
+                IProxyMonobehaviour proxy = transform.proxy;
+                proxy.transform.position = transform.position;
+                proxy.transform.rotation = transform.rotation;
+                proxy.transform.localScale = transform.scale;
+            }
 
-            IProxyMonobehaviour proxy = transform.proxy;
-            proxy.transform.position = transform.position;
-            proxy.transform.rotation = transform.rotation;
-            proxy.transform.localScale = transform.scale;
+            //for (int i = 0; i < m_ProxyData.List[transform.m_Index]->m_ChildIndices.Length; i++)
+            //{
+            //    ProxyTransformData* childData = m_ProxyData.List[m_ProxyData.List[transform.m_Index]->m_ChildIndices[i]];
+
+
+            //}
+        }
+        unsafe private void UpdateProxyTransform(in ProxyTransformData* data)
+        {
+            if (!data->m_IsOccupied) return;
+
+            if (data->clusterID.Equals(ClusterID.Requested))
+            {
+                //m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
+            }
         }
 
         unsafe protected override PresentationResult AfterPresentation()
@@ -235,247 +256,191 @@ namespace Syadeu.Presentation.Proxy
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
             #region Override Proxy Requests
-#if DEBUG_MODE
-            s_HandleOverrideProxyRequestsMarker.Begin();
-#endif
-            int overrideRequestProxies = m_OverrideRequestProxies.Count;
-            for (int i = 0; i < overrideRequestProxies; i++)
-            {
-                int index = m_OverrideRequestProxies.Dequeue();
-                ProxyTransform tr = m_ProxyData[index];
-                if (tr.isDestroyed || tr.isDestroyQueued)
-                {
-                    continue;
-                }
 
-                m_RequestProxyList.Enqueue(index);
+            using (s_HandleOverrideProxyRequestsMarker.Auto())
+            {
+                int overrideRequestProxies = m_OverrideRequestProxies.Count;
+                for (int i = 0; i < overrideRequestProxies; i++)
+                {
+                    int index = m_OverrideRequestProxies.Dequeue();
+                    ProxyTransform tr = m_ProxyData[index];
+                    if (tr.isDestroyed || tr.isDestroyQueued)
+                    {
+                        continue;
+                    }
+
+                    m_RequestProxyList.Enqueue(index);
+                }
             }
-#if DEBUG_MODE
-            s_HandleOverrideProxyRequestsMarker.End();
-#endif
+
             #endregion
 
             #region Create / Remove Proxy
-#if DEBUG_MODE
-            s_HandleCreateProxiesMarker.Begin();
-#endif
-            int requestProxyCount = m_RequestProxyList.Count;
-            for (int i = 0; i < requestProxyCount; i++)
+
+            using (s_HandleCreateProxiesMarker.Auto())
             {
-                //if (i != 0 && i % c_ChunkSize == 0) break;
-
-                ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
-
-                if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
+                int requestProxyCount = m_RequestProxyList.Count;
+                for (int i = 0; i < requestProxyCount; i++)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
-                    continue;
-                }
-                else if (tr.hasProxy && !tr.hasProxyQueued)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"Already have proxy");
-                    continue;
-                }
+                    //if (i != 0 && i % c_ChunkSize == 0) break;
 
-                AddProxy(tr);
+                    ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
+
+                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                        continue;
+                    }
+                    else if (tr.hasProxy && !tr.hasProxyQueued)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy, $"Already have proxy");
+                        continue;
+                    }
+
+                    AddProxy(tr);
+                }
             }
-#if DEBUG_MODE
-            s_HandleCreateProxiesMarker.End();
-            s_HandleRemoveProxiesMarker.Begin();
-#endif
-            int removeProxyCount = m_RemoveProxyList.Count;
-            for (int i = 0; i < removeProxyCount; i++)
+            
+            using (s_HandleRemoveProxiesMarker.Auto())
             {
-                //if (i != 0 && i % c_ChunkSize == 0) break;
-
-                ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
-
-                if (tr.isDestroyed)
+                int removeProxyCount = m_RemoveProxyList.Count;
+                for (int i = 0; i < removeProxyCount; i++)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
-                    continue;
-                }
-                else if (!tr.hasProxy)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Does not have any proxy");
-                    continue;
-                }
+                    //if (i != 0 && i % c_ChunkSize == 0) break;
 
-                RemoveProxy(tr);
+                    ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
+
+                    if (tr.isDestroyed)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                        continue;
+                    }
+                    else if (!tr.hasProxy)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy,
+                            $"Does not have any proxy");
+                        continue;
+                    }
+
+                    RemoveProxy(tr);
+                }
             }
-#if DEBUG_MODE
-            s_HandleRemoveProxiesMarker.End();
-#endif
+
             #endregion
 
             #region Visible / Invisible
-#if DEBUG_MODE
-            s_HandleVisibleProxiesMarker.Begin();
-#endif
-            int visibleCount = m_VisibleList.Count;
-            for (int i = 0; i < visibleCount; i++)
+
+            using (s_HandleVisibleProxiesMarker.Auto())
             {
-                //if (i != 0 && i % c_ChunkSize == 0) break;
+                int visibleCount = m_VisibleList.Count;
+                for (int i = 0; i < visibleCount; i++)
+                {
+                    //if (i != 0 && i % c_ChunkSize == 0) break;
 
-                ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
-                if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
+                    if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
-                tr.isVisible = true;
-                OnDataObjectVisible?.Invoke(tr);
+                    tr.isVisible = true;
+                    OnDataObjectVisible?.Invoke(tr);
+                }
             }
-#if DEBUG_MODE
-            s_HandleVisibleProxiesMarker.End();
-            s_HandleInvisibleProxiesMarker.Begin();
-#endif
-            int invisibleCount = m_InvisibleList.Count;
-            for (int i = 0; i < invisibleCount; i++)
+            
+            using (s_HandleInvisibleProxiesMarker.Auto())
             {
-                //if (i != 0 && i % c_ChunkSize == 0) break;
+                int invisibleCount = m_InvisibleList.Count;
+                for (int i = 0; i < invisibleCount; i++)
+                {
+                    //if (i != 0 && i % c_ChunkSize == 0) break;
 
-                ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
-                if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
+                    if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
-                tr.isVisible = false;
-                OnDataObjectInvisible?.Invoke(tr);
+                    tr.isVisible = false;
+                    OnDataObjectInvisible?.Invoke(tr);
+                }
             }
-#if DEBUG_MODE
-            s_HandleInvisibleProxiesMarker.End();
-#endif
+
             #endregion
 
             #region Destroy
-#if DEBUG_MODE
-            s_HandleDestroyProxiesMarker.Begin();
-#endif
-            int destroyCount = m_RequestDestories.Count;
-            for (int i = 0; i < destroyCount; i++)
+
+            using (s_HandleDestroyProxiesMarker.Auto())
             {
-                ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
-                if (tr.isDestroyed)
+                int destroyCount = m_RequestDestories.Count;
+                for (int i = 0; i < destroyCount; i++)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"Already destroyed");
-                    continue;
+                    ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
+                    if (tr.isDestroyed)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy,
+                            $"Already destroyed");
+                        continue;
+                    }
+
+                    InternalDestory(in tr, in frustum);
                 }
-
-                //if (!tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull) && 
-                //    !tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
-                //{
-                //    RecycleableMonobehaviour proxy = RemoveProxy(tr);
-
-                //    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
-
-                //    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
-                //        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
-                //    {
-                //        proxy.transform.position = INIT_POSITION;
-                //    }
-                //}
-                //if (tr.Ref.m_IsVisible)
-                //{
-                //    tr.Ref.m_IsVisible = false;
-                //    OnDataObjectInvisible?.Invoke(tr);
-                //}
-
-                //OnDataObjectDestroy?.Invoke(tr);
-
-                //unsafe
-                //{
-                //    ClusterID id = tr.Pointer->clusterID;
-                //    if (id.Equals(ClusterID.Requested))
-                //    {
-                //        int tempCount = m_ClusterIDRequests.Count;
-                //        for (int a = 0; a < tempCount; a++)
-                //        {
-                //            var tempID = m_ClusterIDRequests.Dequeue();
-                //            if (tempID.index.Equals(tr.Pointer->m_Index))
-                //            {
-                //                break;
-                //            }
-                //            else m_ClusterIDRequests.Enqueue(tempID);
-                //        }
-                //    }
-                //    else m_ClusterData.Remove(id);
-                //}
-
-                //#region Hierarchy
-
-                //if (tr.Ref.m_ChildIndices.Length > 0)
-                //{
-                //    InternalDestroyChildHierarchy(in tr);
-                //}
-
-                //#endregion
-
-                //m_ProxyData.Remove(tr);
-
-                InternalDestory(in tr, in frustum);
             }
-#if DEBUG_MODE
-            s_HandleDestroyProxiesMarker.End();
-#endif
+
             #endregion
 
             #region Apply ClusterID Requests
-#if DEBUG_MODE
-            s_HandleApplyClusterIDMarker.Begin();
-#endif
-            int clusterIDRequestCount = m_ClusterIDRequests.Count;
-            for (int i = 0; i < clusterIDRequestCount; i++)
-            {
-                var temp = m_ClusterIDRequests.Dequeue();
-                var id = m_ClusterData.Add(temp.translation, temp.index);
 
-                m_ProxyData[temp.index].Ref.clusterID = id;
+            using (s_HandleApplyClusterIDMarker.Auto())
+            {
+                int clusterIDRequestCount = m_ClusterIDRequests.Count;
+                for (int i = 0; i < clusterIDRequestCount; i++)
+                {
+                    var temp = m_ClusterIDRequests.Dequeue();
+                    var id = m_ClusterData.Add(temp.translation, temp.index);
+
+                    m_ProxyData[temp.index].Ref.clusterID = id;
+                }
             }
-#if DEBUG_MODE
-            s_HandleApplyClusterIDMarker.End();
-#endif
+
             #endregion
 
             #region Jobs
-#if DEBUG_MODE
-            s_HandleJobsMarker.Begin();
-            s_HandleScheduleClusterUpdateMarker.Begin();
-#endif
-            if (m_ClusterUpdates.Count > 0)
-            {
-                NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
-                m_ClusterUpdates.Clear();
-                m_TempSortedUpdateList.Clear();
 
-                ClusterUpdateSortJob clusterUpdateSortJob = new ClusterUpdateSortJob
+            s_HandleJobsMarker.Begin();
+
+            using (s_HandleScheduleClusterUpdateMarker.Auto())
+            {
+                if (m_ClusterUpdates.Count > 0)
+                {
+                    NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
+                    m_ClusterUpdates.Clear();
+                    m_TempSortedUpdateList.Clear();
+
+                    ClusterUpdateSortJob clusterUpdateSortJob = new ClusterUpdateSortJob
+                    {
+                        m_ClusterData = m_ClusterData,
+                        m_Request = requests,
+                        m_SortedRequests = m_TempSortedUpdateList
+                    };
+                    ScheduleAt(JobPosition.On, clusterUpdateSortJob);
+
+                    ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
+                    {
+                        m_ClusterData = m_ClusterData.AsParallelWriter(),
+                        m_Requests = m_TempSortedUpdateList.AsDeferredJobArray()
+                    };
+                    ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
+                }
+
+                m_SortedCluster.Clear();
+                //var deferredSortedCluster = m_SortedCluster.AsDeferredJobArray();
+                ClusterJob clusterJob = new ClusterJob
                 {
                     m_ClusterData = m_ClusterData,
-                    m_Request = requests,
-                    m_SortedRequests = m_TempSortedUpdateList
-                };
-                ScheduleAt(JobPosition.On, clusterUpdateSortJob);
+                    m_Frustum = frustum,
+                    m_Output = m_SortedCluster.AsParallelWriter(),
 
-                ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
-                {
-                    m_ClusterData = m_ClusterData.AsParallelWriter(),
-                    m_Requests = m_TempSortedUpdateList.AsDeferredJobArray()
+                    m_Count = (int*)m_ProxyClusterCounter.GetUnsafePtrWithoutChecks()
                 };
-                ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
+                ScheduleAt(JobPosition.On, clusterJob, m_ClusterData.Length);
             }
 
-            m_SortedCluster.Clear();
-            //var deferredSortedCluster = m_SortedCluster.AsDeferredJobArray();
-            ClusterJob clusterJob = new ClusterJob
-            {
-                m_ClusterData = m_ClusterData,
-                m_Frustum = frustum,
-                m_Output = m_SortedCluster.AsParallelWriter(),
-
-                m_Count = (int*)m_ProxyClusterCounter.GetUnsafePtrWithoutChecks()
-            };
-            ScheduleAt(JobPosition.On, clusterJob, m_ClusterData.Length);
-#if DEBUG_MODE
-            s_HandleScheduleClusterUpdateMarker.End();
-            s_HandleScheduleProxyUpdateMarker.Begin();
-#endif
+            using (s_HandleScheduleProxyUpdateMarker.Auto())
             unsafe
             {
                 ref NativeProxyData.UnsafeList list = ref m_ProxyData.List;
@@ -502,10 +467,9 @@ namespace Syadeu.Presentation.Proxy
                 //};
                 //ScheduleAt(JobPosition.On, updateChild, (int)list.m_Length, 64);
             }
-#if DEBUG_MODE
-            s_HandleScheduleProxyUpdateMarker.End();
+
             s_HandleJobsMarker.End();
-#endif
+
             #endregion
 
             return PresentationResult.Normal;
@@ -513,7 +477,7 @@ namespace Syadeu.Presentation.Proxy
 
         private unsafe void InternalDestroyChildHierarchy(in ProxyTransformData* parent, in CameraFrustum frustum)
         {
-            for (int i = 0; i < parent->m_ChildIndices.Length; i++)
+            for (int i = parent->m_ChildIndices.Length - 1; i >= 0; i--)
             {
                 ProxyTransformData* child = m_ProxyData.List[parent->m_ChildIndices[i]];
 
@@ -522,8 +486,12 @@ namespace Syadeu.Presentation.Proxy
                     continue;
                 }
 
+                child->m_ParentIndex = -1;
+
                 ProxyTransform childTr = m_ProxyData[parent->m_ChildIndices[i]];
                 InternalDestory(in childTr, in frustum);
+
+                parent->m_ChildIndices.RemoveAt(i);
             }
         }
         private unsafe void InternalDestory(in ProxyTransform tr, in CameraFrustum frustum)
@@ -570,6 +538,13 @@ namespace Syadeu.Presentation.Proxy
 
             InternalDestroyChildHierarchy(in data, in frustum);
 
+            // has parent
+            if (data->m_ParentIndex > 0)
+            {
+                m_ProxyData.List[data->m_ParentIndex]->m_ChildIndices.RemoveFor(data->m_Index);
+                data->m_ParentIndex = -1;
+            }
+
             m_ProxyData.Remove(tr);
         }
 
@@ -578,10 +553,8 @@ namespace Syadeu.Presentation.Proxy
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterUpdateSortJob : IJob
         {
-#if DEBUG_MODE
             private static readonly Unity.Profiling.ProfilerMarker s_Marker
                 = new Unity.Profiling.ProfilerMarker("ClusterUpdateSort Job");
-#endif
 
             public Cluster<ProxyTransformData> m_ClusterData;
             [DeallocateOnJobCompletion] public NativeArray<ClusterUpdateRequest> m_Request;
@@ -589,9 +562,8 @@ namespace Syadeu.Presentation.Proxy
 
             public void Execute()
             {
-#if DEBUG_MODE
                 s_Marker.Begin();
-#endif
+
                 NativeHashSet<ProxyTransform> m_Listed = new NativeHashSet<ProxyTransform>(m_Request.Length, Allocator.Temp);
 
                 for (int i = m_Request.Length - 1; i >= 0; i--)
@@ -601,9 +573,8 @@ namespace Syadeu.Presentation.Proxy
                     m_SortedRequests.Add(m_Request[i]);
                     m_Listed.Add(m_Request[i].transform);
                 }
-#if DEBUG_MODE
+
                 s_Marker.End();
-#endif
             }
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
