@@ -191,8 +191,8 @@ namespace SyadeuEditor
 
         public override void OnInspectorGUI()
         {
-            EditorUtils.StringHeader("CoreSystem");
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("CoreSystem");
+            EditorUtilities.SectorLine();
 
             EditorGUILayout.Space();
             //EditorGUILayout.PropertyField(m_DisplayLogChannel);
@@ -209,7 +209,7 @@ namespace SyadeuEditor
             else
             {
                 EditorGUILayout.BeginVertical("Box");
-                EditorUtils.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, true);
+                EditorUtilities.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, true);
                 EditorGUILayout.EndVertical();
             }
 
@@ -221,15 +221,15 @@ namespace SyadeuEditor
         bool m_OpenDataManagerList = false;
         void Runtime()
         {
-            EditorUtils.StringHeader("Generals", 15);
+            EditorUtilities.StringHeader("Generals", 15);
             EditorGUI.indentLevel += 1;
 
             m_ManagerView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
 
-            EditorUtils.StringHeader("Routines", 15);
+            EditorUtilities.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;
 
             if (GUILayout.Button("Capture")) ValidateRoutineView();
@@ -238,7 +238,7 @@ namespace SyadeuEditor
             EditorGUI.indentLevel -= 1;
             EditorGUILayout.Space();
 
-            EditorUtils.StringHeader("Jobs", 15);
+            EditorUtilities.StringHeader("Jobs", 15);
             EditorGUI.indentLevel += 1;
 
             #region Job

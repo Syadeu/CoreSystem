@@ -181,19 +181,19 @@ namespace SyadeuEditor.Presentation
             }
             else if (addressableCount == editor.targets.Length)
             {
-                EditorUtils.Line();
-                string headerString = EditorUtils.String("Entity", 13);
+                EditorUtilities.Line();
+                string headerString = EditorUtilities.String("Entity", 13);
                 if (currentGroupIdx == 0)
                 {
-                    headerString += EditorUtils.String(": Invalid", 10);
+                    headerString += EditorUtilities.String(": Invalid", 10);
                 }
                 else
                 {
-                    headerString += EditorUtils.String(": Valid", 10);
+                    headerString += EditorUtilities.String(": Valid", 10);
                 }
 
                 EditorGUILayout.BeginHorizontal();
-                EditorUtils.StringRich(headerString);
+                EditorUtilities.StringRich(headerString);
 
                 EditorGUI.BeginChangeCheck();
                 currentGroupIdx = EditorGUILayout.Popup(currentGroupIdx, s_EntityGroupNames);
@@ -222,7 +222,7 @@ namespace SyadeuEditor.Presentation
                 }
                 EditorGUILayout.EndHorizontal();
 
-                EditorUtils.Line();
+                EditorUtilities.Line();
             }
             else
             {

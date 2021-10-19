@@ -10,6 +10,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -230,17 +231,17 @@ namespace SyadeuEditor.Presentation
 
             m_ToolbarWindow.OnGUI();
 
-            string headerString = EditorUtils.String($"{m_CurrentWindow} Window", 20);
+            string headerString = EditorUtilities.String($"{m_CurrentWindow} Window", 20);
             if (IsDirty)
             {
-                headerString += EditorUtils.String(": Modified", 10);
+                headerString += EditorUtilities.String(": Modified", 10);
             }
 
             EditorGUI.LabelField(HeaderPos,
-                headerString, 
-                EditorUtils.HeaderStyle);
+                headerString,
+                EditorStyleUtilities.HeaderStyle);
             HeaderLinePos.width = Screen.width;
-            EditorUtils.Line(HeaderLinePos);
+            EditorUtilities.Line(HeaderLinePos);
 
             if (Application.isPlaying && m_CurrentWindow != WindowType.Debugger)
             {
@@ -277,7 +278,7 @@ namespace SyadeuEditor.Presentation
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
             m_CopyrightRect.y = Screen.height - 42;
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String(c_CopyrightText, 11), EditorUtils.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String(c_CopyrightText, 11), EditorStyleUtilities.CenterStyle);
 
             KeyboardShortcuts();
         }
@@ -366,7 +367,7 @@ namespace SyadeuEditor.Presentation
 
             public void OnGUI()
             {
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     EditorGUILayout.BeginHorizontal();
                     DrawTools();
@@ -533,7 +534,7 @@ namespace SyadeuEditor.Presentation
 
                 Color origin = GUI.color;
                 GUI.color = ColorPalettes.PastelDreams.Yellow;
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
                 GUI.color = origin;
             }
             private void Draw(int unusedID)
@@ -553,7 +554,7 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                using (new EditorUtils.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
+                using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
                 {
                     if (m_MainWindow.m_SelectedObject != null)
                     {
@@ -643,7 +644,7 @@ namespace SyadeuEditor.Presentation
                     }
 
                     var entity = value.GetObject();
-                    m_SelectedName = entity.Name + EditorUtils.String($": {entity.GetType().Name}", 11);
+                    m_SelectedName = entity.Name + EditorUtilities.String($": {entity.GetType().Name}", 11);
 
                     MemberInfo[] temp = entity.GetType()
                         .GetMembers(
@@ -691,38 +692,38 @@ namespace SyadeuEditor.Presentation
 
                 Color origin = GUI.color;
                 GUI.color = ColorPalettes.PastelDreams.Yellow;
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorUtils.Box);
+                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
                 GUI.color = origin;
             }
             private void Draw(int unusedID)
             {
                 using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
                     GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     if (!Application.isPlaying)
                     {
-                        EditorUtils.StringRich("Debugger only works in runtime", true);
+                        EditorUtilities.StringRich("Debugger only works in runtime", true);
                         return;
                     }
 
                     if (m_Selected.IsEmpty())
                     {
-                        EditorUtils.StringRich("Select Data", true);
+                        EditorUtilities.StringRich("Select Data", true);
                         return;
                     }
 
                     if (!m_Selected.IsValid())
                     {
-                        EditorUtils.StringRich("This data has been destroyed", true);
+                        EditorUtilities.StringRich("This data has been destroyed", true);
                         return;
                     }
 
                     ObjectBase obj = m_Selected.GetObject();
 
-                    EditorUtils.StringRich(m_SelectedName, 20);
+                    EditorUtilities.StringRich(m_SelectedName, 20);
                     EditorGUILayout.Space(3);
-                    EditorUtils.Line();
+                    EditorUtilities.Line();
 
                     DrawDefaultInfomation(obj);
 
@@ -731,7 +732,7 @@ namespace SyadeuEditor.Presentation
                         DrawEntity(entityDataBase);
                     }
 
-                    EditorUtils.Line();
+                    EditorUtilities.Line();
 
                     for (int i = 0; i < m_SelectedMembers.Length; i++)
                     {
@@ -770,7 +771,7 @@ namespace SyadeuEditor.Presentation
             {
                 if (entity is EntityBase entityBase)
                 {
-                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EntityDrawer.DrawPrefab(entityBase, true);
 
@@ -789,10 +790,10 @@ namespace SyadeuEditor.Presentation
                         entityBase.Size
                             = EditorGUILayout.Vector3Field("Size", entityBase.Size);
                     }
-                    EditorUtils.Line();
-                    using (new EditorUtils.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
-                        EditorUtils.StringRich("Transform", 15);
+                        EditorUtilities.StringRich("Transform", 15);
                         EditorGUI.indentLevel++;
 
                         entityBase.transform.position =

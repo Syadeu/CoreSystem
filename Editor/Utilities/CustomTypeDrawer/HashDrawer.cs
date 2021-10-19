@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEditor;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class HashDrawer : ObjectDrawer<Hash>
     {

@@ -9,6 +9,7 @@ using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
 using SyadeuEditor.Presentation;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,8 +69,8 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_DisableTexture = EditorUtils.LoadAsset<Texture2D>("CrossYellow", "CoreSystemEditor");
-            m_EnableTexture = EditorUtils.LoadAsset<Texture2D>("TickGreen", "CoreSystemEditor");
+            m_DisableTexture = EditorUtilities.LoadAsset<Texture2D>("CrossYellow", "CoreSystemEditor");
+            m_EnableTexture = EditorUtilities.LoadAsset<Texture2D>("TickGreen", "CoreSystemEditor");
 
             titleStyle = new GUIStyle();
             titleStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
@@ -93,16 +94,16 @@ namespace SyadeuEditor
         private void OnGUI()
         {
             GUILayout.Space(20);
-            EditorUtils.StringHeader("Setup", 30, true);
+            EditorUtilities.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
-            EditorUtils.Line();
+            EditorUtilities.Line();
             GUILayout.Space(10);
 
             DrawToolbar();
 
-            EditorUtils.Line();
+            EditorUtilities.Line();
 
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 switch ((ToolbarNames)m_SelectedToolbar)
                 {
@@ -120,7 +121,7 @@ namespace SyadeuEditor
                 }
             }
 
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtils.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorUtils.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorStyleUtilities.CenterStyle);
         }
 
         public ToolbarNames SelectedToolbar => (ToolbarNames)m_SelectedToolbar;
@@ -157,7 +158,7 @@ namespace SyadeuEditor
         }
         private void DrawToolbarButton(int i, string name, bool enable)
         {
-            using (new EditorUtils.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
+            using (new EditorUtilities.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
             {
                 EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
                 if (GUILayout.Button(name, titleStyle))
@@ -300,23 +301,23 @@ namespace SyadeuEditor
             }
             public void OnGUI()
             {
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     DrawContrains();
                 }
 
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     DrawTagManager();
                 }
 
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     DrawSettings();
                 }
 
                 using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     DrawUnityAudio();
                 }
@@ -333,12 +334,12 @@ namespace SyadeuEditor
 
             private void DrawContrains()
             {
-                m_OpenContrains = EditorUtils.Foldout(m_OpenContrains, "Constrains");
+                m_OpenContrains = EditorUtilities.Foldout(m_OpenContrains, "Constrains");
                 if (!m_OpenContrains) return;
 
                 EditorGUI.indentLevel++;
 
-                EditorUtils.StringRich("Unity Constrains", 13);
+                EditorUtilities.StringRich("Unity Constrains", 13);
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedCollectionsChecks
@@ -352,9 +353,9 @@ namespace SyadeuEditor
                 }
 
                 EditorGUILayout.Space();
-                EditorUtils.Line();
+                EditorUtilities.Line();
 
-                EditorUtils.StringRich("CoreSystem Constrains", 13);
+                EditorUtilities.StringRich("CoreSystem Constrains", 13);
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedCoresystemChecks =
@@ -379,9 +380,9 @@ namespace SyadeuEditor
                 }
 
                 EditorGUILayout.Space();
-                EditorUtils.Line();
+                EditorUtilities.Line();
 
-                EditorUtils.StringRich("Third Party Constrains", 13);
+                EditorUtilities.StringRich("Third Party Constrains", 13);
 
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
@@ -474,12 +475,12 @@ namespace SyadeuEditor
             }
             private void DrawTagManager()
             {
-                m_OpenTagManager = EditorUtils.Foldout(m_OpenTagManager, "Tag Manager");
+                m_OpenTagManager = EditorUtilities.Foldout(m_OpenTagManager, "Tag Manager");
                 if (!m_OpenTagManager) return;
 
                 EditorGUI.indentLevel++;
 
-                EditorUtils.StringRich("Tags", 13);
+                EditorUtilities.StringRich("Tags", 13);
                 if (m_MissingTags.Count > 0)
                 {
                     EditorGUILayout.HelpBox($"Number({m_MissingTags.Count}) of Tags are missing", MessageType.Error);
@@ -500,9 +501,9 @@ namespace SyadeuEditor
                 }
                 else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
 
-                EditorUtils.Line();
+                EditorUtilities.Line();
 
-                EditorUtils.StringRich("Layers", 13);
+                EditorUtilities.StringRich("Layers", 13);
                 if (m_MissingLayers.Count > 0)
                 {
                     EditorGUILayout.HelpBox($"Number({m_MissingLayers.Count}) of Layers are missing", MessageType.Error);
@@ -574,14 +575,14 @@ namespace SyadeuEditor
 
             private void DrawSettings()
             {
-                m_OpenCoreSystemSettings = EditorUtils.Foldout(m_OpenCoreSystemSettings, "Settings");
+                m_OpenCoreSystemSettings = EditorUtilities.Foldout(m_OpenCoreSystemSettings, "Settings");
                 if (!m_OpenCoreSystemSettings) return;
 
                 EditorGUI.indentLevel++;
 
-                using (new EditorUtils.BoxBlock(Color.white))
+                using (new EditorUtilities.BoxBlock(Color.white))
                 {
-                    EditorUtils.StringRich("Global Settings", 13);
+                    EditorUtilities.StringRich("Global Settings", 13);
                     EditorGUILayout.Space();
 
                     m_CoreSystemSettings.m_DisplayLogChannel =
@@ -599,7 +600,7 @@ namespace SyadeuEditor
                     m_CoreSystemSettings.m_EnableLua =
                         EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
                 }
-                EditorUtils.Line();
+                EditorUtilities.Line();
 
                 EditorGUI.indentLevel--;
             }
@@ -613,11 +614,11 @@ namespace SyadeuEditor
 
             private void DrawUnityAudio()
             {
-                m_OpenUnityAudio = EditorUtils.Foldout(m_OpenUnityAudio, "Unity Audio");
+                m_OpenUnityAudio = EditorUtilities.Foldout(m_OpenUnityAudio, "Unity Audio");
                 if (!m_OpenUnityAudio) return;
 
                 EditorGUI.indentLevel++;
-                using (new EditorUtils.BoxBlock(Color.white))
+                using (new EditorUtilities.BoxBlock(Color.white))
                 {
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
@@ -630,7 +631,7 @@ namespace SyadeuEditor
                         }
                     }
 
-                    EditorUtils.Line();
+                    EditorUtilities.Line();
 
                     if (m_UnityAudioDisableAudio.boolValue)
                     {
@@ -665,7 +666,7 @@ namespace SyadeuEditor
                     m_UnityAudioDopplerFactor.floatValue
                         = EditorGUILayout.Slider("Doppler Factor", m_UnityAudioDopplerFactor.floatValue, 0, 1);
 
-                    EditorUtils.Line();
+                    EditorUtilities.Line();
 
                     m_UnityAudioRealVoiceCount.intValue
                         = EditorGUILayout.IntField("Max Real Voices", m_UnityAudioRealVoiceCount.intValue);
@@ -733,9 +734,9 @@ namespace SyadeuEditor
             {
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    m_OpenMasterScene = EditorUtils.Foldout(m_OpenMasterScene, "Master Scene", 13);
+                    m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
                     bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath);
                     
                     if (m_OpenMasterScene)
@@ -763,7 +764,7 @@ namespace SyadeuEditor
                                 {
                                     ScenePath = scene.path
                                 };
-                                EditorUtils.SetDirty(SceneList.Instance);
+                                EditorUtilities.SetDirty(SceneList.Instance);
                                 CloseScene(scene);
 
                                 serializedObject.Update();
@@ -771,10 +772,10 @@ namespace SyadeuEditor
                         }
                     }
                 }
-                EditorUtils.Line();
-                using (new EditorUtils.BoxBlock(Color.black))
+                EditorUtilities.Line();
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    m_OpenStartScene = EditorUtils.Foldout(m_OpenStartScene, "Start Scene", 13);
+                    m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
                     bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath);
                     
                     if (m_OpenStartScene)
@@ -802,7 +803,7 @@ namespace SyadeuEditor
                                 {
                                     ScenePath = scene.path
                                 };
-                                EditorUtils.SetDirty(SceneList.Instance);
+                                EditorUtilities.SetDirty(SceneList.Instance);
                                 CloseScene(scene);
 
                                 serializedObject.Update();
@@ -810,10 +811,10 @@ namespace SyadeuEditor
                         }
                     }
                 }
-                EditorUtils.Line();
-                using (new EditorUtils.BoxBlock(Color.black))
+                EditorUtilities.Line();
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    m_OpenCustomLoadingScene = EditorUtils.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
+                    m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
                     bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath);
 
                     if (m_OpenCustomLoadingScene)
@@ -835,7 +836,7 @@ namespace SyadeuEditor
                                 {
                                     ScenePath = scene.path
                                 };
-                                EditorUtils.SetDirty(SceneList.Instance);
+                                EditorUtilities.SetDirty(SceneList.Instance);
                                 EditorSceneManager.SetActiveScene(scene);
 
                                 GameObject cameraObj = new GameObject("Loading Camera");
@@ -875,10 +876,10 @@ namespace SyadeuEditor
                         }
                     }
                 }
-                EditorUtils.Line();
-                using (new EditorUtils.BoxBlock(Color.black))
+                EditorUtilities.Line();
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    m_OpenSceneList = EditorUtils.Foldout(m_OpenSceneList, "Scenes", 13);
+                    m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
 
                     if (m_OpenSceneList)
                     {
@@ -1013,25 +1014,25 @@ namespace SyadeuEditor
 
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     if (!Predicate())
                     {
-                        EditorUtils.StringRich($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", true);
+                        EditorUtilities.StringRich($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", true);
                     }
                     else
                     {
-                        EditorUtils.StringRich("Asset matched with Addressable", true);
+                        EditorUtilities.StringRich("Asset matched with Addressable", true);
                     }
                 }
 
-                using (new EditorUtils.BoxBlock(Color.black))
+                using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     if (m_InvalidIndices.Count > 0)
                     {
                         EditorGUILayout.HelpBox("We\'ve found invalid assets in PrefabList but normally " +
                         "it is not an issue. You can ignore this", MessageType.Info);
-                        EditorUtils.StringRich("Invalid prefab found");
+                        EditorUtilities.StringRich("Invalid prefab found");
                         EditorGUI.indentLevel++;
 
                         EditorGUI.BeginDisabledGroup(true);

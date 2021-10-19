@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -29,7 +30,7 @@ namespace SyadeuEditor.Presentation
 
         public override IInstance Draw(IInstance currentValue)
         {
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 DrawField();
             }
@@ -43,14 +44,14 @@ namespace SyadeuEditor.Presentation
                 GUILayout.Space(EditorGUI.indentLevel * 15);
                 GUILayout.Label(Name, GUILayout.Width(Screen.width * .25f));
 
-                Rect fieldRect = GUILayoutUtility.GetRect(m_DisplayName, ReflectionHelperEditor.SelectorStyle, GUILayout.ExpandWidth(true));
+                Rect fieldRect = GUILayoutUtility.GetRect(m_DisplayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
                 int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
                 switch (Event.current.GetTypeForControl(selectorID))
                 {
                     case EventType.Repaint:
                         IsHover = fieldRect.Contains(Event.current.mousePosition);
-                        ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, m_DisplayName, IsHover, isActive: false, on: false, false);
+                        EditorStyleUtilities.SelectorStyle.Draw(fieldRect, m_DisplayName, IsHover, isActive: false, on: false, false);
                         break;
                     case EventType.ContextClick:
                         if (!fieldRect.Contains(Event.current.mousePosition)) break;

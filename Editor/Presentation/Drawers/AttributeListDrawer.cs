@@ -1,6 +1,7 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Attributes;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace SyadeuEditor.Presentation
         public override Reference<AttributeBase>[] Draw(Reference<AttributeBase>[] currentValue)
         {
             EditorGUILayout.BeginHorizontal();
-            EditorUtils.StringRich(Name, 15);
+            EditorUtilities.StringRich(Name, 15);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 Reference<AttributeBase>[] copy = new Reference<AttributeBase>[currentValue.Length + 1];
@@ -65,7 +66,7 @@ namespace SyadeuEditor.Presentation
             }
             EditorGUILayout.EndHorizontal();
 
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 for (int i = 0; i < currentValue.Length; i++)
                 {
@@ -130,7 +131,7 @@ namespace SyadeuEditor.Presentation
                         continue;
                     }
 
-                    m_Open[i] = GUILayout.Toggle(m_Open[i], m_Open[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString, EditorUtils.MiniButton, GUILayout.Width(20));
+                    m_Open[i] = GUILayout.Toggle(m_Open[i], m_Open[i] ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString, EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
                     if (GUILayout.Button("C", GUILayout.Width(20)))
                     {
@@ -151,7 +152,7 @@ namespace SyadeuEditor.Presentation
                         Color color3 = Color.red;
                         color3.a = .7f;
 
-                        using (new EditorUtils.BoxBlock(color3))
+                        using (new EditorUtilities.BoxBlock(color3))
                         {
                             if (!currentValue[i].IsValid())
                             {
@@ -170,7 +171,7 @@ namespace SyadeuEditor.Presentation
                             }
                         }
 
-                        EditorUtils.Line();
+                        EditorUtilities.Line();
                     }
                 }
             }

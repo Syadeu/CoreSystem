@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using SyadeuEditor.Utilities;
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor
@@ -73,7 +74,7 @@ namespace SyadeuEditor
             Vector3 screenPos = ToScreenPosition(worldPosition);
             if (!IsDrawable(screenPos)) return;
 
-            GUIStyle style = center ? EditorUtils.CenterStyle : EditorUtils.HeaderStyle;
+            GUIStyle style = center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle;
 
             float width = style.CalcSize(gc).x + 10 + sizeOffset.x;
             float height = style.CalcHeight(gc, width) + 8 + sizeOffset.y;
@@ -89,39 +90,39 @@ namespace SyadeuEditor
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center, Vector2 offset, Vector2 sizeOffset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color), center, offset, sizeOffset);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color), center, offset, sizeOffset);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center, Vector2 offset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color), center, offset, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color), center, offset, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, bool center)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color), center, Vector2.zero, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color), center, Vector2.zero, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center, Vector2 offset, Vector2 sizeOffset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color, size), center, offset, sizeOffset);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color, size), center, offset, sizeOffset);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center, Vector2 offset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color, size), center, offset, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color, size), center, offset, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, StringColor color, int size, bool center)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, color, size), center, Vector2.zero, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, color, size), center, Vector2.zero, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center, Vector2 offset, Vector2 sizeOffset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, size), center, offset, sizeOffset);
+            SceneLabel(worldPosition, EditorUtilities.String(text, size), center, offset, sizeOffset);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center, Vector2 offset)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, size), center, offset, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, size), center, offset, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, int size, bool center)
         {
-            SceneLabel(worldPosition, EditorUtils.String(text, size), center, Vector2.zero, Vector2.zero);
+            SceneLabel(worldPosition, EditorUtilities.String(text, size), center, Vector2.zero, Vector2.zero);
         }
         public static void SceneLabel(Vector3 worldPosition, string text, Vector2 sizeOffset)
         {
@@ -142,8 +143,8 @@ namespace SyadeuEditor
             Vector3 screenPos = ToScreenPosition(worldPosition);
             if (!IsDrawable(screenPos)) return false;
 
-            float width = EditorUtils.BttStyle.CalcSize(gc).x + 10 + sizeOffset.x;
-            float height = EditorUtils.BttStyle.CalcHeight(gc, width) + 8 + sizeOffset.y;
+            float width = EditorStyleUtilities.BttStyle.CalcSize(gc).x + 10 + sizeOffset.x;
+            float height = EditorStyleUtilities.BttStyle.CalcHeight(gc, width) + 8 + sizeOffset.y;
             //float height = EditorStyles.label.CalcHeight(gc, width) + 8;
 
             sceneRect.x = screenPos.x - width * .5f; sceneRect.x += offset.x;
@@ -152,7 +153,7 @@ namespace SyadeuEditor
             sceneRect.height = height;
 
             Handles.BeginGUI();
-            bool output = GUI.Button(sceneRect, text, EditorUtils.BttStyle);
+            bool output = GUI.Button(sceneRect, text, EditorStyleUtilities.BttStyle);
             Handles.EndGUI();
 
             return output;
@@ -162,23 +163,23 @@ namespace SyadeuEditor
         public static bool SceneButton(Vector3 worldPosition, string text)
             => SceneButton(worldPosition, text, Vector2.zero, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, EditorUtils.String(text, color), offset, sizeOffset);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color), offset, sizeOffset);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, Vector2 offset)
-            => SceneButton(worldPosition, EditorUtils.String(text, color), offset, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color), offset, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color)
-            => SceneButton(worldPosition, EditorUtils.String(text, color), Vector2.zero, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color), Vector2.zero, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, EditorUtils.String(text, color, size), offset, sizeOffset);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color, size), offset, sizeOffset);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size, Vector2 offset)
-            => SceneButton(worldPosition, EditorUtils.String(text, color, size), offset, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color, size), offset, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, StringColor color, int size)
-            => SceneButton(worldPosition, EditorUtils.String(text, color, size), Vector2.zero, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, color, size), Vector2.zero, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, int size, Vector2 offset, Vector2 sizeOffset)
-            => SceneButton(worldPosition, EditorUtils.String(text, size), offset, sizeOffset);
+            => SceneButton(worldPosition, EditorUtilities.String(text, size), offset, sizeOffset);
         public static bool SceneButton(Vector3 worldPosition, string text, int size, Vector2 offset)
-            => SceneButton(worldPosition, EditorUtils.String(text, size), offset, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, size), offset, Vector2.zero);
         public static bool SceneButton(Vector3 worldPosition, string text, int size)
-            => SceneButton(worldPosition, EditorUtils.String(text, size), Vector2.zero, Vector2.zero);
+            => SceneButton(worldPosition, EditorUtilities.String(text, size), Vector2.zero, Vector2.zero);
 
         #endregion
 
@@ -192,7 +193,7 @@ namespace SyadeuEditor
             Color old = GUI.backgroundColor;
             GUI.backgroundColor = col;
 
-            GUI.Box(rect, "", EditorUtils.SplitStyle);
+            GUI.Box(rect, "", EditorStyleUtilities.SplitStyle);
 
             GUI.backgroundColor = old;
 

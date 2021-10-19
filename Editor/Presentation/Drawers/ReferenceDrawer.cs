@@ -2,7 +2,9 @@
 using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -19,7 +21,9 @@ namespace SyadeuEditor.Presentation
         public ReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
         }
-
+        public ReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
+        {
+        }
         public ReferenceDrawer(object parentObject, Type declaredType, Action<IFixedReference> setter, Func<IFixedReference> getter) : base(parentObject, declaredType, setter, getter)
         {
         }
@@ -52,8 +56,8 @@ namespace SyadeuEditor.Presentation
             }
 
             m_Open = GUILayout.Toggle(m_Open,
-                        m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                        , EditorUtils.MiniButton, GUILayout.Width(20));
+                        m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                        , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
             EditorGUI.BeginDisabledGroup(!currentValue.IsValid());
             if (GUILayout.Button("C", GUILayout.Width(20)))
@@ -84,7 +88,7 @@ namespace SyadeuEditor.Presentation
 
                 EditorGUI.indentLevel++;
 
-                using (new EditorUtils.BoxBlock(color3))
+                using (new EditorUtilities.BoxBlock(color3))
                 {
                     if (!currentValue.IsValid())
                     {
@@ -138,7 +142,7 @@ namespace SyadeuEditor.Presentation
                 case EventType.Repaint:
                     bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                    ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName,
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName,
                         isHover, isActive: true, on: true, false);
 
                     break;

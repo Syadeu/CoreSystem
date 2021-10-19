@@ -2,6 +2,7 @@
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -96,7 +97,7 @@ namespace SyadeuEditor.Presentation
         {
             const string c_ObsoleteMsg = "This type marked as deprecated.\n{0}";
 
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
                 if (m_Obsolete != null)
                 {
@@ -119,9 +120,9 @@ namespace SyadeuEditor.Presentation
         }
         protected void DrawHeader()
         {
-            EditorUtils.StringRich(Name + EditorUtils.String($": {Type.Name}", 11), 20);
+            EditorUtilities.StringRich(Name + EditorUtilities.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);
-            EditorUtils.Line();
+            EditorUtilities.Line();
         }
         protected void DrawField(ObjectDrawerBase drawer)
         {

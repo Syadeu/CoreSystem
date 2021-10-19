@@ -5,6 +5,7 @@ using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using SyadeuEditor.Utilities;
 using System;
 using System.Reflection;
 using Unity.Mathematics;
@@ -35,7 +36,7 @@ namespace SyadeuEditor.Presentation
             {
                 if (Drawers[i].Name.Equals("FXBounds"))
                 {
-                    using (new EditorUtils.BoxBlock(Color.black))
+                    using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         DrawFXBounds();
                     }
@@ -76,7 +77,7 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
-                using (new EditorUtils.BoxBlock(Color.white))
+                using (new EditorUtilities.BoxBlock(Color.white))
                 {
                     using (new EditorGUI.DisabledGroupScope(m_PreviewScene == null || !m_PreviewScene.IsOpened))
                     {

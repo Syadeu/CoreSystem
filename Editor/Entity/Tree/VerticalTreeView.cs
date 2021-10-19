@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SyadeuEditor.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,28 +66,28 @@ namespace SyadeuEditor.Tree
         {
             const string notFound = "Not Found";
 
-            using (new EditorUtils.BoxBlock(Color.white))
+            using (new EditorUtilities.BoxBlock(Color.white))
             {
-                EditorUtils.Line();
+                EditorUtilities.Line();
                 BeforeDraw();
                 DrawToolbar();
                 DrawSearchField();
 
                 EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
-                if (m_DrawAddButton && GUILayout.Button("+", EditorUtils.MiniButton))
+                if (m_DrawAddButton && GUILayout.Button("+", EditorStyleUtilities.MiniButton))
                 {
                     m_Data = OnAddButton?.Invoke();
                     SetupElements(m_Data, m_DataSetup);
                     if (Asset != null) EditorUtility.SetDirty(Asset);
                 }
-                if (m_DrawRemoveButton && GUILayout.Button("-", EditorUtils.MiniButton))
+                if (m_DrawRemoveButton && GUILayout.Button("-", EditorStyleUtilities.MiniButton))
                 {
                     m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
                     SetupElements(m_Data, m_DataSetup);
                     if (Asset != null) EditorUtility.SetDirty(Asset);
                 }
                 EditorGUILayout.EndHorizontal();
-                EditorUtils.Line();
+                EditorUtilities.Line();
 
                 Color color1 = Color.black, color2 = Color.gray;
                 color1.a = .5f; color2.a = .3f;
@@ -99,7 +100,7 @@ namespace SyadeuEditor.Tree
                 {
                     if (m_Elements[i].HideElementInTree) continue;
 
-                    using (new EditorUtils.BoxBlock(nextColor))
+                    using (new EditorUtilities.BoxBlock(nextColor))
                     {
                         DrawChild(m_Elements[i]);
                     }
@@ -109,12 +110,12 @@ namespace SyadeuEditor.Tree
                     if (nextColor == color1) nextColor = color2;
                     else nextColor = color1;
 
-                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtils.Line();
+                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.Line();
                 }
 
-                if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
+                if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
                 AfterDraw();
-                EditorUtils.Line();
+                EditorUtilities.Line();
             }
         }
 
@@ -197,9 +198,9 @@ namespace SyadeuEditor.Tree
 
                 m_CurrentDrawChilds += 1;
 
-                if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtils.SectorLine();
+                if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.SectorLine();
             }
-            if (m_CurrentDrawChilds == 0) EditorUtils.StringRich(notFound, true);
+            if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
             AfterDraw();
 
             EditorGUILayout.EndVertical();

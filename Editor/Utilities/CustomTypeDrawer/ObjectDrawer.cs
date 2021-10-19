@@ -1,11 +1,12 @@
 ﻿using Syadeu.Internal;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public abstract class ObjectDrawer<T> : ObjectDrawerBase
     {
@@ -30,6 +31,19 @@ namespace SyadeuEditor.Presentation
             m_DelaredType = declaredType;
             m_Setter = setter;
             m_Getter = getter;
+
+            m_Attributes = Array.Empty<Attribute>();
+            m_Disable = false;
+
+            Name = string.Empty;
+        }
+        public ObjectDrawer(IList list, int index, Type elementType) 
+        {
+            m_TargetObject = list;
+            m_DelaredType = elementType;
+
+            m_Setter = other => list[index] = other;
+            m_Getter = () => list[index] == null ? default(T) : (T)list[index];
 
             m_Attributes = Array.Empty<Attribute>();
             m_Disable = false;
@@ -102,8 +116,8 @@ namespace SyadeuEditor.Presentation
                 }
                 else if (item is HeaderAttribute header)
                 {
-                    EditorUtils.Line();
-                    EditorUtils.StringRich(header.header, 15);
+                    EditorUtilities.Line();
+                    EditorUtilities.StringRich(header.header, 15);
                 }
             }
 

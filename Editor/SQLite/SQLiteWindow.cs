@@ -43,8 +43,8 @@ namespace SyadeuEditor
 
         private void OnGUI()
         {
-            EditorUtils.StringHeader("SQLite Window", StringColor.grey, true);
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("SQLite Window", StringColor.grey, true);
+            EditorUtilities.SectorLine();
 
             #region 데이터 경로 지정 및 닫기
             EditorGUI.BeginDisabledGroup(true);
@@ -115,11 +115,11 @@ namespace SyadeuEditor
 
             if (!m_DatabaseLoaded)
             {
-                EditorUtils.SectorLine();
+                EditorUtilities.SectorLine();
                 return;
             }
             m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, m_ToolbarNames);
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
 
             if (m_Database.Tables.Count == 0)
             {
@@ -165,10 +165,10 @@ namespace SyadeuEditor
 
             if (m_TableNames.Length < m_SeletedTable) m_SeletedTable = 0;
 
-            EditorUtils.StringHeader(m_TableNames[m_SeletedTable]);
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader(m_TableNames[m_SeletedTable]);
+            EditorUtilities.SectorLine();
 
-            EditorUtils.StringRich("작업중", true);
+            EditorUtilities.StringRich("작업중", true);
 
             GUILayout.EndScrollView();
         }
@@ -176,8 +176,8 @@ namespace SyadeuEditor
         {
             if (m_TableNames.Length == 0) return;
 
-            EditorUtils.StringRich("Global Infomation", 20, StringColor.grey);
-            EditorUtils.SectorLine();
+            EditorUtilities.StringRich("Global Infomation", 20, StringColor.grey);
+            EditorUtilities.SectorLine();
 
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.TextField("File size: ", $"{new FileInfo(m_DatabasePath).Length / 1e+6} Mb");
@@ -206,7 +206,7 @@ namespace SyadeuEditor
                     versionInfoColor = StringColor.maroon;
                 }
             }
-            EditorUtils.StringRich(versionInfo, versionInfoColor, true);
+            EditorUtilities.StringRich(versionInfo, versionInfoColor, true);
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.TextField("Application Version: ", $"{Application.version}");
@@ -215,27 +215,27 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
             
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
 
-            EditorUtils.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
+            EditorUtilities.SectorLine();
 
             m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height * .5f));
 
             SQLiteTable selectedTable = m_Database.Tables[m_SeletedTable];
             EditorGUILayout.BeginHorizontal();
-            EditorUtils.StringRich($"Name: ", StringColor.grey);
+            EditorUtilities.StringRich($"Name: ", StringColor.grey);
             for (int i = 0; i < selectedTable.Columns.Count; i++)
             {
-                EditorUtils.StringRich($"{selectedTable.Columns[i].Name}", StringColor.grey);
+                EditorUtilities.StringRich($"{selectedTable.Columns[i].Name}", StringColor.grey);
             }
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtils.StringRich($"Type: ", StringColor.grey);
+            EditorUtilities.StringRich($"Type: ", StringColor.grey);
             for (int i = 0; i < selectedTable.Columns.Count; i++)
             {
-                EditorUtils.StringRich($"{selectedTable.Columns[i].Type.Name}", StringColor.grey);
+                EditorUtilities.StringRich($"{selectedTable.Columns[i].Type.Name}", StringColor.grey);
             }
             EditorGUILayout.EndHorizontal();
 

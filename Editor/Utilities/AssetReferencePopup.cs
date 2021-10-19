@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Syadeu.Collections;
 using UnityEditor;
-
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 #if CORESYSTEM_GOOGLE
 using Google.Apis.Sheets.v4.Data;

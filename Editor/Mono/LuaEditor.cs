@@ -4,6 +4,7 @@ using Syadeu;
 using Syadeu.Collections;
 using Syadeu.Collections.Lua;
 using Syadeu.Internal;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -190,10 +191,10 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
         public static void DrawGUI(this LuaScriptContainer other, string name)
         {
             const string header = "{0}: <size=10>Lua Function {1}</size>";
-            EditorGUILayout.BeginVertical(EditorUtils.Box);
+            EditorGUILayout.BeginVertical(EditorStyleUtilities.Box);
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtils.StringRich(string.Format(header, name, other.m_Scripts?.Count.ToString()), 15);
+            EditorUtilities.StringRich(string.Format(header, name, other.m_Scripts?.Count.ToString()), 15);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 if (other.m_Scripts == null) other.m_Scripts = new List<LuaScript>();
@@ -209,9 +210,9 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
 
             for (int i = 0; i < other.m_Scripts?.Count; i++)
             {
-                EditorUtils.Line();
+                EditorUtilities.Line();
                 EditorGUILayout.BeginHorizontal();
-                EditorUtils.StringRich(string.IsNullOrEmpty(other.m_Scripts[i].m_FunctionName) ? $"{i}" : other.m_Scripts[i].m_FunctionName, 12);
+                EditorUtilities.StringRich(string.IsNullOrEmpty(other.m_Scripts[i].m_FunctionName) ? $"{i}" : other.m_Scripts[i].m_FunctionName, 12);
                 if (GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     other.m_Scripts.RemoveAt(i);
@@ -251,7 +252,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
             EditorGUI.BeginDisabledGroup(selected == 0);
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtils.StringRich("Args", 12);
+            EditorUtilities.StringRich("Args", 12);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 if (scr.m_Args == null)
@@ -284,8 +285,8 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
         }
         public static void DrawFunctionSelector(this LuaScript scr, string name)
         {
-            EditorGUILayout.BeginVertical(EditorUtils.Box);
-            if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 15);
+            EditorGUILayout.BeginVertical(EditorStyleUtilities.Box);
+            if (!string.IsNullOrEmpty(name)) EditorUtilities.StringRich(name, 15);
             EditorGUI.indentLevel += 1;
 
             DrawLuaScript(scr);

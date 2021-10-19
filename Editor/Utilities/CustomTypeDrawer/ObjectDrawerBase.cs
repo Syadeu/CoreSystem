@@ -10,7 +10,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public abstract class ObjectDrawerBase : IDisposable
     {
@@ -38,10 +38,10 @@ namespace SyadeuEditor.Presentation
         {
             Type declaredType = GetDeclaredType(memberInfo);
 
-            if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
-            {
-                return new ValuePairContainerDrawer(parentObject, memberInfo);
-            }
+            //if (declaredType.Equals(TypeHelper.TypeOf<ValuePairContainer>.Type))
+            //{
+            //    return new ValuePairContainerDrawer(parentObject, memberInfo);
+            //}
 
             Type[] drawerTypes = TypeHelper.GetTypes(other => TypeHelper.TypeOf<ObjectDrawerBase>.Type.IsAssignableFrom(other));
             var iter = drawerTypes.Where((other) =>

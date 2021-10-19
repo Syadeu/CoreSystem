@@ -21,6 +21,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Actions;
 using SyadeuEditor.Presentation;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
@@ -42,26 +43,6 @@ namespace SyadeuEditor
 
         readonly Dictionary<object, Drawer> m_CachedDrawer = new Dictionary<object, Drawer>();
         readonly Dictionary<object, AttributeListDrawer> m_CachedAttributeListDrawer = new Dictionary<object, AttributeListDrawer>();
-
-        static GUIStyle m_SelectorStyle = null;
-        public static GUIStyle SelectorStyle
-        {
-            get
-            {
-                if (m_SelectorStyle == null)
-                {
-                    GUIStyle st = new GUIStyle(EditorUtils.TextField);
-                    st.clipping = TextClipping.Clip;
-                    st.stretchWidth = true;
-                    st.alignment = TextAnchor.MiddleCenter;
-                    st.wordWrap = true;
-
-                    m_SelectorStyle = st;
-                }
-
-                return m_SelectorStyle;
-            }
-        }
 
         public abstract class DrawerBase
         {
@@ -94,7 +75,7 @@ namespace SyadeuEditor
                     }
                 }
 
-                if (drawHeader) EditorUtils.StringRich(m_Type.Name, 15, true);
+                if (drawHeader) EditorUtilities.StringRich(m_Type.Name, 15, true);
                 ReflectionDescriptionAttribute description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
                 if (description != null)
                 {
@@ -153,7 +134,7 @@ namespace SyadeuEditor
                 if (string.IsNullOrEmpty(m_Name)) m_Name = "Attributes";
 
                 EditorGUILayout.BeginHorizontal();
-                EditorUtils.StringRich(m_Name, 15);
+                EditorUtilities.StringRich(m_Name, 15);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     m_CurrentList.Add(Hash.Empty);
@@ -168,7 +149,7 @@ namespace SyadeuEditor
                 }
                 EditorGUILayout.EndHorizontal();
 
-                using (new EditorUtils.BoxBlock(m_Color))
+                using (new EditorUtilities.BoxBlock(m_Color))
                 {
                     DrawList();
                 }
@@ -223,8 +204,8 @@ namespace SyadeuEditor
                     }
 
                     m_OpenAttributes[i] = GUILayout.Toggle(m_OpenAttributes[i],
-                        m_OpenAttributes[i] ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                        , EditorUtils.MiniButton, GUILayout.Width(20));
+                        m_OpenAttributes[i] ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                        , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
                     if (GUILayout.Button("C", GUILayout.Width(20)))
                     {
@@ -247,7 +228,7 @@ namespace SyadeuEditor
 
                         //EditorGUI.indentLevel += 1;
 
-                        using (new EditorUtils.BoxBlock(color3))
+                        using (new EditorUtilities.BoxBlock(color3))
                         {
                             if (m_AttributeDrawers[i] == null)
                             {
@@ -268,7 +249,7 @@ namespace SyadeuEditor
                         //EditorGUI.indentLevel -= 1;
                     }
 
-                    if (m_OpenAttributes[i]) EditorUtils.Line();
+                    if (m_OpenAttributes[i]) EditorUtilities.Line();
                 }
             }
             private static void SetAttribute(Hash attHash, object att)
@@ -302,51 +283,6 @@ namespace SyadeuEditor
             return drawer;
         }
 
-        public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
-        {
-            //float iconHeight = EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing * 3;
-            //Vector2 iconSize = EditorGUIUtility.GetIconSize();
-            //EditorGUIUtility.SetIconSize(new Vector2(iconHeight, iconHeight));
-            string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);
-            //Texture2D assetIcon = AssetDatabase.GetCachedIcon(assetPath) as Texture2D;
-
-            string displayName;
-            AddressableAssetEntry entry = null;
-            if (refAsset != null /*&& refAsset.IsValid()*/)
-            {
-                entry = AddressableAssetSettingsDefaultObject.GetSettings(true).FindAssetEntry(refAsset.AssetGUID);
-                if (entry == null)
-                {
-                    displayName = "Not Addressable: " + assetPath.Split('/').Last();
-                }
-                else displayName = entry.address.Split('/').Last();
-            }
-            else displayName = "None";
-
-            EditorGUILayout.BeginHorizontal();
-            if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
-
-            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
-            {
-                Rect rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
-
-                PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
-            }
-
-            //Rect rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-            //rect = EditorGUI.IndentedRect(rect);
-            //if (EditorGUI.DropdownButton(rect, new GUIContent(displayName, assetIcon), FocusType.Passive/*, new GUIStyle("ObjectField")*/))
-            //{
-            //    rect = GUILayoutUtility.GetLastRect();
-            //    rect.position = Event.current.mousePosition;
-
-            //    PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
-            //}
-
-            EditorGUILayout.EndHorizontal();
-            //EditorGUIUtility.SetIconSize(iconSize);
-        }
         public static void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
             GUIContent displayName;
@@ -370,7 +306,7 @@ namespace SyadeuEditor
 
             if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-            Rect fieldRect = GUILayoutUtility.GetRect(displayName, SelectorStyle, GUILayout.ExpandWidth(true));
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
             int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
             switch (Event.current.GetTypeForControl(selectorID))
@@ -378,7 +314,7 @@ namespace SyadeuEditor
                 case EventType.Repaint:
                     bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                    SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
                     break;
                 case EventType.ContextClick:
                     if (!fieldRect.Contains(Event.current.mousePosition)) break;
@@ -480,7 +416,7 @@ namespace SyadeuEditor
                 GUILayout.Label(name);
             }
 
-            Rect fieldRect = GUILayoutUtility.GetRect(displayName, SelectorStyle, GUILayout.ExpandWidth(true));
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
             int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
             switch (Event.current.GetTypeForControl(selectorID))
@@ -488,7 +424,7 @@ namespace SyadeuEditor
                 case EventType.Repaint:
                     bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                    SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
                     break;
                 case EventType.ContextClick:
                     if (!fieldRect.Contains(Event.current.mousePosition)) break;
@@ -634,7 +570,7 @@ namespace SyadeuEditor
                 GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
             }
             
-            if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true)))
             {
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
@@ -696,11 +632,11 @@ namespace SyadeuEditor
             Color originColor = GUI.backgroundColor;
             int prevIndent = EditorGUI.indentLevel;
 
-            using (new EditorUtils.BoxBlock(color3))
+            using (new EditorUtilities.BoxBlock(color3))
             {
                 #region Header
                 EditorGUILayout.BeginHorizontal();
-                if (!string.IsNullOrEmpty(name)) EditorUtils.StringRich(name, 13);
+                if (!string.IsNullOrEmpty(name)) EditorUtilities.StringRich(name, 13);
                 if (GUILayout.Button("+", GUILayout.Width(20)))
                 {
                     if (list.IsFixedSize)
@@ -739,8 +675,8 @@ namespace SyadeuEditor
                     {
                         EditorGUI.indentLevel++;
 
-                        GUILayout.BeginHorizontal(EditorUtils.Box);
-                        using (new EditorUtils.BoxBlock(j % 2 == 0 ? color1 : color2))
+                        GUILayout.BeginHorizontal(EditorStyleUtilities.Box);
+                        using (new EditorUtilities.BoxBlock(j % 2 == 0 ? color1 : color2))
                         {
                             if (list[j] == null)
                             {
@@ -801,7 +737,7 @@ namespace SyadeuEditor
                             else if (elementType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
                             {
                                 AssetReference refAsset = (AssetReference)list[j];
-                                DrawAssetReference(string.Empty, (other) => list[j] = other, refAsset);
+                                AddressableUtilities.DrawAssetReference(string.Empty, (other) => list[j] = other, refAsset);
                             }
                             #endregion
                             else if (DrawSystemField(list[j], elementType, string.Empty, (other) => list[j], out value))
@@ -835,7 +771,7 @@ namespace SyadeuEditor
                         }
                         GUILayout.EndHorizontal();
 
-                        if (j + 1 < list.Count) EditorUtils.Line();
+                        if (j + 1 < list.Count) EditorUtilities.Line();
                         EditorGUI.indentLevel--;
                     }
                 }
@@ -900,8 +836,8 @@ namespace SyadeuEditor
                     }
                     else if (item is HeaderAttribute header)
                     {
-                        EditorUtils.Line();
-                        EditorUtils.StringRich(header.header, 15);
+                        EditorUtilities.Line();
+                        EditorUtilities.StringRich(header.header, 15);
                     }
                 }
 
@@ -921,7 +857,7 @@ namespace SyadeuEditor
                 else if (declaredType.Equals(TypeHelper.TypeOf<AssetReference>.Type))
                 {
                     AssetReference refAsset = (AssetReference)getter.Invoke(obj);
-                    DrawAssetReference(name, (other) => setter.Invoke(obj, other), refAsset);
+                    AddressableUtilities.DrawAssetReference(name, (other) => setter.Invoke(obj, other), refAsset);
                 }
                 #endregion
                 #region CoreSystem Types

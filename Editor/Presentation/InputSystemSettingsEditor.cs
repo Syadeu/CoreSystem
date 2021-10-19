@@ -41,7 +41,7 @@ namespace SyadeuEditor.Presentation
             EditorGUILayout.PropertyField(m_AdditionalInputActions);
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Show Original Contents");
+            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Show Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }

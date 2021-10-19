@@ -43,8 +43,8 @@ namespace SyadeuEditor
         }
         public override void OnInspectorGUI()
         {
-            EditorUtils.StringHeader("Simple Follower");
-            EditorUtils.SectorLine();
+            EditorUtilities.StringHeader("Simple Follower");
+            EditorUtilities.SectorLine();
 
             EditorGUILayout.PropertyField(m_Target, new GUIContent("Target Transform: "));
             EditorGUI.BeginChangeCheck();
@@ -63,7 +63,7 @@ namespace SyadeuEditor
             serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }

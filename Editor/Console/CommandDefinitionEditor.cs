@@ -28,12 +28,12 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.Space();
-            EditorUtils.StringHeader("Command Definition", StringColor.grey, true);
+            EditorUtilities.StringHeader("Command Definition", StringColor.grey, true);
             EditorGUILayout.Space();
             if (IsListed())
             {
-                EditorUtils.StringRich("Added", StringColor.teal, true);
-                if (EditorUtils.Button("Remove"))
+                EditorUtilities.StringRich("Added", StringColor.teal, true);
+                if (EditorUtilities.Button("Remove"))
                 {
                     CoreSystemSettings.Instance.m_CommandDefinitions.Remove(m_Def);
                     EditorUtility.SetDirty(CoreSystemSettings.Instance);
@@ -41,14 +41,14 @@ namespace SyadeuEditor
             }
             else
             {
-                EditorUtils.StringRich("Not Added", StringColor.maroon, true);
-                if (EditorUtils.Button("Add"))
+                EditorUtilities.StringRich("Not Added", StringColor.maroon, true);
+                if (EditorUtilities.Button("Add"))
                 {
                     CoreSystemSettings.Instance.m_CommandDefinitions.Add(m_Def);
                     EditorUtility.SetDirty(CoreSystemSettings.Instance);
                 }
             }
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
 
             EditorGUI.BeginChangeCheck();
             Arguments();
@@ -58,7 +58,7 @@ namespace SyadeuEditor
             }
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtils.Foldout(m_ShowOriginalContents, "Original Contents");
+            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 
@@ -70,7 +70,7 @@ namespace SyadeuEditor
                 {
                     CoreSystemSettings.Instance.m_CommandDefinitions.RemoveAt(i);
                     i--;
-                    EditorUtils.SetDirty(CoreSystemSettings.Instance);
+                    EditorUtilities.SetDirty(CoreSystemSettings.Instance);
                     continue;
                 }
 
@@ -88,7 +88,7 @@ namespace SyadeuEditor
             ShowTypeHelpBox(m_Def.m_Settings);
             m_Def.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Settings);
 
-            EditorUtils.SectorLine();
+            EditorUtilities.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
             //EditorGUILayout.HelpBox("ÀÌ ¸í·É¾î·Î ½ÇÇàÇÒ ¼ö ÀÖ´Â º¯¼öµéÀÔ´Ï´Ù", MessageType.Info);
 
@@ -106,7 +106,7 @@ namespace SyadeuEditor
             string typeHelpTxt = null;
             if (inputType.HasFlag(CommandSetting.ShowIfRequiresTrue))
             {
-                EditorUtils.AutoString(ref typeHelpTxt,
+                EditorUtilities.AutoString(ref typeHelpTxt,
                     "ShowIfRequiresTrue: Requires 프로퍼티의 리턴이 예상값과 일치할 경우에만 자동완성 및 콘솔창에 표시됩니다.");
             }
             EditorGUILayout.HelpBox(typeHelpTxt, MessageType.Info);

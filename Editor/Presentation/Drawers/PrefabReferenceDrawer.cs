@@ -2,7 +2,9 @@
 using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
+using SyadeuEditor.Utilities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -24,6 +26,29 @@ namespace SyadeuEditor.Presentation
 
         public bool DisableHeader { get; set; } = false;
 
+        public PrefabReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
+        {
+            m_Constructor = TypeHelper.GetConstructorInfo(elementType, TypeHelper.TypeOf<int>.Type);
+
+            IPrefabReference prefab = Getter.Invoke();
+            if (!prefab.IsNone() && prefab.IsValid())
+            {
+                if (prefab.GetEditorAsset() == null)
+                {
+                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    return;
+                }
+
+                if (elementType.GenericTypeArguments.Length > 0)
+                {
+                    Type targetType = elementType.GenericTypeArguments[0];
+                    if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
+                    {
+                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    }
+                }
+            }
+        }
         public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
         {
             m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
@@ -101,8 +126,8 @@ namespace SyadeuEditor.Presentation
                 EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
                 EditorGUI.BeginChangeCheck();
                 m_Open = GUILayout.Toggle(m_Open,
-                            m_Open ? EditorUtils.FoldoutOpendString : EditorUtils.FoldoutClosedString
-                            , EditorUtils.MiniButton, GUILayout.Width(20));
+                            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
                 if (EditorGUI.EndChangeCheck())
                 {
                     if (m_Open)
@@ -121,7 +146,7 @@ namespace SyadeuEditor.Presentation
             {
                 using (new GUILayout.VerticalScope())
                 {
-                    EditorUtils.BoxBlock box = new EditorUtils.BoxBlock(Color.black);
+                    EditorUtilities.BoxBlock box = new EditorUtilities.BoxBlock(Color.black);
 
                     using (new EditorGUI.DisabledGroupScope(true))
                     {
@@ -169,14 +194,14 @@ namespace SyadeuEditor.Presentation
 
                 if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-                Rect fieldRect = GUILayoutUtility.GetRect(displayName, ReflectionHelperEditor.SelectorStyle, GUILayout.ExpandWidth(true));
+                Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
                 int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
 
                 switch (Event.current.GetTypeForControl(selectorID))
                 {
                     case EventType.Repaint:
                         IsHover = fieldRect.Contains(Event.current.mousePosition);
-                        ReflectionHelperEditor.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
+                        EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
                         break;
                     case EventType.ContextClick:
                         if (!fieldRect.Contains(Event.current.mousePosition)) break;

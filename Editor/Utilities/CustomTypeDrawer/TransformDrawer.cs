@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public sealed class TransformDrawer : ObjectDrawer<ITransform>
     {
@@ -13,9 +13,9 @@ namespace SyadeuEditor.Presentation
 
         public override ITransform Draw(ITransform currentValue)
         {
-            using (new EditorUtils.BoxBlock(Color.black))
+            using (new EditorUtilities.BoxBlock(Color.black))
             {
-                EditorUtils.StringRich("Transform", 15);
+                EditorUtilities.StringRich("Transform", 15);
                 EditorGUI.indentLevel++;
 
                 currentValue.position =
