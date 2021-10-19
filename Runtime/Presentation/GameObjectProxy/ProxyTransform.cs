@@ -10,6 +10,7 @@ using Unity.Mathematics;
 
 using AABB = Syadeu.Collections.AABB;
 using Syadeu.Collections.Proxy;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -257,6 +258,8 @@ namespace Syadeu.Presentation.Proxy
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
                         float4x4 local2world = float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale);
 
+                        $"{localPosition}".ToLog();
+
                         return math.mul(local2world, new float4(Ref.m_Translation, 1)).xyz;
                     }
                 }
@@ -300,6 +303,25 @@ namespace Syadeu.Presentation.Proxy
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
+        public float3 localPosition
+        {
+            get
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                // .001f
+                //return math.round(Ref.m_Translation * 1000) * 0.001f;
+                return Ref.m_Translation;
+            }
+            set
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                Ref.m_Translation = value;
+
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
+        }
         public quaternion rotation
         {
             get
@@ -315,9 +337,10 @@ namespace Syadeu.Presentation.Proxy
                     unsafe
                     {
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
-                        //float4x4 local2world = float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale);
+                        
+                        quaternion result = math.mul(Ref.m_Rotation, parentData.m_Rotation);
 
-                        return math.mul(Ref.m_Rotation, parentData.m_Rotation);
+                        return result;
                     }
                 }
             }
@@ -360,6 +383,23 @@ namespace Syadeu.Presentation.Proxy
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
+        public quaternion localRotation
+        {
+            get
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                return Ref.m_Rotation;
+            }
+            set
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                Ref.m_Rotation = value;
+
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
+        }
         public float3 eulerAngles
         {
             get
@@ -372,8 +412,33 @@ namespace Syadeu.Presentation.Proxy
             set
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
                 float3 temp = value * UnityEngine.Mathf.Deg2Rad;
+                // .001f
+                temp = math.round(temp * 1000) * 0.001f;
+
                 rotation = quaternion.EulerZXY(temp);
+            }
+        }
+        public float3 localEulerAngles
+        {
+            get
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                return Ref.m_Rotation.Euler() * Mathf.Rad2Deg;
+            }
+            set
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                float3 temp = value * Mathf.Deg2Rad;
+                // .001f
+                temp = math.round(temp * 1000) * 0.001f;
+
+                Ref.m_Rotation = quaternion.EulerZXY(temp);
+
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 scale
@@ -381,31 +446,70 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Ref.scale;
+
+                if (Ref.m_ParentIndex < 0)
+                {
+                    return Ref.scale;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
+
+                        return math.mul(parentData.m_Scale, Ref.m_Scale);
+                    }
+                }
             }
             set
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                Ref.scale = value;
-
+                
                 #region Hierarchy
 
-                //unsafe
-                //{
-                //    float3 parentScale = Ref.m_Scale;
-                //    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
-                //    {
-                //        ref ProxyTransformData child = ref m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+                if (Ref.m_ParentIndex < 0)
+                {
+                    Ref.scale = value;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
 
-                //        float3 scale = math.mul(parentScale, child.m_Scale);
-                //        child.m_Scale = scale;
+                        Ref.m_Scale = math.mul(parentData.m_Scale, value);
+                    }
+                }
 
-                //        //ProxyTransform temp = new ProxyTransform(m_Pointer, child.m_Index, child.m_Generation, child.m_Hash);
-                //        //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(temp));
-                //    }
-                //}
+                unsafe
+                {
+                    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                    {
+                        var data = m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+                        ProxyTransform tr = new ProxyTransform(m_Pointer, data.m_Index, data.m_Generation, data.m_Hash);
+
+                        PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(tr));
+                    }
+                }
 
                 #endregion
+
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+            }
+        }
+        public float3 localScale
+        {
+            get
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                return Ref.m_Scale;
+            }
+            set
+            {
+                if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
+
+                Ref.m_Scale = value;
 
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
