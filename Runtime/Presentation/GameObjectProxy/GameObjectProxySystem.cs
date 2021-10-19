@@ -359,57 +359,6 @@ namespace Syadeu.Presentation.Proxy
                     continue;
                 }
 
-                //if (!tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull) && 
-                //    !tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
-                //{
-                //    RecycleableMonobehaviour proxy = RemoveProxy(tr);
-
-                //    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
-
-                //    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
-                //        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
-                //    {
-                //        proxy.transform.position = INIT_POSITION;
-                //    }
-                //}
-                //if (tr.Ref.m_IsVisible)
-                //{
-                //    tr.Ref.m_IsVisible = false;
-                //    OnDataObjectInvisible?.Invoke(tr);
-                //}
-
-                //OnDataObjectDestroy?.Invoke(tr);
-
-                //unsafe
-                //{
-                //    ClusterID id = tr.Pointer->clusterID;
-                //    if (id.Equals(ClusterID.Requested))
-                //    {
-                //        int tempCount = m_ClusterIDRequests.Count;
-                //        for (int a = 0; a < tempCount; a++)
-                //        {
-                //            var tempID = m_ClusterIDRequests.Dequeue();
-                //            if (tempID.index.Equals(tr.Pointer->m_Index))
-                //            {
-                //                break;
-                //            }
-                //            else m_ClusterIDRequests.Enqueue(tempID);
-                //        }
-                //    }
-                //    else m_ClusterData.Remove(id);
-                //}
-
-                //#region Hierarchy
-
-                //if (tr.Ref.m_ChildIndices.Length > 0)
-                //{
-                //    InternalDestroyChildHierarchy(in tr);
-                //}
-
-                //#endregion
-
-                //m_ProxyData.Remove(tr);
-
                 InternalDestory(in tr, in frustum);
             }
 #if DEBUG_MODE
@@ -513,10 +462,10 @@ namespace Syadeu.Presentation.Proxy
 
         private unsafe void InternalDestroyChildHierarchy(in ProxyTransformData* parent, in CameraFrustum frustum)
         {
-            for (int i = 0; i < parent->m_ChildIndices.Length; i++)
+            for (int i = parent->m_ChildIndices.Length - 1; i >= 0; i--)
             {
                 ProxyTransformData* child = m_ProxyData.List[parent->m_ChildIndices[i]];
-                
+
                 if (!child->m_IsOccupied || child->m_DestroyQueued)
                 {
                     continue;
@@ -526,6 +475,8 @@ namespace Syadeu.Presentation.Proxy
 
                 ProxyTransform childTr = m_ProxyData[parent->m_ChildIndices[i]];
                 InternalDestory(in childTr, in frustum);
+
+                parent->m_ChildIndices.RemoveAt(i);
             }
         }
         private unsafe void InternalDestory(in ProxyTransform tr, in CameraFrustum frustum)

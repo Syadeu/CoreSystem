@@ -232,11 +232,19 @@ namespace Syadeu.Presentation.Proxy
             p->m_IsOccupied = false;
             p->m_DestroyQueued = false;
 
+#if DEBUG
+            if (p->m_ParentIndex > 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Internal proxy error. Parent has not disclosed while child is destroy.");
+            }
+            if (p->m_ChildIndices.Length > 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Internal proxy error. Parent that has childs(count: {p->m_ChildIndices.Length}) doesn\'t disclosed.");
+            }
+#endif
             p->m_ParentIndex = -1;
-            //if (p->m_ChildIndices.Length > 0)
-            //{
-            //    throw new Exception("child has not destroyed.");
-            //}
             p->m_ChildIndices.Clear();
 
             CoreSystem.Logger.Log(Channel.Proxy,
