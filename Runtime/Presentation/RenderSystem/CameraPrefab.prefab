@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8832134446656746777}
   - component: {fileID: 52392365545702266}
   - component: {fileID: 7983644788137148234}
+  - component: {fileID: 5290970440661790201}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -99,7 +100,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 95
+    m_Bits: 223
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -226,6 +227,38 @@ MonoBehaviour:
   m_DefaultViewString: TopView
   m_AimViewString: AimView
   m_DefaultTopViewHeight: 0
+--- !u!114 &5290970440661790201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8832134446656746779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
 --- !u!1 &8832134446683109531
 GameObject:
   m_ObjectHideFlags: 0
@@ -614,7 +647,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8832134447924349095}
-  m_LocalRotation: {x: -0.10208, y: 0.77409065, z: -0.6112713, w: -0.1292702}
+  m_LocalRotation: {x: 0.3463699, y: 0.6507927, z: -0.5139075, w: 0.4386295}
   m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
