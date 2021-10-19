@@ -82,6 +82,16 @@ namespace Syadeu.Presentation.Proxy
             set => m_Scale = value;
         }
         //public AABB aabb => new AABB(m_Center + m_Translation, m_Size).Rotation(m_Rotation);
+
+        public float4x4 localToWorld
+        {
+            get => float4x4.TRS(m_Translation, m_Rotation, m_Scale);
+        }
+        public float4x4 worldToLocal
+        {
+            get => math.inverse(localToWorld);
+        }
+
 #pragma warning restore IDE1006 // Naming Styles
 
         public AABB GetAABB()

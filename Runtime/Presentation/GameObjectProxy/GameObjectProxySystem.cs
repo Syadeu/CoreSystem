@@ -495,6 +495,12 @@ namespace Syadeu.Presentation.Proxy
                     m_Invisible = m_InvisibleList.AsParallelWriter()
                 };
                 ScheduleAt(JobPosition.On, proxyJob, m_SortedCluster, 64);
+
+                //UpdateChildDependencies updateChild = new UpdateChildDependencies
+                //{
+                //    List = list
+                //};
+                //ScheduleAt(JobPosition.On, updateChild, (int)list.m_Length, 64);
             }
 #if DEBUG_MODE
             s_HandleScheduleProxyUpdateMarker.End();
@@ -667,6 +673,19 @@ namespace Syadeu.Presentation.Proxy
             //    }
             //}
         }
+        //unsafe private struct UpdateChildDependencies : IJobParallelFor
+        //{
+        //    [ReadOnly] public NativeProxyData.UnsafeList List;
+
+        //    public void Execute(int i)
+        //    {
+        //        if (!List[i]->m_IsOccupied || List[i]->m_ParentIndex < 0) return;
+
+        //        ProxyTransformData* parent = List[List[i]->m_ParentIndex];
+
+        //        List[i]->m_Translation = math.mul(parent->worldToLocal, new float4(List[i]->m_Translation, 1)).xyz;
+        //    }
+        //}
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         unsafe private struct ProxyJob : IJobParallelForDefer
         {

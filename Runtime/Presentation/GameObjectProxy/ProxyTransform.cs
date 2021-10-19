@@ -305,26 +305,55 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Ref.rotation;
+
+                if (Ref.m_ParentIndex < 0)
+                {
+                    return Ref.rotation;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
+                        //float4x4 local2world = float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale);
+
+                        return math.mul(Ref.m_Rotation, parentData.m_Rotation);
+                    }
+                }
             }
             set
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                Ref.rotation = value;
 
                 #region Hierarchy
 
-                //unsafe
-                //{
-                //    quaternion parentRot = Ref.m_Rotation;
-                //    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
-                //    {
-                //        ref ProxyTransformData child = ref m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+                if (Ref.m_ParentIndex < 0)
+                {
+                    Ref.rotation = value;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
 
-                //        quaternion rotation = math.mul(parentRot, child.m_Rotation);
-                //        child.m_Rotation = rotation;
-                //    }
-                //}
+                        quaternion parentRot = parentData.m_Rotation;
+                        quaternion rotation = math.mul(parentRot, value);
+                        
+                        Ref.m_Rotation = rotation;
+                    }
+                }
+
+                unsafe
+                {
+                    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                    {
+                        var data = m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+                        ProxyTransform tr = new ProxyTransform(m_Pointer, data.m_Index, data.m_Generation, data.m_Hash);
+
+                        PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(tr));
+                    }
+                }
 
                 #endregion
 
