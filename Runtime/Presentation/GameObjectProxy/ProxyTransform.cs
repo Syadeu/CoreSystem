@@ -243,20 +243,57 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return Ref.translation;
+
+                #region Hierarchy
+
+                if (Ref.m_ParentIndex < 0)
+                {
+                    return Ref.translation;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
+                        float4x4 local2world = float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale);
+
+                        return math.mul(local2world, new float4(Ref.m_Translation, 1)).xyz;
+                    }
+                }
+
+                #endregion
             }
             set
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-                Ref.translation = value;
-
                 #region Hierarchy
 
-                //for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
-                //{
-                //    Ref.m_ChildIndices[i]
-                //}
+                if (Ref.m_ParentIndex < 0)
+                {
+                    Ref.translation = value;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
+                        float4x4 world2local = math.inverse(float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale));
+
+                        Ref.m_Translation = math.mul(world2local, new float4(value, 1)).xyz;
+                    }
+                }
+
+                unsafe
+                {
+                    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                    {
+                        var data = m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+                        ProxyTransform tr = new ProxyTransform(m_Pointer, data.m_Index, data.m_Generation, data.m_Hash);
+
+                        PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(tr));
+                    }
+                }
 
                 #endregion
 
@@ -274,6 +311,23 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.rotation = value;
+
+                #region Hierarchy
+
+                //unsafe
+                //{
+                //    quaternion parentRot = Ref.m_Rotation;
+                //    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                //    {
+                //        ref ProxyTransformData child = ref m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+
+                //        quaternion rotation = math.mul(parentRot, child.m_Rotation);
+                //        child.m_Rotation = rotation;
+                //    }
+                //}
+
+                #endregion
+
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
@@ -304,6 +358,26 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
                 Ref.scale = value;
+
+                #region Hierarchy
+
+                //unsafe
+                //{
+                //    float3 parentScale = Ref.m_Scale;
+                //    for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                //    {
+                //        ref ProxyTransformData child = ref m_Pointer->m_TransformBuffer[Ref.m_ChildIndices[i]];
+
+                //        float3 scale = math.mul(parentScale, child.m_Scale);
+                //        child.m_Scale = scale;
+
+                //        //ProxyTransform temp = new ProxyTransform(m_Pointer, child.m_Index, child.m_Generation, child.m_Hash);
+                //        //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(temp));
+                //    }
+                //}
+
+                #endregion
+
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
@@ -313,7 +387,7 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return math.mul(Ref.m_Rotation, new float3(1, 0, 0));
+                return math.mul(Ref.m_Rotation, math.right());
             }
         }
         public float3 up
@@ -321,7 +395,7 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return math.mul(Ref.m_Rotation, new float3(0, 1, 0));
+                return math.mul(Ref.m_Rotation, math.up());
             }
         }
         public float3 forward
@@ -329,7 +403,7 @@ namespace Syadeu.Presentation.Proxy
             get
             {
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
-                return math.mul(Ref.m_Rotation, new float3(0, 0, 1));
+                return math.mul(Ref.m_Rotation, math.forward());
             }
         }
 
@@ -399,6 +473,16 @@ namespace Syadeu.Presentation.Proxy
                 scale = tr.localScale;
             }
         }
+
+        public void SetParent(in ProxyTransform parent)
+        {
+            unsafe
+            {
+                m_Pointer->m_TransformBuffer[parent.m_Index].m_ChildIndices.Add(m_Index);
+                m_Pointer->m_TransformBuffer[m_Index].m_ParentIndex = parent.m_Index;
+            }
+        }
+
         public void Destroy()
         {
             if (isDestroyed)

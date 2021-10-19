@@ -478,7 +478,7 @@ namespace Syadeu.Presentation.Proxy
 #endif
             unsafe
             {
-                NativeProxyData.UnsafeList list = m_ProxyData.List;
+                ref NativeProxyData.UnsafeList list = ref m_ProxyData.List;
 
                 ProxyJob proxyJob = new ProxyJob
                 {

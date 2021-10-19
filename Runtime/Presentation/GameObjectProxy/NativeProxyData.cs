@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Proxy
                 return new ProxyTransform(m_UnsafeList, index, p->m_Generation, p->m_Hash);
             }
         }
-        public UnsafeList List => *m_UnsafeList;
+        public ref UnsafeList List => ref *m_UnsafeList;
 
         public NativeProxyData(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.ClearMemory)
         {
@@ -211,6 +211,8 @@ namespace Syadeu.Presentation.Proxy
         }
         public ProxyTransform GetTransform(int index)
         {
+            if (index < 0 || index >= m_UnsafeList->m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $"index of {index} in {m_UnsafeList->m_Length}");
+
             int gen = m_UnsafeList->m_TransformBuffer[index].m_Generation;
             Hash hash = m_UnsafeList->m_TransformBuffer[index].m_Hash;
 
