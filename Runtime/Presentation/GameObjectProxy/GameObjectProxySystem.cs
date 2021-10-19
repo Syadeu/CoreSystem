@@ -359,46 +359,58 @@ namespace Syadeu.Presentation.Proxy
                     continue;
                 }
 
-                if (!tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull) && 
-                    !tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
-                {
-                    RecycleableMonobehaviour proxy = RemoveProxy(tr);
+                //if (!tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull) && 
+                //    !tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+                //{
+                //    RecycleableMonobehaviour proxy = RemoveProxy(tr);
 
-                    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
+                //    var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
 
-                    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
-                        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
-                    {
-                        proxy.transform.position = INIT_POSITION;
-                    }
-                }
-                if (tr.Ref.m_IsVisible)
-                {
-                    tr.Ref.m_IsVisible = false;
-                    OnDataObjectInvisible?.Invoke(tr);
-                }
+                //    if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
+                //        (intersection & IntersectionType.Contains) == IntersectionType.Contains)
+                //    {
+                //        proxy.transform.position = INIT_POSITION;
+                //    }
+                //}
+                //if (tr.Ref.m_IsVisible)
+                //{
+                //    tr.Ref.m_IsVisible = false;
+                //    OnDataObjectInvisible?.Invoke(tr);
+                //}
 
-                OnDataObjectDestroy?.Invoke(tr);
+                //OnDataObjectDestroy?.Invoke(tr);
 
-                unsafe
-                {
-                    ClusterID id = tr.Pointer->clusterID;
-                    if (id.Equals(ClusterID.Requested))
-                    {
-                        int tempCount = m_ClusterIDRequests.Count;
-                        for (int a = 0; a < tempCount; a++)
-                        {
-                            var tempID = m_ClusterIDRequests.Dequeue();
-                            if (tempID.index.Equals(tr.Pointer->m_Index))
-                            {
-                                break;
-                            }
-                            else m_ClusterIDRequests.Enqueue(tempID);
-                        }
-                    }
-                    else m_ClusterData.Remove(id);
-                }
-                m_ProxyData.Remove(tr);
+                //unsafe
+                //{
+                //    ClusterID id = tr.Pointer->clusterID;
+                //    if (id.Equals(ClusterID.Requested))
+                //    {
+                //        int tempCount = m_ClusterIDRequests.Count;
+                //        for (int a = 0; a < tempCount; a++)
+                //        {
+                //            var tempID = m_ClusterIDRequests.Dequeue();
+                //            if (tempID.index.Equals(tr.Pointer->m_Index))
+                //            {
+                //                break;
+                //            }
+                //            else m_ClusterIDRequests.Enqueue(tempID);
+                //        }
+                //    }
+                //    else m_ClusterData.Remove(id);
+                //}
+
+                //#region Hierarchy
+
+                //if (tr.Ref.m_ChildIndices.Length > 0)
+                //{
+                //    InternalDestroyChildHierarchy(in tr);
+                //}
+
+                //#endregion
+
+                //m_ProxyData.Remove(tr);
+
+                InternalDestory(in tr, in frustum);
             }
 #if DEBUG_MODE
             s_HandleDestroyProxiesMarker.End();
@@ -491,6 +503,68 @@ namespace Syadeu.Presentation.Proxy
             #endregion
 
             return PresentationResult.Normal;
+        }
+
+        private unsafe void InternalDestroyChildHierarchy(in ProxyTransformData* parent, in CameraFrustum frustum)
+        {
+            for (int i = 0; i < parent->m_ChildIndices.Length; i++)
+            {
+                ProxyTransformData* child = m_ProxyData.List[parent->m_ChildIndices[i]];
+
+                if (!child->m_IsOccupied || child->m_DestroyQueued)
+                {
+                    continue;
+                }
+
+                ProxyTransform childTr = m_ProxyData[parent->m_ChildIndices[i]];
+                InternalDestory(in childTr, in frustum);
+            }
+        }
+        private unsafe void InternalDestory(in ProxyTransform tr, in CameraFrustum frustum)
+        {
+            ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
+
+            if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
+                !data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+            {
+                RecycleableMonobehaviour proxy = RemoveProxy(tr);
+
+                var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
+
+                if ((intersection & IntersectionType.Intersects) == IntersectionType.Intersects ||
+                    (intersection & IntersectionType.Contains) == IntersectionType.Contains)
+                {
+                    proxy.transform.position = INIT_POSITION;
+                }
+            }
+
+            if (data->m_IsVisible)
+            {
+                data->m_IsVisible = false;
+                OnDataObjectInvisible?.Invoke(tr);
+            }
+
+            OnDataObjectDestroy?.Invoke(tr);
+
+            ClusterID id = data->clusterID;
+            if (id.Equals(ClusterID.Requested))
+            {
+                int tempCount = m_ClusterIDRequests.Count;
+                for (int a = 0; a < tempCount; a++)
+                {
+                    var tempID = m_ClusterIDRequests.Dequeue();
+                    if (tempID.index.Equals(tr.Pointer->m_Index))
+                    {
+                        break;
+                    }
+                    else m_ClusterIDRequests.Enqueue(tempID);
+                }
+            }
+            else m_ClusterData.Remove(id);
+
+            InternalDestroyChildHierarchy(in data, in frustum);
+
+            m_ProxyData.Remove(tr);
         }
 
         #region Jobs
@@ -688,6 +762,15 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
+        public ProxyTransform CreateTransform(in float3 pos, in quaternion rot, in float3 scale)
+        {
+            throw new NotImplementedException();
+        }
+        public unsafe void SetParent(in ProxyTransform parent, in ProxyTransform child)
+        {
+            m_ProxyData.List[parent.m_Index]->m_ChildIndices.Add(child.m_Index);
+            m_ProxyData.List[child.m_Index]->m_ParentIndex = parent.m_Index;
+        }
         public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, 
             in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, 
             in float3 center, in float3 size,
@@ -700,7 +783,7 @@ namespace Syadeu.Presentation.Proxy
             ProxyTransform tr;
             if (prefab.IsNone())
             {
-                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size, gpuInstanced);
+                tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size, false);
             }
             else if (!prefab.IsValid())
             {
@@ -920,6 +1003,42 @@ namespace Syadeu.Presentation.Proxy
                 CoreSystem.Logger.Log(Channel.Proxy, true,
                     $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
             }
+        }
+        private unsafe RecycleableMonobehaviour RemoveProxy(ProxyTransformData* data)
+        {
+            if (data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull))
+            {
+                throw new Exception();
+            }
+
+            PrefabReference prefab = data->m_Prefab;
+
+            int2 proxyIndex = data->m_ProxyIndex;
+            RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+
+            if ((proxy.transform.position - (Vector3)data->m_Translation).sqrMagnitude > .1f)
+            {
+                data->m_Translation = proxy.transform.position;
+
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    "in-corrected translation found. Did you moved proxy transform directly?");
+            }
+
+            OnDataObjectProxyRemoved?.Invoke(m_ProxyData.GetTransform(data->m_Index), proxy);
+
+            data->m_ProxyIndex = (ProxyTransform.ProxyNull);
+
+            if (proxy.Activated) proxy.Terminate();
+
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
+            {
+                pool = new Stack<RecycleableMonobehaviour>();
+                m_TerminatedProxies.Add(prefab, pool);
+            }
+            pool.Push(proxy);
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                    $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
+            return proxy;
         }
         unsafe private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
         {

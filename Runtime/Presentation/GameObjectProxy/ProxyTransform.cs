@@ -250,6 +250,16 @@ namespace Syadeu.Presentation.Proxy
                 if (isDestroyed || isDestroyQueued) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 Ref.translation = value;
+
+                #region Hierarchy
+
+                //for (int i = 0; i < Ref.m_ChildIndices.Length; i++)
+                //{
+                //    Ref.m_ChildIndices[i]
+                //}
+
+                #endregion
+
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }

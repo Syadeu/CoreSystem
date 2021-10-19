@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using System;
+using Unity.Collections;
 using Unity.Mathematics;
 using AABB = Syadeu.Collections.AABB;
 
@@ -26,6 +27,13 @@ namespace Syadeu.Presentation.Proxy
         public float3 m_Size;
 
         public quaternion m_Rotation;
+
+        #region Hierarchy
+
+        public int m_ParentIndex;
+        public FixedList128Bytes<int> m_ChildIndices;
+
+        #endregion
 
         public bool m_GpuInstanced;
 
