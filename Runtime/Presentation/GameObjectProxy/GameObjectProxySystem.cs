@@ -516,11 +516,13 @@ namespace Syadeu.Presentation.Proxy
             for (int i = 0; i < parent->m_ChildIndices.Length; i++)
             {
                 ProxyTransformData* child = m_ProxyData.List[parent->m_ChildIndices[i]];
-
+                
                 if (!child->m_IsOccupied || child->m_DestroyQueued)
                 {
                     continue;
                 }
+
+                child->m_ParentIndex = -1;
 
                 ProxyTransform childTr = m_ProxyData[parent->m_ChildIndices[i]];
                 InternalDestory(in childTr, in frustum);
@@ -569,6 +571,13 @@ namespace Syadeu.Presentation.Proxy
             else m_ClusterData.Remove(id);
 
             InternalDestroyChildHierarchy(in data, in frustum);
+
+            // has parent
+            if (data->m_ParentIndex > 0)
+            {
+                m_ProxyData.List[data->m_ParentIndex]->m_ChildIndices.RemoveFor(data->m_Index);
+                data->m_ParentIndex = -1;
+            }
 
             m_ProxyData.Remove(tr);
         }

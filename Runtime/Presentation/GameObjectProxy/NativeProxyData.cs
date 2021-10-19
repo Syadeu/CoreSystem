@@ -233,10 +233,10 @@ namespace Syadeu.Presentation.Proxy
             p->m_DestroyQueued = false;
 
             p->m_ParentIndex = -1;
-            if (p->m_ChildIndices.Length > 0)
-            {
-                throw new Exception("child has not destroyed.");
-            }
+            //if (p->m_ChildIndices.Length > 0)
+            //{
+            //    throw new Exception("child has not destroyed.");
+            //}
             p->m_ChildIndices.Clear();
 
             CoreSystem.Logger.Log(Channel.Proxy,
