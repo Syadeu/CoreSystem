@@ -457,7 +457,7 @@ namespace Syadeu.Presentation.Proxy
                     {
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
 
-                        return math.mul(parentData.m_Scale, Ref.m_Scale);
+                        return parentData.m_Scale / Ref.m_Scale;
                     }
                 }
             }

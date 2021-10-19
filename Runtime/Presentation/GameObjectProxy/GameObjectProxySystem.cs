@@ -34,7 +34,8 @@ namespace Syadeu.Presentation.Proxy
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
-        private const int c_InitialMemorySize = 16384;
+        //private const int c_InitialMemorySize = 16384;
+        private const int c_InitialMemorySize = 1024;
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -207,20 +208,43 @@ namespace Syadeu.Presentation.Proxy
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
             if (!(ev.transform is ProxyTransform transform)) return;
-            
-            if (transform.isDestroyed || transform.isDestroyQueued) return;
 
-            if (!transform.Pointer->clusterID.Equals(ClusterID.Requested))
+            ProxyTransformData* data = m_ProxyData.List[transform.m_Index];
+            if (!data->m_IsOccupied || data->m_DestroyQueued) return;
+
+            //UpdateProxyTransform(in data);
+
+            //if (transform.isDestroyed || transform.isDestroyQueued) return;
+
+            if (!data->clusterID.Equals(ClusterID.Requested))
             {
                 m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
             }
 
-            if (!transform.hasProxy || transform.hasProxyQueued) return;
+            if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
+                !data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+            {
+                IProxyMonobehaviour proxy = transform.proxy;
+                proxy.transform.position = transform.position;
+                proxy.transform.rotation = transform.rotation;
+                proxy.transform.localScale = transform.scale;
+            }
 
-            IProxyMonobehaviour proxy = transform.proxy;
-            proxy.transform.position = transform.position;
-            proxy.transform.rotation = transform.rotation;
-            proxy.transform.localScale = transform.scale;
+            //for (int i = 0; i < m_ProxyData.List[transform.m_Index]->m_ChildIndices.Length; i++)
+            //{
+            //    ProxyTransformData* childData = m_ProxyData.List[m_ProxyData.List[transform.m_Index]->m_ChildIndices[i]];
+
+
+            //}
+        }
+        unsafe private void UpdateProxyTransform(in ProxyTransformData* data)
+        {
+            if (!data->m_IsOccupied) return;
+
+            if (data->clusterID.Equals(ClusterID.Requested))
+            {
+                //m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
+            }
         }
 
         unsafe protected override PresentationResult AfterPresentation()
@@ -529,10 +553,8 @@ namespace Syadeu.Presentation.Proxy
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         private struct ClusterUpdateSortJob : IJob
         {
-#if DEBUG_MODE
             private static readonly Unity.Profiling.ProfilerMarker s_Marker
                 = new Unity.Profiling.ProfilerMarker("ClusterUpdateSort Job");
-#endif
 
             public Cluster<ProxyTransformData> m_ClusterData;
             [DeallocateOnJobCompletion] public NativeArray<ClusterUpdateRequest> m_Request;
@@ -540,9 +562,8 @@ namespace Syadeu.Presentation.Proxy
 
             public void Execute()
             {
-#if DEBUG_MODE
                 s_Marker.Begin();
-#endif
+
                 NativeHashSet<ProxyTransform> m_Listed = new NativeHashSet<ProxyTransform>(m_Request.Length, Allocator.Temp);
 
                 for (int i = m_Request.Length - 1; i >= 0; i--)
@@ -552,9 +573,8 @@ namespace Syadeu.Presentation.Proxy
                     m_SortedRequests.Add(m_Request[i]);
                     m_Listed.Add(m_Request[i].transform);
                 }
-#if DEBUG_MODE
+
                 s_Marker.End();
-#endif
             }
         }
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
