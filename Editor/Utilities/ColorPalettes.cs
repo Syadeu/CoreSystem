@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     public static class ColorPalettes
     {

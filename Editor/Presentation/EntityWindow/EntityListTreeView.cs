@@ -27,11 +27,11 @@ namespace SyadeuEditor.Presentation
         private int m_CreationID = 0;
         private SearchField m_SearchField;
         private readonly TreeViewItem m_Root;
-        private readonly List<TreeViewItem> m_Rows = new List<TreeViewItem>();
+        private readonly Dictionary<Hash, TreeViewItem> m_Rows = new Dictionary<Hash, TreeViewItem>();
 
         private readonly EntityWindow m_Window;
 
-        public event Action<ObjectBaseDrawer> OnSelect;
+        public event Action<ObjectBase> OnSelect;
 
         private Dictionary<Hash, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
 
@@ -64,21 +64,21 @@ namespace SyadeuEditor.Presentation
 
             if (Objects != null && Objects.Count > 0)
             {
-                ObjectBaseDrawer drawer;
+                //ObjectBaseDrawer drawer;
                 foreach (var item in Objects?.Values)
                 {
-                    drawer = ObjectBaseDrawer.GetDrawer(item);
+                    //drawer = ObjectBaseDrawer.GetDrawer(item);
 
-                    TreeViewItem folder = GetFolder(drawer.Type);
+                    TreeViewItem folder = GetFolder(item.GetType());
                     if (folder == null)
                     {
-                        folder = new FolderTreeElement(m_CreationID, drawer.Type);
+                        folder = new FolderTreeElement(m_CreationID, item.GetType());
                         m_Root.AddChild(folder);
-                        m_Rows.Add(folder);
+                        m_Rows.Add(item.Hash, folder);
                         m_CreationID++;
                     }
 
-                    folder.AddChild(new ObjectTreeElement(m_CreationID, drawer));
+                    folder.AddChild(new ObjectTreeElement(m_CreationID, item));
                     m_CreationID++;
                 }
             }
@@ -96,7 +96,7 @@ namespace SyadeuEditor.Presentation
             var name = type.GetCustomAttribute<DisplayNameAttribute>();
             var iter = m_Rows.Where((other) =>
                 {
-                    if (!(other is FolderTreeElement folder)) return false;
+                    if (!(other.Value is FolderTreeElement folder)) return false;
 
                     if (folder.Type.Equals(type))
                     {
@@ -110,32 +110,38 @@ namespace SyadeuEditor.Presentation
                     return false;
                 });
 
-            if (iter.Any()) return iter.First();
+            if (iter.Any()) return iter.First().Value;
             return null;
         }
 
-        public void AddItem(ObjectBaseDrawer drawer)
+        public void AddItem(ObjectBase entityObj)
         {
-            TreeViewItem folder = GetFolder(drawer.Type);
+            TreeViewItem folder = GetFolder(entityObj.GetType());
             if (folder == null)
             {
-                folder = new FolderTreeElement(m_CreationID, drawer.Type);
+                folder = new FolderTreeElement(m_CreationID, entityObj.GetType());
                 m_Root.AddChild(folder);
-                m_Rows.Add(folder);
+                m_Rows.Add(entityObj.Hash, folder);
                 m_CreationID++;
             }
 
-            folder.AddChild(new ObjectTreeElement(m_CreationID, drawer));
+            ObjectTreeElement element = new ObjectTreeElement(m_CreationID, entityObj);
+            folder.AddChild(element);
+            m_Rows.Add(entityObj.Hash, element);
             m_CreationID++;
 
             SetupDepthsFromParentsAndChildren(m_Root);
         }
-        public void RemoveItem(ObjectBaseDrawer drawer)
+        public void RemoveItem(ObjectBase entityObj)
         {
-            var iter = GetRows().Where((other) => (other is ObjectTreeElement objEle) && objEle.Target.Equals(drawer));
-            if (!iter.Any()) return;
+            m_Rows[entityObj.Hash].parent.children.Remove(m_Rows[entityObj.Hash]);
 
-            iter.First().parent.children.Remove(iter.First());
+            m_Rows.Remove(entityObj.Hash);
+
+            //var iter = GetRows().Where((other) => (other is ObjectTreeElement objEle) && objEle.Target.Equals(entityObj));
+            //if (!iter.Any()) return;
+
+            //iter.First().parent.children.Remove(iter.First());
         }
 
         public override void OnGUI(Rect rect)
@@ -184,7 +190,7 @@ namespace SyadeuEditor.Presentation
             if (searchWithHash.Success)
             {
                 var temp = (ObjectTreeElement)item;
-                if (temp.Target.m_TargetObject.Hash.ToString().StartsWith(searchWithHash.Value))
+                if (temp.Target.Hash.ToString().StartsWith(searchWithHash.Value))
                 {
                     return true;
                 }
@@ -196,7 +202,7 @@ namespace SyadeuEditor.Presentation
             {
                 string value = searchReferencer.Value.Replace("ref:", "");
                 var temp = (ObjectTreeElement)item;
-                string json = temp.Target.m_TargetObject.GetRawJson();
+                string json = temp.Target.GetRawJson();
 
                 if (!json.Contains(value))
                 {
@@ -216,6 +222,7 @@ namespace SyadeuEditor.Presentation
 
                 if (list[i] is ObjectTreeElement obj)
                 {
+                    //SetSelection(obj.Target);
                     OnSelect?.Invoke(obj.Target);
                 }
             }
@@ -235,29 +242,35 @@ namespace SyadeuEditor.Presentation
                 menu.AddItem(new GUIContent("Add"), false, () =>
                 {
                     var drawer = EntityWindow.Instance.Add(folder.Type);
-                    EntityWindow.Instance.Select(drawer);
+                    //EntityWindow.Instance.Select(drawer);
+
+                    SetSelection(drawer);
                 });
             }
             else if (item is ObjectTreeElement obj)
             {
                 menu.AddItem(new GUIContent("Duplicate"), false, () =>
                 {
-                    ObjectBase clone = (ObjectBase)obj.Target.m_TargetObject.Clone();
+                    ObjectBase clone = (ObjectBase)obj.Target.Clone();
 
                     clone.Hash = Hash.NewHash();
                     clone.Name += "_Clone";
 
-                    EntityWindow.Instance.Select(EntityWindow.Instance.Add(clone));
+                    EntityWindow.Instance.Add(clone);
+                    //EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                    //AddItem(clone);
+                    //EntityWindow.Instance.Select(EntityWindow.Instance.Add(clone));
                 });
 
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                 {
-                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.m_TargetObject.Hash}";
+                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.Hash}";
                 });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
                     item.parent.children.Remove(item);
-                    m_Window.Remove(obj.Target);
+                    EntityDataList.Instance.m_Objects.Remove(obj.Target.Hash);
+                    //m_Window.Remove(obj.Target);
 
                     Reload();
                 });
@@ -265,6 +278,20 @@ namespace SyadeuEditor.Presentation
             menu.ShowAsContext();
 
             base.ContextClickedItem(id);
+        }
+
+        public void SetSelection(ObjectBase entityObj)
+        {
+            int id = m_Rows[entityObj.Hash].id;
+            SetSelection(new int[] { id });
+
+            OnSelect?.Invoke(entityObj);
+        }
+        public void SetSelection(IFixedReference reference)
+        {
+            SetSelection(new int[] { m_Rows[reference.Hash].id });
+
+            OnSelect?.Invoke(((ObjectTreeElement)m_Rows[reference.Hash]).Target);
         }
 
         public abstract class ElementBase : TreeViewItem
@@ -311,7 +338,8 @@ namespace SyadeuEditor.Presentation
         }
         public sealed class ObjectTreeElement : ElementBase
         {
-            private ObjectBaseDrawer m_Target;
+            private ObjectBase m_Target;
+            private Type m_Type;
             private ObsoleteAttribute m_ObsoleteAttribute;
             private DisplayNameAttribute m_DisplayNameAttribute;
 
@@ -322,17 +350,18 @@ namespace SyadeuEditor.Presentation
                     return m_Target.Name;
                 }
             }
-            public ObjectBaseDrawer Target => m_Target;
-            public override Type Type => m_Target.Type;
+            public ObjectBase Target => m_Target;
+            public override Type Type => m_Type;
             public override ObsoleteAttribute Obsolete => m_ObsoleteAttribute;
 
-            public ObjectTreeElement(int id, ObjectBaseDrawer drawer)
+            public ObjectTreeElement(int id, ObjectBase entityObj)
             {
                 this.id = id;
-                m_Target = drawer;
+                m_Target = entityObj;
+                m_Type = entityObj.GetType();
 
-                m_ObsoleteAttribute = drawer.Type.GetCustomAttribute<ObsoleteAttribute>();
-                m_DisplayNameAttribute = drawer.Type.GetCustomAttribute<DisplayNameAttribute>();
+                m_ObsoleteAttribute = m_Type.GetCustomAttribute<ObsoleteAttribute>();
+                m_DisplayNameAttribute = m_Type.GetCustomAttribute<DisplayNameAttribute>();
             }
         }
     }

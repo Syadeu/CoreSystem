@@ -444,7 +444,7 @@ namespace SyadeuEditor
                         });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-                            EntityWindow.Instance.Select(new Reference(att));
+                            EntityWindow.Instance.m_DataListWindow.Select(new FixedReference(att.Hash));
                         });
                     }
                     else

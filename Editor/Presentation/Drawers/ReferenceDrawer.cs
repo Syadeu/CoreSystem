@@ -71,7 +71,11 @@ namespace SyadeuEditor.Presentation
                 {
                     EntityWindow.Instance.Add(clone);
                 }
-                else EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                else
+                {
+                    EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                    EntityDataList.Instance.SaveData(clone);
+                }
 
                 object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                     new object[] { clone });
@@ -163,7 +167,7 @@ namespace SyadeuEditor.Presentation
                         });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-                            EntityWindow.Instance.Select(current);
+                            EntityWindow.Instance.m_DataListWindow.Select(current);
                         });
                     }
                     else
@@ -177,7 +181,7 @@ namespace SyadeuEditor.Presentation
                     {
                         menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
                         {
-                            var obj = EntityWindow.Instance.Add(targetType).m_TargetObject;
+                            var obj = EntityWindow.Instance.Add(targetType);
                             setter.Invoke(obj.Hash);
                         });
                     }
