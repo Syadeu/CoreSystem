@@ -61,13 +61,7 @@ namespace Syadeu.Presentation.Actor
 
             component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
-            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent
-#if DEBUG_MODE
-                , NativeArrayOptions.ClearMemory
-#else
-                , NativeArrayOptions.UninitializedMemory
-#endif
-                );
+            component.m_InstanceProviders = new FixedInstanceList64<ActorProviderBase>();
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)

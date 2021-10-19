@@ -299,6 +299,23 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
+            for (int i = m_DestroyedObjectsInThisFrame.Count - 1; i >= 0; i--)
+            {
+                var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
+
+                if (targetObject is IEntityData entityData)
+                {
+                    ProcessEntityDestroy(targetObject);
+
+                    m_ObjectEntities.Remove(targetObject.Idx);
+                }
+                else
+                {
+                    ProcessNonEntityDestroy(targetObject);
+
+                    m_ObjectEntities.Remove(targetObject.Idx);
+                }
+            }
             m_DestroyedObjectsInThisFrame.Clear();
 
             var entityList = m_ObjectEntities.Values.ToArray();
@@ -1293,6 +1310,7 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
+
 
                 system.m_ComponentSystem
                     .RemoveNotifiedComponents(other

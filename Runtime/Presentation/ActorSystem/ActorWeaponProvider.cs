@@ -217,6 +217,7 @@ namespace Syadeu.Presentation.Actor
                     CoreSystem.Logger.Log(Channel.Entity,
                         $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
 
+
                     $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).".ToLog();
                 }
             }
