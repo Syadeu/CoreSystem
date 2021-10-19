@@ -465,7 +465,15 @@ namespace SyadeuEditor.Presentation
             public ObjectBase Selected
             {
                 get => m_Selected;
-                set => m_Selected = value;
+                set
+                {
+                    m_Selected = value;
+                    if (value != null)
+                    {
+                        SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
+                    }
+                    else SelectedDrawer = null;
+                }
             }
             public ObjectBaseDrawer SelectedDrawer { get; private set; }
 
@@ -479,10 +487,7 @@ namespace SyadeuEditor.Presentation
             }
             private void EntityListTreeView_OnSelect(ObjectBase obj)
             {
-                m_Selected = obj;
-                //m_MainWindow.m_SelectedObject = obj;
-
-                SelectedDrawer = ObjectBaseDrawer.GetDrawer(obj);
+                Selected = obj;
             }
 
             public void Select(IFixedReference reference)
@@ -522,6 +527,11 @@ namespace SyadeuEditor.Presentation
             }
             public void Remove(ObjectBase drawer)
             {
+                if (m_Selected.Equals(drawer))
+                {
+                    m_Selected = null;
+                }
+
                 EntityListTreeView.RemoveItem(drawer);
                 EntityListTreeView.Reload();
             }

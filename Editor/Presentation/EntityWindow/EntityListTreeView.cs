@@ -27,7 +27,8 @@ namespace SyadeuEditor.Presentation
         private int m_CreationID = 0;
         private SearchField m_SearchField;
         private readonly TreeViewItem m_Root;
-        private readonly Dictionary<Hash, TreeViewItem> m_Rows = new Dictionary<Hash, TreeViewItem>();
+        private readonly Dictionary<Type, FolderTreeElement> m_Folders = new Dictionary<Type, FolderTreeElement>();
+        private readonly Dictionary<Hash, ElementBase> m_Rows = new Dictionary<Hash, ElementBase>();
 
         private readonly EntityWindow m_Window;
 
@@ -69,16 +70,19 @@ namespace SyadeuEditor.Presentation
                 {
                     //drawer = ObjectBaseDrawer.GetDrawer(item);
 
-                    TreeViewItem folder = GetFolder(item.GetType());
+                    FolderTreeElement folder = GetFolder(item.GetType());
                     if (folder == null)
                     {
                         folder = new FolderTreeElement(m_CreationID, item.GetType());
                         m_Root.AddChild(folder);
-                        m_Rows.Add(item.Hash, folder);
+                        m_Folders.Add(item.GetType(), folder);
                         m_CreationID++;
                     }
 
-                    folder.AddChild(new ObjectTreeElement(m_CreationID, item));
+                    var element = new ObjectTreeElement(m_CreationID, item);
+                    folder.AddChild(element);
+                    m_Rows.Add(item.Hash, element);
+
                     m_CreationID++;
                 }
             }
@@ -91,37 +95,39 @@ namespace SyadeuEditor.Presentation
 
             return m_Root;
         }
-        public TreeViewItem GetFolder(Type type)
+        public FolderTreeElement GetFolder(Type type)
         {
-            var name = type.GetCustomAttribute<DisplayNameAttribute>();
-            var iter = m_Rows.Where((other) =>
-                {
-                    if (!(other.Value is FolderTreeElement folder)) return false;
+            //var name = type.GetCustomAttribute<DisplayNameAttribute>();
+            //var iter = m_Rows.Where((other) =>
+            //    {
+            //        if (!(other.Value is FolderTreeElement folder)) return false;
 
-                    if (folder.Type.Equals(type))
-                    {
-                        return true;
-                    }
-                    if (name != null && name.DisplayName.Equals(folder.displayName))
-                    {
-                        return true;
-                    }
+            //        if (folder.Type.Equals(type))
+            //        {
+            //            return true;
+            //        }
+            //        if (name != null && name.DisplayName.Equals(folder.displayName))
+            //        {
+            //            return true;
+            //        }
 
-                    return false;
-                });
+            //        return false;
+            //    });
 
-            if (iter.Any()) return iter.First().Value;
+            //if (iter.Any()) return (FolderTreeElement)iter.First().Value;
+            if (m_Folders.TryGetValue(type, out var folder)) return folder;
             return null;
         }
 
         public void AddItem(ObjectBase entityObj)
         {
-            TreeViewItem folder = GetFolder(entityObj.GetType());
+            FolderTreeElement folder = GetFolder(entityObj.GetType());
             if (folder == null)
             {
                 folder = new FolderTreeElement(m_CreationID, entityObj.GetType());
                 m_Root.AddChild(folder);
-                m_Rows.Add(entityObj.Hash, folder);
+                m_Folders.Add(entityObj.GetType(), folder);
+                
                 m_CreationID++;
             }
 
@@ -137,11 +143,6 @@ namespace SyadeuEditor.Presentation
             m_Rows[entityObj.Hash].parent.children.Remove(m_Rows[entityObj.Hash]);
 
             m_Rows.Remove(entityObj.Hash);
-
-            //var iter = GetRows().Where((other) => (other is ObjectTreeElement objEle) && objEle.Target.Equals(entityObj));
-            //if (!iter.Any()) return;
-
-            //iter.First().parent.children.Remove(iter.First());
         }
 
         public override void OnGUI(Rect rect)
