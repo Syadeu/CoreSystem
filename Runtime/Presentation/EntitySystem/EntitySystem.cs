@@ -109,21 +109,21 @@ namespace Syadeu.Presentation
 
                 if (targetObject is IEntityData entityData)
                 {
-                    ProcessEntityDestroy(targetObject);
+                    ProcessEntityDestroy(targetObject, true);
 
                     //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(targetObject);
+                    ProcessNonEntityDestroy(targetObject, true);
 
                     //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
         }
-        private void ProcessEntityDestroy(ObjectBase targetObject)
+        internal void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (!(targetObject is IEntityData))
@@ -158,44 +158,12 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-
-//            if (targetObject is Components.INotifyComponent notifyComponent)
-//            {
-//                var notifies = GetComponentInterface(targetObject.GetType());
-//                foreach (var item in notifies)
-//                {
-//                    Type componentType = item.GenericTypeArguments[0];
-//                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-//#if DEBUG_MODE
-//                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-//#endif
-//                }
-//            }
-
-
 #if DEBUG_MODE
-            //string parseName = targetObject.Name;
-            //InstanceID parseID = targetObject.Idx;
-            //CoreSystem.WaitInvoke(2.5f, () =>
-            //{
-            //    if (Debug_HasComponent(parseID, out int count, out string names))
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Entity,
-            //            $"Entity({parseName}) has " +
-            //            $"number of {count} components that didn\'t disposed. {names}");
-            //    }
-            //    else
-            //    {
-            //        CoreSystem.Logger.Log(Channel.Entity, 
-            //            $"Entity({parseName}) component all checked.");
-            //    }
-            //});
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
-
-            GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
+            if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
-        private void ProcessNonEntityDestroy(ObjectBase targetObject)
+        internal void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (targetObject is IEntityData entityData)
@@ -203,10 +171,10 @@ namespace Syadeu.Presentation
                 throw new InvalidOperationException();
             }
 #endif
-            if (targetObject is DataObjectBase dataObject)
-            {
-                dataObject.InternalOnDestroy();
-            }
+            //if (targetObject is DataObjectBase dataObject)
+            //{
+            //    dataObject.InternalOnDestroy();
+            //}
 
             m_ComponentSystem
                 .RemoveNotifiedComponents
@@ -220,8 +188,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
-
-            GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
+            if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
 
         protected override PresentationResult OnInitializeAsync()
@@ -299,23 +266,6 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
-            for (int i = m_DestroyedObjectsInThisFrame.Count - 1; i >= 0; i--)
-            {
-                var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
-
-                if (targetObject is IEntityData entityData)
-                {
-                    ProcessEntityDestroy(targetObject);
-
-                    m_ObjectEntities.Remove(targetObject.Idx);
-                }
-                else
-                {
-                    ProcessNonEntityDestroy(targetObject);
-
-                    m_ObjectEntities.Remove(targetObject.Idx);
-                }
-            }
             m_DestroyedObjectsInThisFrame.Clear();
 
             var entityList = m_ObjectEntities.Values.ToArray();
@@ -323,16 +273,18 @@ namespace Syadeu.Presentation
             {
                 if (entityList[i] is IEntityData entity)
                 {
-                    ProcessEntityDestroy(entityList[i]);
+                    ProcessEntityDestroy(entityList[i], false);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(entityList[i]);
+                    ProcessNonEntityDestroy(entityList[i], false);
                 }
 
                 entityList[i].InternalOnDestroy();
                 ((IDisposable)entityList[i]).Dispose();
             }
+
+            GetModule<EntityRecycleModule>().ExecuteDisposeAll();
 
             foreach (var item in m_EntityProcessors)
             {
