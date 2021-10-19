@@ -615,6 +615,17 @@ namespace Syadeu.Presentation.Proxy
                 m_Pointer->m_TransformBuffer[m_Index].m_ParentIndex = parent.m_Index;
             }
         }
+        public void RemoveParent()
+        {
+            unsafe
+            {
+                if (m_Pointer->m_TransformBuffer[m_Index].m_ParentIndex < 0) return;
+
+                int parentIdx = m_Pointer->m_TransformBuffer[m_Index].m_ParentIndex;
+                m_Pointer->m_TransformBuffer[parentIdx].m_ChildIndices.RemoveFor(m_Index);
+                m_Pointer->m_TransformBuffer[m_Index].m_ParentIndex = -1;
+            }
+        }
 
         public void Destroy()
         {
