@@ -174,7 +174,7 @@ namespace SyadeuEditor
         #region General Menu
         private sealed class GeneralMenu
         {
-            #region Constrains
+            #region Constraints
 
             const string
                 UNITY_COLLECTIONS_CHECKS = "ENABLE_UNITY_COLLECTIONS_CHECKS",
@@ -196,7 +196,7 @@ namespace SyadeuEditor
                 m_DefinedMotionMatching,
                 m_DefinedBehaviorTree,
                 m_DefinedFMOD;
-            List<string> m_DefinedConstrains;
+            List<string> m_DefinedConstraints;
 
             #endregion
 
@@ -234,7 +234,7 @@ namespace SyadeuEditor
                 #region Constrains
 
                 PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, out string[] temp);
-                m_DefinedConstrains = temp.ToList();
+                m_DefinedConstraints = temp.ToList();
 
                 m_DefinedCollectionsChecks = HasConstrains(UNITY_COLLECTIONS_CHECKS);
                 m_DefinedCoresystemChecks = HasConstrains(CORESYSTEM_DISABLE_CHECKS);
@@ -303,7 +303,7 @@ namespace SyadeuEditor
             {
                 using (new EditorUtilities.BoxBlock(Color.black))
                 {
-                    DrawContrains();
+                    DrawContraints();
                 }
 
                 using (new EditorUtilities.BoxBlock(Color.black))
@@ -330,16 +330,16 @@ namespace SyadeuEditor
 
             #region Contrains
 
-            private bool m_OpenContrains = false;
+            private bool m_OpenContraints = false;
 
-            private void DrawContrains()
+            private void DrawContraints()
             {
-                m_OpenContrains = EditorUtilities.Foldout(m_OpenContrains, "Constrains");
-                if (!m_OpenContrains) return;
+                m_OpenContraints = EditorUtilities.Foldout(m_OpenContraints, "Constrains");
+                if (!m_OpenContraints) return;
 
                 EditorGUI.indentLevel++;
 
-                EditorUtilities.StringRich("Unity Constrains", 13);
+                EditorUtilities.StringRich("Unity Constraints", 13);
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedCollectionsChecks
@@ -347,15 +347,15 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedCollectionsChecks) DefineConstrains(UNITY_COLLECTIONS_CHECKS);
-                        else UndefineContrains(UNITY_COLLECTIONS_CHECKS);
+                        if (m_DefinedCollectionsChecks) DefineConstraints(UNITY_COLLECTIONS_CHECKS);
+                        else UndefineContraints(UNITY_COLLECTIONS_CHECKS);
                     }
                 }
 
                 EditorGUILayout.Space();
                 EditorUtilities.Line();
 
-                EditorUtilities.StringRich("CoreSystem Constrains", 13);
+                EditorUtilities.StringRich("CoreSystem Constraints", 13);
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
                     m_DefinedCoresystemChecks =
@@ -363,8 +363,8 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedCoresystemChecks) DefineConstrains(CORESYSTEM_DISABLE_CHECKS);
-                        else UndefineContrains(CORESYSTEM_DISABLE_CHECKS);
+                        if (m_DefinedCoresystemChecks) DefineConstraints(CORESYSTEM_DISABLE_CHECKS);
+                        else UndefineContraints(CORESYSTEM_DISABLE_CHECKS);
                     }
                 }
                 using (var check = new EditorGUI.ChangeCheckScope())
@@ -374,15 +374,15 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedTurnBasedSystem) DefineConstrains(CORESYSTEM_TURNBASESYSTEM);
-                        else UndefineContrains(CORESYSTEM_TURNBASESYSTEM);
+                        if (m_DefinedTurnBasedSystem) DefineConstraints(CORESYSTEM_TURNBASESYSTEM);
+                        else UndefineContraints(CORESYSTEM_TURNBASESYSTEM);
                     }
                 }
 
                 EditorGUILayout.Space();
                 EditorUtilities.Line();
 
-                EditorUtilities.StringRich("Third Party Constrains", 13);
+                EditorUtilities.StringRich("Third Party Constraints", 13);
 
                 using (var check = new EditorGUI.ChangeCheckScope())
                 {
@@ -391,8 +391,8 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedFMOD) DefineConstrains(CORESYSTEM_FMOD);
-                        else UndefineContrains(CORESYSTEM_FMOD);
+                        if (m_DefinedFMOD) DefineConstraints(CORESYSTEM_FMOD);
+                        else UndefineContraints(CORESYSTEM_FMOD);
                     }
                 }
                 using (var check = new EditorGUI.ChangeCheckScope())
@@ -402,8 +402,8 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedDotween) DefineConstrains(CORESYSTEM_DOTWEEN);
-                        else UndefineContrains(CORESYSTEM_DOTWEEN);
+                        if (m_DefinedDotween) DefineConstraints(CORESYSTEM_DOTWEEN);
+                        else UndefineContraints(CORESYSTEM_DOTWEEN);
                     }
                 }
                 using (var check = new EditorGUI.ChangeCheckScope())
@@ -413,8 +413,8 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedMotionMatching) DefineConstrains(CORESYSTEM_MOTIONMATCHING);
-                        else UndefineContrains(CORESYSTEM_MOTIONMATCHING);
+                        if (m_DefinedMotionMatching) DefineConstraints(CORESYSTEM_MOTIONMATCHING);
+                        else UndefineContraints(CORESYSTEM_MOTIONMATCHING);
                     }
                 }
                 using (var check = new EditorGUI.ChangeCheckScope())
@@ -424,41 +424,41 @@ namespace SyadeuEditor
 
                     if (check.changed)
                     {
-                        if (m_DefinedBehaviorTree) DefineConstrains(CORESYSTEM_BEHAVIORTREE);
-                        else UndefineContrains(CORESYSTEM_BEHAVIORTREE);
+                        if (m_DefinedBehaviorTree) DefineConstraints(CORESYSTEM_BEHAVIORTREE);
+                        else UndefineContraints(CORESYSTEM_BEHAVIORTREE);
                     }
                 }
 
                 EditorGUI.indentLevel--;
             }
 
-            private bool HasConstrains(string name) => m_DefinedConstrains.Contains(name);
-            private void DefineConstrains(params string[] names)
+            private bool HasConstrains(string name) => m_DefinedConstraints.Contains(name);
+            private void DefineConstraints(params string[] names)
             {
                 if (names == null || names.Length == 0) return;
 
                 for (int i = 0; i < names.Length; i++)
                 {
-                    if (m_DefinedConstrains.Contains(names[i])) continue;
+                    if (m_DefinedConstraints.Contains(names[i])) continue;
 
-                    m_DefinedConstrains.Add(names[i]);
+                    m_DefinedConstraints.Add(names[i]);
                 }
 
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstraints.ToArray());
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
             }
-            private void UndefineContrains(params string[] names)
+            private void UndefineContraints(params string[] names)
             {
                 if (names == null || names.Length == 0) return;
 
                 for (int i = 0; i < names.Length; i++)
                 {
-                    if (!m_DefinedConstrains.Contains(names[i])) continue;
+                    if (!m_DefinedConstraints.Contains(names[i])) continue;
 
-                    m_DefinedConstrains.Remove(names[i]);
+                    m_DefinedConstraints.Remove(names[i]);
                 }
 
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstrains.ToArray());
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, m_DefinedConstraints.ToArray());
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
             }
 

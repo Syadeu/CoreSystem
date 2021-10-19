@@ -1,11 +1,10 @@
-﻿using Syadeu;
-using Syadeu.Collections;
-using Syadeu.Internal;
+﻿using Syadeu.Collections;
+
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
