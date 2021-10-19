@@ -15,11 +15,15 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerAction : ActionBase
     {
-        internal override sealed void InternalInitialize()
-        {
-            OnInitialize();
-            base.InternalInitialize();
-        }
+        //internal override sealed void InternalInitialize()
+        //{
+        //    OnCreated();
+        //    base.InternalInitialize();
+        //}
+        //protected override void OnCreated()
+        //{
+        //    base.OnCreated();
+        //}
         internal bool InternalExecute(EntityData<IEntityData> entity)
         {
             if (!string.IsNullOrEmpty(p_DebugText))
@@ -110,7 +114,7 @@ namespace Syadeu.Presentation.Actions
         //    return temp;
         //}
 
-        protected virtual void OnInitialize() { }
+        //protected virtual void OnCreated() { }
         protected virtual void OnTerminate() { }
         protected abstract void OnExecute(EntityData<IEntityData> entity);
     }

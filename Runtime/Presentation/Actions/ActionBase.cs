@@ -13,10 +13,10 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 9999, PropertyName = "DebugText")]
         protected string p_DebugText = string.Empty;
 
-        [JsonIgnore] private bool m_Terminated = true;
+        //[JsonIgnore] private bool m_Terminated = true;
         [JsonIgnore] public IFixedReference m_Reference;
 
-        [JsonIgnore] public bool Terminated => m_Terminated;
+        //[JsonIgnore] public bool Terminated => m_Terminated;
 
         protected static bool TryGetEntitySystem(out EntitySystem entitySystem)
         {
@@ -34,13 +34,13 @@ namespace Syadeu.Presentation.Actions
             entitySystem = m_EntitySystem.System;
             return true;
         }
-        internal virtual void InternalInitialize()
-        {
-            m_Terminated = false;
-        }
+        //internal virtual void InternalInitialize()
+        //{
+        //    m_Terminated = false;
+        //}
         internal virtual void InternalTerminate()
         {
-            m_Terminated = true;
+            //m_Terminated = true;
         }
         internal override void InternalOnDestroy()
         {

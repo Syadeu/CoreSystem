@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Actions
             }
             else temp = (T)pool.Pop();
 
-            temp.InternalInitialize();
+            //temp.InternalInitialize();
             return temp;
         }
 

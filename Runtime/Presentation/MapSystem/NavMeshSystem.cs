@@ -567,7 +567,8 @@ namespace Syadeu.Presentation.Map
                     navAgent.m_OnMoveActions.Execute(m_Entity);
 
                     yield return null;
-                } while (navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
+                } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
+                        navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
 
                 SetIsMoving(false);
                 agent.ResetPath();

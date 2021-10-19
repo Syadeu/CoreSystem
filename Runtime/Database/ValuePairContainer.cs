@@ -10,7 +10,7 @@ using System.Linq;
 namespace Syadeu.Collections
 {
     [Serializable]
-    public sealed class ValuePairContainer : IList, ICloneable
+    public sealed class ValuePairContainer : ICloneable
     {
         [UnityEngine.SerializeReference][JsonProperty(Order = 0, PropertyName = "Values")] private ValuePair[] m_Values;
         [MoonSharpHidden] public ValuePair this[int i]
@@ -18,11 +18,11 @@ namespace Syadeu.Collections
             get => m_Values[i];
             set => m_Values[i] = ValuePair.New(m_Values[i].Name, value);
         }
-        [MoonSharpHidden] object IList.this[int index]
-        {
-            get => m_Values[index];
-            set => m_Values[index] = ValuePair.New(m_Values[index].Name, value);
-        }
+        //[MoonSharpHidden] object IList.this[int index]
+        //{
+        //    get => m_Values[index];
+        //    set => m_Values[index] = ValuePair.New(m_Values[index].Name, value);
+        //}
         [JsonIgnore] public int Count => m_Values.Length;
 
         [JsonIgnore] public bool IsFixedSize => false;

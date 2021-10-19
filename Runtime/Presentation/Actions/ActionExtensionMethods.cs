@@ -11,7 +11,7 @@ namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
-        const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
+        //const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
         const string c_ErrorTriggerActionCompletedWithFailed = "Execution ({0}) at {1} completed with failed.";
@@ -52,12 +52,12 @@ namespace Syadeu.Presentation.Actions
 
             predicate = false;
             T action = TriggerPredicateAction.GetAction(other);
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-                return false;
-            }
+            //if (action.Terminated)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+            //    return false;
+            //}
             return action.InternalExecute(entity, out predicate);
         }
         public static bool Execute<T>(this Reference<T> other) where T : InstanceAction
@@ -77,12 +77,12 @@ namespace Syadeu.Presentation.Actions
         public static bool Execute<T>(this IFixedReference<ParamAction<T>> other, T t)
         {
             var action = ParamAction<T>.GetAction(other);
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, action.Name));
-                return false;
-            }
+            //if (action.Terminated)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        string.Format(c_ErrorIsTerminatedAction, action.Name));
+            //    return false;
+            //}
             return action.InternalExecute(t);
         }
         public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>> other, T t, TA ta)
@@ -93,12 +93,12 @@ namespace Syadeu.Presentation.Actions
         public static bool Execute<T, TA>(this IFixedReference<ParamAction<T, TA>> other, T t, TA ta)
         {
             var action = ParamAction<T, TA>.GetAction(other);
-            if (action.Terminated)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-                return false;
-            }
+            //if (action.Terminated)
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Entity,
+            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
+            //    return false;
+            //}
             return action.InternalExecute(t, ta);
         }
 
@@ -323,13 +323,13 @@ namespace Syadeu.Presentation.Actions
             return !isFailed;
         }
 
-        public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)
-            where TState : StateBase<TAction>, ITerminate, new()
-            where TAction : StatefulActionBase<TState, TAction>
-        {
-            TAction action = StatefulActionBase<TState, TAction>.GetAction(other);
-            action.InternalExecute(entity);
-        }
+        //public static void Execute<TState, TAction>(this Reference<TAction> other, EntityData<IEntityData> entity)
+        //    where TState : StateBase<TAction>, ITerminate, new()
+        //    where TAction : StatefulActionBase<TState, TAction>
+        //{
+        //    TAction action = StatefulActionBase<TState, TAction>.GetAction(other);
+        //    action.InternalExecute(entity);
+        //}
 
         public static void Schedule<T>(this Reference<T> action)
             where T : InstanceAction

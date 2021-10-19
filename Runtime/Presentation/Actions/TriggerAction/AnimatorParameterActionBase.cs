@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.Actions
         [JsonIgnore] private int m_KeyHash;
         [JsonIgnore] protected int KeyHash => m_KeyHash;
 
-        protected override void OnInitialize()
+        protected override void OnCreated()
         {
             m_KeyHash = Animator.StringToHash(m_TriggerKey);
         }

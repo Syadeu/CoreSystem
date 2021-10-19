@@ -307,8 +307,18 @@ namespace Syadeu.Presentation.Actor
             {
                 ref ActorWeaponComponent weaponComponent = ref entity.GetComponent<ActorWeaponComponent>();
 
-                for (int i = 0; i < weaponComponent.m_EquipedWeapons.Length; i++)
+                for (int i = weaponComponent.m_EquipedWeapons.Length - 1; i >= 0; i--)
                 {
+                    ActorWeaponData data = weaponComponent.m_EquipedWeapons[i].GetObject();
+                    if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"Weapon that in the entity({entity.RawName}, at {i}) is invalid. This is not allowed.");
+
+                        weaponComponent.m_EquipedWeapons.RemoveAt(i);
+                        continue;
+                    }
+
                     bool selected = weaponComponent.Selected == i && weaponComponent.Drawn;
                     SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], selected);
                 }

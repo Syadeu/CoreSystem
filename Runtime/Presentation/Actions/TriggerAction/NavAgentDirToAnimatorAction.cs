@@ -23,8 +23,26 @@ namespace Syadeu.Presentation.Actions
         [JsonIgnore] private int m_Vertical;
         [JsonIgnore] private int m_Speed;
 
-        protected override void OnInitialize()
+        protected override void OnCreated()
         {
+#if DEBUG
+            if (string.IsNullOrEmpty(m_HorizontalKey))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_HorizontalKey)} string. This is not allowed.");
+            }
+            if (string.IsNullOrEmpty(m_VerticalKey))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_VerticalKey)} string. This is not allowed.");
+            }
+            if (string.IsNullOrEmpty(m_SpeedKey))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_SpeedKey)} string. This is not allowed.");
+            }
+#endif
+
             m_Horizontal = Animator.StringToHash(m_HorizontalKey);
             m_Vertical = Animator.StringToHash(m_VerticalKey);
             m_Speed = Animator.StringToHash(m_SpeedKey);
