@@ -109,6 +109,12 @@ namespace Syadeu.Presentation
         /// </remarks>
         protected virtual void OnReserve() { }
 
+        public override sealed bool Equals(object obj)
+        {
+            if (obj is ObjectBase target && target.Hash.Equals(Hash)) return true;
+
+            return false;
+        }
         public override sealed int GetHashCode()
         {
             return m_HashCode;
