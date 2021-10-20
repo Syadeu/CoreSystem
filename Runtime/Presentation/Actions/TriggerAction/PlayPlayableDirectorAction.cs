@@ -76,10 +76,10 @@ namespace Syadeu.Presentation.Actions
         {
             m_CoroutineSystem = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
         }
-        //protected override void OnDispose()
-        //{
-        //    m_CoroutineSystem = null;
-        //}
+        protected override void OnDestroy()
+        {
+            m_CoroutineSystem = null;
+        }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
             m_KeepWait = true;

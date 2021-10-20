@@ -44,6 +44,12 @@ namespace Syadeu.Presentation.Actions
         {
             m_RaycastInfos.Clear();
         }
+        protected override void OnDestroy()
+        {
+            m_RenderSystem = null;
+            m_RaycastSystem = null;
+        }
+
         protected override void OnExecute()
         {
             Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));

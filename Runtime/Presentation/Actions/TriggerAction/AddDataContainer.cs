@@ -21,11 +21,15 @@ namespace Syadeu.Presentation.Actions
 
         protected override void OnCreated()
         {
-            m_DataContainer = PresentationSystem<DataContainerSystem>.System;
+            m_DataContainer = PresentationSystem<DefaultPresentationGroup, DataContainerSystem>.System;
             if (!string.IsNullOrEmpty(m_Key))
             {
                 m_KeyHash = DataContainerSystem.ToDataHash(m_Key);
             }
+        }
+        protected override void OnDestroy()
+        {
+            m_DataContainer = null;
         }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
