@@ -54,8 +54,8 @@ namespace Syadeu.Presentation
             if (TryGetObject(original.Hash, out IObject obj))
             {
                 ObjectBase temp = (ObjectBase)obj;
-                temp.InternalReset();
                 temp.m_HashCode = System.CreateHashCode();
+                temp.InternalInitialize();
 
                 return temp;
             }

@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.Actions
             "initialized".ToLog();
         }
 
-        protected override void OnTerminate()
+        protected override void OnReserve()
         {
             "terminated".ToLog();
         }

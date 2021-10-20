@@ -105,7 +105,7 @@ namespace Syadeu.Presentation.Actions
 
             m_CoroutineSystem.PostSequenceIterationJob(job);
         }
-        protected override void OnTerminate()
+        protected override void OnReserve()
         {
             m_KeepWait = false;
         }

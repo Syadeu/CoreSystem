@@ -869,6 +869,8 @@ namespace Syadeu.Presentation
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         public void DestroyObject<T>(IInstance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
         public void DestroyObject(IInstance instance) => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(IObject instance) => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(InstanceID instance) => InternalDestroyEntity(instance);
         internal void InternalDestroyEntity(in InstanceID hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))

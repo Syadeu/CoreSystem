@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actions
             CoreSystem.Logger.NotNull(m_RaycastSystem);
         }
 
-        protected override void OnTerminate()
+        protected override void OnReserve()
         {
             m_RaycastInfos.Clear();
         }

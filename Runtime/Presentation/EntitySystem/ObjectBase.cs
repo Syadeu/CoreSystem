@@ -62,6 +62,7 @@ namespace Syadeu.Presentation
             entity.Idx = Hash.NewHash();
 
             entity.m_Reserved = false;
+            OnCreated();
 
             return entity;
         }
@@ -78,10 +79,12 @@ namespace Syadeu.Presentation
         /// <summary>
         /// Pool 에서 꺼내져 재사용될때 실행됩니다.
         /// </summary>
-        internal virtual void InternalReset()
+        internal virtual void InternalInitialize()
         {
             Idx = Hash.NewHash();
             m_Reserved = false;
+
+            OnInitialize();
         }
         /// <summary>
         /// Pool 로 돌아갈 때 실행됩니다.
@@ -92,6 +95,14 @@ namespace Syadeu.Presentation
             m_Reserved = true;
         }
 
+        /// <summary>
+        /// 객체가 처음 생성될떄 실행됩니다.
+        /// </summary>
+        protected virtual void OnCreated() { }
+        /// <summary>
+        /// Pool 에서 꺼내져 재사용될때 실행됩니다.
+        /// </summary>
+        protected virtual void OnInitialize() { }
         /// <summary>
         /// 인스턴스가 정말 파괴될 때 실행됩니다.
         /// </summary>

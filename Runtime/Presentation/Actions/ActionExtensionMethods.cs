@@ -50,15 +50,12 @@ namespace Syadeu.Presentation.Actions
                 return false;
             }
 
-            predicate = false;
-            T action = TriggerPredicateAction.GetAction(other);
-            //if (action.Terminated)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-            //    return false;
-            //}
-            return action.InternalExecute(entity, out predicate);
+            Instance<T> ins = other.CreateInstance();
+            T action = ins.GetObject();
+            bool result = action.InternalExecute(entity, out predicate);
+            ins.Destroy();
+
+            return result;
         }
         public static bool Execute<T>(this Reference<T> other) where T : InstanceAction
         {
@@ -76,14 +73,12 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this IFixedReference<ParamAction<T>> other, T t)
         {
-            var action = ParamAction<T>.GetAction(other);
-            //if (action.Terminated)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        string.Format(c_ErrorIsTerminatedAction, action.Name));
-            //    return false;
-            //}
-            return action.InternalExecute(t);
+            Instance<ParamAction<T>> ins = other.CreateInstance();
+            ParamAction<T> action = ins.GetObject();
+            bool result = action.InternalExecute(t);
+            ins.Destroy();
+
+            return result;
         }
         public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>> other, T t, TA ta)
         {
@@ -92,14 +87,12 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T, TA>(this IFixedReference<ParamAction<T, TA>> other, T t, TA ta)
         {
-            var action = ParamAction<T, TA>.GetAction(other);
-            //if (action.Terminated)
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //        string.Format(c_ErrorIsTerminatedAction, TypeHelper.TypeOf<T>.Name));
-            //    return false;
-            //}
-            return action.InternalExecute(t, ta);
+            Instance<ParamAction<T, TA>> ins = other.CreateInstance();
+            ParamAction<T, TA> action = ins.GetObject();
+            bool result = action.InternalExecute(t, ta);
+            ins.Destroy();
+
+            return result;
         }
 
         public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerAction

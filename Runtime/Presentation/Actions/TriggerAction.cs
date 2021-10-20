@@ -36,7 +36,6 @@ namespace Syadeu.Presentation.Actions
                 CoreSystem.Logger.LogWarning(Channel.Entity,
                     $"Cannot trigger this action({Name}) because target entity is invalid");
 
-                InternalTerminate();
                 return false;
             }
 
@@ -53,69 +52,6 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        internal override sealed void InternalTerminate()
-        {
-            OnTerminate();
-
-            //if (!m_Pool.TryGetValue(m_Reference, out var pool))
-            //{
-            //    pool = new Stack<ActionBase>();
-            //    m_Pool.Add(m_Reference, pool);
-            //}
-            //pool.Push(this);
-
-            base.InternalTerminate();
-        }
-
-        //public static T GetAction<T>(IFixedReference<T> other) where T : TriggerAction
-        //{
-        //    if (!TryGetEntitySystem(out EntitySystem entitySystem))
-        //    {
-        //        return null;
-        //    }
-
-        //    T temp;
-
-        //    if (!m_Pool.TryGetValue(other, out var pool) ||
-        //        pool.Count == 0)
-        //    {
-        //        T t = entitySystem.CreateInstance(other).GetObject();
-        //        t.m_Reference = other;
-        //        t.InternalCreate();
-
-        //        temp = t;
-        //    }
-        //    else temp = (T)pool.Pop();
-
-        //    temp.InternalInitialize();
-        //    return temp;
-        //}
-        //public static TriggerAction GetAction(FixedReference other)
-        //{
-        //    if (!TryGetEntitySystem(out EntitySystem entitySystem))
-        //    {
-        //        return null;
-        //    }
-
-        //    TriggerAction temp;
-
-        //    if (!m_Pool.TryGetValue(other, out var pool) ||
-        //        pool.Count == 0)
-        //    {
-        //        TriggerAction t = (TriggerAction)entitySystem.CreateInstance(other).GetObject();
-        //        t.m_Reference = other;
-        //        t.InternalCreate();
-
-        //        temp = t;
-        //    }
-        //    else temp = (TriggerAction)pool.Pop();
-
-        //    temp.InternalInitialize();
-        //    return temp;
-        //}
-
-        //protected virtual void OnCreated() { }
-        protected virtual void OnTerminate() { }
         protected abstract void OnExecute(EntityData<IEntityData> entity);
     }
 }
