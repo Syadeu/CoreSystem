@@ -13,12 +13,6 @@ namespace Syadeu.Presentation.Actions
 
         [JsonIgnore] public IFixedReference m_Reference;
 
-        protected static bool TryGetEntitySystem(out EntitySystem entitySystem)
-        {
-            entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-            return true;
-        }
-
         public override sealed object Clone()
         {
             ActionBase actionBase = (ActionBase)base.Clone();

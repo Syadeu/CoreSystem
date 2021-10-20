@@ -833,22 +833,8 @@ namespace Syadeu.Presentation
             var module = GetModule<EntityRecycleModule>();
 
             ObjectBase clone = module.GetOrCreateInstance<ObjectBase>(obj);
-            //if (module.TryGetObject(obj.Hash, out IObject recycled))
-            //{
-            //    clone = (ObjectBase)recycled;
-            //    clone.InternalReset();
-            //}
-            //else
-            //{
-            //    clone = (ObjectBase)obj.Clone();
-            //    clone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
-            //}
 
             m_ObjectEntities.Add(clone.Idx, clone);
-            if (clone is DataObjectBase dataObject)
-            {
-                dataObject.InternalOnCreated();
-            }
 
             return clone;
         }

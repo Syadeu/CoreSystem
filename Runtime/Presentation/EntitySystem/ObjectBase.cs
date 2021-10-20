@@ -62,7 +62,7 @@ namespace Syadeu.Presentation
             entity.Idx = Hash.NewHash();
 
             entity.m_Reserved = false;
-            OnCreated();
+            entity.OnCreated();
 
             return entity;
         }
