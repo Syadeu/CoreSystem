@@ -130,10 +130,6 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
-
-            m_GridOutlineCamera = other.GetProjectionCamera(
-                CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
-                CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
         }
 
         #endregion
@@ -195,6 +191,9 @@ namespace Syadeu.Presentation.TurnTable
                     PlaceUICell(in gridSize, m_GridTempMoveables[i]);
                 }
 
+                m_GridOutlineCamera = m_RenderSystem.GetProjectionCamera(
+                    CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
+                    CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
                 m_GridOutlineCamera.SetPosition(gridSize.IndexToPosition(gridSize.positions[0].index));
 
                 m_IsDrawingGrids = true;
@@ -218,6 +217,9 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridSystem.ClearUICell();
 
                 m_GridOutlineRenderer.positionCount = 0;
+
+                m_GridOutlineCamera.Dispose();
+                m_GridOutlineCamera = null;
 
                 m_IsDrawingGrids = false;
             }

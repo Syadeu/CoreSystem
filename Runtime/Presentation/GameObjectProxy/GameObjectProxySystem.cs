@@ -218,16 +218,18 @@ namespace Syadeu.Presentation.Proxy
 
             if (!data->clusterID.Equals(ClusterID.Requested))
             {
-                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, transform.position));
+                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, data->m_Translation));
             }
 
             if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
                 !data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
             {
-                IProxyMonobehaviour proxy = transform.proxy;
-                proxy.transform.position = transform.position;
-                proxy.transform.rotation = transform.rotation;
-                proxy.transform.localScale = transform.scale;
+                int2 proxyIndex = data->m_ProxyIndex;
+
+                IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+                proxy.transform.position = data->m_Translation;
+                proxy.transform.rotation = data->m_Rotation;
+                proxy.transform.localScale = data->m_Scale;
             }
 
             //for (int i = 0; i < m_ProxyData.List[transform.m_Index]->m_ChildIndices.Length; i++)
@@ -766,9 +768,12 @@ namespace Syadeu.Presentation.Proxy
             in float3 center, in float3 size,
             bool gpuInstanced)
         {
+            const string c_ErrorToEarly = "You've call this method too early or outside of PresentationSystem";
+            const string c_Created = "ProxyTransform({0}) has been created at {1}";
+
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
-            CoreSystem.Logger.NotNull(m_RenderSystem, $"You've call this method too early or outside of PresentationSystem");
+            CoreSystem.Logger.NotNull(m_RenderSystem, c_ErrorToEarly);
 
             ProxyTransform tr;
             if (prefab.IsNone())
@@ -797,9 +802,7 @@ namespace Syadeu.Presentation.Proxy
             }
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
-                $"ProxyTransform(" +
-                $"{(prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY")})" +
-                $"has been created at {pos}");
+                string.Format(c_Created, (prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY"), pos));
 
             return tr;
         }

@@ -567,6 +567,7 @@ namespace Syadeu.Presentation.Render
             if (m_UnusedProjectionCameras.Count > 0)
             {
                 cam = m_UnusedProjectionCameras.Pop();
+                cam.gameObject.SetActive(true);
 
                 projector = cam.GetComponentInChildren<DecalProjector>();
             }
@@ -603,6 +604,7 @@ namespace Syadeu.Presentation.Render
         }
         internal void ReserveProjectionCamere(Camera cam)
         {
+            cam.gameObject.SetActive(false);
             m_UnusedProjectionCameras.Push(cam);
         }
     }

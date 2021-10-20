@@ -95,6 +95,8 @@ namespace Syadeu.Presentation.Events
             m_CoroutineSystem = null;
         }
 
+        const string c_LogPostedEvent = "Posted event : {0}";
+
         private void M_CoroutineSystem_OnTransformUpdate()
         {
             int eventCount = m_TransformEvents.Count;
@@ -110,11 +112,12 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.GetType()}) has been posted");
+                        $"Invalid event({ev.GetType().Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
+
                 CoreSystem.Logger.Log(Channel.Event,
-                    $"Posted event : {ev.GetType().Name}");
+                    string.Format(c_LogPostedEvent, ev.GetType().Name));
             }
         }
         protected override PresentationResult OnPresentation()
@@ -147,8 +150,8 @@ namespace Syadeu.Presentation.Events
                             $"Invalid event({ev.GetType().Name}) has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
-                    CoreSystem.Logger.Log(Channel.Event,
-                        $"Posted event : {ev.GetType().Name}");
+                    CoreSystem.Logger.Log(Channel.Event, 
+                        string.Format(c_LogPostedEvent, ev.GetType().Name));
                 }
             }
             

@@ -102,10 +102,11 @@ namespace Syadeu.Presentation
         {
             if (CoreSystem.BlockCreateInstance) return;
 
-            for (int i = m_DestroyedObjectsInThisFrame.Count - 1; i >= 0; i--)
+            int count = m_DestroyedObjectsInThisFrame.Count;
+            for (int i = count - 1; i >= 0; i--)
             {
                 var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
-                m_DestroyedObjectsInThisFrame.RemoveAt(i);
+                //m_DestroyedObjectsInThisFrame.RemoveAt(i);
 
                 if (targetObject is IEntityData entityData)
                 {
@@ -120,6 +121,7 @@ namespace Syadeu.Presentation
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
+            m_DestroyedObjectsInThisFrame.RemoveRange(0, count);
         }
         private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {

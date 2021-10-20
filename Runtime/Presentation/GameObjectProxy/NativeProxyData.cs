@@ -220,6 +220,8 @@ namespace Syadeu.Presentation.Proxy
         }
         public void Remove(ProxyTransform transform)
         {
+            const string c_DestroyMsg = "ProxyTransform({0}) has been destroyed.";
+
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
@@ -248,7 +250,7 @@ namespace Syadeu.Presentation.Proxy
             p->m_ChildIndices.Clear();
 
             CoreSystem.Logger.Log(Channel.Proxy,
-                $"ProxyTransform({p->m_Prefab.GetObjectSetting().m_Name}) has been destroyed.");
+                string.Format(c_DestroyMsg, p->m_Prefab.GetObjectSetting().m_Name));
         }
         public void Clear()
         {
