@@ -73,7 +73,7 @@ namespace Syadeu.Presentation
         /// </summary>
         internal virtual void InternalOnDestroy()
         {
-            
+            OnDestroy();
         }
         /// <summary>
         /// Pool 에서 꺼내져 재사용될때 실행됩니다.

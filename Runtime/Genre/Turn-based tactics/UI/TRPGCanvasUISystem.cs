@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 if (!entity.HasComponent<ActorControllerComponent>()) continue;
 
-                ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+                ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
                 if (!ctr.HasProvider<ActorOverlayUIProvider>()) continue;
 
                 Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
@@ -221,7 +221,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
-            ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
             Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
@@ -242,7 +242,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
-            ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
             Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
