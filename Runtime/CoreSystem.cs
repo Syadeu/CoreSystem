@@ -1531,8 +1531,8 @@ namespace Syadeu
 #if DEBUG_MODE
                 m_ForegroundJobMarker.Begin();
 #endif
-                int jobCount = 0;
-                while (m_ForegroundJobs.Count > 0)
+                int jobCount = m_ForegroundJobs.Count;
+                for (int i = 0; i < jobCount; i++)
                 {
                     if (!m_ForegroundJobs.TryDequeue(out ForegroundJob job)) continue;
 #if DEBUG_MODE
@@ -1578,11 +1578,11 @@ namespace Syadeu
                     //sampler.End();
                     //UnityEngine.Profiling.Profiler.EndSample();
 #endif
-                    if (jobCount % 50 == 0) break;
+                    //if (jobCount % 50 == 0) break;
                 }
 
 #if DEBUG_MODE
-                m_ForegroundJobMarker.Begin();
+                m_ForegroundJobMarker.End();
 #endif
 
                 #endregion
