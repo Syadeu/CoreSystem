@@ -144,6 +144,34 @@ namespace Syadeu.Presentation.Map
 
             return chain;
         }
+        public GridLayerChain Combine(in GridLayerChain x, in GridLayerChain y)
+        {
+            GridLayerChain chain = new GridLayerChain(x, y);
+            if (m_ParsedLayers.ContainsKey(chain)) return chain;
+
+            if (!m_ParsedLayers.ContainsKey(x) || !m_ParsedLayers.ContainsKey(y))
+            {
+                throw new Exception();
+            }
+
+            GridLayer layer;
+            if (m_ParsedLayers.TryGetFirstValue(x, out layer, out var iter))
+            {
+                do
+                {
+                    m_ParsedLayers.Add(chain, layer);
+                } while (m_ParsedLayers.TryGetNextValue(out layer, ref iter));
+            }
+            if (m_ParsedLayers.TryGetFirstValue(y, out layer, out iter))
+            {
+                do
+                {
+                    m_ParsedLayers.Add(chain, layer);
+                } while (m_ParsedLayers.TryGetNextValue(out layer, ref iter));
+            }
+
+            return chain;
+        }
 
         #endregion
 
