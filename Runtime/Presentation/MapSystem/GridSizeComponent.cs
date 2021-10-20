@@ -137,6 +137,16 @@ namespace Syadeu.Presentation.Map
                 in maxIteration,
                 in avoidEntity);
         }
+        public bool GetPath64(in int to, ref GridPath64 path, in GridLayerChain ignoreLayers, in int maxIteration = 32, in bool avoidEntity = true)
+        {
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
+                positions[0].index,
+                in to,
+                ref path,
+                m_ObstacleLayers.Combine(in ignoreLayers),
+                in maxIteration,
+                in avoidEntity);
+        }
 
         public GridPosition GetGridPosition(in int index)
         {
