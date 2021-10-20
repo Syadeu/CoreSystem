@@ -474,15 +474,19 @@ namespace Syadeu.Presentation.Map
 
         public GridLayerChain Combine(in GridLayer x, in GridLayer y)
         {
-            return GetModule<ObstacleLayerModule>().Combine(x, y);
+            return GetModule<ObstacleLayerModule>().Combine(in x, in y);
         }
         public GridLayerChain Combine(in GridLayer x, params GridLayer[] others)
         {
-            return GetModule<ObstacleLayerModule>().Combine(x, others);
+            return GetModule<ObstacleLayerModule>().Combine(in x, others);
         }
         public GridLayerChain Combine(in GridLayerChain x, in GridLayer y)
         {
-            return GetModule<ObstacleLayerModule>().Combine(x, y);
+            return GetModule<ObstacleLayerModule>().Combine(in x, in y);
+        }
+        public GridLayerChain Combine(in GridLayerChain x, in GridLayerChain y)
+        {
+            return GetModule<ObstacleLayerModule>().Combine(in x, in y);
         }
 
         #endregion

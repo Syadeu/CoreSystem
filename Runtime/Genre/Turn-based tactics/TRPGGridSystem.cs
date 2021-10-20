@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.TurnTable
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterPresentation => true;
 
         private LineRenderer 
             m_GridOutlineRenderer, m_GridPathlineRenderer;
@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridTempOutlines, m_GridTempPathlines;
 
         //private ComputeBuffer m_GridOutlineBuffer;
-        //private Mesh m_OutlineMesh;
+        private Mesh m_OutlineMesh;
 
         private bool 
             m_IsDrawingGrids = false,
@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             //m_GridOutlineBuffer = new ComputeBuffer(128, 12, ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
 
-            //m_OutlineMesh = new Mesh();
+            m_OutlineMesh = new Mesh();
 
             {
                 m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
@@ -122,17 +122,17 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        //private bool m_DrawMesh = false;
+        private bool m_DrawMesh = false;
 
-        //protected override PresentationResult AfterPresentation()
-        //{
-        //    if (m_DrawMesh)
-        //    {
-        //        Graphics.DrawMesh(m_OutlineMesh, Matrix4x4.identity, CoreSystemSettings.Instance.m_TRPGGridLineMaterial, 0);
-        //    }
+        protected override PresentationResult AfterPresentation()
+        {
+            if (m_DrawMesh)
+            {
+                Graphics.DrawMesh(m_OutlineMesh, Matrix4x4.identity, CoreSystemSettings.Instance.m_TRPGGridLineMaterial, 0);
+            }
 
-        //    return base.AfterPresentation();
-        //}
+            return base.AfterPresentation();
+        }
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
@@ -153,6 +153,8 @@ namespace Syadeu.Presentation.TurnTable
                 move.GetMoveablePositions(ref m_GridTempMoveables, out int count);
                 move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines, count);
 
+                //m_OutlineMesh.SetVertices<Vector3>(m_GridTempOutlines);
+                
                 //Graphics.drawmesh
 
                 m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;

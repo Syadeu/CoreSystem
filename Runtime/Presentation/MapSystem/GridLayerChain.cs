@@ -23,6 +23,10 @@ namespace Syadeu.Presentation.Map
         {
             m_Hash = a0.m_Hash ^ a1.Hash;
         }
+        internal GridLayerChain(GridLayerChain x, GridLayerChain y)
+        {
+            m_Hash = x.m_Hash ^ y.m_Hash;
+        }
         internal GridLayerChain(GridLayer x, params GridLayer[] others)
         {
             m_Hash = x.Hash;
