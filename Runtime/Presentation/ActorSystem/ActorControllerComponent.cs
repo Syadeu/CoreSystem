@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Actor
         internal PresentationSystemID<EntitySystem> m_EntitySystem;
 
         internal Entity<ActorEntity> m_Parent;
-        internal InstanceArray<ActorProviderBase> m_InstanceProviders;
+        internal FixedInstanceList64<ActorProviderBase> m_InstanceProviders;
         internal FixedReferenceList64<ParamAction<IActorEvent>> m_OnEventReceived;
 
         public bool IsBusy()
@@ -240,8 +240,6 @@ namespace Syadeu.Presentation.Actor
                 ExecuteOnDestroy(m_InstanceProviders[i].GetObject(), m_Parent);
                 m_EntitySystem.System.DestroyObject(m_InstanceProviders[i]);
             }
-
-            m_InstanceProviders.Dispose();
         }
         private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
         {

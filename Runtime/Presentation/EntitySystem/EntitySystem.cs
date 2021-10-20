@@ -109,21 +109,19 @@ namespace Syadeu.Presentation
 
                 if (targetObject is IEntityData entityData)
                 {
-                    ProcessEntityDestroy(targetObject);
+                    ProcessEntityDestroy(targetObject, true);
 
-                    //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(targetObject);
+                    ProcessNonEntityDestroy(targetObject, true);
 
-                    //((IDisposable)targetObject).Dispose();
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
         }
-        private void ProcessEntityDestroy(ObjectBase targetObject)
+        private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (!(targetObject is IEntityData))
@@ -158,44 +156,12 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-
-//            if (targetObject is Components.INotifyComponent notifyComponent)
-//            {
-//                var notifies = GetComponentInterface(targetObject.GetType());
-//                foreach (var item in notifies)
-//                {
-//                    Type componentType = item.GenericTypeArguments[0];
-//                    m_ComponentSystem.RemoveComponent(notifyComponent.Parent, componentType);
-//#if DEBUG_MODE
-//                    Debug_RemoveComponent(notifyComponent.Parent, componentType);
-//#endif
-//                }
-//            }
-
-
 #if DEBUG_MODE
-            //string parseName = targetObject.Name;
-            //InstanceID parseID = targetObject.Idx;
-            //CoreSystem.WaitInvoke(2.5f, () =>
-            //{
-            //    if (Debug_HasComponent(parseID, out int count, out string names))
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Entity,
-            //            $"Entity({parseName}) has " +
-            //            $"number of {count} components that didn\'t disposed. {names}");
-            //    }
-            //    else
-            //    {
-            //        CoreSystem.Logger.Log(Channel.Entity, 
-            //            $"Entity({parseName}) component all checked.");
-            //    }
-            //});
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
-
-            GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
+            if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
-        private void ProcessNonEntityDestroy(ObjectBase targetObject)
+        private void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
         {
 #if DEBUG_MODE
             if (targetObject is IEntityData entityData)
@@ -203,10 +169,10 @@ namespace Syadeu.Presentation
                 throw new InvalidOperationException();
             }
 #endif
-            if (targetObject is DataObjectBase dataObject)
-            {
-                dataObject.InternalOnDestroy();
-            }
+            //if (targetObject is DataObjectBase dataObject)
+            //{
+            //    dataObject.InternalOnDestroy();
+            //}
 
             m_ComponentSystem
                 .RemoveNotifiedComponents
@@ -220,8 +186,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
-
-            GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
+            if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
         }
 
         protected override PresentationResult OnInitializeAsync()
@@ -306,16 +271,18 @@ namespace Syadeu.Presentation
             {
                 if (entityList[i] is IEntityData entity)
                 {
-                    ProcessEntityDestroy(entityList[i]);
+                    ProcessEntityDestroy(entityList[i], false);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(entityList[i]);
+                    ProcessNonEntityDestroy(entityList[i], false);
                 }
 
                 entityList[i].InternalOnDestroy();
                 ((IDisposable)entityList[i]).Dispose();
             }
+
+            GetModule<EntityRecycleModule>().ExecuteDisposeAll();
 
             foreach (var item in m_EntityProcessors)
             {
@@ -866,22 +833,8 @@ namespace Syadeu.Presentation
             var module = GetModule<EntityRecycleModule>();
 
             ObjectBase clone = module.GetOrCreateInstance<ObjectBase>(obj);
-            //if (module.TryGetObject(obj.Hash, out IObject recycled))
-            //{
-            //    clone = (ObjectBase)recycled;
-            //    clone.InternalReset();
-            //}
-            //else
-            //{
-            //    clone = (ObjectBase)obj.Clone();
-            //    clone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
-            //}
 
             m_ObjectEntities.Add(clone.Idx, clone);
-            if (clone is DataObjectBase dataObject)
-            {
-                dataObject.InternalOnCreated();
-            }
 
             return clone;
         }
@@ -902,6 +855,8 @@ namespace Syadeu.Presentation
         public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         public void DestroyObject<T>(IInstance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
         public void DestroyObject(IInstance instance) => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(IObject instance) => InternalDestroyEntity(instance.Idx);
+        public void DestroyObject(InstanceID instance) => InternalDestroyEntity(instance);
         internal void InternalDestroyEntity(in InstanceID hash)
         {
             if (!m_ObjectEntities.ContainsKey(hash))
@@ -1293,6 +1248,7 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
+
 
                 system.m_ComponentSystem
                     .RemoveNotifiedComponents(other

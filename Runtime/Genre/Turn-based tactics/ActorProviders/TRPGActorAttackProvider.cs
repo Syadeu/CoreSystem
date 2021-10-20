@@ -43,9 +43,12 @@ namespace Syadeu.Presentation.TurnTable
                 m_Targets = new FixedList512Bytes<EntityID>()
             });
         }
+        protected override void OnReserve()
+        {
+            m_TempGetRange.Clear();
+        }
         protected override void OnDestroy()
         {
-            //Targets = null;
             m_TempGetRange.Dispose();
 
             m_GridSystem = null;

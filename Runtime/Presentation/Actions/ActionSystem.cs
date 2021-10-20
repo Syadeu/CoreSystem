@@ -23,9 +23,6 @@ namespace Syadeu.Presentation.Actions
         private readonly List<Payload> m_ScheduledActions = new List<Payload>();
         private readonly ActionContainer m_CurrentAction = new ActionContainer();
 
-        private ActionBase[] m_RawActionData;
-        private UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>> m_Actions;
-
         private EventSystem m_EventSystem;
         private EntitySystem m_EntitySystem;
 
@@ -34,22 +31,7 @@ namespace Syadeu.Presentation.Actions
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
-            //m_ScheduledActions = new NativeQueue<Payload>(Allocator.Persistent);
-
             return base.OnInitialize();
-        }
-        protected override PresentationResult OnInitializeAsync()
-        {
-            m_RawActionData = EntityDataList.Instance.GetData<ActionBase>();
-
-            return base.OnInitializeAsync();
-        }
-
-        public override void OnDispose()
-        {
-            m_Actions.Dispose();
-
-            base.OnDispose();
         }
 
         #region Binds
@@ -61,59 +43,17 @@ namespace Syadeu.Presentation.Actions
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
-            m_Actions = new UnsafeHashMap<FixedReference<ActionBase>, Instance<ActionBase>>(m_RawActionData.Length, AllocatorManager.Persistent);
-            for (int i = 0; i < m_RawActionData.Length; i++)
-            {
-                var ins = m_EntitySystem.CreateInstance<ActionBase>(m_RawActionData[i]);
-
-                m_Actions.Add(new FixedReference<ActionBase>(m_RawActionData[i].Hash), ins);
-            }
         }
 
         #endregion
-
-        protected override PresentationResult OnStartPresentation()
-        {
-            foreach (var action in m_Actions)
-            {
-                action.Value.GetObject().InternalCreate();
-            }
-
-            return base.OnStartPresentation();
-        }
-
-        public Instance<ActionBase> GetAction(IFixedReference<ActionBase> reference)
-        {
-            var temp = ((FixedReference<ActionBase>)reference);
-            if (!m_Actions.ContainsKey(temp))
-            {
-                CoreSystem.Logger.LogError(Channel.Action, "??");
-                return Instance<ActionBase>.Empty;
-            }
-
-            return m_Actions[temp];
-        }
-        public Instance<TAction> GetAction<TAction>(IFixedReference<ActionBase> reference)
-            where TAction : ActionBase
-        {
-            var temp = ((FixedReference<ActionBase>)reference);
-            if (!m_Actions.ContainsKey(temp))
-            {
-                CoreSystem.Logger.LogError(Channel.Action, "??");
-                return Instance<TAction>.Empty;
-            }
-
-            return m_Actions[temp].Cast<ActionBase, TAction>();
-        }
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
             if (!m_CurrentAction.IsEmpty())
             {
-                if (m_CurrentAction.Sequence.KeepWait)
+                if (m_CurrentAction.Payload.Sequence.KeepWait)
                 {
-                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Payload.Sequence.GetType());
                     return;
                 }
 
@@ -124,15 +64,15 @@ namespace Syadeu.Presentation.Actions
                 }
 
                 if (UnityEngine.Time.time - m_CurrentAction.StartTime
-                    < m_CurrentAction.Sequence.AfterDelay)
+                    < m_CurrentAction.Payload.Sequence.AfterDelay)
                 {
-                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Payload.Sequence.GetType());
                     return;
                 }
 
-                handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                m_CurrentAction.Terminate.Invoke();
+                m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
                 m_CurrentAction.Clear();
 
                 return;
@@ -144,33 +84,30 @@ namespace Syadeu.Presentation.Actions
             m_CurrentAction.Payload = temp;
             if (temp.played)
             {
-                m_CurrentAction.Sequence = temp.Sequence;
-                m_CurrentAction.Terminate = temp.Terminate;
-
-                if (!m_CurrentAction.Sequence.KeepWait)
+                if (!m_CurrentAction.Payload.Sequence.KeepWait)
                 {
-                    m_CurrentAction.Terminate.Invoke();
-                    m_CurrentAction.Clear();
-
                     $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                     handler.SetEvent(SystemEventResult.Success, temp.Sequence.GetType());
+
+                    m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
+                    m_CurrentAction.Clear();
+
                     return;
                 }
 
-                handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Payload.Sequence.GetType());
                 return;
             }
 
             switch (temp.actionType)
             {
                 case ActionType.Instance:
-                    //InstanceAction action = InstanceAction.GetAction(temp.action);
-                    InstanceAction action = (InstanceAction)GetAction(temp.action).GetObject();
+                    InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
 
                     if (action is IEventSequence sequence)
                     {
-                        m_CurrentAction.Terminate = action.InternalTerminate;
-                        m_CurrentAction.Sequence = sequence;
+                        m_CurrentAction.Payload.Sequence = sequence;
+                        m_CurrentAction.Payload.m_ActionInstanceID = action.Idx;
 
                         CoreSystem.Logger.Log(Channel.Action,
                                 $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
@@ -180,14 +117,14 @@ namespace Syadeu.Presentation.Actions
                         // Early out
                         if (!sequence.KeepWait)
                         {
-                            action.InternalTerminate();
-                            m_CurrentAction.Clear();
-
                             handler.SetEvent(SystemEventResult.Success, sequence.GetType());
+
+                            m_EntitySystem.DestroyObject(action);
+                            m_CurrentAction.Clear();
                             return;
                         }
 
-                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Payload.Sequence.GetType());
                         return;
                     }
 
@@ -195,18 +132,19 @@ namespace Syadeu.Presentation.Actions
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                     action.InternalExecute();
-                    action.InternalTerminate();
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
+
+                    m_EntitySystem.DestroyObject(action);
+                    m_CurrentAction.Clear();
                     return;
                 case ActionType.Trigger:
-                    //TriggerAction triggerAction = TriggerAction.GetAction(temp.action);
-                    TriggerAction triggerAction = (TriggerAction)GetAction(temp.action).GetObject();
+                    TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
-                        m_CurrentAction.Terminate = triggerAction.InternalTerminate;
-                        m_CurrentAction.Sequence = triggerActionSequence;
+                        m_CurrentAction.Payload.Sequence = triggerActionSequence;
+                        m_CurrentAction.Payload.m_ActionInstanceID = triggerAction.Idx;
 
                         CoreSystem.Logger.Log(Channel.Action,
                                 $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
@@ -216,15 +154,14 @@ namespace Syadeu.Presentation.Actions
                         // Early out
                         if (!triggerActionSequence.KeepWait)
                         {
-                            triggerAction.InternalTerminate();
-                            m_CurrentAction.Clear();
+                            handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                            handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Sequence.GetType());
+                            m_EntitySystem.DestroyObject(triggerAction);
+                            m_CurrentAction.Clear();
                             return;
                         }
 
-                        //$"wait {m_CurrentAction.IsEmpty()}".ToLog();
-                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Sequence.GetType());
+                        handler.SetEvent(SystemEventResult.Wait, m_CurrentAction.Payload.Sequence.GetType());
                         return;
                     }
 
@@ -232,29 +169,26 @@ namespace Syadeu.Presentation.Actions
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                     triggerAction.InternalExecute(temp.entity);
-                    triggerAction.InternalTerminate();
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
+
+                    m_EntitySystem.DestroyObject(triggerAction);
+                    m_CurrentAction.Clear();
                     return;
             }
 
-            handler.SetEvent(SystemEventResult.Failed, m_CurrentAction.Sequence.GetType());
+            handler.SetEvent(SystemEventResult.Failed, m_CurrentAction.Payload.Sequence.GetType());
         }
 
         private void HandleOverrideAction()
         {
             if (m_CurrentAction.IsEmpty()) return;
 
-            if (m_CurrentAction.Sequence != null)
-            {
-                var temp = m_CurrentAction.Payload;
-                temp.played = true;
-                temp.Sequence = m_CurrentAction.Sequence;
-                temp.Terminate = m_CurrentAction.Terminate;
+            var temp = m_CurrentAction.Payload;
+            temp.played = true;
 
-                m_ScheduledActions.Insert(0, temp);
-            }
-            
+            m_ScheduledActions.Insert(0, temp);
+
             m_CurrentAction.Clear();
         }
 
@@ -277,10 +211,11 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            InstanceAction action = (InstanceAction)GetAction(temp.As<ActionBase>()).GetObject();
+            InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp).GetObject();
 
             bool result = action.InternalExecute();
-            action.InternalTerminate();
+            m_EntitySystem.DestroyObject(action);
+            //action.InternalTerminate();
 
             return result;
         }
@@ -330,10 +265,10 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            TriggerAction triggerAction = (TriggerAction)GetAction(temp.As<ActionBase>()).GetObject();
+            TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp).GetObject();
 
             bool result = triggerAction.InternalExecute(entity);
-            triggerAction.InternalTerminate();
+            m_EntitySystem.DestroyObject(triggerAction);
 
             return result;
         }
@@ -358,8 +293,6 @@ namespace Syadeu.Presentation.Actions
         }
         private class ActionContainer
         {
-            public System.Action Terminate;
-            public IEventSequence Sequence;
             public Payload Payload;
 
             public bool TimerStarted;
@@ -367,12 +300,11 @@ namespace Syadeu.Presentation.Actions
 
             public bool IsEmpty()
             {
-                return Terminate == null && Sequence == null;
+                return Payload == null;
             }
             public void Clear()
             {
-                Terminate = null;
-                Sequence = null;
+                Payload = null;
 
                 TimerStarted = false;
                 StartTime = 0;
@@ -385,7 +317,7 @@ namespace Syadeu.Presentation.Actions
             public EntityData<IEntityData> entity;
 
             public bool played;
-            public System.Action Terminate;
+            public InstanceID m_ActionInstanceID;
             public IEventSequence Sequence;
         }
     }

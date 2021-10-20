@@ -237,13 +237,13 @@ namespace Syadeu.Presentation.Entities
                 m_Attributes[i].InternalReserve();
             }
         }
-        internal override void InternalReset()
+        internal override void InternalInitialize()
         {
-            base.InternalReset();
+            base.InternalInitialize();
 
             for (int i = 0; i < m_Attributes.Length; i++)
             {
-                m_Attributes[i].InternalReset();
+                m_Attributes[i].InternalInitialize();
             }
         }
         public override sealed string ToString() => Name;

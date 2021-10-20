@@ -104,13 +104,14 @@ namespace Syadeu.Presentation.Actor
 
             if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
             {
+                //m_OnEquipWeapon.Execute(Parent);
+                //component.SelectWeapon(0);
+
                 ActorWeaponEquipEvent ev = new ActorWeaponEquipEvent(
                     ActorWeaponEquipOptions.SelectWeapon, m_DefaultWeapon);
                 ScheduleEvent(ev);
                 //component.m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
                 //component.m_EquipedWeapons[0] = component.m_DefaultWeaponInstance;
-                //m_OnEquipWeapon.Execute(Parent);
-                //component.SelectWeapon(0);
             }
 
             WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>());
@@ -215,6 +216,9 @@ namespace Syadeu.Presentation.Actor
 
                     CoreSystem.Logger.Log(Channel.Entity,
                         $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
+
+
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).".ToLog();
                 }
             }
         }
@@ -223,28 +227,6 @@ namespace Syadeu.Presentation.Actor
         {
             m_WeaponPoser.Stop();
         }
-        //protected override void OnProxyCreated(RecycleableMonobehaviour monoObj)
-        //{
-        //    ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
-
-        //    if (component.SelectedWeapon.IsValid() && 
-        //        component.SelectedWeapon.GetObject().PrefabInstance.IsValid())
-        //    {
-        //        WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>(), component.SelectedWeapon);
-        //        component.m_WeaponPoser = StartCoroutine(weaponPoser);
-        //    }
-        //}
-        //protected override void OnProxyRemoved(RecycleableMonobehaviour monoObj)
-        //{
-        //    ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
-
-        //    if (!component.m_WeaponPoser.IsNull() &&
-        //        component.m_WeaponPoser.IsValid())
-        //    {
-        //        component.m_WeaponPoser.Stop();
-        //        component.m_WeaponPoser = CoroutineJob.Null;
-        //    }
-        //}
 
         private struct WeaponPoser : ICoroutineJob
         {
@@ -263,6 +245,15 @@ namespace Syadeu.Presentation.Actor
             private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Instance<ActorWeaponData> weapon, bool drawn)
             {
                 ActorWeaponData data = weapon.GetObject();
+                if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
+                {
+                    //CoreSystem.Logger.LogError(Channel.Entity,
+                    //    $"Weapon that in the entity({entity.RawName}, at {i}) is invalid. This is not allowed.");
+
+                    //weaponComponent.m_EquipedWeapons.RemoveAt(i);
+                    return;
+                }
+
                 ActorWeaponData.OverrideData overrideData = data.Overrides;
                 ITransform weaponTr = data.PrefabInstance.transform;
 
@@ -309,16 +300,6 @@ namespace Syadeu.Presentation.Actor
 
                 for (int i = weaponComponent.m_EquipedWeapons.Length - 1; i >= 0; i--)
                 {
-                    ActorWeaponData data = weaponComponent.m_EquipedWeapons[i].GetObject();
-                    if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"Weapon that in the entity({entity.RawName}, at {i}) is invalid. This is not allowed.");
-
-                        weaponComponent.m_EquipedWeapons.RemoveAt(i);
-                        continue;
-                    }
-
                     bool selected = weaponComponent.Selected == i && weaponComponent.Drawn;
                     SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], selected);
                 }

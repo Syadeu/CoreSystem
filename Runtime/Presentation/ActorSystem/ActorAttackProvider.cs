@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
         {
-            ActorControllerComponent component = target.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent component = ref target.GetComponent<ActorControllerComponent>();
             component.ScheduleEvent(new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), hpStatName, damage));
         }
         protected void AttackEventHandler(IActorAttackEvent ev)

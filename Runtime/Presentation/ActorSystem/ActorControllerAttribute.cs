@@ -61,13 +61,7 @@ namespace Syadeu.Presentation.Actor
 
             component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
-            component.m_InstanceProviders = new InstanceArray<ActorProviderBase>(attribute.m_Providers.Length, Allocator.Persistent
-#if DEBUG_MODE
-                , NativeArrayOptions.ClearMemory
-#else
-                , NativeArrayOptions.UninitializedMemory
-#endif
-                );
+            component.m_InstanceProviders = new FixedInstanceList64<ActorProviderBase>();
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
@@ -82,7 +76,7 @@ namespace Syadeu.Presentation.Actor
 #endif
                 Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
                 Initialize(entity, clone.GetObject());
-                component.m_InstanceProviders[i] = clone;
+                component.m_InstanceProviders.Add(clone);
             }
 
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
@@ -109,6 +103,7 @@ namespace Syadeu.Presentation.Actor
 
             //component.m_InstanceProviders.Dispose();
             //component.m_OnEventReceived.Dispose();
+
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
@@ -131,7 +126,7 @@ namespace Syadeu.Presentation.Actor
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
-            ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
                 ExecuteOnProxyCreated(component.m_InstanceProviders[i].GetObject(), monoObj);
@@ -140,7 +135,7 @@ namespace Syadeu.Presentation.Actor
         public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
-            ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
                 ExecuteOnProxyRemoved(component.m_InstanceProviders[i].GetObject(), monoObj);

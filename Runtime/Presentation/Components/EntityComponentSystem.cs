@@ -111,7 +111,7 @@ namespace Syadeu.Presentation.Components
             ConstructSharedStatics();
 
             m_CompleteAllDisposedComponents = ActionWrapper.GetWrapper();
-            m_CompleteAllDisposedComponents.SetProfiler("CompleteAllDisposedComponents");
+            m_CompleteAllDisposedComponents.SetProfiler($"{nameof(EntityComponentSystem)}.{nameof(CompleteAllDisposedComponents)}");
             m_CompleteAllDisposedComponents.SetAction(CompleteAllDisposedComponents);
 
             PresentationManager.Instance.PreUpdate += m_CompleteAllDisposedComponents.Invoke;

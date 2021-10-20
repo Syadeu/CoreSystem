@@ -19,20 +19,38 @@ namespace Syadeu.Presentation.Actions
         [JsonIgnore] private DataContainerSystem m_DataContainer;
         [JsonIgnore] private Hash m_KeyHash = Hash.Empty;
 
+        protected override ObjectBase Copy()
+        {
+            AddDataContainer action = (AddDataContainer)base.Copy();
+            action.m_Key = string.Copy(m_Key);
+
+            return action;
+        }
         protected override void OnCreated()
         {
-            m_DataContainer = PresentationSystem<DataContainerSystem>.System;
+            m_DataContainer = PresentationSystem<DefaultPresentationGroup, DataContainerSystem>.System;
             if (!string.IsNullOrEmpty(m_Key))
             {
                 m_KeyHash = DataContainerSystem.ToDataHash(m_Key);
             }
+            else
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"{nameof(AddDataContainer)}({Name}) error. Key({m_Key}) cannot be a null or empty.");
+            }
+
+            $"asdasdasd iu Key :: {m_Key} :: {m_KeyHash}".ToLog();
+        }
+        protected override void OnDestroy()
+        {
+            m_DataContainer = null;
         }
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
             if (m_KeyHash.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{nameof(AddDataContainer)}({Name}) error. Key cannot be a null or empty.");
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"{nameof(AddDataContainer)}({Name}) error. Key({m_Key}) cannot be a null or empty.");
                 return;
             }
 

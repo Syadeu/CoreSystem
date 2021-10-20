@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] private PresentationSystemID<WorldCanvasSystem> m_WorldCanvasSystem;
 
         [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
-        [JsonIgnore] protected ActorControllerComponent Component => m_Parent.GetComponent<ActorControllerComponent>();
+        [JsonIgnore] protected ref ActorControllerComponent Component => ref m_Parent.GetComponent<ActorControllerComponent>();
 
         [JsonIgnore] protected PresentationSystemID<EventSystem> EventSystem => m_EventSystem;
         [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;

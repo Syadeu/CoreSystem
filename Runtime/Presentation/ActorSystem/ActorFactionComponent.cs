@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.Actor
         internal FixedList512Bytes<Hash> m_Allies;
         internal FixedList512Bytes<Hash> m_Enemies;
 
+        public Hash FactionID => m_Hash;
         public FactionType FactionType
         {
             get => m_FactionType;

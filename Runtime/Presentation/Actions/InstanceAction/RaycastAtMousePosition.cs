@@ -40,7 +40,11 @@ namespace Syadeu.Presentation.Actions
             CoreSystem.Logger.NotNull(m_RenderSystem);
             CoreSystem.Logger.NotNull(m_RaycastSystem);
         }
-
+        protected override void OnDestroy()
+        {
+            m_RenderSystem = null;
+            m_RaycastSystem = null;
+        }
         protected override void OnExecute()
         {
             Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));

@@ -22,6 +22,8 @@ namespace Syadeu.Presentation.Actor
         {
             m_EquipOptions = options;
             m_Weapon = weapon.CreateInstance();
+
+            $"weapon {m_Weapon.IsValid()} : {m_Weapon.GetObject().Name}".ToLog();
         }
 
         public void OnExecute(Entity<ActorEntity> from)
