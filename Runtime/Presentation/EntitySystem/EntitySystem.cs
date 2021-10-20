@@ -758,16 +758,11 @@ namespace Syadeu.Presentation
         private EntityData<IEntityData> InternalCreateObject(EntityDataBase obj)
         {
             EntityDataBase objClone = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityDataBase>(obj);
-            //EntityDataBase objClone = (EntityDataBase)obj.Clone();
-            //objClone.m_IsCreated = true;
-            //objClone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
+            
+            m_ObjectEntities.Add(objClone.Idx, objClone);
 
-            IEntityData clone = (IEntityData)objClone;
-
-            m_ObjectEntities.Add(clone.Idx, objClone);
-
-            ProcessEntityOnCreated(this, clone);
-            return EntityData<IEntityData>.GetEntity(clone.Idx);
+            ProcessEntityOnCreated(this, objClone);
+            return EntityData<IEntityData>.GetEntity(objClone.Idx);
         }
 
         #endregion

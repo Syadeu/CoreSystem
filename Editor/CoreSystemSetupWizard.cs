@@ -205,7 +205,7 @@ namespace SyadeuEditor
             SerializedProperty m_TagProperty, m_LayerProperty;
 
             static string[] c_RequireTags = new string[] { };
-            static string[] c_RequireLayers = new string[] { "Terrain" };
+            static string[] c_RequireLayers = new string[] { "Terrain", "FloorProjection" };
 
             List<string> m_MissingTags, m_MissingLayers;
 

@@ -9,6 +9,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Render;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -42,11 +43,14 @@ namespace Syadeu.Presentation.TurnTable
             m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
+        private ProjectionCamera m_GridOutlineCamera;
+
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
         private InputSystem m_InputSystem;
         private GridSystem m_GridSystem;
+        private RenderSystem m_RenderSystem;
 
         protected override PresentationResult OnInitialize()
         {
@@ -56,7 +60,7 @@ namespace Syadeu.Presentation.TurnTable
 
             {
                 m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
-                m_GridOutlineRenderer.numCornerVertices = 1;
+                m_GridOutlineRenderer.numCornerVertices = 0;
                 m_GridOutlineRenderer.numCapVertices = 1;
                 m_GridOutlineRenderer.alignment = LineAlignment.View;
                 m_GridOutlineRenderer.textureMode = LineTextureMode.Tile;
@@ -64,11 +68,13 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                 m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-                m_GridOutlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
+                //m_GridOutlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
                 m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
 
                 m_GridOutlineRenderer.loop = true;
                 m_GridOutlineRenderer.positionCount = 0;
+
+                m_GridOutlineRenderer.gameObject.layer = RenderSystem.ProjectionLayer;
             }
 
             {
@@ -94,6 +100,7 @@ namespace Syadeu.Presentation.TurnTable
 
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -107,6 +114,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_InputSystem = null;
             m_GridSystem = null;
+            m_RenderSystem = null;
         }
 
         #region Binds
@@ -118,6 +126,14 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(GridSystem other)
         {
             m_GridSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+
+            m_GridOutlineCamera = other.GetProjectionCamera(
+                CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
+                CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
         }
 
         #endregion
@@ -172,12 +188,14 @@ namespace Syadeu.Presentation.TurnTable
                 //m_OutlineMesh.SetIndices()
                 //m_DrawMesh = true;
 
-                GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
+                GridSizeComponent gridSize = entity.GetComponentReadOnly<GridSizeComponent>();
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
                     PlaceUICell(in gridSize, m_GridTempMoveables[i]);
                 }
+
+                m_GridOutlineCamera.SetPosition(gridSize.IndexToPosition(gridSize.positions[0].index));
 
                 m_IsDrawingGrids = true;
             }

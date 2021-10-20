@@ -310,7 +310,7 @@ namespace Syadeu.Presentation.Proxy
 
                     ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
 
-                    if (tr.isDestroyed)
+                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
                     {
                         CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                         continue;
