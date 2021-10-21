@@ -60,3 +60,5 @@ crashlytics-build.properties
 
 workspace.code-workspace
 workspace.code-workspace.meta
+.VSCode/bin/Debug/
+.VSCode/obj/Debug/

@@ -28,6 +28,15 @@
           "net5.0": {
             "targetAlias": "net5.0",
             "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj"
+              },
               "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
                 "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj"
               },
@@ -36,6 +45,9 @@
               },
               "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
                 "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj"
               }
             }
           }
@@ -241,6 +253,42 @@
         "net471": {}
       }
     },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj",
+        "projectName": "Syadeu.Genre",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
     "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
       "restore": {
         "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj",
@@ -332,6 +380,51 @@
               },
               "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
                 "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj",
+        "projectName": "Syadeu.Presentation.TurnTable",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj"
               }
             }
           }

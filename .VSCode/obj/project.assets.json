@@ -65,6 +65,20 @@
           "bin/placeholder/Syadeu.Collections.dll": {}
         }
       },
+      "Syadeu.Genre/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "Syadeu": "1.0.0",
+          "Syadeu.Collections": "1.0.0",
+          "Syadeu.Presentation": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Syadeu.Genre.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Genre.dll": {}
+        }
+      },
       "Syadeu.Presentation/1.0.0": {
         "type": "project",
         "dependencies": {
@@ -101,6 +115,23 @@
         },
         "runtime": {
           "bin/placeholder/Syadeu.Presentation.Dotween.dll": {}
+        }
+      },
+      "Syadeu.Presentation.TurnTable/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "DOTween.Modules": "1.0.0",
+          "DOTweenPro.Scripts": "1.0.0",
+          "Syadeu": "1.0.0",
+          "Syadeu.Collections": "1.0.0",
+          "Syadeu.Presentation": "1.0.0",
+          "Syadeu.Presentation.Dotween": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Syadeu.Presentation.TurnTable.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Presentation.TurnTable.dll": {}
         }
       },
       "XNode/1.0.0": {
@@ -145,6 +176,11 @@
       "path": "../../../../Syadeu.Collections.csproj",
       "msbuildProject": "../../../../Syadeu.Collections.csproj"
     },
+    "Syadeu.Genre/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Genre.csproj",
+      "msbuildProject": "../../../../Syadeu.Genre.csproj"
+    },
     "Syadeu.Presentation/1.0.0": {
       "type": "project",
       "path": "../../../../Syadeu.Presentation.csproj",
@@ -160,6 +196,11 @@
       "path": "../../../../Syadeu.Presentation.Dotween.csproj",
       "msbuildProject": "../../../../Syadeu.Presentation.Dotween.csproj"
     },
+    "Syadeu.Presentation.TurnTable/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Presentation.TurnTable.csproj",
+      "msbuildProject": "../../../../Syadeu.Presentation.TurnTable.csproj"
+    },
     "XNode/1.0.0": {
       "type": "project",
       "path": "../../../../XNode.csproj",
@@ -168,9 +209,13 @@
   },
   "projectFileDependencyGroups": {
     "net5.0": [
+      "Syadeu >= 1.0.0",
+      "Syadeu.Collections >= 1.0.0",
+      "Syadeu.Genre >= 1.0.0",
       "Syadeu.Presentation >= 1.0.0",
       "Syadeu.Presentation.CodeGen >= 1.0.0",
-      "Syadeu.Presentation.Dotween >= 1.0.0"
+      "Syadeu.Presentation.Dotween >= 1.0.0",
+      "Syadeu.Presentation.TurnTable >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -200,6 +245,15 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "projectReferences": {
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+            },
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+            },
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Genre.csproj"
+            },
             "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
               "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj"
             },
@@ -208,6 +262,9 @@
             },
             "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
               "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj"
+            },
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.TurnTable.csproj"
             }
           }
         }
