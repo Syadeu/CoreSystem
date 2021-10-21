@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
-    [TaskCategory("Entity/Actor")]
+    [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorStateConditional : ConditionalBase
     {
         [SerializeField] private ActorStateAttribute.StateInfo m_DesireState = ActorStateAttribute.StateInfo.Idle;

@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Actor
 
         internal int m_SelectedWeaponIndex;
         internal bool m_WeaponHolster;
-        internal bool m_WeaponDrawn;
+        internal bool m_WeaponAiming;
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
         public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
@@ -41,10 +41,10 @@ namespace Syadeu.Presentation.Actor
             get => m_WeaponHolster;
             set => m_WeaponHolster = value;
         }
-        public bool Drawn
+        public bool Aiming
         {
-            get => m_WeaponDrawn;
-            set => m_WeaponDrawn = value;
+            get => Holster ? false : m_WeaponAiming;
+            set => m_WeaponAiming = value;
         }
         public float WeaponDamage
         {

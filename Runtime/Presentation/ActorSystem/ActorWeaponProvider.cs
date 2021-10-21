@@ -242,26 +242,22 @@ namespace Syadeu.Presentation.Actor
             public void Dispose()
             {
             }
-            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Instance<ActorWeaponData> weapon, bool drawn)
+            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Instance<ActorWeaponData> weapon, bool weaponDrawn)
             {
                 ActorWeaponData data = weapon.GetObject();
                 if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
                 {
-                    //CoreSystem.Logger.LogError(Channel.Entity,
-                    //    $"Weapon that in the entity({entity.RawName}, at {i}) is invalid. This is not allowed.");
-
-                    //weaponComponent.m_EquipedWeapons.RemoveAt(i);
                     return;
                 }
 
                 ActorWeaponData.OverrideData overrideData = data.Overrides;
                 ITransform weaponTr = data.PrefabInstance.transform;
 
-                ActorWeaponData.OverrideOptions options = drawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;
-                bool useBone = drawn ? overrideData.DrawUseBone : overrideData.HolsterUseBone;
-                HumanBodyBones attachedBone = drawn ? overrideData.DrawAttachedBone : overrideData.HolsterAttachedBone;
-                float3 posOffset = drawn ? overrideData.DrawWeaponPosOffset : overrideData.HolsterWeaponPosOffset;
-                float3 rotOffset = drawn ? overrideData.DrawWeaponRotOffset : overrideData.HolsterWeaponRotOffset;
+                ActorWeaponData.OverrideOptions options = weaponDrawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;
+                bool useBone = weaponDrawn ? overrideData.DrawUseBone : overrideData.HolsterUseBone;
+                HumanBodyBones attachedBone = weaponDrawn ? overrideData.DrawAttachedBone : overrideData.HolsterAttachedBone;
+                float3 posOffset = weaponDrawn ? overrideData.DrawWeaponPosOffset : overrideData.HolsterWeaponPosOffset;
+                float3 rotOffset = weaponDrawn ? overrideData.DrawWeaponRotOffset : overrideData.HolsterWeaponRotOffset;
 
                 float3 targetPosition;
                 quaternion targetRotation;
@@ -300,8 +296,8 @@ namespace Syadeu.Presentation.Actor
 
                 for (int i = weaponComponent.m_EquipedWeapons.Length - 1; i >= 0; i--)
                 {
-                    bool selected = weaponComponent.Selected == i && weaponComponent.Drawn;
-                    SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], selected);
+                    bool weaponDrawn = weaponComponent.Selected == i && !weaponComponent.Holster;
+                    SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], weaponDrawn);
                 }
             }
             public IEnumerator Execute()

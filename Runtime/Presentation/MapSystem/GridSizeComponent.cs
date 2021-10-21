@@ -119,6 +119,7 @@ namespace Syadeu.Presentation.Map
                 in to, 
                 out pathCount,
                 in m_ObstacleLayers,
+                default,
                 in maxIteration);
         }
 
@@ -134,6 +135,18 @@ namespace Syadeu.Presentation.Map
                 in to, 
                 ref path,
                 in m_ObstacleLayers, 
+                default,
+                in maxIteration,
+                in avoidEntity);
+        }
+        public bool GetPath64(in int to, ref GridPath64 path, FixedList512Bytes<int> additionalIgnoreIndices, in int maxIteration = 32, in bool avoidEntity = true)
+        {
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
+                positions[0].index,
+                in to,
+                ref path,
+                in m_ObstacleLayers,
+                additionalIgnoreIndices,
                 in maxIteration,
                 in avoidEntity);
         }
@@ -144,6 +157,18 @@ namespace Syadeu.Presentation.Map
                 in to,
                 ref path,
                 m_ObstacleLayers.Combine(in ignoreLayers),
+                default,
+                in maxIteration,
+                in avoidEntity);
+        }
+        public bool GetPath64(in int to, ref GridPath64 path, in GridLayerChain ignoreLayers, FixedList512Bytes<int> additionalIgnoreIndices, in int maxIteration = 32, in bool avoidEntity = true)
+        {
+            return PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetPath64(
+                positions[0].index,
+                in to,
+                ref path,
+                m_ObstacleLayers.Combine(in ignoreLayers),
+                additionalIgnoreIndices,
                 in maxIteration,
                 in avoidEntity);
         }
