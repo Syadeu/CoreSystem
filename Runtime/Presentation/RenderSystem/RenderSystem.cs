@@ -26,8 +26,10 @@ using UnityEngine.Rendering.HighDefinition;
 namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
-    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>,
-        INotifySystemModule<RenderProjectionModule>
+    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
+#if CORESYSTEM_HDRP
+        , INotifySystemModule<RenderProjectionModule>
+#endif
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
@@ -94,7 +96,7 @@ namespace Syadeu.Presentation.Render
         public CameraData LastCameraData => m_LastCameraData;
         public LightData LastDirectionalLightData => m_LastDirectionalLightData;
         
-        #region Presentation Methods
+#region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -220,7 +222,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-        #endregion
+#endregion
 
         public CameraFrustum.ReadOnly GetFrustum()
         {
@@ -232,6 +234,8 @@ namespace Syadeu.Presentation.Render
 #if CORESYSTEM_URP
         public void AddUICamera(Camera camera)
         {
+            camera.GetUniversalAdditionalCameraData().renderType = CameraRenderType.Overlay;
+
             m_UICameras.Add(camera);
             if (m_CameraData != null) m_CameraData.cameraStack.Add(camera);
         }
@@ -249,10 +253,13 @@ namespace Syadeu.Presentation.Render
 
         //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
         //}
+
+#if CORESYSTEM_HDRP
         public ProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
         {
             return GetModule<RenderProjectionModule>().GetProjectionCamera(mat, renderTexture);
         }
+#endif
 
         public float3 WorldToViewportPoint(float3 worldPoint)
         {
@@ -330,7 +337,7 @@ namespace Syadeu.Presentation.Render
         //    return new float3(temp.xy, worldPoint.z);
         //}
 
-        #region Ray
+#region Ray
 
         //float4x4 GetWorldToCameraMatrix()
         //{
@@ -438,7 +445,7 @@ namespace Syadeu.Presentation.Render
         //    return ViewportPointToRay(new float3(position.x / Screen.width, position.y / Screen.height, position.z));
         //}
 
-        #endregion
+#endregion
 
         //public Ray ScreenPointToRay(float3 screenPoint)
         //{
@@ -455,7 +462,7 @@ namespace Syadeu.Presentation.Render
             //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )
         }
 
-        #region Legacy
+#region Legacy
 
         /// <summary>
         /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
@@ -533,21 +540,19 @@ namespace Syadeu.Presentation.Render
             return false;
         }
 
-        #endregion
+#endregion
     }
 
+#if CORESYSTEM_HDRP
     internal sealed class RenderProjectionModule : PresentationSystemModule<RenderSystem>
     {
         private int m_Creation = 0;
         private readonly Stack<Camera> m_UnusedProjectionCameras = new Stack<Camera>();
-        //private RenderTextureDescriptor m_TextureDescription;
 
         private SceneSystem m_SceneSystem;
 
         protected override void OnInitialize()
         {
-            //m_TextureDescription = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.DefaultHDR);
-
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
         }
         protected override void OnDispose()
@@ -579,6 +584,7 @@ namespace Syadeu.Presentation.Render
 
                 cam.cullingMask = RenderSystem.ProjectionMask;
                 gameObj.AddComponent<HDAdditionalCameraData>().volumeLayerMask = RenderSystem.ProjectionMask;
+
                 cam.orthographicSize = 20;
 
                 cam.transform.eulerAngles = new Vector3(90, 0, 0);
@@ -593,12 +599,10 @@ namespace Syadeu.Presentation.Render
                 projector = projectorObj.AddComponent<DecalProjector>();
 
                 projector.size = new Vector3(40, 40, 30);
-                //RenderTexture tex = new RenderTexture(m_TextureDescription);
             }
 
-            //mat.mainTexture = cam.targetTexture;
-            projector.material = mat;
             cam.targetTexture = renderTexture;
+            projector.material = mat;
 
             return new ProjectionCamera(this, cam, projector);
         }
@@ -608,7 +612,9 @@ namespace Syadeu.Presentation.Render
             m_UnusedProjectionCameras.Push(cam);
         }
     }
+#endif
 
+#if CORESYSTEM_HDRP
     public sealed class ProjectionCamera : IDisposable
     {
         private RenderProjectionModule m_Module;
@@ -624,8 +630,8 @@ namespace Syadeu.Presentation.Render
         }
 
         private ProjectionCamera() { }
-        internal ProjectionCamera(RenderProjectionModule module, Camera cam
-            , DecalProjector projector)
+        internal ProjectionCamera(RenderProjectionModule module, Camera cam, DecalProjector projector
+            )
         {
             m_Module = module;
             m_Camera = cam;
@@ -647,4 +653,5 @@ namespace Syadeu.Presentation.Render
             m_Projector = null;
         }
     }
+#endif
 }
