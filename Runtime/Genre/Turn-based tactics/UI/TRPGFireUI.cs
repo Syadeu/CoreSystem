@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using Syadeu.Presentation.Events;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,8 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_ClosedSizeDelta;
         private bool m_Opened = false;
 
+        private EventSystem m_EventSystem;
+
         public bool Opened => m_Opened;
 
         private void Awake()
@@ -33,18 +36,25 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private IEnumerator Start()
         {
+            yield return PresentationSystem<DefaultPresentationGroup, EventSystem>.GetAwaiter();
             yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
 
+            m_EventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
             PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.System.AuthoringFire(this);
-            //gameObject.SetActive(false);
+            
             Open(false);
+        }
+        private void OnDestroy()
+        {
+            m_Transform = null;
+            m_EventSystem = null;
         }
 
         private void Click()
         {
             if (!m_Opened) return;
-            
-            //m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_ShortcutType));
+
+            m_EventSystem.PostEvent(TRPGFireUIPressedEvent.GetEvent());
         }
 
         public void Open(bool open)

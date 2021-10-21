@@ -30,9 +30,6 @@ namespace Syadeu.Presentation.TurnTable
 
         public override bool IsStartable => m_RenderSystem.CameraComponent != null;
 
-        private ShortcutType m_CurrentShortcut = ShortcutType.None;
-        private GridPath64 m_LastPath;
-
         private readonly HashSet<EntityData<IEntityData>> m_InBattlePlayerFaction = new HashSet<EntityData<IEntityData>>();
 
         private RenderSystem m_RenderSystem;
@@ -67,9 +64,6 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
-            m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
-            m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
 
@@ -134,9 +128,6 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override PresentationResult OnStartPresentation()
         {
-            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
 
@@ -151,111 +142,8 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        private void DisableCurrentShortcut()
-        {
-            switch (m_CurrentShortcut)
-            {
-                default:
-                case ShortcutType.None:
-                case ShortcutType.Move:
-                    m_TRPGGridSystem.ClearUICell();
-                    m_TRPGGridSystem.ClearUIPath();
-
-                    break;
-                case ShortcutType.Attack:
-                    m_TRPGCameraMovement.SetNormal();
-                    m_TRPGCanvasUISystem.SetFire(true);
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
-                    break;
-            }
-
-            m_CurrentShortcut = ShortcutType.None;
-        }
-
         #region Event Handlers
 
-        private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
-        {
-            if (ev.Shortcut == m_CurrentShortcut)
-            {
-                //"same return".ToLog();
-                DisableCurrentShortcut();
-                return;
-            }
-            else if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(ActorControllerComponent)}.");
-                return;
-            }
-
-            ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
-            if (ctr.IsBusy())
-            {
-                "busy out".ToLog();
-                return;
-            }
-
-            DisableCurrentShortcut();
-
-            switch (ev.Shortcut)
-            {
-                default:
-                case ShortcutType.None:
-                case ShortcutType.Move:
-                    m_TRPGCameraMovement.SetNormal();
-
-                    m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
-                    m_CurrentShortcut = ShortcutType.Move;
-
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
-
-                    break;
-                case ShortcutType.Attack:
-                    if (!ctr.HasProvider<TRPGActorAttackProvider>())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(TRPGActorAttackProvider)}.");
-
-                        return;
-                    }
-
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
-                    m_TRPGCanvasUISystem.SetFire(false);
-
-                    Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
-                    var targets = attProvider.GetObject().GetTargetsInRange();
-                    var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
-
-                    $"{targets.Length} found".ToLog();
-                    for (int i = 0; i < targets.Length; i++)
-                    {
-                        //$"{targets[i].Name} found".ToLog();
-                        m_TRPGCameraMovement.SetAim(tr, targets[i].GetEntity<IEntity>().transform);
-                    }
-
-                    m_CurrentShortcut = ShortcutType.Attack;
-
-                    break;
-            }
-        }
-        private void TRPGGridCellUIPressedEventHandler(TRPGGridCellUIPressedEvent ev)
-        {
-            DisableCurrentShortcut();
-            m_CurrentShortcut = ShortcutType.None;
-
-            MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Position);
-            //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-            //move.movet
-        }
-        private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
-        {
-            DisableCurrentShortcut();
-
-            m_TRPGCanvasUISystem.SetPlayerUI(false);
-
-            m_EventSystem.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
-        }
         private void TRPGEndTurnEventHandler(TRPGEndTurnEvent ev)
         {
             m_TurnTableSystem.NextTurn();
@@ -307,39 +195,6 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
-
-        public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
-        {
-            if (!entity.HasComponent<TRPGActorMoveComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
-                    $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
-                return;
-            }
-            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
-            if (navAgent == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                return;
-            }
-
-            TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-            if (!move.GetPath(in position, ref m_LastPath))
-            {
-                "path error not found".ToLogError();
-                return;
-            }
-
-            m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(),
-                m_LastPath, new ActorMoveEvent(entity, 1));
-
-            ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
-            int requireAp = m_LastPath.Length;
-
-            turnPlayer.ActionPoint -= requireAp - 1;
-        }
 
         private readonly Queue<Action> m_ScheduledActions = new Queue<Action>();
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
