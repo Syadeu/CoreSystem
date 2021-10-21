@@ -125,7 +125,6 @@ namespace Syadeu.Presentation.Actor
 
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
-            //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {

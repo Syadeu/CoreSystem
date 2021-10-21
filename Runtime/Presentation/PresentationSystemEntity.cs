@@ -101,6 +101,12 @@ namespace Syadeu.Presentation
         protected void StopCoroutine(CoreRoutine routine) => CoreSystem.RemoveUnityUpdate(routine);
         protected void StopBackgroundCoroutine(CoreRoutine routine) => CoreSystem.RemoveBackgroundUpdate(routine);
 
+        /// <summary>
+        /// 씬에 종속되는 오브젝트를 생성하려면 <see cref="SceneSystem.CreateGameObject(string)"/> 을 먼저 고려하세요.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="isStatic"></param>
+        /// <returns></returns>
         protected UnityEngine.GameObject CreateGameObject(string name, bool isStatic)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);

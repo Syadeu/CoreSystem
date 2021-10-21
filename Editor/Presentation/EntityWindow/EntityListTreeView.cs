@@ -259,6 +259,7 @@ namespace SyadeuEditor.Presentation
         {
             int id = m_Rows[entityObj.Hash].id;
             SetSelection(new int[] { id });
+            FrameItem(id);
 
             OnSelect?.Invoke(entityObj);
         }

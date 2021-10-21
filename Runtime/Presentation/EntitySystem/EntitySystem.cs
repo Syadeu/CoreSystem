@@ -102,10 +102,11 @@ namespace Syadeu.Presentation
         {
             if (CoreSystem.BlockCreateInstance) return;
 
-            for (int i = m_DestroyedObjectsInThisFrame.Count - 1; i >= 0; i--)
+            int count = m_DestroyedObjectsInThisFrame.Count;
+            for (int i = count - 1; i >= 0; i--)
             {
                 var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
-                m_DestroyedObjectsInThisFrame.RemoveAt(i);
+                //m_DestroyedObjectsInThisFrame.RemoveAt(i);
 
                 if (targetObject is IEntityData entityData)
                 {
@@ -120,6 +121,7 @@ namespace Syadeu.Presentation
                     m_ObjectEntities.Remove(targetObject.Idx);
                 }
             }
+            m_DestroyedObjectsInThisFrame.RemoveRange(0, count);
         }
         private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {
@@ -758,16 +760,11 @@ namespace Syadeu.Presentation
         private EntityData<IEntityData> InternalCreateObject(EntityDataBase obj)
         {
             EntityDataBase objClone = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityDataBase>(obj);
-            //EntityDataBase objClone = (EntityDataBase)obj.Clone();
-            //objClone.m_IsCreated = true;
-            //objClone.m_HashCode = m_Random.NextInt(0, int.MaxValue);
+            
+            m_ObjectEntities.Add(objClone.Idx, objClone);
 
-            IEntityData clone = (IEntityData)objClone;
-
-            m_ObjectEntities.Add(clone.Idx, objClone);
-
-            ProcessEntityOnCreated(this, clone);
-            return EntityData<IEntityData>.GetEntity(clone.Idx);
+            ProcessEntityOnCreated(this, objClone);
+            return EntityData<IEntityData>.GetEntity(objClone.Idx);
         }
 
         #endregion
@@ -1088,10 +1085,12 @@ namespace Syadeu.Presentation
 
         private static void ProcessEntityOnCreated(EntitySystem system, IEntityData entity)
         {
+            const string c_CreateStartMsg = "Create entity({0})";
+
             m_ProcessEntityOnCreateMarker.Begin();
 
             CoreSystem.Logger.Log(Channel.Entity,
-                $"Create entity({entity.Name})");
+                string.Format(c_CreateStartMsg, entity.Name));
 
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
 
@@ -1171,7 +1170,6 @@ namespace Syadeu.Presentation
 
             m_ProcessEntityOnCreateMarker.End();
         }
-
         private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
         {
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
@@ -1212,10 +1210,12 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnDestroy(EntitySystem system, IEntityData entity)
         {
+            const string c_DestroyStartMsg = "Destroying entity({0})";
+
             m_ProcessEntityOnDestoryMarker.Begin();
 
             CoreSystem.Logger.Log(Channel.Entity,
-                $"Destroying entity({entity.Name})");
+                string.Format(c_DestroyStartMsg, entity.Name));
 
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
 
@@ -1306,13 +1306,16 @@ namespace Syadeu.Presentation
 
         private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
+            const string c_StartMsg = "Processing OnProxyCreated at {0}";
+            const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyCreated";
+
             CoreSystem.Logger.Log(Channel.Entity,
-                $"Processing OnProxyCreated at {entity.Name}");
+                string.Format(c_StartMsg, entity.Name));
 
             if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
             {
                 CoreSystem.Logger.LogWarning(Channel.Entity,
-                    $"Fast deletion at {entity.Name}. From {nameof(ProcessEntityOnProxyCreated)}");
+                    string.Format(c_FastDeletionMsg, entity.Name));
                 return;
             }
 
@@ -1373,13 +1376,16 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
         {
+            const string c_StartMsg = "Processing OnProxyRemoved at {0}";
+            const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyRemoved";
+
             CoreSystem.Logger.Log(Channel.Entity,
-                $"Processing OnProxyRemoved at {entity.Name}");
+                string.Format(c_StartMsg, entity.Name));
 
             if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
             {
                 CoreSystem.Logger.LogWarning(Channel.Entity,
-                    $"Fast deletion at {entity.Name}. From {nameof(ProcessEntityOnProxyRemoved)}");
+                    string.Format(c_FastDeletionMsg, entity.Name));
                 return;
             }
 

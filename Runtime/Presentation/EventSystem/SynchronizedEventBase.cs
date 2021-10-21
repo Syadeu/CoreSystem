@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using System;
 using System.Collections;
 
 namespace Syadeu.Presentation
@@ -8,6 +9,9 @@ namespace Syadeu.Presentation
     /// </summary>
     public abstract class SynchronizedEventBase : IValidation
     {
+        public abstract string Name { get; }
+        public abstract Type EventType { get; }
+
         public virtual UpdateLoop Loop => UpdateLoop.Default;
 
         internal abstract void InternalPost();

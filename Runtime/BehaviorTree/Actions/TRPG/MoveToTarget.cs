@@ -10,7 +10,7 @@ using Syadeu.Presentation.TurnTable;
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
-    [TaskCategory("Entity/Actor")]
+    [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
         "찾은 타겟의 근처로 최대한 이동합니다." +
         "FindTargetsAction 이 이전에 수행되어야됩니다.")]

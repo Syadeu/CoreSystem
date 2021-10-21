@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
-    [TaskCategory("Entity/Actor")]
+    [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorTargetInAttackRange : ConditionalBase
     {
         [SerializeField] private int m_DesireRange = 1;
