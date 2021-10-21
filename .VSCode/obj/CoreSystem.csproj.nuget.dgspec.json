@@ -1,0 +1,372 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj": {}
+  },
+  "projects": {
+    "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj",
+        "projectName": "CoreSystem",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "outputPath": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.301\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj",
+        "projectName": "DOTween.Modules",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj",
+        "projectName": "DOTweenPro.Scripts",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\FMODUnity.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\FMODUnity.csproj",
+        "projectName": "FMODUnity",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\FMODUnity.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj",
+        "projectName": "MoonSharp",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj",
+        "projectName": "Syadeu.Collections",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj",
+        "projectName": "Syadeu",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\FMODUnity.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\FMODUnity.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\XNode.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\XNode.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj",
+        "projectName": "Syadeu.Presentation.CodeGen",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj",
+        "projectName": "Syadeu.Presentation",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\MoonSharp.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj",
+        "projectName": "Syadeu.Presentation.Dotween",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {
+              "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTween.Modules.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\DOTweenPro.Scripts.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Collections.csproj"
+              },
+              "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj": {
+                "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.csproj"
+              }
+            }
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    },
+    "D:\\Unity\\SystemTest\\SystemTest\\XNode.csproj": {
+      "restore": {
+        "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\XNode.csproj",
+        "projectName": "XNode",
+        "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\XNode.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "projectStyle": "PackagesConfig",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net471": {
+            "projectReferences": {}
+          }
+        },
+        "packagesConfigPath": "D:\\Unity\\SystemTest\\SystemTest\\packages.config"
+      },
+      "frameworks": {
+        "net471": {}
+      }
+    }
+  }
+}

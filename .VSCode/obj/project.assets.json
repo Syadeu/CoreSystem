@@ -1,0 +1,243 @@
+{
+  "version": 3,
+  "targets": {
+    "net5.0": {
+      "DOTween.Modules/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/DOTween.Modules.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/DOTween.Modules.dll": {}
+        }
+      },
+      "DOTweenPro.Scripts/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "DOTween.Modules": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/DOTweenPro.Scripts.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/DOTweenPro.Scripts.dll": {}
+        }
+      },
+      "FMODUnity/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/FMODUnity.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/FMODUnity.dll": {}
+        }
+      },
+      "MoonSharp/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/MoonSharp.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/MoonSharp.dll": {}
+        }
+      },
+      "Syadeu/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "FMODUnity": "1.0.0",
+          "MoonSharp": "1.0.0",
+          "Syadeu.Collections": "1.0.0",
+          "XNode": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Syadeu.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.dll": {}
+        }
+      },
+      "Syadeu.Collections/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/Syadeu.Collections.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Collections.dll": {}
+        }
+      },
+      "Syadeu.Presentation/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "MoonSharp": "1.0.0",
+          "Syadeu": "1.0.0",
+          "Syadeu.Collections": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Syadeu.Presentation.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Presentation.dll": {}
+        }
+      },
+      "Syadeu.Presentation.CodeGen/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/Syadeu.Presentation.CodeGen.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Presentation.CodeGen.dll": {}
+        }
+      },
+      "Syadeu.Presentation.Dotween/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "DOTween.Modules": "1.0.0",
+          "DOTweenPro.Scripts": "1.0.0",
+          "Syadeu": "1.0.0",
+          "Syadeu.Collections": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Syadeu.Presentation.Dotween.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Syadeu.Presentation.Dotween.dll": {}
+        }
+      },
+      "XNode/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/XNode.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/XNode.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "DOTween.Modules/1.0.0": {
+      "type": "project",
+      "path": "../../../../DOTween.Modules.csproj",
+      "msbuildProject": "../../../../DOTween.Modules.csproj"
+    },
+    "DOTweenPro.Scripts/1.0.0": {
+      "type": "project",
+      "path": "../../../../DOTweenPro.Scripts.csproj",
+      "msbuildProject": "../../../../DOTweenPro.Scripts.csproj"
+    },
+    "FMODUnity/1.0.0": {
+      "type": "project",
+      "path": "../../../../FMODUnity.csproj",
+      "msbuildProject": "../../../../FMODUnity.csproj"
+    },
+    "MoonSharp/1.0.0": {
+      "type": "project",
+      "path": "../../../../MoonSharp.csproj",
+      "msbuildProject": "../../../../MoonSharp.csproj"
+    },
+    "Syadeu/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.csproj",
+      "msbuildProject": "../../../../Syadeu.csproj"
+    },
+    "Syadeu.Collections/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Collections.csproj",
+      "msbuildProject": "../../../../Syadeu.Collections.csproj"
+    },
+    "Syadeu.Presentation/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Presentation.csproj",
+      "msbuildProject": "../../../../Syadeu.Presentation.csproj"
+    },
+    "Syadeu.Presentation.CodeGen/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Presentation.CodeGen.csproj",
+      "msbuildProject": "../../../../Syadeu.Presentation.CodeGen.csproj"
+    },
+    "Syadeu.Presentation.Dotween/1.0.0": {
+      "type": "project",
+      "path": "../../../../Syadeu.Presentation.Dotween.csproj",
+      "msbuildProject": "../../../../Syadeu.Presentation.Dotween.csproj"
+    },
+    "XNode/1.0.0": {
+      "type": "project",
+      "path": "../../../../XNode.csproj",
+      "msbuildProject": "../../../../XNode.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net5.0": [
+      "Syadeu.Presentation >= 1.0.0",
+      "Syadeu.Presentation.CodeGen >= 1.0.0",
+      "Syadeu.Presentation.Dotween >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\user\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj",
+      "projectName": "CoreSystem",
+      "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\CoreSystem.csproj",
+      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+      "outputPath": "D:\\Unity\\SystemTest\\SystemTest\\Assets\\Scripts\\CoreSystem\\.VSCode\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net5.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "projectReferences": {
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.CodeGen.csproj"
+            },
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.csproj"
+            },
+            "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj": {
+              "projectPath": "D:\\Unity\\SystemTest\\SystemTest\\Syadeu.Presentation.Dotween.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net5.0": {
+        "targetAlias": "net5.0",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.301\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
