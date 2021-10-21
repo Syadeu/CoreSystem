@@ -37,6 +37,11 @@
             "name": "com.unity.addressables",
             "expression": "1.16.19",
             "define": "UNITY_ADDRESSABLES"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "10.5.1",
+            "define": "CORESYSTEM_HDRP"
         }
     ],
     "noEngineReferences": false

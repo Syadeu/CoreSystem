@@ -43,7 +43,9 @@ namespace Syadeu.Presentation.TurnTable
             m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
+#if CORESYSTEM_HDRP
         private ProjectionCamera m_GridOutlineCamera;
+#endif
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
@@ -68,13 +70,14 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                 m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-                //m_GridOutlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
                 m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
 
                 m_GridOutlineRenderer.loop = true;
                 m_GridOutlineRenderer.positionCount = 0;
 
+#if CORESYSTEM_HDRP
                 m_GridOutlineRenderer.gameObject.layer = RenderSystem.ProjectionLayer;
+#endif
             }
 
             {
@@ -191,11 +194,12 @@ namespace Syadeu.Presentation.TurnTable
                     PlaceUICell(in gridSize, m_GridTempMoveables[i]);
                 }
 
+#if CORESYSTEM_HDRP
                 m_GridOutlineCamera = m_RenderSystem.GetProjectionCamera(
                     CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
                     CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
                 m_GridOutlineCamera.SetPosition(gridSize.IndexToPosition(gridSize.positions[0].index));
-
+#endif
                 m_IsDrawingGrids = true;
             }
         }
@@ -218,8 +222,10 @@ namespace Syadeu.Presentation.TurnTable
 
                 m_GridOutlineRenderer.positionCount = 0;
 
+#if CORESYSTEM_HDRP
                 m_GridOutlineCamera.Dispose();
                 m_GridOutlineCamera = null;
+#endif
 
                 m_IsDrawingGrids = false;
             }

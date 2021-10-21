@@ -57,7 +57,9 @@ namespace Syadeu.Mono
 
         // TRPG Extensions
         [Header("TRPG Grid System")]
+#if CORESYSTEM_HDRP
         public RenderTexture m_TRPGGridProjectionTexture;
+#endif
         public float m_TRPGGridLineWidth = .1f;
         public Material m_TRPGGridLineMaterial;
         public float m_TRPGGridPathLineWidth = .35f;
