@@ -21,6 +21,13 @@ namespace Syadeu.Presentation.Actor
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
         }
+        protected override ObjectBase Copy()
+        {
+            ActorStatAttribute att = (ActorStatAttribute)base.Copy();
+            att.m_Stats = (ValuePairContainer)m_Stats.Clone();
+
+            return att;
+        }
         protected override void OnReserve()
         {
             base.OnReserve();

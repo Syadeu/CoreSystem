@@ -19,12 +19,17 @@ using UnityEngine;
 
 #if CORESYSTEM_URP
 using UnityEngine.Rendering.Universal;
+#elif CORESYSTEM_HDRP
+using UnityEngine.Rendering.HighDefinition;
 #endif
 
 namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
+#if CORESYSTEM_HDRP
+        , INotifySystemModule<RenderProjectionModule>
+#endif
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
@@ -37,6 +42,9 @@ namespace Syadeu.Presentation.Render
 #else
         public const string s_DefaultShaderName = "Standard";
 #endif
+
+        public static readonly LayerMask ProjectionLayer = LayerMask.NameToLayer("FloorProjection");
+        public static readonly LayerMask ProjectionMask = LayerMask.GetMask("FloorProjection");
 
         private ObClass<Camera> m_Camera;
         private CameraComponent m_CameraComponent = null;
@@ -87,7 +95,7 @@ namespace Syadeu.Presentation.Render
 
         public CameraData LastCameraData => m_LastCameraData;
         public LightData LastDirectionalLightData => m_LastDirectionalLightData;
-
+        
 #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
@@ -226,6 +234,8 @@ namespace Syadeu.Presentation.Render
 #if CORESYSTEM_URP
         public void AddUICamera(Camera camera)
         {
+            camera.GetUniversalAdditionalCameraData().renderType = CameraRenderType.Overlay;
+
             m_UICameras.Add(camera);
             if (m_CameraData != null) m_CameraData.cameraStack.Add(camera);
         }
@@ -243,6 +253,13 @@ namespace Syadeu.Presentation.Render
 
         //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
         //}
+
+#if CORESYSTEM_HDRP
+        public ProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
+        {
+            return GetModule<RenderProjectionModule>().GetProjectionCamera(mat, renderTexture);
+        }
+#endif
 
         public float3 WorldToViewportPoint(float3 worldPoint)
         {
@@ -525,4 +542,116 @@ namespace Syadeu.Presentation.Render
 
 #endregion
     }
+
+#if CORESYSTEM_HDRP
+    internal sealed class RenderProjectionModule : PresentationSystemModule<RenderSystem>
+    {
+        private int m_Creation = 0;
+        private readonly Stack<Camera> m_UnusedProjectionCameras = new Stack<Camera>();
+
+        private SceneSystem m_SceneSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_SceneSystem = null;
+        }
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+        }
+
+        public ProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
+        {
+            Camera cam;
+            DecalProjector projector;
+
+            if (m_UnusedProjectionCameras.Count > 0)
+            {
+                cam = m_UnusedProjectionCameras.Pop();
+                cam.gameObject.SetActive(true);
+
+                projector = cam.GetComponentInChildren<DecalProjector>();
+            }
+            else
+            {
+                GameObject gameObj = m_SceneSystem.CreateGameObject($"Projection Camera {m_Creation++}");
+                cam = gameObj.AddComponent<Camera>();
+                cam.orthographic = true;
+
+                cam.cullingMask = RenderSystem.ProjectionMask;
+                gameObj.AddComponent<HDAdditionalCameraData>().volumeLayerMask = RenderSystem.ProjectionMask;
+
+                cam.orthographicSize = 20;
+
+                cam.transform.eulerAngles = new Vector3(90, 0, 0);
+                cam.transform.position = new Vector3(0, 10, 0);
+
+                GameObject projectorObj = new GameObject("Projector");
+                projectorObj.transform.SetParent(gameObj.transform);
+                projectorObj.transform.localEulerAngles = new Vector3(0, 0, 0);
+                projectorObj.transform.localPosition = Vector3.zero;
+                projectorObj.transform.localScale = Vector3.zero;
+
+                projector = projectorObj.AddComponent<DecalProjector>();
+
+                projector.size = new Vector3(40, 40, 30);
+            }
+
+            cam.targetTexture = renderTexture;
+            projector.material = mat;
+
+            return new ProjectionCamera(this, cam, projector);
+        }
+        internal void ReserveProjectionCamere(Camera cam)
+        {
+            cam.gameObject.SetActive(false);
+            m_UnusedProjectionCameras.Push(cam);
+        }
+    }
+#endif
+
+#if CORESYSTEM_HDRP
+    public sealed class ProjectionCamera : IDisposable
+    {
+        private RenderProjectionModule m_Module;
+        
+        private Camera m_Camera;
+        private Transform m_Transform;
+        private DecalProjector m_Projector;
+
+        public RenderTexture RenderTexture
+        {
+            get => m_Camera.targetTexture;
+            //set => m_Camera.targetTexture = value;
+        }
+
+        private ProjectionCamera() { }
+        internal ProjectionCamera(RenderProjectionModule module, Camera cam, DecalProjector projector
+            )
+        {
+            m_Module = module;
+            m_Camera = cam;
+            m_Transform = cam.transform;
+            m_Projector = projector;
+        }
+
+        public void SetPosition(Vector3 pos)
+        {
+            m_Transform.position = pos + new Vector3(0, 10, 0);
+        }
+        public void Dispose()
+        {
+            m_Module.ReserveProjectionCamere(m_Camera);
+
+            m_Module = null;
+            m_Camera = null;
+            m_Transform = null;
+            m_Projector = null;
+        }
+    }
+#endif
 }

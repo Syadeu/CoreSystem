@@ -308,8 +308,7 @@ namespace Syadeu.Presentation.TurnTable
             for (int i = temp.Count - 1; i >= 0; i--)
             {
                 vertices.Add(current.c0);
-                vertices.Add(current.c1);
-
+                
                 if (!Find(temp, current.c1, out current))
                 {
                     break;

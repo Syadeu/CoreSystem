@@ -95,6 +95,8 @@ namespace Syadeu.Presentation.Events
             m_CoroutineSystem = null;
         }
 
+        const string c_LogPostedEvent = "Posted event : {0}";
+
         private void M_CoroutineSystem_OnTransformUpdate()
         {
             int eventCount = m_TransformEvents.Count;
@@ -110,11 +112,12 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.GetType()}) has been posted");
+                        $"Invalid event({ev.Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
+
                 CoreSystem.Logger.Log(Channel.Event,
-                    $"Posted event : {ev.GetType().Name}");
+                    string.Format(c_LogPostedEvent, ev.Name));
             }
         }
         protected override PresentationResult OnPresentation()
@@ -144,11 +147,11 @@ namespace Syadeu.Presentation.Events
                     catch (Exception ex)
                     {
                         CoreSystem.Logger.LogError(Channel.Event,
-                            $"Invalid event({ev.GetType().Name}) has been posted");
+                            $"Invalid event({ev.Name}) has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
-                    CoreSystem.Logger.Log(Channel.Event,
-                        $"Posted event : {ev.GetType().Name}");
+                    CoreSystem.Logger.Log(Channel.Event, 
+                        string.Format(c_LogPostedEvent, ev.Name));
                 }
             }
             
@@ -192,7 +195,7 @@ namespace Syadeu.Presentation.Events
             if (m_AddedEvents.Contains(hash))
             {
                 CoreSystem.Logger.LogError(Channel.Event,
-                    $"Attemp to add same delegate event({ev.Method.Name}) at {TypeHelper.TypeOf<TEvent>.ToString()}.");
+                    $"Attemp to add same delegate event({ev.Method.Name}) at {TypeHelper.TypeOf<TEvent>.Name}.");
                 return;
             }
             m_AddedEvents.Add(hash);
@@ -321,12 +324,15 @@ namespace Syadeu.Presentation.Events
 
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {
+            const string c_ExecuteEventMsg = "Execute scheduled event({0})";
+            const string c_PostedEventMsg = "Posted event : {0}";
+
             SynchronizedEventBase ev = m_ScheduledEvents.Dequeue();
-            Type evType = ev.GetType();
+            
             if (ev.IsValid())
             {
                 CoreSystem.Logger.Log(Channel.Action,
-                    $"Execute scheduled event({evType.Name})");
+                    string.Format(c_ExecuteEventMsg, ev.Name));
 
                 try
                 {
@@ -336,14 +342,15 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({evType.Name}) has been posted");
+                        $"Invalid event({ev.Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
+
                 CoreSystem.Logger.Log(Channel.Event,
-                    $"Posted event : {evType.Name}");
+                    string.Format(c_PostedEventMsg, ev.Name));
             }
 
-            handler.SetEvent(SystemEventResult.Success, evType);
+            handler.SetEvent(SystemEventResult.Success, ev.EventType);
         }
     }
 }

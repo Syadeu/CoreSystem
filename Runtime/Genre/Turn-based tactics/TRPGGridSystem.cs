@@ -9,6 +9,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Render;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -42,11 +43,19 @@ namespace Syadeu.Presentation.TurnTable
             m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
+#if CORESYSTEM_HDRP
+        private ProjectionCamera m_GridOutlineCamera;
+#endif
+
+        private GridPath64 m_LastPath;
+
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
         private InputSystem m_InputSystem;
         private GridSystem m_GridSystem;
+        private RenderSystem m_RenderSystem;
+        private NavMeshSystem m_NavMeshSystem;
 
         protected override PresentationResult OnInitialize()
         {
@@ -56,7 +65,7 @@ namespace Syadeu.Presentation.TurnTable
 
             {
                 m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
-                m_GridOutlineRenderer.numCornerVertices = 1;
+                m_GridOutlineRenderer.numCornerVertices = 0;
                 m_GridOutlineRenderer.numCapVertices = 1;
                 m_GridOutlineRenderer.alignment = LineAlignment.View;
                 m_GridOutlineRenderer.textureMode = LineTextureMode.Tile;
@@ -64,11 +73,14 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                 m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-                m_GridOutlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
                 m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
 
                 m_GridOutlineRenderer.loop = true;
                 m_GridOutlineRenderer.positionCount = 0;
+
+#if CORESYSTEM_HDRP
+                m_GridOutlineRenderer.gameObject.layer = RenderSystem.ProjectionLayer;
+#endif
             }
 
             {
@@ -94,6 +106,8 @@ namespace Syadeu.Presentation.TurnTable
 
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -107,6 +121,8 @@ namespace Syadeu.Presentation.TurnTable
 
             m_InputSystem = null;
             m_GridSystem = null;
+            m_RenderSystem = null;
+            m_NavMeshSystem = null;
         }
 
         #region Binds
@@ -118,6 +134,14 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(GridSystem other)
         {
             m_GridSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+        private void Bind(NavMeshSystem other)
+        {
+            m_NavMeshSystem = other;
         }
 
         #endregion
@@ -133,6 +157,8 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.AfterPresentation();
         }
+
+        #region UI
 
         public void DrawUICell(EntityData<IEntityData> entity)
         {
@@ -172,13 +198,19 @@ namespace Syadeu.Presentation.TurnTable
                 //m_OutlineMesh.SetIndices()
                 //m_DrawMesh = true;
 
-                GridSizeComponent gridSize = entity.GetComponent<GridSizeComponent>();
+                GridSizeComponent gridSize = entity.GetComponentReadOnly<GridSizeComponent>();
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
                     PlaceUICell(in gridSize, m_GridTempMoveables[i]);
                 }
 
+#if CORESYSTEM_HDRP
+                m_GridOutlineCamera = m_RenderSystem.GetProjectionCamera(
+                    CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
+                    CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
+                m_GridOutlineCamera.SetPosition(gridSize.IndexToPosition(gridSize.positions[0].index));
+#endif
                 m_IsDrawingGrids = true;
             }
         }
@@ -200,6 +232,11 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridSystem.ClearUICell();
 
                 m_GridOutlineRenderer.positionCount = 0;
+
+#if CORESYSTEM_HDRP
+                m_GridOutlineCamera.Dispose();
+                m_GridOutlineCamera = null;
+#endif
 
                 m_IsDrawingGrids = false;
             }
@@ -231,6 +268,41 @@ namespace Syadeu.Presentation.TurnTable
             m_GridPathlineRenderer.positionCount = 0;
 
             m_IsDrawingPaths = false;
+        }
+
+        #endregion
+
+        public void MoveToCell(EntityData<IEntityData> entity, GridPosition position)
+        {
+            if (!entity.HasComponent<TRPGActorMoveComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
+                    $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
+                return;
+            }
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
+                return;
+            }
+
+            TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
+            if (!move.GetPath(in position, ref m_LastPath))
+            {
+                "path error not found".ToLogError();
+                return;
+            }
+
+            m_NavMeshSystem.MoveTo(entity.As<IEntityData, IEntity>(),
+                m_LastPath, new ActorMoveEvent(entity, 1));
+
+            ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
+            int requireAp = m_LastPath.Length;
+
+            turnPlayer.ActionPoint -= requireAp - 1;
         }
     }
 }

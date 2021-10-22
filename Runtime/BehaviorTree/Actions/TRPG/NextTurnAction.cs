@@ -5,7 +5,7 @@ using Syadeu.Presentation.TurnTable;
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
-    [TaskCategory("Entity/Actor")]
+    [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
         "이 Actor 의 턴을 넘깁니다.")]
     public sealed class NextTurnAction : ActionBase

@@ -24,6 +24,9 @@ namespace Syadeu.Presentation
         private static readonly Dictionary<int, ActionWrapper<TEvent>>
             s_EventActions = new Dictionary<int, ActionWrapper<TEvent>>();
 
+        public override sealed string Name => TypeHelper.TypeOf<TEvent>.Name;
+        public override sealed Type EventType => TypeHelper.TypeOf<TEvent>.Type;
+
         internal static void AddEvent(Action<TEvent> ev)
         {
             int hash = ev.GetHashCode();
