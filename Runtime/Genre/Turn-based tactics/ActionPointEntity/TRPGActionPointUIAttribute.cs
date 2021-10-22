@@ -13,16 +13,16 @@ namespace Syadeu.Presentation.TurnTable
     [Description("UIObjectEntity 에 달리는 어트리뷰트")]
     public sealed class TRPGActionPointUIAttribute : ActorOverlayUIAttributeBase
     {
-        [Header("General")]
-        [JsonProperty(Order = 0, PropertyName = "HPStatName")]
-        internal string m_HPStatName = "HP";
+        //[Header("General")]
+        //[JsonProperty(Order = 0, PropertyName = "HPStatName")]
+        //internal string m_HPStatName = "HP";
 
-        [JsonIgnore] internal Hash m_HPNameHash;
+        //[JsonIgnore] internal Hash m_HPNameHash;
         [JsonIgnore] internal TRPGActionPointOverlayUI m_CurrentProxy = null;
 
         protected override void OnUICreated(Entity<ActorEntity> parent)
         {
-            m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
+            //m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 
-            int hp = stat.GetValue<int>(m_HPNameHash);
+            int hp = (int)stat.HP;
 
             m_CurrentProxy.SetHPText(hp);
         }
@@ -105,8 +105,8 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             int
-                fullHp = stat.GetOriginalValue<int>(att.m_HPNameHash),
-                hp = stat.GetValue<int>(att.m_HPNameHash);
+                fullHp = (int)stat.FullHP,
+                hp = (int)stat.HP;
 
             att.m_CurrentProxy.SetHPFullText(fullHp);
             att.m_CurrentProxy.SetHPText(hp);

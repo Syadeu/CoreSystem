@@ -107,17 +107,9 @@ namespace Syadeu.Presentation.TurnTable
             return att.m_Targets;
         }
 
-        public void Attack(Entity<ActorEntity> target, string targetStatName = "HP")
+        public void Attack(Entity<ActorEntity> target)
         {
-            if (!Parent.HasComponent<ActorWeaponComponent>())
-            {
-                "doesn\'t have weapon".ToLogError();
-                return;
-            }
-
-            var weapon = Parent.GetComponent<ActorWeaponComponent>();
-
-            TRPGActorAttackEvent ev = new TRPGActorAttackEvent(target, targetStatName, (int)weapon.WeaponDamage);
+            ActorAttackEvent ev = new ActorAttackEvent(target);
             ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
         }
     }

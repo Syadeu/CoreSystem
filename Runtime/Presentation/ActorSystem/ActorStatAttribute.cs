@@ -11,22 +11,38 @@ namespace Syadeu.Presentation.Actor
     [DisplayName("Attribute: Actor Stat")]
     public sealed class ActorStatAttribute : ActorAttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
+        [JsonProperty(Order = 0, PropertyName = "HP")]
+        private float m_HP = 1;
+        [JsonProperty(Order = 1, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
+        [JsonIgnore] private float m_CurrentHP;
 
         public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
-        internal void Initialize()
+        [JsonIgnore] public float FullHP => m_HP;
+        [JsonIgnore] public float HP
         {
-            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+            get => m_CurrentHP;
+            set => m_CurrentHP = value;
         }
+
         protected override ObjectBase Copy()
         {
             ActorStatAttribute att = (ActorStatAttribute)base.Copy();
             att.m_Stats = (ValuePairContainer)m_Stats.Clone();
 
             return att;
+        }
+        protected override void OnCreated()
+        {
+            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+            m_CurrentHP = m_HP;
+        }
+        protected override void OnInitialize()
+        {
+            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+            m_CurrentHP = m_HP;
         }
         protected override void OnReserve()
         {
@@ -58,9 +74,5 @@ namespace Syadeu.Presentation.Actor
     [Preserve]
     internal sealed class ActorStatProcessor : AttributeProcessor<ActorStatAttribute>
     {
-        protected override void OnCreated(ActorStatAttribute attribute, EntityData<IEntityData> entity)
-        {
-            attribute.Initialize();
-        }
     }
 }

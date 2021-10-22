@@ -10,20 +10,12 @@ namespace Syadeu.Presentation.TurnTable
 {
     public static class TRPGExtenstionMethods
     {
-        public static void Attack(this Entity<ActorEntity> other, Entity<ActorEntity> target, string targetStatName = "HP")
+        public static void Attack(this Entity<ActorEntity> other, Entity<ActorEntity> target)
         {
-            if (!other.HasComponent<ActorWeaponComponent>())
-            {
-                "doesn\'t have weapon".ToLogError();
-                return;
-            }
-
-            var weapon = other.GetComponent<ActorWeaponComponent>();
-
-            TRPGActorAttackEvent ev = new TRPGActorAttackEvent(target, targetStatName, (int)weapon.WeaponDamage);
+            ActorAttackEvent ev = new ActorAttackEvent(target);
             ev.ScheduleEvent(other);
         }
-        public static void Attack(this Entity<ActorEntity> other, int index, string targetStatName = "HP")
+        public static void Attack(this Entity<ActorEntity> other, int index)
         {
             if (!other.HasComponent<ActorControllerComponent>())
             {
@@ -49,17 +41,11 @@ namespace Syadeu.Presentation.TurnTable
                     $"Index({index}) is out of range. Target count is {attProvider.TargetCount}.");
                 return;
             }
-            else if (!other.HasComponent<ActorWeaponComponent>())
-            {
-                "doesn\'t have weapon".ToLogError();
-                return;
-            }
 //#endif
             var weapon = other.GetComponent<ActorWeaponComponent>();
 
-            TRPGActorAttackEvent ev = new TRPGActorAttackEvent(
-                attProvider.m_Targets[index].GetEntity<ActorEntity>(), 
-                targetStatName, (int)weapon.WeaponDamage);
+            ActorAttackEvent ev = new ActorAttackEvent(
+                attProvider.m_Targets[index].GetEntity<ActorEntity>());
 
             ev.ScheduleEvent(other);
         }

@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
-            if (ev is IActorAttackEvent attackEvent)
+            if (ev is ActorAttackEvent attackEvent)
             {
                 AttackEventHandler(attackEvent);
             }
@@ -64,9 +64,9 @@ namespace Syadeu.Presentation.Actor
                 }
             }
 
-            int hp = m_StatAttribute.GetValue<int>(ev.HPStatNameHash);
-            hp -= Mathf.RoundToInt(ev.Damage);
-            m_StatAttribute.SetValue(ev.HPStatNameHash, hp);
+            float hp = m_StatAttribute.HP;
+            hp -= ev.Damage;
+            m_StatAttribute.HP = hp;
 
             if (hp <= 0)
             {
@@ -76,12 +76,12 @@ namespace Syadeu.Presentation.Actor
 
             $"{Parent.Name} : {hp} left, dmg {ev.Damage}".ToLog();
         }
-        protected virtual void SendHitEvent(Entity<ActorEntity> target, Hash hpStatName, float damage)
+        protected virtual void SendHitEvent(Entity<ActorEntity> target, float damage)
         {
             ref ActorControllerComponent component = ref target.GetComponent<ActorControllerComponent>();
-            component.ScheduleEvent(new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), hpStatName, damage));
+            component.ScheduleEvent(new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), damage));
         }
-        protected void AttackEventHandler(IActorAttackEvent ev)
+        protected void AttackEventHandler(ActorAttackEvent ev)
         {
             if (!Parent.HasComponent<ActorWeaponComponent>()) return;
 
@@ -94,52 +94,24 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            EntityData<IEntityData> target = ev.Target.As<ActorEntity, IEntityData>();
+            EntityData<IEntityData> target = ev.Target.GetEntityData<IEntityData>();
             Entity<ActorEntity> parent = Parent.As<IEntityData, ActorEntity>();
 
             bool isFailed = false;
             for (int i = 0; i < m_OnAttack.Length; i++)
             {
-                isFailed |= !m_OnAttack[i].Schedule(Parent, target);
+                isFailed |= !m_OnAttack[i].Execute(Parent, target);
             }
 
             if (isFailed)
             {
                 currentWeaponIns.GetObject().FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
-                SendHitEvent(ev.Target, ev.HPStatNameHash, ev.Damage);
+                SendHitEvent(ev.Target.GetEntity<ActorEntity>(), component.WeaponDamage);
             }
             else
             {
                 currentWeaponIns.GetObject().FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
             }
-
-            //for (int i = 0; i < ev.Targets.Length; i++)
-            //{
-            //    ev.Targets[i].GetController().PostEvent(new TestActorHitEvent());
-            //}
-
-            //var weaponProvider = GetProvider<ActorWeaponProvider>();
-            //if (weaponProvider.IsEmpty())
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Entity,
-            //           $"This entity({Parent.Name}) doesn\'t have any {nameof(ActorWeaponProvider)}.");
-            //    return;
-            //}
-
-            //for (int i = 0; i < ev.Targets.Length; i++)
-            //{
-            //    var targetStat = ev.Targets[i].GetAttribute<ActorEntity, ActorStatAttribute>();
-            //    if (targetStat == null)
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Entity,
-            //            $"Target entity({ev.Targets[i].Object.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
-            //        continue;
-            //    }
-
-            //    int hp = targetStat.GetValue<int>(ev.HPStatNameHash);
-            //    hp -= Mathf.RoundToInt(weaponProvider.Object.WeaponDamage);
-            //    targetStat.SetValue(ev.HPStatNameHash, hp);
-            //}
         }
 
         public bool IsAlly(Entity<ActorEntity> entity)

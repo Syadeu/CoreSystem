@@ -9,7 +9,6 @@ namespace Syadeu.Presentation.Actor
     public interface IActorHitEvent : IActorEvent
     {
         Entity<ActorEntity> AttackFrom { get; }
-        Hash HPStatNameHash { get; }
         float Damage { get; }
     }
 }

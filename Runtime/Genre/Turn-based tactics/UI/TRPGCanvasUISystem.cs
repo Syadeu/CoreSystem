@@ -77,6 +77,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
+            m_EventSystem.RemoveEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
             m_TurnTableSystem.RemoveOnStartTurnEvent(CheckStartTurnActorOverlayUI);
             m_TurnTableSystem.RemoveOnEndTurnEvent(CheckEndTurnActorOverlayUI);
@@ -141,6 +142,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
+            m_EventSystem.AddEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
             return base.OnStartPresentation();
         }
@@ -284,6 +286,10 @@ namespace Syadeu.Presentation.TurnTable.UI
             SetPlayerUI(false);
 
             m_EventSystem.ScheduleEvent(TRPGEndTurnEvent.GetEvent());
+        }
+        private void TRPGFireUIPressedEventHandler(TRPGFireUIPressedEvent ev)
+        {
+            //m_TurnTableSystem.cu
         }
 
         #endregion
