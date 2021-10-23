@@ -308,7 +308,7 @@ namespace Syadeu.Presentation.Actor
                 for (int i = weaponComponent.m_EquipedWeapons.Length - 1; i >= 0; i--)
                 {
                     bool weaponDrawn = weaponComponent.Selected == i && !weaponComponent.Holster;
-                    $"{weaponDrawn} :: {weaponComponent.Selected == i} :: {weaponComponent.Holster}".ToLog();
+                    //$"{weaponDrawn} :: {weaponComponent.Selected == i} :: {weaponComponent.Holster}".ToLog();
                     SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], weaponDrawn);
                 }
             }
