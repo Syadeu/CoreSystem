@@ -52,6 +52,7 @@ namespace Syadeu.Presentation.TurnTable
 
             int hp = (int)stat.HP;
 
+            $"ui in {hp}".ToLog();
             m_CurrentProxy.SetHPText(hp);
         }
     }
