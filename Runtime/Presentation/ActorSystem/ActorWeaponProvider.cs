@@ -76,6 +76,8 @@ namespace Syadeu.Presentation.Actor
             component.m_OnEquipWeapon = m_OnEquipWeapon.ToFixedList16();
             component.m_OnUnequipWeapon = m_OnUnequipWeapon.ToFixedList16();
 
+            component.m_WeaponHolster = true;
+
             if (m_MaxEquipableCount <= 0)
             {
                 m_MaxEquipableCount = 1;
@@ -306,6 +308,7 @@ namespace Syadeu.Presentation.Actor
                 for (int i = weaponComponent.m_EquipedWeapons.Length - 1; i >= 0; i--)
                 {
                     bool weaponDrawn = weaponComponent.Selected == i && !weaponComponent.Holster;
+                    $"{weaponDrawn} :: {weaponComponent.Selected == i} :: {weaponComponent.Holster}".ToLog();
                     SetPosition(entity, in animator, weaponComponent.m_EquipedWeapons[i], weaponDrawn);
                 }
             }

@@ -12,6 +12,8 @@ namespace Syadeu.Presentation.BehaviorTree
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class FindTargetsAction : ActionBase
     {
+        [UnityEngine.SerializeField] private int m_DesireRange = 1;
+
         public override TaskStatus OnUpdate()
         {
 #if DEBUG_MODE
@@ -37,7 +39,7 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 #endif
-            var temp = ctr.GetProvider<TRPGActorAttackProvider>().GetObject().GetTargetsInRange();
+            var temp = ctr.GetProvider<TRPGActorAttackProvider>().GetObject().GetTargetsWithin(m_DesireRange);
             
             //if (temp.Length > 0)
             {
