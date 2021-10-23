@@ -129,6 +129,7 @@ namespace SyadeuEditor.Presentation
                 if (!IsDataLoaded) EntityDataList.Instance.LoadData();
             }
 
+            ObjectBaseDrawer.Pool.Clear();
             m_DataListWindow.Reload();
             CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }

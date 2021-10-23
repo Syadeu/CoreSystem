@@ -18,6 +18,7 @@ namespace Syadeu.Presentation.Internal
     /// </remarks>
     public abstract partial class PresentationSystemEntity : IInitPresentation, 
         IBeforePresentation, IOnPresentation, IAfterPresentation, 
+        ITransformPresentation, IAfterTransformPresentation,
         IDisposable
     {
         internal static UnityEngine.Transform s_PresentationUnityFolder;
@@ -29,6 +30,8 @@ namespace Syadeu.Presentation.Internal
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
         public abstract bool EnableAfterPresentation { get; }
+        public virtual bool EnableTransformPresentation => false;
+        public virtual bool EnableAfterTransformPresentation => false;
 
         public PresentationSystemID SystemID => new PresentationSystemID(m_GroupIndex, m_SystemIndex);
 
@@ -62,6 +65,11 @@ namespace Syadeu.Presentation.Internal
         protected abstract PresentationResult AfterPresentationAsync();
         PresentationResult IAfterPresentation.AfterPresentation() => AfterPresentation();
         PresentationResult IAfterPresentation.AfterPresentationAsync() => AfterPresentationAsync();
+
+        protected virtual PresentationResult TransformPresentation() { return PresentationResult.Normal; }
+        PresentationResult ITransformPresentation.TransformPresentation() => TransformPresentation();
+        protected virtual PresentationResult AfterTransformPresentation() { return PresentationResult.Normal; }
+        PresentationResult IAfterTransformPresentation.AfterTransformPresentation() => AfterTransformPresentation();
 
         internal PresentationSystemEntity()
         {
@@ -201,9 +209,11 @@ namespace Syadeu.Presentation.Internal
 
         protected enum JobPosition
         {
-            Before  =   0,
-            On      =   1,
-            After   =   2
+            Before          =   0,
+            On              =   1,
+            After           =   2,
+            Transform       =   3,
+            AfterTransform  =   4
         }
 
         protected JobHandle ScheduleAt<TJob>(JobPosition position, TJob job) where TJob : struct, IJob

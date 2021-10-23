@@ -32,8 +32,9 @@ namespace Syadeu.Presentation.Render
 #endif
     {
         public override bool EnableBeforePresentation => true;
-        public override bool EnableOnPresentation => true;
-        public override bool EnableAfterPresentation => true;
+        public override bool EnableOnPresentation => false;
+        public override bool EnableAfterPresentation => false;
+        public override bool EnableTransformPresentation => true;
 
 #if CORESYSTEM_URP
         public const string s_DefaultShaderName = "Universal Render Pipeline/Lit";
@@ -96,7 +97,7 @@ namespace Syadeu.Presentation.Render
         public CameraData LastCameraData => m_LastCameraData;
         public LightData LastDirectionalLightData => m_LastDirectionalLightData;
         
-#region Presentation Methods
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -167,7 +168,7 @@ namespace Syadeu.Presentation.Render
 
 			return base.BeforePresentation();
         }
-        protected override PresentationResult AfterPresentation()
+        protected override PresentationResult TransformPresentation()
         {
             if (DirectionalLight != null)
             {
@@ -177,7 +178,7 @@ namespace Syadeu.Presentation.Render
                 
             }
 
-            if (Camera == null) return base.AfterPresentation();
+            if (Camera == null) return base.TransformPresentation();
 
             m_LastCameraData.Update(Camera);
             FrustumJob job = new FrustumJob
@@ -187,7 +188,7 @@ namespace Syadeu.Presentation.Render
             };
             m_FrustumJob = ScheduleAt(JobPosition.After, job);
 
-			return base.AfterPresentation();
+			return base.TransformPresentation();
         }
 
         private struct FrustumJob : IJob
@@ -222,7 +223,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-#endregion
+        #endregion
 
         public CameraFrustum.ReadOnly GetFrustum()
         {
@@ -337,7 +338,7 @@ namespace Syadeu.Presentation.Render
         //    return new float3(temp.xy, worldPoint.z);
         //}
 
-#region Ray
+        #region Ray
 
         //float4x4 GetWorldToCameraMatrix()
         //{
@@ -445,7 +446,7 @@ namespace Syadeu.Presentation.Render
         //    return ViewportPointToRay(new float3(position.x / Screen.width, position.y / Screen.height, position.z));
         //}
 
-#endregion
+        #endregion
 
         //public Ray ScreenPointToRay(float3 screenPoint)
         //{
@@ -462,7 +463,7 @@ namespace Syadeu.Presentation.Render
             //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )
         }
 
-#region Legacy
+        #region Legacy
 
         /// <summary>
         /// 해당 월드 좌표를 입력한 Matrix 기반으로 2D 좌표값을 반환합니다.
@@ -540,7 +541,7 @@ namespace Syadeu.Presentation.Render
             return false;
         }
 
-#endregion
+        #endregion
     }
 
 #if CORESYSTEM_HDRP

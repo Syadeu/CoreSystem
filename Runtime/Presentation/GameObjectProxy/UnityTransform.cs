@@ -21,6 +21,8 @@ namespace Syadeu.Presentation.Proxy
         public Transform provider { get; internal set; }
         private Renderer[] renderers { get; set; }
 
+        UnityEngine.Object ITransform.proxy => provider;
+        bool ITransform.hasProxy => true;
         public float3 position
         {
             get

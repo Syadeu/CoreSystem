@@ -37,8 +37,8 @@ namespace Syadeu.Presentation.Entities
         private string m_Name = string.Empty;
         [JsonProperty(Order = 1, PropertyName = "TriggerOption")]
         private TriggerOptions m_TriggerOption = TriggerOptions.OnFire;
-        [JsonProperty(Order = 2, PropertyName = "PlayOption")]
-        private PlayOptions m_PlayOption = PlayOptions.OneShot;
+        //[JsonProperty(Order = 2, PropertyName = "PlayOption")]
+        //private PlayOptions m_PlayOption = PlayOptions.OneShot;
 
         [Space]
         [JsonProperty(Order = 3, PropertyName = "FXEntity")]
@@ -67,16 +67,17 @@ namespace Syadeu.Presentation.Entities
             {
                 m_Instance = m_FXEntity.CreateInstance();
                 FXEntity fx = m_Instance.GetObject();
-                fx.SetPlayOptions(m_PlayOption);
+                //fx.SetPlayOptions(m_PlayOption);
 
                 coroutineSystem.System.PostCoroutineJob(new FireCoroutine
                 {
                     m_FXEntity = m_Instance,
-                    m_PlayOption = m_PlayOption,
+                    m_PlayOption = fx.PlayOptions,
                     TRS = TRS,
 
                     Parent = proxy
                 });
+                "firing fx".ToLog();
             }
             else
             {
@@ -144,6 +145,7 @@ namespace Syadeu.Presentation.Entities
                     yield return null;
                 }
 
+                "destroy fx".ToLog();
                 m_FXEntity.Destroy();
             }
         }

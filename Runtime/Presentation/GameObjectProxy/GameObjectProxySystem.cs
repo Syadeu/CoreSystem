@@ -39,7 +39,8 @@ namespace Syadeu.Presentation.Proxy
 
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
-        public override bool EnableAfterPresentation => true;
+        public override bool EnableAfterPresentation => false;
+        public override bool EnableTransformPresentation => true;
 
         public event Action<ProxyTransform> OnDataObjectCreated;
         public event Action<ProxyTransform> OnDataObjectDestroy;
@@ -249,11 +250,11 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
-        unsafe protected override PresentationResult AfterPresentation()
+        unsafe protected override PresentationResult TransformPresentation()
         {
             //const int c_ChunkSize = 100;
 
-            if (m_LoadingLock) return base.AfterPresentation();
+            if (m_LoadingLock) return base.TransformPresentation();
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 

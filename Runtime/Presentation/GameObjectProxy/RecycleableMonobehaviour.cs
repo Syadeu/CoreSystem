@@ -230,6 +230,7 @@ namespace Syadeu.Presentation.Proxy
             OnTerminate();
 
             m_Entity = Entity<IEntity>.Empty;
+            OnParticleStopped = null;
             Activated = false;
         }
 

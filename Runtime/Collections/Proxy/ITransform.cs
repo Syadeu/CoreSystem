@@ -13,6 +13,9 @@ namespace Syadeu.Collections.Proxy
     public interface ITransform : IEquatable<ITransform>
     {
 #pragma warning disable IDE1006 // Naming Styles
+        bool hasProxy { get; }
+        UnityEngine.Object proxy { get; }
+
         float3 position { get; set; }
         quaternion rotation { get; set; }
         float3 eulerAngles { get; set; }

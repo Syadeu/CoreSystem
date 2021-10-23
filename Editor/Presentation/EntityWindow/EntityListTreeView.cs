@@ -254,6 +254,66 @@ namespace SyadeuEditor.Presentation
 
             base.ContextClickedItem(id);
         }
+        
+        #region Dragging
+
+        const string k_GenericDragID = "GenericDragColumnDragging";
+
+        protected override bool CanStartDrag(CanStartDragArgs args)
+        {
+            if (args.draggedItem is FolderTreeElement) return false;
+
+            return true;
+        }
+        protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
+        {
+            if (hasSearch) return;
+
+            DragAndDrop.PrepareStartDrag();
+            var draggedRows = GetRows().Where(item => args.draggedItemIDs.Contains(item.id)).ToList();
+            DragAndDrop.SetGenericData(k_GenericDragID, draggedRows);
+            DragAndDrop.objectReferences = new UnityEngine.Object[] { }; // this IS required for dragging to work
+            string title = draggedRows.Count == 1 ? draggedRows[0].displayName : "< Multiple >";
+            DragAndDrop.StartDrag(title);
+        }
+        protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
+        {
+            var draggedRows = DragAndDrop.GetGenericData(k_GenericDragID) as List<TreeViewItem>;
+            if (draggedRows == null)
+            {
+                return DragAndDropVisualMode.None;
+            }
+
+            switch (args.dragAndDropPosition)
+            {
+                case DragAndDropPosition.UponItem:
+                    if (args.parentItem != null &&
+                        args.parentItem is FolderTreeElement)
+                    {
+                        return DragAndDropVisualMode.Move;
+                    }
+
+                    return DragAndDropVisualMode.Rejected;
+                case DragAndDropPosition.BetweenItems:
+
+                    return DragAndDropVisualMode.Move;
+                case DragAndDropPosition.OutsideItems:
+
+
+                    return DragAndDropVisualMode.Move;
+                default:
+
+                    return DragAndDropVisualMode.None;
+            }
+        }
+        private static bool IsValidDrag(List<TreeViewItem> dragged, TreeViewItem target)
+        {
+            if (target == null) return false;
+
+            return true;
+        }
+
+        #endregion
 
         public void SetSelection(ObjectBase entityObj)
         {

@@ -47,6 +47,8 @@ namespace Syadeu.Presentation
             private readonly List<IBeforePresentation> m_BeforePresentations = new List<IBeforePresentation>();
             private readonly List<IOnPresentation> m_OnPresentations = new List<IOnPresentation>();
             private readonly List<IAfterPresentation> m_AfterPresentations = new List<IAfterPresentation>();
+            private readonly List<ITransformPresentation> m_TransformPresentations = new List<ITransformPresentation>();
+            private readonly List<IAfterTransformPresentation> m_AfterTransformPresentations = new List<IAfterTransformPresentation>();
 
             public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
             private readonly List<Hash> m_GroupDependences = new List<Hash>();
@@ -78,12 +80,19 @@ namespace Syadeu.Presentation
             public JobHandle 
                 m_BeforePresentationJobHandle,
                 m_OnPresentationJobHandle,
-                m_AfterPresentationJobHandle;
+                m_AfterPresentationJobHandle,
+                m_TransformJobHandle,
+                m_AfterTransformJobHandle;
+            bool
+                m_HasBeforePresentationJob,
+                m_HasOnPresentationJob,
+                m_HasAfterPresentationJob,
+                m_HasTransformJob,
+                m_HasAfterTransformJob;
 
             public int Count => m_Systems.Count;
             public List<PresentationSystemEntity> Systems => m_Systems;
 
-//#if DEBUG_MODE
             private Unity.Profiling.ProfilerMarker
                 m_InitializeMarker, m_InitializeAsyncMarker, m_StartPreMarker,
                 m_BeforePreJobMarker, m_OnPreJobMarker, m_AfterPreJobMarker,
@@ -92,7 +101,6 @@ namespace Syadeu.Presentation
             private List<Unity.Profiling.ProfilerMarker>
                 m_BeforePreSystemMarkers, m_OnPreSystemMarkers, m_AfterPreSystemMarkers,
                 m_BeforePreAsyncSystemMarkers, m_OnPreAsyncSystemMarkers, m_AfterPreAsyncSystemMarkers;
-//#endif
 
             public Group(Type name, Hash hash)
             {
@@ -193,26 +201,31 @@ namespace Syadeu.Presentation
                 if (system.EnableBeforePresentation)
                 {
                     m_BeforePresentations.Add(system);
-//#if DEBUG_MODE
+
                     m_BeforePreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
                     m_BeforePreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
-//#endif
                 }
                 if (system.EnableOnPresentation)
                 {
                     m_OnPresentations.Add(system);
-//#if DEBUG_MODE
+
                     m_OnPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
                     m_OnPreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
-//#endif
                 }
                 if (system.EnableAfterPresentation)
                 {
                     m_AfterPresentations.Add(system);
-//#if DEBUG_MODE
+
                     m_AfterPreSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
                     m_AfterPreAsyncSystemMarkers.Add(new Unity.Profiling.ProfilerMarker(Unity.Profiling.ProfilerCategory.Scripts, $"{system.GetType().Name}"));
-//#endif
+                }
+                if (system.EnableTransformPresentation)
+                {
+                    m_TransformPresentations.Add(system);
+                }
+                if (system.EnableAfterTransformPresentation)
+                {
+                    m_AfterTransformPresentations.Add(system);
                 }
             }
             public void Reset()
@@ -228,6 +241,8 @@ namespace Syadeu.Presentation
                 m_BeforePresentations.Clear();
                 m_OnPresentations.Clear();
                 m_AfterPresentations.Clear();
+                m_TransformPresentations.Clear();
+                m_AfterTransformPresentations.Clear();
 
                 m_MainthreadSignal = false;
                 m_BackgroundthreadSignal = false;
@@ -252,9 +267,69 @@ namespace Syadeu.Presentation
             }
             public void SetJobHandle(int pos, JobHandle jobHandle)
             {
-                if (pos == 0) m_BeforePresentationJobHandle = JobHandle.CombineDependencies(m_BeforePresentationJobHandle, jobHandle);
-                else if (pos == 1) m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
-                else m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
+                switch (pos)
+                {
+                    default:
+                    case 0:
+                        if (m_HasBeforePresentationJob)
+                        {
+                            m_BeforePresentationJobHandle = JobHandle.CombineDependencies(m_BeforePresentationJobHandle, jobHandle);
+
+                            break;
+                        }
+
+                        m_BeforePresentationJobHandle = jobHandle;
+                        m_HasBeforePresentationJob = true;
+
+                        break;
+                    case 1:
+                        if (m_HasOnPresentationJob)
+                        {
+                            m_OnPresentationJobHandle = JobHandle.CombineDependencies(m_OnPresentationJobHandle, jobHandle);
+
+                            break;
+                        }
+
+                        m_OnPresentationJobHandle = jobHandle;
+                        m_HasOnPresentationJob = true;
+
+                        break;
+                    case 2:
+                        if (m_HasAfterPresentationJob)
+                        {
+                            m_AfterPresentationJobHandle = JobHandle.CombineDependencies(m_AfterPresentationJobHandle, jobHandle);
+
+                            break;
+                        }
+
+                        m_AfterPresentationJobHandle = jobHandle;
+                        m_HasAfterPresentationJob = true;
+
+                        break;
+                    case 3:
+                        if (m_HasTransformJob)
+                        {
+                            m_TransformJobHandle = JobHandle.CombineDependencies(m_TransformJobHandle, jobHandle);
+
+                            break;
+                        }
+
+                        m_TransformJobHandle = jobHandle;
+                        m_HasTransformJob = true;
+
+                        break;
+                    case 4:
+                        if (m_HasAfterTransformJob)
+                        {
+                            m_AfterTransformJobHandle = JobHandle.CombineDependencies(m_AfterTransformJobHandle, jobHandle);
+
+                            break;
+                        }
+
+                        m_AfterTransformJobHandle = jobHandle;
+                        m_HasAfterTransformJob = true;
+                        break;
+                }
             }
 
             #endregion
@@ -362,7 +437,11 @@ namespace Syadeu.Presentation
                     // Unity Jobs
                     using (m_BeforePreJobMarker.Auto())
                     {
-                        m_BeforePresentationJobHandle.Complete();
+                        if (m_HasBeforePresentationJob)
+                        {
+                            m_BeforePresentationJobHandle.Complete();
+                            m_HasBeforePresentationJob = false;
+                        }
                     }
 
                     for (int i = 0; i < m_BeforePresentations.Count; i++)
@@ -375,6 +454,8 @@ namespace Syadeu.Presentation
                     }
 
                     BeforePresentationModules();
+
+                    JobHandle.ScheduleBatchedJobs();
 
                     m_MainthreadBeforePre = true;
                 }
@@ -437,7 +518,11 @@ namespace Syadeu.Presentation
                     // Unity Jobs
                     using (m_OnPreJobMarker.Auto())
                     {
-                        m_OnPresentationJobHandle.Complete();
+                        if (m_HasOnPresentationJob)
+                        {
+                            m_OnPresentationJobHandle.Complete();
+                            m_HasOnPresentationJob = false;
+                        }
                     }
 
                     for (int i = 0; i < m_OnPresentations.Count; i++)
@@ -450,6 +535,8 @@ namespace Syadeu.Presentation
                     }
 
                     OnPresentationModules();
+
+                    JobHandle.ScheduleBatchedJobs();
 
                     m_MainthreadOnPre = true;
                 }
@@ -512,7 +599,11 @@ namespace Syadeu.Presentation
                     // Unity Jobs
                     using (m_AfterPreJobMarker.Auto())
                     {
-                        m_AfterPresentationJobHandle.Complete();
+                        if (m_HasAfterPresentationJob)
+                        {
+                            m_AfterPresentationJobHandle.Complete();
+                            m_HasAfterPresentationJob = false;
+                        }
                     }
 
                     for (int i = 0; i < m_AfterPresentations.Count; i++)
@@ -525,6 +616,8 @@ namespace Syadeu.Presentation
                     }
 
                     AfterPresentationModules();
+
+                    JobHandle.ScheduleBatchedJobs();
 
                     m_MainthreadAfterPre = true;
                 }
@@ -577,6 +670,39 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
+            }
+
+            public void TransformPresentation()
+            {
+                if (m_HasTransformJob)
+                {
+                    m_TransformJobHandle.Complete();
+                    m_HasTransformJob = false;
+                }
+
+                for (int i = 0; i < m_TransformPresentations.Count; i++)
+                {
+                    PresentationResult result = m_TransformPresentations[i].TransformPresentation();
+                    LogMessage(result);
+                }
+
+                JobHandle.ScheduleBatchedJobs();
+            }
+            public void AfterTransformPresentation()
+            {
+                if (m_HasAfterTransformJob)
+                {
+                    m_AfterTransformJobHandle.Complete();
+                    m_HasAfterTransformJob = false;
+                }
+
+                for (int i = 0; i < m_AfterTransformPresentations.Count; i++)
+                {
+                    PresentationResult result = m_AfterTransformPresentations[i].AfterTransformPresentation();
+                    LogMessage(result);
+                }
+
+                JobHandle.ScheduleBatchedJobs();
             }
 
             #endregion
@@ -762,6 +888,9 @@ namespace Syadeu.Presentation
                     UpdateAsync -= item.Value.OnPresentationAsync;
                     AfterUpdate -= item.Value.AfterPresentation;
                     AfterUpdateAsync -= item.Value.AfterPresentationAsync;
+
+                    TransformUpdate -= item.Value.TransformPresentation;
+                    AfterTransformUpdate -= item.Value.AfterTransformPresentation;
 
                     item.Value.Reset();
                 }
@@ -1204,11 +1333,12 @@ namespace Syadeu.Presentation
             Instance.Update -= group.OnPresentation;
             Instance.AfterUpdate -= group.AfterPresentation;
 
-            //Instance.StopUnityUpdate(group.MainPresentation);
-            //Instance.StopBackgroundUpdate(group.BackgroundPresentation);
             Instance.BeforeUpdateAsync -= group.BeforePresentationAsync;
             Instance.UpdateAsync -= group.OnPresentationAsync;
             Instance.AfterUpdateAsync -= group.AfterPresentationAsync;
+
+            TransformUpdate -= group.TransformPresentation;
+            AfterTransformUpdate -= group.AfterTransformPresentation;
 
             group.Reset();
 
@@ -1415,6 +1545,8 @@ namespace Syadeu.Presentation
             Instance.BeforeUpdate += group.BeforePresentation;
             Instance.Update += group.OnPresentation;
             Instance.AfterUpdate += group.AfterPresentation;
+            Instance.TransformUpdate += group.TransformPresentation;
+            Instance.AfterTransformUpdate += group.AfterTransformPresentation;
         }
         private static IEnumerator PresentationAsync(Group group)
         {

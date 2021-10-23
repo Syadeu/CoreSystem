@@ -39,19 +39,21 @@ namespace Syadeu.Presentation.Entities
             }
         }
         [JsonIgnore] public bool Stopped => m_Stopped;
+        [JsonIgnore] public FXBounds.PlayOptions PlayOptions => m_PlayOptions;
 
-        public void SetPlayOptions(FXBounds.PlayOptions playOptions)
+        protected override void OnReserve()
         {
-            m_PlayOptions = playOptions;
-            Setup(m_ParticleSystem);
+            m_PlayQueued = false;
+            m_Stopped = false;
         }
         public void Play()
         {
+            m_PlayQueued = true;
             if (m_ParticleSystem == null)
             {
-                m_PlayQueued = true;
                 return;
             }
+            Setup(m_ParticleSystem);
 
             m_ParticleSystem.Play();
 
@@ -113,12 +115,20 @@ namespace Syadeu.Presentation.Entities
         }
     }
     internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
-        IEntityOnProxyCreated
+        IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         protected override void OnCreated(FXEntity entity)
         {
             ((ProxyTransform)entity.transform).enableCull = false;
         }
+        //protected override void OnDestroy(FXEntity entity)
+        //{
+        //    if (entity.transform.hasProxy)
+        //    {
+        //        RecycleableMonobehaviour monoObj = (RecycleableMonobehaviour)entity.transform.proxy;
+        //        monoObj.RemoveOnParticleStoppedEvent(OnParticleStopped);
+        //    }
+        //}
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
             FXEntity fx = (FXEntity)entityBase;
@@ -142,8 +152,10 @@ namespace Syadeu.Presentation.Entities
             monoObj.RemoveOnParticleStoppedEvent(OnParticleStopped);
         }
 
-        private void OnParticleStopped(Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
+        private static void OnParticleStopped(Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
+            if (!entity.IsValid()) return;
+
             FXEntity fx = (FXEntity)entity.Target;
             fx.m_Stopped = true;
         }

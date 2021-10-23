@@ -200,6 +200,7 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
+        UnityEngine.Object ITransform.proxy => proxy;
         IProxyMonobehaviour IProxyTransform.proxy => proxy;
         public RecycleableMonobehaviour proxy
         {
