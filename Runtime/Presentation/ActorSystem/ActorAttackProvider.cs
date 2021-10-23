@@ -33,6 +33,10 @@ namespace Syadeu.Presentation.Actor
                     $"Entity({entity.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
             }
         }
+        protected override void OnReserve()
+        {
+            m_StatAttribute = null;
+        }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
             if (ev is ActorAttackEvent attackEvent)
@@ -103,7 +107,7 @@ namespace Syadeu.Presentation.Actor
                 isFailed |= !m_OnAttack[i].Execute(Parent, target);
             }
 
-            if (isFailed)
+            if (!isFailed)
             {
                 currentWeaponIns.GetObject().FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target.GetEntity<ActorEntity>(), component.WeaponDamage);

@@ -267,6 +267,15 @@ namespace Syadeu.Presentation.Actor
                     targetPosition = tr.position;
                     targetRotation = tr.rotation;
                 }
+                else if (animator == null)
+                {
+                    var tr = entity.transform;
+                    targetPosition = tr.position;
+                    targetRotation = tr.rotation;
+
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"This entity({entity.RawName}) use bone for weapon but doesn\'t have {nameof(AnimatorAttribute)}.");
+                }
                 else
                 {
                     var tr = animator.AnimatorComponent.Animator.GetBoneTransform(attachedBone);

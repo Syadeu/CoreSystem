@@ -32,6 +32,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnCreated(Entity<ActorEntity> entity)
         {
+            base.OnCreated(entity);
+
             entity.AddComponent<TRPGActorAttackComponent>();
             ref var com = ref entity.GetComponent<TRPGActorAttackComponent>();
 
@@ -45,6 +47,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnReserve()
         {
+            base.OnReserve();
+
             m_TempGetRange.Clear();
         }
         protected override void OnDestroy()
@@ -98,6 +102,10 @@ namespace Syadeu.Presentation.TurnTable
                     foreach (var target in iter)
                     {
                         if (Parent.Idx.Equals(target)) continue;
+                        else if (!target.GetEntityData<IEntityData>().HasComponent<TurnPlayerComponent>())
+                        {
+                            continue;
+                        }
 
                         att.m_Targets.Add(target);
                     }
@@ -111,6 +119,12 @@ namespace Syadeu.Presentation.TurnTable
         {
             ActorAttackEvent ev = new ActorAttackEvent(target);
             ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+        }
+        public void Attack(int index)
+        {
+            ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
+
+            Attack(att.m_Targets[0].GetEntity<ActorEntity>());
         }
     }
 }

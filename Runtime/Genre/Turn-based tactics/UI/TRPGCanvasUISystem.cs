@@ -289,7 +289,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private void TRPGFireUIPressedEventHandler(TRPGFireUIPressedEvent ev)
         {
-            //m_TurnTableSystem.cu
+            m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
+                .GetProvider<TRPGActorAttackProvider>().GetObject().Attack(0);
         }
 
         #endregion

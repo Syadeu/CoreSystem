@@ -33,7 +33,18 @@ namespace Syadeu.Presentation.Actor
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
         public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
-        public Instance<ActorWeaponData> SelectedWeapon => m_EquipedWeapons[m_SelectedWeaponIndex];
+        public Instance<ActorWeaponData> SelectedWeapon
+        {
+            get
+            {
+                if (m_EquipedWeapons.Length == 0 || m_SelectedWeaponIndex >= m_EquipedWeapons.Length)
+                {
+                    return Instance<ActorWeaponData>.Empty;
+                }
+
+                return m_EquipedWeapons[m_SelectedWeaponIndex];
+            }
+        }
         public int Selected => m_SelectedWeaponIndex;
         public int Equiped => m_EquipedWeapons.Length;
         public bool Holster
