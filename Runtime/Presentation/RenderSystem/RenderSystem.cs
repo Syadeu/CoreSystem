@@ -16,6 +16,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 #if CORESYSTEM_URP
 using UnityEngine.Rendering.Universal;
@@ -107,8 +108,11 @@ namespace Syadeu.Presentation.Render
             m_Camera = new ObClass<Camera>(ObValueDetection.Changed);
             m_Camera.OnValueChange += OnCameraChangedHandler;
 
-            CoreSystem.Instance.OnRender -= Instance_OnRender;
-            CoreSystem.Instance.OnRender += Instance_OnRender;
+            //CoreSystem.Instance.OnRender -= Instance_OnRender;
+            //CoreSystem.Instance.OnRender += Instance_OnRender;
+
+            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
+            RenderPipelineManager.beginCameraRendering += Instance_OnRender;
 
             m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
             m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
@@ -118,7 +122,8 @@ namespace Syadeu.Presentation.Render
         public override void OnDispose()
         {
             m_Camera.OnValueChange -= OnCameraChangedHandler;
-            CoreSystem.Instance.OnRender -= Instance_OnRender;
+            //CoreSystem.Instance.OnRender -= Instance_OnRender;
+            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
 
             m_CameraFrustum.Dispose();
         }
@@ -148,7 +153,7 @@ namespace Syadeu.Presentation.Render
             }
 #endif
         }
-        private void Instance_OnRender()
+        private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
             OnRender?.Invoke();
         }
