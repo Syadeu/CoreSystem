@@ -185,6 +185,7 @@ namespace SyadeuEditor
                 CORESYSTEM_DOTWEEN = "CORESYSTEM_DOTWEEN",
                 CORESYSTEM_MOTIONMATCHING = "CORESYSTEM_MOTIONMATCHING",
                 CORESYSTEM_BEHAVIORTREE = "CORESYSTEM_BEHAVIORTREE",
+                CORESYSTEM_SHAPES = "CORESYSTEM_SHAPES",
                 CORESYSTEM_FMOD = "CORESYSTEM_FMOD";
             bool
                 m_DefinedCollectionsChecks, 
@@ -195,6 +196,7 @@ namespace SyadeuEditor
                 m_DefinedDotween,
                 m_DefinedMotionMatching,
                 m_DefinedBehaviorTree,
+                m_DefinedShapes,
                 m_DefinedFMOD;
             List<string> m_DefinedConstraints;
 
@@ -244,6 +246,7 @@ namespace SyadeuEditor
                 m_DefinedDotween = HasConstrains(CORESYSTEM_DOTWEEN);
                 m_DefinedMotionMatching = HasConstrains(CORESYSTEM_MOTIONMATCHING);
                 m_DefinedBehaviorTree = HasConstrains(CORESYSTEM_BEHAVIORTREE);
+                m_DefinedShapes = HasConstrains(CORESYSTEM_SHAPES);
                 m_DefinedFMOD = HasConstrains(CORESYSTEM_FMOD);
 
                 #endregion
@@ -334,104 +337,52 @@ namespace SyadeuEditor
 
             private void DrawContraints()
             {
-                m_OpenContraints = EditorUtilities.Foldout(m_OpenContraints, "Constrains");
+                m_OpenContraints = EditorUtilities.Foldout(m_OpenContraints, "Constraints");
                 if (!m_OpenContraints) return;
 
                 EditorGUI.indentLevel++;
 
                 EditorUtilities.StringRich("Unity Constraints", 13);
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedCollectionsChecks
-                        = EditorGUILayout.ToggleLeft("Define ENABLE_UNITY_COLLECTIONS_CHECKS", m_DefinedCollectionsChecks);
 
-                    if (check.changed)
-                    {
-                        if (m_DefinedCollectionsChecks) DefineConstraints(UNITY_COLLECTIONS_CHECKS);
-                        else UndefineContraints(UNITY_COLLECTIONS_CHECKS);
-                    }
-                }
+                DrawConstraint(ref m_DefinedCollectionsChecks, UNITY_COLLECTIONS_CHECKS);
 
                 EditorGUILayout.Space();
                 EditorUtilities.Line();
 
                 EditorUtilities.StringRich("CoreSystem Constraints", 13);
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedCoresystemChecks =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_DISABLE_CHECKS", m_DefinedCoresystemChecks);
 
-                    if (check.changed)
-                    {
-                        if (m_DefinedCoresystemChecks) DefineConstraints(CORESYSTEM_DISABLE_CHECKS);
-                        else UndefineContraints(CORESYSTEM_DISABLE_CHECKS);
-                    }
-                }
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedTurnBasedSystem =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_TURNBASESYSTEM", m_DefinedTurnBasedSystem);
-
-                    if (check.changed)
-                    {
-                        if (m_DefinedTurnBasedSystem) DefineConstraints(CORESYSTEM_TURNBASESYSTEM);
-                        else UndefineContraints(CORESYSTEM_TURNBASESYSTEM);
-                    }
-                }
+                DrawConstraint(ref m_DefinedCoresystemChecks, CORESYSTEM_DISABLE_CHECKS);
+                DrawConstraint(ref m_DefinedTurnBasedSystem, CORESYSTEM_TURNBASESYSTEM);
 
                 EditorGUILayout.Space();
                 EditorUtilities.Line();
 
                 EditorUtilities.StringRich("Third Party Constraints", 13);
-
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedFMOD =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_FMOD", m_DefinedFMOD);
-
-                    if (check.changed)
-                    {
-                        if (m_DefinedFMOD) DefineConstraints(CORESYSTEM_FMOD);
-                        else UndefineContraints(CORESYSTEM_FMOD);
-                    }
-                }
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedDotween =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_DOTWEEN", m_DefinedDotween);
-
-                    if (check.changed)
-                    {
-                        if (m_DefinedDotween) DefineConstraints(CORESYSTEM_DOTWEEN);
-                        else UndefineContraints(CORESYSTEM_DOTWEEN);
-                    }
-                }
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedMotionMatching =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_MOTIONMATCHING", m_DefinedMotionMatching);
-
-                    if (check.changed)
-                    {
-                        if (m_DefinedMotionMatching) DefineConstraints(CORESYSTEM_MOTIONMATCHING);
-                        else UndefineContraints(CORESYSTEM_MOTIONMATCHING);
-                    }
-                }
-                using (var check = new EditorGUI.ChangeCheckScope())
-                {
-                    m_DefinedBehaviorTree =
-                        EditorGUILayout.ToggleLeft("Define CORESYSTEM_BEHAVIORTREE", m_DefinedBehaviorTree);
-
-                    if (check.changed)
-                    {
-                        if (m_DefinedBehaviorTree) DefineConstraints(CORESYSTEM_BEHAVIORTREE);
-                        else UndefineContraints(CORESYSTEM_BEHAVIORTREE);
-                    }
-                }
+                
+                DrawConstraint(ref m_DefinedFMOD, CORESYSTEM_FMOD);
+                DrawConstraint(ref m_DefinedDotween, CORESYSTEM_DOTWEEN);
+                DrawConstraint(ref m_DefinedMotionMatching, CORESYSTEM_MOTIONMATCHING);
+                DrawConstraint(ref m_DefinedShapes, CORESYSTEM_SHAPES);
+                DrawConstraint(ref m_DefinedBehaviorTree, CORESYSTEM_BEHAVIORTREE);
 
                 EditorGUI.indentLevel--;
             }
 
+            private void DrawConstraint(ref bool defined, in string constString)
+            {
+                const string c_Label = "Define {0}";
+                using (var check = new EditorGUI.ChangeCheckScope())
+                {
+                    defined =
+                        EditorGUILayout.ToggleLeft(string.Format(c_Label, constString), defined);
+
+                    if (check.changed)
+                    {
+                        if (defined) DefineConstraints(constString);
+                        else UndefineContraints(constString);
+                    }
+                }
+            }
             private bool HasConstrains(string name) => m_DefinedConstraints.Contains(name);
             private void DefineConstraints(params string[] names)
             {

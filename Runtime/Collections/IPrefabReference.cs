@@ -5,7 +5,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Collections
 {
-    [JsonConverter(typeof(PrefabReferenceJsonConvereter))]
+    [JsonConverter(typeof(PrefabReferenceJsonConverter))]
     public interface IPrefabReference : IEquatable<IPrefabReference>, IValidation
     {
         long Index { get; }

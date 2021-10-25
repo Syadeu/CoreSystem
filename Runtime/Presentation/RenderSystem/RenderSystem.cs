@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Render
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
 
         public event Action<Camera, Camera> OnCameraChanged;
-        public event Action OnRender;
+        public event Action<ScriptableRenderContext, Camera> OnRender;
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
@@ -155,7 +155,12 @@ namespace Syadeu.Presentation.Render
         }
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
-            OnRender?.Invoke();
+#if CORESYSTEM_SHAPES
+            using (Shapes.Draw.Command(cam))
+#endif
+            {
+                OnRender?.Invoke(ctx, cam);
+            }
         }
 
         protected override PresentationResult BeforePresentation()

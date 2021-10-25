@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-
+using UnityEngine.Rendering;
 using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
@@ -128,7 +128,7 @@ namespace Syadeu.Presentation
 
             m_RenderSystem.OnRender += M_RenderSystem_OnRender;
         }
-        private void M_RenderSystem_OnRender()
+        private void M_RenderSystem_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
             if (!m_DrawBounds || m_RenderSystem.Camera == null) return;
 

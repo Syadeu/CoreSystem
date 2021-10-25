@@ -399,7 +399,7 @@ namespace Syadeu.Presentation.Map
 
         public void DrawGridGL(float thinkness) => DrawGridGL(Grid, thinkness);
         public void DrawOccupiedCells(int[] gridEntities) => DrawOccupiedCells(Grid, gridEntities);
-        public void DrawOccupiedCells(NativeArray<int> gridEntities) => DrawOccupiedCells(Grid, gridEntities);
+        public void DrawOccupiedCells(in NativeArray<int> gridEntities) => DrawOccupiedCells(Grid, in gridEntities);
 
         static void DrawGridGL(BinaryGrid grid, float thickness)
         {
@@ -467,12 +467,16 @@ namespace Syadeu.Presentation.Map
                 GL.Vertex(p4);
             }
         }
-        static void DrawOccupiedCells(BinaryGrid grid, NativeArray<int> gridEntities)
+        static void DrawOccupiedCells(in BinaryGrid grid, in NativeArray<int> gridEntities)
         {
             float sizeHalf = grid.cellSize * .5f;
 
             for (int i = 0; i < gridEntities.Length; i++)
             {
+#if CORESYSTEM_SHAPES
+                Vector3 cellPos = grid.IndexToPosition(gridEntities[i]);
+                Shapes.Draw.Rectangle(cellPos + new Vector3(0, .05f, 0), Vector3.up, new Vector2(grid.cellSize, grid.cellSize), Color.red);
+#else
                 Vector3
                         cellPos = grid.IndexToPosition(gridEntities[i]),
                         p1 = new Vector3(cellPos.x - sizeHalf, cellPos.y + .1f, cellPos.z - sizeHalf),
@@ -484,6 +488,7 @@ namespace Syadeu.Presentation.Map
                 GL.Vertex(p2);
                 GL.Vertex(p3);
                 GL.Vertex(p4);
+#endif
             }
         }
         static void DrawCell(BinaryGrid grid, in int index)
@@ -502,7 +507,7 @@ namespace Syadeu.Presentation.Map
             GL.Vertex(p4);
         }
 
-        #endregion
+#endregion
     }
     [Preserve]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>

@@ -19,6 +19,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Syadeu.Presentation.Map
 {
@@ -288,7 +289,7 @@ namespace Syadeu.Presentation.Map
             }, "draw", "grid");
         }
 
-        private void M_RenderSystem_OnRender()
+        private void M_RenderSystem_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
             if (m_DrawGrid && m_MainGrid != null)
             {
@@ -312,17 +313,6 @@ namespace Syadeu.Presentation.Map
                 var gridEntities = m_GridEntities.GetKeyArray(AllocatorManager.Temp);
                 m_MainGrid.DrawOccupiedCells(gridEntities);
                 gridEntities.Dispose();
-
-                //GL.Color(Color.black);
-                //var temp = m_EntityGridIndices.Keys.ToArray();
-                //for (int i = 0; i < temp.Length; i++)
-                //{
-                //    var indices = GetRange(m_EntityGridIndices[temp[i]][0], 6);
-                //    foreach (var item in indices)
-                //    {
-                //        DrawCell(m_MainGrid.Value.Grid, item);
-                //    }
-                //}
 
                 GL.End();
                 GL.PopMatrix();

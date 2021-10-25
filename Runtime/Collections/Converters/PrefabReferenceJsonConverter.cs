@@ -8,7 +8,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Collections.Converters
 {
     [Preserve]
-    internal sealed class PrefabReferenceJsonConvereter : JsonConverter<IPrefabReference>
+    internal sealed class PrefabReferenceJsonConverter : JsonConverter<IPrefabReference>
     {
         //private ConstructorInfo m_Constructor;
         private Type[] m_ConstructorParam;
@@ -16,7 +16,7 @@ namespace Syadeu.Collections.Converters
         public override bool CanRead => true;
         public override bool CanWrite => true;
 
-        public PrefabReferenceJsonConvereter() : base()
+        public PrefabReferenceJsonConverter() : base()
         {
             m_ConstructorParam = new Type[] { typeof(long) };
         }
