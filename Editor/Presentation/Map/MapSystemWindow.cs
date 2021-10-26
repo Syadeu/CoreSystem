@@ -113,7 +113,7 @@ namespace SyadeuEditor.Presentation.Map
                         ResetSceneData();
                     }
                 }
-                ReflectionHelperEditor.DrawReferenceSelector("Scene data: ", (hash) =>
+                ReferenceDrawer.DrawReferenceSelector("Scene data: ", (hash) =>
                 {
                     if (hash.Equals(Hash.Empty))
                     {
@@ -1045,7 +1045,7 @@ namespace SyadeuEditor.Presentation.Map
 
         private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntityBase>> setter)
         {
-            ReflectionHelperEditor.DrawReferenceSelector("Map data: ", (hash) =>
+            ReferenceDrawer.DrawReferenceSelector("Map data: ", (hash) =>
             {
                 if (hash.Equals(Hash.Empty))
                 {

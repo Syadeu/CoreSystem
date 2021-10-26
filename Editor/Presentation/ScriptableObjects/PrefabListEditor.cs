@@ -8,12 +8,10 @@ using System.Linq;
 using System;
 using SyadeuEditor.Presentation;
 
-#if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
-#endif
 
 namespace SyadeuEditor
 {
