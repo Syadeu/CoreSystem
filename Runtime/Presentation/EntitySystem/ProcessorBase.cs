@@ -49,7 +49,7 @@ namespace Syadeu.Presentation
                 return m_EntitySystem.m_DataContainerSystem;
             }
         }
-        private GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
+        internal GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
 
         [Obsolete]
         protected void RequestSystem<TSystem>(Action<TSystem> setter

@@ -77,7 +77,6 @@ namespace Syadeu.Presentation.Entities
 
                     Parent = proxy
                 });
-                "firing fx".ToLog();
             }
             else
             {

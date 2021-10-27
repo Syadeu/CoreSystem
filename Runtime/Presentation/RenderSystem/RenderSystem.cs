@@ -575,6 +575,11 @@ namespace Syadeu.Presentation.Render
             m_SceneSystem = other;
         }
 
+        protected override void TransformPresentation()
+        {
+
+        }
+
         public ProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
         {
             Camera cam;
@@ -615,9 +620,10 @@ namespace Syadeu.Presentation.Render
             cam.targetTexture = renderTexture;
             projector.material = mat;
 
-            return new ProjectionCamera(this, cam, projector);
+            var main = new ProjectionCamera(this, cam, projector);
+            return main;
         }
-        internal void ReserveProjectionCamere(Camera cam)
+        internal void ReserveProjectionCamere(ProjectionCamera main, Camera cam)
         {
             cam.gameObject.SetActive(false);
             m_UnusedProjectionCameras.Push(cam);
@@ -656,7 +662,7 @@ namespace Syadeu.Presentation.Render
         }
         public void Dispose()
         {
-            m_Module.ReserveProjectionCamere(m_Camera);
+            m_Module.ReserveProjectionCamere(this, m_Camera);
 
             m_Module = null;
             m_Camera = null;

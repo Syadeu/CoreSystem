@@ -172,7 +172,6 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!IsValid())
             {
-                "not valid return".ToLog();
                 return;
             }
 

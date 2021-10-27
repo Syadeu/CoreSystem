@@ -1,5 +1,6 @@
 ﻿using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Mono;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
@@ -40,6 +41,7 @@ namespace SyadeuEditor.Presentation.Map
 
         private MapData m_SelectedMapData = null;
         private MapDataEntityBase.Object[] m_SelectedObjects = null;
+        private MapDataEntityBase.RawObject[] m_SelectedRawObjects = null;
         private GameObject[] m_SelectedGameObjects = null;
 
         private bool m_WasEditedMapDataSelector = false;
@@ -58,8 +60,24 @@ namespace SyadeuEditor.Presentation.Map
 
             for (int i = 0; i < m_LoadedMapData.Count; i++)
             {
-                MapDataEntityBase.Object temp = m_LoadedMapData[i][target];
-                if (temp != null)
+                if (m_LoadedMapData[i][target] != null &&
+                    m_LoadedMapData[i][target] is MapDataEntityBase.Object temp)
+                {
+                    mapData = m_LoadedMapData[i];
+                    return temp;
+                }
+            }
+            return null;
+        }
+        private MapDataEntityBase.RawObject GetRawMapDataObject(GameObject target, out MapData mapData)
+        {
+            mapData = null;
+            if (target == null) return null;
+
+            for (int i = 0; i < m_LoadedMapData.Count; i++)
+            {
+                if (m_LoadedMapData[i][target] != null &&
+                    m_LoadedMapData[i][target] is MapDataEntityBase.RawObject temp)
                 {
                     mapData = m_LoadedMapData[i];
                     return temp;
@@ -70,42 +88,92 @@ namespace SyadeuEditor.Presentation.Map
 
         public void SelectObject(GameObject obj)
         {
+            m_SelectedObjects = null;
+            m_SelectedRawObjects = null;
+            m_SelectedGameObjects = null;
+
             if (obj == null)
             {
-                m_SelectedObjects = null;
-                m_SelectedGameObjects = null;
                 return;
             }
 
-            m_SelectedObjects = new MapDataEntityBase.Object[1];
-            m_SelectedObjects[0] = GetMapDataObject(obj, out m_SelectedMapData);
-            m_SelectedMapData.SetDirty();
+            var entityObj = GetMapDataObject(obj, out m_SelectedMapData);
+            if (entityObj != null)
+            {
+                m_SelectedObjects = new MapDataEntityBase.Object[1];
+                m_SelectedObjects[0] = entityObj;
+                m_SelectedMapData.SetDirty();
 
-            m_SelectedGameObjects = m_SelectedObjects == null ? null : new GameObject[] { obj };
-            Selection.activeGameObject = m_SelectedGameObjects[0];
+                m_SelectedGameObjects = new GameObject[] { obj };
+                Selection.activeGameObject = m_SelectedGameObjects[0];
+                return;
+            }
+
+            var rawObj = GetRawMapDataObject(obj, out m_SelectedMapData);
+            if (rawObj != null)
+            {
+                m_SelectedRawObjects = new MapDataEntityBase.RawObject[1];
+                m_SelectedRawObjects[0] = rawObj;
+                m_SelectedMapData.SetDirty();
+
+                m_SelectedGameObjects = new GameObject[] { obj };
+                Selection.activeGameObject = m_SelectedGameObjects[0];
+                return;
+            }
+
+            m_SelectedGameObjects = null;
+            Selection.activeGameObject = null;
         }
         public void SelectObjects(GameObject[] obj)
         {
+            m_SelectedObjects = null;
+            m_SelectedRawObjects = null;
+            m_SelectedGameObjects = null;
+
             if (obj == null)
             {
-                m_SelectedObjects = null;
-                m_SelectedGameObjects = null;
                 return;
             }
 
-            m_SelectedObjects = new MapDataEntityBase.Object[obj.Length];
+            List<GameObject> gameObjects = new List<GameObject>();
+            List<MapDataEntityBase.Object> entityObjs = new List<MapDataEntityBase.Object>();
+            List<MapDataEntityBase.RawObject> rawObjs = new List<MapDataEntityBase.RawObject>();
             for (int i = 0; i < obj.Length; i++)
             {
-                m_SelectedObjects[i] = GetMapDataObject(obj[i], out m_SelectedMapData);
-                if (m_SelectedMapData != null)
+                var entityObj = GetMapDataObject(obj[i], out m_SelectedMapData);
+                if (entityObj != null)
                 {
+                    gameObjects.Add(obj[i]);
+                    entityObjs.Add(entityObj);
+
+                    m_SelectedMapData.SetDirty();
+                    continue;
+                }
+
+                var rawObj = GetRawMapDataObject(obj[i], out m_SelectedMapData);
+                if (rawObj != null)
+                {
+                    gameObjects.Add(obj[i]);
+                    rawObjs.Add(rawObj);
+
                     m_SelectedMapData.SetDirty();
                 }
             }
 
-            //m_SelectedObjects = GetMapDataObject(obj, out m_SelectedMapData);
-            m_SelectedGameObjects = m_SelectedObjects == null ? null : obj;
-            //Selection.gameObjects = m_SelectedGameObjects;
+            m_SelectedObjects = entityObjs.ToArray();
+            m_SelectedRawObjects = rawObjs.ToArray();
+
+            //m_SelectedObjects = new MapDataEntityBase.Object[obj.Length];
+            //for (int i = 0; i < obj.Length; i++)
+            //{
+            //    m_SelectedObjects[i] = GetMapDataObject(obj[i], out m_SelectedMapData);
+            //    if (m_SelectedMapData != null)
+            //    {
+            //        m_SelectedMapData.SetDirty();
+            //    }
+            //}
+
+            m_SelectedGameObjects = gameObjects.Count == 0 ? null : gameObjects.ToArray();
         }
 
         public void OnGUI()
@@ -356,34 +424,88 @@ namespace SyadeuEditor.Presentation.Map
 
                         var list = EntityDataList.Instance.m_Objects.Where((other) => other.Value is EntityBase).Select((other) => (EntityBase)other.Value).ToArray();
 
-                        PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
+                        GenericMenu menu = new GenericMenu();
+                        menu.AddItem(new GUIContent("Raw"), false, () =>
+                        {
+                            PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow
                             (
-                            list: list,
-                            setter: (hash) =>
-                            {
-                                if (hash.IsEmpty())
+                                list: PrefabList.Instance.ObjectSettings,
+                                setter: (prefabIdx) =>
                                 {
-                                    return;
-                                }
+                                    if (prefabIdx < 0)
+                                    {
+                                        return;
+                                    }
 
-                                Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
-                                MapDataEntityBase.Object obj = new MapDataEntityBase.Object
+                                    PrefabReference<GameObject> refobj = new PrefabReference<GameObject>(prefabIdx);
+                                    GameObject asset = (GameObject)refobj.GetEditorAsset();
+                                    var renderers = asset.GetComponentsInChildren<Renderer>();
+                                    Bounds bounds = renderers[0].bounds;
+                                    for (int i = 1; i < renderers.Length; i++)
+                                    {
+                                        bounds.Encapsulate(renderers[i].bounds);
+                                    }
+
+                                    MapDataEntityBase.RawObject obj = new MapDataEntityBase.RawObject
+                                    {
+                                        m_Object = refobj,
+                                        m_Translation = pos,
+                                        m_Rotation = quaternion.identity,
+                                        m_Scale = 1,
+
+                                        m_Center = bounds.center,
+                                        m_Size = bounds.size
+                                    };
+
+                                    //m_SelectedGameObject = m_EditingMapData.Add(obj);
+                                    //m_SelectedObject = GetMapDataObject(m_SelectedGameObject, out m_SelectedMapData);
+                                    SelectObject(m_EditingMapData.Add(obj));
+                                    m_WasEditedMapDataSelector = true;
+                                    //Repaint();
+                                },
+                                getter: (objSet) =>
                                 {
-                                    m_Object = refobj,
-                                    m_Translation = pos,
-                                    m_Rotation = quaternion.identity,
-                                    m_Scale = 1
-                                };
+                                    for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                                    {
+                                        if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                                    }
+                                    return -1;
+                                },
+                                noneValue: -2
+                                ));
+                        });
+                        menu.AddItem(new GUIContent("Entity"), false, () =>
+                        {
+                            PopupWindow.Show(rect, SelectorPopup<Hash, EntityBase>.GetWindow
+                            (
+                                list: list,
+                                setter: (hash) =>
+                                {
+                                    if (hash.IsEmpty())
+                                    {
+                                        return;
+                                    }
 
-                                //m_SelectedGameObject = m_EditingMapData.Add(obj);
-                                //m_SelectedObject = GetMapDataObject(m_SelectedGameObject, out m_SelectedMapData);
-                                SelectObject(m_EditingMapData.Add(obj));
-                                m_WasEditedMapDataSelector = true;
-                                //Repaint();
-                            },
-                            getter: (other) => other.Hash,
-                            noneValue: Hash.Empty
-                            ));
+                                    Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
+                                    MapDataEntityBase.Object obj = new MapDataEntityBase.Object
+                                    {
+                                        m_Object = refobj,
+                                        m_Translation = pos,
+                                        m_Rotation = quaternion.identity,
+                                        m_Scale = 1
+                                    };
+
+                                    //m_SelectedGameObject = m_EditingMapData.Add(obj);
+                                    //m_SelectedObject = GetMapDataObject(m_SelectedGameObject, out m_SelectedMapData);
+                                    SelectObject(m_EditingMapData.Add(obj));
+                                    m_WasEditedMapDataSelector = true;
+                                    //Repaint();
+                                },
+                                getter: (other) => other.Hash,
+                                noneValue: Hash.Empty
+                                ));
+                        });
+                        menu.ShowAsContext();
 
                         #endregion
 
@@ -406,38 +528,21 @@ namespace SyadeuEditor.Presentation.Map
 
             #endregion
 
-            if (m_SelectedObjects != null)
+            for (int i = 0; i < m_SelectedGameObjects?.Length; i++)
             {
-                for (int i = 0; i < m_SelectedObjects?.Length; i++)
+                var entityObj = GetMapDataObject(m_SelectedGameObjects[i], out _);
+                if (entityObj != null)
                 {
-                    if (m_SelectedObjects[i] == null) continue;
+                    DrawSelectedObject(entityObj, m_SelectedGameObjects[i]);
+                    continue;
+                }
 
-                    DrawSelectedObject(m_SelectedObjects[i], m_SelectedGameObjects[i]);
+                var rawObj = GetRawMapDataObject(m_SelectedGameObjects[i], out _);
+                if (rawObj != null)
+                {
+                    DrawSelectedRawObject(rawObj, m_SelectedGameObjects[i]);
                 }
             }
-
-            //#region GL Draw All previews
-
-            //if (m_SelectedObject == null)
-            //{
-            //    Color temp = Color.white;
-            //    temp.a = .5f;
-            //    Handles.color = temp;
-
-            //    for (int i = 0; i < m_CreatedObjects.Count; i++)
-            //    {
-            //        MapDataEntityBase.Object obj = GetMapDataObject(m_CreatedObjects[i], out _);
-
-            //        Vector2 pos = HandleUtility.WorldToGUIPoint(obj.m_Translation);
-            //        if (!obj.m_Object.IsValid() ||
-            //            !EditorSceneUtils.IsDrawable(pos)) continue;
-
-            //        AABB aabb = obj.aabb;
-            //        Handles.DrawWireCube(aabb.center, aabb.size);
-            //    }
-            //}
-
-            //#endregion
         }
         public void Dispose()
         {
@@ -528,6 +633,81 @@ namespace SyadeuEditor.Presentation.Map
             Handles.color = Color.red;
             Handles.DrawWireCube(selectAabb.center, selectAabb.size);
         }
+        private void DrawSelectedRawObject(MapDataEntityBase.RawObject obj, GameObject proxy)
+        {
+            const float width = 180;
+            PrefabList.ObjectSetting prefabSetting = obj.m_Object.GetObjectSetting();
+            if (prefabSetting == null)
+            {
+                Handles.BeginGUI();
+                Rect tempRect = new Rect(HandleUtility.WorldToGUIPoint(obj.m_Translation), new Vector2(width, 60));
+                GUI.BeginGroup(tempRect, "INVALID", EditorStyleUtilities.Box);
+
+                if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
+                {
+                    m_SelectedMapData.Remove(proxy);
+
+                    m_SelectedGameObjects = null;
+                    m_SelectedMapData = null;
+                    m_SelectedRawObjects = null;
+                }
+
+                GUI.EndGroup();
+                Handles.EndGUI();
+                return;
+            }
+
+            AABB selectAabb = obj.aabb;
+
+            #region Scene GUI Overlays
+
+            Vector3 worldPos = selectAabb.center; worldPos.y = selectAabb.max.y;
+            Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
+
+            if (guiPos.x + width > Screen.width) guiPos.x = Screen.width - width;
+            else
+            {
+                guiPos.x += 50;
+            }
+            Rect rect = new Rect(guiPos, new Vector2(width, 60));
+
+            Handles.BeginGUI();
+            string objName = $"{(prefabSetting.Name != null ? $"{prefabSetting.Name}" : "None")}";
+            GUI.BeginGroup(rect, objName, EditorStyleUtilities.Box);
+
+            #region Proxy Copy
+
+            obj.m_Translation = proxy.transform.position;
+            obj.m_Rotation = proxy.transform.rotation;
+            obj.m_Scale = proxy.transform.localScale;
+
+            obj.m_Static = proxy.isStatic;
+
+            #endregion
+
+            if (GUI.Button(GUILayoutUtility.GetRect(width, 20, GUILayout.ExpandWidth(false)), "Remove"))
+            {
+                if (EditorUtility.DisplayDialog($"Remove ({objName})", "Are you sure?", "Remove", "Cancel"))
+                {
+                    m_SelectedMapData.Remove(proxy);
+
+                    m_SelectedGameObjects = null;
+                    m_SelectedMapData = null;
+                    m_SelectedObjects = null;
+
+                    //Repaint();
+                }
+            }
+            GUI.EndGroup();
+            Handles.EndGUI();
+
+            #endregion
+
+            if (m_SelectedObjects == null) return;
+
+            Handles.color = Color.red;
+            Handles.DrawWireCube(selectAabb.center, selectAabb.size);
+        }
 
         private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntityBase>> setter)
         {
@@ -550,31 +730,42 @@ namespace SyadeuEditor.Presentation.Map
 
             private readonly Transform m_Folder = null;
             private readonly MapDataEntityBase m_MapData;
-            private readonly List<MapDataEntityBase.Object> m_MapDataObjects;
+            private readonly Dictionary<MapDataEntityBase.Object, GameObject> m_MapDataObjects = new Dictionary<MapDataEntityBase.Object, GameObject>();
+            private readonly Dictionary<MapDataEntityBase.RawObject, GameObject> m_MapDataRawObjects = new Dictionary<MapDataEntityBase.RawObject, GameObject>();
 
             private readonly List<GameObject> m_CreatedObjects = new List<GameObject>();
+
             private readonly Dictionary<GameObject, MapDataEntityBase.Object> m_Dictionary = new Dictionary<GameObject, MapDataEntityBase.Object>();
+            private readonly Dictionary<GameObject, MapDataEntityBase.RawObject> m_RawDictionary = new Dictionary<GameObject, MapDataEntityBase.RawObject>();
 
             public bool IsDirty { get; private set; } = false;
             public IReadOnlyList<GameObject> CreatedObjects => m_CreatedObjects;
             public MapDataEntityBase Entity => m_MapData;
 
-            public MapDataEntityBase.Object this[GameObject i]
+            public object this[GameObject i]
             {
                 get
                 {
-                    if (!m_Dictionary.TryGetValue(i, out MapDataEntityBase.Object obj)) return null;
-                    return obj;
+                    if (m_Dictionary.TryGetValue(i, out MapDataEntityBase.Object obj)) return obj;
+                    else if (m_RawDictionary.TryGetValue(i, out var data)) return data;
+
+                    return null;
                 }
             }
             public GameObject this[MapDataEntityBase.Object i]
             {
                 get
                 {
-                    if (!m_MapDataObjects.Contains(i)) return null;
-
-                    int idx = m_MapDataObjects.IndexOf(i);
-                    return m_CreatedObjects[idx];
+                    if (m_MapDataObjects.TryGetValue(i, out var data)) return data;
+                    return null;
+                }
+            }
+            public GameObject this[MapDataEntityBase.RawObject i]
+            {
+                get
+                {
+                    if (m_MapDataRawObjects.TryGetValue(i, out var data)) return data;
+                    return null;
                 }
             }
 
@@ -585,13 +776,24 @@ namespace SyadeuEditor.Presentation.Map
                 m_Folder = new GameObject(m_MapData.Name).transform;
                 m_Folder.SetParent(parent);
 
-                m_MapDataObjects = m_MapData.m_Objects.ToList();
-                for (int i = 0; i < m_MapDataObjects.Count; i++)
+                var dataList = m_MapData.m_Objects.ToList();
+                for (int i = 0; i < dataList.Count; i++)
                 {
-                    GameObject obj = InstantiateObject(m_Folder, m_MapDataObjects[i]);
+                    GameObject obj = InstantiateObject(m_Folder, dataList[i]);
 
                     m_CreatedObjects.Add(obj);
-                    m_Dictionary.Add(obj, m_MapDataObjects[i]);
+                    m_Dictionary.Add(obj, dataList[i]);
+                    m_MapDataObjects.Add(dataList[i], obj);
+                }
+
+                var rawDataList = m_MapData.m_RawObjects.ToList();
+                for (int i = 0; i < rawDataList.Count; i++)
+                {
+                    GameObject obj = InstantiateObject(m_Folder, rawDataList[i]);
+
+                    m_CreatedObjects.Add(obj);
+                    m_RawDictionary.Add(obj, rawDataList[i]);
+                    m_MapDataRawObjects.Add(rawDataList[i], obj);
                 }
             }
 
@@ -601,12 +803,26 @@ namespace SyadeuEditor.Presentation.Map
             {
                 GameObject obj = InstantiateObject(m_Folder, target);
 
-                m_MapDataObjects.Add(target);
+                m_MapDataObjects.Add(target, obj);
 
                 m_CreatedObjects.Add(obj);
                 m_Dictionary.Add(obj, target);
 
-                m_MapData.m_Objects = m_MapDataObjects.ToArray();
+                m_MapData.m_Objects = m_MapDataObjects.Keys.ToArray();
+                IsDirty = true;
+
+                return obj;
+            }
+            public GameObject Add(MapDataEntityBase.RawObject target)
+            {
+                GameObject obj = InstantiateObject(m_Folder, target);
+
+                m_MapDataRawObjects.Add(target, obj);
+
+                m_CreatedObjects.Add(obj);
+                m_RawDictionary.Add(obj, target);
+
+                m_MapData.m_RawObjects = m_MapDataRawObjects.Keys.ToArray();
                 IsDirty = true;
 
                 return obj;
@@ -620,18 +836,27 @@ namespace SyadeuEditor.Presentation.Map
             }
             public void Remove(GameObject target)
             {
-                if (!m_Dictionary.TryGetValue(target, out MapDataEntityBase.Object data))
+                if (m_Dictionary.TryGetValue(target, out MapDataEntityBase.Object data))
                 {
-                    return;
+                    m_MapDataObjects.Remove(data);
+
+                    m_CreatedObjects.Remove(target);
+                    m_Dictionary.Remove(target);
+
+                    UnityEngine.Object.DestroyImmediate(target);
+                    m_MapData.m_Objects = m_MapDataObjects.Keys.ToArray();
                 }
+                else if (m_RawDictionary.TryGetValue(target, out var rawData))
+                {
+                    m_MapDataRawObjects.Remove(rawData);
 
-                m_MapDataObjects.Remove(data);
+                    m_CreatedObjects.Remove(target);
+                    m_RawDictionary.Remove(target);
 
-                m_CreatedObjects.Remove(target);
-                m_Dictionary.Remove(target);
-
-                UnityEngine.Object.DestroyImmediate(target);
-                m_MapData.m_Objects = m_MapDataObjects.ToArray();
+                    UnityEngine.Object.DestroyImmediate(target);
+                    m_MapData.m_RawObjects = m_MapDataRawObjects.Keys.ToArray();
+                }
+                
                 IsDirty = true;
             }
 
@@ -642,6 +867,47 @@ namespace SyadeuEditor.Presentation.Map
                 IsDirty = true;
             }
 
+            private static GameObject InstantiateObject(Transform parent, MapDataEntityBase.RawObject target)
+            {
+                GameObject obj;
+                if (target.m_Object.IsNone() ||
+                    !target.m_Object.IsValid())
+                {
+                    obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    obj.transform.SetParent(parent);
+                }
+                else
+                {
+                    var temp = target.m_Object.GetEditorAsset();
+                    if (!(temp is GameObject gameObj))
+                    {
+                        obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        obj.transform.SetParent(parent);
+                    }
+                    else
+                    {
+                        obj = (GameObject)PrefabUtility.InstantiatePrefab(gameObj, parent);
+                    }
+                    //
+                }
+
+                //obj.tag = c_EditorOnly;
+                //obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+
+                Transform tr = obj.transform;
+
+                tr.position = target.m_Translation;
+                tr.rotation = target.m_Rotation;
+                tr.localScale = target.m_Scale;
+
+                //obj.isStatic = target.m_Static;
+                if (target.m_Static)
+                {
+                    SetStaticRecursive(obj);
+                }
+
+                return obj;
+            }
             private static GameObject InstantiateObject(Transform parent, MapDataEntityBase.Object target)
             {
                 GameObject obj;
@@ -683,21 +949,20 @@ namespace SyadeuEditor.Presentation.Map
                 }
 
                 return obj;
-
-                void SetStaticRecursive(GameObject obj)
+            }
+            private static void SetStaticRecursive(GameObject obj)
+            {
+                for (int i = 0; i < obj.transform.childCount; i++)
                 {
-                    for (int i = 0; i < obj.transform.childCount; i++)
+                    if (obj.transform.GetChild(i).childCount > 0)
                     {
-                        if (obj.transform.GetChild(i).childCount > 0)
-                        {
-                            SetStaticRecursive(obj.transform.GetChild(i).gameObject);
-                        }
-
-                        obj.transform.GetChild(i).gameObject.isStatic = true;
+                        SetStaticRecursive(obj.transform.GetChild(i).gameObject);
                     }
 
-                    obj.isStatic = true;
+                    obj.transform.GetChild(i).gameObject.isStatic = true;
                 }
+
+                obj.isStatic = true;
             }
 
             public void Dispose()

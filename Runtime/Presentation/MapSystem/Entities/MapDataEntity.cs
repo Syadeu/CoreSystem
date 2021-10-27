@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using Syadeu.ThreadSafe;
 using System.ComponentModel;
 using UnityEngine.Scripting;
@@ -13,6 +14,7 @@ namespace Syadeu.Presentation.Map
     public sealed class MapDataEntity : MapDataEntityBase
     {
         [JsonIgnore] public Entity<EntityBase>[] CreatedEntities { get; internal set; }
+        [JsonIgnore] public ProxyTransform[] CreatedRawObjects { get; internal set; }
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
         public override bool IsValid() => true;
@@ -61,6 +63,22 @@ namespace Syadeu.Presentation.Map
 
                 entity.CreatedEntities[i] = CreateEntity(entity.m_Objects[i].m_Object, entity.m_Objects[i].m_Translation, entity.m_Objects[i].m_Rotation, entity.m_Objects[i].m_Scale);
             }
+
+            entity.CreatedRawObjects = new ProxyTransform[entity.m_RawObjects.Length];
+            for (int i = 0; i < entity.m_RawObjects.Length; i++)
+            {
+                if (entity.m_RawObjects[i].m_Object.IsNone() ||
+                    !entity.m_RawObjects[i].m_Object.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Cannot spawn map object in [{entity.Name}] element at {i} raw object is not valid.");
+
+                    continue;
+                }
+
+                entity.CreatedRawObjects[i] = ProxySystem.CreateNewPrefab(entity.m_RawObjects[i].m_Object, entity.m_RawObjects[i].m_Translation, entity.m_RawObjects[i].m_Rotation, entity.m_RawObjects[i].m_Scale, true,
+                    entity.m_RawObjects[i].m_Center, entity.m_RawObjects[i].m_Size, true);
+            }
         }
         protected override void OnDestroy(MapDataEntity entity)
         {
@@ -73,6 +91,14 @@ namespace Syadeu.Presentation.Map
                 }
             }
             entity.CreatedEntities = null;
+
+            for (int i = 0; i < entity.CreatedRawObjects.Length; i++)
+            {
+                if (!entity.CreatedRawObjects[i].isDestroyed)
+                {
+                    entity.CreatedRawObjects[i].Destroy();
+                }
+            }
         }
     }
 }

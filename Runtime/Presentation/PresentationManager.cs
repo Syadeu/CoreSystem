@@ -686,7 +686,27 @@ namespace Syadeu.Presentation
                     LogMessage(result);
                 }
 
+                TransformPresentationModules();
+
                 JobHandle.ScheduleBatchedJobs();
+            }
+            private void TransformPresentationModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalTransformPresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
             public void AfterTransformPresentation()
             {
@@ -702,7 +722,27 @@ namespace Syadeu.Presentation
                     LogMessage(result);
                 }
 
+                AfterTransformPresentationModules();
+
                 JobHandle.ScheduleBatchedJobs();
+            }
+            private void AfterTransformPresentationModules()
+            {
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
+                    for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                    {
+                        try
+                        {
+                            m_Systems[i].m_Modules[j].InternalAfterTransformPresentation();
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Presentation,
+                                ex);
+                        }
+                    }
+                }
             }
 
             #endregion

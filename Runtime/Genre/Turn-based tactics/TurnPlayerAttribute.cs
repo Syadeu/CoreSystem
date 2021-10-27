@@ -19,7 +19,6 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Attribute: Turn Player")]
-    [AttributeAcceptOnly(typeof(ActorEntity))]
     public sealed class TurnPlayerAttribute : AttributeBase,
         INotifyComponent<TurnPlayerComponent>
     {
@@ -106,6 +105,11 @@ namespace Syadeu.Presentation.TurnTable
         private void ActorStateChangedEventHandler(ActorStateAttribute att, 
             ActorStateAttribute.StateInfo from, ActorStateAttribute.StateInfo to)
         {
+            if ((to & ActorStateAttribute.StateInfo.Dead) == ActorStateAttribute.StateInfo.Dead)
+            {
+                m_TurnTableSystem.RemovePlayer(att.Parent);
+            }
+
             ActorFaction faction = ((ActorEntity)att.ParentEntity).Faction;
             if (faction.FactionType != FactionType.Player)
             {

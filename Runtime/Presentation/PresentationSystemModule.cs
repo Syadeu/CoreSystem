@@ -36,6 +36,9 @@ namespace Syadeu.Presentation
         internal void InternalAfterPresentation() => AfterPresentation();
         internal void InternalAfterPresentationAsync() => AfterPresentationAsync();
 
+        internal void InternalTransformPresentation() => TransformPresentation();
+        internal void InternalAfterTransformPresentation() => AfterTransformPresentation();
+
         internal PresentationSystemModule()
         {
 
@@ -64,6 +67,9 @@ namespace Syadeu.Presentation
 
         protected virtual void AfterPresentation() { }
         protected virtual void AfterPresentationAsync() { }
+
+        protected virtual void TransformPresentation() { }
+        protected virtual void AfterTransformPresentation() { }
 
         protected virtual void OnDispose() { }
 
