@@ -161,7 +161,7 @@ namespace SyadeuEditor.Presentation
                     {
                         menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                         {
-                            if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
 
                             EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
                         });

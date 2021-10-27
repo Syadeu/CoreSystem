@@ -8,8 +8,8 @@ namespace SyadeuEditor
     {
         public static Camera SceneCam => SceneView.lastActiveSceneView.camera;
 
-        internal static Color SceneGUIBackgroundColor = new Color32(29, 20, 45, 100);
-        internal static Rect sceneRect = new Rect(0f, 0f, 0f, 0f);
+        public static Color SceneGUIBackgroundColor = new Color32(29, 20, 45, 100);
+        public static Rect sceneRect = new Rect(0f, 0f, 0f, 0f);
 
         static GUIContent _guiContent = null;
 

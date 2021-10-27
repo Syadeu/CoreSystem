@@ -1,8 +1,5 @@
 ﻿using System.ComponentModel;
-
-#if UNITY_ADDRESSABLES
 using UnityEditor.AddressableAssets.Settings;
-#endif
 
 namespace SyadeuEditor
 {

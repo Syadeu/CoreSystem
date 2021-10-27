@@ -97,7 +97,7 @@ namespace SyadeuEditor.Presentation
                     }
 
                     idx = i;
-                    ReflectionHelperEditor.DrawAttributeSelector(null, (attHash) =>
+                    DrawAttributeSelector(null, (attHash) =>
                     {
                         currentValue[idx] = new Reference<AttributeBase>(attHash);
 
@@ -178,7 +178,159 @@ namespace SyadeuEditor.Presentation
 
             return currentValue;
         }
+        public static void DrawAttributeSelector(string name, Action<Hash> setter, Hash current, Type entityType)
+        {
+            GUIContent displayName;
+            EntityDataList.Instance.m_Objects.TryGetValue(current, out var attVal);
+            //AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(current);
+            AttributeBase att = attVal == null ? null : (AttributeBase)attVal;
+            if (current.Equals(Hash.Empty)) displayName = new GUIContent("None");
+            else if (att == null) displayName = new GUIContent("Attribute Not Found");
+            else displayName = new GUIContent(att.Name);
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUI.indentLevel * 15);
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                GUILayout.Label(name);
+            }
+
+            Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
+            int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+
+            switch (Event.current.GetTypeForControl(selectorID))
+            {
+                case EventType.Repaint:
+                    bool isHover = fieldRect.Contains(Event.current.mousePosition);
+
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, isHover, isActive: true, on: true, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
+
+                    Event.current.Use();
+
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (att != null)
+                    {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{att.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.m_DataListWindow.Select(new FixedReference(att.Hash));
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+
+                    menu.ShowAsContext();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition) ||
+                        Event.current.button != 0) break;
+
+                    EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
+                    if (acceptOnly != null && (
+                        acceptOnly.AttributeTypes == null ||
+                        acceptOnly.AttributeTypes.Length == 0))
+                    {
+                        throw new Exception($"entity({entityType.Name}) has null attribute accepts");
+                    }
+
+                    Rect tempRect = GUILayoutUtility.GetLastRect();
+                    tempRect.position = Event.current.mousePosition;
+
+                    var atts = EntityDataList.Instance.GetData<AttributeBase>()
+                        .Where((other) =>
+                        {
+                            Type attType = other.GetType();
+                            bool attCheck = false;
+                            if (acceptOnly != null)
+                            {
+                                for (int i = 0; i < acceptOnly.AttributeTypes.Length; i++)
+                                {
+                                    if (acceptOnly.AttributeTypes[i].IsAssignableFrom(attType))
+                                    {
+                                        attCheck = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            else attCheck = true;
+
+                            if (!attCheck) return false;
+                            attCheck = false;
+
+                            AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
+                            if (requireEntity == null) return true;
+
+                            if (requireEntity.Types == null || requireEntity.Types.Length == 0)
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                for (int i = 0; i < requireEntity.Types.Length; i++)
+                                {
+                                    if (requireEntity.Types[i].IsAssignableFrom(entityType))
+                                    {
+                                        attCheck = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!attCheck) return false;
+                            return true;
+                        })
+                        .ToArray();
+
+                    Event.current.Use();
+
+                    PopupWindow.Show(tempRect,
+                        SelectorPopup<Hash, AttributeBase>.GetWindow(atts, setter, (att) =>
+                        {
+                            return att.Hash;
+                        }, Hash.Empty)
+                        );
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        Event.current.Use();
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            //if (GUILayout.Button(displayName, SelectorStyle, GUILayout.ExpandWidth(true)))
+            //{
+            //    EntityAcceptOnlyAttribute acceptOnly = entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
+            //    if (acceptOnly != null && (
+            //        acceptOnly.AttributeTypes == null || 
+            //        acceptOnly.AttributeTypes.Length == 0))
+            //    {
+            //        throw new Exception($"entity({entityType.Name}) has null attribute accepts");
+            //    }
+
+
+            //}
+
+            GUILayout.EndHorizontal();
+        }
     }
     //[EditorTool("TestTool", typeof(EntityWindow))]
     //public sealed class TestTool : EditorTool
