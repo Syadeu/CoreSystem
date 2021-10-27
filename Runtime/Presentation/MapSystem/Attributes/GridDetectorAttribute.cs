@@ -36,6 +36,10 @@ namespace Syadeu.Presentation.Map
         internal Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]
         internal LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
+        [Tooltip("발견한 Entity 가 범위를 벗어났을때, " +
+            "True 를 반환하면 바로 제거하고 아닐 경우 계속 탐지에 넣습니다.")]
+        [JsonProperty(Order = 6, PropertyName = "DetectRemoveCondition")]
+        internal Reference<TriggerPredicateAction>[] m_DetectRemoveCondition = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] internal GridSizeAttribute m_GridSize = null;
@@ -82,6 +86,7 @@ namespace Syadeu.Presentation.Map
 
                 m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
                 m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
+                m_DetectRemoveCondition = attribute.m_DetectRemoveCondition.ToFixedList64(),
 
                 m_Detected = new FixedList512Bytes<EntityShortID>(),
                 m_TargetedBy = new FixedList512Bytes<EntityShortID>()

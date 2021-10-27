@@ -18,6 +18,7 @@ namespace Syadeu.Presentation.Map
         internal bool m_TriggerOnlyInverse;
 
         internal FixedReferenceList64<TriggerPredicateAction> m_OnDetectedPredicate;
+        internal FixedReferenceList64<TriggerPredicateAction> m_DetectRemoveCondition;
         internal FixedLogicTriggerAction8 m_OnDetected;
 
         /// <summary>

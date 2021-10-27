@@ -132,6 +132,10 @@ namespace Syadeu.Presentation.Map
                     //"already detect".ToLog();
                     continue;
                 }
+                else if (detector.m_DetectRemoveCondition.Execute(entity.As<IEntity, IEntityData>(), out bool predicate) && predicate)
+                {
+                    continue;
+                }
 
                 EntityID targetID = detector.m_Detected[i].GetEntityID();
                 Entity<IEntity> target = targetID.GetEntity<IEntity>();
@@ -252,6 +256,12 @@ namespace Syadeu.Presentation.Map
                 {
                     continue;
                 }
+                var detectorEntity = detectorID.GetEntityData<IEntityData>();
+                ref var detector = ref detectorEntity.GetComponent<GridDetectorComponent>();
+                if (detector.m_DetectRemoveCondition.Execute(detectorEntity, out bool predicate) && predicate)
+                {
+                    continue;
+                }
 
                 if (entityHasDetector)
                 {
@@ -264,7 +274,6 @@ namespace Syadeu.Presentation.Map
                     }
                 }
 
-                ref var detector = ref detectorID.GetEntity<IEntity>().GetComponent<GridDetectorComponent>();
                 detector.m_Detected.Remove(myShortID);
 
                 if (postEvent)

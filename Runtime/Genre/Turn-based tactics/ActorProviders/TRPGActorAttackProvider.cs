@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
@@ -17,17 +18,13 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGActorAttackProvider : ActorAttackProvider,
         INotifyComponent<TRPGActorAttackComponent>
     {
-        //[JsonProperty(Order = 0, PropertyName = "AttackRange")] private int m_AttackRange = 1;
-        [Tooltip("GridDetector 가 있으면 이 값은 무시됩니다.")]
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
         [JsonProperty(Order = 2, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
 
         [JsonIgnore] private NativeList<int> m_TempGetRange;
-        [JsonIgnore] private GridSystem m_GridSystem;
 
         protected override void OnCreated()
         {
-            m_GridSystem = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
         }
         protected override void OnCreated(Entity<ActorEntity> entity)
@@ -54,30 +51,15 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnDestroy()
         {
             m_TempGetRange.Dispose();
-
-            m_GridSystem = null;
         }
 
         public FixedList512Bytes<EntityID> GetTargetsInRange()
         {
-            //if (Parent.HasComponent<GridDetectorComponent>())
-            //{
-            //    var temp = Parent.GetComponentReadOnly<GridDetectorComponent>();
-            //    FixedList512Bytes<EntityID> list = new FixedList512Bytes<EntityID>();
-            //    for (int i = 0; i < temp.Detected.Length; i++)
-            //    {
-            //        list.Add(temp.Detected[i].GetEntityID());
-            //    }
+            int
+                weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range),
+                searchRange = Parent.GetComponent<TRPGActorAttackComponent>().m_SearchRange;
 
-            //    ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
-            //    att.m_Targets = list;
-
-            //    return list;
-            //}
-            //else
-            {
-                return GetTargetsWithin(Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range));
-            }
+            return GetTargetsWithin(math.max(weaponRange, searchRange));
         }
         public FixedList512Bytes<EntityID> GetTargetsWithin(in int range)
         {
@@ -97,7 +79,7 @@ namespace Syadeu.Presentation.TurnTable
 
             for (int i = 0; i < m_TempGetRange.Length; i++)
             {
-                if (m_GridSystem.GetEntitiesAt(m_TempGetRange[i], out var iter))
+                if (PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetEntitiesAt(m_TempGetRange[i], out var iter))
                 {
                     foreach (var target in iter)
                     {
@@ -124,7 +106,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
-            Attack(att.m_Targets[0].GetEntity<ActorEntity>());
+            Attack(att.m_Targets[index].GetEntity<ActorEntity>());
         }
     }
 }
