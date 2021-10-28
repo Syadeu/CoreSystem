@@ -20,6 +20,7 @@ namespace Syadeu.Presentation.Actions
             "만약 100 보다 낮으면 해당 값의 확률로 선택된 TriggerAction 의 실행 여부를 결정합니다.\n" +
             "값은 0 ~ 100 까지 입니다.")]
         [JsonProperty(Order = 1, PropertyName = "RandomPossbbility")]
+        [Range(0, 100)]
         private int m_RandomPossiblity = 100;
 
         protected override void OnExecute(EntityData<IEntityData> entity)

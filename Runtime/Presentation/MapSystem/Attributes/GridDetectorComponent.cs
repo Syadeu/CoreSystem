@@ -57,6 +57,8 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < m_TargetedBy.Length; i++)
             {
                 var target = m_TargetedBy[i].GetEntityID().GetEntity<IEntity>();
+                if (!target.HasComponent<GridDetectorComponent>()) continue;
+
                 ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
 
                 targetDetector.m_Detected.Remove(m_MyShortID);

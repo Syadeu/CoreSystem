@@ -391,7 +391,14 @@ namespace Syadeu.Presentation.Map
 
             public void Dispose()
             {
-                //m_Positions.Dispose();
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+
+                agent.m_Direction = 0;
+                agent.m_IsMoving = false;
+
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnMoveStateChangedEvent.GetEvent(m_Entity.As<IEntityData, IEntity>(),
+                    OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
+                agent.m_OnMoveActions.Execute(m_Entity);
             }
             private void SetPreviousPosition(float3 pos)
             {
@@ -570,12 +577,7 @@ namespace Syadeu.Presentation.Map
                 } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
                         navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
 
-                SetIsMoving(false);
                 agent.ResetPath();
-
-                eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(entity, 
-                    OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
-                navAgent.m_OnMoveActions.Execute(m_Entity);
             }
         }
 

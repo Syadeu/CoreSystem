@@ -375,7 +375,7 @@ namespace Syadeu.Presentation.Map
 
                 if (target.Hash.Equals(temp))
                 {
-                    return detector.m_TriggerOnlyInverse;
+                    return !detector.m_TriggerOnlyInverse;
                 }
             }
             return false;

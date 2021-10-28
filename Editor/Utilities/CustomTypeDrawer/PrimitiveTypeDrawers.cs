@@ -39,10 +39,12 @@ namespace SyadeuEditor.Utilities
     public sealed class IntDrawer : ObjectDrawer<int>
     {
         private bool m_DrawName;
+        private RangeAttribute m_RangeAttribute;
 
         public IntDrawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
         {
             m_DrawName = drawName;
+            m_RangeAttribute = memberInfo.GetCustomAttribute<RangeAttribute>();
         }
 
         public IntDrawer(object parentObject, Type declaredType, Action<int> setter, Func<int> getter) : base(parentObject, declaredType, setter, getter)
@@ -51,6 +53,13 @@ namespace SyadeuEditor.Utilities
 
         public override int Draw(int currentValue)
         {
+            if (m_RangeAttribute != null)
+            {
+                if (m_DrawName) return EditorGUILayout.IntSlider(Name, currentValue, (int)m_RangeAttribute.min, (int)m_RangeAttribute.max);
+
+                return EditorGUILayout.IntSlider(currentValue, (int)m_RangeAttribute.min, (int)m_RangeAttribute.max);
+            }
+
             if (m_DrawName) return EditorGUILayout.IntField(Name, currentValue);
             return EditorGUILayout.IntField(currentValue);
         }
@@ -77,10 +86,12 @@ namespace SyadeuEditor.Utilities
     public sealed class FloatDrawer : ObjectDrawer<float>
     {
         private bool m_DrawName;
+        private RangeAttribute m_RangeAttribute;
 
         public FloatDrawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
         {
             m_DrawName = drawName;
+            m_RangeAttribute = memberInfo.GetCustomAttribute<RangeAttribute>();
         }
 
         public FloatDrawer(object parentObject, Type declaredType, Action<float> setter, Func<float> getter) : base(parentObject, declaredType, setter, getter)
@@ -89,6 +100,13 @@ namespace SyadeuEditor.Utilities
 
         public override float Draw(float currentValue)
         {
+            if (m_RangeAttribute != null)
+            {
+                if (m_DrawName) return EditorGUILayout.Slider(Name, currentValue, m_RangeAttribute.min, m_RangeAttribute.max);
+
+                return EditorGUILayout.Slider(currentValue, m_RangeAttribute.min, m_RangeAttribute.max);
+            }
+
             if (m_DrawName) return EditorGUILayout.FloatField(Name, currentValue);
             return EditorGUILayout.FloatField(currentValue);
         }

@@ -1,0 +1,24 @@
+{
+    "name": "SyadeuEditor.BehaviorTree",
+    "rootNamespace": "SyadeuEditor.BehaviorTree",
+    "references": [
+        "GUID:1d81797f34a5ed74a9c8ae22ffe9a072",
+        "GUID:a35cecc1c26b8eb43b1fcdad25ac3741",
+        "GUID:149e342d6a09fc340831dce824fb8bae",
+        "GUID:8bc3a2c31d86c324ba5c080d1b72889b",
+        "GUID:bb32cf4f552f1234aa061fc0e6d8b75c"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "CORESYSTEM_BEHAVIORTREE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

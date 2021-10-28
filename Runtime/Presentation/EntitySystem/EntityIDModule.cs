@@ -56,12 +56,6 @@ namespace Syadeu.Presentation
             m_EntityConversions.Add(shortID, id);
             m_EntityShortConversions.Add(id, shortID);
 
-            if (!m_EntityConversions.ContainsKey(shortID))
-            {
-                "??".ToLogError();
-            }
-            else "converted".ToLog();
-
             return shortID;
         }
         public EntityID Convert(EntityShortID id)

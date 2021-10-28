@@ -53,6 +53,13 @@ namespace Syadeu.Presentation.Map
 
         public GridLayer GetLayer(in int index)
         {
+            if (m_Grid == null || m_Grid.m_Layers.Length <= index)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Grid layer({index}) not found.");
+                return GridLayer.Empty;
+            }
+
             int hash = unchecked(index * 397 ^ m_Grid.m_HashCode);
             bool inverse = m_Grid.m_Layers[index].m_Inverse;
 
@@ -60,6 +67,13 @@ namespace Syadeu.Presentation.Map
         }
         public GridLayerChain GetLayerChain(params int[] indices)
         {
+            if (m_Grid == null || m_Grid.m_Layers.Length == 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Grid layer not found.");
+                return GridLayerChain.Empty;
+            }
+
             if (indices.Length == 0) return GridLayerChain.Empty;
             GridLayerChain chain;
 
