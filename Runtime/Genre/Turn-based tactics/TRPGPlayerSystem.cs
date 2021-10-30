@@ -32,12 +32,15 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly HashSet<EntityData<IEntityData>> m_InBattlePlayerFaction = new HashSet<EntityData<IEntityData>>();
 
+        
+
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
+        private InputSystem m_InputSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
@@ -52,9 +55,9 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
-            //RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
 
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGGridSystem>(Bind);
@@ -73,9 +76,9 @@ namespace Syadeu.Presentation.TurnTable
             m_CoroutineSystem = null;
             m_NavMeshSystem = null;
             m_EventSystem = null;
-            //m_InputSystem = null;
             m_EntityRaycastSystem = null;
             m_WorldCanvasSystem = null;
+            m_InputSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
@@ -104,6 +107,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(WorldCanvasSystem other)
         {
             m_WorldCanvasSystem = other;
+        }
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
         }
 
         private void Bind(EntityRaycastSystem other)
@@ -135,6 +142,8 @@ namespace Syadeu.Presentation.TurnTable
 
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
+            
+
             m_TRPGCanvasUISystem.SetPlayerUI(false);
 
             return base.OnStartPresentation();
@@ -148,12 +157,17 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TurnTableSystem.NextTurn();
         }
+
+
         private void OnTurnStateChangedEventHandler(OnTurnStateChangedEvent ev)
         {
             ActorFactionComponent faction = ev.Entity.GetComponent<ActorFactionComponent>();
-            if (faction.FactionType != FactionType.Player || ev.State != OnTurnStateChangedEvent.TurnState.Start) return;
+            if (faction.FactionType != FactionType.Player) return;
 
-            m_TRPGCanvasUISystem.SetPlayerUI(true);
+            if (ev.State != OnTurnStateChangedEvent.TurnState.Start)
+            {
+                m_TRPGCanvasUISystem.SetPlayerUI(true);
+            }
         }
 
         private void OnPlayerFactionStateChangedEventHandler(OnPlayerFactionStateChangedEvent ev)

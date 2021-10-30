@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #endif
             if (Entity.GetComponentReadOnly<TRPGActorAttackComponent>().TargetCount > 0)
             {
-                $"has target {Entity.GetComponentReadOnly<TRPGActorAttackComponent>().m_Targets[0].GetEntity<IEntity>().Name}".ToLog();
+                $"has target {Entity.GetComponentReadOnly<TRPGActorAttackComponent>().GetTargetAt(0).GetEntity<IEntity>().Name}".ToLog();
                 return TaskStatus.Success;
             }
 

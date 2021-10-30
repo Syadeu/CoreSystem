@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            var targetPos = att.m_Targets[0].GetEntity<IEntity>().GetComponentReadOnly<GridSizeComponent>().positions;
+            var targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridSizeComponent>().positions;
 
             FixedList4096Bytes<int> list = new FixedList4096Bytes<int>();
             GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();

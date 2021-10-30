@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Events;
 
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
@@ -140,6 +141,8 @@ namespace Syadeu.Presentation
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
+        private EventSystem m_EventSystem;
+
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
         {
@@ -161,6 +164,8 @@ namespace Syadeu.Presentation
             }
 
             PresentationManager.Instance.PostUpdate += Instance_PostUpdate;
+
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
 
@@ -233,6 +238,13 @@ namespace Syadeu.Presentation
         public override void OnDispose()
         {
             PresentationManager.Instance.PostUpdate -= Instance_PostUpdate;
+
+            m_EventSystem = null;
+        }
+
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
         }
 
         private void Instance_PostUpdate()
@@ -422,6 +434,8 @@ namespace Syadeu.Presentation
 
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
+            m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Loading));
+
             if (m_SceneInstanceFolder != null)
             {
                 UnityEngine.Object.Destroy(m_SceneInstanceFolder.gameObject);
@@ -477,6 +491,16 @@ namespace Syadeu.Presentation
                     m_AsyncOperation = null;
                     OnLoadingExit?.Invoke();
                     m_LoadingEnabled = false;
+
+                    if (IsStartScene)
+                    {
+                        m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Main));
+                    }
+                    else
+                    {
+                        m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Game));
+                    }
+
                     CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
                 }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
             }

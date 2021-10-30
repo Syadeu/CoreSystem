@@ -42,6 +42,11 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly UpdateTransform[] m_AimTarget = new UpdateTransform[2];
 
+        public float RotationDegree
+        {
+            get => m_RotationDegree;
+            set => m_RotationDegree = value;
+        }
         public TRPGCameraState State { get; private set; } = TRPGCameraState.Normal;
         public float2 AxisVelocity
         {

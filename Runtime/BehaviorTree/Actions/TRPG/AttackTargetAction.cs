@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #endif
 
             var att = Entity.GetComponent<TRPGActorAttackComponent>();
-            if (att.m_Targets.Length == 0) return TaskStatus.Failure;
+            if (att.TargetCount == 0) return TaskStatus.Failure;
 
             var ctr = Entity.GetComponent<ActorControllerComponent>();
 #if DEBUG_MODE
@@ -66,52 +66,22 @@ namespace Syadeu.Presentation.BehaviorTree
 #endif
             var attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
 
-            Comparer comparer = new Comparer(Entity.transform.position);
-            var iter = att.m_Targets.OrderBy(Order, comparer);
-
             switch (m_AttackOptions)
             {
                 default:
                 case AttackOptions.Closest:
-                    attProvider.GetObject().Attack(iter.First().GetEntity<ActorEntity>());
+                    attProvider.GetObject().Attack(att.GetTargetAt(0).GetEntity<ActorEntity>());
                     break;
                 case AttackOptions.Distant:
-                    attProvider.GetObject().Attack(iter.Last().GetEntity<ActorEntity>());
+                    attProvider.GetObject().Attack(att.GetTargetAt(att.TargetCount - 1).GetEntity<ActorEntity>());
                     break;
                 case AttackOptions.Middle:
-                    int index = iter.Count() / 2;
-                    attProvider.GetObject().Attack(iter.ElementAt(index).GetEntity<ActorEntity>());
+                    int index = att.TargetCount / 2;
+                    attProvider.GetObject().Attack(att.GetTargetAt(index).GetEntity<ActorEntity>());
                     break;
             }
 
             return TaskStatus.Success;
-        }
-
-        private static ITransform Order(EntityID id)
-        {
-            return id.GetEntity<IEntity>().transform;
-        }
-        private struct Comparer : IComparer<ITransform>
-        {
-            public float3 myPos;
-
-            public Comparer(float3 center)
-            {
-                myPos = center;
-            }
-            public int Compare(ITransform x, ITransform y)
-            {
-                float3
-                    tempX = x.position - myPos,
-                    tempY = y.position - myPos;
-                float
-                    xMag = math.dot(tempX, tempX),
-                    yMag = math.dot(tempY, tempY);
-
-                if (xMag < yMag) return -1;
-                else if (xMag == yMag) return 0;
-                return 1;
-            }
         }
     }
 #endif

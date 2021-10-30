@@ -145,6 +145,15 @@ namespace Syadeu.Presentation.Input
             m_CreatedInputActions.Add(action);
             return action;
         }
+        public InputAction GetKeyboardBinding(Key keyCode, InputActionType type)
+        {
+            InputAction action = new InputAction(binding:
+                string.Format(c_KeyboardBinding, TypeHelper.Enum<Key>.ToString(keyCode)),
+                type: type);
+
+            m_CreatedInputActions.Add(action);
+            return action;
+        }
         public void RemoveBinding(InputAction action)
         {
             action.Disable();

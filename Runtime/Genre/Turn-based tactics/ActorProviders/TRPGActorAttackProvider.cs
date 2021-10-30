@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -37,9 +38,7 @@ namespace Syadeu.Presentation.TurnTable
             com = (new TRPGActorAttackComponent()
             {
                 m_SearchRange = m_SearchRange,
-                m_ConsumeAP = m_DefaultConsumeAP,
-
-                m_Targets = new FixedList512Bytes<EntityID>()
+                m_ConsumeAP = m_DefaultConsumeAP
             });
         }
         protected override void OnReserve()
@@ -61,7 +60,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return GetTargetsWithin(math.max(weaponRange, searchRange));
         }
-        public FixedList512Bytes<EntityID> GetTargetsWithin(in int range)
+        public FixedList512Bytes<EntityID> GetTargetsWithin(in int range, bool sort = true)
         {
             if (!Parent.HasComponent<GridSizeComponent>())
             {
@@ -75,28 +74,68 @@ namespace Syadeu.Presentation.TurnTable
             gridSize.GetRange(ref m_TempGetRange, in range);
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
-            att.m_Targets.Clear();
-
+            
+            FixedList512Bytes<EntityID> list = new FixedList512Bytes<EntityID>();
             for (int i = 0; i < m_TempGetRange.Length; i++)
             {
                 if (PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetEntitiesAt(m_TempGetRange[i], out var iter))
                 {
-                    foreach (var target in iter)
+                    foreach (var item in iter)
                     {
-                        if (Parent.Idx.Equals(target)) continue;
-                        else if (!target.GetEntityData<IEntityData>().HasComponent<TurnPlayerComponent>())
-                        {
-                            continue;
-                        }
+                        if (item.Equals(Parent.Idx)) continue;
 
-                        att.m_Targets.Add(target);
+                        list.Add(item);
                     }
                 }
             }
 
-            return att.m_Targets;
+            if (sort)
+            {
+                IOrderedEnumerable<EntityID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
+
+                att.InitializeTargets(sorted.ToFixedList512());
+            }
+            else
+            {
+                att.InitializeTargets(list);
+            }
+
+            return att.GetTargets();
+        }
+        private static ITransform Order(EntityID id)
+        {
+            return id.GetEntity<IEntity>().transform;
+        }
+        private struct Comparer : IComparer<ITransform>
+        {
+            public float3 myPos;
+
+            public Comparer(float3 center)
+            {
+                myPos = center;
+            }
+            public int Compare(ITransform x, ITransform y)
+            {
+                float3
+                    tempX = x.position - myPos,
+                    tempY = y.position - myPos;
+                float
+                    xMag = math.dot(tempX, tempX),
+                    yMag = math.dot(tempY, tempY);
+
+                if (xMag < yMag) return -1;
+                else if (xMag == yMag) return 0;
+                return 1;
+            }
         }
 
+        public void Attack()
+        {
+            ref TRPGActorAttackComponent attackComponent = ref Parent.GetComponent<TRPGActorAttackComponent>();
+
+            ActorAttackEvent ev = new ActorAttackEvent(attackComponent.GetTarget().GetEntity<IEntity>());
+            ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+        }
         public void Attack(Entity<ActorEntity> target)
         {
             ActorAttackEvent ev = new ActorAttackEvent(target);
@@ -106,7 +145,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
-            Attack(att.m_Targets[index].GetEntity<ActorEntity>());
+            Attack(att.GetTargets()[index].GetEntity<ActorEntity>());
         }
     }
 }

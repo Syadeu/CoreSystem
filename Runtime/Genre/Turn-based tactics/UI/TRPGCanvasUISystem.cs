@@ -259,11 +259,16 @@ namespace Syadeu.Presentation.TurnTable.UI
                     var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();
-                    for (int i = 0; i < targets.Length; i++)
+                    if (targets.Length == 0) break;
+
+                    ref TRPGActorAttackComponent attackComponent = ref m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
+
+                    if (attackComponent.GetTarget().IsEmpty())
                     {
-                        //$"{targets[i].Name} found".ToLog();
-                        m_TRPGCameraMovement.SetAim(tr, targets[i].GetEntity<IEntity>().transform);
+                        attackComponent.SetTarget(0);
                     }
+
+                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetEntity<IEntity>().transform);
 
                     m_CurrentShortcut = ShortcutType.Attack;
 
@@ -290,7 +295,9 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void TRPGFireUIPressedEventHandler(TRPGFireUIPressedEvent ev)
         {
             m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
-                .GetProvider<TRPGActorAttackProvider>().GetObject().Attack(0);
+                .GetProvider<TRPGActorAttackProvider>().GetObject().Attack();
+            //m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
+            //    .GetProvider<TRPGActorAttackProvider>().GetObject().Attack(0);
         }
 
         #endregion

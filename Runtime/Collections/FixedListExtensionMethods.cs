@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 
 namespace Syadeu.Collections
@@ -38,6 +39,27 @@ namespace Syadeu.Collections
         }
 
         #region Unity.Collections.FixedList
+
+        public static FixedList512Bytes<T> ToFixedList512<T>(this IEnumerable<T> t)
+            where T : unmanaged
+        {
+            FixedList512Bytes<T> temp = new FixedList512Bytes<T>();
+            foreach (var item in t)
+            {
+                temp.Add(item);
+            }
+            return temp;
+        }
+        public static FixedList512Bytes<T> ToFixedList512<T>(this IEnumerator<T> t)
+            where T : unmanaged
+        {
+            FixedList512Bytes<T> temp = new FixedList512Bytes<T>();
+            while (t.MoveNext())
+            {
+                temp.Add(t.Current);
+            }
+            return temp;
+        }
 
         public static bool RemoveFor<T>(this FixedList32Bytes<T> other, T value) where T : unmanaged, IEquatable<T>
         {

@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.TurnTable
             var weapon = other.GetComponent<ActorWeaponComponent>();
 
             ActorAttackEvent ev = new ActorAttackEvent(
-                attProvider.m_Targets[index].GetEntity<ActorEntity>());
+                attProvider.GetTargetAt(index).GetEntity<ActorEntity>());
 
             ev.ScheduleEvent(other);
         }
