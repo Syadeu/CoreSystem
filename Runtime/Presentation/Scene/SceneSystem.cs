@@ -292,6 +292,8 @@ namespace Syadeu.Presentation
                 m_IsDebugScene = true;
 
                 OnSceneChangeCalled?.Invoke();
+
+                m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Game));
             }
             return base.OnStartPresentation();
         }

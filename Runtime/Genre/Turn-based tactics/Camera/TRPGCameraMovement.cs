@@ -161,21 +161,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_AimTarget[i].Proxy.SetParent(transform.parent);
             }
 
-            m_RotateLeft.performed += M_RotateLeft_performed;
-            m_RotateRight.performed += M_RotateRight_performed;
-
             m_MoveAxis.Enable();
-            m_RotateLeft.Enable();
-            m_RotateRight.Enable();
-        }
-
-        private void M_RotateLeft_performed(InputAction.CallbackContext obj)
-        {
-            m_TargetOrientation.y += m_RotationDegree;
-        }
-        private void M_RotateRight_performed(InputAction.CallbackContext obj)
-        {
-            m_TargetOrientation.y -= m_RotationDegree;
         }
 
         protected override void OnRenderStart()
