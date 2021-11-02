@@ -124,7 +124,7 @@ namespace Syadeu.Presentation.Actor
                 my = Parent.GetComponent<ActorFactionComponent>(),
                 target = entity.GetComponent<ActorFactionComponent>();
 
-            return my.IsAllies(in target);
+            return my.IsAlly(in target);
         }
         public bool IsEnemy(Entity<ActorEntity> entity)
         {
@@ -132,7 +132,7 @@ namespace Syadeu.Presentation.Actor
                 my = Parent.GetComponent<ActorFactionComponent>(),
                 target = entity.GetComponent<ActorFactionComponent>();
 
-            return my.IsEnemies(in target);
+            return my.IsEnemy(in target);
         }
     }
 }

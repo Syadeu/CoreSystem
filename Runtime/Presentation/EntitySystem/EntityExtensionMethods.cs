@@ -118,6 +118,33 @@ namespace Syadeu.Presentation
             return ins.Cast<IEntityData, T>();
         }
 
+        public static bool IsEntity(this in InstanceID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            if (obj is IEntity) return true;
+
+            return false;
+        }
+        public static bool IsEntity(this in EntityID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            if (obj is IEntity) return true;
+
+            return false;
+        }
+        public static bool IsEntity<T>(this in EntityID id) where T : IEntityData
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            if (obj is T) return true;
+
+            return false;
+        }
         public static Entity<T> GetEntity<T>(this EntityID id)
             where T : class, IEntity
         {
@@ -160,6 +187,7 @@ namespace Syadeu.Presentation
 #endif
             return Entity<T>.GetEntityWithoutCheck(id);
         }
+
         public static EntityData<T> GetEntityData<T>(this EntityID id)
             where T : class, IEntityData
         {

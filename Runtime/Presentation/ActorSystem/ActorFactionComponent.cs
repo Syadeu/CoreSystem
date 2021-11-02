@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.Actor
             set => m_FactionType = value;
         }
 
-        public bool IsAllies(in ActorFactionComponent faction)
+        public bool IsAlly(in ActorFactionComponent faction)
         {
             if (Equals(faction)) return true;
 
@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.Actor
             }
             return false;
         }
-        public bool IsEnemies(in ActorFactionComponent faction)
+        public bool IsEnemy(in ActorFactionComponent faction)
         {
             if (Equals(faction)) return false;
 

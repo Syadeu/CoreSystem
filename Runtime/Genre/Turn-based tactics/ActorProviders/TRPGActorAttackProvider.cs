@@ -82,17 +82,18 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     foreach (var item in iter)
                     {
-                        if (item.Equals(Parent.Idx)) continue;
+                        if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+                        else if (!item.IsEnemy(Parent.Idx)) continue;
 
                         list.Add(item);
                     }
                 }
             }
-
+            
             if (sort)
             {
                 IOrderedEnumerable<EntityID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
-
+                
                 att.InitializeTargets(sorted.ToFixedList512());
             }
             else

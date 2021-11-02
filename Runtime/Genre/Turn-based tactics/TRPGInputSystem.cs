@@ -221,6 +221,10 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     index = 0;
                 }
+                else if (index < 0)
+                {
+                    index = attComponent.TargetCount - 1;
+                }
 
                 attComponent.SetTarget(index);
 
