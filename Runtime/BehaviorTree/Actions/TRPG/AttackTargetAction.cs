@@ -5,8 +5,10 @@
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.TurnTable;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
@@ -28,6 +30,8 @@ namespace Syadeu.Presentation.BehaviorTree
         }
 
         [UnityEngine.SerializeField] private AttackOptions m_AttackOptions = AttackOptions.Closest;
+        [UnityEngine.SerializeField] 
+        private Reference<TriggerAction>[] TriggerActions = Array.Empty<Reference<TriggerAction>>();
 
         public override TaskStatus OnUpdate()
         {

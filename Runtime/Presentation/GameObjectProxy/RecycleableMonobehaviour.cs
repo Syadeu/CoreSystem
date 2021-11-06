@@ -1,4 +1,8 @@
-﻿using Syadeu.Collections;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation;
@@ -34,6 +38,9 @@ namespace Syadeu.Presentation.Proxy
         internal Entity<IEntity> m_Entity;
         private readonly Dictionary<IComponentID, List<Component>> m_Components = new Dictionary<IComponentID, List<Component>>();
 
+        public event Action<Entity<IEntity>> OnVisible;
+        public event Action<Entity<IEntity>> OnInvisible;
+
 #pragma warning disable IDE1006 // Naming Styles
         /// <summary>
         /// <see cref="Presentation.GameObjectProxySystem"/> 에서 파싱한 <see cref="GameObject"/> 입니다.
@@ -45,11 +52,6 @@ namespace Syadeu.Presentation.Proxy
         public new Transform transform => m_Transform;
         public Entity<IEntity> entity => m_Entity;
 #pragma warning restore IDE1006 // Naming Styles
-        /// <summary>
-        /// PrefabManager 인스펙터창에서 보여질 이름입니다.
-        /// 런타임에 아무런 영향을 주지않습니다.
-        /// </summary>
-        public virtual string DisplayName => name;
         public virtual bool InitializeOnCall => true;
 
         /// <summary>
@@ -183,6 +185,7 @@ namespace Syadeu.Presentation.Proxy
             Component[] components = GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true);
             for (int i = 0; i < components.Length; i++)
             {
+#if DEBUG_MODE
                 if (components[i] == null)
                 {
                     CoreSystem.Logger.Log(Channel.Proxy,
@@ -190,7 +193,7 @@ namespace Syadeu.Presentation.Proxy
 
                     continue;
                 }
-
+#endif
                 Type t = components[i].GetType();
                 IComponentID id = ComponentID.GetID(t);
 
@@ -202,6 +205,12 @@ namespace Syadeu.Presentation.Proxy
                 list.Add(components[i]);
             }
 
+            IProxyComponent[] proxyComponents = base.GetComponentsInChildren<IProxyComponent>(true);
+            for (int i = 0; i < proxyComponents.Length; i++)
+            {
+                proxyComponents[i].OnProxyCreated(this);
+            }
+
             //MeshFilter[] meshes = GetComponentsInChildren<MeshFilter>(true);
             //for (int i = 0; i < meshes.Length; i++)
             //{
@@ -210,6 +219,14 @@ namespace Syadeu.Presentation.Proxy
             //}
 
             OnCreated();
+        }
+        internal void InternalOnVisible()
+        {
+            OnVisible?.Invoke(m_Entity);
+        }
+        internal void InternalOnInvisible()
+        {
+            OnInvisible?.Invoke(m_Entity);
         }
 
         /// <summary>

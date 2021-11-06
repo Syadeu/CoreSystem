@@ -4,6 +4,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,7 +13,7 @@ using UnityEngine.Playables;
 namespace Syadeu.Presentation.Attributes
 {
     [RequireComponent(typeof(Animator))]
-    public sealed class AnimatorComponent : MonoBehaviour
+    public sealed class AnimatorComponent : MonoBehaviour, IProxyComponent
     {
         [SerializeField] private bool m_EnableRootMotion = true;
         [SerializeField] private bool m_ManualRootMotionUpdate = false;
@@ -61,6 +62,20 @@ namespace Syadeu.Presentation.Attributes
 
             m_Transform.position += (float3)m_Animator.deltaPosition;
             m_Transform.rotation *= m_Animator.deltaRotation;
+        }
+
+        public void OnProxyCreated(RecycleableMonobehaviour obj)
+        {
+            obj.OnVisible += Obj_OnVisible;
+            obj.OnInvisible += Obj_OnInvisible;
+        }
+        private void Obj_OnVisible(Entity<IEntity> obj)
+        {
+            m_Animator.enabled = true;
+        }
+        private void Obj_OnInvisible(Entity<IEntity> obj)
+        {
+            m_Animator.enabled = false;
         }
     }
 }

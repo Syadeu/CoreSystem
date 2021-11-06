@@ -341,10 +341,17 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
-                    if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
                     tr.isVisible = true;
                     OnDataObjectVisible?.Invoke(tr);
+
+                    int2 proxyIdx = tr.Pointer->m_ProxyIndex;
+                    if (!proxyIdx.Equals(-1) &&
+                        !proxyIdx.Equals(-2))
+                    {
+                        m_Instances[proxyIdx.x][proxyIdx.y].InternalOnVisible();
+                    }
                 }
             }
             
@@ -356,10 +363,17 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
-                    if (tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
 
                     tr.isVisible = false;
                     OnDataObjectInvisible?.Invoke(tr);
+
+                    int2 proxyIdx = tr.Pointer->m_ProxyIndex;
+                    if (!proxyIdx.Equals(ProxyTransform.ProxyNull) &&
+                        !proxyIdx.Equals(ProxyTransform.ProxyQueued))
+                    {
+                        m_Instances[proxyIdx.x][proxyIdx.y].InternalOnInvisible();
+                    }
                 }
             }
 
@@ -501,9 +515,18 @@ namespace Syadeu.Presentation.Proxy
         {
             ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
 
-            if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
-                !data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+            if (data->m_IsVisible)
             {
+                data->m_IsVisible = false;
+                OnDataObjectInvisible?.Invoke(tr);
+            }
+
+            int2 proxyIdx = data->m_ProxyIndex;
+            if (!proxyIdx.Equals(ProxyTransform.ProxyNull) &&
+                !proxyIdx.Equals(ProxyTransform.ProxyQueued))
+            {
+                m_Instances[proxyIdx.x][proxyIdx.y].InternalOnInvisible();
+
                 RecycleableMonobehaviour proxy = RemoveProxy(tr);
 
                 var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
@@ -513,12 +536,6 @@ namespace Syadeu.Presentation.Proxy
                 {
                     proxy.transform.position = INIT_POSITION;
                 }
-            }
-
-            if (data->m_IsVisible)
-            {
-                data->m_IsVisible = false;
-                OnDataObjectInvisible?.Invoke(tr);
             }
 
             OnDataObjectDestroy?.Invoke(tr);
@@ -709,11 +726,8 @@ namespace Syadeu.Presentation.Proxy
 
                     if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
-                        if (data.m_ProxyIndex.Equals(-1) &&
-                            !data.m_ProxyIndex.Equals(-2))
-                        {
-                            m_Request.Enqueue(data.m_Index);
-                        }
+                        EnabledCullHandler(in data);
+
                         continue;
                     }
 
@@ -748,6 +762,30 @@ namespace Syadeu.Presentation.Proxy
                 }
 
                 //
+            }
+
+            private void EnabledCullHandler(in ProxyTransformData data)
+            {
+                if (data.m_ProxyIndex.Equals(-1) &&
+                    !data.m_ProxyIndex.Equals(-2))
+                {
+                    m_Request.Enqueue(data.m_Index);
+                }
+
+                if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
+                {
+                    if (!data.m_IsVisible)
+                    {
+                        m_Visible.Enqueue(data.m_Index);
+                    }
+                }
+                else
+                {
+                    if (data.m_IsVisible)
+                    {
+                        m_Invisible.Enqueue(data.m_Index);
+                    }
+                }
             }
         }
 

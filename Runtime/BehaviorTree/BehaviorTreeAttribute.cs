@@ -113,6 +113,15 @@ namespace Syadeu.Presentation.BehaviorTree
                 temp.Completed += attribute.LoadBehaviorTreeAsync;
             }
             else attribute.LoadBehaviorTree(attribute.BehaviorTree.Asset);
+
+            if (entity.Target is IEntity)
+            {
+                var tr = entity.As<IEntityData, IEntity>().transform;
+                if (tr is ProxyTransform proxy)
+                {
+                    proxy.enableCull = false;
+                }
+            }
         }
         protected override void OnDestroy(BehaviorTreeAttribute attribute, EntityData<IEntityData> entity)
         {
