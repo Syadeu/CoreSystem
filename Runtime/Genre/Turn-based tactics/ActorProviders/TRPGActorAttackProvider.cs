@@ -20,7 +20,6 @@ namespace Syadeu.Presentation.TurnTable
         INotifyComponent<TRPGActorAttackComponent>
     {
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
-        [JsonProperty(Order = 2, PropertyName = "DefaultConsumeAP")] private int m_DefaultConsumeAP = 1;
 
         [JsonIgnore] private NativeList<int> m_TempGetRange;
 
@@ -37,8 +36,7 @@ namespace Syadeu.Presentation.TurnTable
 
             com = (new TRPGActorAttackComponent()
             {
-                m_SearchRange = m_SearchRange,
-                m_ConsumeAP = m_DefaultConsumeAP
+                m_SearchRange = m_SearchRange
             });
         }
         protected override void OnReserve()

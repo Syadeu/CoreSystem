@@ -9,7 +9,6 @@ namespace Syadeu.Presentation.TurnTable
     public struct TRPGActorAttackComponent : IEntityComponent
     {
         public int m_SearchRange;
-        public int m_ConsumeAP;
 
         private FixedList512Bytes<EntityID> m_Targets;
         private int m_CurrentTargetIndex;
