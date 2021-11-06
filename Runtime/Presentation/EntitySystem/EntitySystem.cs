@@ -372,7 +372,7 @@ namespace Syadeu.Presentation
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                    $"Internal EntitySystem error. ProxyTransform({tr.prefab.GetObjectSetting().Name}) doesn\'t have entity.");
                 return;
             }
 #endif

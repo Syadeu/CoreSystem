@@ -514,6 +514,7 @@ namespace Syadeu.Presentation.Proxy
         private unsafe void InternalDestory(in ProxyTransform tr, in CameraFrustum frustum)
         {
             ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
+            data->m_DestroyQueued = false;
 
             if (data->m_IsVisible)
             {

@@ -155,7 +155,7 @@ namespace Syadeu.Presentation.TurnTable
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
 
             //entity.GetAttribute<TurnPlayerAttribute>().m_OnStartTurnActions.Schedule(entity);
-            player.OnEndTurnActions.Schedule(entity);
+            player.OnStartTurnActions.Schedule(entity);
 
             OnStartTurn?.Invoke(entity);
         }
