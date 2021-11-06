@@ -75,6 +75,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             m_Opened = open;
+            m_Button.enabled = open;
         }
     }
 }
