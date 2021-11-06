@@ -164,9 +164,13 @@ namespace Syadeu.Presentation.TurnTable
             ActorFactionComponent faction = ev.Entity.GetComponent<ActorFactionComponent>();
             if (faction.FactionType != FactionType.Player) return;
 
-            if (ev.State != OnTurnStateChangedEvent.TurnState.Start)
+            if (ev.State == OnTurnStateChangedEvent.TurnState.Start)
             {
                 m_TRPGCanvasUISystem.SetPlayerUI(true);
+            }
+            else if (ev.State == OnTurnStateChangedEvent.TurnState.End)
+            {
+                m_TRPGCanvasUISystem.SetPlayerUI(false);
             }
         }
 
