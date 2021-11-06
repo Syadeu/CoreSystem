@@ -367,15 +367,14 @@ namespace Syadeu.Presentation
         }
         private void OnDataObjectInvisible(ProxyTransform tr)
         {
-#if DEBUG_MODE
             if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
                 !m_ObjectEntities.ContainsKey(eCheckHash))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Internal EntitySystem error. ProxyTransform({tr.prefab.GetObjectSetting().Name}) doesn\'t have entity.");
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"Internal EntitySystem error. ProxyTransform({tr.prefab.GetObjectSetting().Name}) doesn\'t have entity.");
                 return;
             }
-#endif
+
             InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
