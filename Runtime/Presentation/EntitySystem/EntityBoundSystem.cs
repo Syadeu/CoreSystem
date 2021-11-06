@@ -272,14 +272,30 @@ namespace Syadeu.Presentation
                 if (!att.Enabled) return false;
                 if (att.m_TriggerOnly.Length == 0) return true;
 
-                for (int i = 0; i < att.m_TriggerOnly.Length; i++)
+                if (att.m_Inverse)
                 {
-                    if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
+                    for (int i = 0; i < att.m_TriggerOnly.Length; i++)
                     {
-                        return !att.m_Inverse;
+                        if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
+                        {
+                            return false;
+                        }
                     }
+
+                    return true;
                 }
-                return false;
+                else
+                {
+                    for (int i = 0; i < att.m_TriggerOnly.Length; i++)
+                    {
+                        if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
             }
         }
 
