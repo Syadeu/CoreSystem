@@ -5,12 +5,13 @@
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.TurnTable;
 using UnityEngine;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorHasAPToConditional : ConditionalBase
     {

@@ -3,19 +3,17 @@
 #endif
 
 using BehaviorDesigner.Runtime.Tasks;
-using Syadeu.Collections;
-using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.TurnTable;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Mathematics;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using BehaviorDesigner.Runtime;
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+    using UnityEngine;
+
     [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
         "AttackOptions 값에 따라 찾은 타겟을 공격합니다." +
@@ -29,9 +27,7 @@ namespace Syadeu.Presentation.BehaviorTree
             Middle
         }
 
-        [UnityEngine.SerializeField] private AttackOptions m_AttackOptions = AttackOptions.Closest;
-        [UnityEngine.SerializeField] 
-        private Reference<TriggerAction>[] TriggerActions = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField] private AttackOptions m_AttackOptions = AttackOptions.Closest;
 
         public override TaskStatus OnUpdate()
         {

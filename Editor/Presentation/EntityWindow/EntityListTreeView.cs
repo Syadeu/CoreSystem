@@ -237,6 +237,7 @@ namespace SyadeuEditor.Presentation
                     clone.Name += "_Clone";
 
                     EntityWindow.Instance.Add(clone);
+                    SetSelection(clone);
                 });
 
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>

@@ -503,8 +503,10 @@ namespace Syadeu.Presentation.Map
             [NoAlias] in int from, 
             [NoAlias] in int to,
             out int pathFound,
-            in GridLayerChain ignoreIndices = default, FixedList512Bytes<int> additionalIgnoreIndices = default,
-            [NoAlias] in int maxIteration = 32, in bool avoidEntity = true)
+            in GridLayerChain ignoreIndices = default, 
+            FixedList512Bytes<int> additionalIgnoreIndices = default,
+            [NoAlias] in int maxIteration = 32, 
+            in bool avoidEntity = true)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),
@@ -518,7 +520,7 @@ namespace Syadeu.Presentation.Map
                 );
 
             GridPathTile tile = new GridPathTile(-1, 0, from, fromLocation);
-            Calculate(ref tile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
+            Calculate(in from, in to, ref tile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
 
             unsafe
             {
@@ -556,7 +558,7 @@ namespace Syadeu.Presentation.Map
                         out bool isNew);
 
                     lastTileData.opened[nextDirection] = false;
-                    Calculate(ref nextTile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
+                    Calculate(in from, in to, ref nextTile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
 
                     if (isNew)
                     {
@@ -599,8 +601,14 @@ namespace Syadeu.Presentation.Map
             return false;
         }
 
-        public bool GetPath64(in int from, in int to, ref GridPath64 paths, 
-            in GridLayerChain ignoreIndices = default, FixedList512Bytes<int> additionalIgnoreIndices = default, in int maxIteration = 32, in bool avoidEntity = true)
+        public bool GetPath64(
+            [NoAlias] in int from,
+            [NoAlias] in int to, 
+            ref GridPath64 paths, 
+            in GridLayerChain ignoreIndices = default, 
+            FixedList512Bytes<int> additionalIgnoreIndices = default,
+            [NoAlias] in int maxIteration = 32, 
+            in bool avoidEntity = true)
         {
             int2
                 fromLocation = GridMap.GetLocation(in from),
@@ -614,7 +622,7 @@ namespace Syadeu.Presentation.Map
                 );
 
             GridPathTile tile = new GridPathTile(-1, 0, from, fromLocation);
-            Calculate(ref tile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
+            Calculate(in from, in to, ref tile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
 
             paths.Clear();
 
@@ -665,7 +673,7 @@ namespace Syadeu.Presentation.Map
                         out bool isNew);
 
                     lastTileData.opened[nextDirection] = false;
-                    Calculate(ref nextTile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
+                    Calculate(in from, in to, ref nextTile, in ignoreIndices, additionalIgnoreIndices, in avoidEntity);
 
                     if (isNew)
                     {
@@ -904,7 +912,10 @@ namespace Syadeu.Presentation.Map
             return new GridPathTile(parentArrayIdx, arrayIdx, tile.position, tile.openedPositions[direction], direction);
         }
 
-        private void Calculate(ref GridPathTile tile,
+        private void Calculate(
+            [NoAlias] in int from,
+            [NoAlias] in int to,
+            ref GridPathTile tile,
             in GridLayerChain ignoreLayers, FixedList512Bytes<int> additionalIgnoreIndices,
             in bool avoidEntity)
         {
@@ -920,7 +931,9 @@ namespace Syadeu.Presentation.Map
                     continue;
                 }
 
-                if (avoidEntity)
+                if (nextTempLocation.index != from && 
+                    nextTempLocation.index != to &&
+                    avoidEntity)
                 {
                     if (HasEntityAt(nextTempLocation.index))
                     {

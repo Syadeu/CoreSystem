@@ -1,13 +1,14 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Map;
-using Syadeu.Presentation.TurnTable;
 using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorTargetInAttackRange : ConditionalBase
     {

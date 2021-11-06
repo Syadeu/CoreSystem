@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.BehaviorTree
             GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();
 
             GridPath64 tempPath = new GridPath64();
-            gridSize.GetPath64(targetPos.index, ref tempPath, avoidEntity: false);
+            gridSize.GetPath64(targetPos.index, ref tempPath, avoidEntity: true);
 
             ref TurnPlayerComponent turnPlayer = ref Entity.GetComponent<TurnPlayerComponent>();
             GridPath64 path = new GridPath64();
