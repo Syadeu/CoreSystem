@@ -49,11 +49,18 @@ namespace Syadeu.Presentation.TurnTable
             FixedList4096Bytes<int> list = new FixedList4096Bytes<int>();
             gridsize.GetRange(ref list, turnPlayer.ActionPoint);
 
+            GridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
+
             count = list.Length;
             gridPositions.Clear();
             for (int i = 0; i < list.Length; i++)
             {
-                if (!gridsize.HasPath(list[i], out int pathCount) ||
+                if (gridSystem.HasEntityAt(list[i]))
+                {
+                    count--;
+                    continue;
+                }
+                else if (!gridsize.HasPath(list[i], out int pathCount) ||
                     pathCount > turnPlayer.ActionPoint)
                 {
                     count--;

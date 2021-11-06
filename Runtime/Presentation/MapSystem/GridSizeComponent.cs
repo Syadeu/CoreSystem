@@ -120,7 +120,8 @@ namespace Syadeu.Presentation.Map
                 out pathCount,
                 in m_ObstacleLayers,
                 default,
-                in maxIteration);
+                in maxIteration,
+                avoidEntity: true);
         }
 
         public bool HasDirection(GridPosition position, Direction direction, out GridPosition target)
