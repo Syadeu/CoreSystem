@@ -65,10 +65,18 @@ namespace Syadeu.Presentation.BehaviorTree
             gridSize.GetPath64(targetPos.index, ref tempPath, avoidEntity: true);
 
             ref TurnPlayerComponent turnPlayer = ref Entity.GetComponent<TurnPlayerComponent>();
-            GridPath64 path = new GridPath64();
-            for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
+            GridPath64 path;
+            if (tempPath[tempPath.Length - 1].index == targetPos.index)
             {
-                path.Add(tempPath[i]);
+                path = new GridPath64();
+                for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
+                {
+                    path.Add(tempPath[i]);
+                }
+            }
+            else
+            {
+                path = tempPath;
             }
 
             $"from {gridSize.positions[0].location} to {targetPos.location}".ToLog();
