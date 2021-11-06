@@ -10,9 +10,10 @@ using System.Reflection;
 using UnityEngine.AddressableAssets;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Collections.Proxy;
+
 #if UNITY_EDITOR
 using UnityEditor;
-using Syadeu.Collections.Proxy;
 #endif
 
 namespace Syadeu.Presentation.Map

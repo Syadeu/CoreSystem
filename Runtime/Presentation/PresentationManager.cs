@@ -1064,9 +1064,10 @@ namespace Syadeu.Presentation
 
             while (!CoreSystem.BlockCreateInstance)
             {
-#if DEBUG_MODE
+#if UNITY_EDITOR
                 if (CoreSystem.IsEditorPaused) continue;
-
+#endif
+#if DEBUG_MODE
                 using (simSemaphoreMarker.Auto())
 #endif
                 {

@@ -24,9 +24,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Collections.Proxy;
 using Syadeu.Collections;
 
-#if UNITY_CINEMACHINE
 using Cinemachine;
-#endif
 
 namespace Syadeu.Presentation.Actions
 {
