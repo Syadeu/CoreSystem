@@ -16,17 +16,19 @@ namespace Syadeu.Presentation.Map
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
         private PrefabReference<UnityEngine.TerrainData> m_Data = PrefabReference<UnityEngine.TerrainData>.None;
-        [JsonProperty(Order = 1, PropertyName = "Position")]
+        [JsonProperty(Order = 1, PropertyName = "Material")]
+        private PrefabReference<UnityEngine.Material> m_Material = PrefabReference<UnityEngine.Material>.None;
+        [JsonProperty(Order = 2, PropertyName = "Position")]
         private float3 m_Position;
-        [JsonProperty(Order = 2, PropertyName = "Rotation")]
+        [JsonProperty(Order = 3, PropertyName = "Rotation")]
         private float3 m_Rotation;
-        [JsonProperty(Order = 3, PropertyName = "m_Scale")]
+        [JsonProperty(Order = 4, PropertyName = "m_Scale")]
         private float3 m_Scale;
 
         [Space, Header("Terrain NavObstacle")]
-        [JsonProperty(Order = 4, PropertyName = "EnableObstacle")]
+        [JsonProperty(Order = 5, PropertyName = "EnableObstacle")]
         private bool m_EnableObstacle = false;
-        [JsonProperty(Order = 5, PropertyName = "AreaMask")]
+        [JsonProperty(Order = 6, PropertyName = "AreaMask")]
         private int m_AreaMask = 0;
 
         [JsonIgnore] internal Terrain m_TerrainInstance = null;
@@ -38,7 +40,7 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated()
         {
-            if (m_EnableObstacle) m_NavMeshSystem = PresentationSystem<NavMeshSystem>.System;
+            if (m_EnableObstacle) m_NavMeshSystem = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
         }
         protected override void OnDestroy()
         {
@@ -94,8 +96,32 @@ namespace Syadeu.Presentation.Map
 
         private void LoadTerrainDataAsync(AsyncOperationHandle<UnityEngine.TerrainData> obj)
         {
-            LoadTerrainData(obj.Result);
+            if (m_Material.IsNone() ||
+                !m_Material.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                       $"Terrain({Name}) raised unexpected error. Material is not valid.");
+                return;
+            }
+            if (m_Material.Asset == null)
+            {
+                var asyncHandle = m_Material.LoadAssetAsync();
+                if (!asyncHandle.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"Terrain({Name}) raised unexpected error. Material is not valid.");
+                    return;
+                }
+
+                asyncHandle.Completed += LoadMaterialAsync;
+            }
+            else LoadTerrainData(obj.Result);
         }
+        private void LoadMaterialAsync(AsyncOperationHandle<Material> obj)
+        {
+            LoadTerrainData(m_Data.Asset);
+        }
+
         private void LoadTerrainData(UnityEngine.TerrainData obj)
         {
             GameObject terrainObj = Terrain.CreateTerrainGameObject(obj);
@@ -107,6 +133,8 @@ namespace Syadeu.Presentation.Map
             tr.position = trs.m_Position;
             tr.rotation = trs.m_Rotation;
             tr.localScale = trs.m_Scale;
+
+            terrain.materialTemplate = m_Material.Asset;
 
 #if UNITY_EDITOR
             const string c_TerrainName = "Terrain_({0}, {1}, {2})";

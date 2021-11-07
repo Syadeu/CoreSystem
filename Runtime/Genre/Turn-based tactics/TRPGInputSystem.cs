@@ -107,7 +107,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_CurrentShortcut == ev.Shortcut)
             {
-                m_KeyboardInputs.Disable();
+                m_KeyboardInputs.SetIngame_Default();
 
                 m_CurrentShortcut = ShortcutType.None;
                 return;
