@@ -8,13 +8,14 @@
   "dependencies": {
     "com.unity.burst": "1.5.6",
     "com.unity.jobs": "0.11.0-preview.6",
-    "com.unity.mathematics": "1.2.1",
+    "com.unity.mathematics": "1.2.4",
     "com.unity.addressables": "1.16.19",
     "com.unity.inputsystem": "1.1.0-preview.3",
-    "com.unity.nuget.newtonsoft-json": "2.0.0",
+    "com.unity.nuget.newtonsoft-json": "2.0.2",
     "com.unity.test-framework": "1.1.27",
-    "com.unity.nuget.mono-cecil": "1.10.1",
-    "com.unity.cinemachine": "2.6.10"
+    "com.unity.nuget.mono-cecil": "1.10.2",
+    "com.unity.cinemachine": "2.6.10",
+    "com.unity.collections": "1.0.0-pre.6"
   },
   "optionalDependencies": {
     "com.unity.platforms.windows": "0.10.0-preview.10",
@@ -28,7 +29,8 @@
     "syadeu",
     "background",
     "thread",
-    "system"
+    "system",
+    "ecs"
   ],
   "author": {
     "name": "Syadeu",

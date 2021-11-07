@@ -30,7 +30,7 @@ namespace Syadeu.Collections
 
         public static bool IsLoaded => Instance.m_IsLoaded;
 
-        private void OnEnable()
+        public override void OnInitialize()
         {
             LoadData();
         }
@@ -317,8 +317,9 @@ namespace Syadeu.Collections
 
         public ObjectBase GetObject(Hash hash)
         {
-            if (hash.Equals(Hash.Empty)) return null;
-            if (m_Objects.TryGetValue(hash, out var value)) return value;
+            if (hash.IsEmpty()) return null;
+            else if (m_Objects.TryGetValue(hash, out var value)) return value;
+
             return null;
         }
         public ObjectBase GetObject(string name) => GetObject(m_EntityNameHash[Hash.NewHash(name)]);

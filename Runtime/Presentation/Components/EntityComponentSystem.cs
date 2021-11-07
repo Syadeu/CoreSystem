@@ -90,14 +90,15 @@ namespace Syadeu.Presentation.Components
             }
             else length = types.Length * 2;
 
-            ComponentBuffer[] tempBuffer = new ComponentBuffer[length];
+            m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
+            //ComponentBuffer[] tempBuffer = new ComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
                 ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
-                tempBuffer[idx] = buffer;
+                m_ComponentArrayBuffer[idx] = buffer;
             }
 
-            m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
+            //m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
             m_DisposedComponents = new NativeQueue<DisposedComponent>(Allocator.Persistent);
 
             m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
@@ -753,11 +754,11 @@ namespace Syadeu.Presentation.Components
         /// </remarks>
         private struct DisposedComponent : IDisposable
         {
-            private static ComponentBuffer* s_Buffer;
+            [NativeDisableUnsafePtrRestriction] private static ComponentBuffer* s_Buffer;
             /// <summary>
             /// <see cref="EntityComponentSystem.m_ComponentHashMap"/>
             /// </summary>
-            private static UntypedUnsafeHashMap* s_HashMap;
+            [NativeDisableUnsafePtrRestriction] private static UntypedUnsafeHashMap* s_HashMap;
 
             private int2 index;
             private EntityData<IEntityData> entity;
