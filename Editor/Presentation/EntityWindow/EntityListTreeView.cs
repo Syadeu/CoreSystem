@@ -34,7 +34,7 @@ namespace SyadeuEditor.Presentation
 
         public event Action<ObjectBase> OnSelect;
 
-        private Dictionary<Hash, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
+        private Dictionary<ulong, ObjectBase> Objects => EntityDataList.Instance.m_Objects;
 
         public EntityListTreeView(EntityWindow mainWindow, TreeViewState state) : base(state)
         {

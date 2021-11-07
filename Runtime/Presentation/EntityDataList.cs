@@ -25,7 +25,7 @@ namespace Syadeu.Collections
         private static readonly Regex s_Whitespace = new Regex(@"\s+");
         private bool m_IsLoaded = false;
 
-        public Dictionary<Hash, ObjectBase> m_Objects;
+        public Dictionary<ulong, ObjectBase> m_Objects;
         private Dictionary<ulong, Hash> m_EntityNameHash;
 
         public static bool IsLoaded => Instance.m_IsLoaded;
@@ -46,7 +46,7 @@ namespace Syadeu.Collections
         {
             DirectoryCheck();
 
-            m_Objects = new Dictionary<Hash, ObjectBase>();
+            m_Objects = new Dictionary<ulong, ObjectBase>();
             m_EntityNameHash = new Dictionary<ulong, Hash>();
 
             Load<EntityDataBase>(CoreSystemFolder.EntityPath);
@@ -60,7 +60,7 @@ namespace Syadeu.Collections
         {
             DirectoryCheck();
 
-            m_Objects = new Dictionary<Hash, ObjectBase>();
+            m_Objects = new Dictionary<ulong, ObjectBase>();
             m_EntityNameHash = new Dictionary<ulong, Hash>();
 
             var iter1 = LoadAsync<EntityDataBase>(CoreSystemFolder.EntityPath);
@@ -145,13 +145,16 @@ namespace Syadeu.Collections
                     obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
                     if (!(obj is T))
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                        CoreSystem.Logger.LogWarning(Channel.Entity, $"1. Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
                         continue;
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                    CoreSystem.Logger.LogWarning(Channel.Entity, 
+                        $"2. Data({t?.Name}) at {dataPaths[i]} is invalid. " +
+                        $"This data has been ignored.");
+                    UnityEngine.Debug.LogError(ex);
                     continue;
                 }
                 T temp = (T)obj;
@@ -309,7 +312,7 @@ namespace Syadeu.Collections
                     .Select(other => (T)other.Value)
                     .ToArray();
         }
-        private bool GetDataPredicate<T>(KeyValuePair<Hash, ObjectBase> pair)
+        private bool GetDataPredicate<T>(KeyValuePair<ulong, ObjectBase> pair)
         {
             Type type = pair.Value.GetType();
             return TypeHelper.TypeOf<T>.Type.IsAssignableFrom(type);

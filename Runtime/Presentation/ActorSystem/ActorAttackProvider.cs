@@ -60,14 +60,6 @@ namespace Syadeu.Presentation.Actor
 #endif
             EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
 
-            for (int i = 0; i < m_OnHit.Length; i++)
-            {
-                if (!m_OnHit[i].Schedule(Parent, target))
-                {
-                    $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
-                }
-            }
-
             float hp = m_StatAttribute.HP;
             hp -= ev.Damage;
             m_StatAttribute.HP = hp;
@@ -76,6 +68,16 @@ namespace Syadeu.Presentation.Actor
             {
                 ActorLifetimeChangedEvent lifetimeChanged = new ActorLifetimeChangedEvent(ActorLifetimeChangedEvent.State.Dead);
                 PostEvent(lifetimeChanged);
+            }
+            else
+            {
+                for (int i = 0; i < m_OnHit.Length; i++)
+                {
+                    if (!m_OnHit[i].Schedule(Parent, target))
+                    {
+                        $"{Parent.Name} : hit failed attacked from {target.Name}".ToLog();
+                    }
+                }
             }
 
             $"{Parent.Name} : {hp} left, dmg {ev.Damage}".ToLog();
