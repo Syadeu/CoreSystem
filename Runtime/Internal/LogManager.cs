@@ -137,33 +137,47 @@ namespace Syadeu.Internal
 #endif
         public static void Log(string channel, ResultFlag result, string msg, bool logThread)
         {
+#if !UNITY_EDITOR
+            const string c_RuntimeLog = "[CoreSystem][{0}] {1}";
+#endif
             string text = string.Empty;
+#if !UNITY_EDITOR
+            text = string.Format(c_RuntimeLog, TypeHelper.Enum<ResultFlag>.ToString(result), msg);
+#endif
+
+#if UNITY_EDITOR
             if (logThread)
             {
                 text = string.Format(c_LogThreadText, TypeHelper.Enum<StringColor>.ToString(StringColor.fuchsia), GetThreadType());
             }
-            
+#endif
             switch (result)
             {
                 case ResultFlag.Warning:
+#if UNITY_EDITOR
                     text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.orange), TypeHelper.Enum<ResultFlag>.ToString(result)), 
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel), 
                         msg);
+#endif
                     Debug.LogWarning(text);
                     break;
                 case ResultFlag.Error:
+#if UNITY_EDITOR
                     text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.maroon), TypeHelper.Enum<ResultFlag>.ToString(result)),
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
+#endif
                     Debug.LogError(text);
                     break;
                 default:
+#if UNITY_EDITOR
                     text += string.Format(c_LogBaseText, TypeHelper.Enum<StringColor>.ToString(StringColor.lime), 
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.teal), TypeHelper.Enum<ResultFlag>.ToString(result)),
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
+#endif
                     Debug.Log(text);
                     break;
             }
