@@ -18,6 +18,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<EntityRaycastSystem>.Type,
                 TypeHelper.TypeOf<Components.EntityComponentSystem>.Type,
                 TypeHelper.TypeOf<Proxy.GameObjectProxySystem>.Type,
+                TypeHelper.TypeOf<GameObjectSystem>.Type,
 
                 TypeHelper.TypeOf<Data.DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Input.InputSystem>.Type,

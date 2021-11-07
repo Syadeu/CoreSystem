@@ -24,6 +24,8 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly Dictionary<int, InputAction> m_ShortcutBindings = new Dictionary<int, InputAction>();
 
+        private ShortcutType m_CurrentShortcut = ShortcutType.None;
+
         private KeyboardInputs m_KeyboardInputs;
 
         private EventSystem m_EventSystem;
@@ -103,7 +105,13 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
-            m_KeyboardInputs.Disable();
+            if (m_CurrentShortcut == ev.Shortcut)
+            {
+                m_KeyboardInputs.Disable();
+
+                m_CurrentShortcut = ShortcutType.None;
+                return;
+            }
 
             switch (ev.Shortcut)
             {
@@ -112,10 +120,13 @@ namespace Syadeu.Presentation.TurnTable
                     break;
                 case ShortcutType.Attack:
                     m_KeyboardInputs.SetIngame_TargetAim();
+
                     break;
                 default:
                     break;
             }
+
+            m_CurrentShortcut = ev.Shortcut;
         }
 
         #endregion

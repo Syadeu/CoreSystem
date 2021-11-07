@@ -796,15 +796,22 @@ namespace Syadeu.Presentation.Components
 
                 IntPtr p = s_Buffer[index.x].ElementAt(index.y);
 
-                object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
-
-                // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
-                if (obj is IDisposable disposable)
+                try
                 {
-                    disposable.Dispose();
+                    object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
 
-                    CoreSystem.Logger.Log(Channel.Component,
-                        $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} disposed.");
+                    // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
+                    if (obj is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+
+                        CoreSystem.Logger.Log(Channel.Component,
+                            $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.RawName} disposed.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
                 }
 
                 CoreSystem.Logger.Log(Channel.Component,
