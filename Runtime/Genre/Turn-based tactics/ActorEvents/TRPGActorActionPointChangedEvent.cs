@@ -1,5 +1,6 @@
 ﻿using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -17,6 +18,12 @@ namespace Syadeu.Presentation.TurnTable
 
         public void OnExecute(Entity<ActorEntity> from)
         {
+        }
+
+        [Preserve]
+        private static void AOTCodeGenerator()
+        {
+            ActorSystem.AOTCodeGenerator<TRPGActorActionPointChangedEvent>();
         }
     }
 }

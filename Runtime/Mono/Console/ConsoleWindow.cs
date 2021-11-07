@@ -97,6 +97,14 @@ namespace Syadeu.Mono
                         m_ConsoleLogScroll = Vector2.zero;
                     }, "clear");
                 }
+
+                if (FindDefinition("quit") == null)
+                {
+                    InternalCreateCommand((arg) =>
+                    {
+                        Application.Quit();
+                    }, "quit");
+                }
             }
         }
         private void Application_logMessageReceived(string condition, string stackTrace, LogType type)

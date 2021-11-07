@@ -134,7 +134,8 @@ namespace Syadeu.Presentation.Map
             ref SceneDataComponent sceneData = ref entity.GetComponent<SceneDataComponent>();
             sceneData.m_Created = true;
 
-            sceneData.m_CreatedMapData = new InstanceArray<MapDataEntity>(mapData.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            //sceneData.m_CreatedMapData = new InstanceArray<MapDataEntity>(mapData.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            sceneData.m_CreatedMapData = new FixedInstanceList64<MapDataEntity>();
             for (int i = 0; i < mapData.Count; i++)
             {
                 if (mapData[i].IsEmpty() || !mapData[i].IsValid())
@@ -142,15 +143,31 @@ namespace Syadeu.Presentation.Map
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"MapData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
 
-                    sceneData.m_CreatedMapData[i] = Instance<MapDataEntity>.Empty;
+                    //sceneData.m_CreatedMapData.Add(Instance<MapDataEntity>.Empty);
                     continue;
                 }
 
                 EntityData<IEntityData> temp = EntitySystem.CreateObject(mapData[i]);
-                sceneData.m_CreatedMapData[i] = new Instance<MapDataEntity>(temp);
+                sceneData.m_CreatedMapData.Add(new Instance<MapDataEntity>(temp));
             }
 
-            sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneDataEntity.m_TerrainData, Allocator.Persistent);
+            //sceneData.m_CreatedTerrains = new InstanceArray<TerrainData>(sceneDataEntity.m_TerrainData, Allocator.Persistent);
+            sceneData.m_CreatedTerrains = new FixedInstanceList64<TerrainData>();
+            for (int i = 0; i < sceneDataEntity.m_TerrainData.Length; i++)
+            {
+                if (sceneDataEntity.m_TerrainData[i].IsEmpty() ||
+                    !sceneDataEntity.m_TerrainData[i].IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        $"TerrainData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
+
+                    continue;
+                }
+
+                Instance<TerrainData> temp = EntitySystem.CreateInstance(sceneDataEntity.m_TerrainData[i]);
+                sceneData.m_CreatedTerrains.Add(temp);
+            }
+
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
             {
                 sceneData.m_CreatedTerrains[i].GetObject().Create(null);

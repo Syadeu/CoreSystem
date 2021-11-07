@@ -6,8 +6,8 @@ namespace Syadeu.Presentation.Map
     public struct SceneDataComponent : IEntityComponent, IDisposable
     {
         internal bool m_Created;
-        internal InstanceArray<MapDataEntity> m_CreatedMapData;
-        internal InstanceArray<TerrainData> m_CreatedTerrains;
+        internal FixedInstanceList64<MapDataEntity> m_CreatedMapData;
+        internal FixedInstanceList64<TerrainData> m_CreatedTerrains;
 
         void IDisposable.Dispose()
         {
@@ -21,9 +21,6 @@ namespace Syadeu.Presentation.Map
             {
                 m_CreatedTerrains[i].Destroy();
             }
-
-            m_CreatedMapData.Dispose();
-            m_CreatedTerrains.Dispose();
         }
     }
 }
