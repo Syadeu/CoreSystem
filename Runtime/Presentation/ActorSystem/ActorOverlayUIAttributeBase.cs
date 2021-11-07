@@ -58,5 +58,18 @@ namespace Syadeu.Presentation.Actor
         /// <param name="ev"></param>
         protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
         { }
+
+        internal static void AOTCodeGenerator<TEvent>()
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            ActorOverlayUIAttributeBase att = null;
+
+            att.EventReceived<TEvent>(default);
+            att.OnEventReceived<TEvent>(default);
+        }
     }
 }

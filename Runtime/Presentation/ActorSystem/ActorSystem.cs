@@ -365,6 +365,8 @@ namespace Syadeu.Presentation.Actor
         {
             AOTCodeGenerator<ActorLifetimeChangedEvent>();
             AOTCodeGenerator<ActorHitEvent>();
+            AOTCodeGenerator<ActorAttackEvent>();
+            AOTCodeGenerator<ActorMoveEvent>();
 
             throw new System.InvalidOperationException();
         }
@@ -381,6 +383,9 @@ namespace Syadeu.Presentation.Actor
 
             system.ScheduleEvent<TEvent>(Entity<ActorEntity>.Empty, null, default);
             EventHandlerFactory<TEvent>();
+
+            ActorOverlayUIAttributeBase.AOTCodeGenerator<TEvent>();
+
             handler = new EventHandler<TEvent>();
         }
 

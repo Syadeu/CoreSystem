@@ -12,6 +12,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -226,6 +227,12 @@ namespace Syadeu.Presentation.TurnTable
                 if (IsTurnTableStarted()) return false;
 
                 return true;
+            }
+
+            [Preserve]
+            private static void AOTCodeGenerator()
+            {
+                ActorSystem.AOTCodeGenerator<ActorMoveEvent<ActorPointMovePredicate>>();
             }
         }
     }

@@ -103,6 +103,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
+            m_KeyboardInputs.Disable();
+
             switch (ev.Shortcut)
             {
                 case ShortcutType.Move:

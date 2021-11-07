@@ -32,8 +32,6 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly HashSet<EntityData<IEntityData>> m_InBattlePlayerFaction = new HashSet<EntityData<IEntityData>>();
 
-        
-
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
@@ -157,7 +155,6 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_TurnTableSystem.NextTurn();
         }
-
 
         private void OnTurnStateChangedEventHandler(OnTurnStateChangedEvent ev)
         {

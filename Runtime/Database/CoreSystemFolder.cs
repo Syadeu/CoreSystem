@@ -5,7 +5,7 @@ namespace Syadeu.Collections
 {
     public static class CoreSystemFolder
     {
-        private const string DEFAULT_PATH = "../CoreSystem";
+        private static string DEFAULT_PATH = $"..{Path.DirectorySeparatorChar}CoreSystem";
         private const string MODULE_PATH = "Modules";
         private static string c_ApplicationDataPath = Application.dataPath;
 

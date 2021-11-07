@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Entities
             entity.AddComponent<UIObjectCanvasGroupComponent>();
             ref var com = ref entity.GetComponent<UIObjectCanvasGroupComponent>();
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
-            com.m_Parent = Entity<IEntity>.GetEntityWithoutCheck(e.Idx);
+            com.m_Parent = e.Idx;
             com.Alpha = e.m_InitialAlpha;
         }
 

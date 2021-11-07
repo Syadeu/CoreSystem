@@ -7,7 +7,7 @@ namespace Syadeu.Presentation.Entities
 {
     public struct UIObjectCanvasGroupComponent : IEntityComponent
     {
-        internal Entity<IEntity> m_Parent;
+        internal EntityID m_Parent;
         public bool m_Enabled;
 
         private float m_Alpha;
@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.Entities
             set
             {
                 m_Alpha = value;
-                SetAlpha((ProxyTransform)m_Parent.transform);
+                SetAlpha((ProxyTransform)m_Parent.GetEntity<IEntity>().transform);
             }
         }
 
