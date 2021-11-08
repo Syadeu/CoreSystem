@@ -471,7 +471,7 @@ namespace Syadeu
 
             ConfigLoader.Save();
 
-            for (int i = 0; i < StaticManagers.Count; i++)
+            for (int i = StaticManagers.Count - 1; i >= 0; i--)
             {
                 try
                 {
@@ -482,7 +482,7 @@ namespace Syadeu
                     Debug.LogException(ex);
                 }
             }
-            for (int i = 0; i < InstanceManagers.Count; i++)
+            for (int i = InstanceManagers.Count - 1; i >= 0; i--)
             {
                 try
                 {
@@ -493,7 +493,7 @@ namespace Syadeu
                     Debug.LogException(ex);
                 }
             }
-            for (int i = 0; i < DataManagers.Count; i++)
+            for (int i = DataManagers.Count - 1; i >= 0; i--)
             {
                 try
                 {
@@ -859,7 +859,7 @@ namespace Syadeu
             List<CoreRoutine> waitForRemove = new List<CoreRoutine>();
 
             int tickCounter = 0;
-            while (true)
+            while (!s_BlockCreateInstance)
             {
 #if UNITY_EDITOR
                 if (IsEditorPaused) continue;
@@ -1258,8 +1258,9 @@ namespace Syadeu
                 if (s_BlockCreateInstance) break;
             }
 #if UNITY_EDITOR
-            
+
 #endif
+            Debug.Log("background out");
         }
         private IEnumerator UnityWorker()
         {
