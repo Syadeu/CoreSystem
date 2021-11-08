@@ -180,6 +180,18 @@ namespace Syadeu.Presentation
                         continue;
                     }
                 }
+                else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
+                {
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedUpdateIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
                 else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
@@ -257,6 +269,18 @@ namespace Syadeu.Presentation
                         continue;
                     }
                 }
+                else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
+                {
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedUpdateIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
                 else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
@@ -329,6 +353,18 @@ namespace Syadeu.Presentation
 
                         m_TerminatedCoroutineIndices.Enqueue(idx);
                         m_UsedAfterTransformIndices.RemoveAt(i);
+                        continue;
+                    }
+                }
+                else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
+                {
+                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    {
+                        m_CoroutineIterators[idx].Disposable.Dispose();
+                        m_CoroutineIterators[idx] = null;
+
+                        m_TerminatedCoroutineIndices.Enqueue(idx);
+                        m_UsedUpdateIndices.RemoveAt(i);
                         continue;
                     }
                 }
