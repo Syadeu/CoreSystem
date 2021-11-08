@@ -234,6 +234,10 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
+                    m_Systems[i].InternalOnShutdown();
+                }
+                for (int i = 0; i < m_Systems.Count; i++)
+                {
                     m_Systems[i].Dispose();
                 }
                 m_Systems.Clear();

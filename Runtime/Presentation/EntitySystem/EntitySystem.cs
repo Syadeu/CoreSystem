@@ -264,7 +264,7 @@ namespace Syadeu.Presentation
 
             static bool ProcessorPredicate(Type other) => !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
         }
-        public override void OnDispose()
+        protected override void OnShutDown()
         {
             m_DestroyedObjectsInThisFrame.Clear();
 
@@ -300,7 +300,9 @@ namespace Syadeu.Presentation
                     item.Value[a].Dispose();
                 }
             }
-
+        }
+        public override void OnDispose()
+        {
             PresentationManager.Instance.PreUpdate -= Instance_PreUpdate;
             m_SceneSystem.OnSceneChangeCalled -= M_SceneSystem_OnSceneChangeCalled;
 

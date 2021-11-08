@@ -82,6 +82,8 @@ namespace Syadeu.Presentation.TurnTable
                     {
                         if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
                         else if (!item.IsEnemy(Parent.Idx)) continue;
+                        // TODO : 임시코드
+                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
 
                         list.Add(item);
                     }

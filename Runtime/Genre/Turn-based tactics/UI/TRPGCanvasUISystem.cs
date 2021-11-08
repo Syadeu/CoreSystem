@@ -251,15 +251,15 @@ namespace Syadeu.Presentation.TurnTable.UI
                         return;
                     }
 
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
-                    SetFire(false);
-
                     Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
                     var targets = attProvider.GetObject().GetTargetsInRange();
                     var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();
                     if (targets.Length == 0) break;
+                     
+                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
+                    SetFire(false);
 
                     ref TRPGActorAttackComponent attackComponent = ref m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
 

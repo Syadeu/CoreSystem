@@ -75,10 +75,16 @@ namespace Syadeu.Presentation.Internal
         {
             ConfigLoader.LoadConfig(this);
         }
-        ~PresentationSystemEntity()
+
+        internal void InternalOnShutdown()
         {
-            Dispose();
+            OnShutDown();
+
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"Shutdown system {GetType().Name}");
         }
+        protected virtual void OnShutDown() { }
+
         public void Dispose()
         {
             InternalOnDispose();
@@ -89,6 +95,7 @@ namespace Syadeu.Presentation.Internal
             {
                 ((IDisposable)m_Modules[i]).Dispose();
             }
+            m_Modules = null;
         }
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
