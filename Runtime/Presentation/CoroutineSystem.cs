@@ -170,7 +170,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -182,7 +182,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -195,7 +195,7 @@ namespace Syadeu.Presentation
                 else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -259,7 +259,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -271,7 +271,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -284,7 +284,7 @@ namespace Syadeu.Presentation
                 else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -346,7 +346,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.AsyncOperation oper && oper.isDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -358,7 +358,7 @@ namespace Syadeu.Presentation
                 }
                 else if (iter.Iter.Current is UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle operHandle && operHandle.IsDone)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
@@ -371,7 +371,7 @@ namespace Syadeu.Presentation
                 else if (iter.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
                     !yieldAwaiter.KeepWait)
                 {
-                    if (!m_CurrentIterationJob.Iter.MoveNext())
+                    if (!iter.Iter.MoveNext())
                     {
                         m_CoroutineIterators[idx].Disposable.Dispose();
                         m_CoroutineIterators[idx] = null;
