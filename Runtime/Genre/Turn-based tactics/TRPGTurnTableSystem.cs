@@ -25,8 +25,8 @@ namespace Syadeu.Presentation.TurnTable
         private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
         private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
 
-        private event Action<EntityData<IEntityData>> OnStartTurn;
-        private event Action<EntityData<IEntityData>> OnEndTurn;
+        public event Action<EntityData<IEntityData>> OnStartTurn;
+        public event Action<EntityData<IEntityData>> OnEndTurn;
 #if DEBUG_MODE
         private readonly HashSet<int>
             m_AddedOnStartTurnEvent = new HashSet<int>(),
@@ -34,11 +34,13 @@ namespace Syadeu.Presentation.TurnTable
 #endif
 
         private bool m_TurnTableEnabled = false;
+        private int m_TurnCount = 0;
 
         private EventSystem m_EventSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
 
         public bool Enabled => m_TurnTableEnabled;
+        public int TurnCount => m_TurnCount;
         public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
         public IReadOnlyList<EntityData<IEntityData>> Players => m_Players;
 
@@ -196,6 +198,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             m_TurnTableEnabled = true;
+            m_TurnCount = 0;
 
             if (m_Players.Count == 0)
             {
@@ -279,6 +282,7 @@ namespace Syadeu.Presentation.TurnTable
             if (m_CurrentTurn == null)
             {
                 InternalInitializeTable();
+                m_TurnCount++;
             }
 
             $"next turn called: {prev.Value.Name} => {m_CurrentTurn.Value.Name}".ToLog();
