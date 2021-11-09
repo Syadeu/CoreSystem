@@ -113,7 +113,7 @@ namespace Syadeu.Presentation.Entities
         public bool IsEmpty() => Equals(Empty);
         public bool IsValid()
         {
-            if (IsEmpty()) return false;
+            if (IsEmpty() || !Target.IsValid()) return false;
 
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 

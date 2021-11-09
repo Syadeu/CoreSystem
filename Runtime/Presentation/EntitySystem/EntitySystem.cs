@@ -349,6 +349,16 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
+            // TODO : Temp code
+            if (m_EntityGameObjects.TryGetValue(obj.m_Hash, out InstanceID entity) &&
+                m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj))
+            {
+                if (entityObj is EntityBase entityBase)
+                {
+                    entityBase.transform = null;
+                }
+            }
+            
             m_EntityGameObjects.Remove(obj.m_Hash);
         }
         private void OnDataObjectVisible(ProxyTransform tr)

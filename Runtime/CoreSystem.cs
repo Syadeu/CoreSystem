@@ -126,6 +126,13 @@ namespace Syadeu
             return null;
         }
 
+        public static void DestroyAllInstanceManager()
+        {
+            if (InstanceGroupTr == null) return;
+
+            UnityEngine.Object.Destroy(InstanceGroupTr.gameObject);
+        }
+
         #endregion
 
         #region Events

@@ -141,7 +141,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_ShortcutBindings.TryGetValue(shortcut.Index, out var action))
             {
+                action.performed -= shortcut.OnKeyboardPressed;
                 m_InputSystem.RemoveBinding(action);
+
+                m_ShortcutBindings.Remove(shortcut.Index);
             }
         }
 

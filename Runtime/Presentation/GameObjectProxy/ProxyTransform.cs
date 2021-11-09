@@ -219,9 +219,9 @@ namespace Syadeu.Presentation.Proxy
                 unsafe
                 {
                     if (m_Generation.Equals(-1) || m_Pointer == null) return true;
-                    if (!Ref.m_IsOccupied || 
+                    else if (!Ref.m_IsOccupied || 
                         !m_Hash.Equals(Ref.m_Hash)) return true;
-                    if (!Ref.m_Generation.Equals(m_Generation)) return true;
+                    else if (!Ref.m_Generation.Equals(m_Generation)) return true;
                 }
                 return false;
             }

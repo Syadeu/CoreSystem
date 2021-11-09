@@ -105,7 +105,6 @@ namespace Syadeu.Presentation
         }
         private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
         {
-            if (!(obj is EntityBase)) return;
             TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 

@@ -299,8 +299,9 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
                 .GetProvider<TRPGActorAttackProvider>().GetObject().Attack();
-            //m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
-            //    .GetProvider<TRPGActorAttackProvider>().GetObject().Attack(0);
+
+            // TODO : temp code
+            m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
         }
 
         #endregion
@@ -316,6 +317,12 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_TRPGInputSystem.BindShortcut(shortcut);
 
             shortcut.Hide = m_ShortcutsHide;
+        }
+        public void RemoveShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
+        {
+            m_TRPGInputSystem.UnbindShortcut(shortcut);
+
+            m_Shortcuts[(int)shortcutType] = null;
         }
         public void AuthoringEndTurn(TRPGEndTurnUI endTurn)
         {

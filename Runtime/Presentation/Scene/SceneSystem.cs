@@ -24,12 +24,6 @@ using Syadeu.Presentation.Events;
 using UnityEditor.VersionControl;
 #endif
 
-#if UNITY_ADDRESSABLES
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.ResourceProviders;
-using UnityEngine.ResourceManagement.AsyncOperations;
-#endif
-
 namespace Syadeu.Presentation
 {
     [RequireGlobalConfig("General")]
@@ -436,6 +430,7 @@ namespace Syadeu.Presentation
 
             m_LoadingEnabled = true;
             OnLoadingEnter?.Invoke();
+            CoreSystem.DestroyAllInstanceManager();
             m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Loading));
 
             if (m_SceneInstanceFolder != null)

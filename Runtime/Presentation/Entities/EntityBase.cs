@@ -43,7 +43,13 @@ namespace Syadeu.Presentation.Entities
 
         public override bool IsValid()
         {
-            if (Reserved || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
+            if (Reserved || transform == null) return false;
+
+            else if (transform is ProxyTransform proxyTransform &&
+                (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
+            {
+                return false;
+            }
 
             return true;
         }
