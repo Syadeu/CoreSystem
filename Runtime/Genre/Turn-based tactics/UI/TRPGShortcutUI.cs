@@ -78,9 +78,12 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private void OnDestroy()
         {
-            PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
-                .System
-                .RemoveShortcut(this, m_ShortcutType);
+            // TODO : Temp code
+            var system = PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
+                .System;
+            if (system == null) return;
+
+            system.RemoveShortcut(this, m_ShortcutType);
 
             m_CanvasUISystem = null;
             m_EventSystem = null;
