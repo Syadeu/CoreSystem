@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Actions
         private float m_Volume = 1;
         [JsonProperty(Order = 3, PropertyName = "Pitch"), Range(0, 1)]
         private float m_Pitch = 1;
-        [JsonProperty(Order = 4, PropertyName = "StereoPan"), Range(0, 1)]
+        [JsonProperty(Order = 4, PropertyName = "StereoPan"), Range(-1, 1)]
         private float m_StereoPan = 0;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;

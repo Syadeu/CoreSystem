@@ -24,8 +24,6 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly Dictionary<int, InputAction> m_ShortcutBindings = new Dictionary<int, InputAction>();
 
-        private ShortcutType m_CurrentShortcut = ShortcutType.None;
-
         private KeyboardInputs m_KeyboardInputs;
 
         private EventSystem m_EventSystem;
@@ -45,7 +43,7 @@ namespace Syadeu.Presentation.TurnTable
         public override void OnDispose()
         {
             m_EventSystem.RemoveEvent<OnAppStateChangedEvent>(OnAppStateChangedEventHandler);
-            m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
+            //m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
 
             m_KeyboardInputs.Dispose();
 
@@ -67,7 +65,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnAppStateChangedEvent>(OnAppStateChangedEventHandler);
-            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
+            //m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
         }
         private void Bind(Input.InputSystem other)
         {
@@ -103,31 +101,31 @@ namespace Syadeu.Presentation.TurnTable
                     break;
             }
         }
-        private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
-        {
-            if (m_CurrentShortcut == ev.Shortcut)
-            {
-                m_KeyboardInputs.SetIngame_Default();
+        //private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
+        //{
+        //    if (m_CurrentShortcut == ev.Shortcut)
+        //    {
+        //        m_KeyboardInputs.SetIngame_Default();
 
-                m_CurrentShortcut = ShortcutType.None;
-                return;
-            }
+        //        m_CurrentShortcut = ShortcutType.None;
+        //        return;
+        //    }
 
-            switch (ev.Shortcut)
-            {
-                case ShortcutType.Move:
-                    m_KeyboardInputs.SetIngame_Default();
-                    break;
-                case ShortcutType.Attack:
-                    m_KeyboardInputs.SetIngame_TargetAim();
+        //    switch (ev.Shortcut)
+        //    {
+        //        case ShortcutType.Move:
+        //            m_KeyboardInputs.SetIngame_Default();
+        //            break;
+        //        case ShortcutType.Attack:
+        //            m_KeyboardInputs.SetIngame_TargetAim();
 
-                    break;
-                default:
-                    break;
-            }
+        //            break;
+        //        default:
+        //            break;
+        //    }
 
-            m_CurrentShortcut = ev.Shortcut;
-        }
+        //    m_CurrentShortcut = ev.Shortcut;
+        //}
 
         #endregion
 
@@ -147,9 +145,18 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
+        public void SetIngame_Default()
+        {
+            m_KeyboardInputs.SetIngame_Default();
+        }
+        public void SetIngame_TargetAim()
+        {
+            m_KeyboardInputs.SetIngame_TargetAim();
+        }
+
         #region Inner Classes
 
-        private sealed class KeyboardInputs : IDisposable
+        public sealed class KeyboardInputs : IDisposable
         {
             private Input.InputSystem m_InputSystem;
 
@@ -229,6 +236,12 @@ namespace Syadeu.Presentation.TurnTable
                 TRPGTurnTableSystem turnTableSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System;
 
                 ref var attComponent = ref turnTableSystem.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
+                if (attComponent.TargetCount == 0)
+                {
+                    "no target".ToLog();
+                    return;
+                }
+
                 int index = attComponent.GetTargetIndex() + addictive;
                 if (index >= attComponent.TargetCount)
                 {
