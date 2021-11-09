@@ -1499,6 +1499,8 @@ namespace Syadeu.Presentation
         internal static TSystem GetSystem<TSystem>(in Hash groupHash)
             where TSystem : PresentationSystemEntity
         {
+            if (Instance == null) return null;
+            
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
             {
                 return null;
