@@ -203,6 +203,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                     break;
             }
 
+            m_TRPGInputSystem.SetIngame_Default();
             m_CurrentShortcut = ShortcutType.None;
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
@@ -240,6 +241,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                     m_CurrentShortcut = ShortcutType.Move;
 
                     m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
+                    m_TRPGInputSystem.SetIngame_Default();
 
                     break;
                 case ShortcutType.Attack:
@@ -260,6 +262,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                      
                     m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
                     SetFire(false);
+                    m_TRPGInputSystem.SetIngame_TargetAim();
 
                     ref TRPGActorAttackComponent attackComponent = ref m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
 
