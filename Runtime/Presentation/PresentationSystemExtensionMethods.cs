@@ -73,7 +73,7 @@ namespace Syadeu.Presentation
         }
         public static ObjectBase GetObject(this IFixedReference t)
         {
-            if (t.IsEmpty())
+            if (t == null || t.IsEmpty())
             {
                 return null;
             }

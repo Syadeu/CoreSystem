@@ -789,10 +789,19 @@ namespace Syadeu.Presentation
         internal Instance CreateInstance(Reference obj)
             => CreateInstance(obj.GetObject());
         internal Instance CreateInstance(IFixedReference obj)
-            => CreateInstance(obj.GetObject());
+        {
+            return CreateInstance(obj.GetObject());
+        }
         internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
         {
 #if DEBUG_MODE
+            if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot create an null object.");
+
+                return Instance<T>.Empty;
+            }
             Type objType = obj.GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {
@@ -816,6 +825,13 @@ namespace Syadeu.Presentation
         internal Instance CreateInstance(IObject obj)
         {
 #if DEBUG_MODE
+            if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot create an null object.");
+
+                return Instance.Empty;
+            }
             Type objType = obj.GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
             {

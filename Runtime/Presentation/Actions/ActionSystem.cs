@@ -139,6 +139,26 @@ namespace Syadeu.Presentation.Actions
                     m_CurrentAction.Clear();
                     return;
                 case ActionType.Trigger:
+#if DEBUG_MODE
+                    if (temp.action.IsEmpty() || !temp.action.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Action,
+                            $"Unknown error raised while executing scheduled action. Scheduled action is not valid.");
+
+                        return;
+                    }
+#endif
+                    Instance<ActionBase> ins = m_EntitySystem.CreateInstance(temp.action);
+#if DEBUG_MODE
+                    if (ins.IsEmpty() || !ins.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Action,
+                            $"Action instance creation failed.");
+
+                        return;
+                    }
+#endif
+
                     TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
 
                     if (triggerAction is IEventSequence triggerActionSequence)
