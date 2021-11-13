@@ -174,7 +174,7 @@ namespace Syadeu.Presentation.Entities
 
         public virtual bool IsValid()
         {
-            if (Reserved || PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.Disposed) return false;
+            if (Reserved) return false;
 
             return true;
         }

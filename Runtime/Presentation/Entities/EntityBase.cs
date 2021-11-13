@@ -44,11 +44,13 @@ namespace Syadeu.Presentation.Entities
         public override bool IsValid()
         {
             if (Reserved || transform == null) return false;
-
-            else if (transform is ProxyTransform proxyTransform &&
-                (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
+            else if (!CoreSystem.BlockCreateInstance)
             {
-                return false;
+                if (transform is ProxyTransform proxyTransform &&
+                (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
+                {
+                    return false;
+                }
             }
 
             return true;

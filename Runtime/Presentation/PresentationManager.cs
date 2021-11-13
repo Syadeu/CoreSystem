@@ -975,61 +975,117 @@ namespace Syadeu.Presentation
 
         private void PresentationPreUpdate()
         {
-#if DEBUG_MODE
-            using (m_PrePresentationMarker.Auto())
-#endif
+            try
             {
-                PreUpdate?.Invoke();
+#if DEBUG_MODE
+                using (m_PrePresentationMarker.Auto())
+#endif
+                {
+                    PreUpdate?.Invoke();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
             }
         }
 
         private void PresentationBeforeUpdate()
         {
-#if DEBUG_MODE
-            using (m_BeforeSemaphoreMarker.Auto())
-#endif
+            try
             {
-                m_BeforeUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+                using (m_BeforeSemaphoreMarker.Auto())
+#endif
+                {
+                    m_BeforeUpdateAsyncSemaphore.Set();
+                }
+                BeforeUpdate?.Invoke();
             }
-            BeforeUpdate?.Invoke();
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
+            }
         }
         private void PresentationOnUpdate()
         {
-#if DEBUG_MODE
-            using (m_OnSemaphoreMarker.Auto())
-#endif
+            try
             {
-                m_OnUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+                using (m_OnSemaphoreMarker.Auto())
+#endif
+                {
+                    m_OnUpdateAsyncSemaphore.Set();
+                }
+                Update?.Invoke();
             }
-            Update?.Invoke();
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
+            }
         }
         private void PresentationAfterUpdate()
         {
-#if DEBUG_MODE
-            using (m_AfterSemaphoreMarker.Auto())
-#endif
+            try
             {
-                m_AfterUpdateAsyncSemaphore.Set();
+#if DEBUG_MODE
+                using (m_AfterSemaphoreMarker.Auto())
+#endif
+                {
+                    m_AfterUpdateAsyncSemaphore.Set();
+                }
+                AfterUpdate?.Invoke();
             }
-            AfterUpdate?.Invoke();
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
+            }
         }
 
         private void PresentationLateTransformUpdate()
         {
-            TransformUpdate?.Invoke();
+            try
+            {
+                TransformUpdate?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
+            }
         }
         private void PresentationLateAfterTransformUpdate()
         {
-            AfterTransformUpdate?.Invoke();
+            try
+            {
+                AfterTransformUpdate?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
+            }
         }
 
         private void PresentationPostUpdate()
         {
-#if DEBUG_MODE
-            using (m_PostPresentationMarker.Auto())
-#endif
+            try
             {
-                PostUpdate?.Invoke();
+#if DEBUG_MODE
+                using (m_PostPresentationMarker.Auto())
+#endif
+                {
+                    PostUpdate?.Invoke();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Dispose();
             }
         }
 
