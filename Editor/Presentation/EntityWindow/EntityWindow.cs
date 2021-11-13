@@ -327,10 +327,9 @@ namespace SyadeuEditor.Presentation
             public void OnGUI()
             {
                 using (new EditorUtilities.BoxBlock(Color.black))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.BeginHorizontal();
                     DrawTools();
-                    EditorGUILayout.EndHorizontal();
                 }
             }
             private void DrawTools()
@@ -497,39 +496,38 @@ namespace SyadeuEditor.Presentation
             }
             private void Draw(int unusedID)
             {
-                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, true, true,
-                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height));
-
-                #region TestRect Controller
-
-                //m_MainWindow.m_CopyrightRect = EditorGUILayout.RectField("copyright", m_MainWindow.m_CopyrightRect);
-                //m_MainWindow.HeaderPos = EditorGUILayout.RectField("headerPos", m_MainWindow. HeaderPos);
-                //m_MainWindow.HeaderLinePos = EditorGUILayout.RectField("HeaderLinePos", m_MainWindow.HeaderLinePos);
-                //m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
-
-                //m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
-                //EditorGUILayout.Space();
-
-                #endregion
-
-                using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
+                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
                 {
-                    if (m_MainWindow.m_DataListWindow.Selected != null)
+                    m_Scroll = scroll.scrollPosition;
+
+                    #region TestRect Controller
+
+                    //m_MainWindow.m_CopyrightRect = EditorGUILayout.RectField("copyright", m_MainWindow.m_CopyrightRect);
+                    //m_MainWindow.HeaderPos = EditorGUILayout.RectField("headerPos", m_MainWindow. HeaderPos);
+                    //m_MainWindow.HeaderLinePos = EditorGUILayout.RectField("HeaderLinePos", m_MainWindow.HeaderLinePos);
+                    //m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
+
+                    //m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
+                    //EditorGUILayout.Space();
+
+                    #endregion
+
+                    using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
+                    using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        EditorGUI.BeginChangeCheck();
-                        m_MainWindow.m_DataListWindow.SelectedDrawer.OnGUI();
-                        if (EditorGUI.EndChangeCheck())
+                        if (m_MainWindow.m_DataListWindow.Selected != null)
                         {
-                            m_MainWindow.IsDirty = true;
+                            m_MainWindow.m_DataListWindow.SelectedDrawer.OnGUI();
                         }
-                    }
-                    else
-                    {
-                        EditorGUILayout.LabelField("select object");
+                        else
+                        {
+                            EditorGUILayout.LabelField("select object");
+                        }
+
+                        if (change.changed) m_MainWindow.IsDirty = true;
                     }
                 }
-
-                EditorGUILayout.EndScrollView();
             }
         }
 

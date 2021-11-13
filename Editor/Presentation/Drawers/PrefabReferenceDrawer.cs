@@ -123,23 +123,24 @@ namespace SyadeuEditor.Presentation
                     m_WasEdited = false;
                 }
 
-                EditorGUI.BeginDisabledGroup(!currentValue.IsValid() || currentValue.IsNone());
-                EditorGUI.BeginChangeCheck();
-                m_Open = GUILayout.Toggle(m_Open,
+                using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid() || currentValue.IsNone()))
+                using (var change = new EditorGUI.ChangeCheckScope())
+                {
+                    m_Open = GUILayout.Toggle(m_Open,
                             m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
                             , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (m_Open)
+                    if (change.changed)
                     {
-                        m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
-                    }
-                    else
-                    {
-                        m_Editor = null;
+                        if (m_Open)
+                        {
+                            m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
+                        }
+                        else
+                        {
+                            m_Editor = null;
+                        }
                     }
                 }
-                EditorGUI.EndDisabledGroup();
             }
 
             if (m_Open)
@@ -248,8 +249,6 @@ namespace SyadeuEditor.Presentation
                             list = PrefabList.Instance.ObjectSettings;
                         }
 
-                        Event.current.Use();
-
                         try
                         {
                             PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
@@ -264,6 +263,9 @@ namespace SyadeuEditor.Presentation
                         catch (ExitGUIException)
                         {
                         }
+
+                        Event.current.Use();
+                        GUIUtility.hotControl = 0;
                         break;
                     case EventType.MouseUp:
                         if (GUIUtility.hotControl == selectorID)

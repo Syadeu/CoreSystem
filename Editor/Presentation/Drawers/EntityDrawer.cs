@@ -105,42 +105,25 @@ namespace SyadeuEditor.Presentation
             DrawDescription();
 
             Target.Name = EditorGUILayout.TextField("Name: ", Target.Name);
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
-            EditorGUI.EndDisabledGroup();
+            
+            using (new EditorGUI.DisabledGroupScope(true))
+            {
+                EditorGUILayout.TextField("Hash: ", Target.Hash.ToString());
+            }
+
             if (Target is EntityBase entity)
             {
                 using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     DrawPrefab(entity);
 
-                    EditorGUI.BeginChangeCheck();
-                    DrawField(prefabReferenceDrawer);
-                    if (EditorGUI.EndChangeCheck())
+                    using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        if (!entity.Prefab.IsNone() && entity.Prefab.IsValid())
-                        {
-                            GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
-                            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+                        DrawField(prefabReferenceDrawer);
 
-                            AABB aabb = new AABB(target.transform.position, 0);
-                            foreach (var item in renderers)
-                            {
-                                aabb.Encapsulate(item.bounds);
-                            }
-                            entity.Center = aabb.center - ((float3)target.transform.position);
-                            entity.Size = aabb.size;
-                        }
-                    }
-                    m_OpenAABB = EditorGUILayout.Foldout(m_OpenAABB, "AABB");
-                    if (m_OpenAABB)
-                    {
-                        EditorGUI.indentLevel++;
-
-                        using (new EditorUtilities.BoxBlock(Color.white))
+                        if (change.changed)
                         {
-                            EditorGUI.BeginDisabledGroup(entity.Prefab.IsNone() || !entity.Prefab.IsValid());
-                            if (GUILayout.Button("Auto"))
+                            if (!entity.Prefab.IsNone() && entity.Prefab.IsValid())
                             {
                                 GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
                                 Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
@@ -153,8 +136,34 @@ namespace SyadeuEditor.Presentation
                                 entity.Center = aabb.center - ((float3)target.transform.position);
                                 entity.Size = aabb.size;
                             }
-                            EditorGUI.EndDisabledGroup();
+                        }
+                    }
+                    
+                    
+                    m_OpenAABB = EditorGUILayout.Foldout(m_OpenAABB, "AABB");
+                    if (m_OpenAABB)
+                    {
+                        EditorGUI.indentLevel++;
 
+                        using (new EditorUtilities.BoxBlock(Color.white))
+                        {
+                            using (new EditorGUI.DisabledGroupScope(entity.Prefab.IsNone() || !entity.Prefab.IsValid()))
+                            {
+                                if (GUILayout.Button("Auto"))
+                                {
+                                    GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
+                                    Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+
+                                    AABB aabb = new AABB(target.transform.position, 0);
+                                    foreach (var item in renderers)
+                                    {
+                                        aabb.Encapsulate(item.bounds);
+                                    }
+                                    entity.Center = aabb.center - ((float3)target.transform.position);
+                                    entity.Size = aabb.size;
+                                }
+                            }
+                            
                             DrawField(m_CenterDrawer);
                             DrawField(m_SizeDrawer);
                         }

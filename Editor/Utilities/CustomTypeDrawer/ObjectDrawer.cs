@@ -121,13 +121,14 @@ namespace SyadeuEditor.Utilities
                 }
             }
 
-            EditorGUI.BeginDisabledGroup(m_Disable || m_Setter == null);
-            if (m_Setter == null)
+            using (new EditorGUI.DisabledGroupScope(m_Disable || m_Setter == null))
             {
-                Draw(m_Getter.Invoke());
+                if (m_Setter == null)
+                {
+                    Draw(m_Getter.Invoke());
+                }
+                else m_Setter.Invoke(Draw(m_Getter.Invoke()));
             }
-            else m_Setter.Invoke(Draw(m_Getter.Invoke()));
-            EditorGUI.EndDisabledGroup();
         }
         public abstract T Draw(T currentValue);
     }

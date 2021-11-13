@@ -6,6 +6,7 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
+using Unity.Burst;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -177,6 +178,7 @@ namespace Syadeu.Presentation
                 return s_Instance;
             }
         }
+        [BurstDiscard]
         /// <summary>
         /// 이 시스템(<typeparamref name="TSystem"/>) 이 속한 시스템 그룹(<seealso cref="PresentationGroupEntity"/>) 입니다.
         /// </summary>
@@ -188,6 +190,7 @@ namespace Syadeu.Presentation
                 return PresentationManager.Instance.m_PresentationGroups[Instance.m_GroupHash].m_SystemGroup;
             }
         }
+        [BurstDiscard]
         /// <summary>
         /// 시스템 <typeparamref name="TSystem"/> 의 인스턴스 입니다.
         /// </summary>
@@ -230,6 +233,7 @@ namespace Syadeu.Presentation
 
             bool ICustomYieldAwaiter.KeepWait => !IsValid() || !HasInitialized();
         }
+        [BurstDiscard]
         public static ICustomYieldAwaiter GetAwaiter() => new SystemAwaiter();
         bool IValidation.IsValid() => !m_GroupHash.IsEmpty() && m_Index >= 0;
 
