@@ -60,7 +60,11 @@ namespace Syadeu.Presentation
             for (int i = 0; i < m_CoroutineIterators.Count; i++)
             {
                 if (m_CoroutineIterators[i] == null) continue;
-                m_CoroutineIterators[i].Disposable.Dispose();
+
+                else if (!CoreSystem.BlockCreateInstance)
+                {
+                    m_CoroutineIterators[i].Disposable.Dispose();
+                }
             }
 
             m_CoroutineJobs.Clear();
