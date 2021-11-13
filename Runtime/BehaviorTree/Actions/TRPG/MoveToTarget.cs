@@ -5,11 +5,13 @@
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Map;
-using Syadeu.Presentation.TurnTable;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
         "찾은 타겟의 근처로 최대한 이동합니다." +

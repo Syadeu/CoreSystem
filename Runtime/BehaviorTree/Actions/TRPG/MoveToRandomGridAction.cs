@@ -5,13 +5,15 @@
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Map;
-using Syadeu.Presentation.TurnTable;
 using Unity.Collections;
 using UnityEngine;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class MoveToRandomGridAction : ActionBase
     {
@@ -50,9 +52,23 @@ namespace Syadeu.Presentation.BehaviorTree
             FixedList4096Bytes<int> range = new FixedList4096Bytes<int>();
             gridSize.GetRange(ref range, in m_DesireRange);
 
+            var grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
             for (int i = 0; i < gridSize.positions.Length; i++)
             {
                 range.Remove(gridSize.positions[i].index);
+            }
+            for (int i = range.Length - 1; i >= 0; i--)
+            {
+                if (grid.HasEntityAt(range[i]))
+                {
+                    range.RemoveAt(i);
+                }
+            }
+            if (range.Length == 0)
+            {
+                "cant move all blocked".ToLog();
+
+                return TaskStatus.Success;
             }
 
             int rnd = Random.Range(0, range.Length);

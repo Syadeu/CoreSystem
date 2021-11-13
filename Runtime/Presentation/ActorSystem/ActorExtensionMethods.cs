@@ -3,6 +3,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor

@@ -4,11 +4,13 @@
 
 using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.TurnTable;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class FindTargetsAction : ActionBase
     {

@@ -1,10 +1,12 @@
 ﻿using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Events;
-using Syadeu.Presentation.TurnTable;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
 #if CORESYSTEM_TURNBASESYSTEM
+    using Syadeu.Presentation.TurnTable;
+
     [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
         "이 Actor 의 턴을 넘깁니다.")]

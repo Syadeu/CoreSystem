@@ -3,10 +3,8 @@
 #endif
 
 using BehaviorDesigner.Runtime.Tasks;
-using Syadeu.Collections;
 using Syadeu.Presentation.Map;
-using Unity.Collections;
-using UnityEngine;
+using Syadeu.Collections;
 using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
@@ -14,11 +12,8 @@ namespace Syadeu.Presentation.BehaviorTree
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
-    [TaskCategory("Entity/Actor/TRPG")]
-    public sealed class IsActorTargetInAttackRange : ConditionalBase
+    public sealed class IsActorCanMoveToTarget : ConditionalBase
     {
-        [SerializeField] private int m_DesireRange = 1;
-
         public override TaskStatus OnUpdate()
         {
 #if DEBUG_MODE
@@ -42,25 +37,17 @@ namespace Syadeu.Presentation.BehaviorTree
             }
 #endif
 
-            TRPGActorAttackComponent att = Entity.GetComponentReadOnly<TRPGActorAttackComponent>();
+            GridSizeComponent gridSize = Entity.GetComponent<GridSizeComponent>();
+            TRPGActorAttackComponent att = Entity.GetComponent<TRPGActorAttackComponent>();
+
             if (att.TargetCount == 0)
             {
-                "no target".ToLog();
                 return TaskStatus.Failure;
             }
 
-            var targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridSizeComponent>().positions;
-
-            FixedList4096Bytes<int> list = new FixedList4096Bytes<int>();
-            GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();
-            gridSize.GetRange(ref list, in m_DesireRange);
-
-            for (int i = 0; i < targetPos.Length; i++)
+            if (gridSize.HasPath(att.GetTargetAt<IEntityData>(0).GetComponent<GridSizeComponent>().positions[0].index))
             {
-                if (list.Contains(targetPos[i].index))
-                {
-                    return TaskStatus.Success;
-                }
+                return TaskStatus.Success;
             }
 
             return TaskStatus.Failure;

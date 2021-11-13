@@ -4,7 +4,7 @@ using System.ComponentModel;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
-using UnityEngine;
+using Syadeu.Presentation.Components;
 
 #if CORESYSTEM_MOTIONMATCHING
 namespace Syadeu.Presentation.MotionMatching

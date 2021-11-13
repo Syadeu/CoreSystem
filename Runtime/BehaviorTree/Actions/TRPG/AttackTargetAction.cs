@@ -6,10 +6,10 @@ using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using System;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
-    using BehaviorDesigner.Runtime;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
     using UnityEngine;

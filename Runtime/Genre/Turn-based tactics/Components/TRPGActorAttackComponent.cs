@@ -1,4 +1,8 @@
-﻿using Syadeu.Collections;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System.Collections.Generic;
@@ -26,6 +30,26 @@ namespace Syadeu.Presentation.TurnTable
         }
         public FixedList512Bytes<EntityID> GetTargets() => m_Targets;
         public EntityID GetTargetAt(int index) => m_Targets[index];
+        public EntityData<T> GetTargetAt<T>(int index) where T : class, IEntityData
+        {
+#if DEBUG_MODE
+            if (m_Targets.Length == 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Doesn\'t have any targets.");
+
+                return EntityData<T>.Empty;
+            }
+            else if (m_Targets.Length >= index || index < 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Target range is out of range.");
+
+                return EntityData<T>.Empty;
+            }
+#endif
+            return m_Targets[index].GetEntityData<T>();
+        }
 
         public void SetTarget(int i)
         {

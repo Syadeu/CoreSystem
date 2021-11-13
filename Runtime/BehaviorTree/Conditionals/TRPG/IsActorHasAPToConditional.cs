@@ -6,6 +6,7 @@ using BehaviorDesigner.Runtime.Tasks;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using UnityEngine;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {

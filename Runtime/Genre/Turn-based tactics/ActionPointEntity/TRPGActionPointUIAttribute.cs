@@ -6,6 +6,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Proxy;
 using System.ComponentModel;
+using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.TurnTable
 {

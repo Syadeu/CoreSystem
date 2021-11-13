@@ -4,6 +4,7 @@ using DG.Tweening;
 
 using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;

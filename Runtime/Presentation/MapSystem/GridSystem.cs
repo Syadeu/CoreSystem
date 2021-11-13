@@ -6,6 +6,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
