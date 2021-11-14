@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.TurnTable
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
 #if CORESYSTEM_HDRP
-        private ProjectionCamera m_GridOutlineCamera;
+        private HDRPProjectionCamera m_GridOutlineCamera;
 #endif
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
