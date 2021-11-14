@@ -206,6 +206,9 @@ namespace SyadeuEditor
             Color m_PrevColor;
             int m_PrevIndent;
 
+            GUILayout.HorizontalScope m_HorizontalScope;
+            GUILayout.VerticalScope m_VerticalScope;
+
             public BoxBlock(Color color, params GUILayoutOption[] options)
             {
                 m_PrevColor = GUI.backgroundColor;
@@ -213,16 +216,20 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel = 0;
 
-                GUILayout.BeginHorizontal();
+                m_HorizontalScope = new GUILayout.HorizontalScope();
                 GUILayout.Space(m_PrevIndent * 15);
                 GUI.backgroundColor = color;
-                GUILayout.BeginVertical(EditorStyleUtilities.Box, options);
+
+                m_VerticalScope = new GUILayout.VerticalScope(EditorStyleUtilities.Box, options);
                 GUI.backgroundColor = m_PrevColor;
             }
             public void Dispose()
             {
-                GUILayout.EndVertical();
-                GUILayout.EndHorizontal();
+                m_VerticalScope.Dispose();
+                m_HorizontalScope.Dispose();
+
+                m_VerticalScope = null;
+                m_HorizontalScope = null;
 
                 EditorGUI.indentLevel = m_PrevIndent;
                 GUI.backgroundColor = m_PrevColor;

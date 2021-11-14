@@ -35,84 +35,85 @@ namespace SyadeuEditor.Presentation
             if (generics.Length > 0) targetType = generics[0];
             else targetType = null;
 
-            GUILayout.BeginVertical();
-            EditorGUILayout.BeginHorizontal();
-
-            DrawReferenceSelector(Name, (idx) =>
+            using (new GUILayout.VerticalScope())
             {
-                ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
-
-                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                    new object[] { objBase });
-
-                IFixedReference origin = Getter.Invoke();
-                Setter.Invoke((IFixedReference)temp);
-                m_WasEdited = !origin.Equals(Getter.Invoke());
-            }, currentValue, targetType);
-            if (m_WasEdited)
-            {
-                GUI.changed = true;
-                m_WasEdited = false;
-            }
-
-            m_Open = GUILayout.Toggle(m_Open,
-                        m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                        , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-
-            EditorGUI.BeginDisabledGroup(!currentValue.IsValid());
-            if (GUILayout.Button("C", GUILayout.Width(20)))
-            {
-                ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
-
-                clone.Hash = Hash.NewHash();
-                clone.Name += "_Clone";
-
-                if (EntityWindow.IsOpened)
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    EntityWindow.Instance.Add(clone);
-                }
-                else
-                {
-                    EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
-                    EntityDataList.Instance.SaveData(clone);
-                }
-
-                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                    new object[] { clone });
-                currentValue = (IFixedReference)temp;
-            }
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUILayout.EndHorizontal();
-
-            if (m_Open)
-            {
-                Color color3 = Color.red;
-                color3.a = .7f;
-
-                EditorGUI.indentLevel++;
-
-                using (new EditorUtilities.BoxBlock(color3))
-                {
-                    if (!currentValue.IsValid())
+                    DrawReferenceSelector(Name, (idx) =>
                     {
-                        EditorGUILayout.HelpBox(
-                            "This reference is invalid.",
-                            MessageType.Error);
+                        ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+
+                        object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                            new object[] { objBase });
+
+                        IFixedReference origin = Getter.Invoke();
+                        Setter.Invoke((IFixedReference)temp);
+                        m_WasEdited = !origin.Equals(Getter.Invoke());
+                    }, currentValue, targetType);
+                    if (m_WasEdited)
+                    {
+                        GUI.changed = true;
+                        m_WasEdited = false;
                     }
-                    else
-                    {
-                        EditorGUILayout.HelpBox(
-                            "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
-                            MessageType.Info);
 
-                        ObjectBaseDrawer.GetDrawer((ObjectBase)currentValue.GetObject()).OnGUI();
+                    m_Open = GUILayout.Toggle(m_Open,
+                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+
+                    using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
+                    {
+                        if (GUILayout.Button("C", GUILayout.Width(20)))
+                        {
+                            ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
+
+                            clone.Hash = Hash.NewHash();
+                            clone.Name += "_Clone";
+
+                            if (EntityWindow.IsOpened)
+                            {
+                                EntityWindow.Instance.Add(clone);
+                            }
+                            else
+                            {
+                                EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+                                EntityDataList.Instance.SaveData(clone);
+                            }
+
+                            object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                                new object[] { clone });
+                            currentValue = (IFixedReference)temp;
+                        }
                     }
                 }
 
-                EditorGUI.indentLevel--;
+                if (m_Open)
+                {
+                    Color color3 = Color.red;
+                    color3.a = .7f;
+
+                    EditorGUI.indentLevel++;
+
+                    using (new EditorUtilities.BoxBlock(color3))
+                    {
+                        if (!currentValue.IsValid())
+                        {
+                            EditorGUILayout.HelpBox(
+                                "This reference is invalid.",
+                                MessageType.Error);
+                        }
+                        else
+                        {
+                            EditorGUILayout.HelpBox(
+                                "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
+                                MessageType.Info);
+
+                            ObjectBaseDrawer.GetDrawer((ObjectBase)currentValue.GetObject()).OnGUI();
+                        }
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
             }
-            EditorGUILayout.EndVertical();
 
             return currentValue;
         }
@@ -199,6 +200,7 @@ namespace SyadeuEditor.Presentation
                         {
                             GUIUtility.hotControl = selectorID;
                             DrawSelectionWindow(setter, targetType);
+                            
                             GUI.changed = true;
                             Event.current.Use();
                         }
@@ -217,6 +219,14 @@ namespace SyadeuEditor.Presentation
 
             static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
             {
+                try
+                {
+                    GUIUtility.ExitGUI();
+                }
+                catch (ExitGUIException)
+                {
+                }
+
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
