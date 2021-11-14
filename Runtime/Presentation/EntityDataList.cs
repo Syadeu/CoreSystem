@@ -304,6 +304,10 @@ namespace Syadeu.Collections
             if (m_Objects == null) return Array.Empty<ObjectBase>();
             return m_Objects.Values.ToArray();
         }
+        public IEnumerable<ObjectBase> GetData(Func<ObjectBase, bool> predicate)
+        {
+            return m_Objects.Values.Where(predicate);
+        }
         public T[] GetData<T>() where T : ObjectBase
         {
             if (m_Objects == null) return Array.Empty<T>();

@@ -1,4 +1,8 @@
-﻿#undef UNITY_ADDRESSABLES
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+#undef UNITY_ADDRESSABLES
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,6 +23,8 @@ using System.Collections.Concurrent;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Events;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Threading;
 
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
@@ -133,6 +139,7 @@ namespace Syadeu.Presentation
         }
 
         private readonly ConcurrentDictionary<Hash, List<Func<ICustomYieldAwaiter>>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Func<ICustomYieldAwaiter>>>();
+        private readonly ConcurrentDictionary<Hash, List<SceneAssetAwaiter>> m_CustomSceneAssetLoadDependences = new ConcurrentDictionary<Hash, List<SceneAssetAwaiter>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
         private EventSystem m_EventSystem;
@@ -228,6 +235,18 @@ namespace Syadeu.Presentation
                 }
             }
             #endregion
+        }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            IEnumerable<ObjectBase> iter = EntityDataList.Instance.GetData(GetSceneAssetNotifier);
+            foreach (var item in iter)
+            {
+                INotifySceneAsset notifySceneAsset = (INotifySceneAsset)item;
+
+                RegisterSceneAsset(notifySceneAsset.TargetScene, notifySceneAsset);
+            }
+
+            return base.OnInitializeAsync();
         }
         public override void OnDispose()
         {
@@ -352,11 +371,13 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneLoadDependence(SceneReference key, Func<ICustomYieldAwaiter> onSceneStart)
         {
+#if DEBUG_MODE
             if (string.IsNullOrEmpty(key.scenePath))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     "Scene is valid");
             }
+#endif
             Hash hash = Hash.NewHash(key.scenePath);
 
             if (!m_CustomSceneLoadDependences.TryGetValue(hash, out var list))
@@ -373,11 +394,13 @@ namespace Syadeu.Presentation
         /// <param name="onSceneStart"></param>
         public void RegisterSceneUnloadDependence(SceneReference key, Action onSceneStart)
         {
+#if DEBUG_MODE
             if (string.IsNullOrEmpty(key.scenePath))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     "Scene is valid");
             }
+#endif
             Hash hash = Hash.NewHash(key.scenePath);
 
             if (!m_CustomSceneUnloadDependences.TryGetValue(hash, out var list))
@@ -386,6 +409,28 @@ namespace Syadeu.Presentation
                 m_CustomSceneUnloadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
+        }
+
+        public void RegisterSceneAsset(SceneReference key, INotifyAsset asset)
+        {
+#if DEBUG_MODE
+            if (string.IsNullOrEmpty(key.scenePath))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"Target scene is invalid. Cannot add scene asset(s) at {TypeHelper.ToString(asset.GetType())}");
+                return;
+            }
+#endif
+            SceneAssetAwaiter awaiter = new SceneAssetAwaiter(asset.NotifyAssets);
+
+            Hash hash = Hash.NewHash(key.scenePath);
+
+            if (!m_CustomSceneAssetLoadDependences.TryGetValue(hash, out var list))
+            {
+                list = new List<SceneAssetAwaiter>();
+                m_CustomSceneAssetLoadDependences.TryAdd(hash, list);
+            }
+            list.Add(awaiter);
         }
 
         public GameObject CreateGameObject(string name)
@@ -546,6 +591,17 @@ namespace Syadeu.Presentation
                 }
             }
 
+            // Scene Assets
+            if (system.m_CustomSceneAssetLoadDependences.TryGetValue(hash, out List<SceneAssetAwaiter> sceneAssetAwaiters))
+            {
+                for (int i = 0; i < sceneAssetAwaiters.Count; i++)
+                {
+                    sceneAssetAwaiters[i].LoadAsync();
+
+                    awaiters.Add(sceneAssetAwaiters[i]);
+                }
+            }
+
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
                 CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
@@ -571,6 +627,15 @@ namespace Syadeu.Presentation
                 }
             }
 
+            // Scene Assets
+            if (system.m_CustomSceneAssetLoadDependences.TryGetValue(hash, out List<SceneAssetAwaiter> sceneAssetAwaiters))
+            {
+                for (int i = 0; i < sceneAssetAwaiters.Count; i++)
+                {
+                    sceneAssetAwaiters[i].Reset();
+                }
+            }
+
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
                 CoreSystem.Logger.Log(Channel.Scene, 
@@ -585,6 +650,50 @@ namespace Syadeu.Presentation
                 group.m_SystemGroup.Stop();
             }
         }
+
+        private static bool GetSceneAssetNotifier(ObjectBase objectBase)
+        {
+            if (objectBase is INotifySceneAsset) return true;
+
+            return false;
+        }
+
         #endregion
+
+        private sealed class SceneAssetAwaiter : ICustomYieldAwaiter
+        {
+            private readonly IEnumerable<IPrefabReference> m_SceneAssets;
+            private readonly long m_SceneAssetCount;
+            private long m_LoadedCount;
+
+            public SceneAssetAwaiter(IEnumerable<IPrefabReference> sceneAssets)
+            {
+                m_SceneAssets = sceneAssets;
+                m_SceneAssetCount = sceneAssets.LongCount();
+                m_LoadedCount = 0;
+            }
+
+            public void LoadAsync()
+            {
+                if (m_LoadedCount == m_SceneAssetCount) return;
+
+                foreach (var item in m_SceneAssets)
+                {
+                    var handle = item.LoadAssetAsync();
+                    handle.Completed += Handle_Completed;
+                }
+            }
+            public void Reset()
+            {
+                m_LoadedCount = 0;
+            }
+
+            private void Handle_Completed(AsyncOperationHandle obj)
+            {
+                Interlocked.Increment(ref m_LoadedCount);
+            }
+
+            bool ICustomYieldAwaiter.KeepWait => m_LoadedCount != m_SceneAssetCount;
+        }
     }
 }

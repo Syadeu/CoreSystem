@@ -3,6 +3,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Mono
 {
+    [AddComponentMenu("CoreSystem/Simple/Switch")]
     public sealed class SimpleSwitch : MonoBehaviour
     {
         [System.Serializable]
