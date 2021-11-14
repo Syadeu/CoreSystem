@@ -31,12 +31,13 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < Drawers.Length; i++)
             {
+                foreach (var item in p_Attributes[i])
+                {
+                    DrawSystemAttribute(item);
+                }
+
                 if (Drawers[i].Name.Equals("FXBounds"))
                 {
-                    foreach (var item in p_Attributes[i])
-                    {
-                        DrawSystemAttribute(item);
-                    }
                     using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         DrawFXBounds();

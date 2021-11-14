@@ -100,6 +100,11 @@ namespace SyadeuEditor.Utilities
 
         public override sealed void OnGUI()
         {
+            //foreach (var item in m_Attributes)
+            //{
+            //    DrawSystemAttribute(in item);
+            //}
+
             using (new EditorGUI.DisabledGroupScope(m_Disable || m_Setter == null))
             {
                 if (m_Setter == null)

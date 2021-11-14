@@ -745,10 +745,10 @@ namespace SyadeuEditor.Utilities
         
         public override void OnGUI()
         {
-            foreach (var item in m_Attributes)
-            {
-                DrawSystemAttribute(in item);
-            }
+            //foreach (var item in m_Attributes)
+            //{
+            //    DrawSystemAttribute(in item);
+            //}
 
             using (new EditorUtilities.BoxBlock(Color.black))
             {
