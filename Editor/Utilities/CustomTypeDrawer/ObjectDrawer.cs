@@ -100,27 +100,6 @@ namespace SyadeuEditor.Utilities
 
         public override sealed void OnGUI()
         {
-            foreach (var item in m_Attributes)
-            {
-                if (item is SpaceAttribute)
-                {
-                    EditorGUILayout.Space();
-                }
-                else if (item is TooltipAttribute tooltip)
-                {
-                    EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
-                }
-                else if (item is ReflectionDescriptionAttribute description)
-                {
-                    EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
-                }
-                else if (item is HeaderAttribute header)
-                {
-                    EditorUtilities.Line();
-                    EditorUtilities.StringRich(header.header, 15);
-                }
-            }
-
             using (new EditorGUI.DisabledGroupScope(m_Disable || m_Setter == null))
             {
                 if (m_Setter == null)

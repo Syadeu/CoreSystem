@@ -1,5 +1,5 @@
 ﻿using Syadeu.Collections;
-
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Linq;
@@ -19,6 +19,27 @@ namespace SyadeuEditor.Utilities
 
         public abstract void OnGUI();
         public virtual void Dispose() { }
+
+        protected void DrawSystemAttribute(in Attribute attribute)
+        {
+            if (attribute is SpaceAttribute)
+            {
+                EditorGUILayout.Space();
+            }
+            else if (attribute is TooltipAttribute tooltip)
+            {
+                EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
+            }
+            else if (attribute is ReflectionDescriptionAttribute description)
+            {
+                EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+            }
+            else if (attribute is HeaderAttribute header)
+            {
+                EditorUtilities.Line();
+                EditorUtilities.StringRich(header.header, 15);
+            }
+        }
 
         public static Type GetDeclaredType(MemberInfo memberInfo)
         {
@@ -163,26 +184,6 @@ namespace SyadeuEditor.Utilities
             #endregion
 
             return new NullDrawer(memberInfo, declaredType);
-        }
-    }
-    public sealed class NullDrawer : ObjectDrawerBase
-    {
-        private string m_Name;
-
-        public override object TargetObject => null;
-        public override string Name => m_Name;
-
-        private MemberInfo MemberInfo;
-
-        public NullDrawer(MemberInfo member, Type declaredType)
-        {
-            MemberInfo = member;
-            m_Name = $"Not supported Type: {member.MemberType} {TypeHelper.ToString(declaredType)}";
-        }
-
-        public override void OnGUI()
-        {
-            EditorGUILayout.LabelField(MemberInfo.Name, Name);
         }
     }
 }

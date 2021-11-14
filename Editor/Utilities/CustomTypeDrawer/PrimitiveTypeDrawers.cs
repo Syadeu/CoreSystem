@@ -608,6 +608,7 @@ namespace SyadeuEditor.Utilities
         private bool 
             m_EnableFoldout = false, m_Open = false;
 
+        private readonly Attribute[] m_Attributes;
         private Func<object> m_Getter;
         private Action<object> m_Setter;
 
@@ -623,6 +624,8 @@ namespace SyadeuEditor.Utilities
         {
             m_EnableFoldout = foldout;
             m_TargetObject = null;
+            m_Attributes = memberInfo.GetCustomAttributes().ToArray();
+
             Type declaredType;
             if (memberInfo is FieldInfo field)
             {
@@ -699,6 +702,7 @@ namespace SyadeuEditor.Utilities
         {
             m_TargetObject = obj;
             m_Name = name;
+            m_Attributes = Array.Empty<Attribute>();
 
             if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
 
@@ -741,6 +745,11 @@ namespace SyadeuEditor.Utilities
         
         public override void OnGUI()
         {
+            foreach (var item in m_Attributes)
+            {
+                DrawSystemAttribute(in item);
+            }
+
             using (new EditorUtilities.BoxBlock(Color.black))
             {
                 if (m_EnableFoldout && FieldCount > 1)

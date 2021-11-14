@@ -25,6 +25,7 @@ namespace SyadeuEditor.Presentation
         private ReflectionDescriptionAttribute m_Description;
 
         private readonly MemberInfo[] m_Members;
+        protected readonly Attribute[][] p_Attributes;
         private readonly ObjectDrawerBase[] m_ObjectDrawers;
 
         public override sealed object TargetObject => m_TargetObject;
@@ -87,6 +88,12 @@ namespace SyadeuEditor.Presentation
             m_Description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
 
             m_Members = ReflectionHelper.GetSerializeMemberInfos(m_Type);
+            p_Attributes = new Attribute[m_Members.Length][];
+            for (int i = 0; i < p_Attributes.Length; i++)
+            {
+                p_Attributes[i] = m_Members[i].GetCustomAttributes().ToArray();
+            }
+
             m_ObjectDrawers = new ObjectDrawerBase[m_Members.Length];
             for (int i = 0; i < m_ObjectDrawers.Length; i++)
             {
@@ -115,6 +122,11 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < m_ObjectDrawers.Length; i++)
             {
+                foreach (var item in p_Attributes[i])
+                {
+                    DrawSystemAttribute(item);
+                }
+
                 DrawField(m_ObjectDrawers[i]);
             }
         }

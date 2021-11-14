@@ -33,6 +33,10 @@ namespace SyadeuEditor.Presentation
             {
                 if (Drawers[i].Name.Equals("FXBounds"))
                 {
+                    foreach (var item in p_Attributes[i])
+                    {
+                        DrawSystemAttribute(item);
+                    }
                     using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         DrawFXBounds();

@@ -4,19 +4,10 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
-using Syadeu.Internal;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using Unity.Burst;
 using Unity.Collections;
-using Unity.Jobs;
-using Unity.Mathematics;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Entities
 {
@@ -102,13 +93,14 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+#if DEBUG_MODE
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
                     return null;
                 }
-                if (s_EntitySystem.IsNull())
+                else if (s_EntitySystem.IsNull())
                 {
                     s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
                     if (s_EntitySystem.IsNull())
@@ -118,7 +110,7 @@ namespace Syadeu.Presentation.Entities
                         return null;
                     }
                 }
-
+#endif
                 if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
                     !(value is T t))
                 {

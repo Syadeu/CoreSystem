@@ -17,13 +17,14 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
+#if DEBUG_MODE
             if (!entity.HasComponent<TurnPlayerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"");
                 return;
             }
-
+#endif
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             
             if (turnPlayer.ActionPoint + m_AddActionPoint < 0)
