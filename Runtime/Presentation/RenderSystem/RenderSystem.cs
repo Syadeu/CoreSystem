@@ -83,6 +83,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
+        public ScreenAspect ScreenAspect => new ScreenAspect(Screen.currentResolution);
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;
@@ -114,6 +115,8 @@ namespace Syadeu.Presentation.Render
 
             m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
             m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
+
+            
 
             return base.OnInitialize();
         }
