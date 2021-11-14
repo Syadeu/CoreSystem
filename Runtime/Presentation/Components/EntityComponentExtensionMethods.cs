@@ -15,9 +15,7 @@ namespace Syadeu.Presentation.Components
         public static ref TComponent GetComponent<TComponent>(in this EntityID id)
             where TComponent : unmanaged, IEntityComponent
         {
-            EntityData<IEntityData> entity = id.GetEntityData<IEntityData>();
-            
-            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(entity);
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(id);
         }
 
         #region IEntityDataID Components
@@ -51,12 +49,11 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
 #if DEBUG_MODE
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
             PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
 #endif
-            EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(entity);
-            //return ref EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(entity);
+            EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트가 있는지 반환합니다.
@@ -81,7 +78,7 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 
-            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx));
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(t.Idx);
         }
         /// <summary>
         /// 해당 타입의 컴포넌트가 있는지 반환합니다.
@@ -115,7 +112,7 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 
-            return EntityComponentSystem.Constants.SystemID.System.HasComponent(EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx), componentType);
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent(t.Idx, componentType);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
@@ -149,7 +146,7 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx));
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(t.Idx);
         }
         /// <summary>
         /// 박싱된 <typeparamref name="TComponent"/> 컴포넌트를 가져옵니다.
@@ -180,7 +177,7 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx));
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(t.Idx);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 의 포인터 주소를 가져옵니다.
@@ -207,7 +204,7 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx));
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(t.Idx);
         }
         /// <summary>
         /// <typeparamref name="TComponent"/> 컴포넌트를 제거합니다.
@@ -234,11 +231,10 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
 #if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(entity);
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t.Idx);
 #endif
-            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(entity);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
         }
         /// <summary>
         /// 해당 컴포넌트를 제거합니다.
@@ -272,11 +268,10 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
 #if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(entity, componentType);
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t.Idx, componentType);
 #endif
-            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(entity, componentType);
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
         }
 
         #endregion

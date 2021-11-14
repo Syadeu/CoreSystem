@@ -42,14 +42,13 @@ namespace Syadeu.Presentation.BehaviorTree
             }
 #endif
             var temp = ctr.GetProvider<TRPGActorAttackProvider>().GetObject().GetTargetsWithin(m_DesireRange);
-            
             //if (temp.Length > 0)
-            {
-                $"{temp.Length} found".ToLog();
-                return TaskStatus.Success;
-            }
+            //{
 
-            //return TaskStatus.Failure;
+            //}
+
+            $"{temp.Length} found".ToLog();
+            return TaskStatus.Success;
         }
     }
 #endif

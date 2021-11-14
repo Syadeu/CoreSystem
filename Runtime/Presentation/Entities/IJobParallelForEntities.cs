@@ -114,9 +114,9 @@ namespace Syadeu.Presentation.Entities
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
 
-                buffer.ElementAt<TComponent>(i, out EntityData<IEntityData> entity, out TComponent component);
+                buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
 
-                jobData.Execute(in entity, in component);
+                jobData.Execute(entity.GetEntityData<IEntityData>(), in component);
             }
         }
 

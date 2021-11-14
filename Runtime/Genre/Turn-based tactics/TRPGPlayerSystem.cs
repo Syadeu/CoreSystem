@@ -211,6 +211,11 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
+        //public FixedList512Bytes<EntityID> GetTargetsWithin(in EntityID entity, in int range, in bool sort = true)
+        //{
+
+        //}
+
         private readonly Queue<Action> m_ScheduledActions = new Queue<Action>();
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
         {

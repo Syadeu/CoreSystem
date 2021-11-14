@@ -1012,7 +1012,7 @@ namespace Syadeu.Presentation
         {
             if (entity is Actor.ActorProviderBase actorProvider)
             {
-                Debug_RemoveComponent(actorProvider.Parent, component);
+                Debug_RemoveComponent(actorProvider.Parent.Idx, component);
                 return;
             }
 
@@ -1040,21 +1040,21 @@ namespace Syadeu.Presentation
             }
             if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
         }
-        internal void Debug_RemoveComponent<TComponent>(EntityData<IEntityData> entity)
+        internal void Debug_RemoveComponent<TComponent>(EntityID entity)
             => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
-        internal void Debug_RemoveComponent(EntityData<IEntityData> entity, Type component)
+        internal void Debug_RemoveComponent(EntityID entityID, Type component)
         {
-            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+            if (!m_AddedComponents.TryGetValue(entityID, out var list))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.RawName}) doesn\'t have component at all.");
+                    $"Entity({entityID.Hash}) doesn\'t have component at all.");
                 return;
             }
 
             if (!list.Contains(component))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.RawName}) doesn\'t have {component.Name}.");
+                    $"Entity({entityID.Hash}) doesn\'t have {component.Name}.");
                 return;
             }
 
@@ -1066,7 +1066,7 @@ namespace Syadeu.Presentation
                     break;
                 }
             }
-            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+            if (list.Count == 0) m_AddedComponents.Remove(entityID);
         }
 #endif
 

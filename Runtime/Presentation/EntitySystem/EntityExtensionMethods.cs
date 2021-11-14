@@ -462,7 +462,7 @@ namespace Syadeu.Presentation
 
     public static class EntityDataHelper
     {
-        public static EntityData<T> GetEntity<T>(InstanceID idx)
+        public static EntityData<T> GetEntity<T>(in InstanceID idx)
             where T : class, IEntityData
         {
             #region Validation
@@ -500,7 +500,7 @@ namespace Syadeu.Presentation
 
             return new EntityData<T>(idx, target.GetHashCode(), target.Name);
         }
-        public static EntityData<T> GetEntityWithoutCheck<T>(InstanceID idx)
+        public static EntityData<T> GetEntityWithoutCheck<T>(in InstanceID idx)
             where T : class, IEntityData
         {
             ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
