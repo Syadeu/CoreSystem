@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.BehaviorTree
             else if (!Entity.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Entity.RawName}) doeesn\'t have {nameof(ActorControllerAttribute)}");
+                    $"Entity({Entity.RawName}) doesn\'t have {nameof(ActorControllerAttribute)}");
                 return TaskStatus.Failure;
             }
 #endif
@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.BehaviorTree
             if (!ctr.HasProvider<TRPGActorAttackProvider>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Entity.RawName}) doeesn\'t have {nameof(TRPGActorAttackProvider)}");
+                    $"Entity({Entity.RawName}) doesn\'t have {nameof(TRPGActorAttackProvider)}");
                 return TaskStatus.Failure;
             }
 #endif

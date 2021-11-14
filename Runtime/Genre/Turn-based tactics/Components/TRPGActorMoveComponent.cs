@@ -84,11 +84,11 @@ namespace Syadeu.Presentation.TurnTable
             return gridsize.IndexToPosition(tile.index);
         }
 
-        public void MoveTo(in GridPath64 path, in ActorMoveEvent ev)
-        {
-            NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
-            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
-        }
+        //public void MoveTo(in GridPath64 path, in ActorMoveEvent ev)
+        //{
+        //    NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
+        //    navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), path, ev);
+        //}
         public void MoveTo(in float3 point, in ActorMoveEvent ev)
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;

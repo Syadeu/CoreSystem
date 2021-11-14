@@ -1,4 +1,8 @@
-﻿using Syadeu.Presentation.Attributes;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Actions;
 using System.ComponentModel;
 using Syadeu.Collections;
@@ -14,13 +18,14 @@ namespace Syadeu.Presentation.MotionMatching
     {
         protected override void OnExecute(EntityData<IEntityData> entity)
         {
+#if DEBUG_MODE
             if (!entity.HasComponent<NavAgentComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"{nameof(NavAgentAttribute)} not found at {entity.Name}");
                 return;
             }
-
+#endif
             NavAgentComponent navAgent = entity.GetComponentReadOnly<NavAgentComponent>();
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             if (animator == null)

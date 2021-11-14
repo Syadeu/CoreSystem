@@ -84,10 +84,13 @@ namespace Syadeu.Presentation.BehaviorTree
             $"from {gridSize.positions[0].location} to {targetPos.location}".ToLog();
             $"1. path length {tempPath.Length} :: {path.Length}".ToLog();
 
-            TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
-            move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+            PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
+                .MoveToCell(Entity, path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
 
-            turnPlayer.ActionPoint -= path.Length - 1;
+            //TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
+            //move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+
+            //turnPlayer.ActionPoint -= path.Length - 1;
 
             return TaskStatus.Success;
         }

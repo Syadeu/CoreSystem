@@ -75,19 +75,8 @@ namespace Syadeu.Presentation.BehaviorTree
             GridPath64 tempPath = new GridPath64();
             gridSize.GetPath64(range[rnd], ref tempPath, avoidEntity: true);
 
-            ref TurnPlayerComponent turnPlayer = ref Entity.GetComponent<TurnPlayerComponent>();
-            //GridPath64 path = new GridPath64();
-            //for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
-            //{
-            //    path.Add(tempPath[i]);
-            //}
-
-            //$"1. path length {tempPath.Length} :: {path.Length}".ToLog();
-
-            TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
-            move.MoveTo(in tempPath, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
-
-            turnPlayer.ActionPoint -= tempPath.Length - 1;
+            PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
+                .MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
 
             return TaskStatus.Success;
         }
