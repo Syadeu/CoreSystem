@@ -75,12 +75,12 @@ namespace Syadeu.Mono
                 {
                     return m_LoadHandle.Convert<T>();
                 }
-                if (m_LoadedObject != null)
+                else if (m_LoadedObject != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, "already loaded");
                     return default(AsyncOperationHandle<T>);
                 }
-                if (!m_RefPrefab.RuntimeKeyIsValid())
+                else if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
                     return default(AsyncOperationHandle<T>);

@@ -133,6 +133,7 @@ namespace Syadeu.Collections
         AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
         AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>();
         public AsyncOperationHandle<T> LoadAssetAsync() => GetObjectSetting().LoadAssetAsync<T>();
+        public AsyncOperationHandle LoadAssetUntypedAsync() => GetObjectSetting().LoadAssetAsync();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
 
         public AsyncOperationHandle<UnityEngine.GameObject> InstantiateAysnc(in float3 pos, in quaternion rot, in UnityEngine.Transform parent) => GetObjectSetting().InstantiateAsync(in pos, in rot, in parent);

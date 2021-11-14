@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Proxy;
@@ -104,6 +108,7 @@ namespace Syadeu.Presentation.Map
 
         private void LoadTerrainDataAsync(AsyncOperationHandle<UnityEngine.TerrainData> obj)
         {
+#if DEBUG_MODE
             if (m_Material.IsNone() ||
                 !m_Material.IsValid())
             {
@@ -111,21 +116,23 @@ namespace Syadeu.Presentation.Map
                        $"Terrain({Name}) raised unexpected error. Material is not valid.");
                 return;
             }
+#endif
             if (m_Material.Asset == null)
             {
-                var asyncHandle = m_Material.LoadAssetAsync();
+                var asyncHandle = m_Material.LoadAssetUntypedAsync();
+#if DEBUG_MODE
                 if (!asyncHandle.IsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Terrain({Name}) raised unexpected error. Material is not valid.");
                     return;
                 }
-
+#endif
                 asyncHandle.Completed += LoadMaterialAsync;
             }
             else LoadTerrainData(obj.Result);
         }
-        private void LoadMaterialAsync(AsyncOperationHandle<Material> obj)
+        private void LoadMaterialAsync(AsyncOperationHandle obj)
         {
             LoadTerrainData(m_Data.Asset);
         }

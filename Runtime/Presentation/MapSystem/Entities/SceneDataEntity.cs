@@ -7,16 +7,15 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Unity.Collections;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
 {
     [DisplayName("EntityData: SceneData")]
     [EntityAcceptOnly(typeof(SceneDataAttributeBase))]
-    public sealed class SceneDataEntity : EntityDataBase,
+    public sealed class SceneDataEntity : EntityDataBase, INotifySceneAsset,
         INotifyComponent<SceneDataComponent>
     {
         [JsonProperty(Order = 0, PropertyName = "TerrainData")]
@@ -39,6 +38,22 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
+
+        SceneReference INotifySceneAsset.TargetScene => GetTargetScene();
+        IEnumerable<IPrefabReference> INotifyAsset.NotifyAssets
+        {
+            get
+            {
+                var iters = m_TerrainData.Select(other => ((INotifyAsset)other.GetObject()).NotifyAssets);
+                List<IPrefabReference> list = new List<IPrefabReference>();
+                foreach (var item in iters)
+                {
+                    list.AddRange(item);
+                }
+
+                return list;
+            }
+        }
 
         public override bool IsValid()
         {
