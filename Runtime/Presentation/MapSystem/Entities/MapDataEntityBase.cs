@@ -3,8 +3,12 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Map
@@ -77,5 +81,48 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
         [JsonProperty(Order = 1, PropertyName = "Objects")] public Object[] m_Objects = Array.Empty<Object>();
         [JsonProperty(Order = 2, PropertyName = "RawObjects")] public RawObject[] m_RawObjects = Array.Empty<RawObject>();
+
+        public ICustomYieldAwaiter LoadAllAssets()
+        {
+            return new Awaiter(m_Objects, m_RawObjects);
+        }
+
+        private sealed class Awaiter : ICustomYieldAwaiter
+        {
+            private readonly int m_AssetCount;
+            private int m_Counter;
+
+            public Awaiter(Object[] objs, RawObject[] rawObjs)
+            {
+                AsyncOperationHandle<GameObject> handle;
+                m_Counter = 0;
+
+                IEnumerable<PrefabReference<GameObject>> temp1 = objs
+                    .Select(other => other.m_Object.GetObject().Prefab);
+                foreach (var item in temp1)
+                {
+                    handle = item.LoadAssetAsync();
+                    handle.CompletedTypeless += Handle_CompletedTypeless;
+                }
+                m_AssetCount += temp1.Count();
+
+                IEnumerable<PrefabReference<GameObject>> temp2 = rawObjs
+                    .Select(other => other.m_Object);
+                foreach (var item in temp2)
+                {
+                    handle = item.LoadAssetAsync();
+                    handle.CompletedTypeless += Handle_CompletedTypeless;
+                }
+
+                m_AssetCount += temp2.Count();
+            }
+
+            private void Handle_CompletedTypeless(AsyncOperationHandle obj)
+            {
+                Interlocked.Increment(ref m_Counter);
+            }
+
+            public bool KeepWait => m_Counter != m_AssetCount;
+        }
     }
 }

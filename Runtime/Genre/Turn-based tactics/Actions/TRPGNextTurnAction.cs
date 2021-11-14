@@ -11,7 +11,7 @@ using System.ComponentModel;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [DisplayName("TriggerAction: Next turn")]
+    [DisplayName("TriggerAction: TRPG Next turn")]
     public sealed class TRPGNextTurnAction : TriggerAction
     {
         protected override void OnExecute(EntityData<IEntityData> entity)

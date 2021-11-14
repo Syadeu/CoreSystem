@@ -35,7 +35,6 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntityWithoutCheck(Idx);
 
-        [JsonIgnore] public bool IsMapDataCreated { get; private set; } = false;
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 
@@ -56,43 +55,38 @@ namespace Syadeu.Presentation.Map
             if (m_SceneIndex < 0 || SceneList.Instance.Scenes.Count <= m_SceneIndex) return null;
             return SceneList.Instance.Scenes[m_SceneIndex];
         }
-
-        public void CreateMapData(EntitySystem entitySystem)
+        public ICustomYieldAwaiter LoadAllAssets()
         {
-            if (IsMapDataCreated) throw new System.Exception();
-
-            CreatedMapData = new EntityData<MapDataEntity>[m_MapData.Length];
+            List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                if (m_MapData[i].IsEmpty() || !m_MapData[i].IsValid())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"MapData(Element At {i}) in SceneData({Name}) is not valid.");
-
-                    CreatedMapData[i] = EntityData<MapDataEntity>.Empty;
-                    continue;
-                }
-
-                EntityData<IEntityData> temp = entitySystem.CreateObject(m_MapData[i]);
-                CreatedMapData[i] = temp.Cast<IEntityData, MapDataEntity>();
+                awaiters.Add(m_MapData[i].GetObject().LoadAllAssets());
             }
 
-            IsMapDataCreated = true;
+            return new Awaiter(awaiters);
         }
 
-        public void DestroyMapData()
+        private sealed class Awaiter : ICustomYieldAwaiter
         {
-            if (!IsMapDataCreated) throw new System.Exception();
+            private readonly IEnumerable<ICustomYieldAwaiter> m_Awaiters;
 
-            for (int i = 0; i < CreatedMapData.Length; i++)
+            public Awaiter(IEnumerable<ICustomYieldAwaiter> awaiters)
             {
-                MapDataEntity mapData = CreatedMapData[i];
-                mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
-                CreatedMapData[i].Destroy();
+                m_Awaiters = awaiters;
             }
 
-            CreatedMapData = null;
-            IsMapDataCreated = false;
+            public bool KeepWait
+            {
+                get
+                {
+                    foreach (var item in m_Awaiters)
+                    {
+                        if (item.KeepWait) return true;
+                    }
+
+                    return false;
+                }
+            }
         }
 
         [Preserve]

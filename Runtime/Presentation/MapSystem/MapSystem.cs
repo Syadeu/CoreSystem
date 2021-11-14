@@ -56,8 +56,8 @@ namespace Syadeu.Presentation.Map
             m_SceneSystem = other;
 
             SceneDataEntity[] sceneData = EntityDataList.Instance.m_Objects.Values
-                    .Where((other) => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
-                    .Select((other) => (SceneDataEntity)other)
+                    .Where(other => (other is SceneDataEntity sceneData) && sceneData.m_BindScene && sceneData.IsValid())
+                    .Select(other => (SceneDataEntity)other)
                     .ToArray();
 
             for (int i = 0; i < sceneData.Length; i++)
@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.Map
             public Reference<SceneDataEntity> m_SceneData;
             private EntityData<SceneDataEntity> m_InstanceHash;
 
-            public void RegisterOnSceneLoad()
+            public ICustomYieldAwaiter RegisterOnSceneLoad()
             {
                 SceneDataEntity data = m_SceneData.GetObject();
                 SceneReference targetScene = data.GetTargetScene();
@@ -122,6 +122,8 @@ namespace Syadeu.Presentation.Map
                 //mapSystem.m_LoadedSceneData.Add(entity);
 
                 m_InstanceHash = entity;
+
+                return data.LoadAllAssets();
             }
             public void RegisterOnSceneUnload()
             {

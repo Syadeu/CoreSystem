@@ -302,7 +302,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                 .GetProvider<TRPGActorAttackProvider>().GetObject().Attack();
 
             // TODO : temp code
-            m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
+            //m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
         }
 
         #endregion

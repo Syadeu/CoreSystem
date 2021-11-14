@@ -132,7 +132,7 @@ namespace Syadeu.Presentation
             }
         }
 
-        private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Action>>();
+        private readonly ConcurrentDictionary<Hash, List<Func<ICustomYieldAwaiter>>> m_CustomSceneLoadDependences = new ConcurrentDictionary<Hash, List<Func<ICustomYieldAwaiter>>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
         private EventSystem m_EventSystem;
@@ -350,7 +350,7 @@ namespace Syadeu.Presentation
         /// </summary>
         /// <param name="key"></param>
         /// <param name="onSceneStart"></param>
-        public void RegisterSceneLoadDependence(SceneReference key, Action onSceneStart)
+        public void RegisterSceneLoadDependence(SceneReference key, Func<ICustomYieldAwaiter> onSceneStart)
         {
             if (string.IsNullOrEmpty(key.scenePath))
             {
@@ -361,7 +361,7 @@ namespace Syadeu.Presentation
 
             if (!m_CustomSceneLoadDependences.TryGetValue(hash, out var list))
             {
-                list = new List<Action>();
+                list = new List<Func<ICustomYieldAwaiter>>();
                 m_CustomSceneLoadDependences.TryAdd(hash, list);
             }
             list.Add(onSceneStart);
@@ -536,22 +536,22 @@ namespace Syadeu.Presentation
         }
         private static List<ICustomYieldAwaiter> StartSceneDependences(SceneSystem system, SceneReference key)
         {
+            List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             Hash hash = Hash.NewHash(key.scenePath);
-            if (system.m_CustomSceneLoadDependences.TryGetValue(hash, out List<Action> list))
+            if (system.m_CustomSceneLoadDependences.TryGetValue(hash, out List<Func<ICustomYieldAwaiter>> list))
             {
                 for (int i = 0; i < list.Count; i++)
                 {
-                    list[i].Invoke();
+                    awaiters.Add(list[i].Invoke());
                 }
             }
 
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
                 CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
-                return null;
+                return awaiters;
             }
 
-            List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < groupHashs.Count; i++)
             {
                 if (!PresentationManager.Instance.m_PresentationGroups.TryGetValue(groupHashs[i], out var group)) continue;
@@ -573,7 +573,8 @@ namespace Syadeu.Presentation
 
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for unload");
+                CoreSystem.Logger.Log(Channel.Scene, 
+                    $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for unload");
                 return;
             }
 
