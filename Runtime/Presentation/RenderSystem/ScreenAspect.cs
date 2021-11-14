@@ -1,17 +1,4 @@
-﻿#undef UNITY_ADDRESSABLES
-
-#if UNITY_ADDRESSABLES
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.ResourceProviders;
-using UnityEngine.ResourceManagement.AsyncOperations;
-#endif
-
-using UnityEngine;
-
-#if CORESYSTEM_URP
-using UnityEngine.Rendering.Universal;
-#elif CORESYSTEM_HDRP
-#endif
+﻿using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
@@ -28,6 +15,15 @@ namespace Syadeu.Presentation.Render
 
             WidthRatio = resolution.width / 80;
             HeightRatio = resolution.height / 80;
+        }
+
+        public bool Is16p9()
+        {
+            return WidthRatio == 16 && HeightRatio == 9;
+        }
+        public bool Is16p10()
+        {
+            return WidthRatio == 16 && HeightRatio == 10;
         }
     }
 }

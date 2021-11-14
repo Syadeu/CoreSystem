@@ -12,6 +12,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
+    [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorCanMoveToTarget : ConditionalBase
     {
         public override TaskStatus OnUpdate()
