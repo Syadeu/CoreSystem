@@ -248,9 +248,17 @@ namespace Syadeu.Presentation
 
             return base.OnInitializeAsync();
         }
-        public override void OnDispose()
+        protected override void OnShutDown()
         {
             PresentationManager.Instance.PostUpdate -= Instance_PostUpdate;
+        }
+        public override void OnDispose()
+        {
+            m_LoadingEvent.Clear();
+
+            m_CustomSceneLoadDependences.Clear();
+            m_CustomSceneAssetLoadDependences.Clear();
+            m_CustomSceneUnloadDependences.Clear();
 
             m_EventSystem = null;
         }
