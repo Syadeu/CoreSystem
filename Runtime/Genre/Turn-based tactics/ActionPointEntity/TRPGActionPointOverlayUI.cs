@@ -9,6 +9,7 @@ namespace Syadeu.Presentation.TurnTable
     /// <summary>
     /// <seealso cref="TRPGActionPointUIAttribute"/>
     /// </summary>
+    [AddComponentMenu("CoreSystem/TRPG/UI/Action Point")]
     public sealed class TRPGActionPointOverlayUI : RecycleableMonobehaviour
     {
         [SerializeField] private CanvasGroup m_CanvasGroup;

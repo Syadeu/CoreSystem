@@ -25,6 +25,7 @@ using UnityEngine.UI;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [AddComponentMenu("CoreSystem/TRPG/UI/Grid Cell")]
     public sealed class TRPGGridCellOverlayUI : OnScreenControl, ITerminate, IValidation,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {

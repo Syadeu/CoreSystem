@@ -353,18 +353,25 @@ namespace Syadeu.Presentation.Map
             } while (m_GridObservers.TryGetNextValue(out observerID, ref iter));
         }
 
+        public void RemoveDetectorObserve(in Entity<IEntity> observer)
+        {
+
+        }
+
         #region Static Functions
 
         private static void RemoveTargetedEntity(ref UnsafeMultiHashMap<EntityID, EntityID> hashMap, in EntityID targetID, in EntityID detectorID)
         {
-            if (hashMap.CountValuesForKey(targetID) == 1)
-            {
-                hashMap.Remove(targetID);
-            }
-            else
-            {
-                hashMap.Remove(targetID, detectorID);
-            }
+            //if (hashMap.CountValuesForKey(targetID) == 1)
+            //{
+            //    hashMap.Remove(targetID);
+            //}
+            //else
+            //{
+            //    hashMap.Remove(targetID, detectorID);
+            //}
+
+            RemoveValueAtHashMap(ref hashMap, in targetID, in detectorID);
         }
         private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)
         {

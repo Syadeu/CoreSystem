@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
+    [AddComponentMenu("CoreSystem/Camera/Main Component", 0)]
     public sealed class CameraComponent : MonoBehaviour
     {
         public struct Target
