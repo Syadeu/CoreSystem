@@ -1,14 +1,6 @@
-﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
-#define DEBUG_MODE
-#endif
-
-#undef UNITY_ADDRESSABLES
-
+﻿using Newtonsoft.Json;
 using Syadeu.Collections;
 using System.Collections.Generic;
-
-#if UNITY_EDITOR
-#endif
 
 namespace Syadeu.Presentation
 {
@@ -22,6 +14,7 @@ namespace Syadeu.Presentation
     /// </remarks>
     public interface INotifyAsset
     {
+        [JsonIgnore]
         IEnumerable<IPrefabReference> NotifyAssets { get; }
     }
 }

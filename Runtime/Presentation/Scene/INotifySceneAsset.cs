@@ -1,12 +1,4 @@
-﻿#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
-#define DEBUG_MODE
-#endif
-
-#undef UNITY_ADDRESSABLES
-
-
-#if UNITY_EDITOR
-#endif
+﻿using Newtonsoft.Json;
 
 namespace Syadeu.Presentation
 {
@@ -18,6 +10,7 @@ namespace Syadeu.Presentation
     /// </remarks>
     public interface INotifySceneAsset : INotifyAsset
     {
+        [JsonIgnore]
         SceneReference TargetScene { get; }
     }
 }

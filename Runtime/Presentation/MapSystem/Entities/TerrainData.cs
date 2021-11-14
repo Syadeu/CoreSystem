@@ -3,6 +3,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,17 +13,19 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Syadeu.Presentation.Map
 {
     [DisplayName("Data: Terrain Data")]
-    public sealed class TerrainData : DataObjectBase
+    public sealed class TerrainData : DataObjectBase, INotifyAsset
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
         private PrefabReference<UnityEngine.TerrainData> m_Data = PrefabReference<UnityEngine.TerrainData>.None;
         [JsonProperty(Order = 1, PropertyName = "Material")]
         private PrefabReference<UnityEngine.Material> m_Material = PrefabReference<UnityEngine.Material>.None;
+
+        [Space, Header("Transformation")]
         [JsonProperty(Order = 2, PropertyName = "Position")]
         private float3 m_Position;
         [JsonProperty(Order = 3, PropertyName = "Rotation")]
         private float3 m_Rotation;
-        [JsonProperty(Order = 4, PropertyName = "m_Scale")]
+        [JsonProperty(Order = 4, PropertyName = "Scale")]
         private float3 m_Scale;
 
         [Space, Header("Terrain NavObstacle")]
@@ -37,6 +40,11 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public bool IsCreated => m_TerrainInstance != null;
         [JsonIgnore] public TRS TRS => new TRS(m_Position, m_Rotation, m_Scale);
+
+        IEnumerable<IPrefabReference> INotifyAsset.NotifyAssets
+        {
+            get => new IPrefabReference[] { m_Data, m_Material };
+        }
 
         protected override void OnCreated()
         {
