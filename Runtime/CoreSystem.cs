@@ -840,6 +840,8 @@ namespace Syadeu
 
         private void BackgroundWorker(System.Object stateInfo)
         {
+            const string c_WarningTick = "{0} ticks were skipped due to slow unity thread";
+
             BackgroundThread = Thread.CurrentThread;
             LogManager.RegisterThread(ThreadInfo.Background, BackgroundThread);
 
@@ -879,8 +881,8 @@ namespace Syadeu
                 else
                 {
                     if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
-                        $"{tickCounter} ticks were skipped due to slow unity thread");
-                    //$"passed".ToLog();
+                        string.Format(c_WarningTick, tickCounter));
+                    
                     tickCounter = 0;
                 }
 

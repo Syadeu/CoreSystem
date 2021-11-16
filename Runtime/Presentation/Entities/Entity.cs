@@ -24,7 +24,6 @@ namespace Syadeu.Presentation.Entities
     public struct Entity<T> : IEntityDataID, IValidation, IEquatable<Entity<T>>, IEquatable<EntityID> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
-        private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
         public static Entity<T> Empty => new Entity<T>(Hash.Empty, null);
 
@@ -40,23 +39,9 @@ namespace Syadeu.Presentation.Entities
                 return Empty;
             }
 #endif
-            if (s_EntitySystem.IsNull())
-            {
-                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                if (s_EntitySystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem.");
-                    return Empty;
-                }
-            }
-            if (!s_EntitySystem.System.m_ObjectEntities.ContainsKey(idx))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot found entity({idx})");
-                return Empty;
-            }
-            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
+            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase target = system.m_ObjectEntities[idx];
             if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
@@ -70,17 +55,9 @@ namespace Syadeu.Presentation.Entities
         internal static Entity<T> GetEntityWithoutCheck(in InstanceID id) => GetEntityWithoutCheck(id.Hash);
         internal static Entity<T> GetEntityWithoutCheck(Hash idx)
         {
-            if (s_EntitySystem.IsNull())
-            {
-                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                if (s_EntitySystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem.");
-                    return Empty;
-                }
-            }
-            ObjectBase target = s_EntitySystem.System.m_ObjectEntities[idx];
+            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase target = system.m_ObjectEntities[idx];
             return new Entity<T>(idx, target.Name);
         }
 
@@ -93,6 +70,7 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
+                const string c_WarningAccessWillDestroy = "Accessing entity({0}) that will be destroy in the next frame.";
 #if DEBUG_MODE
                 if (IsEmpty())
                 {
@@ -100,18 +78,10 @@ namespace Syadeu.Presentation.Entities
                         "An empty entity reference trying to access transform.");
                     return null;
                 }
-                else if (s_EntitySystem.IsNull())
-                {
-                    s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                    if (s_EntitySystem.IsNull())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            "Cannot retrived EntitySystem.");
-                        return null;
-                    }
-                }
 #endif
-                if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
+                EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+                if (!system.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
                     !(value is T t))
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -120,10 +90,10 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 if (!CoreSystem.BlockCreateInstance &&
-                    s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx))
+                    system.IsMarkedAsDestroyed(m_Idx))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Accessing entity({value.Name}) that will be destroy in the next frame.");
+                    CoreSystem.Logger.LogWarning(Channel.Entity,
+                        string.Format(c_WarningAccessWillDestroy, RawName));
                 }
 
                 return t;
@@ -211,25 +181,10 @@ namespace Syadeu.Presentation.Entities
         {
             if (IsEmpty() || !Target.IsValid()) return false;
 
-            if (s_EntitySystem.IsNull())
-            {
-                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                if (s_EntitySystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem.");
-                    return false;
-                }
-            }
-            else if (!s_EntitySystem.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem. The system has been destroyed.");
-                return false;
-            }
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-            return !s_EntitySystem.System.IsDestroyed(m_Idx) && 
-                !s_EntitySystem.System.IsMarkedAsDestroyed(m_Idx);
+            return !system.IsDestroyed(m_Idx) && 
+                !system.IsMarkedAsDestroyed(m_Idx);
         }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
@@ -246,18 +201,9 @@ namespace Syadeu.Presentation.Entities
                 return 0;
             }
 #endif
-            if (s_EntitySystem.IsNull())
-            {
-                s_EntitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.SystemID;
-                if (s_EntitySystem.IsNull())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived EntitySystem.");
-                    return 0;
-                }
-            }
+            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-            if (!s_EntitySystem.System.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
+            if (!system.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Destroyed entity.");

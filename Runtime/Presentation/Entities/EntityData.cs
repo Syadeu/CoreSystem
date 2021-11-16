@@ -115,7 +115,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (IsEmpty() || !Target.IsValid()) return false;
 
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             return !system.IsDestroyed(m_Idx) &&
                 !system.IsMarkedAsDestroyed(m_Idx);
