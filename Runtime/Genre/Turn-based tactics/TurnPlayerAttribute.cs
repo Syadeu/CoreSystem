@@ -32,7 +32,7 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [DisplayName("Attribute: Turn Player")]
+    [DisplayName("Attribute: TRPG Turn Player")]
     public sealed class TurnPlayerAttribute : AttributeBase,
         INotifyComponent<TurnPlayerComponent>
     {

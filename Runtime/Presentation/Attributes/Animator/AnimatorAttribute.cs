@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Internal;
@@ -34,7 +38,13 @@ namespace Syadeu.Presentation.Attributes
             "You\'re trying to load invalid type of animator key({0}) value at entity({1}). " +
             "Expected type of ({2}) but input was ({3}).";
 
-        [JsonProperty(Order = 0, PropertyName = "AnimationTrigger")]
+        [JsonProperty(Order = 0, PropertyName = "EnableRootMotion")]
+        internal bool m_EnableRootMotion = false;
+        [JsonProperty(Order = 1, PropertyName = "ManualRootMotion")]
+        internal bool m_ManualRootMotion = false;
+
+        [Space, Header("Trigger Actions")]
+        [JsonProperty(Order = 2, PropertyName = "AnimationTrigger")]
         internal Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
         [JsonIgnore] public bool IsInitialized => Parameters != null;
@@ -161,9 +171,16 @@ namespace Syadeu.Presentation.Attributes
             att.AnimatorComponent = monoObj.GetComponent<AnimatorComponent>();
             if (att.AnimatorComponent == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                Animator animator = monoObj.GetComponentInChildren<Animator>();
+#if DEBUG_MODE
+                if (animator == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator({nameof(AnimatorComponent)})");
-                return false;
+                    return false;
+                }
+#endif
+                att.AnimatorComponent = animator.gameObject.AddComponent<AnimatorComponent>();
             }
             att.AnimatorComponent.m_Transform = entity.transform;
             att.AnimatorComponent.m_AnimatorAttribute = att;

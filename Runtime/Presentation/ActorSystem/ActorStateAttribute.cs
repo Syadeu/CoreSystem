@@ -15,14 +15,14 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [DisplayName("Attribute: Actor State")]
     public sealed class ActorStateAttribute : ActorAttributeBase
     {
         [Flags]

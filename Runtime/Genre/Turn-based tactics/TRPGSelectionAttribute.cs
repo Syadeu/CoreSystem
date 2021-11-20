@@ -5,9 +5,11 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
+using System.ComponentModel;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [DisplayName("Attribute: TRPG Selection")]
     [AttributeAcceptOnly(typeof(ActorEntity), typeof(ObjectEntity))]
     public sealed class TRPGSelectionAttribute : AttributeBase,
         INotifyComponent<TRPGSelectionComponent>

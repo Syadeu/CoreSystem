@@ -20,9 +20,16 @@ using Newtonsoft.Json;
 using Syadeu.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Syadeu.Presentation.Events;
 
 namespace Syadeu.Presentation.Actions
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// <seealso cref="IEventSequence"/> 로 Schedule 을 관리할 수 있습니다.
+    /// </remarks>
     public abstract class InstanceAction : ActionBase
     {
         internal bool InternalExecute()

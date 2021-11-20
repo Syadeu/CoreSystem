@@ -16,17 +16,18 @@
 #define DEBUG_MODE
 #endif
 
-using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Entities;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// <seealso cref="IEventSequence"/> 로 Schedule 을 관리할 수 있습니다.
+    /// </remarks>
     public abstract class TriggerAction : ActionBase
     {
         internal bool InternalExecute(EntityData<IEntityData> entity)
