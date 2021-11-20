@@ -154,13 +154,6 @@ namespace Syadeu.Presentation.Map
 
             if (gridChanged)
             {
-                //for (int i = 0; i < clonePostions.Length; i++)
-                //{
-                //    if (component.positions.Contains(clonePostions[i])) continue;
-
-
-                //}
-
                 if (postEvent)
                 {
                     m_EventSystem.PostEvent(Events.OnGridPositionChangedEvent.GetEvent(entity, component.positions));

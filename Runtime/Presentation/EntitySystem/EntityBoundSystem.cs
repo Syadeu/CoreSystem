@@ -185,16 +185,18 @@ namespace Syadeu.Presentation
         private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
             if (!ev.entity.IsValid()) return;
-            TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
-            if (atts == null) return;
+            //TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
+            TriggerBoundAttribute att = ev.entity.GetAttribute<TriggerBoundAttribute>();
+            if (att == null) return;
 
+            FindAndPostEvent(att);
             //using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler), Channel.Debug))
-            {
-                for (int i = 0; i < atts.Length; i++)
-                {
-                    FindAndPostEvent(atts[i]);
-                }
-            }
+            //{
+            //    for (int i = 0; i < atts.Length; i++)
+            //    {
+            //        FindAndPostEvent(atts[i]);
+            //    }
+            //}
 
             void FindAndPostEvent(TriggerBoundAttribute att)
             {
