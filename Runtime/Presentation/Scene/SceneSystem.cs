@@ -575,6 +575,9 @@ namespace Syadeu.Presentation
                     if (awaiters[i].KeepWait)
                     {
                         status = i;
+
+                        $"{awaiters[i].GetType().FullName}:: {awaiters.Count}:{i}".ToLog();
+
                         return false;
                     }
                 }

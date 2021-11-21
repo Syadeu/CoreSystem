@@ -25,6 +25,7 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;

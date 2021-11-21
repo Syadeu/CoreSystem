@@ -115,6 +115,23 @@ namespace Syadeu.Presentation.Map
                     .Select(other => other.m_Object.GetObject().Prefab);
                 foreach (var item in temp1)
                 {
+                    if (item.IsNone())
+                    {
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    if (!item.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"MapDataEntity() trying to load an invalid entity.");
+
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
                     handle = item.LoadAssetAsync();
                     handle.CompletedTypeless += Handle_CompletedTypeless;
                 }
@@ -124,6 +141,23 @@ namespace Syadeu.Presentation.Map
                     .Select(other => other.m_Object);
                 foreach (var item in temp2)
                 {
+                    if (item.IsNone())
+                    {
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    if (!item.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"MapDataEntity() trying to load an invalid entity.");
+
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
                     handle = item.LoadAssetAsync();
                     handle.CompletedTypeless += Handle_CompletedTypeless;
                 }

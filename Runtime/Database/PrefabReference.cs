@@ -146,7 +146,19 @@ namespace Syadeu.Collections
         }
         AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
         AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>();
-        public AsyncOperationHandle<T> LoadAssetAsync() => GetObjectSetting().LoadAssetAsync<T>();
+        public AsyncOperationHandle<T> LoadAssetAsync()
+        {
+            var setting = GetObjectSetting();
+            if (setting == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Prefab(at {m_Idx}) is not valid.");
+
+                return default(AsyncOperationHandle<T>);
+            }
+
+            return setting.LoadAssetAsync<T>();
+        }
         public AsyncOperationHandle LoadAssetUntypedAsync() => GetObjectSetting().LoadAssetAsync();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
 

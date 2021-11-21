@@ -110,7 +110,10 @@ namespace Syadeu.Presentation.Map
                 {
                     foreach (var item in m_Awaiters)
                     {
-                        if (item.KeepWait) return true;
+                        if (item.KeepWait)
+                        {
+                            return true;
+                        }
                     }
 
                     return false;
