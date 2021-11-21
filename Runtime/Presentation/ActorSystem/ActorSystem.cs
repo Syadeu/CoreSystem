@@ -138,6 +138,14 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
+            if (m_ScheduledEvents.Count == 0)
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"System({nameof(ActorSystem)}) take event schedule queue but no event left.");
+
+                return;
+            }
+
             IEventHandler ev = m_ScheduledEvents[0];
             m_ScheduledEvents.RemoveAt(0);
 

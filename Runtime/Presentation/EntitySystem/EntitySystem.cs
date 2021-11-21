@@ -1093,27 +1093,15 @@ namespace Syadeu.Presentation
             return GetModule<EntityIDModule>().Convert(id);
         }
 
-        public ObjectBase GetEntityByID(EntityID id)
-        {
-            InstanceID instanceID = id;
-            ObjectBase obj = GetEntityByID(instanceID);
-
-#if DEBUG_MODE
-            if (!(obj is IEntityData))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(EntityID)}.");
-                return null;
-            }
-#endif
-            return obj;
-        }
         public ObjectBase GetEntityByID(InstanceID id)
         {
             if (m_ObjectEntities.TryGetValue(id, out var value))
             {
                 return value;
             }
+
+            CoreSystem.Logger.LogError(Channel.Entity,
+                $"ID({id.Hash}) entity not found.");
             return null;
         }
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);

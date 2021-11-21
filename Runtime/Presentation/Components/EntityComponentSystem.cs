@@ -606,7 +606,7 @@ namespace Syadeu.Presentation.Components
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
-
+#endif
             if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
@@ -614,7 +614,7 @@ namespace Syadeu.Presentation.Components
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
-#endif
+
             IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
             s_GetComponentMarker.End();
@@ -636,7 +636,7 @@ namespace Syadeu.Presentation.Components
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
-
+#endif
             if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
@@ -644,7 +644,7 @@ namespace Syadeu.Presentation.Components
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
-#endif
+
             TComponent boxed = ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
 
             s_GetComponentReadOnlyMarker.End();
@@ -665,7 +665,7 @@ namespace Syadeu.Presentation.Components
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
-
+#endif
             if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
             {
                 CoreSystem.Logger.LogError(Channel.Component,
@@ -674,7 +674,6 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#endif
             s_GetComponentPointerMarker.End();
             return ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer) + index.y;
         }

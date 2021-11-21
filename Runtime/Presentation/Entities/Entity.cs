@@ -70,8 +70,8 @@ namespace Syadeu.Presentation.Entities
         internal static Entity<T> GetEntityWithoutCheck(Hash idx)
         {
             EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase target = system.m_ObjectEntities[idx];
+            
+            ObjectBase target = system.GetEntityByID(idx);
             return new Entity<T>(idx, target.Name);
         }
 

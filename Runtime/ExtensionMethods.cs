@@ -100,20 +100,16 @@ namespace Syadeu
 #endif
         public static void ToLogError(this string log, UnityEngine.Object target = null)
         {
-#if DEBUG_MODE
             if (target == null) CoreSystem.Logger.LogError(Channel.Debug, log);
             else Debug.LogError(log, target);
-#endif
         }
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
         public static void ToLog(this string log, UnityEngine.Object target = null)
         {
-#if DEBUG_MODE
             if (target == null) CoreSystem.Logger.Log(Channel.Debug, log);
             else Debug.Log(log, target);
-#endif
         }
         public static void ToLogConsole(this string log, ResultFlag flag = ResultFlag.Normal)
         {

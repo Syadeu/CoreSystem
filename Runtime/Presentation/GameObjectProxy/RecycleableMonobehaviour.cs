@@ -199,15 +199,14 @@ namespace Syadeu.Presentation.Proxy
             Component[] components = GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true);
             for (int i = 0; i < components.Length; i++)
             {
-#if DEBUG_MODE
                 if (components[i] == null)
                 {
-                    CoreSystem.Logger.Log(Channel.Proxy,
+                    CoreSystem.Logger.LogError(Channel.Proxy,
                         $"{name} has missing component. Fix it!");
 
                     continue;
                 }
-#endif
+
                 Type t = components[i].GetType();
                 IComponentID id = ComponentID.GetID(t);
 
