@@ -122,29 +122,20 @@ namespace Syadeu.Presentation.Entities
             }
             private unsafe static void PrivateExecute(ref T jobData, in int i)
             {
-                ComponentBuffer* p = (ComponentBuffer*)s_ComponentBuffer;
-                ref ComponentBuffer buffer = ref *p;
+                ref ComponentBuffer buffer = ref *(ComponentBuffer*)s_ComponentBuffer;
 
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
 
                 buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
 
-                jobData.Execute(entity.GetEntityData<IEntityData>(), in component);
+                jobData.Execute(entity.GetEntityData(), in component);
             }
         }
 
-        private static JobHandle Schedule<T, TComponent>(this T jobData, [NoAlias] int length, [NoAlias] int innerloopBatchCount, 
-            JobHandle dependsOn = new JobHandle())
-            where T : struct, IJobParallelForEntities<TComponent>
-            where TComponent : unmanaged, IEntityComponent
-        {
-            unsafe
-            {
-                return ScheduleInternal<T, TComponent>(ref jobData, /*length,*/ innerloopBatchCount, dependsOn);
-            }
-        }
-        public static JobHandle Schedule<T, TComponent>(this T jobData, [NoAlias] int innerloopBatchCount = 64, 
+        public static JobHandle Schedule<T, TComponent>(
+            this ref T jobData, 
+            [NoAlias] int innerloopBatchCount = 64, 
             JobHandle dependsOn = new JobHandle())
             where T : struct, IJobParallelForEntities<TComponent>
             where TComponent : unmanaged, IEntityComponent
@@ -188,11 +179,5 @@ namespace Syadeu.Presentation.Entities
 
             s_GlobalJobHandle.Complete();
         }
-    }
-
-    public interface IJobParallelForComponents<TComponent>
-        where TComponent : unmanaged, IEntityComponent
-    {
-        void Execute(in TComponent component);
     }
 }

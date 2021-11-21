@@ -182,61 +182,28 @@ namespace Syadeu.Presentation
 
         #region Events
 
+        private struct TriggerBoundJob : IJobParallelForEntities<TriggerBoundComponent>
+        {
+            public void Execute(in EntityData<IEntityData> entity, in TriggerBoundComponent component)
+            {
+                throw new NotImplementedException();
+            }
+        }
         private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
             if (!ev.entity.IsValid()) return;
-            //TriggerBoundAttribute[] atts = ev.entity.GetAttributes<TriggerBoundAttribute>();
+
             TriggerBoundAttribute att = ev.entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             FindAndPostEvent(att);
-            //using (new CoreSystem.LogTimer(nameof(OnTransformChangedEventHandler), Channel.Debug))
-            //{
-            //    for (int i = 0; i < atts.Length; i++)
-            //    {
-            //        FindAndPostEvent(atts[i]);
-            //    }
-            //}
 
             void FindAndPostEvent(TriggerBoundAttribute att)
             {
-                //if (att.m_Triggered.Count > 0)
-                //{
-                //    Entity<IEntity>[] tempParsedArr = att.m_Triggered.ToArray();
-                //    for (int i = 0; i < tempParsedArr.Length; i++)
-                //    {
-                //        TryTrigger(in m_EventSystem, ev.entity, att.m_Triggered[i]);
-                //    }
-                //}
-
                 ClusterID updatedID = m_TriggerBoundCluster.Update(att.m_ClusterID, ev.entity.transform.position);
-                //if (!updatedID.Equals(att.m_ClusterID))
-                //{
-                //    var prevGroup = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
-                //    for (int i = 0; i < prevGroup.Length; i++)
-                //    {
-                //        if (!prevGroup.HasElementAt(i)) continue;
-
-                //        int arrIdx = prevGroup[i];
-                //        Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
-
-                //        TryTrigger(in m_EventSystem, ev.entity, in target);
-                //    }
-                //}
 
                 att.m_ClusterID = updatedID;
-                //ClusterGroup<TriggerBoundAttribute> group = m_TriggerBoundCluster.GetGroup(in att.m_ClusterID);
 
-                //for (int i = 0; i < group.Length; i++)
-                //{
-                //    if (i.Equals(att.m_ClusterID.ItemIndex) ||
-                //        !group.HasElementAt(i)) continue;
-
-                //    int arrIdx = group[i];
-                //    Entity<IEntity> target = m_TriggerBoundArray[arrIdx];
-
-                //    TryTrigger(in m_EventSystem, ev.entity, in target);
-                //}
                 for (int i = 0; i < m_TriggerBoundArray.Length; i++)
                 {
                     if (!m_TriggerBoundArray[i].IsValid() || m_TriggerBoundArray[i].Hash.Equals(att.ParentEntity.Hash)) continue;
@@ -282,39 +249,41 @@ namespace Syadeu.Presentation
                     }
                 }
             }
-            static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
-            {
-                if (!att.Enabled) return false;
-                if (att.m_TriggerOnly.Length == 0) return true;
-
-                if (att.m_Inverse)
-                {
-                    for (int i = 0; i < att.m_TriggerOnly.Length; i++)
-                    {
-                        if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    for (int i = 0; i < att.m_TriggerOnly.Length; i++)
-                    {
-                        if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
-                        {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            }
+            
         }
 
         #endregion
+
+        private static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
+        {
+            if (!att.Enabled) return false;
+            else if (att.m_TriggerOnly.Length == 0) return true;
+
+            if (att.m_Inverse)
+            {
+                for (int i = 0; i < att.m_TriggerOnly.Length; i++)
+                {
+                    if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            else
+            {
+                for (int i = 0; i < att.m_TriggerOnly.Length; i++)
+                {
+                    if (att.m_TriggerOnly[i].Hash.Equals(target.Hash))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         private int FindOrIncrementTriggerBoundArrayIndex()
         {

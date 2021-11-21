@@ -63,6 +63,39 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
+        internal bool InternalExecute(in IEntityDataID entity)
+        {
+            if (Idx.Equals(InstanceID.Empty))
+            {
+                CoreSystem.Logger.LogError(Channel.Action, $"Executing an raw action");
+            }
+
+            if (!string.IsNullOrEmpty(p_DebugText))
+            {
+                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
+            }
+
+            if (!entity.IsValid())
+            {
+                CoreSystem.Logger.LogWarning(Channel.Action,
+                    $"Cannot trigger this action({Name}) because target entity is invalid");
+
+                return false;
+            }
+
+            bool result = true;
+            try
+            {
+                OnExecute(entity.ToEntityData<IEntityData>());
+            }
+            catch (System.Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                result = false;
+            }
+
+            return result;
+        }
         protected abstract void OnExecute(EntityData<IEntityData> entity);
     }
 }

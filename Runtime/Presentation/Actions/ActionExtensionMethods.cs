@@ -367,7 +367,7 @@ namespace Syadeu.Presentation.Actions
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
-        public static void Schedule<T>(this IFixedReferenceList<T> actions, EntityData<IEntityData> entity)
+        public static void Schedule<T>(this IFixedReferenceList<T> actions, in IEntityDataID entity)
             where T : TriggerAction
         {
             if (actions.Length == 0) return;

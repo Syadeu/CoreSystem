@@ -306,7 +306,7 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        public void ScheduleTriggerAction<T>(IFixedReference<T> action, EntityData<IEntityData> entity)
+        public void ScheduleTriggerAction<T>(IFixedReference<T> action, IEntityDataID entity)
             where T : TriggerAction
         {
             Payload payload = new Payload
@@ -348,7 +348,7 @@ namespace Syadeu.Presentation.Actions
         {
             public ActionType actionType;
             public FixedReference<ActionBase> action;
-            public EntityData<IEntityData> entity;
+            public IEntityDataID entity;
 
             public bool played;
             public InstanceID m_ActionInstanceID;

@@ -38,6 +38,26 @@ namespace Syadeu.Presentation
 
         #region Converts
 
+        public static Entity<T> ToEntity<T>(this IEntityDataID t)
+            where T : class, IEntity
+        {
+#if DEBUG_MODE
+            if (!(t.Target is T))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({t.RawName}) is not {TypeHelper.TypeOf<T>.ToString()}.");
+
+                return Entity<T>.Empty;
+            }
+#endif
+            return Entity<T>.GetEntity(t.Idx);
+        }
+        public static EntityData<T> ToEntityData<T>(this IEntityDataID t)
+            where T : class, IEntityData
+        {
+            return EntityData<T>.GetEntity(t.Idx);
+        }
+
         public static Entity<TA> As<T, TA>(this EntityData<T> t)
             where T : class, IEntityData
             where TA : class, IEntity
@@ -202,6 +222,22 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntityWithoutCheck(id);
         }
 
+        public static EntityData<IEntityData> GetEntityData(this in EntityID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+#if DEBUG_MODE
+            if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({id.Hash}) not found.");
+
+                return EntityData<IEntityData>.Empty;
+            }
+#endif
+            return EntityData<IEntityData>.GetEntityWithoutCheck(id);
+        }
         public static EntityData<T> GetEntityData<T>(this EntityID id)
             where T : class, IEntityData
         {
@@ -211,6 +247,9 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (obj == null)
             {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({id.Hash}) not found.");
+
                 return EntityData<T>.Empty;
             }
 #endif
@@ -227,6 +266,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Instance({id.Hash}) is invalid id.");
+
                 return EntityData<T>.Empty;
             }
             else if (!(obj is IEntityData))
