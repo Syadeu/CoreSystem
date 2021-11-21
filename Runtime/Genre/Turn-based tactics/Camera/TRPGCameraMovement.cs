@@ -164,9 +164,18 @@ namespace Syadeu.Presentation.TurnTable
             m_MoveAxis.Enable();
         }
 
+        private Coroutine m_UpdateCoroutine;
         protected override void OnRenderStart()
         {
-            StartCoroutine(Updater());
+            m_UpdateCoroutine = StartCoroutine(Updater());
+        }
+        private void OnDestroy()
+        {
+            if (m_UpdateCoroutine != null)
+            {
+                StopCoroutine(m_UpdateCoroutine);
+                m_UpdateCoroutine = null;
+            }
         }
 
         private IEnumerator Updater()
