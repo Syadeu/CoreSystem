@@ -24,37 +24,38 @@ namespace Syadeu.Presentation.Actor
 {
     public static class ActorExtensionMethods
     {
-        public static void ScheduleEvent<TEvent>(this TEvent ev, Entity<ActorEntity> other)
+        public static void ScheduleEvent<TEvent>(this TEvent ev, IEntityDataID actorEntity)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            if (!other.HasComponent<ActorControllerComponent>())
+            if (!actorEntity.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
+                    $"This entity({actorEntity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
 
-            other.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(actorEntity.ToEntity<ActorEntity>(), ev);
         }
-        public static void PostEvent<TEvent>(this TEvent ev, Entity<ActorEntity> other)
+        public static void PostEvent<TEvent>(this TEvent ev, IEntityDataID actorEntity)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            if (!other.HasComponent<ActorControllerComponent>())
+            if (!actorEntity.HasComponent<ActorControllerComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
+                    $"This entity({actorEntity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
 
-            other.GetComponent<ActorControllerComponent>().PostEvent(ev);
+            ActorSystem.PostEvent(actorEntity.ToEntity<ActorEntity>(), ev);
         }
 
         public static ActorControllerAttribute GetController(this Entity<ActorEntity> entity)

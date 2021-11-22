@@ -52,18 +52,25 @@ namespace Syadeu.Presentation.Actor
         IAttributeOnProxy
     {
         WorldCanvasSystem m_WorldCanvasSystem;
+        ActorSystem m_ActorSystem;
 
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
         }
         private void Bind(WorldCanvasSystem other)
         {
             m_WorldCanvasSystem = other;
         }
+        private void Bind(ActorSystem other)
+        {
+            m_ActorSystem = other;
+        }
         protected override void OnDispose()
         {
             m_WorldCanvasSystem = null;
+            m_ActorSystem = null;
         }
 
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
@@ -101,7 +108,8 @@ namespace Syadeu.Presentation.Actor
             if (attribute.m_SetAliveOnCreated)
             {
                 ActorLifetimeChangedEvent ev = new ActorLifetimeChangedEvent(ActorLifetimeChangedEvent.State.Alive);
-                component.PostEvent(ev);
+
+                ActorSystem.PostEvent(actor, ev);
             }
         }
         protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
@@ -121,7 +129,7 @@ namespace Syadeu.Presentation.Actor
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
-            provider.Bind(parent, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem, m_WorldCanvasSystem);
+            provider.Bind(parent, m_ActorSystem, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem, m_WorldCanvasSystem);
 
             //if (provider.ReceiveEventOnly != null)
             //{

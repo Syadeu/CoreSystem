@@ -198,7 +198,7 @@ namespace Syadeu.Presentation.TurnTable
 
             for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
             {
-                select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem.SystemID, tr);
+                select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem, tr);
             }
 
             $"select entity {entity.RawName}".ToLog();

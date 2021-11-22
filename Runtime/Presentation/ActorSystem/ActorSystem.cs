@@ -18,11 +18,14 @@
 
 using Syadeu.Collections;
 using Syadeu.Internal;
+using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -245,7 +248,7 @@ namespace Syadeu.Presentation.Actor
 
             public void Post()
             {
-                m_EventPost.Invoke(m_Event);
+                m_EventPost.Invoke(m_Actor, m_Event);
             }
             public void Reserve()
             {
@@ -278,8 +281,16 @@ namespace Syadeu.Presentation.Actor
             return -1;
         }
 
+        /// <summary><inheritdoc cref="ScheduleEvent{TEvent}(Entity{ActorEntity}, TEvent)"/></summary>
+        /// <remarks>
+        /// <paramref name="overrideSameEvent"/> 가 true 일 경우에 다음 이벤트가 없을 경우에만 
+        /// 같은 이벤트를 덮어씁니다.
+        /// </remarks>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
+        /// <param name="overrideSameEvent"></param>
         public void ScheduleEvent<TEvent>(
-            Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev, bool overrideSameEvent)
+            Entity<ActorEntity> actor, TEvent ev, bool overrideSameEvent)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -288,7 +299,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!overrideSameEvent || (m_CurrentEvent.IsEmpty() && m_ScheduledEvents.Count == 0))
             {
-                ScheduleEvent(actor, post, ev);
+                ScheduleEvent(actor, ev);
                 return;
             }
 
@@ -324,7 +335,7 @@ namespace Syadeu.Presentation.Actor
                 EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
 
                 handler.m_Actor = actor;
-                handler.m_EventPost = post;
+                handler.m_EventPost = PostEvent;
                 handler.m_Event = ev;
 
                 m_ScheduledEvents.Insert(0, handler);
@@ -340,7 +351,7 @@ namespace Syadeu.Presentation.Actor
                 EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
 
                 handler.m_Actor = actor;
-                handler.m_EventPost = post;
+                handler.m_EventPost = PostEvent;
                 handler.m_Event = ev;
 
                 m_ScheduledEvents[index].Reserve();
@@ -350,10 +361,14 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            ScheduleEvent(actor, post, ev);
+            ScheduleEvent(actor, ev);
         }
-        public void ScheduleEvent<TEvent>(
-            Entity<ActorEntity> actor, ActorEventDelegate<TEvent> post, TEvent ev)
+        /// <summary>
+        /// 이벤트를 스케쥴합니다.
+        /// </summary>
+        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="ev"></param>
+        public void ScheduleEvent<TEvent>(Entity<ActorEntity> actor, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -375,11 +390,76 @@ namespace Syadeu.Presentation.Actor
             EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
 
             handler.m_Actor = actor;
-            handler.m_EventPost = post;
+            handler.m_EventPost = PostEvent;
             handler.m_Event = ev;
 
             m_ScheduledEvents.Add(handler);
             m_EventSystem.TakeQueueTicket(this);
+        }
+
+        public static void PostEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            if (ev.BurstCompile)
+            {
+                EventJob<TEvent> eventJob = new EventJob<TEvent>()
+                {
+                    m_Entity = entity,
+                    m_Event = ev
+                };
+                eventJob.Run();
+            }
+            else
+            {
+                try
+                {
+                    ev.OnExecute(entity);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, ex);
+                    return;
+                }
+            }
+
+            if (ev is ActorLifetimeChangedEvent lifeTimeChanged)
+            {
+                ActorStateAttribute state = entity.GetAttribute<ActorStateAttribute>();
+                if (state != null)
+                {
+                    if (lifeTimeChanged.LifeTime == ActorLifetimeChangedEvent.State.Alive)
+                    {
+                        if ((state.State & ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle) != (ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle))
+                        {
+                            state.State = ActorStateAttribute.StateInfo.Spawn | ActorStateAttribute.StateInfo.Idle;
+                        }
+                    }
+                    else
+                    {
+                        if ((state.State & ActorStateAttribute.StateInfo.Dead) != ActorStateAttribute.StateInfo.Dead)
+                        {
+                            state.State = ActorStateAttribute.StateInfo.Dead;
+                        }
+                    }
+                }
+            }
+
+            ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
+
+            for (int i = 0; i < ctr.m_InstanceProviders.Length; i++)
+            {
+                ((IActorProvider)ctr.m_InstanceProviders[i].GetObject()).ReceivedEvent(ev);
+            }
+            ctr.m_OnEventReceived.Execute(ev);
+
+            if (ev is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
 
         [Preserve]
@@ -403,7 +483,7 @@ namespace Syadeu.Presentation.Actor
             IEventHandler handler = null;
             ActorEventDelegate<TEvent> temp = null;
 
-            system.ScheduleEvent<TEvent>(Entity<ActorEntity>.Empty, null, default);
+            system.ScheduleEvent<TEvent>(Entity<ActorEntity>.Empty, default);
             EventHandlerFactory<TEvent>();
 
             ActorOverlayUIAttributeBase.AOTCodeGenerator<TEvent>();
@@ -411,11 +491,27 @@ namespace Syadeu.Presentation.Actor
             handler = new EventHandler<TEvent>();
         }
 
-        public delegate void ActorEventDelegate<TEvent>(TEvent ev)
+        public delegate void ActorEventDelegate<TEvent>(Entity<ActorEntity> entity, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent;
 #else
             where TEvent : unmanaged, IActorEvent;
 #endif
+        [BurstCompile]
+        private struct EventJob<TEvent> : IJob
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
+        {
+            public Entity<ActorEntity> m_Entity;
+            public TEvent m_Event;
+
+            public void Execute()
+            {
+                m_Event.OnExecute(m_Entity);
+            }
+        }
     }
 }

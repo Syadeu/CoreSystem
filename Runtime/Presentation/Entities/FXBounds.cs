@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Entities
             return ((IValidation)m_FXEntity).IsValid();
         }
 
-        public void Fire(PresentationSystemID<CoroutineSystem> coroutineSystem, ITransform parent)
+        public void Fire(CoroutineSystem coroutineSystem, ITransform parent)
         {
             if (parent is ProxyTransform proxy)
             {
@@ -83,7 +83,7 @@ namespace Syadeu.Presentation.Entities
                 FXEntity fx = m_Instance.GetObject();
                 //fx.SetPlayOptions(m_PlayOption);
 
-                coroutineSystem.System.PostCoroutineJob(new FireCoroutine
+                coroutineSystem.PostCoroutineJob(new FireCoroutine
                 {
                     m_FXEntity = m_Instance,
                     m_PlayOption = fx.PlayOptions,

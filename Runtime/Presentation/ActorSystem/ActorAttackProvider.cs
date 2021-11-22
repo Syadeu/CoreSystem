@@ -99,8 +99,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected virtual void SendHitEvent(Entity<ActorEntity> target, float damage)
         {
-            ref ActorControllerComponent component = ref target.GetComponent<ActorControllerComponent>();
-            component.ScheduleEvent(new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), damage));
+            ActorSystem.ScheduleEvent(target, new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), damage));
         }
         protected void AttackEventHandler(ActorAttackEvent ev)
         {

@@ -32,27 +32,30 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] private bool m_Initialized = false;
         [JsonIgnore] private EntityData<IEntityData> m_Parent = EntityData<IEntityData>.Empty;
 
-        [JsonIgnore] private PresentationSystemID<EventSystem> m_EventSystem;
-        [JsonIgnore] private PresentationSystemID<EntitySystem> m_EntitySystem;
-        [JsonIgnore] private PresentationSystemID<CoroutineSystem> m_CoroutineSystem;
-        [JsonIgnore] private PresentationSystemID<WorldCanvasSystem> m_WorldCanvasSystem;
+        [JsonIgnore] private EventSystem m_EventSystem;
+        [JsonIgnore] private EntitySystem m_EntitySystem;
+        [JsonIgnore] private CoroutineSystem m_CoroutineSystem;
+        [JsonIgnore] private WorldCanvasSystem m_WorldCanvasSystem;
+        [JsonIgnore] private ActorSystem m_ActorSystem;
 
         [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
         [JsonIgnore] protected ref ActorControllerComponent Component => ref m_Parent.GetComponent<ActorControllerComponent>();
 
-        [JsonIgnore] protected PresentationSystemID<EventSystem> EventSystem => m_EventSystem;
-        [JsonIgnore] protected PresentationSystemID<CoroutineSystem> CoroutineSystem => m_CoroutineSystem;
+        [JsonIgnore] protected EventSystem EventSystem => m_EventSystem;
+        [JsonIgnore] protected CoroutineSystem CoroutineSystem => m_CoroutineSystem;
+        [JsonIgnore] protected ActorSystem ActorSystem => m_ActorSystem;
 
-        void IActorProvider.Bind(EntityData<IEntityData> parent,
+        void IActorProvider.Bind(EntityData<IEntityData> parent, ActorSystem actorSystem,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
             WorldCanvasSystem worldCanvasSystem)
         {
             m_Parent = parent;
 
-            m_EventSystem = eventSystem.SystemID;
-            m_EntitySystem = entitySystem.SystemID;
-            m_CoroutineSystem = coroutineSystem.SystemID;
-            m_WorldCanvasSystem = worldCanvasSystem.SystemID;
+            m_ActorSystem = actorSystem;
+            m_EventSystem = eventSystem;
+            m_EntitySystem = entitySystem;
+            m_CoroutineSystem = coroutineSystem;
+            m_WorldCanvasSystem = worldCanvasSystem;
 
             m_Initialized = true;
         }
@@ -61,7 +64,7 @@ namespace Syadeu.Presentation.Actor
             try
             {
                 OnEventReceived(ev);
-                OnEventReceived(ev, m_WorldCanvasSystem.System);
+                OnEventReceived(ev, m_WorldCanvasSystem);
             }
             catch (System.Exception ex)
             {
@@ -71,12 +74,12 @@ namespace Syadeu.Presentation.Actor
         void IActorProvider.OnCreated(Entity<ActorEntity> entity)
         {
             OnCreated(entity);
-            OnCreated(entity, m_WorldCanvasSystem.System);
+            OnCreated(entity, m_WorldCanvasSystem);
         }
         void IActorProvider.OnDestroy(Entity<ActorEntity> entity)
         {
             OnDestroy(entity);
-            OnDestroy(entity, m_WorldCanvasSystem.System);
+            OnDestroy(entity, m_WorldCanvasSystem);
         }
         void IActorProvider.OnProxyCreated(RecycleableMonobehaviour monoObj)
         {
@@ -97,6 +100,14 @@ namespace Syadeu.Presentation.Actor
 
             m_Initialized = false;
             m_Parent = EntityData<IEntityData>.Empty;
+        }
+        protected override void OnDestroy()
+        {
+            m_ActorSystem = null;
+            m_EventSystem = null;
+            m_EntitySystem = null;
+            m_CoroutineSystem = null;
+            m_WorldCanvasSystem = null;
         }
 
         protected virtual void OnEventReceived<TEvent>(TEvent ev)
@@ -127,7 +138,7 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            Component.ScheduleEvent(ev);
+            m_ActorSystem.ScheduleEvent(Parent.As<IEntityData, ActorEntity>(), ev);
         }
         protected void PostEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -136,7 +147,7 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            Component.PostEvent(ev);
+            ActorSystem.PostEvent(Parent.As<IEntityData, ActorEntity>(), ev);
         }
         protected Instance<T> GetProvider<T>() where T : ActorProviderBase
         {
@@ -145,11 +156,11 @@ namespace Syadeu.Presentation.Actor
 
         protected CoroutineJob StartCoroutine<T>(T coroutine) where T : struct, ICoroutineJob
         {
-            return m_CoroutineSystem.System.PostCoroutineJob(coroutine);
+            return m_CoroutineSystem.PostCoroutineJob(coroutine);
         }
         protected void StopCoroutine(CoroutineJob coroutine)
         {
-            m_CoroutineSystem.System.StopCoroutineJob(coroutine);
+            m_CoroutineSystem.StopCoroutineJob(coroutine);
         }
     }
 }

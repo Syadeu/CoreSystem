@@ -52,6 +52,7 @@ namespace Syadeu.Presentation.Map
         private EventSystem m_EventSystem;
         private CoroutineSystem m_CoroutineSystem;
         private GridSystem m_GridSystem;
+        private ActorSystem m_ActorSystem;
 
         #region Presentation Methods
 
@@ -60,6 +61,7 @@ namespace Syadeu.Presentation.Map
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
 
             //PoolContainer<NavMeshQueryContainer>.Initialize(NavMeshQueryFactory, 16);
 
@@ -73,6 +75,8 @@ namespace Syadeu.Presentation.Map
 
             m_EventSystem = null;
             m_CoroutineSystem = null;
+            m_GridSystem = null;
+            m_ActorSystem = null;
         }
 
         private sealed class NavMeshQueryContainer : IDisposable
@@ -128,6 +132,10 @@ namespace Syadeu.Presentation.Map
         private void Bind(GridSystem other)
         {
             m_GridSystem = other;
+        }
+        private void Bind(ActorSystem other)
+        {
+            m_ActorSystem = other;
         }
 
         #endregion
@@ -323,9 +331,8 @@ namespace Syadeu.Presentation.Map
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
-            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
+            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
         }
         public void MoveTo<TPredicate>(Entity<IEntity> entity, float3 point, ActorMoveEvent<TPredicate> ev)
             where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
@@ -344,9 +351,8 @@ namespace Syadeu.Presentation.Map
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
-            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev, true);
+            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
         }
         public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
@@ -368,9 +374,8 @@ namespace Syadeu.Presentation.Map
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
-            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
         }
         public void MoveTo(Entity<IEntity> entity, IList<float3> points, ActorMoveEvent ev)
         {
@@ -392,9 +397,8 @@ namespace Syadeu.Presentation.Map
                 m_Entity = entity.As<IEntity,IEntityData>(),
                 m_Positions = position
             };
-            //m_CoroutineSystem.PostCoroutineJob(moveJob);
 
-            entity.GetComponent<ActorControllerComponent>().ScheduleEvent(ev);
+            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
         }
         internal struct MoveJob : ICoroutineJob
         {

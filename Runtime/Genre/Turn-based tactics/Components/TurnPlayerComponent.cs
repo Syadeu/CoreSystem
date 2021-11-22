@@ -42,8 +42,7 @@ namespace Syadeu.Presentation.TurnTable
                     if (m_Parent.HasComponent<ActorControllerComponent>())
                     {
                         TRPGActorActionPointChangedEvent ev = new TRPGActorActionPointChangedEvent(value);
-                        ref var ctr = ref m_Parent.GetComponent<ActorControllerComponent>();
-                        ctr.PostEvent(ev);
+                        ev.PostEvent(m_Parent);
                     }
                 }
             }

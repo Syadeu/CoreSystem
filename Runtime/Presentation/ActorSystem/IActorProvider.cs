@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actor
 {
     internal interface IActorProvider
     {
-        void Bind(EntityData<IEntityData> parent,
+        void Bind(EntityData<IEntityData> parent, ActorSystem actorSystem,
             EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
             WorldCanvasSystem worldCanvasSystem);
 

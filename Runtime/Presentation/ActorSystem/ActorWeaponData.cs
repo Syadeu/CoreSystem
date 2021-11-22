@@ -131,7 +131,7 @@ namespace Syadeu.Presentation.Actor
         }
 
         public void FireFXBounds(ITransform sender,
-            PresentationSystemID<CoroutineSystem> coroutineSystem, FXBounds.TriggerOptions triggerOptions)
+            CoroutineSystem coroutineSystem, FXBounds.TriggerOptions triggerOptions)
         {
             ITransform targetTr;
             if (m_PrefabInstance.IsEmpty())
