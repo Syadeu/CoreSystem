@@ -44,6 +44,7 @@ namespace Syadeu.Presentation.Actor
 
         private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
         private readonly EventContainer m_CurrentEvent = new EventContainer();
+        private NativeHashSet<ActorEventHandler> m_ScheduledEventIDs;
 
         private NativeStream NativeStream;
 
@@ -56,16 +57,8 @@ namespace Syadeu.Presentation.Actor
 
         protected override PresentationResult OnInitialize()
         {
-            //NativeStream = new NativeStream(1024, AllocatorManager.Persistent);
+            m_ScheduledEventIDs = new NativeHashSet<ActorEventHandler>(1024, AllocatorManager.Persistent);
 
-            //var wr = NativeStream.AsWriter();
-            //wr.BeginForEachIndex(0);
-
-            //wr.Write(Entity<IEntity>.Empty);
-
-            ////var rdr = NativeStream.AsReader();
-            ////rdr.
-            //UnsafeStream unsafeStream;
             return base.OnInitialize();
         }
         protected override PresentationResult OnInitializeAsync()
@@ -104,6 +97,8 @@ namespace Syadeu.Presentation.Actor
             m_EntitySystem = null;
 
             m_EventSystem.RemoveEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
+
+            m_ScheduledEventIDs.Dispose();
 
             m_EventSystem = null;
         }
@@ -231,9 +226,10 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
-            public Entity<ActorEntity> m_Actor;
-            public TEvent m_Event;
-            public ActorEventDelegate<TEvent> m_EventPost;
+            private Entity<ActorEntity> m_Actor;
+            private TEvent m_Event;
+            private ActorEventDelegate<TEvent> m_EventPost;
+            private Hash m_Hash;
 
             public Entity<ActorEntity> Actor => m_Actor;
             public Type EventType => TypeHelper.TypeOf<TEvent>.Type;
@@ -244,8 +240,16 @@ namespace Syadeu.Presentation.Actor
                     if (m_Event is IEventSequence sequence) return sequence;
                     return null;
                 }
-            } 
+            }
+            public Hash Hash => m_Hash;
 
+            public void Initialize(Entity<ActorEntity> actor, TEvent ev, ActorEventDelegate<TEvent> postAction)
+            {
+                m_Actor = actor;
+                m_Event = ev;
+                m_EventPost = postAction;
+                m_Hash = Hash.NewHash();
+            }
             public void Post()
             {
                 m_EventPost.Invoke(m_Actor, m_Event);
@@ -281,6 +285,11 @@ namespace Syadeu.Presentation.Actor
             return -1;
         }
 
+        public bool IsExecuted(in ActorEventHandler handler)
+        {
+            return !m_ScheduledEventIDs.Contains(handler);
+        }
+
         /// <summary><inheritdoc cref="ScheduleEvent{TEvent}(Entity{ActorEntity}, TEvent)"/></summary>
         /// <remarks>
         /// <paramref name="overrideSameEvent"/> 가 true 일 경우에 다음 이벤트가 없을 경우에만 
@@ -289,7 +298,7 @@ namespace Syadeu.Presentation.Actor
         /// <typeparam name="TEvent"></typeparam>
         /// <param name="ev"></param>
         /// <param name="overrideSameEvent"></param>
-        public void ScheduleEvent<TEvent>(
+        public ActorEventHandler ScheduleEvent<TEvent>(
             Entity<ActorEntity> actor, TEvent ev, bool overrideSameEvent)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -297,10 +306,11 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         {
+            ActorEventHandler evHandler;
+
             if (!overrideSameEvent || (m_CurrentEvent.IsEmpty() && m_ScheduledEvents.Count == 0))
             {
-                ScheduleEvent(actor, ev);
-                return;
+                return ScheduleEvent(actor, ev);
             }
 
 #if DEBUG_MODE
@@ -333,42 +343,42 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-
-                handler.m_Actor = actor;
-                handler.m_EventPost = PostEvent;
-                handler.m_Event = ev;
+                handler.Initialize(actor, ev, PostEvent);
 
                 m_ScheduledEvents.Insert(0, handler);
 
                 if (!wasSequence) m_EventSystem.TakeQueueTicket(this);
 
-                return;
+                evHandler = new ActorEventHandler(handler.Hash);
+                m_ScheduledEventIDs.Add(evHandler);
+
+                return evHandler;
             }
 
             index = FindScheduledEvent<TEvent>();
             if (index >= 0)
             {
                 EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-
-                handler.m_Actor = actor;
-                handler.m_EventPost = PostEvent;
-                handler.m_Event = ev;
+                handler.Initialize(actor, ev, PostEvent);
 
                 m_ScheduledEvents[index].Reserve();
                 m_ScheduledEvents[index] = handler;
 
                 "override schedule ev".ToLog();
-                return;
+                evHandler = new ActorEventHandler(handler.Hash);
+                m_ScheduledEventIDs.Add(evHandler);
+
+                return evHandler;
             }
 
-            ScheduleEvent(actor, ev);
+            return ScheduleEvent(actor, ev);
         }
         /// <summary>
         /// 이벤트를 스케쥴합니다.
         /// </summary>
         /// <typeparam name="TEvent"></typeparam>
         /// <param name="ev"></param>
-        public void ScheduleEvent<TEvent>(Entity<ActorEntity> actor, TEvent ev)
+        public ActorEventHandler ScheduleEvent<TEvent>(Entity<ActorEntity> actor, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
 #else
@@ -388,13 +398,15 @@ namespace Syadeu.Presentation.Actor
             }
 
             EventHandler<TEvent> handler = PoolContainer<EventHandler<TEvent>>.Dequeue();
-
-            handler.m_Actor = actor;
-            handler.m_EventPost = PostEvent;
-            handler.m_Event = ev;
+            handler.Initialize(actor, ev, PostEvent);
 
             m_ScheduledEvents.Add(handler);
             m_EventSystem.TakeQueueTicket(this);
+
+            ActorEventHandler evHandler = new ActorEventHandler(handler.Hash);
+            m_ScheduledEventIDs.Add(evHandler);
+
+            return evHandler;
         }
 
         public static void PostEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
@@ -484,7 +496,9 @@ namespace Syadeu.Presentation.Actor
             ActorEventDelegate<TEvent> temp = null;
 
             system.ScheduleEvent<TEvent>(Entity<ActorEntity>.Empty, default);
+            ActorSystem.PostEvent<TEvent>(Entity<ActorEntity>.Empty, default);
             EventHandlerFactory<TEvent>();
+            EventJob<TEvent> eventJob = new EventJob<TEvent>();
 
             ActorOverlayUIAttributeBase.AOTCodeGenerator<TEvent>();
 
