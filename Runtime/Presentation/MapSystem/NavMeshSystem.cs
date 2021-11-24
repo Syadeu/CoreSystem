@@ -315,13 +315,13 @@ namespace Syadeu.Presentation.Map
             m_RequireReload = true;
         }
 
-        public void MoveTo(Entity<IEntity> entity, float3 point, ActorMoveEvent ev)
+        public ActorEventHandler MoveTo(Entity<IEntity> entity, float3 point, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 "no agent".ToLogError();
-                return;
+                return ActorEventHandler.Empty;
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
@@ -332,16 +332,16 @@ namespace Syadeu.Presentation.Map
                 m_Positions = position
             };
 
-            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
+            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
         }
-        public void MoveTo<TPredicate>(Entity<IEntity> entity, float3 point, ActorMoveEvent<TPredicate> ev)
+        public ActorEventHandler MoveTo<TPredicate>(Entity<IEntity> entity, float3 point, ActorMoveEvent<TPredicate> ev)
             where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 "no agent".ToLogError();
-                return;
+                return ActorEventHandler.Empty;
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
@@ -352,15 +352,15 @@ namespace Syadeu.Presentation.Map
                 m_Positions = position
             };
 
-            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
+            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
         }
-        public void MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
+        public ActorEventHandler MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 "no agent".ToLogError();
-                return;
+                return ActorEventHandler.Empty;
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
@@ -375,15 +375,15 @@ namespace Syadeu.Presentation.Map
                 m_Positions = position
             };
 
-            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
+            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
         }
-        public void MoveTo(Entity<IEntity> entity, IList<float3> points, ActorMoveEvent ev)
+        public ActorEventHandler MoveTo(Entity<IEntity> entity, IList<float3> points, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 "no agent".ToLogError();
-                return;
+                return ActorEventHandler.Empty;
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
@@ -398,7 +398,7 @@ namespace Syadeu.Presentation.Map
                 m_Positions = position
             };
 
-            m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
+            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
         }
         internal struct MoveJob : ICoroutineJob
         {

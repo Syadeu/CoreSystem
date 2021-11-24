@@ -285,63 +285,69 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public void MoveToCell(IEntityDataID entity, in GridPath64 path, in ActorMoveEvent ev)
+        public ActorEventHandler MoveToCell(IEntityDataID entity, in GridPath64 path, in ActorMoveEvent ev)
         {
+#if DEBUG_MODE
             if (!entity.HasComponent<TRPGActorMoveComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
                     $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
-                return;
+                return ActorEventHandler.Empty;
             }
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                return;
+                return ActorEventHandler.Empty;
             }
-
-            m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx), path, ev);
+#endif
+            ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx), path, ev);
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = path.Length;
 
             turnPlayer.ActionPoint -= requireAp;
             $"{turnPlayer.ActionPoint} : {requireAp}".ToLog();
+
+            return handler;
         }
-        public void MoveToCell(IEntityDataID entity, GridPosition position)
+        public ActorEventHandler MoveToCell(IEntityDataID entity, GridPosition position)
         {
+#if DEBUG_MODE
             if (!entity.HasComponent<TRPGActorMoveComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
                     $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
-                return;
+                return ActorEventHandler.Empty;
             }
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                return;
+                return ActorEventHandler.Empty;
             }
-
+#endif
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             GridPath64 path = new GridPath64();
             if (!move.GetPath(in position, ref path))
             {
                 "path error not found".ToLogError();
-                return;
+                return ActorEventHandler.Empty;
             }
 
-            m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx),
+            ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx),
                 path, new ActorMoveEvent(EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx), 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = path.Length;
 
             turnPlayer.ActionPoint -= requireAp - 1;
+
+            return handler;
         }
     }
 }

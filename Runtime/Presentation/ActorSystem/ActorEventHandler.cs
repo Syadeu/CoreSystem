@@ -21,7 +21,10 @@ using System;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ActorEventHandler : ICustomYieldAwaiter, IEmpty, IEquatable<ActorEventHandler>
+    /// <summary>
+    /// <see cref="IActorEvent"/> 를 상속받고 <see cref="ActorSystem.ScheduleEvent{TEvent}(Entities.Entity{ActorEntity}, TEvent)"/> 를 수행한 이벤트에 대한 핸들러입니다.
+    /// </summary>
+    public struct ActorEventHandler : ICustomYieldAwaiter, IEmpty, IValidation, IEquatable<ActorEventHandler>
     {
         public static ActorEventHandler Empty => new ActorEventHandler(Hash.Empty);
 
@@ -29,10 +32,15 @@ namespace Syadeu.Presentation.Actor
 
         bool ICustomYieldAwaiter.KeepWait => !IsExecuted;
 
+        /// <summary>
+        /// 이 Actor Event 가 수행되었나요?
+        /// </summary>
         public bool IsExecuted
         {
             get
             {
+                if (m_Hash.IsEmpty()) return true;
+
                 ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
 
                 return system.IsExecuted(in this);
@@ -44,6 +52,7 @@ namespace Syadeu.Presentation.Actor
             m_Hash = hash;
         }
         public bool IsEmpty() => m_Hash.Equals(Hash.Empty);
+        public bool IsValid() => !IsEmpty();
         public bool Equals(ActorEventHandler other) => m_Hash.Equals(other.m_Hash);
     }
 }

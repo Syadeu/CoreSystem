@@ -131,6 +131,7 @@ namespace Syadeu.Presentation.Actor
 
                 handler.SetEvent(SystemEventResult.Success, m_CurrentEvent.Event.EventType);
 
+                m_ScheduledEventIDs.Remove(new ActorEventHandler(m_CurrentEvent.Event.Hash));
                 m_CurrentEvent.Clear();
 
                 return;
@@ -160,6 +161,7 @@ namespace Syadeu.Presentation.Actor
                 if (!ev.EventSequence.KeepWait)
                 {
                     handler.SetEvent(SystemEventResult.Success, ev.EventType);
+                    m_ScheduledEventIDs.Remove(new ActorEventHandler(m_CurrentEvent.Event.Hash));
                     m_CurrentEvent.Clear();
 
                     return;
@@ -176,6 +178,8 @@ namespace Syadeu.Presentation.Actor
 
                 handler.SetEvent(SystemEventResult.Success, ev.EventType);
                 ev.Reserve();
+
+                m_ScheduledEventIDs.Remove(new ActorEventHandler(ev.Hash));
             }
         }
 
@@ -213,6 +217,7 @@ namespace Syadeu.Presentation.Actor
             Entity<ActorEntity> Actor { get; }
             Type EventType { get; }
             IEventSequence EventSequence { get; }
+            Hash Hash { get; }
 
             void Post();
             void Reserve();
