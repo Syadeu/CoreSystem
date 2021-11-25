@@ -9,6 +9,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Presentation.Actor;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
@@ -18,8 +19,24 @@ namespace Syadeu.Presentation.BehaviorTree
         "FindTargetsAction 이 이전에 수행되어야됩니다.")]
     public sealed class MoveToTarget : ActionBase
     {
+        private ActorEventHandler m_ActorEventHandler;
+        private bool m_IsExecuted;
+
+        public override void OnStart()
+        {
+            base.OnStart();
+
+            m_ActorEventHandler = ActorEventHandler.Empty;
+            m_IsExecuted = false;
+        }
         public override TaskStatus OnUpdate()
         {
+            if (m_IsExecuted)
+            {
+                if (!m_ActorEventHandler.IsExecuted) return TaskStatus.Running;
+                else return TaskStatus.Success;
+            }
+
 #if DEBUG_MODE
             if (!Entity.IsValid())
             {
@@ -52,14 +69,14 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 #endif
-            TRPGActorAttackComponent att = Entity.GetComponentReadOnly<TRPGActorAttackComponent>();
+                TRPGActorAttackComponent att = Entity.GetComponentReadOnly<TRPGActorAttackComponent>();
             if (att.TargetCount == 0)
             {
                 "no target".ToLog();
                 return TaskStatus.Failure;
             }
             
-            GridPosition targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridSizeComponent>().positions[0];
+            GridPosition targetPos = att.GetTargetAt(0).GetComponentReadOnly<GridSizeComponent>().positions[0];
 
             GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();
 
@@ -84,7 +101,7 @@ namespace Syadeu.Presentation.BehaviorTree
             $"from {gridSize.positions[0].location} to {targetPos.location}".ToLog();
             $"1. path length {tempPath.Length} :: {path.Length}".ToLog();
 
-            PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
+            m_ActorEventHandler = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
                 .MoveToCell(Entity, path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
 
             //TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
@@ -92,7 +109,9 @@ namespace Syadeu.Presentation.BehaviorTree
 
             //turnPlayer.ActionPoint -= path.Length - 1;
 
-            return TaskStatus.Success;
+            m_IsExecuted = true;
+
+            return TaskStatus.Running;
         }
     }
 #endif
