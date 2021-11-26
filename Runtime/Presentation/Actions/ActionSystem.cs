@@ -100,7 +100,7 @@ namespace Syadeu.Presentation.Actions
             {
                 if (!m_CurrentAction.Payload.Sequence.KeepWait)
                 {
-                    $"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
+                    //$"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                     handler.SetEvent(SystemEventResult.Success, temp.Sequence.GetType());
 
                     m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
