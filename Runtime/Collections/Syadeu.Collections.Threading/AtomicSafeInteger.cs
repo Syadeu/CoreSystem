@@ -40,8 +40,43 @@ namespace Syadeu.Collections.Threading
 
         public bool Equals(AtomicSafeInteger other) => m_Value.Equals(other.m_Value);
         public override int GetHashCode() => m_Value.GetHashCode();
+        public override bool Equals(object obj)
+        {
+            if (obj is int integer)
+            {
+                return m_Value.Equals(integer);
+            }
+            else if (obj is AtomicSafeInteger atomicInteger)
+            {
+                return m_Value.Equals(atomicInteger.m_Value);
+            }
+
+            return false;
+        }
+
+        public static AtomicSafeInteger operator ++(AtomicSafeInteger a) => a.Value = a.m_Value + 1;
+        public static AtomicSafeInteger operator --(AtomicSafeInteger a) => a.Value = a.m_Value - 1;
+
+        public static AtomicSafeInteger operator +(AtomicSafeInteger a, int b) => a.Value = a.m_Value + b;
+        public static AtomicSafeInteger operator -(AtomicSafeInteger a, int b) => a.Value = a.m_Value - b;
+        public static AtomicSafeInteger operator /(AtomicSafeInteger a, int b) => a.Value = a.m_Value / b;
+        public static AtomicSafeInteger operator *(AtomicSafeInteger a, int b) => a.Value = a.m_Value * b;
+        public static AtomicSafeInteger operator %(AtomicSafeInteger a, int b) => a.Value = a.m_Value % b;
+        public static AtomicSafeInteger operator ^(AtomicSafeInteger a, int b) => a.Value = a.m_Value ^ b;
+
+        public static AtomicSafeSingle operator /(AtomicSafeInteger a, float b) => new AtomicSafeSingle(a.m_Value / b);
+        public static AtomicSafeSingle operator *(AtomicSafeInteger a, float b) => new AtomicSafeSingle(a.m_Value * b);
+
+        public static bool operator ==(AtomicSafeInteger a, int b) => a.m_Value == b;
+        public static bool operator !=(AtomicSafeInteger a, int b) => a.m_Value != b;
+
+        public static bool operator <(AtomicSafeInteger a, int b) => a.m_Value < b;
+        public static bool operator >(AtomicSafeInteger a, int b) => a.m_Value > b;
+        public static bool operator <(AtomicSafeInteger a, float b) => a.m_Value < b;
+        public static bool operator >(AtomicSafeInteger a, float b) => a.m_Value > b;
 
         public static implicit operator int(AtomicSafeInteger other) => other.Value;
         public static implicit operator AtomicSafeInteger(int other) => new AtomicSafeInteger(other);
+        public static implicit operator AtomicSafeSingle(AtomicSafeInteger other) => new AtomicSafeSingle(other);
     }
 }

@@ -40,6 +40,33 @@ namespace Syadeu.Collections.Threading
 
         public bool Equals(AtomicSafeSingle other) => m_Value.Equals(other.m_Value);
         public override int GetHashCode() => m_Value.GetHashCode();
+        public override bool Equals(object obj)
+        {
+            if (obj is float single)
+            {
+                return m_Value.Equals(single);
+            }
+            else if (obj is AtomicSafeSingle atomicSingle)
+            {
+                return m_Value.Equals(atomicSingle.m_Value);
+            }
+
+            return false;
+        }
+
+        public static AtomicSafeSingle operator +(AtomicSafeSingle a, float b) => a.Value = a.m_Value + b;
+        public static AtomicSafeSingle operator -(AtomicSafeSingle a, float b) => a.Value = a.m_Value - b;
+        public static AtomicSafeSingle operator /(AtomicSafeSingle a, float b) => a.Value = a.m_Value / b;
+        public static AtomicSafeSingle operator *(AtomicSafeSingle a, float b) => a.Value = a.m_Value * b;
+        public static AtomicSafeSingle operator /(AtomicSafeSingle a, int b) => a.Value = a.m_Value / b;
+        public static AtomicSafeSingle operator *(AtomicSafeSingle a, int b) => a.Value = a.m_Value * b;
+        public static AtomicSafeSingle operator %(AtomicSafeSingle a, float b) => a.Value = a.m_Value % b;
+
+        public static AtomicSafeBoolen operator ==(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value == b);
+        public static AtomicSafeBoolen operator !=(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value != b);
+
+        public static AtomicSafeBoolen operator <(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value < b);
+        public static AtomicSafeBoolen operator >(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value > b);
 
         public static implicit operator float(AtomicSafeSingle other) => other.Value;
         public static implicit operator AtomicSafeSingle(float other) => new AtomicSafeSingle(other);

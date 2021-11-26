@@ -39,6 +39,22 @@ namespace Syadeu.Collections.Threading
 
         public bool Equals(AtomicSafeBoolen other) => m_Value.Equals(other.m_Value);
         public override int GetHashCode() => m_Value.GetHashCode();
+        public override bool Equals(object obj)
+        {
+            if (obj is bool boolen)
+            {
+                return Value.Equals(boolen);
+            }
+            else if (obj is AtomicSafeBoolen atomicBoolen)
+            {
+                return Value.Equals(atomicBoolen.Value);
+            }
+
+            return false;
+        }
+
+        public static bool operator ==(AtomicSafeBoolen a, bool b) => a.Value == b;
+        public static bool operator !=(AtomicSafeBoolen a, bool b) => a.Value != b;
 
         public static implicit operator bool(AtomicSafeBoolen other) => other.Value;
         public static implicit operator AtomicSafeBoolen(bool other) => new AtomicSafeBoolen(other);
