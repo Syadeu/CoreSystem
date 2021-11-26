@@ -25,8 +25,6 @@ namespace Syadeu.Collections.Threading
         {
             get
             {
-                Interlocked.MemoryBarrier();
-
                 return m_Value == 0 ? false : true;
             }
             set
