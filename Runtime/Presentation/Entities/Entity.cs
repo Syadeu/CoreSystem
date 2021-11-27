@@ -99,7 +99,7 @@ namespace Syadeu.Presentation.Entities
                     !(value is T t))
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value.GetType())}.");
+                        $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value?.GetType())}.");
                     return null;
                 }
 
@@ -193,7 +193,7 @@ namespace Syadeu.Presentation.Entities
         public bool IsEmpty() => Equals(Empty);
         public bool IsValid()
         {
-            if (IsEmpty() || !Target.IsValid()) return false;
+            if (IsEmpty() || Target == null || !Target.IsValid()) return false;
 
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 

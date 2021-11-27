@@ -233,7 +233,8 @@ namespace Syadeu.Presentation.Proxy
                 unsafe
                 {
                     if (m_Generation.Equals(-1) || m_Pointer == null) return true;
-                    else if (!Ref.m_IsOccupied || 
+                    else if (m_Pointer->Length <= m_Index) return true;
+                    else if (!Ref.m_IsOccupied ||
                         !m_Hash.Equals(Ref.m_Hash)) return true;
                     else if (!Ref.m_Generation.Equals(m_Generation)) return true;
                 }

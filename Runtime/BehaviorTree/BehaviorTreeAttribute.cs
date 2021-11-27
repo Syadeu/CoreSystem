@@ -51,8 +51,6 @@ namespace Syadeu.Presentation.BehaviorTree
         public void LoadBehaviorTreeAsync(AsyncOperationHandle<ExternalBehavior> obj) => LoadBehaviorTree(obj.Result);
         public void LoadBehaviorTree(ExternalBehavior obj)
         {
-            $"tree {obj.name} loaded".ToLog();
-
             m_InstanceBehaviorTree = UnityEngine.Object.Instantiate(obj);
             m_InstanceBehaviorTree.Init();
         }

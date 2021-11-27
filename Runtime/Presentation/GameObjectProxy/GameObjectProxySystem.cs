@@ -184,14 +184,14 @@ namespace Syadeu.Presentation.Proxy
             CoreSystem.Logger.Log(Channel.Proxy, true,
                 "Scene on loading enter lambda excute");
 
+            m_ProxyData.For(DestroyTransform);
+
             m_RequestDestories.Clear();
 
             m_RequestProxyList.Clear();
             m_RemoveProxyList.Clear();
             m_VisibleList.Clear();
             m_InvisibleList.Clear();
-
-            m_ProxyData.For(DestroyTransform);
 
             ReleaseAllPrefabs();
 

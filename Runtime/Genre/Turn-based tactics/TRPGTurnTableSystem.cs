@@ -68,8 +68,20 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnInitialize();
         }
+        protected override void OnShutDown()
+        {
+            if (m_TurnTableEnabled)
+            {
+                StopTurnTable();
+            }
+        }
         public override void OnDispose()
         {
+            m_CurrentTurn = null;
+
+            OnStartTurn = null;
+            OnEndTurn = null;
+
             m_EventSystem = null;
             m_WorldCanvasSystem = null;
         }

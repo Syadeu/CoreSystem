@@ -40,7 +40,7 @@ namespace Syadeu.Mono
             [NonSerialized] public bool m_IsRuntimeObject = false;
             [NonSerialized] public GameObject m_Prefab = null;
 
-            [NonSerialized] private bool m_IsLoaded = false;
+            [NonSerialized] private int m_InstantateCount = 0;
             [NonSerialized] private AsyncOperationHandle m_LoadHandle = default;
             [NonSerialized] private UnityEngine.Object m_LoadedObject = null;
 
@@ -63,8 +63,9 @@ namespace Syadeu.Mono
                 }
                 if (m_LoadedObject != null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, "already loaded");
-                    return default(AsyncOperationHandle);
+                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} already loaded. This is not allowed.");
+
+                    return m_RefPrefab.OperationHandle;
                 }
                 if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
@@ -75,7 +76,6 @@ namespace Syadeu.Mono
                 var handle = m_RefPrefab.LoadAssetAsync<UnityEngine.Object>();
                 handle.Completed += Handle_Completed;
 
-                m_IsLoaded = true;
                 m_LoadHandle = handle;
                 return handle;
             }
@@ -127,7 +127,6 @@ namespace Syadeu.Mono
 
                 handle.Completed += this.AsynHandleOnCompleted;
 
-                m_IsLoaded = true;
                 m_LoadHandle = handle;
                 return handle;
             }
@@ -136,6 +135,9 @@ namespace Syadeu.Mono
                 m_LoadedObject = obj.Result;
 
                 m_LoadHandle = default;
+
+                CoreSystem.Logger.Log(Channel.Data,
+                    $"Loaded asset {m_Name}");
             }
 
             public void UnloadAsset()
@@ -145,9 +147,17 @@ namespace Syadeu.Mono
                     CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
                     return;
                 }
+                else if (m_InstantateCount > 0)
+                {
+                    CoreSystem.Logger.LogError(Channel.Data,
+                        $"{m_Name} is not fully released but trying to unload.");
+                }
 
                 m_LoadedObject = null;
                 m_RefPrefab.ReleaseAsset();
+
+                CoreSystem.Logger.Log(Channel.Data,
+                    $"Unload asset {m_Name}");
             }
 
             #endregion
@@ -160,10 +170,21 @@ namespace Syadeu.Mono
                     return default(AsyncOperationHandle<GameObject>);
                 }
 
+                m_InstantateCount++;
                 return m_RefPrefab.InstantiateAsync(pos, rot, parent);
             }
 
-            public void ReleaseInstance(GameObject obj) => m_RefPrefab.ReleaseInstance(obj);
+            public void ReleaseInstance(GameObject obj)
+            {
+                m_RefPrefab.ReleaseInstance(obj);
+                m_InstantateCount--;
+
+                if (m_InstantateCount == 0)
+                {
+                    m_LoadedObject = null;
+                    UnloadAsset();
+                }
+            }
 
             public override string ToString() => m_Name;
         }

@@ -119,23 +119,22 @@ namespace Syadeu.Presentation
             int count = m_DestroyedObjectsInThisFrame.Count;
             for (int i = count - 1; i >= 0; i--)
             {
-                var targetObject = m_ObjectEntities[m_DestroyedObjectsInThisFrame[i]];
-                //m_DestroyedObjectsInThisFrame.RemoveAt(i);
+                InstanceID id = m_DestroyedObjectsInThisFrame[i];
+                m_DestroyedObjectsInThisFrame.RemoveAt(i);
 
-                if (targetObject is IEntityData entityData)
+                ObjectBase targetObject = m_ObjectEntities[id];
+
+                if (targetObject is IEntityData)
                 {
                     ProcessEntityDestroy(targetObject, true);
-
-                    m_ObjectEntities.Remove(targetObject.Idx);
                 }
                 else
                 {
                     ProcessNonEntityDestroy(targetObject, true);
-
-                    m_ObjectEntities.Remove(targetObject.Idx);
                 }
+
+                m_ObjectEntities.Remove(id);
             }
-            m_DestroyedObjectsInThisFrame.RemoveRange(0, count);
         }
         private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
         {
@@ -147,11 +146,10 @@ namespace Syadeu.Presentation
 #endif
             IEntityData entityData = (IEntityData)targetObject;
 
-            if (targetObject is IEntity entity)
+            if (targetObject is IEntity entity && entity.transform != null)
             {
-                if (entity.transform is ProxyTransform tr && m_EntityGameObjects.ContainsKey(tr.m_Hash))
+                if (entity.transform is ProxyTransform tr)
                 {
-                    Hash index = tr.m_Hash;
                     tr.Destroy();
                 }
                 else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
@@ -317,8 +315,11 @@ namespace Syadeu.Presentation
         }
         public override void OnDispose()
         {
-            PresentationManager.Instance.PreUpdate -= Instance_PreUpdate;
+            PresentationManager.Instance.PreUpdate -= m_DestroyedObjectsInThisFrameAction.Invoke;
             m_SceneSystem.OnSceneChangeCalled -= M_SceneSystem_OnSceneChangeCalled;
+
+            m_DestroyedObjectsInThisFrameAction.Reserve();
+            m_DestroyedObjectsInThisFrameAction = null;
 
             OnEntityCreated = null;
             OnEntityDestroy = null;
@@ -363,17 +364,21 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            // TODO : Temp code
-            if (m_EntityGameObjects.TryGetValue(obj.m_Hash, out InstanceID entity) &&
-                m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj))
-            {
-                if (entityObj is EntityBase entityBase)
-                {
-                    entityBase.transform = null;
-                }
-            }
-            
+            InstanceID entity = m_EntityGameObjects[obj.m_Hash];
             m_EntityGameObjects.Remove(obj.m_Hash);
+
+            if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
+
+            if (entityObj is EntityBase entityBase)
+            {
+                entityBase.transform = null;
+            }
+            //ObjectBase entityObj = m_ObjectEntities[entity];
+
+            //ProcessEntityDestroy(entityObj, true);
+            //m_ObjectEntities.Remove(entity);
+
+            InternalDestroyEntity(in entity);
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {

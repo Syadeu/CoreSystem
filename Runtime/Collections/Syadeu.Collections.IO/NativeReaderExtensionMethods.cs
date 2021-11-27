@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using System;
 using System.Text;
 using Unity.Burst;
 using Unity.Collections;

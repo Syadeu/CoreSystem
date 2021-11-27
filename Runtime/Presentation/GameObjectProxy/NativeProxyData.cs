@@ -49,12 +49,13 @@ namespace Syadeu.Presentation.Proxy
 
             public void* Pointer => m_Buffer.ToPointer();
             public ProxyTransformData* m_TransformBuffer => (ProxyTransformData*)m_Buffer;
+            public uint Length => m_Length;
 
             public ProxyTransformData* this[int index]
             {
                 get
                 {
-                    if (index >= m_Length) throw new ArgumentOutOfRangeException();
+                    if (index >= m_Length || index < 0) throw new ArgumentOutOfRangeException();
                     return m_TransformBuffer + index;
                 }
             }
