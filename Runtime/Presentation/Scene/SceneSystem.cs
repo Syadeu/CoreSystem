@@ -702,10 +702,9 @@ namespace Syadeu.Presentation
             {
                 if (m_LoadedCount == m_SceneAssetCount) return;
 
-                foreach (var item in m_SceneAssets)
+                foreach (IPrefabReference item in m_SceneAssets)
                 {
-                    var handle = item.LoadAssetAsync();
-                    handle.Completed += Handle_Completed;
+                    InternalLoad(item);
                 }
             }
             public void Reset()
@@ -713,6 +712,17 @@ namespace Syadeu.Presentation
                 m_LoadedCount = 0;
             }
 
+            private void InternalLoad(IPrefabReference prefab)
+            {
+                if (prefab.Asset != null)
+                {
+                    Interlocked.Increment(ref m_LoadedCount);
+                    return;
+                }
+
+                AsyncOperationHandle handle = prefab.LoadAssetAsync();
+                handle.Completed += Handle_Completed;
+            }
             private void Handle_Completed(AsyncOperationHandle obj)
             {
                 Interlocked.Increment(ref m_LoadedCount);

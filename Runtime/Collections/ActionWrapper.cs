@@ -37,9 +37,12 @@ namespace Syadeu.Collections
         {
             return new ActionWrapper();
         }
-        private ActionWrapper()
+        /// <summary>
+        /// <see cref="GetWrapper"/> 를 사용하세요.
+        /// </summary>
+        public ActionWrapper()
         {
-            
+            throw new NotImplementedException();
         }
         public static ActionWrapper GetWrapper() => s_Container.Dequeue();
         public void Reserve()
@@ -81,9 +84,12 @@ namespace Syadeu.Collections
         {
             return new ActionWrapper<T>();
         }
-        private ActionWrapper()
+        /// <summary>
+        /// <see cref="GetWrapper"/> 를 사용하세요.
+        /// </summary>
+        public ActionWrapper()
         {
-
+            throw new NotImplementedException();
         }
         public static ActionWrapper<T> GetWrapper() => s_Container.Dequeue();
         public void Reserve()
@@ -105,7 +111,14 @@ namespace Syadeu.Collections
         public void Invoke(T t)
         {
             if (m_MarkerSet) m_Marker.Begin();
-            m_Action?.Invoke(t);
+            try
+            {
+                m_Action?.Invoke(t);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogException(ex);
+            }
             if (m_MarkerSet) m_Marker.End();
         }
     }

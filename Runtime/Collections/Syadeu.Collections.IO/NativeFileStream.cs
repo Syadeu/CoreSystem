@@ -31,19 +31,27 @@ namespace Syadeu.Collections.IO
         private ReadHandle m_Handle;
 
         [BurstDiscard]
+        public byte[] Read(string path)
+        {
+            return File.ReadAllBytes(path);
+        }
+        [BurstDiscard]
         public NativeFileReader ReadAsync(string path)
         {
             unsafe
             {
                 m_Command = (ReadCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<ReadCommand>(), UnsafeUtility.AlignOf<ReadCommand>(), Allocator.Persistent);
-
+                
                 m_Command->Offset = 0;
                 m_Command->Size = new FileInfo(path).Length;
                 m_Command->Buffer = (byte*)UnsafeUtility.Malloc(m_Command->Size, 16, Allocator.Persistent);
 
                 m_Handle = AsyncReadManager.Read(path, m_Command, 1);
 
-                return new NativeFileReader(m_Handle, (byte*)m_Command->Buffer, (int)m_Command->Size);
+                NativeFileReader rdr = new NativeFileReader();
+                rdr.Initialize(m_Handle, *m_Command);
+
+                return rdr;
             }
         }
         [BurstDiscard]

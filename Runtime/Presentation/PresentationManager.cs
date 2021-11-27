@@ -950,7 +950,14 @@ namespace Syadeu.Presentation
                     TransformUpdate -= item.Value.TransformPresentation;
                     AfterTransformUpdate -= item.Value.AfterTransformPresentation;
 
-                    item.Value.Reset();
+                    try
+                    {
+                        item.Value.Reset();
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                    }
                 }
             }
 
@@ -1360,7 +1367,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
-                return null;
+                return new NullCustomYieldAwaiter();
             }
             $"start call {group.m_Name.Name}".ToLog();
             for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
@@ -1458,6 +1465,12 @@ namespace Syadeu.Presentation
             group.Reset();
 
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
+
+            List<Hash> connectedGroups = group.GetGroupDependences();
+            for (int i = 0; i < connectedGroups.Count; i++)
+            {
+                StopPresentation(connectedGroups[i]);
+            }
         }
 
         internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter

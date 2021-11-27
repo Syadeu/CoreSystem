@@ -132,8 +132,12 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
 
-                    handle = item.LoadAssetAsync();
-                    handle.CompletedTypeless += Handle_CompletedTypeless;
+                    if (item.Asset == null)
+                    {
+                        handle = item.LoadAssetAsync();
+                        handle.CompletedTypeless += Handle_CompletedTypeless;
+                    }
+                    else Interlocked.Increment(ref m_Counter);
                 }
                 m_AssetCount += temp1.Count();
 

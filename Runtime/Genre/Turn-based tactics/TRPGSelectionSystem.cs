@@ -90,6 +90,11 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_EntityRaycastSystem = other;
         }
+
+        private ActionWrapper<UnityEngine.InputSystem.InputAction.CallbackContext> 
+            m_LeftMouseButtonActionWrapper,
+            m_RightMouseButtonActionWrapper;
+
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
@@ -97,15 +102,26 @@ namespace Syadeu.Presentation.TurnTable
             m_LeftMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
                 UnityEngine.InputSystem.LowLevel.MouseButton.Left,
                 UnityEngine.InputSystem.InputActionType.Button);
+            {
+                m_LeftMouseButtonActionWrapper = ActionWrapper<UnityEngine.InputSystem.InputAction.CallbackContext>.GetWrapper();
+                m_LeftMouseButtonActionWrapper.SetAction(M_LeftMouseButtonAction_performed);
+                m_LeftMouseButtonActionWrapper.SetProfiler($"{nameof(TRPGSelectionSystem)}.M_LeftMouseButtonAction_performed");
 
-            m_LeftMouseButtonAction.performed += M_LeftMouseButtonAction_performed;
-
+                m_LeftMouseButtonAction.performed += m_LeftMouseButtonActionWrapper.Invoke;
+            }
+            
             m_RightMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
                 UnityEngine.InputSystem.LowLevel.MouseButton.Right,
                 UnityEngine.InputSystem.InputActionType.Button
                 );
 
-            m_RightMouseButtonAction.performed += M_RightMouseButtonAction_performed;
+            {
+                m_RightMouseButtonActionWrapper = ActionWrapper<UnityEngine.InputSystem.InputAction.CallbackContext>.GetWrapper();
+                m_RightMouseButtonActionWrapper.SetAction(M_RightMouseButtonAction_performed);
+                m_RightMouseButtonActionWrapper.SetProfiler($"{nameof(TRPGSelectionSystem)}.M_RightMouseButtonAction_performed");
+
+                m_RightMouseButtonAction.performed += m_RightMouseButtonActionWrapper.Invoke;
+            }
 
             m_LeftMouseButtonAction.Enable();
             m_RightMouseButtonAction.Enable();

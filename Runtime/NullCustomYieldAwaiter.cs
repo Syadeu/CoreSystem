@@ -14,14 +14,8 @@
 
 namespace Syadeu
 {
-    /// <summary>
-    /// <see cref="CoreSystem"/> framework 내 코루틴에서 사용할 수 있는 awaiter 입니다.
-    /// </summary>
-    /// <remarks>
-    /// <see langword="null"/> 반환은 <seealso cref="NullCustomYieldAwaiter"/> 를 참조하세요.
-    /// </remarks>
-    public interface ICustomYieldAwaiter
+    public struct NullCustomYieldAwaiter : ICustomYieldAwaiter
     {
-        bool KeepWait { get; }
+        public bool KeepWait => false;
     }
 }

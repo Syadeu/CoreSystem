@@ -126,6 +126,9 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
+            Destroy(m_GridOutlineRenderer.gameObject);
+            Destroy(m_GridPathlineRenderer.gameObject);
+
             //m_GridOutlineBuffer.Release();
 
             m_GridTempMoveables.Dispose();

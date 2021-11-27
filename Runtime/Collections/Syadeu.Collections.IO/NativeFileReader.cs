@@ -16,18 +16,19 @@
 #define DEBUG_MODE
 #endif
 
-using System.Text;
-using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.IO.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.IO
 {
-    public struct NativeFileReader : IValidation
+    public struct NativeFileReader : INativeReader, IValidation
     {
         private ReadHandle m_Handle;
         [NativeDisableUnsafePtrRestriction] private unsafe byte* m_Data;
-        private int m_Size;
+        private long m_Size;
+
+        public unsafe byte* Data => m_Data;
+        public long Size => m_Size;
 
         public bool IsReadable
         {
@@ -37,31 +38,15 @@ namespace Syadeu.Collections.IO
             }
         }
 
-        internal unsafe NativeFileReader(ReadHandle handle, byte* data, int size)
+        public void Initialize(ReadHandle handle, ReadCommand cmd)
         {
             m_Handle = handle;
-            m_Data = data;
-            m_Size = size;
-        }
-
-        [BurstDiscard]
-        public string ToString(Encoding encoding)
-        {
             unsafe
             {
-                return encoding.GetString(m_Data, m_Size);
+                m_Data = (byte*)cmd.Buffer;
             }
+            m_Size = cmd.Size;
         }
-        //public T Read<T>()
-        //{
-        //    Encoding.UTF8
-
-        //    MemoryStream memStream = new MemoryStream();
-        //    BinaryFormatter binForm = new BinaryFormatter();
-        //    memStream.Write(arrBytes, 0, arrBytes.Length);
-        //    memStream.Seek(0, SeekOrigin.Begin);
-        //    Object obj = (Object)binForm.Deserialize(memStream);
-        //}
 
         public bool IsValid()
         {
@@ -72,5 +57,14 @@ namespace Syadeu.Collections.IO
 
             return true;
         }
+    }
+    public interface INativeReader : IValidation
+    {
+        unsafe byte* Data { get; }
+        long Size { get; }
+
+        bool IsReadable { get; }
+
+        void Initialize(ReadHandle handle, ReadCommand cmd);
     }
 }
