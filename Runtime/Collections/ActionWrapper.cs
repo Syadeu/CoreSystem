@@ -40,10 +40,7 @@ namespace Syadeu.Collections
         /// <summary>
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
-        public ActionWrapper()
-        {
-            throw new NotImplementedException();
-        }
+        public ActionWrapper() { }
         public static ActionWrapper GetWrapper() => s_Container.Dequeue();
         public void Reserve()
         {
@@ -87,10 +84,7 @@ namespace Syadeu.Collections
         /// <summary>
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
-        public ActionWrapper()
-        {
-            throw new NotImplementedException();
-        }
+        public ActionWrapper() { }
         public static ActionWrapper<T> GetWrapper() => s_Container.Dequeue();
         public void Reserve()
         {
