@@ -184,7 +184,7 @@ namespace Syadeu.Presentation
 
         private struct TriggerBoundJob : IJobParallelForEntities<TriggerBoundComponent>
         {
-            public void Execute(in EntityData<IEntityData> entity, in TriggerBoundComponent component)
+            public void Execute(in InstanceID entity, in TriggerBoundComponent component)
             {
                 throw new NotImplementedException();
             }

@@ -46,8 +46,6 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] internal InstanceArray<TerrainData> m_CreatedTerrains;
 
-        [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntityWithoutCheck(Idx);
-
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 

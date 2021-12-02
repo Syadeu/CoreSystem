@@ -279,35 +279,35 @@ namespace Syadeu.Presentation
             return EntityData<T>.GetEntityWithoutCheck(id);
         }
 
-        public static Instance GetInstance(this EntityID id)
+        public static ObjectBase GetObject(this EntityID id)
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             ObjectBase obj = entitySystem.GetEntityByID(id);
-            return new Instance(obj);
+            return obj;
         }
-        public static Instance<T> GetInstance<T>(this EntityID id)
-            where T : class, IObject
+        public static T GetObject<T>(this EntityID id)
+            where T : ObjectBase
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             ObjectBase obj = entitySystem.GetEntityByID(id);
-            return new Instance<T>(obj);
+            return (T)obj;
         }
-        public static Instance GetInstance(this InstanceID id)
+        public static ObjectBase GetObject(this InstanceID id)
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             ObjectBase obj = entitySystem.GetEntityByID(id);
-            return new Instance(obj);
+            return obj;
         }
-        public static Instance<T> GetInstance<T>(this InstanceID id)
-            where T : class, IObject
+        public static T GetObject<T>(this InstanceID id)
+            where T : ObjectBase
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             ObjectBase obj = entitySystem.GetEntityByID(id);
-            return new Instance<T>(obj);
+            return (T)obj;
         }
 
         #endregion
@@ -389,7 +389,7 @@ namespace Syadeu.Presentation
 
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.\n" +
-                    $"d:{entitySystem.IsDestroyed(t.Idx)}, dq:{entitySystem.IsMarkedAsDestroyed(t.Idx)}");
+                    $"d:{entitySystem.IsDestroyed(t.Idx)}, dq:{entitySystem.IsMarkedAsDestroyed(t.Idx)}, resv:{((ObjectBase)t.Target).Reserved}, tr:{((t.Target is EntityBase entity) ? $"{entity.transform != null}" : "notr")}");
                 return null;
             }
 #endif

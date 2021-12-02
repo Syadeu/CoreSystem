@@ -33,8 +33,6 @@ namespace Syadeu.Presentation.Entities
         internal bool m_EnableAutoFade = false;
         internal float m_InitialAlpha = 1;
 
-        [JsonIgnore] EntityData<IEntityData> INotifyComponent.Parent => EntityData<IEntityData>.GetEntity(Idx);
-
         [Preserve]
         static void AOTCodeGeneration()
         {

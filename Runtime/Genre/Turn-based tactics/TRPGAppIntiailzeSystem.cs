@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public override void OnDispose()
         {
-            m_SceneSystem.OnSceneChangeCalled -= CheckCurrentSceneAndExecute;
+            m_SceneSystem.OnSceneChanged -= CheckCurrentSceneAndExecute;
 
             m_SceneSystem = null;
         }
@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_SceneSystem = other;
 
-            m_SceneSystem.OnSceneChangeCalled += CheckCurrentSceneAndExecute;
+            m_SceneSystem.OnSceneChanged += CheckCurrentSceneAndExecute;
         }
 
         private void CheckCurrentSceneAndExecute()

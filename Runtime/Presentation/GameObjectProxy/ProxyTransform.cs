@@ -274,8 +274,6 @@ namespace Syadeu.Presentation.Proxy
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
                         float4x4 local2world = float4x4.TRS(parentData.m_Translation, parentData.m_Rotation, parentData.m_Scale);
 
-                        $"{localPosition}".ToLog();
-
                         return math.mul(local2world, new float4(Ref.m_Translation, 1)).xyz;
                     }
                 }

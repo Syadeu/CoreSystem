@@ -178,7 +178,7 @@ namespace Syadeu.Presentation.Components
             m_CompleteAllDisposedComponents.Reserve();
             m_CompleteAllDisposedComponents = null;
 
-            m_SceneSystem.OnSceneChangeCalled -= CompleteAllDisposedComponents;
+            m_SceneSystem.OnSceneChanged -= CompleteAllDisposedComponents;
 
             int count = m_DisposedComponents.Count;
             for (int i = 0; i < count; i++)
@@ -226,7 +226,7 @@ namespace Syadeu.Presentation.Components
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
-            m_SceneSystem.OnSceneChangeCalled += CompleteAllDisposedComponents;
+            m_SceneSystem.OnSceneChanged += CompleteAllDisposedComponents;
         }
 
         #endregion
@@ -307,6 +307,11 @@ namespace Syadeu.Presentation.Components
             //{
             //    $"err {entity.RawName}: {entity.GetHashCode()},{}".ToLogError();
             //}
+            return idx;
+        }
+        private static int GetEntityIndex(in IObject entity)
+        {
+            int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
             return idx;
         }
         private static int2 GetIndex(in Type t, in EntityID entity)
@@ -527,17 +532,17 @@ namespace Syadeu.Presentation.Components
             //PropertyInfo property = interfaceType
             //    .GetProperty(c_Parent, TypeHelper.TypeOf<EntityData<IEntityData>>.Type);
 
-            EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
-            RemoveComponent(entity.Idx, interfaceType.GenericTypeArguments[0]);
+            //EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
+            RemoveComponent(obj.Idx, interfaceType.GenericTypeArguments[0]);
         }
-        public void RemoveNotifiedComponents(IObject obj, Action<EntityID, Type> onRemove = null)
+        public void RemoveNotifiedComponents(IObject obj, Action<InstanceID, Type> onRemove = null)
         {
             using (s_RemoveNotifiedComponentMarker.Auto())
             {
-                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
+                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj.Idx, onRemove);
             }
         }
-        public void RemoveNotifiedComponents(EntityID entity, Action<EntityID, Type> onRemove = null)
+        public void RemoveNotifiedComponents(InstanceID entity, Action<InstanceID, Type> onRemove = null)
         {
             using (s_RemoveNotifiedComponentMarker.Auto())
             {

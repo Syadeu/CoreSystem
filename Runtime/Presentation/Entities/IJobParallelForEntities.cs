@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Entities
     public interface IJobParallelForEntities<TComponent>
         where TComponent : unmanaged, IEntityComponent
     {
-        void Execute(in EntityData<IEntityData> entity, in TComponent component);
+        void Execute(in InstanceID entity, in TComponent component);
     }
 
     public static class IJobParallelForEntitiesInterfaces
@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.Entities
         public struct Job<TComponent> : IJobParallelForEntities<TComponent>
             where TComponent : unmanaged, IEntityComponent
         {
-            public void Execute(in EntityData<IEntityData> entity, in TComponent component)
+            public void Execute(in InstanceID entity, in TComponent component)
             {
                 throw new NotImplementedException();
             }
@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Entities
 
                 buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
 
-                jobData.Execute(entity.GetEntityData(), in component);
+                jobData.Execute(entity, in component);
             }
         }
 

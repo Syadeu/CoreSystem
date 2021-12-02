@@ -32,6 +32,5 @@ namespace Syadeu.Presentation.Components
     }
     public interface INotifyComponent
     {
-        EntityData<IEntityData> Parent { get; }
     }
 }

@@ -32,24 +32,36 @@ namespace Syadeu.Presentation.Components
         private NativeHashSet<Hash> m_ZeroNotifiedObjects;
         private NativeMultiHashMap<Hash, TypeInfo> m_NotifiedObjects;
 
+        private EntitySystem m_EntitySystem;
+
         protected override void OnInitialize()
         {
             m_ZeroNotifiedObjects = new NativeHashSet<Hash>(EntityDataList.Instance.m_Objects.Count,
                  AllocatorManager.Persistent);
             m_NotifiedObjects = new NativeMultiHashMap<Hash, TypeInfo>(System.BufferLength, AllocatorManager.Persistent);
+
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
         }
         protected override void OnDispose()
         {
             m_ZeroNotifiedObjects.Dispose();
             m_NotifiedObjects.Dispose();
+
+            m_EntitySystem = null;
+        }
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
         }
 
-        public void TryRemoveComponent(EntityID entityID, Action<EntityID, Type> onRemove)
+        public void TryRemoveComponent(InstanceID entityID, Action<InstanceID, Type> onRemove)
         {
-            Entity<IEntity> entity = entityID.GetEntity<IEntity>();
+            //Entity<IEntity> entity = entityID.GetEntity<IEntity>();
+            ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
+            Hash rawID = rawObject.Hash;
 
-            if (m_ZeroNotifiedObjects.Contains(entity.Hash)) return;
-            else if (m_NotifiedObjects.TryGetFirstValue(entity.Hash, out TypeInfo typeInfo, out var parsedIter))
+            if (m_ZeroNotifiedObjects.Contains(rawID)) return;
+            else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
             {
                 do
                 {
@@ -61,17 +73,17 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-            if (!entity.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Entity({entity.Hash}) is disclosed.");
-                return;
-            }
+            //if (!entity.IsValid())
+            //{
+            //    CoreSystem.Logger.LogError(Channel.Component,
+            //        $"Entity({entity.Hash}) is disclosed.");
+            //    return;
+            //}
 
-            var iter = Select(entity.Type);
+            var iter = Select(rawObject.GetType());
             if (!iter.Any())
             {
-                m_ZeroNotifiedObjects.Add(entity.Hash);
+                m_ZeroNotifiedObjects.Add(rawID);
                 return;
             }
 
@@ -81,10 +93,10 @@ namespace Syadeu.Presentation.Components
                 onRemove?.Invoke(entityID, componentType);
                 System.RemoveComponent(entityID, componentType);
 
-                m_NotifiedObjects.Add(entity.Hash, ComponentType.GetValue(componentType).Data);
+                m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
             }
         }
-        public void TryRemoveComponent(IObject obj, Action<EntityID, Type> onRemove)
+        public void TryRemoveComponent(IObject obj, Action<InstanceID, Type> onRemove)
         {
             if (!(obj is INotifyComponent notify)) return;
 
@@ -93,8 +105,8 @@ namespace Syadeu.Presentation.Components
             {
                 do
                 {
-                    onRemove?.Invoke(notify.Parent.Idx, typeInfo.Type);
-                    System.RemoveComponent(notify.Parent.Idx, typeInfo);
+                    onRemove?.Invoke(obj.Idx, typeInfo.Type);
+                    System.RemoveComponent(obj.Idx, typeInfo);
 
                 } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
@@ -111,8 +123,8 @@ namespace Syadeu.Presentation.Components
             var select = iter.Select(i => i.GenericTypeArguments[0]);
             foreach (var componentType in select)
             {
-                onRemove?.Invoke(notify.Parent.Idx, componentType);
-                System.RemoveComponent(notify.Parent.Idx, componentType);
+                onRemove?.Invoke(obj.Idx, componentType);
+                System.RemoveComponent(obj.Idx, componentType);
 
                 m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
             }

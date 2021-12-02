@@ -76,7 +76,16 @@ namespace Syadeu.Presentation
         public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
         public bool IsStartScene => CurrentSceneRef.Equals(SceneList.Instance.StartScene);
 
-        public event Action OnSceneChangeCalled;
+        // OnSceneLoadCall -> OnLoadingEnter -> OnWaitLoading -> OnSceneChanged -> OnAfterLoading -> OnLoadingExit
+
+        /// <summary>
+        /// 씬 전환을 호출했을때 맨 처음 실행하는 이벤트입니다.
+        /// </summary>
+        public event Action OnSceneLoadCall;
+        /// <summary>
+        /// 로딩 중 씬이 전환된 직후 (Activate) 호출되는 이벤트입니다.
+        /// </summary>
+        public event Action OnSceneChanged;
         /// <summary>
         /// 로딩 콜이 실행되었을때 맨 처음으로 발생하는 이벤트입니다.
         /// </summary>
@@ -326,7 +335,7 @@ namespace Syadeu.Presentation
 
                 m_IsDebugScene = true;
 
-                OnSceneChangeCalled?.Invoke();
+                OnSceneChanged?.Invoke();
 
                 m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Game));
             }
@@ -496,7 +505,9 @@ namespace Syadeu.Presentation
             CompleteJob();
 
             m_LoadingEnabled = true;
+            OnSceneLoadCall?.Invoke();
             OnLoadingEnter?.Invoke();
+
             CoreSystem.DestroyAllInstanceManager();
             m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Loading));
 
@@ -533,7 +544,7 @@ namespace Syadeu.Presentation
                 m_CurrentScene = SceneManager.GetSceneByPath(scene);
                 SceneManager.SetActiveScene(m_CurrentScene);
 
-                OnSceneChangeCalled?.Invoke();
+                OnSceneChanged?.Invoke();
                 onCompleted?.Invoke(oper);
 
                 CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");

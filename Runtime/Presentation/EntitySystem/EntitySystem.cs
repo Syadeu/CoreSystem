@@ -40,7 +40,8 @@ namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>,
         INotifySystemModule<EntityRecycleModule>,
-        INotifySystemModule<EntityIDModule>
+        INotifySystemModule<EntityIDModule>,
+        INotifySystemModule<EntityHierarchyModule>
 #if DEBUG_MODE
         , INotifySystemModule<EntityDebugModule>
 #endif
@@ -117,11 +118,9 @@ namespace Syadeu.Presentation
             if (CoreSystem.BlockCreateInstance) return;
 
             int count = m_DestroyedObjectsInThisFrame.Count;
-            for (int i = count - 1; i >= 0; i--)
+            for (int i = 0; i < count; i++)
             {
                 InstanceID id = m_DestroyedObjectsInThisFrame[i];
-                m_DestroyedObjectsInThisFrame.RemoveAt(i);
-
                 ObjectBase targetObject = m_ObjectEntities[id];
 
                 if (targetObject is IEntityData)
@@ -132,7 +131,11 @@ namespace Syadeu.Presentation
                 {
                     ProcessNonEntityDestroy(targetObject, true);
                 }
-
+            }
+            for (int i = count - 1; i >= 0; i--)
+            {
+                InstanceID id = m_DestroyedObjectsInThisFrame[i];
+                m_DestroyedObjectsInThisFrame.RemoveAt(i);
                 m_ObjectEntities.Remove(id);
             }
         }
@@ -145,19 +148,6 @@ namespace Syadeu.Presentation
             }
 #endif
             IEntityData entityData = (IEntityData)targetObject;
-
-            if (targetObject is IEntity entity && entity.transform != null)
-            {
-                if (entity.transform is ProxyTransform tr)
-                {
-                    tr.Destroy();
-                }
-                else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
-                {
-                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                    ((IDisposable)unityTr).Dispose();
-                }
-            }
 
             ProcessEntityOnDestroy(this, entityData);
 
@@ -174,6 +164,19 @@ namespace Syadeu.Presentation
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
 #endif
             if (reserve) GetModule<EntityRecycleModule>().InsertReservedObject(targetObject);
+
+            if (targetObject is IEntity entity && entity.transform != null)
+            {
+                if (entity.transform is ProxyTransform tr)
+                {
+                    tr.Destroy();
+                }
+                else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
+                {
+                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                    ((IDisposable)unityTr).Dispose();
+                }
+            }
         }
         private void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
         {
@@ -316,7 +319,7 @@ namespace Syadeu.Presentation
         public override void OnDispose()
         {
             PresentationManager.Instance.PreUpdate -= m_DestroyedObjectsInThisFrameAction.Invoke;
-            m_SceneSystem.OnSceneChangeCalled -= M_SceneSystem_OnSceneChangeCalled;
+            m_SceneSystem.OnSceneChanged -= M_SceneSystem_OnSceneLoadCall;
 
             m_DestroyedObjectsInThisFrameAction.Reserve();
             m_DestroyedObjectsInThisFrameAction = null;
@@ -364,21 +367,21 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            InstanceID entity = m_EntityGameObjects[obj.m_Hash];
-            m_EntityGameObjects.Remove(obj.m_Hash);
+            //InstanceID entity = m_EntityGameObjects[obj.m_Hash];
+            //m_EntityGameObjects.Remove(obj.m_Hash);
 
-            if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
+            //if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
 
-            if (entityObj is EntityBase entityBase)
-            {
-                entityBase.transform = null;
-            }
-            //ObjectBase entityObj = m_ObjectEntities[entity];
+            //if (entityObj is EntityBase entityBase)
+            //{
+            //    entityBase.transform = null;
+            //}
+            ////ObjectBase entityObj = m_ObjectEntities[entity];
 
-            //ProcessEntityDestroy(entityObj, true);
-            //m_ObjectEntities.Remove(entity);
+            ////ProcessEntityDestroy(entityObj, true);
+            ////m_ObjectEntities.Remove(entity);
 
-            InternalDestroyEntity(in entity);
+            //InternalDestroyEntity(in entity);
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
@@ -473,10 +476,19 @@ namespace Syadeu.Presentation
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
-            m_SceneSystem.OnSceneChangeCalled += M_SceneSystem_OnSceneChangeCalled;
+            m_SceneSystem.OnSceneLoadCall += M_SceneSystem_OnSceneLoadCall;
         }
-        private void M_SceneSystem_OnSceneChangeCalled()
+        private void M_SceneSystem_OnSceneLoadCall()
         {
+            using (var iter = m_EntityGameObjects.GetEnumerator())
+            {
+                while (iter.MoveNext())
+                {
+                    InternalDestroyEntity(iter.Current.Value);
+                }
+            }
+
+            m_DestroyedObjectsInThisFrameAction.Invoke();
         }
 
         #endregion
@@ -1061,7 +1073,7 @@ namespace Syadeu.Presentation
         }
         internal void Debug_RemoveComponent<TComponent>(EntityID entity)
             => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
-        internal void Debug_RemoveComponent(EntityID entityID, Type component)
+        internal void Debug_RemoveComponent(InstanceID entityID, Type component)
         {
             if (!m_AddedComponents.TryGetValue(entityID, out var list))
             {

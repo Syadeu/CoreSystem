@@ -115,11 +115,11 @@ namespace Syadeu.Presentation.Entities
         }
 
         public FixedString128Bytes RawName => m_Name;
-        /// <inheritdoc cref="IEntityData.Name"/>
+        /// <inheritdoc cref="IObject.Name"/>
         public string Name => m_Idx.IsEmpty() ? c_Invalid : m_Name.ConvertToString();
-        /// <inheritdoc cref="IEntityData.Hash"/>
+        /// <inheritdoc cref="IObject.Hash"/>
         public Hash Hash => Target.Hash;
-        /// <inheritdoc cref="IEntityData.Idx"/>
+        /// <inheritdoc cref="IObject.Idx"/>
         public EntityID Idx => m_Idx;
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
