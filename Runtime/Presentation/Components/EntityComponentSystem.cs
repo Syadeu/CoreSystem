@@ -298,23 +298,23 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
-        private static int GetEntityIndex(in EntityID entity)
-        {
-            int idx = math.abs(entity.GetEntityData<IEntityData>().GetHashCode()) % ComponentBuffer.c_InitialCount;
+        //private static int GetEntityIndex(in EntityID entity)
+        //{
+        //    int idx = math.abs(entity.GetEntityData<IEntityData>().GetHashCode()) % ComponentBuffer.c_InitialCount;
 
-            // 매우 우연의 확률로 나올 수 있는데, 현재 랜덤 시드값에서 좀 자주 발생
-            //if (idx == 0)
-            //{
-            //    $"err {entity.RawName}: {entity.GetHashCode()},{}".ToLogError();
-            //}
-            return idx;
-        }
-        private static int GetEntityIndex(in IObject entity)
+        //    // 매우 우연의 확률로 나올 수 있는데, 현재 랜덤 시드값에서 좀 자주 발생
+        //    //if (idx == 0)
+        //    //{
+        //    //    $"err {entity.RawName}: {entity.GetHashCode()},{}".ToLogError();
+        //    //}
+        //    return idx;
+        //}
+        private static int GetEntityIndex(in InstanceID entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
             return idx;
         }
-        private static int2 GetIndex(in Type t, in EntityID entity)
+        private static int2 GetIndex(in Type t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -322,7 +322,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        private static int2 GetIndex(in TypeInfo t, in EntityID entity)
+        private static int2 GetIndex(in TypeInfo t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -330,7 +330,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        private static int2 GetIndex<TComponent>(in EntityID entity)
+        private static int2 GetIndex<TComponent>(in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
@@ -383,7 +383,7 @@ namespace Syadeu.Presentation.Components
             return (IntPtr)((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
-        public void AddComponent<TComponent>(in EntityID entity) where TComponent : unmanaged, IEntityComponent
+        public void AddComponent<TComponent>(in InstanceID entity) where TComponent : unmanaged, IEntityComponent
         {
             s_AddComponentMarker.Begin();
 
@@ -428,7 +428,7 @@ namespace Syadeu.Presentation.Components
 
             s_AddComponentMarker.End();
         }
-        public void RemoveComponent<TComponent>(in EntityID entity)
+        public void RemoveComponent<TComponent>(in InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
@@ -456,7 +456,7 @@ namespace Syadeu.Presentation.Components
             //}
             //$"entity({entity.RawName}) removed component ({TypeHelper.TypeOf<TComponent>.Name})".ToLog();
         }
-        public void RemoveComponent(EntityID entity, Type componentType)
+        public void RemoveComponent(in InstanceID entity, Type componentType)
         {
             s_RemoveComponentMarker.Begin();
 
@@ -488,7 +488,7 @@ namespace Syadeu.Presentation.Components
 
             s_RemoveComponentMarker.End();
         }
-        public void RemoveComponent(EntityID entity, TypeInfo componentType)
+        public void RemoveComponent(in InstanceID entity, in TypeInfo componentType)
         {
             s_RemoveComponentMarker.Begin();
 
@@ -535,21 +535,21 @@ namespace Syadeu.Presentation.Components
             //EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
             RemoveComponent(obj.Idx, interfaceType.GenericTypeArguments[0]);
         }
-        public void RemoveNotifiedComponents(IObject obj, Action<InstanceID, Type> onRemove = null)
+        public void RemoveNotifiedComponents(IObject obj, InstanceID insID, Action<InstanceID, Type> onRemove = null)
         {
             using (s_RemoveNotifiedComponentMarker.Auto())
             {
-                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj.Idx, onRemove);
+                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, insID, onRemove);
             }
         }
-        public void RemoveNotifiedComponents(InstanceID entity, Action<InstanceID, Type> onRemove = null)
-        {
-            using (s_RemoveNotifiedComponentMarker.Auto())
-            {
-                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(entity, onRemove);
-            }
-        }
-        public bool HasComponent<TComponent>(EntityID entity) 
+        //public void RemoveNotifiedComponents(IObject obj, InstanceID entity, Action<InstanceID, Type> onRemove = null)
+        //{
+        //    using (s_RemoveNotifiedComponentMarker.Auto())
+        //    {
+        //        GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, entity, onRemove);
+        //    }
+        //}
+        public bool HasComponent<TComponent>(in InstanceID entity) 
             where TComponent : unmanaged, IEntityComponent
         {
             int2 index = GetIndex<TComponent>(entity);
@@ -576,7 +576,7 @@ namespace Syadeu.Presentation.Components
 
             return true;
         }
-        public bool HasComponent(EntityID entity, Type componentType)
+        public bool HasComponent(InstanceID entity, Type componentType)
         {
             int2 index = GetIndex(componentType, entity);
 #if DEBUG_MODE
@@ -596,7 +596,7 @@ namespace Syadeu.Presentation.Components
 
             return true;
         }
-        public ref TComponent GetComponent<TComponent>(EntityID entity) 
+        public ref TComponent GetComponent<TComponent>(InstanceID entity) 
             where TComponent : unmanaged, IEntityComponent
         {
             s_GetComponentMarker.Begin();
@@ -626,7 +626,7 @@ namespace Syadeu.Presentation.Components
 
             return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
         }
-        public TComponent GetComponentReadOnly<TComponent>(EntityID entity)
+        public TComponent GetComponentReadOnly<TComponent>(in InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
         {
             s_GetComponentReadOnlyMarker.Begin();
@@ -655,7 +655,7 @@ namespace Syadeu.Presentation.Components
             s_GetComponentReadOnlyMarker.End();
             return boxed;
         }
-        public TComponent* GetComponentPointer<TComponent>(EntityID entity) 
+        public TComponent* GetComponentPointer<TComponent>(in InstanceID entity) 
             where TComponent : unmanaged, IEntityComponent
         {
             s_GetComponentPointerMarker.Begin();
@@ -777,14 +777,14 @@ namespace Syadeu.Presentation.Components
             [NativeDisableUnsafePtrRestriction] private static UntypedUnsafeHashMap* s_HashMap;
 
             private int2 index;
-            private EntityID entity;
+            private InstanceID entity;
 
             public static void Initialize(ComponentBuffer* buffer, UntypedUnsafeHashMap* hashMap)
             {
                 s_Buffer = buffer;
                 s_HashMap = hashMap;
             }
-            public static DisposedComponent Construct(int2 index, EntityID entity)
+            public static DisposedComponent Construct(int2 index, InstanceID entity)
             {
                 return new DisposedComponent()
                 {

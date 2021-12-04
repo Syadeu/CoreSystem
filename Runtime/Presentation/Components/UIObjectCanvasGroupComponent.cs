@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Entities
 {
     public struct UIObjectCanvasGroupComponent : IEntityComponent
     {
-        internal EntityID m_Parent;
+        internal InstanceID m_Parent;
         public bool m_Enabled;
 
         private float m_Alpha;

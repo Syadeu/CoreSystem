@@ -125,11 +125,11 @@ namespace Syadeu.Presentation
 
                 if (targetObject is IEntityData)
                 {
-                    ProcessEntityDestroy(targetObject, true);
+                    ProcessEntityDestroy(targetObject, id, true);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(targetObject, true);
+                    ProcessNonEntityDestroy(targetObject, id, true);
                 }
             }
             for (int i = count - 1; i >= 0; i--)
@@ -139,7 +139,7 @@ namespace Syadeu.Presentation
                 m_ObjectEntities.Remove(id);
             }
         }
-        private void ProcessEntityDestroy(ObjectBase targetObject, bool reserve)
+        private void ProcessEntityDestroy(ObjectBase targetObject, InstanceID insID, bool reserve)
         {
 #if DEBUG_MODE
             if (!(targetObject is IEntityData))
@@ -149,12 +149,12 @@ namespace Syadeu.Presentation
 #endif
             IEntityData entityData = (IEntityData)targetObject;
 
-            ProcessEntityOnDestroy(this, entityData);
+            ProcessEntityOnDestroy(this, entityData, insID);
 
             m_ComponentSystem
                 .RemoveNotifiedComponents
                     (
-                        targetObject
+                        targetObject, insID
 #if DEBUG_MODE
                         , Debug_RemoveComponent
 #endif
@@ -178,7 +178,7 @@ namespace Syadeu.Presentation
                 }
             }
         }
-        private void ProcessNonEntityDestroy(ObjectBase targetObject, bool reserve)
+        private void ProcessNonEntityDestroy(ObjectBase targetObject, InstanceID insID, bool reserve)
         {
 #if DEBUG_MODE
             if (targetObject is IEntityData entityData)
@@ -194,7 +194,7 @@ namespace Syadeu.Presentation
             m_ComponentSystem
                 .RemoveNotifiedComponents
                     (
-                        targetObject
+                        targetObject, insID
 #if DEBUG_MODE
                         , Debug_RemoveComponent
 #endif
@@ -288,11 +288,11 @@ namespace Syadeu.Presentation
             {
                 if (entityList[i] is IEntityData entity)
                 {
-                    ProcessEntityDestroy(entityList[i], false);
+                    ProcessEntityDestroy(entityList[i], entityList[i].Idx, false);
                 }
                 else
                 {
-                    ProcessNonEntityDestroy(entityList[i], false);
+                    ProcessNonEntityDestroy(entityList[i], entityList[i].Idx, false);
                 }
 
                 entityList[i].InternalOnDestroy();
@@ -488,7 +488,7 @@ namespace Syadeu.Presentation
                 }
             }
 
-            m_DestroyedObjectsInThisFrameAction.Invoke();
+            //m_DestroyedObjectsInThisFrameAction.Invoke();
         }
 
         #endregion
@@ -905,9 +905,8 @@ namespace Syadeu.Presentation
         /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ITransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
-        public void DestroyEntity(Entity<IEntity> entity) => InternalDestroyEntity(entity.Idx);
+        public void DestroyEntity(IEntityDataID entity) => InternalDestroyEntity(entity.Idx);
         /// <inheritdoc cref="DestroyEntity(Entity{IEntity})"/>
-        public void DestroyEntity(EntityData<IEntityData> entity) => InternalDestroyEntity(entity.Idx);
         public void DestroyObject<T>(IInstance<T> instance) where T : class, IObject => InternalDestroyEntity(instance.Idx);
         public void DestroyObject(IInstance instance) => InternalDestroyEntity(instance.Idx);
         public void DestroyObject(IObject instance) => InternalDestroyEntity(instance.Idx);
@@ -974,13 +973,11 @@ namespace Syadeu.Presentation
             }
         }
 
-        internal bool IsDestroyed(in InstanceID id) => IsDestroyed(id.Hash);
-        internal bool IsDestroyed(in Hash idx)
+        internal bool IsDestroyed(in InstanceID idx)
         {
             return !m_ObjectEntities.ContainsKey(idx);
         }
-        internal bool IsMarkedAsDestroyed(in InstanceID id) => IsMarkedAsDestroyed(id.Hash);
-        internal bool IsMarkedAsDestroyed(in Hash idx)
+        internal bool IsMarkedAsDestroyed(in InstanceID idx)
         {
             return m_DestroyedObjectsInThisFrame.Contains(idx);
         }
@@ -1071,7 +1068,7 @@ namespace Syadeu.Presentation
             }
             if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
         }
-        internal void Debug_RemoveComponent<TComponent>(EntityID entity)
+        internal void Debug_RemoveComponent<TComponent>(InstanceID entity)
             => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
         internal void Debug_RemoveComponent(InstanceID entityID, Type component)
         {
@@ -1101,11 +1098,11 @@ namespace Syadeu.Presentation
         }
 #endif
 
-        internal EntityShortID Convert(EntityID id)
+        internal EntityShortID Convert(InstanceID id)
         {
             return GetModule<EntityIDModule>().Convert(id);
         }
-        internal EntityID Convert(EntityShortID id)
+        internal InstanceID Convert(EntityShortID id)
         {
             return GetModule<EntityIDModule>().Convert(id);
         }
@@ -1254,7 +1251,7 @@ namespace Syadeu.Presentation
             //});
             //#endregion
         }
-        private static void ProcessEntityOnDestroy(EntitySystem system, IEntityData entity)
+        private static void ProcessEntityOnDestroy(EntitySystem system, IEntityData entity, InstanceID insID)
         {
             const string c_DestroyStartMsg = "Destroying entity({0})";
 
@@ -1297,9 +1294,10 @@ namespace Syadeu.Presentation
 
 
                 system.m_ComponentSystem
-                    .RemoveNotifiedComponents(other
+                    .RemoveNotifiedComponents(
+                        other, insID
 #if DEBUG_MODE
-                    , system.Debug_RemoveComponent
+                        , system.Debug_RemoveComponent
 #endif
                     );
 

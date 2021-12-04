@@ -54,10 +54,10 @@ namespace Syadeu.Presentation.Components
             m_EntitySystem = other;
         }
 
-        public void TryRemoveComponent(InstanceID entityID, Action<InstanceID, Type> onRemove)
+        public void TryRemoveComponent(IObject rawObject, InstanceID entityID, Action<InstanceID, Type> onRemove)
         {
             //Entity<IEntity> entity = entityID.GetEntity<IEntity>();
-            ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
+            //ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
             Hash rawID = rawObject.Hash;
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;

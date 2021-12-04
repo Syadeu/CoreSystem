@@ -16,8 +16,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
-using Syadeu.Internal;
 using Syadeu.Presentation.Proxy;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -41,10 +41,10 @@ namespace Syadeu.Presentation.Entities
 
         [JsonProperty(Order = -8, PropertyName = "StaticBatching")] public bool StaticBatching { get; set; } = false;
 
-        [ReflectionDescription("AABB 의 Center")]
+        [Description("AABB 의 Center")]
         [JsonProperty(Order = -7, PropertyName = "Center")] public float3 Center { get; set; }
 
-        [ReflectionDescription("AABB 의 Size")]
+        [Description("AABB 의 Size")]
         [JsonProperty(Order = -6, PropertyName = "Size")] public float3 Size { get; set; }
 
         [Space]

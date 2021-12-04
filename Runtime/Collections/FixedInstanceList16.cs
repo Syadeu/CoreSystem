@@ -19,7 +19,7 @@ namespace Syadeu.Collections
     public struct FixedInstanceList16<T>
         where T : class, IObject
     {
-        private FixedList128Bytes<Hash> m_Hashes;
+        private FixedList128Bytes<InstanceID> m_Hashes;
 
         public int Length => m_Hashes.Length;
 
@@ -37,7 +37,7 @@ namespace Syadeu.Collections
         {
             m_Hashes.Add(reference.Idx);
         }
-        public void Add(Hash hash)
+        public void Add(InstanceID hash)
         {
             m_Hashes.Add(hash);
         }

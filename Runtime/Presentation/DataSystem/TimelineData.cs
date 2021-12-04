@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using System;
@@ -8,12 +7,11 @@ using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Presentation.Data
 {
     [DisplayName("Data: Timeline Data")]
-    [ReflectionDescription(
+    [Description(
         "PlayPlayableDirectorAction 에서 사용할 수 있는 타임라인 데이터입니다."
         )]
     public sealed class TimelineData : DataObjectBase

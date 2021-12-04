@@ -24,6 +24,7 @@ namespace Syadeu.Collections
     /// <summary>
     /// <see cref="EntityData{T}"/>, <see cref="Entity{T}"/> 의 인스턴스 ID
     /// </summary>
+    [Obsolete("Use InstanceID", true)]
     public readonly struct EntityID : IValidation, IEmpty, IEquatable<EntityID>, IEquatable<InstanceID>, IEquatable<Hash>
     {
         public static readonly EntityID Empty = new EntityID(Hash.Empty);

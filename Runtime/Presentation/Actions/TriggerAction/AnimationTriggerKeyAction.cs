@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Proxy;
 using System.ComponentModel;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Set Animator Trigger")]
-    [ReflectionDescription("Unity Animator 전용입니다")]
+    [Description("Unity Animator 전용입니다")]
     public sealed class AnimationTriggerKeyAction : AnimatorParameterActionBase
     {
         protected override void OnExecute(EntityData<IEntityData> entity)

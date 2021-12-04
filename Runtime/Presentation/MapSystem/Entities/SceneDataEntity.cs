@@ -41,12 +41,12 @@ namespace Syadeu.Presentation.Map
         [JsonProperty(Order = 1, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
         [JsonProperty(Order = 2, PropertyName = "SceneIndex")] private int m_SceneIndex;
-        [JsonProperty(Order = 3, PropertyName = "MapData")] private Reference<MapDataEntity>[] m_MapData = Array.Empty<Reference<MapDataEntity>>();
+        [JsonProperty(Order = 3, PropertyName = "MapData")] private Reference<MapDataEntityBase>[] m_MapData = Array.Empty<Reference<MapDataEntityBase>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] internal InstanceArray<TerrainData> m_CreatedTerrains;
 
-        [JsonIgnore] public IReadOnlyList<Reference<MapDataEntity>> MapData => m_MapData;
+        [JsonIgnore] public IReadOnlyList<Reference<MapDataEntityBase>> MapData => m_MapData;
         [JsonIgnore] public EntityData<MapDataEntity>[] CreatedMapData { get; private set; }
 
         [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Map
         }
         private void CreateMapData(SceneDataEntity sceneDataEntity)
         {
-            IReadOnlyList<Reference<MapDataEntity>> mapData = sceneDataEntity.MapData;
+            IReadOnlyList<Reference<MapDataEntityBase>> mapData = sceneDataEntity.MapData;
 
             EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
             entity.AddComponent<SceneDataComponent>();

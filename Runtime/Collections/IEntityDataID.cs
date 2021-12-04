@@ -22,7 +22,7 @@ namespace Syadeu.Collections
         FixedString128Bytes RawName { get; }
         string Name { get; }
         Hash Hash { get; }
-        EntityID Idx { get; }
+        InstanceID Idx { get; }
         Type Type { get; }
 
         IEntityData Target { get; }

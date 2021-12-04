@@ -67,11 +67,11 @@ namespace Syadeu.Presentation.Actor
             return instance.As().GetAttribute<ActorControllerAttribute>();
         }
 
-        public static bool IsActorEntity(this in EntityID entityID)
+        public static bool IsActorEntity(this in InstanceID entityID)
         {
             return entityID.IsEntity<ActorEntity>();
         }
-        public static bool IsAlly(this in EntityID entityID, in EntityID targetID)
+        public static bool IsAlly(this in InstanceID entityID, in InstanceID targetID)
         {
             EntityData<IEntityData>
                 entity = entityID.GetEntityData<IEntityData>(),
@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Actor
 
             return entity.GetComponent<ActorFactionComponent>().IsAlly(in target.GetComponent<ActorFactionComponent>());
         }
-        public static bool IsEnemy(this in EntityID entityID, in EntityID targetID)
+        public static bool IsEnemy(this in InstanceID entityID, in InstanceID targetID)
         {
             EntityData<IEntityData>
                 entity = entityID.GetEntityData<IEntityData>(),

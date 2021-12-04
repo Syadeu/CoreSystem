@@ -14,13 +14,11 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Map;
 using System.ComponentModel;
 using UnityEngine.AI;
 using UnityEngine.Scripting;
-//using Syadeu.ThreadSafe;
 
 namespace Syadeu.Presentation.Attributes
 {
@@ -32,7 +30,7 @@ namespace Syadeu.Presentation.Attributes
     /// </remarks>
     [DisplayName("Attribute: NavObstacle")]
     [AttributeAcceptOnly(typeof(EntityBase))]
-    [ReflectionDescription(
+    [Description(
         "실시간 NavMesh 베이킹을 위해 고안된 어트리뷰트입니다.")]
     public sealed class NavObstacleAttribute : AttributeBase
     {

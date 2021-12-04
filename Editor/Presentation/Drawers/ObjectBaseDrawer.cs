@@ -5,6 +5,7 @@ using Syadeu.Presentation.Entities;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -22,7 +23,7 @@ namespace SyadeuEditor.Presentation
         public readonly ObjectBase m_TargetObject;
         private Type m_Type;
         private ObsoleteAttribute m_Obsolete;
-        private ReflectionDescriptionAttribute m_Description;
+        private DescriptionAttribute m_Description;
 
         private readonly MemberInfo[] m_Members;
         protected readonly Attribute[][] p_Attributes;
@@ -85,7 +86,7 @@ namespace SyadeuEditor.Presentation
             m_TargetObject = objectBase;
             m_Type = objectBase.GetType();
             m_Obsolete = m_Type.GetCustomAttribute<ObsoleteAttribute>();
-            m_Description = m_Type.GetCustomAttribute<ReflectionDescriptionAttribute>();
+            m_Description = m_Type.GetCustomAttribute<DescriptionAttribute>();
 
             m_Members = ReflectionHelper.GetSerializeMemberInfos(m_Type);
             p_Attributes = new Attribute[m_Members.Length][];
@@ -157,7 +158,7 @@ namespace SyadeuEditor.Presentation
         {
             if (m_Description == null) return;
 
-            EditorGUILayout.HelpBox(m_Description.m_Description, MessageType.Info);
+            EditorGUILayout.HelpBox(m_Description.Description, MessageType.Info);
         }
 
         protected bool IsObsolete(out ObsoleteAttribute obsolete)

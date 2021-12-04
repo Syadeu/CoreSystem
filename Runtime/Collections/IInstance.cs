@@ -19,7 +19,7 @@ namespace Syadeu.Collections
 {
     public interface IInstance : IEmpty, IEquatable<IInstance>
     {
-        Hash Idx { get; }
+        InstanceID Idx { get; }
     }
     public interface IInstance<T> : IInstance
         where T : class, IObject

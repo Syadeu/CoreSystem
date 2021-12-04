@@ -19,7 +19,6 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Render;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -29,7 +28,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Map
 {
     [DisplayName("Attribute: Grid map")]
-    [ReflectionDescription("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
+    [Description("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {
         [Serializable]
@@ -37,7 +36,7 @@ namespace Syadeu.Presentation.Map
         {
             [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name = "NewLayer";
             [ReflectionSealedView, JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash = Hash.NewHash();
-            [ReflectionDescription("반대로 적용합니다.")]
+            [Description("반대로 적용합니다.")]
             [JsonProperty(Order = 2, PropertyName = "Inverse")] public bool m_Inverse = false;
             [JsonProperty(Order = 3, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
 

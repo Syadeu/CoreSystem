@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
@@ -23,7 +22,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Execute Animation")]
-    [ReflectionDescription(
+    [Description(
         "애니메이션 클립에 달린 TriggerAction이 타겟으로 삼을 액션입니다.")]
     public sealed class AnimationTriggerAction : TriggerAction
     {

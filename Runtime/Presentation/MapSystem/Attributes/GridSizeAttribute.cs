@@ -14,22 +14,14 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
-using Syadeu.Presentation.Proxy;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
-using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Map
 {
@@ -40,7 +32,7 @@ namespace Syadeu.Presentation.Map
     public sealed class GridSizeAttribute : GridAttributeBase,
         INotifyComponent<GridSizeComponent>
     {
-        [ReflectionDescription("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
+        [Description("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
         [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
         [JsonProperty(Order = 1, PropertyName = "GridLocations")]
         internal int2[] m_GridLocations = Array.Empty<int2>();

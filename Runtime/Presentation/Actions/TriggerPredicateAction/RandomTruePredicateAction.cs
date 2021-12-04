@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System.ComponentModel;
 using UnityEngine;
@@ -22,7 +21,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("PredicateAction: Random True")]
-    [ReflectionDescription("지정한 확률로 True 를 반환합니다.")]
+    [Description("지정한 확률로 True 를 반환합니다.")]
     public sealed class RandomTruePredicateAction : TriggerPredicateAction
     {
         [JsonProperty(Order = 0, PropertyName = "Persentage")]

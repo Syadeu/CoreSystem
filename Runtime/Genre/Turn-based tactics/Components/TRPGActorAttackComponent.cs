@@ -14,22 +14,22 @@ namespace Syadeu.Presentation.TurnTable
     {
         public int m_SearchRange;
 
-        private FixedList512Bytes<EntityID> m_Targets;
+        private FixedList512Bytes<InstanceID> m_Targets;
         private int m_CurrentTargetIndex;
-        private EntityID m_CurrentTarget;
+        private InstanceID m_CurrentTarget;
 
         public int TargetCount => m_Targets.Length;
 
-        public void InitializeTargets(FixedList512Bytes<EntityID> targets)
+        public void InitializeTargets(FixedList512Bytes<InstanceID> targets)
         {
             m_Targets = targets;
             if (!m_Targets.Contains(m_CurrentTarget))
             {
-                m_CurrentTarget = EntityID.Empty;
+                m_CurrentTarget = InstanceID.Empty;
             }
         }
-        public FixedList512Bytes<EntityID> GetTargets() => m_Targets;
-        public EntityID GetTargetAt(int index) => m_Targets[index];
+        public FixedList512Bytes<InstanceID> GetTargets() => m_Targets;
+        public InstanceID GetTargetAt(int index) => m_Targets[index];
         public EntityData<T> GetTargetAt<T>(int index) where T : class, IEntityData
         {
 #if DEBUG_MODE
@@ -56,11 +56,11 @@ namespace Syadeu.Presentation.TurnTable
             m_CurrentTarget = m_Targets[i];
             m_CurrentTargetIndex = i;
         }
-        public EntityID GetTarget()
+        public InstanceID GetTarget()
         {
             if (!m_Targets.Contains(m_CurrentTarget))
             {
-                m_CurrentTarget = EntityID.Empty;
+                m_CurrentTarget = InstanceID.Empty;
             }
 
             return m_CurrentTarget;
@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!m_Targets.Contains(m_CurrentTarget))
             {
-                m_CurrentTarget = EntityID.Empty;
+                m_CurrentTarget = InstanceID.Empty;
                 m_CurrentTargetIndex = -1;
             }
 

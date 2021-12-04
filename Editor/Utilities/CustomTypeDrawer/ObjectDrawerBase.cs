@@ -1,9 +1,9 @@
 ﻿using Syadeu.Collections;
-using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
+using System.ComponentModel;
 
 using Unity.Mathematics;
 using UnityEditor;
@@ -30,9 +30,9 @@ namespace SyadeuEditor.Utilities
             {
                 EditorGUILayout.HelpBox(tooltip.tooltip, MessageType.Info);
             }
-            else if (attribute is ReflectionDescriptionAttribute description)
+            else if (attribute is DescriptionAttribute description)
             {
-                EditorGUILayout.HelpBox(description.m_Description, MessageType.Info);
+                EditorGUILayout.HelpBox(description.Description, MessageType.Info);
             }
             else if (attribute is HeaderAttribute header)
             {

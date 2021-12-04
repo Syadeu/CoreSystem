@@ -35,14 +35,14 @@ namespace Syadeu.Presentation.Entities
     /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct Entity<T> : IEntityDataID, IValidation, IEquatable<Entity<T>>, IEquatable<EntityID> where T : class, IEntity
+    public struct Entity<T> : IEntityDataID, IValidation, IEquatable<Entity<T>>, IEquatable<InstanceID> where T : class, IEntity
     {
         private const string c_Invalid = "Invalid";
 
-        public static Entity<T> Empty => new Entity<T>(Hash.Empty, null);
+        public static Entity<T> Empty => new Entity<T>(InstanceID.Empty, null);
 
-        public static Entity<T> GetEntity(in InstanceID id) => GetEntity(id.Hash);
-        public static Entity<T> GetEntity(Hash idx)
+        //public static Entity<T> GetEntity(in InstanceID id) => GetEntity(id.Hash);
+        public static Entity<T> GetEntity(in InstanceID idx)
         {
             #region Validation
 #if DEBUG_MODE
@@ -66,8 +66,8 @@ namespace Syadeu.Presentation.Entities
 
             return new Entity<T>(idx, target.Name);
         }
-        internal static Entity<T> GetEntityWithoutCheck(in InstanceID id) => GetEntityWithoutCheck(id.Hash);
-        internal static Entity<T> GetEntityWithoutCheck(Hash idx)
+        //internal static Entity<T> GetEntityWithoutCheck(in InstanceID id) => GetEntityWithoutCheck(id.Hash);
+        internal static Entity<T> GetEntityWithoutCheck(in InstanceID idx)
         {
             EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
             
@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         /// <inheritdoc cref="IEntityData.Idx"/>
-        private readonly EntityID m_Idx;
+        private readonly InstanceID m_Idx;
         private FixedString128Bytes m_Name;
 
         IEntityData IEntityDataID.Target => Target;
@@ -84,7 +84,7 @@ namespace Syadeu.Presentation.Entities
         {
             get
             {
-                const string c_WarningAccessWillDestroy = "Accessing entity({0}) that will be destroy in the next frame.";
+                //const string c_WarningAccessWillDestroy = "Accessing entity({0}) that will be destroy in the next frame.";
 #if DEBUG_MODE
                 if (IsEmpty())
                 {
@@ -95,22 +95,40 @@ namespace Syadeu.Presentation.Entities
 #endif
                 EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-                if (!system.m_ObjectEntities.TryGetValue(m_Idx, out var value) ||
-                    !(value is T t))
+                if (!system.m_ObjectEntities.TryGetValue(m_Idx, out var value))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An destroyed entity reference trying to access.");
+                    return null;
+                }
+                
+                if (!(value is T t))
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value?.GetType())}.");
                     return null;
                 }
 
-                if (!CoreSystem.BlockCreateInstance &&
-                    system.IsMarkedAsDestroyed(m_Idx))
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Entity,
-                        string.Format(c_WarningAccessWillDestroy, RawName));
-                }
+                //if (!CoreSystem.BlockCreateInstance &&
+                //    system.IsMarkedAsDestroyed(m_Idx))
+                //{
+                //    CoreSystem.Logger.LogWarning(Channel.Entity,
+                //        string.Format(c_WarningAccessWillDestroy, RawName));
+                //}
 
                 return t;
+            }
+        }
+        public bool HasTarget
+        {
+            get
+            {
+                if (IsEmpty()) return false;
+
+                EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                if (system.IsDestroyed(m_Idx)) return false;
+
+                return true;
             }
         }
 
@@ -120,7 +138,7 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IObject.Hash"/>
         public Hash Hash => Target.Hash;
         /// <inheritdoc cref="IObject.Idx"/>
-        public EntityID Idx => m_Idx;
+        public InstanceID Idx => m_Idx;
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
@@ -179,7 +197,7 @@ namespace Syadeu.Presentation.Entities
 
 #pragma warning restore IDE1006 // Naming Styles
 
-        private Entity(Hash idx, string name)
+        private Entity(InstanceID idx, string name)
         {
             m_Idx = idx;
 
@@ -193,16 +211,13 @@ namespace Syadeu.Presentation.Entities
         public bool IsEmpty() => Equals(Empty);
         public bool IsValid()
         {
-            if (IsEmpty() || Target == null || !Target.IsValid()) return false;
+            if (IsEmpty() || !HasTarget) return false;
 
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            return !system.IsDestroyed(m_Idx) && 
-                !system.IsMarkedAsDestroyed(m_Idx);
+            return true;
         }
 
         public bool Equals(Entity<T> other) => m_Idx.Equals(other.m_Idx);
-        public bool Equals(EntityID other) => m_Idx.Equals(other);
+        public bool Equals(InstanceID other) => m_Idx.Equals(other);
         public bool Equals(IEntityDataID other) => m_Idx.Equals(other.Idx);
 
         public override int GetHashCode()
@@ -230,8 +245,8 @@ namespace Syadeu.Presentation.Entities
         public static implicit operator T(Entity<T> a) => a.Target;
         //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
         //public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
-        public static implicit operator Entity<T>(Hash a) => GetEntity(a);
-        public static implicit operator Entity<T>(EntityData<T> a) => GetEntity(a.Idx);
+        public static implicit operator Entity<T>(InstanceID a) => GetEntity(a);
+        //public static implicit operator Entity<T>(EntityData<T> a) => GetEntity(a.Idx);
         public static implicit operator Entity<T>(T a)
         {
             if (a == null)

@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
@@ -23,7 +22,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Random Select Trigger")]
-    [ReflectionDescription(
+    [Description(
         "TriggerActions 에 등록된 액션 중, 랜덤하게 무작위 선택되어 하나만 실행합니다. " +
         "만약 RandomPossibiltiy 가 100 (persent) 보다 낮으면 해당 확률로 실행 여부를 결정합니다.")]
     public sealed class RandomSelectorAction : TriggerAction

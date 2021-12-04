@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Components
         /// <typeparam name="TComponent"></typeparam>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static void AddComponent<TComponent>(in this EntityID t)
+        public static void AddComponent<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Components
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        public static bool HasComponent<TComponent>(in this EntityID t)
+        public static bool HasComponent<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.Components
         /// </remarks>
         /// <param name="componentType"></param>
         /// <returns></returns>
-        public static bool HasComponent(in this EntityID t, Type componentType)
+        public static bool HasComponent(in this InstanceID t, Type componentType)
         {
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
@@ -151,7 +151,7 @@ namespace Syadeu.Presentation.Components
         /// </remarks>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        public static ref TComponent GetComponent<TComponent>(in this EntityID t)
+        public static ref TComponent GetComponent<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -181,7 +181,7 @@ namespace Syadeu.Presentation.Components
         /// </remarks>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        public static TComponent GetComponentReadOnly<TComponent>(in this EntityID t)
+        public static TComponent GetComponentReadOnly<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -215,7 +215,7 @@ namespace Syadeu.Presentation.Components
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        unsafe public static TComponent* GetComponentPointer<TComponent>(in this EntityID t)
+        unsafe public static TComponent* GetComponentPointer<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -251,7 +251,7 @@ namespace Syadeu.Presentation.Components
         /// 컴포넌트를 제거할때 해당 컴포넌트가 <seealso cref="IDisposable"/> 를 상속받고 있으면 자동으로 수행합니다.
         /// </remarks>
         /// <typeparam name="TComponent"></typeparam>
-        public static void RemoveComponent<TComponent>(in this EntityID t)
+        public static void RemoveComponent<TComponent>(in this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -289,7 +289,7 @@ namespace Syadeu.Presentation.Components
         /// 해당 타입이 <seealso cref="IEntityComponent"/> 를 상속받지 않는다면 에디터에서만 오류를 반환합니다.
         /// </remarks>
         /// <param name="componentType"></param>
-        public static void RemoveComponent(in this EntityID t, Type componentType)
+        public static void RemoveComponent(in this InstanceID t, Type componentType)
         {
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))

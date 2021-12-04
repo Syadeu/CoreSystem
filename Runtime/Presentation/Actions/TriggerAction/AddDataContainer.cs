@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System.ComponentModel;
@@ -22,7 +21,7 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Add DataContainer")]
-    [ReflectionDescription("" +
+    [Description("" +
         "이 Entity 를 해당 키 값으로 등록합니다. " +
         "Type 은 EntityData<IEntityData> 로 등록됩니다.")]
     public sealed class AddDataContainer : TriggerAction

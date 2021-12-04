@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.TurnTable
             m_TempGetRange.Dispose();
         }
 
-        public FixedList512Bytes<EntityID> GetTargetsInRange()
+        public FixedList512Bytes<InstanceID> GetTargetsInRange()
         {
             int
                 weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range),
@@ -58,14 +58,14 @@ namespace Syadeu.Presentation.TurnTable
 
             return GetTargetsWithin(math.max(weaponRange, searchRange));
         }
-        public FixedList512Bytes<EntityID> GetTargetsWithin(in int range, bool sort = true)
+        public FixedList512Bytes<InstanceID> GetTargetsWithin(in int range, bool sort = true)
         {
             if (!Parent.HasComponent<GridSizeComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
 
-                return new FixedList512Bytes<EntityID>();
+                return new FixedList512Bytes<InstanceID>();
             }
 
             GridSizeComponent gridSize = Parent.GetComponent<GridSizeComponent>();
@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.TurnTable
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             
-            FixedList512Bytes<EntityID> list = new FixedList512Bytes<EntityID>();
+            FixedList512Bytes<InstanceID> list = new FixedList512Bytes<InstanceID>();
             for (int i = 0; i < m_TempGetRange.Length; i++)
             {
                 if (PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetEntitiesAt(m_TempGetRange[i], out var iter))
@@ -92,7 +92,7 @@ namespace Syadeu.Presentation.TurnTable
             
             if (sort)
             {
-                IOrderedEnumerable<EntityID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
+                IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
                 
                 att.InitializeTargets(sorted.ToFixedList512());
             }
@@ -103,7 +103,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return att.GetTargets();
         }
-        private static ITransform Order(EntityID id)
+        private static ITransform Order(InstanceID id)
         {
             return id.GetEntity<IEntity>().transform;
         }

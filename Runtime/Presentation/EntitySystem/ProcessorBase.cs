@@ -117,7 +117,7 @@ namespace Syadeu.Presentation
             Entity<IEntity> target = EntitySystem.CreateEntity(entity, position, rotation, localSize);
             if (!target.IsValid()) return Entity<T>.Empty;
 
-            return target.As<IEntity, T>();
+            return target.ToEntity<T>();
         }
     }
 }

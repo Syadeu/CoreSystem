@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
+using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using Syadeu.ThreadSafe;
@@ -25,6 +26,7 @@ namespace Syadeu.Presentation.Map
 {
     [DisplayName("MapData: Map Data Entity")]
     [EntityAcceptOnly(typeof(MapDataAttributeBase))]
+    [Description("파괴되지않는 오브젝트들로 구성된 오브젝트 데이터 테이블 입니다.")]
     public sealed class MapDataEntity : MapDataEntityBase
     {
         [JsonIgnore] public Entity<EntityBase>[] CreatedEntities { get; internal set; }

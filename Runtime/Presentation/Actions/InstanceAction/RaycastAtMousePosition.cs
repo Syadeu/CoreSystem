@@ -14,8 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Render;
 using System;
 using System.ComponentModel;
@@ -29,7 +27,7 @@ namespace Syadeu.Presentation.Actions
     /// 마우스 좌표에 <see cref="EntityRaycastSystem"/> 으로 레이캐스팅합니다.
     /// </summary>
     [DisplayName("InstanceAction: Raycast At Mouse Position")]
-    [ReflectionDescription(
+    [Description(
         "마우스 좌표에 EntityRaycastSystem 으로 레이캐스팅합니다.")]
     public sealed class RaycastAtMousePosition : InstanceAction
     {

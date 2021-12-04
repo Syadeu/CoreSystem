@@ -19,10 +19,10 @@ namespace Syadeu.Presentation.Actor
 {
     public struct ActorAttackEvent : IActorEvent
     {
-        private EntityID m_Target;
+        private InstanceID m_Target;
 
         public bool BurstCompile => true;
-        public EntityID Target => m_Target;
+        public InstanceID Target => m_Target;
 
         public ActorAttackEvent(IEntityDataID target)
         {

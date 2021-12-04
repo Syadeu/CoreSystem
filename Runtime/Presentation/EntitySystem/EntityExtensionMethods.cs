@@ -27,11 +27,11 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
-        public static EntityShortID GetShortID(this EntityID id)
+        public static EntityShortID GetShortID(this InstanceID id)
         {
             return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Convert(id);
         }
-        public static EntityID GetEntityID(this EntityShortID id)
+        public static InstanceID GetID(this EntityShortID id)
         {
             return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Convert(id);
         }
@@ -58,17 +58,14 @@ namespace Syadeu.Presentation
             return EntityData<T>.GetEntity(t.Idx);
         }
 
+        [Obsolete("Use ToEntity")]
         public static Entity<TA> As<T, TA>(this EntityData<T> t)
             where T : class, IEntityData
             where TA : class, IEntity
         {
             return Entity<TA>.GetEntity(t.Idx);
         }
-        public static Entity<T> As<T>(this EntityData<T> t)
-            where T : class, IEntity
-        {
-            return Entity<T>.GetEntity(t.Idx);
-        }
+        [Obsolete("Use ToEntityData")]
         public static EntityData<TA> As<T, TA>(this Entity<T> t)
             where T : class, IEntity
             where TA : class, IEntityData
@@ -161,16 +158,7 @@ namespace Syadeu.Presentation
 
             return false;
         }
-        public static bool IsEntity(this in EntityID id)
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-            if (obj is IEntity) return true;
-
-            return false;
-        }
-        public static bool IsEntity<T>(this in EntityID id) where T : IEntityData
+        public static bool IsEntity<T>(this in InstanceID id) where T : IEntityData
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
@@ -178,26 +166,6 @@ namespace Syadeu.Presentation
             if (obj is T) return true;
 
             return false;
-        }
-        public static Entity<T> GetEntity<T>(this EntityID id)
-            where T : class, IEntity
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                return Entity<T>.Empty;
-            }
-            else if (!(obj is IEntity))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(EntityID)}.");
-                return Entity<T>.Empty;
-            }
-#endif
-            return Entity<T>.GetEntityWithoutCheck(id);
         }
         public static Entity<T> GetEntity<T>(this InstanceID id)
             where T : class, IEntity
@@ -222,7 +190,7 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntityWithoutCheck(id);
         }
 
-        public static EntityData<IEntityData> GetEntityData(this in EntityID id)
+        public static EntityData<IEntityData> GetEntityData(this in InstanceID id)
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
@@ -237,23 +205,6 @@ namespace Syadeu.Presentation
             }
 #endif
             return EntityData<IEntityData>.GetEntityWithoutCheck(id);
-        }
-        public static EntityData<T> GetEntityData<T>(this EntityID id)
-            where T : class, IEntityData
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({id.Hash}) not found.");
-
-                return EntityData<T>.Empty;
-            }
-#endif
-            return EntityData<T>.GetEntityWithoutCheck(id);
         }
         public static EntityData<T> GetEntityData<T>(this InstanceID id)
             where T : class, IEntityData
@@ -279,21 +230,6 @@ namespace Syadeu.Presentation
             return EntityData<T>.GetEntityWithoutCheck(id);
         }
 
-        public static ObjectBase GetObject(this EntityID id)
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-            return obj;
-        }
-        public static T GetObject<T>(this EntityID id)
-            where T : ObjectBase
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-            return (T)obj;
-        }
         public static ObjectBase GetObject(this InstanceID id)
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;

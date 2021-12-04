@@ -24,19 +24,19 @@ namespace Syadeu.Collections
     public struct Instance<T> : IInstance<T>, IEquatable<Instance<T>>
         where T : class, IObject
     {
-        public static readonly Instance<T> Empty = new Instance<T>(Hash.Empty);
+        public static readonly Instance<T> Empty = new Instance<T>(InstanceID.Empty);
 
-        private Hash m_Idx;
+        private readonly InstanceID m_Idx;
 
-        public Hash Idx => m_Idx;
+        public InstanceID Idx => m_Idx;
 
-        public Instance(Hash idx)
-        {
-            m_Idx = idx;
-        }
+        //public Instance(Hash idx)
+        //{
+        //    m_Idx = idx;
+        //}
         public Instance(InstanceID id)
         {
-            m_Idx = id.Hash;
+            m_Idx = id;
         }
         public Instance(IEntityDataID entity)
         {
@@ -48,18 +48,18 @@ namespace Syadeu.Collections
             {
                 UnityEngine.Debug.LogError(
                     $"Object({obj.Name}) is not an instance.");
-                m_Idx = Hash.Empty;
+                m_Idx = InstanceID.Empty;
                 return;
             }
             if (!(obj is T))
             {
                 UnityEngine.Debug.LogError(
                     $"Object({obj.Name}) is not a {TypeHelper.TypeOf<T>.Name}.");
-                m_Idx = Hash.Empty;
+                m_Idx = InstanceID.Empty;
                 return;
             }
 
-            m_Idx = obj.Idx.Hash;
+            m_Idx = obj.Idx;
         }
 
         public bool IsEmpty() => Equals(Empty);
@@ -69,15 +69,15 @@ namespace Syadeu.Collections
 
     public struct Instance : IInstance, IEquatable<Instance>
     {
-        public static readonly Instance Empty = new Instance(Hash.Empty);
+        public static readonly Instance Empty = new Instance(InstanceID.Empty);
 
-        private Hash m_Idx;
+        private readonly InstanceID m_Idx;
 
-        public Hash Idx => m_Idx;
+        public InstanceID Idx => m_Idx;
 
         public Instance(InstanceID idx)
         {
-            m_Idx = idx.Hash;
+            m_Idx = idx;
         }
         public Instance(IObject obj)
         {
@@ -85,11 +85,11 @@ namespace Syadeu.Collections
             {
                 UnityEngine.Debug.LogError(
                     $"Object({obj.Name}) is not an instance.");
-                m_Idx = Hash.Empty;
+                m_Idx = InstanceID.Empty;
                 return;
             }
 
-            m_Idx = obj.Idx.Hash;
+            m_Idx = obj.Idx;
         }
 
         public bool IsEmpty() => Equals(Empty);

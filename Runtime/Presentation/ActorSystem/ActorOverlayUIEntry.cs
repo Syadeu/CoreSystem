@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
@@ -60,7 +59,7 @@ namespace Syadeu.Presentation.Actor
 #if CORESYSTEM_TURNBASESYSTEM
 
         [Space, Header("Turn-based System")]
-        [ReflectionDescription("EnableAlways 이 True 이면 아래 설정들을 전부 무시합니다.")]
+        [Description("EnableAlways 이 True 이면 아래 설정들을 전부 무시합니다.")]
 
         [JsonProperty(Order = 6, PropertyName = "EnableWhileTurnTable")]
         [Tooltip("TurnTable 시스템이 동작 중일때만 활성화합니다. " +

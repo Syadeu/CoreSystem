@@ -55,8 +55,8 @@ namespace Syadeu.Presentation.Map
 
         private readonly ConcurrentQueue<GridSizeAttribute> m_WaitForRegister = new ConcurrentQueue<GridSizeAttribute>();
 
-        private UnsafeMultiHashMap<EntityID, int> m_EntityGridIndices;
-        private UnsafeMultiHashMap<int, EntityID> m_GridEntities;
+        private UnsafeMultiHashMap<InstanceID, int> m_EntityGridIndices;
+        private UnsafeMultiHashMap<int, InstanceID> m_GridEntities;
 
         private NativeHashMap<GridPosition, Entity<IEntity>> m_PlacedCellUIEntities;
         private readonly List<Entity<IEntity>> m_DrawnCellUIEntities = new List<Entity<IEntity>>();
@@ -76,8 +76,8 @@ namespace Syadeu.Presentation.Map
         {
             CreateConsoleCommands();
 
-            m_EntityGridIndices = new UnsafeMultiHashMap<EntityID, int>(4096, AllocatorManager.Persistent);
-            m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(1024, AllocatorManager.Persistent);
+            m_EntityGridIndices = new UnsafeMultiHashMap<InstanceID, int>(4096, AllocatorManager.Persistent);
+            m_GridEntities = new UnsafeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
 
             m_PlacedCellUIEntities = new NativeHashMap<GridPosition, Entity<IEntity>>(1024, AllocatorManager.Persistent);
 
@@ -421,7 +421,7 @@ namespace Syadeu.Presentation.Map
                 if (m_MainGrid.Length > m_GridEntities.Capacity)
                 {
                     m_GridEntities.Dispose();
-                    m_GridEntities = new UnsafeMultiHashMap<int, EntityID>(m_MainGrid.Length, AllocatorManager.Persistent);
+                    m_GridEntities = new UnsafeMultiHashMap<int, InstanceID>(m_MainGrid.Length, AllocatorManager.Persistent);
 
                     GetModule<GridDetectionModule>().UpdateHashMap(m_GridEntities, m_MainGrid.Length);
                 }
@@ -493,7 +493,7 @@ namespace Syadeu.Presentation.Map
         {
             return m_GridEntities.ContainsKey(index);
         }
-        public bool GetEntitiesAt(in int index, out UnsafeMultiHashMap<int, EntityID>.Enumerator iter)
+        public bool GetEntitiesAt(in int index, out UnsafeMultiHashMap<int, InstanceID>.Enumerator iter)
         {
             if (m_GridEntities.ContainsKey(index))
             {
@@ -501,7 +501,7 @@ namespace Syadeu.Presentation.Map
                 return true;
             }
 
-            iter = default(UnsafeMultiHashMap<int, EntityID>.Enumerator);
+            iter = default(UnsafeMultiHashMap<int, InstanceID>.Enumerator);
             return false;
         }
 

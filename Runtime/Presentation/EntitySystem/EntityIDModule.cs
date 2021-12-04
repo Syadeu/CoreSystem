@@ -23,13 +23,13 @@ namespace Syadeu.Presentation
 {
     internal sealed class EntityIDModule : PresentationSystemModule<EntitySystem>
     {
-        private NativeHashMap<EntityShortID, EntityID> m_EntityConversions;
-        private NativeHashMap<EntityID, EntityShortID> m_EntityShortConversions;
+        private NativeHashMap<EntityShortID, InstanceID> m_EntityConversions;
+        private NativeHashMap<InstanceID, EntityShortID> m_EntityShortConversions;
 
         protected override void OnInitialize()
         {
-            m_EntityConversions = new NativeHashMap<EntityShortID, EntityID>(1024, AllocatorManager.Persistent);
-            m_EntityShortConversions = new NativeHashMap<EntityID, EntityShortID>(1024, AllocatorManager.Persistent);
+            m_EntityConversions = new NativeHashMap<EntityShortID, InstanceID>(1024, AllocatorManager.Persistent);
+            m_EntityShortConversions = new NativeHashMap<InstanceID, EntityShortID>(1024, AllocatorManager.Persistent);
 
             //System.OnEntityDestroy += System_OnEntityDestroy;
         }
@@ -53,10 +53,10 @@ namespace Syadeu.Presentation
             m_EntityShortConversions.Dispose();
         }
 
-        public EntityShortID Convert(EntityID id)
+        public EntityShortID Convert(InstanceID id)
         {
             EntityShortID shortID = new EntityShortID(id);
-            if (m_EntityConversions.TryGetValue(shortID, out EntityID exist))
+            if (m_EntityConversions.TryGetValue(shortID, out InstanceID exist))
             {
                 if (!exist.Equals(id))
                 {
@@ -72,7 +72,7 @@ namespace Syadeu.Presentation
 
             return shortID;
         }
-        public EntityID Convert(EntityShortID id)
+        public InstanceID Convert(EntityShortID id)
         {
             return m_EntityConversions[id];
         }

@@ -73,7 +73,7 @@ namespace Syadeu.Presentation
         {
             ObjectBase entity = (ObjectBase)MemberwiseClone();
             entity.Name = string.Copy(Name);
-            entity.Idx = Hash.NewHash();
+            entity.Idx = new InstanceID(Hash.NewHash());
 
             entity.m_Reserved = false;
             entity.OnCreated();
@@ -95,7 +95,7 @@ namespace Syadeu.Presentation
         /// </summary>
         internal virtual void InternalInitialize()
         {
-            Idx = Hash.NewHash();
+            Idx = new InstanceID(Hash.NewHash());
             m_Reserved = false;
 
             OnInitialize();

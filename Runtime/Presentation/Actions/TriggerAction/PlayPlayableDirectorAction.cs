@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 
-using Syadeu.Internal;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
@@ -29,10 +28,6 @@ using UnityEngine.Playables;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 using Unity.Mathematics;
-using Unity.Collections;
-using UnityEngine.Timeline;
-using System.Linq;
-using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Timeline;
 using Syadeu.Presentation.Events;
 using Syadeu.Collections.Proxy;
@@ -43,7 +38,7 @@ using Cinemachine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Play PlayableDirector")]
-    [ReflectionDescription(
+    [Description(
         "타임라인 액션입니다.\n" +
         "OnStart -> OnStartAction -> OnTimelineStart -> OnTimelineEnd -> OnEnd -> OnEndAction"
         )]

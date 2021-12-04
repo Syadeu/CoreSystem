@@ -60,7 +60,7 @@ namespace Syadeu.Presentation.Map
         {
             for (int i = 0; i < m_Detected.Length; i++)
             {
-                var target = m_Detected[i].GetEntityID().GetEntity<IEntity>();
+                var target = m_Detected[i].GetID().GetEntity<IEntity>();
                 if (!target.HasComponent<GridDetectorComponent>())
                 {
                     continue;
@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Map
             }
             for (int i = 0; i < m_TargetedBy.Length; i++)
             {
-                var target = m_TargetedBy[i].GetEntityID().GetEntity<IEntity>();
+                var target = m_TargetedBy[i].GetID().GetEntity<IEntity>();
                 if (!target.HasComponent<GridDetectorComponent>()) continue;
 
                 ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
