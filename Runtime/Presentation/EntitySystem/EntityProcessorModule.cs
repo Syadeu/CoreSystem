@@ -93,6 +93,8 @@ namespace Syadeu.Presentation
         /// </remarks>
         public event Action<IEntityData> OnEntityDestroy;
 
+        private Dictionary<Type, List<ProcessorBase>> m_Processors;
+
         private readonly Dictionary<Type, List<IAttributeProcessor>> 
             m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
         private readonly Dictionary<Type, List<IEntityDataProcessor>> 
@@ -115,27 +117,28 @@ namespace Syadeu.Presentation
         }
         protected override void OnInitializeAsync()
         {
+            m_Processors = new Dictionary<Type, List<ProcessorBase>>();
             m_SystemReferences = new SystemReferences();
 
-            Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
-            for (int i = 0; i < processors.Length; i++)
+            IEnumerable<Type> iter = TypeHelper.GetTypesIter(ProcessorPredicate);
+            foreach (Type processorType in iter)
             {
-                ConstructorInfo ctor = processors[i].GetConstructor(BindingFlags.Public | BindingFlags.Instance,
+                ConstructorInfo ctor = processorType.GetConstructor(BindingFlags.Public | BindingFlags.Instance,
                     null, CallingConventions.HasThis, Array.Empty<Type>(), null);
 
-                IProcessor processor;
-                if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processors[i]))
+                ProcessorBase processor;
+                if (ctor == null) processor = (ProcessorBase)Activator.CreateInstance(processorType);
+                else
                 {
-                    if (ctor == null) processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
-                    else
-                    {
-                        processor = (IAttributeProcessor)ctor.Invoke(null);
-                    }
+                    processor = (ProcessorBase)ctor.Invoke(null);
+                }
 
+                if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processorType))
+                {
                     if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(processor.Target))
                     {
                         throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Attribute processor {processors[i].Name} has an invalid target");
+                            $"Attribute processor {TypeHelper.ToString(processorType)} has an invalid target");
                     }
 
                     if (!m_AttributeProcessors.TryGetValue(processor.Target, out var values))
@@ -145,18 +148,12 @@ namespace Syadeu.Presentation
                     }
                     values.Add((IAttributeProcessor)processor);
                 }
-                else
+                else if (TypeHelper.TypeOf<IEntityDataProcessor>.Type.IsAssignableFrom(processorType))
                 {
-                    if (ctor == null) processor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
-                    else
-                    {
-                        processor = (IEntityDataProcessor)ctor.Invoke(null);
-                    }
-
                     if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(processor.Target))
                     {
                         throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Entity processor {processors[i].Name} has an invalid target");
+                            $"Entity processor {TypeHelper.ToString(processorType)} has an invalid target");
                     }
 
                     if (!m_EntityProcessors.TryGetValue(processor.Target, out var values))
@@ -164,14 +161,21 @@ namespace Syadeu.Presentation
                         values = new List<IEntityDataProcessor>();
                         m_EntityProcessors.Add(processor.Target, values);
                     }
-                    //$"{entityProcessor.GetType().Name} added".ToLog();
+
                     values.Add((IEntityDataProcessor)processor);
                 }
+
+                if (!m_Processors.TryGetValue(processor.Target, out var processorList))
+                {
+                    processorList = new List<ProcessorBase>();
+                    m_Processors.Add(processor.Target, processorList);
+                }
+                processorList.Add(processor);
 
                 ProcessorBase baseProcessor = (ProcessorBase)processor;
                 baseProcessor.m_SystemReferences = m_SystemReferences;
 
-                processor.OnInitializeAsync();
+                ((IProcessor)processor).OnInitializeAsync();
             }
         }
         static bool ProcessorPredicate(Type other) => !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
@@ -212,6 +216,9 @@ namespace Syadeu.Presentation
 
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
+
+            m_SystemReferences.Dispose();
+            m_SystemReferences = null;
 
             OnEntityCreated = null;
             OnEntityDestroy = null;

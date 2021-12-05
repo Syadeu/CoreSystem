@@ -28,28 +28,21 @@ namespace Syadeu.Presentation.Attributes
     /// <remarks>
     /// 참조: <seealso cref="IAttributeOnProxy"/>, <seealso cref="IAttributeOnProxyCreated"/>, <seealso cref="IAttributeOnProxyRemoved"/>
     /// </remarks>
-    [Preserve]
+    [Preserve, Obsolete("Use EntityProcessor")]
     public abstract class AttributeProcessor : ProcessorBase, IAttributeProcessor
     {
-        Type IProcessor.Target => TargetAttribute;
-        void IProcessor.OnInitialize() => OnInitialize();
-        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
-        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
-        void IDisposable.Dispose() => OnDispose();
-
-        ~AttributeProcessor()
+        internal override void InternalOnCreated(ObjectBase obj)
         {
-            CoreSystem.Logger.Log(Channel.GC, $"Disposing AttributeProcessor({TargetAttribute.Name})");
-            ((IDisposable)this).Dispose();
+            throw new NotImplementedException();
+        }
+        internal override void InternalOnDestroy(ObjectBase obj)
+        {
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// 이 프로세서가 타겟으로 삼을 <see cref="AttributeBase"/>입니다.
-        /// </summary>
-        protected abstract Type TargetAttribute { get; }
-        protected virtual void OnInitialize() { }
-        protected virtual void OnInitializeAsync() { }
+        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
+        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
+
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="ObjectBase"/>가 부착된 <see cref="IEntityData"/>가
         /// 생성되었을 때 실행되는 메소드입니다.
@@ -70,38 +63,32 @@ namespace Syadeu.Presentation.Attributes
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
         protected virtual void OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) { }
-
-        protected virtual void OnDispose() { }
     }
     /// <inheritdoc cref="AttributeProcessor"/>
     /// <typeparam name="T"></typeparam>
-    [Preserve]
+    [Preserve, Obsolete("Use EntityProcessor")]
     public abstract class AttributeProcessor<T> : ProcessorBase, IAttributeProcessor 
         where T : AttributeBase
     {
-        Type IProcessor.Target => TargetAttribute;
-        void IProcessor.OnInitialize() => OnInitialize();
-        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
-        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
-        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
-        void IDisposable.Dispose() => OnDispose();
-
-         ~AttributeProcessor()
+        internal override void InternalOnCreated(ObjectBase obj)
         {
-            CoreSystem.Logger.Log(Channel.GC, $"Disposing AttributeProcessor({TargetAttribute.Name})");
-            ((IDisposable)this).Dispose();
+            throw new NotImplementedException();
+        }
+        internal override void InternalOnDestroy(ObjectBase obj)
+        {
+            throw new NotImplementedException();
         }
 
-        private Type TargetAttribute => TypeHelper.TypeOf<T>.Type;
-        protected virtual void OnInitialize() { }
-        protected virtual void OnInitializeAsync() { }
+        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
+        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
+
+        public override Type Target => TypeHelper.TypeOf<T>.Type;
+
         /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, EntityData{IEntityData})"/>
         protected virtual void OnCreated(T attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, EntityData{IEntityData})"/>
         /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, EntityData{IEntityData})"/>
         protected virtual void OnDestroy(T attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, EntityData{IEntityData})"/>
-
-        protected virtual void OnDispose() { }
     }
 }

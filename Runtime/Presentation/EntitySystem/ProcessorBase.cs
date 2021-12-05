@@ -31,8 +31,8 @@ namespace Syadeu.Presentation
     /// <summary>
     /// 직접 상속은 허용하지 않습니다.
     /// </summary>
-    [RequireDerived]
-    public abstract class ProcessorBase
+    [RequireDerived, Preserve]
+    public abstract class ProcessorBase : IProcessor
     {
         internal EntityProcessorModule.SystemReferences m_SystemReferences;
 
@@ -41,20 +41,14 @@ namespace Syadeu.Presentation
         protected DataContainerSystem DataContainerSystem => m_SystemReferences.DataContainerSystem;
         internal GameObjectProxySystem ProxySystem => m_SystemReferences.GameObjectProxySystem;
 
-        [Obsolete]
-        protected void RequestSystem<TSystem>(Action<TSystem> setter
-#if DEBUG_MODE
-            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
-#endif
-            )
-            where TSystem : PresentationSystemEntity
+        public abstract Type Target { get; }
+
+        ~ProcessorBase()
         {
-            PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter
-#if DEBUG_MODE
-                , methodName
-#endif
-                );
+            CoreSystem.Logger.Log(Channel.GC, $"Disposing processor({TypeHelper.ToString(Target)})");
+            ((IDisposable)this).Dispose();
         }
+
         /// <summary>
         /// <see cref="DefaultPresentationGroup"/> 은 즉시 등록되지만 나머지 그룹에 한하여,
         /// <typeparamref name="TGroup"/> 이 시작될 때 등록됩니다.
@@ -95,5 +89,42 @@ namespace Syadeu.Presentation
 
             return target.ToEntity<T>();
         }
+
+        void IProcessor.OnInitialize() => OnInitialize();
+        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
+
+        internal abstract void InternalOnCreated(ObjectBase obj);
+        internal abstract void InternalOnDestroy(ObjectBase obj);
+
+        void IDisposable.Dispose()
+        {
+            OnDispose();
+
+            m_SystemReferences = null;
+        }
+
+        protected virtual void OnInitialize() { }
+        protected virtual void OnInitializeAsync() { }
+        protected virtual void OnDispose() { }
+    }
+
+    public abstract class EntityProcessor : ProcessorBase
+    {
+        internal override void InternalOnCreated(ObjectBase obj) => OnCreated(obj);
+        internal override void InternalOnDestroy(ObjectBase obj) => OnDestroy(obj);
+
+        protected virtual void OnCreated(ObjectBase obj) { }
+        protected virtual void OnDestroy(ObjectBase obj) { }
+    }
+    public abstract class EntityProcessor<TEntity> : ProcessorBase
+        where TEntity : ObjectBase
+    {
+        public override sealed Type Target => TypeHelper.TypeOf<TEntity>.Type;
+
+        internal override void InternalOnCreated(ObjectBase obj) => OnCreated((TEntity)obj);
+        internal override void InternalOnDestroy(ObjectBase obj) => OnDestroy((TEntity)obj);
+
+        protected virtual void OnCreated(ObjectBase obj) { }
+        protected virtual void OnDestroy(ObjectBase obj) { }
     }
 }
