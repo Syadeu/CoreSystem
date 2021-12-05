@@ -16,11 +16,15 @@ using Syadeu.Collections;
 
 namespace Syadeu.Presentation.Actor
 {
-    public class ActorInventoryProvider : ActorProviderBase
+    public class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
     {
         public void Insert(Instance<IObject> item)
         {
 
         }
+    }
+    public struct ActorInventoryComponent : IActorProviderComponent
+    {
+
     }
 }

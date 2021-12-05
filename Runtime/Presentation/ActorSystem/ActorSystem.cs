@@ -151,8 +151,10 @@ namespace Syadeu.Presentation.Actor
             if (ev.EventSequence != null)
             {
                 m_CurrentEvent.Event = ev;
+                ref ActorControllerComponent ctr = ref ev.Actor.GetComponent<ActorControllerComponent>();
+                ctr.m_IsExecutingEvent = true;
 
-                CoreSystem.Logger.Log(Channel.Action,
+                CoreSystem.Logger.Log(Channel.Event,
                     $"Execute scheduled actor event({ev.GetEventName()})");
 
                 ev.Post();
@@ -197,6 +199,9 @@ namespace Syadeu.Presentation.Actor
             }
             public void Clear()
             {
+                ref ActorControllerComponent ctr = ref Event.Actor.GetComponent<ActorControllerComponent>();
+                ctr.m_IsExecutingEvent = false;
+
                 Event.Reserve();
                 Event = null;
 

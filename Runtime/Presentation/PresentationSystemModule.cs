@@ -53,6 +53,8 @@ namespace Syadeu.Presentation
         internal void InternalTransformPresentation() => TransformPresentation();
         internal void InternalAfterTransformPresentation() => AfterTransformPresentation();
 
+        internal void InternalOnShutDown() => OnShutDown();
+
         internal PresentationSystemModule()
         {
 
@@ -85,6 +87,7 @@ namespace Syadeu.Presentation
         protected virtual void TransformPresentation() { }
         protected virtual void AfterTransformPresentation() { }
 
+        protected virtual void OnShutDown() { }
         protected virtual void OnDispose() { }
 
         /// <summary>

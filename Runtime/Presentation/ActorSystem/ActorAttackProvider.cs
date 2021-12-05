@@ -30,28 +30,13 @@ namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Attack Provider")]
     [ActorProviderRequire(typeof(ActorWeaponProvider))]
-    public class ActorAttackProvider : ActorProviderBase
+    public class ActorAttackProvider : ActorProviderBase<ActorAttackComponent>
     {
         [JsonProperty(Order = -10, PropertyName = "OnAttack")]
         protected LogicTriggerAction[] m_OnAttack = Array.Empty<LogicTriggerAction>();
         [JsonProperty(Order = -9, PropertyName = "OnHit")]
         protected LogicTriggerAction[] m_OnHit = Array.Empty<LogicTriggerAction>();
 
-        [JsonIgnore] private ActorStatAttribute m_StatAttribute;
-
-        protected override void OnCreated(Entity<ActorEntity> entity)
-        {
-            m_StatAttribute = entity.GetAttribute<ActorStatAttribute>();
-            if (m_StatAttribute == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have any {nameof(ActorStatAttribute)}.");
-            }
-        }
-        protected override void OnReserve()
-        {
-            m_StatAttribute = null;
-        }
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
             if (ev is ActorAttackEvent attackEvent)
@@ -65,24 +50,17 @@ namespace Syadeu.Presentation.Actor
         }
         protected void HitEventHandler(IActorHitEvent ev)
         {
-#if DEBUG_MODE
-            if (m_StatAttribute == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{Parent.Name} doesn\'t have {nameof(ActorStatAttribute)}");
-                return;
-            }
-#endif
-            EntityData<IEntityData> target = ev.AttackFrom.As<ActorEntity, IEntityData>();
+            ref ActorStatComponent stat = ref Parent.GetComponent<ActorStatComponent>();
+            EntityData<IEntityData> target = ev.AttackFrom.ToEntityData<IEntityData>();
 
-            float hp = m_StatAttribute.HP;
+            float hp = stat.HP;
             hp -= ev.Damage;
-            m_StatAttribute.HP = hp;
+            stat.HP = hp;
 
             if (hp <= 0)
             {
                 ActorLifetimeChangedEvent lifetimeChanged = new ActorLifetimeChangedEvent(ActorLifetimeChangedEvent.State.Dead);
-                PostEvent(lifetimeChanged);
+                ActorSystem.PostEvent(Parent.ToEntity<ActorEntity>(), lifetimeChanged);
             }
             else
             {
@@ -97,9 +75,9 @@ namespace Syadeu.Presentation.Actor
 
             $"{Parent.Name} : {hp} left, dmg {ev.Damage}".ToLog();
         }
-        protected virtual void SendHitEvent(Entity<ActorEntity> target, float damage)
+        private void SendHitEvent(Entity<ActorEntity> target, float damage)
         {
-            ActorSystem.ScheduleEvent(target, new ActorHitEvent(Parent.As<IEntityData, ActorEntity>(), damage));
+            ScheduleEvent(target, new ActorHitEvent(Parent.ToEntity<ActorEntity>(), damage));
         }
         protected void AttackEventHandler(ActorAttackEvent ev)
         {
@@ -115,7 +93,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             EntityData<IEntityData> target = ev.Target.GetEntityData<IEntityData>();
-            Entity<ActorEntity> parent = Parent.As<IEntityData, ActorEntity>();
+            Entity<ActorEntity> parent = Parent.ToEntity<ActorEntity>();
 
             bool isFailed = false;
             for (int i = 0; i < m_OnAttack.Length; i++)
@@ -125,12 +103,12 @@ namespace Syadeu.Presentation.Actor
 
             if (!isFailed)
             {
-                currentWeaponIns.GetObject().FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnSuccess);
+                currentWeaponIns.GetObject().FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target.GetEntity<ActorEntity>(), component.WeaponDamage);
             }
             else
             {
-                currentWeaponIns.GetObject().FireFXBounds(parent.transform, CoroutineSystem, FXBounds.TriggerOptions.FireOnFailed);
+                currentWeaponIns.GetObject().FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnFailed);
             }
         }
 
@@ -150,5 +128,10 @@ namespace Syadeu.Presentation.Actor
 
             return my.IsEnemy(in target);
         }
+    }
+
+    public struct ActorAttackComponent : IActorProviderComponent
+    {
+
     }
 }

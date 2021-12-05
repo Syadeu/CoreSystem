@@ -27,34 +27,37 @@ using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ActorControllerComponent : IEntityComponent, IDisposable
+    public struct ActorControllerComponent : IEntityComponent
     {
         internal PresentationSystemID<EntitySystem> m_EntitySystem;
 
+        internal bool m_IsExecutingEvent;
         internal Entity<ActorEntity> m_Parent;
-        internal FixedInstanceList64<ActorProviderBase> m_InstanceProviders;
+        internal FixedInstanceList64<IActorProvider> m_InstanceProviders;
         internal FixedReferenceList64<ParamAction<IActorEvent>> m_OnEventReceived;
 
         public bool IsBusy()
         {
-            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
-            if (!system.CurrentEventActor.IsEmpty())
-            {
-                if (system.CurrentEventActor.Idx.Equals(m_Parent.Idx))
-                {
-                    return true;
-                }
-            }
-            return false;
+            //ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            //if (!system.CurrentEventActor.IsEmpty())
+            //{
+            //    if (system.CurrentEventActor.Idx.Equals(m_Parent.Idx))
+            //    {
+            //        return true;
+            //    }
+            //}
+            //return false;
+
+            return m_IsExecutingEvent;
         }
 
-        public bool HasProvider<T>() where T : ActorProviderBase
+        public bool HasProvider<TProvider>() where TProvider : class, IActorProvider
         {
-            if (TypeHelper.TypeOf<T>.IsAbstract)
+            if (TypeHelper.TypeOf<TProvider>.IsAbstract)
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
+                    if (TypeHelper.TypeOf<TProvider>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
                         return true;
                     }
@@ -65,49 +68,36 @@ namespace Syadeu.Presentation.Actor
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].GetObject() is T)
+                if (m_InstanceProviders[i].GetObject() is TProvider)
                 {
                     return true;
                 }
             }
             return false;
         }
-        public Instance<T> GetProvider<T>() where T : ActorProviderBase
+        public Instance<TProvider> GetProvider<TProvider>() where TProvider : class, IActorProvider
         {
-            if (TypeHelper.TypeOf<T>.IsAbstract)
+            if (TypeHelper.TypeOf<TProvider>.IsAbstract)
             {
                 for (int i = 0; i < m_InstanceProviders.Length; i++)
                 {
-                    if (TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
+                    if (TypeHelper.TypeOf<TProvider>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
-                        return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
+                        return m_InstanceProviders[i].Cast<IActorProvider, TProvider>();
                     }
                 }
 
-                return Instance<T>.Empty;
+                return Instance<TProvider>.Empty;
             }
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
-                if (m_InstanceProviders[i].GetObject() is T)
+                if (m_InstanceProviders[i].GetObject() is TProvider)
                 {
-                    return m_InstanceProviders[i].Cast<ActorProviderBase, T>();
+                    return m_InstanceProviders[i].Cast<IActorProvider, TProvider>();
                 }
             }
-            return Instance<T>.Empty;
-        }
-
-        void IDisposable.Dispose()
-        {
-            for (int i = 0; i < m_InstanceProviders.Length; i++)
-            {
-                ExecuteOnDestroy(m_InstanceProviders[i].GetObject(), m_Parent);
-                m_EntitySystem.System.DestroyObject(m_InstanceProviders[i]);
-            }
-        }
-        private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
-        {
-            provider.OnDestroy(entity);
+            return Instance<TProvider>.Empty;
         }
     }
 }

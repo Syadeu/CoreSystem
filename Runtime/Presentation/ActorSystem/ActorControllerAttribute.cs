@@ -35,8 +35,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Attribute: Actor Controller")]
-    public sealed class ActorControllerAttribute : ActorAttributeBase,
-        INotifyComponent<ActorControllerComponent>
+    public sealed class ActorControllerAttribute : ActorAttributeBase
     {
         [Header("General")]
         [JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
@@ -46,7 +45,7 @@ namespace Syadeu.Presentation.Actor
 
         [Header("Provider")]
         [JsonProperty(Order = 2, PropertyName = "Providers")] 
-        internal Reference<ActorProviderBase>[] m_Providers = Array.Empty<Reference<ActorProviderBase>>();
+        internal Reference<IActorProvider>[] m_Providers = Array.Empty<Reference<IActorProvider>>();
     }
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
         IAttributeOnProxy
@@ -78,11 +77,11 @@ namespace Syadeu.Presentation.Actor
             entity.AddComponent<ActorControllerComponent>();
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
 
-            Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
+            Entity<ActorEntity> actor = entity.ToEntity<ActorEntity>();
 
             component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
-            component.m_InstanceProviders = new FixedInstanceList64<ActorProviderBase>();
+            component.m_InstanceProviders = new FixedInstanceList64<IActorProvider>();
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
             
             for (int i = 0; i < attribute.m_Providers.Length; i++)
@@ -95,14 +94,14 @@ namespace Syadeu.Presentation.Actor
                     continue;
                 }
 #endif
-                Instance<ActorProviderBase> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
+                Instance<IActorProvider> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
                 Initialize(entity, clone.GetObject());
                 component.m_InstanceProviders.Add(clone);
             }
 
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnCreated(component.m_InstanceProviders[i].GetObject(), actor);
+                ExecuteOnCreated(component.m_InstanceProviders[i].GetObject());
             }
 
             if (attribute.m_SetAliveOnCreated)
@@ -114,35 +113,25 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            //ActorControllerComponent component = entity.GetComponent<ActorControllerComponent>();
+            ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
+            for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+            {
+                ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());
+            }
 
-            //Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
-            //for (int i = 0; i < component.m_InstanceProviders.Length; i++)
-            //{
-            //    ExecuteOnDestroy(component.m_InstanceProviders[i].Object, actor);
-            //    EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
-            //}
-
-            //component.m_InstanceProviders.Dispose();
-            //component.m_OnEventReceived.Dispose();
-
+            entity.RemoveComponent<ActorControllerComponent>();
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
-            provider.Bind(parent, m_ActorSystem, EventSystem, EntitySystem, EntitySystem.m_CoroutineSystem, m_WorldCanvasSystem);
-
-            //if (provider.ReceiveEventOnly != null)
-            //{
-            //    attribute.m_ProviderAcceptsOnly.Add(provider, provider.ReceiveEventOnly);
-            //}
+            provider.Bind(parent);
         }
-        private static void ExecuteOnCreated(IActorProvider provider, Entity<ActorEntity> entity)
+        private static void ExecuteOnCreated(IActorProvider provider)
         {
-            provider.OnCreated(entity);
+            provider.OnCreated();
         }
-        private static void ExecuteOnDestroy(IActorProvider provider, Entity<ActorEntity> entity)
+        private static void ExecuteOnDestroy(IActorProvider provider)
         {
-            provider.OnDestroy(entity);
+            provider.OnDestroy();
         }
 
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
@@ -150,25 +139,24 @@ namespace Syadeu.Presentation.Actor
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnProxyCreated(component.m_InstanceProviders[i].GetObject(), monoObj);
+                ExecuteOnProxyCreated(component.m_InstanceProviders[i].GetObject());
             }
         }
         public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {
-            //ActorControllerAttribute att = (ActorControllerAttribute)attribute;
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnProxyRemoved(component.m_InstanceProviders[i].GetObject(), monoObj);
+                ExecuteOnProxyRemoved(component.m_InstanceProviders[i].GetObject());
             }
         }
-        private static void ExecuteOnProxyCreated(IActorProvider provider, RecycleableMonobehaviour monoObj)
+        private static void ExecuteOnProxyCreated(IActorProvider provider)
         {
-            provider.OnProxyCreated(monoObj);
+            provider.OnProxyCreated();
         }
-        private static void ExecuteOnProxyRemoved(IActorProvider provider, RecycleableMonobehaviour monoObj)
+        private static void ExecuteOnProxyRemoved(IActorProvider provider)
         {
-            provider.OnProxyRemoved(monoObj);
+            provider.OnProxyRemoved();
         }
     }
 }

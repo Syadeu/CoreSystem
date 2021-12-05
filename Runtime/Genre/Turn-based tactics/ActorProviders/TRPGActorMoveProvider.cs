@@ -7,14 +7,11 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("ActorProvider: TRPG Move Provider")]
-    public sealed class TRPGActorMoveProvider : ActorProviderBase,
-        INotifyComponent<TRPGActorMoveComponent>
+    public sealed class TRPGActorMoveProvider : ActorProviderBase<TRPGActorMoveComponent>
     {
-        protected override void OnCreated(Entity<ActorEntity> entity)
+        protected override void OnCreated(ref TRPGActorMoveComponent component)
         {
-            entity.AddComponent<TRPGActorMoveComponent>();
-            ref var com = ref entity.GetComponent<TRPGActorMoveComponent>();
-            com.m_Parent = entity.As<ActorEntity, IEntityData>();
+            component.m_Parent = Parent;
         }
     }
 }

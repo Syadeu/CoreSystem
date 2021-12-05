@@ -40,6 +40,7 @@ namespace Syadeu.Presentation
 {
     public sealed class EntitySystem : PresentationSystemEntity<EntitySystem>,
         INotifySystemModule<EntityRecycleModule>,
+        INotifySystemModule<EntityProcessorModule>,
         INotifySystemModule<EntityIDModule>,
         INotifySystemModule<EntityHierarchyModule>
 #if DEBUG_MODE
@@ -63,26 +64,42 @@ namespace Syadeu.Presentation
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<IEntityData> OnEntityCreated;
+        public event Action<IEntityData> OnEntityCreated
+        {
+            add
+            {
+                GetModule<EntityProcessorModule>().OnEntityCreated += value;
+            }
+            remove
+            {
+                GetModule<EntityProcessorModule>().OnEntityCreated -= value;
+            }
+        }
         /// <summary>
         /// 엔티티가 파괴될때 실행되는 이벤트 delegate 입니다.
         /// </summary>
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<IEntityData> OnEntityDestroy;
+        public event Action<IEntityData> OnEntityDestroy
+        {
+            add
+            {
+                GetModule<EntityProcessorModule>().OnEntityDestroy += value;
+            }
+            remove
+            {
+                GetModule<EntityProcessorModule>().OnEntityDestroy -= value;
+            }
+        }
 
         private Unity.Mathematics.Random m_Random;
 
         internal readonly Dictionary<InstanceID, ObjectBase> m_ObjectEntities = new Dictionary<InstanceID, ObjectBase>();
         internal NativeHashMap<Hash, InstanceID> m_EntityGameObjects;
 
-        private readonly Dictionary<Type, List<IAttributeProcessor>> m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
-        private readonly Dictionary<Type, List<IEntityDataProcessor>> m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
-
         private readonly List<InstanceID> m_DestroyedObjectsInThisFrame = new List<InstanceID>();
-        private readonly Queue<Query> m_Queries = new Queue<Query>();
-
+        
         private static Unity.Profiling.ProfilerMarker
             m_CreateEntityMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateEntity)}"),
             m_CreateEntityDataMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateObject)}");
@@ -149,7 +166,7 @@ namespace Syadeu.Presentation
 #endif
             IEntityData entityData = (IEntityData)targetObject;
 
-            ProcessEntityOnDestroy(this, entityData, insID);
+            EntityProcessorModule.ProcessEntityOnDestroy(GetModule<EntityProcessorModule>(), entityData, insID);
 
             m_ComponentSystem
                 .RemoveNotifiedComponents
@@ -216,68 +233,7 @@ namespace Syadeu.Presentation
             RequestSystem<DefaultPresentationGroup, Components.EntityComponentSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
 
-            #region Processor Registeration
-            Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
-            for (int i = 0; i < processors.Length; i++)
-            {
-                ConstructorInfo ctor = processors[i].GetConstructor(BindingFlags.Public | BindingFlags.Instance,
-                    null, CallingConventions.HasThis, Array.Empty<Type>(), null);
-
-                IProcessor processor;
-                if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processors[i]))
-                {
-                    if (ctor == null) processor = (IAttributeProcessor)Activator.CreateInstance(processors[i]);
-                    else
-                    {
-                        processor = (IAttributeProcessor)ctor.Invoke(null);
-                    }
-
-                    if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(processor.Target))
-                    {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Attribute processor {processors[i].Name} has an invalid target");
-                    }
-
-                    if (!m_AttributeProcessors.TryGetValue(processor.Target, out var values))
-                    {
-                        values = new List<IAttributeProcessor>();
-                        m_AttributeProcessors.Add(processor.Target, values);
-                    }
-                    values.Add((IAttributeProcessor)processor);
-                }
-                else
-                {
-                    if (ctor == null) processor = (IEntityDataProcessor)Activator.CreateInstance(processors[i]);
-                    else
-                    {
-                        processor = (IEntityDataProcessor)ctor.Invoke(null);
-                    }
-
-                    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(processor.Target))
-                    {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Entity processor {processors[i].Name} has an invalid target");
-                    }
-
-                    if (!m_EntityProcessors.TryGetValue(processor.Target, out var values))
-                    {
-                        values = new List<IEntityDataProcessor>();
-                        m_EntityProcessors.Add(processor.Target, values);
-                    }
-                    //$"{entityProcessor.GetType().Name} added".ToLog();
-                    values.Add((IEntityDataProcessor)processor);
-                }
-
-                ProcessorBase baseProcessor = (ProcessorBase)processor;
-                baseProcessor.m_EntitySystem = this;
-
-                processor.OnInitializeAsync();
-            }
-            #endregion
-
             return base.OnInitializeAsync();
-
-            static bool ProcessorPredicate(Type other) => !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
         }
         protected override void OnShutDown()
         {
@@ -300,21 +256,6 @@ namespace Syadeu.Presentation
             }
 
             GetModule<EntityRecycleModule>().ExecuteDisposeAll();
-
-            foreach (var item in m_EntityProcessors)
-            {
-                for (int a = 0; a < item.Value.Count; a++)
-                {
-                    item.Value[a].Dispose();
-                }
-            }
-            foreach (var item in m_AttributeProcessors)
-            {
-                for (int a = 0; a < item.Value.Count; a++)
-                {
-                    item.Value[a].Dispose();
-                }
-            }
         }
         public override void OnDispose()
         {
@@ -324,13 +265,8 @@ namespace Syadeu.Presentation
             m_DestroyedObjectsInThisFrameAction.Reserve();
             m_DestroyedObjectsInThisFrameAction = null;
 
-            OnEntityCreated = null;
-            OnEntityDestroy = null;
-
             m_ObjectEntities.Clear();
-            m_AttributeProcessors.Clear();
-            m_EntityProcessors.Clear();
-
+            
             m_ProxySystem.OnDataObjectDestroy -= M_ProxySystem_OnDataObjectDestroyAsync;
             m_ProxySystem.OnDataObjectVisible -= OnDataObjectVisible;
             m_ProxySystem.OnDataObjectInvisible -= OnDataObjectInvisible;
@@ -429,7 +365,7 @@ namespace Syadeu.Presentation
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
             monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
-            ProcessEntityOnProxyCreated(this, entity, monoObj);
+            EntityProcessorModule.ProcessEntityOnProxyCreated(GetModule<EntityProcessorModule>(), entity, monoObj);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
@@ -450,7 +386,7 @@ namespace Syadeu.Presentation
 
             IEntity entity = (IEntity)objectBase;
 
-            ProcessEntityOnProxyRemoved(this, entity, monoObj);
+            EntityProcessorModule.ProcessEntityOnProxyRemoved(GetModule<EntityProcessorModule>(), entity, monoObj);
             monoObj.m_Entity = Entity<IEntity>.Empty;
         }
         
@@ -495,21 +431,6 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnStartPresentation()
         {
-            foreach (var item in m_EntityProcessors)
-            {
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    item.Value[i].OnInitialize();
-                }
-            }
-            foreach (var item in m_AttributeProcessors)
-            {
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    item.Value[i].OnInitialize();
-                }
-            }
-
             //ConsoleWindow.CreateCommand((cmd) =>
             //{
             //    while (m_ObjectEntities.Any())
@@ -526,17 +447,6 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnPresentation()
         {
-            if (m_Queries.Count > 0)
-            {
-                int queryCount = m_Queries.Count;
-                for (int i = 0; i < queryCount; i++)
-                {
-                    Query query = m_Queries.Dequeue();
-                    var iter = query.GetEnumerator();
-                    while (iter.MoveNext()) { }
-                    query.Terminate();
-                }
-            }
             return base.OnPresentation();
         }
         protected override PresentationResult OnPresentationAsync()
@@ -716,7 +626,7 @@ namespace Syadeu.Presentation
 
             m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
 
-            ProcessEntityOnCreated(this, entity);
+            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
         }
 
@@ -805,7 +715,7 @@ namespace Syadeu.Presentation
             
             m_ObjectEntities.Add(objClone.Idx, objClone);
 
-            ProcessEntityOnCreated(this, objClone);
+            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), objClone);
             return EntityData<IEntityData>.GetEntity(objClone.Idx);
         }
 
@@ -1038,11 +948,11 @@ namespace Syadeu.Presentation
             => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
         internal void Debug_RemoveComponent(ObjectBase entity, Type component)
         {
-            if (entity is Actor.ActorProviderBase actorProvider)
-            {
-                Debug_RemoveComponent(actorProvider.Parent.Idx, component);
-                return;
-            }
+            //if (entity is Actor.IActorProvider actorProvider)
+            //{
+            //    Debug_RemoveComponent(actorProvider.Idx, component);
+            //    return;
+            //}
 
             if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
             {
@@ -1120,376 +1030,6 @@ namespace Syadeu.Presentation
         }
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
-        #region Processor
-
-        private static Unity.Profiling.ProfilerMarker
-            m_ProcessEntityOnCreateMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(ProcessEntityOnCreated)}"),
-            m_ProcessEntityOnDestoryMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(ProcessEntityOnDestroy)}");
-
-        private static void ProcessEntityOnCreated(EntitySystem system, IEntityData entity)
-        {
-            const string c_CreateStartMsg = "Create entity({0})";
-
-            m_ProcessEntityOnCreateMarker.Begin();
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_CreateStartMsg, entity.Name));
-
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
-
-            #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
-            {
-                if (entity.Attributes[i] == null)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                    return;
-                }
-
-                Type t = entity.Attributes[i].GetType();
-
-                if (!TypeHelper.TypeOf<AttributeBase>.Type.Equals(t.BaseType))
-                {
-                    if (system.m_AttributeProcessors.TryGetValue(t.BaseType, out List<IAttributeProcessor> groupProcessors))
-                    {
-                        for (int j = 0; j < groupProcessors.Count; j++)
-                        {
-                            IAttributeProcessor processor = groupProcessors[j];
-
-                            try
-                            {
-                                processor.OnCreated(entity.Attributes[i], entityData);
-                            }
-                            catch (Exception ex)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
-                            }
-                        }
-                        CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
-                    }
-                }
-
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
-                    {
-                        IAttributeProcessor processor = processors[j];
-
-                        try
-                        {
-                            processor.OnCreated(entity.Attributes[i], entityData);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
-                        }
-                    }
-                    CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
-                }
-            }
-            #endregion
-
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    IEntityDataProcessor processor = entityProcessor[i];
-
-                    try
-                    {
-                        processor.OnCreated(entity);
-                    }
-                    catch (Exception ex)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnCreated));
-                    }
-                }
-            }
-            #endregion
-
-            system.OnEntityCreated?.Invoke(entity);
-
-            m_ProcessEntityOnCreateMarker.End();
-        }
-        private static void ProcessEntityOnPresentation(EntitySystem system, IEntityData entity)
-        {
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
-
-            //#region Entity
-            //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))
-            //{
-            //    for (int i = 0; i < entityProcessor.Count; i++)
-            //    {
-            //        IEntityProcessor processor = entityProcessor[i];
-
-            //    }
-            //}
-            //#endregion
-
-            //#region Attributes
-            //Array.ForEach(entity.Attributes, (other) =>
-            //{
-            //    if (other == null)
-            //    {
-            //        CoreSystem.Logger.LogWarning(Channel.Presentation,
-            //            string.Format(c_AttributeEmptyWarning, entity.Name));
-            //        return;
-            //    }
-
-            //    Type t = other.GetType();
-
-            //    if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
-            //    {
-            //        for (int j = 0; j < processors.Count; j++)
-            //        {
-            //            if (!(processors[j] is IAttributeOnPresentation onPresentation)) continue;
-            //            onPresentation.OnPresentation(other, entityData);
-            //        }
-            //    }
-            //});
-            //#endregion
-        }
-        private static void ProcessEntityOnDestroy(EntitySystem system, IEntityData entity, InstanceID insID)
-        {
-            const string c_DestroyStartMsg = "Destroying entity({0})";
-
-            m_ProcessEntityOnDestoryMarker.Begin();
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_DestroyStartMsg, entity.Name));
-
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
-
-            #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
-            {
-                IAttribute other = entity.Attributes[i];
-                if (other == null)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                    continue;
-                }
-
-                Type t = other.GetType();
-
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
-                    {
-                        IAttributeProcessor processor = processors[j];
-
-                        try
-                        {
-                            processor.OnDestroy(other, entityData);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnDestroy));
-                        }
-                    }
-                }
-
-
-                system.m_ComponentSystem
-                    .RemoveNotifiedComponents(
-                        other, insID
-#if DEBUG_MODE
-                        , system.Debug_RemoveComponent
-#endif
-                    );
-
-//                if (other is Components.INotifyComponent notifyComponent)
-//                {
-//                    var interfaceTypes = GetComponentInterface(other.GetType());
-//                    foreach (var interfaceType in interfaceTypes)
-//                    {
-//                        Type componentType = interfaceType.GenericTypeArguments[0];
-//                        system.m_ComponentSystem.RemoveComponent(entityData, componentType);
-//#if DEBUG_MODE
-//                        system.Debug_RemoveComponent(entityData, componentType);
-//#endif
-//                    }
-//                }
-            }
-            #endregion
-
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    IEntityDataProcessor processor = entityProcessor[i];
-
-                    try
-                    {
-                        processor.OnDestroy(entity);
-                    }
-                    catch (Exception ex)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnDestroy));
-                    }
-                }
-            }
-            #endregion
-
-            system.OnEntityDestroy?.Invoke(entity);
-
-            //for (int i = 0; i < entity.Attributes.Length; i++)
-            //{
-            //    IAttribute other = entity.Attributes[i];
-
-            //    //other.Dispose();
-            //    system.GetModule<EntityRecycleModule>().InsertReservedObject(entity.Attributes[i]);
-            //}
-
-            m_ProcessEntityOnDestoryMarker.End();
-        }
-
-        private static void ProcessEntityOnProxyCreated(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
-        {
-            const string c_StartMsg = "Processing OnProxyCreated at {0}";
-            const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyCreated";
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_StartMsg, entity.Name));
-
-            if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
-            {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
-                    string.Format(c_FastDeletionMsg, entity.Name));
-                return;
-            }
-
-            Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
-
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    if (entityProcessor[i] is IEntityOnProxyCreated onProxyCreated)
-                    {
-                        try
-                        {
-                            onProxyCreated.OnProxyCreated((EntityBase)entity, entityData, monoObj);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyCreated.OnProxyCreated));
-                        }
-                    }
-                }
-            }
-            #endregion
-
-            #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
-            {
-                var other = entity.Attributes[i];
-                if (other == null)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                    continue;
-                }
-
-                Type t = other.GetType();
-
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
-                    {
-                        if (processors[j] is IAttributeOnProxyCreated onProxyCreated)
-                        {
-                            try
-                            {
-                                onProxyCreated.OnProxyCreated(other, entityData, monoObj);
-                            }
-                            catch (Exception ex)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyCreated.OnProxyCreated));
-                            }
-                        }
-                    }
-                }
-            }
-            #endregion
-        }
-        private static void ProcessEntityOnProxyRemoved(EntitySystem system, IEntity entity, RecycleableMonobehaviour monoObj)
-        {
-            const string c_StartMsg = "Processing OnProxyRemoved at {0}";
-            const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyRemoved";
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_StartMsg, entity.Name));
-
-            if (system.IsDestroyed(entity.Idx) || system.IsMarkedAsDestroyed(entity.Idx))
-            {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
-                    string.Format(c_FastDeletionMsg, entity.Name));
-                return;
-            }
-
-            Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
-
-            #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
-            {
-                for (int i = 0; i < entityProcessor.Count; i++)
-                {
-                    if (entityProcessor[i] is IEntityOnProxyRemoved onProxyRemoved)
-                    {
-                        try
-                        {
-                            onProxyRemoved.OnProxyRemoved((EntityBase)entity, entityData, monoObj);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyRemoved.OnProxyRemoved));
-                        }
-                    }
-                }
-            }
-            #endregion
-
-            #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
-            {
-                var other = entity.Attributes[i];
-                if (other == null)
-                {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                }
-
-                Type t = other.GetType();
-
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
-                    {
-                        if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
-                        {
-                            try
-                            {
-                                onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
-                            }
-                            catch (Exception ex)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
-                            }
-                        }
-                    }
-                }
-            }
-            #endregion
-        }
-
-        #endregion
-
         #region Experiments
 
         /// <summary>
@@ -1524,130 +1064,9 @@ namespace Syadeu.Presentation
 
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            ProcessEntityOnCreated(this, entity);
+            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), entity);
             return Entity<ConvertedEntity>.GetEntity(entity.Idx);
         }
-
-        public sealed class Query : System.Collections.IEnumerable
-        {
-            static readonly Stack<Query> m_Pool = new Stack<Query>();
-
-            readonly EntitySystem m_EntitySystem;
-            readonly List<Reference> m_Has = new List<Reference>();
-            readonly List<Reference> m_HasNot = new List<Reference>();
-
-            EntityData<IEntityData> m_Entity;
-            System.Collections.IEnumerator m_Enumerator;
-            
-            internal static Query Dequeue(EntitySystem entitySystem, EntityData<IEntityData> entity)
-            {
-                if (m_Pool.Count == 0) return new Query(entitySystem, entity);
-                else return m_Pool.Pop();
-            }
-            private Query(EntitySystem entitySystem, EntityData<IEntityData> entity)
-            {
-                m_EntitySystem = entitySystem;
-                m_Entity = entity;
-            }
-            internal void Terminate()
-            {
-                m_Has.Clear();
-                m_HasNot.Clear();
-                m_Enumerator = null;
-                m_Entity = EntityData<IEntityData>.Empty;
-                m_Pool.Push(this);
-            }
-
-            public Query Has(Reference attributeHash)
-            {
-                m_Has.Add(attributeHash);
-                return this;
-            }
-            public Query HasNot(Reference attributeHash)
-            {
-                m_HasNot.Add(attributeHash);
-                return this;
-            }
-
-            public void Schedule(Action action)
-            {
-                m_Enumerator = GetEnumerator(action);
-                m_EntitySystem.m_Queries.Enqueue(this);
-            }
-            public void Schedule<T>(Action<T> action, T t)
-            {
-                m_Enumerator = GetEnumerator(action, t);
-                m_EntitySystem.m_Queries.Enqueue(this);
-            }
-            public void Schedule<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
-            {
-                m_Enumerator = GetEnumerator(action, t0, t1);
-                m_EntitySystem.m_Queries.Enqueue(this);
-            }
-
-            #region Enumerator
-            private System.Collections.IEnumerator GetEnumerator(Action action)
-            {
-                if (!IsExcutable()) yield break;
-
-                try
-                {
-                    action.Invoke();
-                }
-                catch (Exception)
-                {
-                    yield break;
-                }
-            }
-            private System.Collections.IEnumerator GetEnumerator<T>(Action<T> action, T t)
-            {
-                if (!IsExcutable()) yield break;
-
-                try
-                {
-                    action.Invoke(t);
-                }
-                catch (Exception)
-                {
-                    yield break;
-                }
-            }
-            private System.Collections.IEnumerator GetEnumerator<T0, T1>(Action<T0, T1> action, T0 t0, T1 t1)
-            {
-                if (!IsExcutable()) yield break;
-
-                try
-                {
-                    action.Invoke(t0, t1);
-                }
-                catch (Exception)
-                {
-                    yield break;
-                }
-            }
-
-            public System.Collections.IEnumerator GetEnumerator() => m_Enumerator;
-
-            private bool IsExcutable()
-            {
-                for (int i = 0; i < m_Has.Count; i++)
-                {
-                    if (!m_Entity.HasAttribute(m_Has[i])) return false;
-                }
-                for (int i = 0; i < m_HasNot.Count; i++)
-                {
-                    if (m_Entity.HasAttribute(m_Has[i])) return false;
-                }
-                return true;
-            }
-            #endregion
-        }
-        /// <summary>
-        /// [Experiment] 테스트 중인 기능입니다.
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public Query GetQuery(EntityData<IEntityData> entity) => Query.Dequeue(this, entity);
 
         #endregion
     }

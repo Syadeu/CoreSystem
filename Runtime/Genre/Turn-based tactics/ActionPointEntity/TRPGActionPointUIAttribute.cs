@@ -121,7 +121,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             int
-                fullHp = (int)stat.FullHP,
+                fullHp = (int)stat.HP,
                 hp = (int)stat.HP;
 
             att.m_CurrentProxy.SetHPFullText(fullHp);

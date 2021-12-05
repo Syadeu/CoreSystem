@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
@@ -30,16 +31,10 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 1, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
-        [JsonIgnore] private float m_CurrentHP;
 
         public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
-        [JsonIgnore] public float FullHP => m_HP;
-        [JsonIgnore] public float HP
-        {
-            get => m_CurrentHP;
-            set => m_CurrentHP = value;
-        }
+        [JsonIgnore] public float HP => m_HP;
 
         protected override ObjectBase Copy()
         {
@@ -51,12 +46,10 @@ namespace Syadeu.Presentation.Actor
         protected override void OnCreated()
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
-            m_CurrentHP = m_HP;
         }
         protected override void OnInitialize()
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
-            m_CurrentHP = m_HP;
         }
         protected override void OnReserve()
         {
@@ -88,5 +81,38 @@ namespace Syadeu.Presentation.Actor
     [Preserve]
     internal sealed class ActorStatProcessor : AttributeProcessor<ActorStatAttribute>
     {
+        protected override void OnCreated(ActorStatAttribute attribute, EntityData<IEntityData> entity)
+        {
+            entity.AddComponent<ActorStatComponent>();
+            ref ActorStatComponent stat = ref entity.GetComponent<ActorStatComponent>();
+            stat = new ActorStatComponent(attribute.HP);
+        }
+        protected override void OnDestroy(ActorStatAttribute attribute, EntityData<IEntityData> entity)
+        {
+            entity.RemoveComponent<ActorStatComponent>();
+        }
+    }
+
+    public struct ActorStatComponent : IEntityComponent
+    {
+        private float m_OriginalHP;
+        private float m_HP;
+
+        public float OriginalHP => m_OriginalHP;
+        public float HP
+        {
+            get => m_HP;
+            set
+            {
+                m_HP = value;
+            }
+        }
+
+        public ActorStatComponent(
+            in float originalHP)
+        {
+            m_OriginalHP = originalHP;
+            m_HP = originalHP;
+        }
     }
 }

@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -58,7 +59,16 @@ namespace Syadeu.Presentation.Components
         {
             //Entity<IEntity> entity = entityID.GetEntity<IEntity>();
             //ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
-            Hash rawID = rawObject.Hash;
+            Hash rawID;
+            if (rawObject is AttributeBase attribute)
+            {
+                entityID = attribute.ParentEntity.Idx;
+                rawID = attribute.ParentEntity.Hash;
+            }
+            else
+            {
+                rawID = rawObject.Hash;
+            }
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;
             else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
@@ -96,39 +106,39 @@ namespace Syadeu.Presentation.Components
                 m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
             }
         }
-        public void TryRemoveComponent(IObject obj, Action<InstanceID, Type> onRemove)
-        {
-            if (!(obj is INotifyComponent notify)) return;
+        //public void TryRemoveComponent(IObject obj, Action<InstanceID, Type> onRemove)
+        //{
+        //    if (!(obj is INotifyComponent notify)) return;
 
-            if (m_ZeroNotifiedObjects.Contains(obj.Hash)) return;
-            else if (m_NotifiedObjects.TryGetFirstValue(obj.Hash, out TypeInfo typeInfo, out var parsedIter))
-            {
-                do
-                {
-                    onRemove?.Invoke(obj.Idx, typeInfo.Type);
-                    System.RemoveComponent(obj.Idx, typeInfo);
+        //    if (m_ZeroNotifiedObjects.Contains(obj.Hash)) return;
+        //    else if (m_NotifiedObjects.TryGetFirstValue(obj.Hash, out TypeInfo typeInfo, out var parsedIter))
+        //    {
+        //        do
+        //        {
+        //            onRemove?.Invoke(obj.Idx, typeInfo.Type);
+        //            System.RemoveComponent(obj.Idx, typeInfo);
 
-                } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
+        //        } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
-                return;
-            }
+        //        return;
+        //    }
 
-            var iter = Select(obj.GetType());
-            if (!iter.Any())
-            {
-                m_ZeroNotifiedObjects.Add(obj.Hash);
-                return;
-            }
+        //    var iter = Select(obj.GetType());
+        //    if (!iter.Any())
+        //    {
+        //        m_ZeroNotifiedObjects.Add(obj.Hash);
+        //        return;
+        //    }
 
-            var select = iter.Select(i => i.GenericTypeArguments[0]);
-            foreach (var componentType in select)
-            {
-                onRemove?.Invoke(obj.Idx, componentType);
-                System.RemoveComponent(obj.Idx, componentType);
+        //    var select = iter.Select(i => i.GenericTypeArguments[0]);
+        //    foreach (var componentType in select)
+        //    {
+        //        onRemove?.Invoke(obj.Idx, componentType);
+        //        System.RemoveComponent(obj.Idx, componentType);
 
-                m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
-            }
-        }
+        //        m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
+        //    }
+        //}
 
         private static bool CollectTypes(Type t)
         {

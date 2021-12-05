@@ -94,6 +94,11 @@ namespace Syadeu.Presentation.Internal
         {
             OnShutDown();
 
+            for (int i = 0; i < m_Modules.Length; i++)
+            {
+                m_Modules[i].InternalOnShutDown();
+            }
+
             CoreSystem.Logger.Log(Channel.Presentation,
                 $"Shutdown system {GetType().Name}");
         }

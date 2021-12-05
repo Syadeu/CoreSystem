@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
-using Syadeu.Presentation.Render;
-using System;
 
 namespace Syadeu.Presentation.Actor
 {
-    internal interface IActorProvider
+    public interface IActorProvider : IObject
     {
-        void Bind(EntityData<IEntityData> parent, ActorSystem actorSystem,
-            EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
-            WorldCanvasSystem worldCanvasSystem);
+        [JsonIgnore]
+        object Component { get; }
+
+        void Bind(EntityData<IEntityData> parent);
 
         void ReceivedEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -33,10 +33,27 @@ namespace Syadeu.Presentation.Actor
 #else
             where TEvent : unmanaged, IActorEvent;
 #endif
-        void OnCreated(Entity<ActorEntity> entity);
-        void OnDestroy(Entity<ActorEntity> entity);
 
-        void OnProxyCreated(RecycleableMonobehaviour monoObj);
-        void OnProxyRemoved(RecycleableMonobehaviour monoObj);
+        void OnCreated();
+        void OnReserve();
+        void OnDestroy();
+
+        void OnProxyCreated();
+        void OnProxyRemoved();
     }
+    public interface IActorProvider<TComponent> : IActorProvider
+        where TComponent : unmanaged, IActorProviderComponent
+    {
+        [JsonIgnore]
+        new TComponent Component { get; }
+
+        void OnCreated(ref TComponent component);
+        void OnReserve(ref TComponent component);
+        void OnDestroy(ref TComponent component);
+
+        void OnProxyCreated(ref TComponent component, ITransform transform);
+        void OnProxyRemoved(ref TComponent component, ITransform transform);
+    }
+
+    public interface IActorProviderComponent : IEntityComponent { }
 }

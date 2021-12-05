@@ -29,23 +29,19 @@ namespace Syadeu.Presentation.Actor
     /// <summary>
     /// <see cref="ActorOverlayUIAttributeBase"/> 와 페어로 작동합니다.
     /// </summary>
-    public class ActorOverlayUIProvider : ActorProviderBase,
-        INotifyComponent<ActorOverlayUIComponent>
+    public class ActorOverlayUIProvider : ActorProviderBase<ActorOverlayUIComponent>
     {
         [JsonProperty(Order = -10, PropertyName = "UIEntries")]
         protected Reference<ActorOverlayUIEntry>[] m_UIEntries = Array.Empty<Reference<ActorOverlayUIEntry>>();
 
         [JsonIgnore] public IReadOnlyList<Reference<ActorOverlayUIEntry>> UIEntries => m_UIEntries;
 
-        protected override sealed void OnCreated(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem)
+        protected override sealed void OnCreated(ref ActorOverlayUIComponent component)
         {
-            entity.AddComponent<ActorOverlayUIComponent>();
-            ref var com = ref entity.GetComponent<ActorOverlayUIComponent>();
-            com = new ActorOverlayUIComponent()
-            {
-                m_OpenedUI = new FixedList512Bytes<Reference<ActorOverlayUIEntry>>()
-            };
+            WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
+            component.m_OpenedUI = new FixedList512Bytes<Reference<ActorOverlayUIEntry>>();
 
+            Entity<ActorEntity> entity = Parent.ToEntity<ActorEntity>();
             for (int i = 0; i < m_UIEntries.Length; i++)
             {
                 ActorOverlayUIEntry entry = m_UIEntries[i].GetObject();
@@ -54,14 +50,17 @@ namespace Syadeu.Presentation.Actor
                 worldCanvasSystem.RegisterActorOverlayUI(entity, m_UIEntries[i]);
             }
         }
-        protected override sealed void OnDestroy(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem)
+        protected override void OnDestroy(ref ActorOverlayUIComponent component)
         {
-            worldCanvasSystem.RemoveAllOverlayUI(entity.Cast<ActorEntity, IEntity>());
+            WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
+            worldCanvasSystem.RemoveAllOverlayUI(Parent.ToEntity<IEntity>());
         }
-        protected override sealed void OnEventReceived<TEvent>(TEvent ev, WorldCanvasSystem worldCanvasSystem)
+        protected override void OnEventReceived<TEvent>(TEvent ev)
         {
+            WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
+
             ActorEventHandler(ev);
-            worldCanvasSystem.PostActorOverlayUIEvent(Parent.As<IEntityData, ActorEntity>(), ev);
+            worldCanvasSystem.PostActorOverlayUIEvent(Parent.ToEntity<ActorEntity>(), ev);
         }
 
         protected virtual void ActorEventHandler<TEvent>(TEvent ev)

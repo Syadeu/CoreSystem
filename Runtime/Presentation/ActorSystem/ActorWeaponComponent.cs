@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ActorWeaponComponent : IEntityComponent, IDisposable
+    public struct ActorWeaponComponent : IActorProviderComponent, IDisposable
     {
         internal Entity<ActorEntity> m_Parent;
         //internal Instance<ActorWeaponProvider> m_Provider;

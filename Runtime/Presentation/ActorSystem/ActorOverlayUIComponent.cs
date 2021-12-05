@@ -17,7 +17,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ActorOverlayUIComponent : IEntityComponent
+    public struct ActorOverlayUIComponent : IActorProviderComponent
     {
         internal FixedList512Bytes<Reference<ActorOverlayUIEntry>> m_OpenedUI;
     }

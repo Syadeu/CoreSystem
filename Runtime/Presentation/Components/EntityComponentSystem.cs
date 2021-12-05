@@ -520,11 +520,6 @@ namespace Syadeu.Presentation.Components
 
             s_RemoveComponentMarker.End();
         }
-        /// <summary>
-        /// TODO: Reflection 이 일어나서 SharedStatic 으로 interface 해싱 후 받아오는 게 좋아보임.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="interfaceType"></param>
         public void RemoveComponent(ObjectBase obj, Type interfaceType)
         {
             //const string c_Parent = "Parent";
@@ -542,13 +537,6 @@ namespace Syadeu.Presentation.Components
                 GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, insID, onRemove);
             }
         }
-        //public void RemoveNotifiedComponents(IObject obj, InstanceID entity, Action<InstanceID, Type> onRemove = null)
-        //{
-        //    using (s_RemoveNotifiedComponentMarker.Auto())
-        //    {
-        //        GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, entity, onRemove);
-        //    }
-        //}
         public bool HasComponent<TComponent>(in InstanceID entity) 
             where TComponent : unmanaged, IEntityComponent
         {

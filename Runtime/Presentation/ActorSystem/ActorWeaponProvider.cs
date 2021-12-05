@@ -32,8 +32,7 @@ namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Weapon Provider")]
     [ActorProviderRequire(typeof(ActorInventoryProvider))]
-    public sealed class ActorWeaponProvider : ActorProviderBase,
-        INotifyComponent<ActorWeaponComponent>
+    public sealed class ActorWeaponProvider : ActorProviderBase<ActorWeaponComponent>
     {
         [Header("Accept Weapon Types")]
         [JsonProperty(Order = 0, PropertyName = "ExcludeWeapon")]
@@ -52,16 +51,6 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
         internal int m_MaxEquipableCount = 1;
 
-        //[Header("Weapon Position")]
-        //[JsonProperty(Order = 6, PropertyName = "UseBone")]
-        //internal bool m_UseBone = true;
-        //[JsonProperty(Order = 7, PropertyName = "AttachedBone")]
-        //internal HumanBodyBones m_AttachedBone = HumanBodyBones.RightHand;
-        //[JsonProperty(Order = 8, PropertyName = "WeaponPosOffset")]
-        //internal float3 m_WeaponPosOffset = float3.zero;
-        //[JsonProperty(Order = 9, PropertyName = "WeaponRotOffset")]
-        //internal float3 m_WeaponRotOffset = float3.zero;
-
         [Header("TriggerAction")]
         [JsonProperty(Order = 10, PropertyName = "OnWeaponSelected")]
         internal Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
@@ -72,11 +61,9 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] CoroutineJob m_WeaponPoser;
 
-        protected override void OnCreated(Entity<ActorEntity> entity)
+        protected override void OnCreated(ref ActorWeaponComponent component)
         {
-            Parent.AddComponent<ActorWeaponComponent>();
-            ref ActorWeaponComponent component = ref Parent.GetComponent<ActorWeaponComponent>();
-            component.m_Parent = entity;
+            component.m_Parent = Parent.ToEntity<ActorEntity>();
 
             component.m_DefaultWeapon = m_DefaultWeapon;
             component.m_MaxEquipableCount = m_MaxEquipableCount;
@@ -120,17 +107,12 @@ namespace Syadeu.Presentation.Actor
 
             if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
             {
-                //m_OnEquipWeapon.Execute(Parent);
-                //component.SelectWeapon(0);
-
                 ActorWeaponEquipEvent ev = new ActorWeaponEquipEvent(
                     ActorWeaponEquipOptions.SelectWeapon, m_DefaultWeapon);
-                ScheduleEvent(ev);
-                //component.m_DefaultWeaponInstance = m_DefaultWeapon.CreateInstance();
-                //component.m_EquipedWeapons[0] = component.m_DefaultWeaponInstance;
+                ScheduleEvent(Parent.ToEntity<ActorEntity>(), ev);
             }
 
-            WeaponPoser weaponPoser = new WeaponPoser(Parent.As<IEntityData, ActorEntity>());
+            WeaponPoser weaponPoser = new WeaponPoser(Parent.ToEntity<ActorEntity>());
             m_WeaponPoser = StartCoroutine(weaponPoser);
             //Parent.AddComponent(component);
         }
@@ -238,8 +220,7 @@ namespace Syadeu.Presentation.Actor
                 }
             }
         }
-
-        protected override void OnDestroy()
+        protected override void OnReserve(ref ActorWeaponComponent component)
         {
             m_WeaponPoser.Stop();
         }

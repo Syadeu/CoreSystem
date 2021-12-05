@@ -14,100 +14,115 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
-using Syadeu.Presentation.Render;
-using System;
 
 namespace Syadeu.Presentation.Actor
 {
     /// <summary>
     /// <see cref="ActorControllerAttribute"/> 에서 사용하는 새로운 Provider 를 작성할 수 있습니다.
     /// </summary>
-    public abstract class ActorProviderBase : DataObjectBase, IActorProvider
+    public abstract class ActorProviderBase<TComponent> : DataObjectBase, IActorProvider<TComponent>
+        where TComponent : unmanaged, IActorProviderComponent
     {
-        [JsonIgnore] private bool m_Initialized = false;
         [JsonIgnore] private EntityData<IEntityData> m_Parent = EntityData<IEntityData>.Empty;
 
-        [JsonIgnore] private EventSystem m_EventSystem;
-        [JsonIgnore] private EntitySystem m_EntitySystem;
-        [JsonIgnore] private CoroutineSystem m_CoroutineSystem;
-        [JsonIgnore] private WorldCanvasSystem m_WorldCanvasSystem;
-        [JsonIgnore] private ActorSystem m_ActorSystem;
-
         [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
-        [JsonIgnore] protected ref ActorControllerComponent Component => ref m_Parent.GetComponent<ActorControllerComponent>();
 
-        [JsonIgnore] protected EventSystem EventSystem => m_EventSystem;
-        [JsonIgnore] protected CoroutineSystem CoroutineSystem => m_CoroutineSystem;
-        [JsonIgnore] protected ActorSystem ActorSystem => m_ActorSystem;
+        #region IActorProvider
 
-        void IActorProvider.Bind(EntityData<IEntityData> parent, ActorSystem actorSystem,
-            EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
-            WorldCanvasSystem worldCanvasSystem)
+        object IActorProvider.Component => m_Parent.GetComponent<TComponent>();
+
+        void IActorProvider.Bind(EntityData<IEntityData> parent)
         {
             m_Parent = parent;
-
-            m_ActorSystem = actorSystem;
-            m_EventSystem = eventSystem;
-            m_EntitySystem = entitySystem;
-            m_CoroutineSystem = coroutineSystem;
-            m_WorldCanvasSystem = worldCanvasSystem;
-
-            m_Initialized = true;
         }
         void IActorProvider.ReceivedEvent<TEvent>(TEvent ev)
         {
             try
             {
                 OnEventReceived(ev);
-                OnEventReceived(ev, m_WorldCanvasSystem);
             }
             catch (System.Exception ex)
             {
                 CoreSystem.Logger.LogError(Channel.Entity, ex);
             }
         }
-        void IActorProvider.OnCreated(Entity<ActorEntity> entity)
+
+        void IActorProvider.OnCreated()
         {
-            OnCreated(entity);
-            OnCreated(entity, m_WorldCanvasSystem);
+            if (!m_Parent.HasComponent<TComponent>())
+            {
+                m_Parent.AddComponent<TComponent>();
+            }
+
+            ((IActorProvider<TComponent>)this).OnCreated(ref m_Parent.GetComponent<TComponent>());
         }
-        void IActorProvider.OnDestroy(Entity<ActorEntity> entity)
+        void IActorProvider.OnReserve()
         {
-            OnDestroy(entity);
-            OnDestroy(entity, m_WorldCanvasSystem);
+            ((IActorProvider<TComponent>)this).OnReserve(ref m_Parent.GetComponent<TComponent>());
+
+            m_Parent.RemoveComponent<TComponent>();
         }
-        void IActorProvider.OnProxyCreated(RecycleableMonobehaviour monoObj)
+        void IActorProvider.OnDestroy()
         {
-            OnProxyCreated(monoObj);
+            ((IActorProvider<TComponent>)this).OnDestroy(ref m_Parent.GetComponent<TComponent>());
         }
-        void IActorProvider.OnProxyRemoved(RecycleableMonobehaviour monoObj)
+
+        void IActorProvider.OnProxyCreated()
         {
-            OnProxyRemoved(monoObj);
+            ((IActorProvider<TComponent>)this).OnProxyCreated(ref m_Parent.GetComponent<TComponent>(), m_Parent.ToEntity<IEntity>().transform);
         }
-        //protected override void OnDispose()
-        //{
-        //    m_Initialized = false;
-        //    m_Parent = EntityData<IEntityData>.Empty;
-        //}
-        protected override void OnReserve()
+        void IActorProvider.OnProxyRemoved()
+        {
+            ((IActorProvider<TComponent>)this).OnProxyRemoved(ref m_Parent.GetComponent<TComponent>(), m_Parent.ToEntity<IEntity>().transform);
+        }
+
+        #endregion
+
+        #region IActorProvider<TComponent>
+
+        public TComponent Component => m_Parent.GetComponent<TComponent>();
+
+        void IActorProvider<TComponent>.OnCreated(ref TComponent component)
+        {
+            OnCreated(ref component);
+        }
+        void IActorProvider<TComponent>.OnReserve(ref TComponent component)
+        {
+            OnReserve(ref component);
+        }
+        void IActorProvider<TComponent>.OnDestroy(ref TComponent component)
+        {
+            OnDestroy(ref component);
+        }
+        
+        void IActorProvider<TComponent>.OnProxyCreated(ref TComponent component, ITransform transform)
+        {
+            OnProxyCreated(ref component, transform);
+        }
+        void IActorProvider<TComponent>.OnProxyRemoved(ref TComponent component, ITransform transform)
+        {
+            OnProxyRemoved(ref component, transform);
+        }
+
+        #endregion
+
+        protected override sealed void OnCreated()
+        {
+            base.OnCreated();
+        }
+        protected override sealed void OnReserve()
         {
             base.OnReserve();
 
-            m_Initialized = false;
             m_Parent = EntityData<IEntityData>.Empty;
         }
-        protected override void OnDestroy()
+        protected override sealed void OnDestroy()
         {
-            m_ActorSystem = null;
-            m_EventSystem = null;
-            m_EntitySystem = null;
-            m_CoroutineSystem = null;
-            m_WorldCanvasSystem = null;
         }
 
         protected virtual void OnEventReceived<TEvent>(TEvent ev)
@@ -117,50 +132,47 @@ namespace Syadeu.Presentation.Actor
             where TEvent : unmanaged, IActorEvent
 #endif
         { }
-        protected virtual void OnEventReceived<TEvent>(TEvent ev, WorldCanvasSystem worldCanvasSystem)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
-        { }
-        protected virtual void OnCreated(Entity<ActorEntity> entity) { }
-        protected virtual void OnCreated(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem) { }
-        protected virtual void OnDestroy(Entity<ActorEntity> entity) { }
-        protected virtual void OnDestroy(Entity<ActorEntity> entity, WorldCanvasSystem worldCanvasSystem) { }
-        protected virtual void OnProxyCreated(RecycleableMonobehaviour monoObj) { }
-        protected virtual void OnProxyRemoved(RecycleableMonobehaviour monoObj) { }
 
-        protected void ScheduleEvent<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        protected virtual void OnCreated(ref TComponent component) { }
+        protected virtual void OnReserve(ref TComponent component) { }
+        protected virtual void OnDestroy(ref TComponent component) { }
+
+        protected virtual void OnProxyCreated(ref TComponent component, ITransform transform) { }
+        protected virtual void OnProxyRemoved(ref TComponent component, ITransform transform) { }
+
+        protected Instance<TProvider> GetProvider<TProvider>()
+            where TProvider : class, IActorProvider
         {
-            m_ActorSystem.ScheduleEvent(Parent.As<IEntityData, ActorEntity>(), ev);
-        }
-        protected void PostEvent<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
-        {
-            ActorSystem.PostEvent(Parent.As<IEntityData, ActorEntity>(), ev);
-        }
-        protected Instance<T> GetProvider<T>() where T : ActorProviderBase
-        {
-            return Component.GetProvider<T>();
+            ref ActorControllerComponent ctr = ref Parent.GetComponent<ActorControllerComponent>();
+            return ctr.GetProvider<TProvider>();
         }
 
-        protected CoroutineJob StartCoroutine<T>(T coroutine) where T : struct, ICoroutineJob
+        protected static void ScheduleEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
-            return m_CoroutineSystem.PostCoroutineJob(coroutine);
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(entity, ev);
         }
-        protected void StopCoroutine(CoroutineJob coroutine)
+        protected static void ScheduleEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev, bool overrideSameEvent)
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+            where TEvent : struct, IActorEvent
+#else
+            where TEvent : unmanaged, IActorEvent
+#endif
         {
-            m_CoroutineSystem.StopCoroutineJob(coroutine);
+            ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
+            system.ScheduleEvent(entity, ev, overrideSameEvent);
+        }
+
+        protected static CoroutineJob StartCoroutine<TJob>(TJob cor)
+            where TJob : ICoroutineJob
+        {
+            CoroutineSystem coroutineSystem = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
+            return coroutineSystem.PostCoroutineJob(cor);
         }
     }
 }

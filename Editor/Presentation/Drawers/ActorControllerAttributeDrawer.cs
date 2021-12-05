@@ -26,7 +26,7 @@ namespace SyadeuEditor.Presentation
         private void Check()
         {
             m_CurrentProviders.Clear();
-            Reference<ActorProviderBase>[] temp = (Reference<ActorProviderBase>[])m_ProvidersField.GetValue(TargetObject);
+            Reference<IActorProvider>[] temp = (Reference<IActorProvider>[])m_ProvidersField.GetValue(TargetObject);
 
             var iter = temp
                 .Where((other) => !other.IsEmpty() && other.IsValid())

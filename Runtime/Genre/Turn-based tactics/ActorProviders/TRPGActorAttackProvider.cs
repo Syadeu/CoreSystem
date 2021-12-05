@@ -16,37 +16,32 @@ using UnityEngine;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("ActorProvider: TRPG Attack Provider")]
-    public sealed class TRPGActorAttackProvider : ActorAttackProvider,
-        INotifyComponent<TRPGActorAttackComponent>
+    public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
 
         [JsonIgnore] private NativeList<int> m_TempGetRange;
 
-        protected override void OnCreated()
+        protected override void OnInitialize()
+        {
+            base.OnInitialize();
+        }
+        protected override void OnCreated(ref ActorAttackComponent component)
         {
             m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
-        }
-        protected override void OnCreated(Entity<ActorEntity> entity)
-        {
-            base.OnCreated(entity);
+            Parent.AddComponent<TRPGActorAttackComponent>();
 
-            entity.AddComponent<TRPGActorAttackComponent>();
-            ref var com = ref entity.GetComponent<TRPGActorAttackComponent>();
+            ref var com = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
             com = (new TRPGActorAttackComponent()
             {
                 m_SearchRange = m_SearchRange
             });
         }
-        protected override void OnReserve()
+        protected override void OnReserve(ref ActorAttackComponent component)
         {
-            base.OnReserve();
+            Parent.RemoveComponent<TRPGActorAttackComponent>();
 
-            m_TempGetRange.Clear();
-        }
-        protected override void OnDestroy()
-        {
             m_TempGetRange.Dispose();
         }
 
