@@ -34,36 +34,12 @@ namespace Syadeu.Presentation
     [RequireDerived]
     public abstract class ProcessorBase
     {
-        internal EntitySystem m_EntitySystem;
+        internal EntityProcessorModule.SystemReferences m_SystemReferences;
 
-        protected EntitySystem EntitySystem => m_EntitySystem;
-        protected EventSystem EventSystem
-        {
-            get
-            {
-                if (m_EntitySystem.m_EventSystem == null)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                        $"{nameof(EventSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
-                }
-
-                return m_EntitySystem.m_EventSystem;
-            }
-        }
-        protected DataContainerSystem DataContainerSystem
-        {
-            get
-            {
-                if (m_EntitySystem.m_DataContainerSystem == null)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                        $"{nameof(DataContainerSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
-                }
-
-                return m_EntitySystem.m_DataContainerSystem;
-            }
-        }
-        internal GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
+        protected EntitySystem EntitySystem => m_SystemReferences.EntitySystem;
+        protected EventSystem EventSystem => m_SystemReferences.EventSystem;
+        protected DataContainerSystem DataContainerSystem => m_SystemReferences.DataContainerSystem;
+        internal GameObjectProxySystem ProxySystem => m_SystemReferences.GameObjectProxySystem;
 
         [Obsolete]
         protected void RequestSystem<TSystem>(Action<TSystem> setter

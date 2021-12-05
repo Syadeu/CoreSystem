@@ -79,7 +79,6 @@ namespace Syadeu.Presentation.Actor
 
             Entity<ActorEntity> actor = entity.ToEntity<ActorEntity>();
 
-            component.m_EntitySystem = m_EntitySystem.SystemID;
             component.m_Parent = actor;
             component.m_InstanceProviders = new FixedInstanceList64<IActorProvider>();
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();

@@ -119,7 +119,7 @@ namespace Syadeu.Presentation.Internal
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
 
-        protected T GetModule<T>() where T : PresentationSystemModule
+        public T GetModule<T>() where T : PresentationSystemModule
         {
             var temp = m_Modules.FindFor(GetModulePredicate<T>);
 

@@ -29,8 +29,6 @@ namespace Syadeu.Presentation.Actor
 {
     public struct ActorControllerComponent : IEntityComponent
     {
-        internal PresentationSystemID<EntitySystem> m_EntitySystem;
-
         internal bool m_IsExecutingEvent;
         internal Entity<ActorEntity> m_Parent;
         internal FixedInstanceList64<IActorProvider> m_InstanceProviders;

@@ -19,7 +19,9 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Internal;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -37,6 +39,44 @@ namespace Syadeu.Presentation
         private const string 
             c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.",
             c_AttributeEmptyWarning = "Entity({0}) has empty attribute. This is not allowed. Request Ignored.";
+
+        internal sealed class SystemReferences : IDisposable
+        {
+            private EntitySystem m_EntitySystem;
+            private EventSystem m_EventSystem;
+            private DataContainerSystem m_DataContainerSystem;
+            private GameObjectProxySystem m_GameObjectProxySystem;
+            private Components.EntityComponentSystem m_ComponentSystem;
+
+            public EntitySystem EntitySystem => m_EntitySystem;
+            public EventSystem EventSystem => m_EventSystem;
+            public DataContainerSystem DataContainerSystem => m_DataContainerSystem;
+            public GameObjectProxySystem GameObjectProxySystem => m_GameObjectProxySystem;
+            public Components.EntityComponentSystem EntityComponentSystem => m_ComponentSystem;
+
+            public void Initialize(
+                EntitySystem entitySystem,
+                EventSystem eventSystem,
+                DataContainerSystem dataContainerSystem,
+                GameObjectProxySystem gameObjectProxySystem,
+                Components.EntityComponentSystem componentSystem)
+            {
+                m_EntitySystem = entitySystem;
+                m_EventSystem = eventSystem;
+                m_DataContainerSystem = dataContainerSystem;
+                m_GameObjectProxySystem = gameObjectProxySystem;
+                m_ComponentSystem = componentSystem;
+            }
+
+            public void Dispose()
+            {
+                m_EntitySystem = null;
+                m_EventSystem = null;
+                m_DataContainerSystem = null;
+                m_GameObjectProxySystem = null;
+                m_ComponentSystem = null;
+            }
+        }
 
         /// <summary>
         /// 엔티티가 생성될때 실행되는 이벤트 delegate 입니다.
@@ -58,13 +98,24 @@ namespace Syadeu.Presentation
         private readonly Dictionary<Type, List<IEntityDataProcessor>> 
             m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
 
+        private SystemReferences m_SystemReferences;
+
+        private EventSystem m_EventSystem;
+        private DataContainerSystem m_DataContainerSystem;
+        private GameObjectProxySystem m_GameObjectProxySystem;
         private Components.EntityComponentSystem m_ComponentSystem;
 
         #region Presentation Methods
 
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Components.EntityComponentSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, DataContainerSystem>(Bind);
+        }
         protected override void OnInitializeAsync()
         {
-
+            m_SystemReferences = new SystemReferences();
 
             Type[] processors = TypeHelper.GetTypes(ProcessorPredicate);
             for (int i = 0; i < processors.Length; i++)
@@ -118,19 +169,31 @@ namespace Syadeu.Presentation
                 }
 
                 ProcessorBase baseProcessor = (ProcessorBase)processor;
-                baseProcessor.m_EntitySystem = System;
+                baseProcessor.m_SystemReferences = m_SystemReferences;
 
                 processor.OnInitializeAsync();
             }
         }
         static bool ProcessorPredicate(Type other) => !other.IsAbstract && !other.IsInterface && TypeHelper.TypeOf<IProcessor>.Type.IsAssignableFrom(other);
 
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+        }
+        private void Bind(DataContainerSystem other)
+        {
+            m_DataContainerSystem = other;
+        }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_GameObjectProxySystem = other;
+        }
         private void Bind(Components.EntityComponentSystem other)
         {
             m_ComponentSystem = other;
         }
 
-        protected override void OnShutDown()
+        protected override void OnDispose()
         {
             foreach (var item in m_EntityProcessors)
             {
@@ -146,20 +209,24 @@ namespace Syadeu.Presentation
                     item.Value[a].Dispose();
                 }
             }
-        }
-        protected override void OnDispose()
-        {
+
             m_AttributeProcessors.Clear();
             m_EntityProcessors.Clear();
 
             OnEntityCreated = null;
             OnEntityDestroy = null;
 
+            m_EventSystem = null;
+            m_DataContainerSystem = null;
+            m_GameObjectProxySystem = null;
             m_ComponentSystem = null;
         }
 
         protected override void OnStartPresentation()
         {
+            m_SystemReferences.Initialize(
+                System, m_EventSystem, m_DataContainerSystem, m_GameObjectProxySystem, m_ComponentSystem);
+
             foreach (var item in m_EntityProcessors)
             {
                 for (int i = 0; i < item.Value.Count; i++)
