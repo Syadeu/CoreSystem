@@ -131,7 +131,7 @@ namespace Syadeu.Presentation.Map
         }
     }
     [Preserve]
-    internal sealed class SceneDataEntityProcessor : EntityDataProcessor<SceneDataEntity>
+    internal sealed class SceneDataEntityProcessor : EntityProcessor<SceneDataEntity>
     {
         protected override void OnCreated(SceneDataEntity entity)
         {

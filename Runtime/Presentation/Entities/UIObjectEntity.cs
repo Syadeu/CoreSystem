@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<UIObjectEntity>();
         }
     }
-    internal sealed class UIObjectProcessor : EntityDataProcessor<UIObjectEntity>, 
+    internal sealed class UIObjectProcessor : EntityProcessor<UIObjectEntity>, 
         IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         private WorldCanvasSystem m_WorldCanvasSystem;

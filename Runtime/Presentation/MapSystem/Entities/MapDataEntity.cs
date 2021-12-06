@@ -60,7 +60,7 @@ namespace Syadeu.Presentation.Map
             AotHelper.EnsureList<MapDataEntity>();
         }
     }
-    public sealed class MapDataProcessor : EntityDataProcessor<MapDataEntity>
+    public sealed class MapDataProcessor : EntityProcessor<MapDataEntity>
     {
         protected override void OnCreated(MapDataEntity entity)
         {

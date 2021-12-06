@@ -128,7 +128,7 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<FXEntity>();
         }
     }
-    internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
+    internal sealed class FXEntityProcessor : EntityProcessor<FXEntity>,
         IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         protected override void OnCreated(FXEntity entity)

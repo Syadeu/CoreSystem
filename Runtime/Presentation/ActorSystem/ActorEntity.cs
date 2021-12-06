@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Actor
             AotHelper.EnsureList<ActorEntity>();
         }
     }
-    internal sealed class ActorProccesor : EntityDataProcessor<ActorEntity>
+    internal sealed class ActorProccesor : EntityProcessor<ActorEntity>
     {
         protected override void OnCreated(ActorEntity actor)
         {

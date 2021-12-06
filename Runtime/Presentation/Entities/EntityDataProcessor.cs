@@ -23,14 +23,14 @@ namespace Syadeu.Presentation.Entities
     /// <summary>
     /// <see cref="EntityDataBase"/>의 동작부를 선언할 수 있습니다.
     /// </summary>
-    [Preserve, Obsolete("Use EntityProcessor")]
+    [Preserve, Obsolete("Use EntityProcessor", true)]
     public abstract class EntityDataProcessor : ProcessorBase, IEntityDataProcessor
     {
-        internal override void InternalOnCreated(ObjectBase obj)
+        internal override void InternalOnCreated(IObject obj)
         {
             throw new NotImplementedException();
         }
-        internal override void InternalOnDestroy(ObjectBase obj)
+        internal override void InternalOnDestroy(IObject obj)
         {
             throw new NotImplementedException();
         }
@@ -59,14 +59,14 @@ namespace Syadeu.Presentation.Entities
     }
     /// <inheritdoc cref="EntityDataProcessor"/>
     /// <typeparam name="T"></typeparam>
-    [Preserve, Obsolete("Use EntityProcessor")]
+    [Preserve, Obsolete("Use EntityProcessor", true)]
     public abstract class EntityDataProcessor<T> : ProcessorBase, IEntityDataProcessor where T : EntityDataBase
     {
-        internal override void InternalOnCreated(ObjectBase obj)
+        internal override void InternalOnCreated(IObject obj)
         {
             throw new NotImplementedException();
         }
-        internal override void InternalOnDestroy(ObjectBase obj)
+        internal override void InternalOnDestroy(IObject obj)
         {
             throw new NotImplementedException();
         }

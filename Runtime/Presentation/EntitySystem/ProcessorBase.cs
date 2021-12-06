@@ -93,8 +93,8 @@ namespace Syadeu.Presentation
         void IProcessor.OnInitialize() => OnInitialize();
         void IProcessor.OnInitializeAsync() => OnInitializeAsync();
 
-        internal abstract void InternalOnCreated(ObjectBase obj);
-        internal abstract void InternalOnDestroy(ObjectBase obj);
+        internal abstract void InternalOnCreated(IObject obj);
+        internal abstract void InternalOnDestroy(IObject obj);
 
         void IDisposable.Dispose()
         {
@@ -106,25 +106,5 @@ namespace Syadeu.Presentation
         protected virtual void OnInitialize() { }
         protected virtual void OnInitializeAsync() { }
         protected virtual void OnDispose() { }
-    }
-
-    public abstract class EntityProcessor : ProcessorBase
-    {
-        internal override void InternalOnCreated(ObjectBase obj) => OnCreated(obj);
-        internal override void InternalOnDestroy(ObjectBase obj) => OnDestroy(obj);
-
-        protected virtual void OnCreated(ObjectBase obj) { }
-        protected virtual void OnDestroy(ObjectBase obj) { }
-    }
-    public abstract class EntityProcessor<TEntity> : ProcessorBase
-        where TEntity : ObjectBase
-    {
-        public override sealed Type Target => TypeHelper.TypeOf<TEntity>.Type;
-
-        internal override void InternalOnCreated(ObjectBase obj) => OnCreated((TEntity)obj);
-        internal override void InternalOnDestroy(ObjectBase obj) => OnDestroy((TEntity)obj);
-
-        protected virtual void OnCreated(ObjectBase obj) { }
-        protected virtual void OnDestroy(ObjectBase obj) { }
     }
 }

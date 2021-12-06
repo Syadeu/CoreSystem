@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
@@ -95,11 +94,6 @@ namespace Syadeu.Presentation
 
         private Dictionary<Type, List<ProcessorBase>> m_Processors;
 
-        private readonly Dictionary<Type, List<IAttributeProcessor>> 
-            m_AttributeProcessors = new Dictionary<Type, List<IAttributeProcessor>>();
-        private readonly Dictionary<Type, List<IEntityDataProcessor>> 
-            m_EntityProcessors = new Dictionary<Type, List<IEntityDataProcessor>>();
-
         private SystemReferences m_SystemReferences;
 
         private EventSystem m_EventSystem;
@@ -133,36 +127,10 @@ namespace Syadeu.Presentation
                     processor = (ProcessorBase)ctor.Invoke(null);
                 }
 
-                if (TypeHelper.TypeOf<IAttributeProcessor>.Type.IsAssignableFrom(processorType))
+                if (!TypeHelper.TypeOf<ObjectBase>.Type.IsAssignableFrom(processor.Target))
                 {
-                    if (!TypeHelper.TypeOf<AttributeBase>.Type.IsAssignableFrom(processor.Target))
-                    {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Attribute processor {TypeHelper.ToString(processorType)} has an invalid target");
-                    }
-
-                    if (!m_AttributeProcessors.TryGetValue(processor.Target, out var values))
-                    {
-                        values = new List<IAttributeProcessor>();
-                        m_AttributeProcessors.Add(processor.Target, values);
-                    }
-                    values.Add((IAttributeProcessor)processor);
-                }
-                else if (TypeHelper.TypeOf<IEntityDataProcessor>.Type.IsAssignableFrom(processorType))
-                {
-                    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(processor.Target))
-                    {
-                        throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                            $"Entity processor {TypeHelper.ToString(processorType)} has an invalid target");
-                    }
-
-                    if (!m_EntityProcessors.TryGetValue(processor.Target, out var values))
-                    {
-                        values = new List<IEntityDataProcessor>();
-                        m_EntityProcessors.Add(processor.Target, values);
-                    }
-
-                    values.Add((IEntityDataProcessor)processor);
+                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                        $"Entity processor {TypeHelper.ToString(processorType)} has an invalid target");
                 }
 
                 if (!m_Processors.TryGetValue(processor.Target, out var processorList))
@@ -172,8 +140,7 @@ namespace Syadeu.Presentation
                 }
                 processorList.Add(processor);
 
-                ProcessorBase baseProcessor = (ProcessorBase)processor;
-                baseProcessor.m_SystemReferences = m_SystemReferences;
+                processor.m_SystemReferences = m_SystemReferences;
 
                 ((IProcessor)processor).OnInitializeAsync();
             }
@@ -199,23 +166,15 @@ namespace Syadeu.Presentation
 
         protected override void OnDispose()
         {
-            foreach (var item in m_EntityProcessors)
+            foreach (var item in m_Processors)
             {
                 for (int a = 0; a < item.Value.Count; a++)
                 {
-                    item.Value[a].Dispose();
-                }
-            }
-            foreach (var item in m_AttributeProcessors)
-            {
-                for (int a = 0; a < item.Value.Count; a++)
-                {
-                    item.Value[a].Dispose();
+                    ((IDisposable)item.Value[a]).Dispose();
                 }
             }
 
-            m_AttributeProcessors.Clear();
-            m_EntityProcessors.Clear();
+            m_Processors.Clear();
 
             m_SystemReferences.Dispose();
             m_SystemReferences = null;
@@ -234,18 +193,11 @@ namespace Syadeu.Presentation
             m_SystemReferences.Initialize(
                 System, m_EventSystem, m_DataContainerSystem, m_GameObjectProxySystem, m_ComponentSystem);
 
-            foreach (var item in m_EntityProcessors)
+            foreach (var item in m_Processors)
             {
                 for (int i = 0; i < item.Value.Count; i++)
                 {
-                    item.Value[i].OnInitialize();
-                }
-            }
-            foreach (var item in m_AttributeProcessors)
-            {
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    item.Value[i].OnInitialize();
+                    ((IProcessor)item.Value[i]).OnInitialize();
                 }
             }
         }
@@ -275,40 +227,19 @@ namespace Syadeu.Presentation
 
                 Type t = entity.Attributes[i].GetType();
 
-                if (!TypeHelper.TypeOf<AttributeBase>.Type.Equals(t.BaseType))
-                {
-                    if (system.m_AttributeProcessors.TryGetValue(t.BaseType, out List<IAttributeProcessor> groupProcessors))
-                    {
-                        for (int j = 0; j < groupProcessors.Count; j++)
-                        {
-                            IAttributeProcessor processor = groupProcessors[j];
-
-                            try
-                            {
-                                processor.OnCreated(entity.Attributes[i], entityData);
-                            }
-                            catch (Exception ex)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
-                            }
-                        }
-                        CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
-                    }
-                }
-
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(t, out var processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        IAttributeProcessor processor = processors[j];
+                        ProcessorBase processor = processors[j];
 
                         try
                         {
-                            processor.OnCreated(entity.Attributes[i], entityData);
+                            processor.InternalOnCreated(entity.Attributes[i]);
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnCreated));
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
                         }
                     }
                     CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
@@ -317,19 +248,19 @@ namespace Syadeu.Presentation
             #endregion
 
             #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
                 {
-                    IEntityDataProcessor processor = entityProcessor[i];
+                    ProcessorBase processor = entityProcessor[i];
 
                     try
                     {
-                        processor.OnCreated(entity);
+                        processor.InternalOnCreated(entity);
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnCreated));
+                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
                     }
                 }
             }
@@ -401,19 +332,19 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(t, out var processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
-                        IAttributeProcessor processor = processors[j];
+                        ProcessorBase processor = processors[j];
 
                         try
                         {
-                            processor.OnDestroy(other, entityData);
+                            processor.InternalOnDestroy(other);
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeProcessor.OnDestroy));
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
                         }
                     }
                 }
@@ -430,19 +361,19 @@ namespace Syadeu.Presentation
             #endregion
 
             #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
                 {
-                    IEntityDataProcessor processor = entityProcessor[i];
+                    ProcessorBase processor = entityProcessor[i];
 
                     try
                     {
-                        processor.OnDestroy(entity);
+                        processor.InternalOnDestroy(entity);
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityDataProcessor.OnDestroy));
+                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
                     }
                 }
             }
@@ -479,7 +410,7 @@ namespace Syadeu.Presentation
             Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
 
             #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
                 {
@@ -511,7 +442,7 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(t, out var processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {
@@ -549,7 +480,7 @@ namespace Syadeu.Presentation
             Entity<IEntity> entityData = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
 
             #region Entity
-            if (system.m_EntityProcessors.TryGetValue(entity.GetType(), out List<IEntityDataProcessor> entityProcessor))
+            if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
                 {
@@ -580,7 +511,7 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                if (system.m_AttributeProcessors.TryGetValue(t, out List<IAttributeProcessor> processors))
+                if (system.m_Processors.TryGetValue(t, out var processors))
                 {
                     for (int j = 0; j < processors.Count; j++)
                     {

@@ -28,20 +28,21 @@ namespace Syadeu.Presentation.Attributes
     /// <remarks>
     /// 참조: <seealso cref="IAttributeOnProxy"/>, <seealso cref="IAttributeOnProxyCreated"/>, <seealso cref="IAttributeOnProxyRemoved"/>
     /// </remarks>
-    [Preserve, Obsolete("Use EntityProcessor")]
-    public abstract class AttributeProcessor : ProcessorBase, IAttributeProcessor
+    [Preserve]
+    public abstract class AttributeProcessor : ProcessorBase
     {
-        internal override void InternalOnCreated(ObjectBase obj)
+        internal override void InternalOnCreated(IObject obj)
         {
-            throw new NotImplementedException();
-        }
-        internal override void InternalOnDestroy(ObjectBase obj)
-        {
-            throw new NotImplementedException();
-        }
+            AttributeBase att = (AttributeBase)obj;
 
-        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated(attribute, entity);
-        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy(attribute, entity);
+            OnCreated(att, att.Parent);
+        }
+        internal override void InternalOnDestroy(IObject obj)
+        {
+            AttributeBase att = (AttributeBase)obj;
+
+            OnDestroy(att, att.Parent);
+        }
 
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="ObjectBase"/>가 부착된 <see cref="IEntityData"/>가
@@ -65,30 +66,31 @@ namespace Syadeu.Presentation.Attributes
         protected virtual void OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) { }
     }
     /// <inheritdoc cref="AttributeProcessor"/>
-    /// <typeparam name="T"></typeparam>
-    [Preserve, Obsolete("Use EntityProcessor")]
-    public abstract class AttributeProcessor<T> : ProcessorBase, IAttributeProcessor 
-        where T : AttributeBase
+    /// <typeparam name="TEntity"></typeparam>
+    [Preserve]
+    public abstract class AttributeProcessor<TEntity> : ProcessorBase
+        where TEntity : AttributeBase
     {
-        internal override void InternalOnCreated(ObjectBase obj)
+        internal override void InternalOnCreated(IObject obj)
         {
-            throw new NotImplementedException();
+            TEntity att = (TEntity)obj;
+            
+            OnCreated(att, att.Parent);
         }
-        internal override void InternalOnDestroy(ObjectBase obj)
+        internal override void InternalOnDestroy(IObject obj)
         {
-            throw new NotImplementedException();
+            TEntity att = (TEntity)obj;
+
+            OnDestroy(att, att.Parent);
         }
 
-        void IAttributeProcessor.OnCreated(IAttribute attribute, EntityData<IEntityData> entity) => OnCreated((T)attribute, entity);
-        void IAttributeProcessor.OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) => OnDestroy((T)attribute, entity);
-
-        public override Type Target => TypeHelper.TypeOf<T>.Type;
+        public override sealed Type Target => TypeHelper.TypeOf<TEntity>.Type;
 
         /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, EntityData{IEntityData})"/>
-        protected virtual void OnCreated(T attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnCreated(TEntity attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, EntityData{IEntityData})"/>
         /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, EntityData{IEntityData})"/>
-        protected virtual void OnDestroy(T attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnDestroy(TEntity attribute, EntityData<IEntityData> entity) { }
         /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, EntityData{IEntityData})"/>
     }
 }
