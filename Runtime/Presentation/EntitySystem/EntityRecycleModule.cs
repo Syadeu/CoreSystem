@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
         public void InsertReservedObject(IObject obj)
         {
             ObjectBase temp = (ObjectBase)obj;
-            temp.InternalReserve();
+            temp.InternalOnReserve();
 
             if (obj is ConvertedEntity)
             {

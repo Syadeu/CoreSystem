@@ -251,6 +251,7 @@ namespace Syadeu.Presentation
                     ProcessNonEntityDestroy(entityList[i], entityList[i].Idx, false);
                 }
 
+                entityList[i].InternalOnReserve();
                 entityList[i].InternalOnDestroy();
                 ((IDisposable)entityList[i]).Dispose();
             }

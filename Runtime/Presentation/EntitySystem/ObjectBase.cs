@@ -103,7 +103,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// Pool 로 돌아갈 때 실행됩니다.
         /// </summary>
-        internal virtual void InternalReserve()
+        internal virtual void InternalOnReserve()
         {
             OnReserve();
             m_Reserved = true;

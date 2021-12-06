@@ -42,6 +42,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             Parent.RemoveComponent<TRPGActorAttackComponent>();
 
+            m_TempGetRange.Clear();
+        }
+        protected override void OnDestroy()
+        {
             m_TempGetRange.Dispose();
         }
 

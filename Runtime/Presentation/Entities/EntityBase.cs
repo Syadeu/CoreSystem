@@ -69,9 +69,9 @@ namespace Syadeu.Presentation.Entities
 
             return true;
         }
-        internal override void InternalReserve()
+        internal override void InternalOnReserve()
         {
-            base.InternalReserve();
+            base.InternalOnReserve();
 
             transform = null;
         }
