@@ -168,14 +168,14 @@ namespace Syadeu.Presentation
 
             EntityProcessorModule.ProcessEntityOnDestroy(GetModule<EntityProcessorModule>(), entityData, insID);
 
-            m_ComponentSystem
-                .RemoveNotifiedComponents
-                    (
-                        targetObject, insID
-#if DEBUG_MODE
-                        , Debug_RemoveComponent
-#endif
-                    );
+//            m_ComponentSystem
+//                .RemoveNotifiedComponents
+//                    (
+//                        targetObject, insID
+//#if DEBUG_MODE
+//                        , Debug_RemoveComponent
+//#endif
+//                    );
 
 #if DEBUG_MODE
             GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(targetObject);
@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
             m_ComponentSystem
                 .RemoveNotifiedComponents
                     (
-                        targetObject, insID
+                        targetObject
 #if DEBUG_MODE
                         , Debug_RemoveComponent
 #endif

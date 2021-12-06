@@ -50,11 +50,12 @@ namespace Syadeu.Presentation.Actor
                 worldCanvasSystem.RegisterActorOverlayUI(entity, m_UIEntries[i]);
             }
         }
-        protected override void OnDestroy(ref ActorOverlayUIComponent component)
+        protected override void OnReserve(ref ActorOverlayUIComponent component)
         {
             WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
             worldCanvasSystem.RemoveAllOverlayUI(Parent.ToEntity<IEntity>());
         }
+
         protected override void OnEventReceived<TEvent>(TEvent ev)
         {
             WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;

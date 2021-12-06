@@ -51,25 +51,13 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity, ex);
             }
         }
-
         void IActorProvider.OnCreated()
         {
             if (!m_Parent.HasComponent<TComponent>())
             {
                 m_Parent.AddComponent<TComponent>();
             }
-
-            ((IActorProvider<TComponent>)this).OnCreated(ref m_Parent.GetComponent<TComponent>());
-        }
-        void IActorProvider.OnReserve()
-        {
-            ((IActorProvider<TComponent>)this).OnReserve(ref m_Parent.GetComponent<TComponent>());
-
-            m_Parent.RemoveComponent<TComponent>();
-        }
-        void IActorProvider.OnDestroy()
-        {
-            ((IActorProvider<TComponent>)this).OnDestroy(ref m_Parent.GetComponent<TComponent>());
+            OnCreated(ref m_Parent.GetComponent<TComponent>());
         }
 
         void IActorProvider.OnProxyCreated()
@@ -87,19 +75,6 @@ namespace Syadeu.Presentation.Actor
 
         public TComponent Component => m_Parent.GetComponent<TComponent>();
 
-        void IActorProvider<TComponent>.OnCreated(ref TComponent component)
-        {
-            OnCreated(ref component);
-        }
-        void IActorProvider<TComponent>.OnReserve(ref TComponent component)
-        {
-            OnReserve(ref component);
-        }
-        void IActorProvider<TComponent>.OnDestroy(ref TComponent component)
-        {
-            OnDestroy(ref component);
-        }
-        
         void IActorProvider<TComponent>.OnProxyCreated(ref TComponent component, ITransform transform)
         {
             OnProxyCreated(ref component, transform);
@@ -111,18 +86,12 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
-        protected override sealed void OnCreated()
-        {
-            base.OnCreated();
-        }
         protected override sealed void OnReserve()
         {
-            base.OnReserve();
+            OnReserve(ref m_Parent.GetComponent<TComponent>());
 
+            m_Parent.RemoveComponent<TComponent>();
             m_Parent = EntityData<IEntityData>.Empty;
-        }
-        protected override sealed void OnDestroy()
-        {
         }
 
         protected virtual void OnEventReceived<TEvent>(TEvent ev)
@@ -135,7 +104,6 @@ namespace Syadeu.Presentation.Actor
 
         protected virtual void OnCreated(ref TComponent component) { }
         protected virtual void OnReserve(ref TComponent component) { }
-        protected virtual void OnDestroy(ref TComponent component) { }
 
         protected virtual void OnProxyCreated(ref TComponent component, ITransform transform) { }
         protected virtual void OnProxyRemoved(ref TComponent component, ITransform transform) { }

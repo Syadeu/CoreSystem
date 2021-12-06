@@ -55,19 +55,19 @@ namespace Syadeu.Presentation.Components
             m_EntitySystem = other;
         }
 
-        public void TryRemoveComponent(IObject rawObject, InstanceID entityID, Action<InstanceID, Type> onRemove)
+        public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
         {
-            //Entity<IEntity> entity = entityID.GetEntity<IEntity>();
-            //ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
             Hash rawID;
+            InstanceID instanceID;
             if (rawObject is AttributeBase attribute)
             {
-                entityID = attribute.ParentEntity.Idx;
                 rawID = attribute.ParentEntity.Hash;
+                instanceID = attribute.ParentEntity.Idx;
             }
             else
             {
                 rawID = rawObject.Hash;
+                instanceID = rawObject.Idx;
             }
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;
@@ -75,8 +75,8 @@ namespace Syadeu.Presentation.Components
             {
                 do
                 {
-                    onRemove?.Invoke(entityID, typeInfo.Type);
-                    System.RemoveComponent(entityID, typeInfo);
+                    onRemove?.Invoke(instanceID, typeInfo.Type);
+                    System.RemoveComponent(instanceID, typeInfo);
 
                 } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
@@ -100,8 +100,8 @@ namespace Syadeu.Presentation.Components
             var select = iter.Select(i => i.GenericTypeArguments[0]);
             foreach (var componentType in select)
             {
-                onRemove?.Invoke(entityID, componentType);
-                System.RemoveComponent(entityID, componentType);
+                onRemove?.Invoke(instanceID, componentType);
+                System.RemoveComponent(instanceID, componentType);
 
                 m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
             }

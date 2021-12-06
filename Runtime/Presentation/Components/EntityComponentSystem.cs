@@ -530,11 +530,11 @@ namespace Syadeu.Presentation.Components
             //EntityData<IEntityData> entity = ((INotifyComponent)obj).Parent;
             RemoveComponent(obj.Idx, interfaceType.GenericTypeArguments[0]);
         }
-        public void RemoveNotifiedComponents(IObject obj, InstanceID insID, Action<InstanceID, Type> onRemove = null)
+        public void RemoveNotifiedComponents(IObject obj, Action<InstanceID, Type> onRemove = null)
         {
             using (s_RemoveNotifiedComponentMarker.Auto())
             {
-                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, insID, onRemove);
+                GetModule<EntityNotifiedComponentModule>().TryRemoveComponent(obj, onRemove);
             }
         }
         public bool HasComponent<TComponent>(in InstanceID entity) 
@@ -785,7 +785,7 @@ namespace Syadeu.Presentation.Components
             {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
-                    $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.Hash}) : index{index}".ToLogError();
+                    $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.Hash}, {entity.GetObject().Name}) : index{index}".ToLogError();
                     return;
                 }
 

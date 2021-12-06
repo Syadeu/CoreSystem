@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Render
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnShutDown()
         {
             foreach (var item in m_AttachedUIHashMap)
             {
@@ -103,12 +103,14 @@ namespace Syadeu.Presentation.Render
                 }
             }
 
-            m_AttachedUIHashMap.Dispose();
-
             if (m_Canvas != null)
             {
                 Destroy(m_Canvas.gameObject);
             }
+        }
+        public override void OnDispose()
+        {
+            m_AttachedUIHashMap.Dispose();
 
             m_RenderSystem = null;
             m_CoroutineSystem = null;

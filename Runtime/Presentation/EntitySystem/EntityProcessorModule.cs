@@ -348,15 +348,6 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
-
-
-                system.m_ComponentSystem
-                    .RemoveNotifiedComponents(
-                        other, insID
-#if DEBUG_MODE
-                        //, system.Debug_RemoveComponent
-#endif
-                    );
             }
             #endregion
 
@@ -378,6 +369,14 @@ namespace Syadeu.Presentation
                 }
             }
             #endregion
+
+            system.m_ComponentSystem
+                .RemoveNotifiedComponents(
+                    entity
+#if DEBUG_MODE
+                    //, system.Debug_RemoveComponent
+#endif
+                    );
 
             system.OnEntityDestroy?.Invoke(entity);
 

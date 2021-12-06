@@ -115,7 +115,8 @@ namespace Syadeu.Presentation.Actor
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());
+                //ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());
+                EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
             }
 
             entity.RemoveComponent<ActorControllerComponent>();
@@ -127,10 +128,6 @@ namespace Syadeu.Presentation.Actor
         private static void ExecuteOnCreated(IActorProvider provider)
         {
             provider.OnCreated();
-        }
-        private static void ExecuteOnDestroy(IActorProvider provider)
-        {
-            provider.OnDestroy();
         }
 
         public void OnProxyCreated(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)

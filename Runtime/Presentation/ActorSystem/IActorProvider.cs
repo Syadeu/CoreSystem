@@ -33,10 +33,7 @@ namespace Syadeu.Presentation.Actor
 #else
             where TEvent : unmanaged, IActorEvent;
 #endif
-
         void OnCreated();
-        void OnReserve();
-        void OnDestroy();
 
         void OnProxyCreated();
         void OnProxyRemoved();
@@ -46,10 +43,6 @@ namespace Syadeu.Presentation.Actor
     {
         [JsonIgnore]
         new TComponent Component { get; }
-
-        void OnCreated(ref TComponent component);
-        void OnReserve(ref TComponent component);
-        void OnDestroy(ref TComponent component);
 
         void OnProxyCreated(ref TComponent component, ITransform transform);
         void OnProxyRemoved(ref TComponent component, ITransform transform);
