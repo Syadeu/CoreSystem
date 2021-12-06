@@ -175,6 +175,7 @@ namespace Syadeu.Presentation
             }
 
             m_Processors.Clear();
+            m_Processors = null;
 
             m_SystemReferences.Dispose();
             m_SystemReferences = null;
@@ -348,6 +349,14 @@ namespace Syadeu.Presentation
                         }
                     }
                 }
+
+                system.m_ComponentSystem
+                    .RemoveNotifiedComponents(
+                        other
+#if DEBUG_MODE
+                        //, system.Debug_RemoveComponent
+#endif
+                    );
             }
             #endregion
 

@@ -35,7 +35,8 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Attribute: Actor Controller")]
-    public sealed class ActorControllerAttribute : ActorAttributeBase
+    public sealed class ActorControllerAttribute : ActorAttributeBase,
+        INotifyComponent<ActorControllerComponent>
     {
         [Header("General")]
         [JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
@@ -118,8 +119,6 @@ namespace Syadeu.Presentation.Actor
                 //ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());
                 EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
             }
-
-            entity.RemoveComponent<ActorControllerComponent>();
         }
         private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
         {
