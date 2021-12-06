@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Actions
                 m_Volume = m_Volume
             };
 
-            m_CoroutineSystem.PostCoroutineJob(job);
+            m_CoroutineSystem.StartCoroutine(job);
         }
 
         private struct PlayJob : ICoroutineJob

@@ -136,11 +136,11 @@ namespace Syadeu.Presentation.Actor
             system.ScheduleEvent(entity, ev, overrideSameEvent);
         }
 
-        protected static CoroutineJob StartCoroutine<TJob>(TJob cor)
+        protected static CoroutineHandler StartCoroutine<TJob>(TJob cor)
             where TJob : ICoroutineJob
         {
             CoroutineSystem coroutineSystem = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
-            return coroutineSystem.PostCoroutineJob(cor);
+            return coroutineSystem.StartCoroutine(cor);
         }
     }
 }

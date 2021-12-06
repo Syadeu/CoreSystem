@@ -83,7 +83,7 @@ namespace Syadeu.Presentation.Entities
                 FXEntity fx = m_Instance.GetObject();
                 //fx.SetPlayOptions(m_PlayOption);
 
-                coroutineSystem.PostCoroutineJob(new FireCoroutine
+                coroutineSystem.StartCoroutine(new FireCoroutine
                 {
                     m_FXEntity = m_Instance,
                     m_PlayOption = fx.PlayOptions,

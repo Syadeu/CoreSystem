@@ -663,7 +663,7 @@ namespace Syadeu.Presentation.Map
             }
 
             agent.m_MoveJob 
-                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
+                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
         }
     }
     public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence
@@ -715,7 +715,7 @@ namespace Syadeu.Presentation.Map
             }
 
             agent.m_MoveJob
-                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(m_MoveJob);
+                = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
         }
     }
 
@@ -724,7 +724,7 @@ namespace Syadeu.Presentation.Map
         internal bool m_IsMoving;
         internal float3 m_Direction;
         internal float3 m_PreviousTarget, m_Destination;
-        internal CoroutineJob m_MoveJob;
+        internal CoroutineHandler m_MoveJob;
 
         internal FixedReferenceList64<TriggerAction> m_OnMoveActions;
         internal FixedReferenceList64<TriggerPredicateAction> m_UpdateTRSWhile;

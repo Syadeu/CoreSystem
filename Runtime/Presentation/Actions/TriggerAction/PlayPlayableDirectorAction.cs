@@ -110,7 +110,7 @@ namespace Syadeu.Presentation.Actions
                 m_OnEndAction = m_OnEndAction.ToFixedList64()
             };
 
-            m_CoroutineSystem.PostSequenceIterationJob(job);
+            m_CoroutineSystem.StartCoroutine(job);
         }
         protected override void OnReserve()
         {

@@ -59,7 +59,7 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
         internal Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonIgnore] CoroutineJob m_WeaponPoser;
+        [JsonIgnore] CoroutineHandler m_WeaponPoser;
 
         protected override void OnCreated(ref ActorWeaponComponent component)
         {

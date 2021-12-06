@@ -299,7 +299,7 @@ namespace Syadeu.Presentation.Render
 
             if (setting.m_UpdateType != Actor.UpdateType.Manual)
             {
-                m_CoroutineSystem.PostCoroutineJob(updateJob);
+                m_CoroutineSystem.StartCoroutine(updateJob);
             }
         }
         public void UnregisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
@@ -453,12 +453,17 @@ namespace Syadeu.Presentation.Render
 
                 WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
 
-                while (m_Entity.IsValid() && m_InstanceObject.IsValid())
+                while (true)
                 {
                     if (renderSystem.Camera == null)
                     {
                         yield return waitUntil;
                     }
+                    if (m_Entity.IsValid() && m_InstanceObject.IsValid())
+                    {
+                        break;
+                    }
+
                     camTr = renderSystem.Camera.transform;
 
                     SetPosition(in setting);

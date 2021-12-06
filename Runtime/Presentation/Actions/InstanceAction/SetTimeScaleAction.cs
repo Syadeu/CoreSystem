@@ -65,7 +65,7 @@ namespace Syadeu.Presentation.Actions
                 m_TargetUpdateTime = m_TargetUpdateTime
             };
 
-            PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.PostCoroutineJob(job);
+            PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(job);
         }
 
         private struct UpdateJob : ICoroutineJob
