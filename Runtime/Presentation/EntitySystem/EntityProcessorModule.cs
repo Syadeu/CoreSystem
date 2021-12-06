@@ -205,6 +205,20 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public void ProceessOnCreated(ObjectBase obj)
+        {
+            const string c_CreateStartMsg = "Create entity({0})";
+            CoreSystem.Logger.Log(Channel.Entity,
+                string.Format(c_CreateStartMsg, obj.Name));
+
+            if (obj is IEntityData entityData)
+            {
+                ProcessEntityOnCreated(this, entityData);
+            }
+
+            OnEntityCreated?.Invoke(obj);
+        }
+
         public void ProcessOnDestroy(ObjectBase obj)
         {
             InternalProcessOnReserve(obj);
@@ -221,6 +235,10 @@ namespace Syadeu.Presentation
         }
         private void InternalProcessOnReserve(ObjectBase obj)
         {
+            const string c_DestroyStartMsg = "Destroying entity({0})";
+            CoreSystem.Logger.Log(Channel.Entity,
+                string.Format(c_DestroyStartMsg, obj.Name));
+
             if (obj is IEntityData entityData)
             {
                 ProcessEntityOnDestroy(this, entityData);
@@ -256,14 +274,9 @@ namespace Syadeu.Presentation
             OnEntityDestroy?.Invoke(obj);
         }
 
-        public static void ProcessEntityOnCreated(EntityProcessorModule system, IEntityData entity)
+        private static void ProcessEntityOnCreated(EntityProcessorModule system, IEntityData entity)
         {
-            const string c_CreateStartMsg = "Create entity({0})";
-
             m_ProcessEntityOnCreateMarker.Begin();
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_CreateStartMsg, entity.Name));
 
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
 
@@ -362,12 +375,7 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnDestroy(EntityProcessorModule system, IEntityData entity)
         {
-            const string c_DestroyStartMsg = "Destroying entity({0})";
-
             m_ProcessEntityOnDestoryMarker.Begin();
-
-            CoreSystem.Logger.Log(Channel.Entity,
-                string.Format(c_DestroyStartMsg, entity.Name));
 
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
 

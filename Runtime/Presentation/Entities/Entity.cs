@@ -136,7 +136,19 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IObject.Name"/>
         public string Name => m_Idx.IsEmpty() ? c_Invalid : m_Name.ConvertToString();
         /// <inheritdoc cref="IObject.Hash"/>
-        public Hash Hash => Target.Hash;
+        public Hash Hash
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (Target == null)
+                {
+                    return Hash.Empty;
+                }
+#endif
+                return Target.Hash;
+            }
+        }
         /// <inheritdoc cref="IObject.Idx"/>
         public InstanceID Idx => m_Idx;
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();

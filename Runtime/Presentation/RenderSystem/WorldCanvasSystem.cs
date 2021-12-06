@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 #if CORESYSTEM_DOTWEEN
 using DG.Tweening;
 #endif
@@ -32,7 +36,8 @@ using UnityEngine.UI;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>
+    public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>,
+        INotifySystemModule<EntityOverlayUIModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -459,7 +464,7 @@ namespace Syadeu.Presentation.Render
                     {
                         yield return waitUntil;
                     }
-                    if (m_Entity.IsValid() && m_InstanceObject.IsValid())
+                    if (!m_Entity.IsValid())
                     {
                         break;
                     }

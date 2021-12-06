@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Entities
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        "An empty entity reference trying to access transform.");
+                        "An empty entity reference trying to access.");
                     return null;
                 }
 #endif

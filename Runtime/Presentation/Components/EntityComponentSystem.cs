@@ -810,7 +810,7 @@ namespace Syadeu.Presentation.Components
                         disposable.Dispose();
 
                         CoreSystem.Logger.Log(Channel.Component,
-                            $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash} disposed.");
+                            $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} disposed.");
                     }
                 }
                 catch (Exception ex)
@@ -819,7 +819,7 @@ namespace Syadeu.Presentation.Components
                 }
 
                 CoreSystem.Logger.Log(Channel.Component,
-                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash} removed");
+                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} removed");
             }
         }
 

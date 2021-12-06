@@ -410,7 +410,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
+                    $"You\'re trying to access to an invalid entity(t:{TypeHelper.ToString(t.GetType())}, {t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }

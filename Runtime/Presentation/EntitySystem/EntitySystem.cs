@@ -98,7 +98,7 @@ namespace Syadeu.Presentation
         internal readonly Dictionary<InstanceID, ObjectBase> m_ObjectEntities = new Dictionary<InstanceID, ObjectBase>();
         internal NativeHashMap<Hash, InstanceID> m_EntityGameObjects;
 
-        private readonly List<InstanceID> m_DestroyedObjectsInThisFrame = new List<InstanceID>();
+        private readonly Stack<InstanceID> m_DestroyedObjectsInThisFrame = new Stack<InstanceID>();
         
         private static Unity.Profiling.ProfilerMarker
             m_CreateEntityMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateEntity)}"),
@@ -133,22 +133,26 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
+
+        private Queue<InstanceID> m_WaitForRemove = new Queue<InstanceID>();
         private void Instance_PreUpdate()
         {
             if (CoreSystem.BlockCreateInstance) return;
 
-            int count = m_DestroyedObjectsInThisFrame.Count;
-            for (int i = 0; i < count; i++)
+            while (m_DestroyedObjectsInThisFrame.Count > 0)
             {
-                InstanceID id = m_DestroyedObjectsInThisFrame[i];
+                InstanceID id = m_DestroyedObjectsInThisFrame.Pop();
                 ObjectBase targetObject = m_ObjectEntities[id];
 
                 m_EntityProcessorModule.ProcessOnReserve(targetObject);
+
+                m_WaitForRemove.Enqueue(id);
             }
+
+            int count = m_WaitForRemove.Count;
             for (int i = count - 1; i >= 0; i--)
             {
-                InstanceID id = m_DestroyedObjectsInThisFrame[i];
-                m_DestroyedObjectsInThisFrame.RemoveAt(i);
+                InstanceID id = m_WaitForRemove.Dequeue();
                 m_ObjectEntities.Remove(id);
             }
         }
@@ -225,15 +229,16 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            InstanceID entity = m_EntityGameObjects[obj.m_Hash];
-            m_EntityGameObjects.Remove(obj.m_Hash);
+            //InstanceID entity = m_EntityGameObjects[obj.m_Hash];
+            //m_EntityGameObjects.Remove(obj.m_Hash);
 
-            if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
+            //if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
 
-            if (entityObj is EntityBase entityBase)
-            {
-                entityBase.transform = null;
-            }
+            //if (entityObj is EntityBase entityBase)
+            //{
+            //    entityBase.transform = null;
+            //}
+
             ////ObjectBase entityObj = m_ObjectEntities[entity];
 
             ////ProcessEntityDestroy(entityObj, true);
@@ -545,10 +550,9 @@ namespace Syadeu.Presentation
             //entity.m_HashCode = m_Random.NextInt(0, int.MaxValue);
 
             m_ObjectEntities.Add(entity.Idx, entity);
-
             m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
 
-            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), entity);
+            GetModule<EntityProcessorModule>().ProceessOnCreated(entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
         }
 
@@ -637,7 +641,7 @@ namespace Syadeu.Presentation
             
             m_ObjectEntities.Add(objClone.Idx, objClone);
 
-            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), objClone);
+            GetModule<EntityProcessorModule>().ProceessOnCreated(objClone);
             return EntityData<IEntityData>.GetEntity(objClone.Idx);
         }
 
@@ -723,6 +727,7 @@ namespace Syadeu.Presentation
 
             m_ObjectEntities.Add(clone.Idx, clone);
 
+            GetModule<EntityProcessorModule>().ProceessOnCreated(clone);
             return clone;
         }
 
@@ -799,10 +804,9 @@ namespace Syadeu.Presentation
             }
 
 
-            if (!CoreSystem.BlockCreateInstance)
-            {
-                m_DestroyedObjectsInThisFrame.Add(hash);
-            }
+            if (CoreSystem.BlockCreateInstance) return;
+
+            m_DestroyedObjectsInThisFrame.Push(hash);
         }
 
         internal bool IsDestroyed(in InstanceID idx)
@@ -986,7 +990,7 @@ namespace Syadeu.Presentation
 
             m_ObjectEntities.Add(entity.Idx, entity);
 
-            EntityProcessorModule.ProcessEntityOnCreated(GetModule<EntityProcessorModule>(), entity);
+            GetModule<EntityProcessorModule>().ProceessOnCreated(entity);
             return Entity<ConvertedEntity>.GetEntity(entity.Idx);
         }
 
