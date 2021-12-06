@@ -105,10 +105,10 @@ namespace Syadeu.Presentation
             m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
+        private void M_EntitySystem_OnEntityCreated(IObject obj)
         {
             if (!(obj is EntityBase entity)) return;
-            TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
@@ -119,9 +119,10 @@ namespace Syadeu.Presentation
 
             att.m_ClusterID = id;
         }
-        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
+        private void M_EntitySystem_OnEntityDestroy(IObject obj)
         {
-            TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
+            if (!(obj is EntityBase entity)) return;
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = m_TriggerBoundCluster.Remove(att.m_ClusterID);

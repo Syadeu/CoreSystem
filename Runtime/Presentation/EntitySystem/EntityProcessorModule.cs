@@ -83,14 +83,14 @@ namespace Syadeu.Presentation
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<IEntityData> OnEntityCreated;
+        public event Action<IObject> OnEntityCreated;
         /// <summary>
         /// 엔티티가 파괴될때 실행되는 이벤트 delegate 입니다.
         /// </summary>
         /// <remarks>
         /// 모든 프로세서가 동작한 후, 맨 마지막에 실행됩니다.
         /// </remarks>
-        public event Action<IEntityData> OnEntityDestroy;
+        public event Action<IObject> OnEntityDestroy;
 
         private Dictionary<Type, List<ProcessorBase>> m_Processors;
 
@@ -205,6 +205,57 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public void ProcessOnDestroy(ObjectBase obj)
+        {
+            InternalProcessOnReserve(obj);
+
+            obj.InternalOnReserve();
+            obj.InternalOnDestroy();
+            ((IDisposable)obj).Dispose();
+        }
+        public void ProcessOnReserve(ObjectBase obj)
+        {
+            InternalProcessOnReserve(obj);
+
+            System.GetModule<EntityRecycleModule>().InsertReservedObject(obj);
+        }
+        private void InternalProcessOnReserve(ObjectBase obj)
+        {
+            if (obj is IEntityData entityData)
+            {
+                ProcessEntityOnDestroy(this, entityData);
+            }
+
+            m_ComponentSystem
+                .RemoveNotifiedComponents(
+                    obj
+#if DEBUG_MODE
+                    //, system.Debug_RemoveComponent
+#endif
+                    );
+
+#if DEBUG_MODE
+            System.GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(obj);
+#endif
+
+            if (obj is EntityBase entity && entity.transform != null)
+            {
+                if (entity.transform is ProxyTransform tr)
+                {
+                    tr.Destroy();
+                }
+                else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
+                {
+                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+                    ((IDisposable)unityTr).Dispose();
+                }
+
+                entity.transform = null;
+            }
+
+            OnEntityDestroy?.Invoke(obj);
+        }
+
         public static void ProcessEntityOnCreated(EntityProcessorModule system, IEntityData entity)
         {
             const string c_CreateStartMsg = "Create entity({0})";
@@ -271,7 +322,7 @@ namespace Syadeu.Presentation
 
             m_ProcessEntityOnCreateMarker.End();
         }
-        public static void ProcessEntityOnPresentation(EntityProcessorModule system, IEntityData entity)
+        private static void ProcessEntityOnPresentation(EntityProcessorModule system, IEntityData entity)
         {
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
 
@@ -309,7 +360,7 @@ namespace Syadeu.Presentation
             //});
             //#endregion
         }
-        public static void ProcessEntityOnDestroy(EntityProcessorModule system, IEntityData entity, InstanceID insID)
+        private static void ProcessEntityOnDestroy(EntityProcessorModule system, IEntityData entity)
         {
             const string c_DestroyStartMsg = "Destroying entity({0})";
 
@@ -378,24 +429,6 @@ namespace Syadeu.Presentation
                 }
             }
             #endregion
-
-            system.m_ComponentSystem
-                .RemoveNotifiedComponents(
-                    entity
-#if DEBUG_MODE
-                    //, system.Debug_RemoveComponent
-#endif
-                    );
-
-            system.OnEntityDestroy?.Invoke(entity);
-
-            //for (int i = 0; i < entity.Attributes.Length; i++)
-            //{
-            //    IAttribute other = entity.Attributes[i];
-
-            //    //other.Dispose();
-            //    system.GetModule<EntityRecycleModule>().InsertReservedObject(entity.Attributes[i]);
-            //}
 
             m_ProcessEntityOnDestoryMarker.End();
         }
