@@ -235,7 +235,7 @@ namespace Syadeu.Presentation.Proxy
         }
         public void Remove(ProxyTransform transform)
         {
-            const string c_DestroyMsg = "ProxyTransform({0}) has been destroyed.";
+            //const string c_DestroyMsg = "ProxyTransform({0}) has been destroyed.";
 
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
@@ -264,8 +264,8 @@ namespace Syadeu.Presentation.Proxy
             p->m_ParentIndex = -1;
             p->m_ChildIndices.Clear();
 
-            CoreSystem.Logger.Log(Channel.Proxy,
-                string.Format(c_DestroyMsg, p->m_Prefab.GetObjectSetting().m_Name));
+            //CoreSystem.Logger.Log(Channel.Proxy,
+            //    string.Format(c_DestroyMsg, p->m_Prefab.GetObjectSetting().m_Name));
         }
         public void Clear()
         {

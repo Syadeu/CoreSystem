@@ -453,7 +453,7 @@ namespace Syadeu.Presentation.Render
 
                 WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
 
-                while (m_InstanceObject.IsValid())
+                while (m_Entity.IsValid() && m_InstanceObject.IsValid())
                 {
                     if (renderSystem.Camera == null)
                     {

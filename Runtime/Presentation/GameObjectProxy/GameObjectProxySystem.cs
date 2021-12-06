@@ -178,32 +178,45 @@ namespace Syadeu.Presentation.Proxy
             m_SceneSystem = other;
             m_SceneSystem.OnLoadingEnter += M_SceneSystem_OnLoadingEnter;
         }
-        private void M_SceneSystem_OnLoadingEnter()
+        private unsafe void M_SceneSystem_OnLoadingEnter()
         {
             m_LoadingLock = true;
             CoreSystem.Logger.Log(Channel.Proxy, true,
                 "Scene on loading enter lambda excute");
 
-            m_ProxyData.For(DestroyTransform);
+            //m_ProxyData.For(DestroyTransform);
+            m_ProxyData.For(RemoveProxy);
 
-            m_RequestDestories.Clear();
+            //m_RequestDestories.Clear();
 
             m_RequestProxyList.Clear();
             m_RemoveProxyList.Clear();
-            m_VisibleList.Clear();
-            m_InvisibleList.Clear();
+            //m_VisibleList.Clear();
+            //m_InvisibleList.Clear();
 
             ReleaseAllPrefabs();
 
-            m_ProxyData.Dispose();
-            m_ClusterData.Dispose();
-            m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
-            m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
+            //m_ProxyData.Dispose();
+            //m_ClusterData.Dispose();
+            //m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
+            //m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
             m_LoadingLock = false;
 
             void DestroyTransform(ProxyTransform tr)
             {
                 OnDataObjectDestroy?.Invoke(tr);
+            }
+            void RemoveProxy(ProxyTransform tr)
+            {
+                if (tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull))
+                {
+                    return;
+                }
+
+                int2 proxyIndex = tr.Ref.m_ProxyIndex;
+                OnDataObjectProxyRemoved?.Invoke(tr, m_Instances[proxyIndex.x][proxyIndex.y]);
+
+                tr.SetProxy(ProxyTransform.ProxyNull);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -148,7 +148,6 @@ namespace Syadeu.Presentation.Map
 
                 MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
-                data.DestroyChildOnDestroy = false;
                 m_InstanceHash.Destroy();
                 m_InstanceHash = EntityData<SceneDataEntity>.Empty;
                 //mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);

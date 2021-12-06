@@ -225,15 +225,15 @@ namespace Syadeu.Presentation
         }
         private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
         {
-            //InstanceID entity = m_EntityGameObjects[obj.m_Hash];
-            //m_EntityGameObjects.Remove(obj.m_Hash);
+            InstanceID entity = m_EntityGameObjects[obj.m_Hash];
+            m_EntityGameObjects.Remove(obj.m_Hash);
 
-            //if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
+            if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
 
-            //if (entityObj is EntityBase entityBase)
-            //{
-            //    entityBase.transform = null;
-            //}
+            if (entityObj is EntityBase entityBase)
+            {
+                entityBase.transform = null;
+            }
             ////ObjectBase entityObj = m_ObjectEntities[entity];
 
             ////ProcessEntityDestroy(entityObj, true);
@@ -338,13 +338,13 @@ namespace Syadeu.Presentation
         }
         private void M_SceneSystem_OnSceneLoadCall()
         {
-            using (var iter = m_EntityGameObjects.GetEnumerator())
-            {
-                while (iter.MoveNext())
-                {
-                    InternalDestroyEntity(iter.Current.Value);
-                }
-            }
+            //using (var iter = m_EntityGameObjects.GetEnumerator())
+            //{
+            //    while (iter.MoveNext())
+            //    {
+            //        InternalDestroyEntity(iter.Current.Value);
+            //    }
+            //}
 
             //m_DestroyedObjectsInThisFrameAction.Invoke();
         }

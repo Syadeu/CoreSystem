@@ -327,7 +327,7 @@ namespace Syadeu.Presentation.Components
 
         #region IEntityDataID Components
 
-        /// <inheritdoc cref="AddComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="AddComponent{TComponent}(in InstanceID)"/>
         public static void AddComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -354,7 +354,7 @@ namespace Syadeu.Presentation.Components
 #endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="HasComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
         public static bool HasComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -375,7 +375,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="HasComponent(in EntityID, Type)"/>
+        /// <inheritdoc cref="HasComponent(in InstanceID, Type)"/>
         public static bool HasComponent(this IEntityDataID t, Type componentType)
         {
 #if DEBUG_MODE
@@ -402,7 +402,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.HasComponent(t.Idx, componentType);
         }
-        /// <inheritdoc cref="GetComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponent{TComponent}(in InstanceID)"/>
         public static ref TComponent GetComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -425,7 +425,7 @@ namespace Syadeu.Presentation.Components
 
             return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in InstanceID)"/>
         public static TComponent GetComponentReadOnly<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -448,7 +448,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="GetComponentPointer{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponentPointer{TComponent}(in InstanceID)"/>
         unsafe public static TComponent* GetComponentPointer<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -471,7 +471,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="RemoveComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="RemoveComponent{TComponent}(in InstanceID)"/>
         public static void RemoveComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -495,7 +495,7 @@ namespace Syadeu.Presentation.Components
 #endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="RemoveComponent(in EntityID, Type)"/>
+        /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
         public static void RemoveComponent(this IEntityDataID t, Type componentType)
         {
 #if DEBUG_MODE
@@ -527,5 +527,138 @@ namespace Syadeu.Presentation.Components
         }
 
         #endregion
+
+        /// <inheritdoc cref="AddComponent{TComponent}(in InstanceID)"/>
+        public static void AddComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+#if DEBUG_MODE
+            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
+#endif
+            EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
+        public static bool HasComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="HasComponent(in InstanceID, Type)"/>
+        public static bool HasComponent(this IObject t, Type componentType)
+        {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return false;
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent(t.Idx, componentType);
+        }
+        /// <inheritdoc cref="GetComponent{TComponent}(in InstanceID)"/>
+        public static ref TComponent GetComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in InstanceID)"/>
+        public static TComponent GetComponentReadOnly<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="GetComponentPointer{TComponent}(in InstanceID)"/>
+        unsafe public static TComponent* GetComponentPointer<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="RemoveComponent{TComponent}(in InstanceID)"/>
+        public static void RemoveComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
+            }
+
+#if DEBUG_MODE
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t.Idx);
+#endif
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
+        public static void RemoveComponent(this IObject t, Type componentType)
+        {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return;
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
+            }
+
+#if DEBUG_MODE
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t.Idx, componentType);
+#endif
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
+        }
     }
 }

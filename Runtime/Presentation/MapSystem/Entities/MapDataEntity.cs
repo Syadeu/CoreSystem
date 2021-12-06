@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Map
     {
         [JsonIgnore] public Entity<EntityBase>[] CreatedEntities { get; internal set; }
         [JsonIgnore] public ProxyTransform[] CreatedRawObjects { get; internal set; }
-        [JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
+        //[JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
 
         public override bool IsValid() => true;
         protected override ObjectBase Copy()
@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Map
             }
             clone.m_Objects = temp;
             clone.CreatedEntities = null;
-            clone.DestroyChildOnDestroy = true;
+            //clone.DestroyChildOnDestroy = true;
 
             return clone;
         }
@@ -98,12 +98,12 @@ namespace Syadeu.Presentation.Map
         }
         protected override void OnDestroy(MapDataEntity entity)
         {
-            if (entity == null || !entity.DestroyChildOnDestroy) return;
+            //if (entity == null || !entity.DestroyChildOnDestroy) return;
             for (int i = 0; i < entity.CreatedEntities.Length; i++)
             {
                 if (entity.CreatedEntities[i].IsValid())
                 {
-                    entity.CreatedEntities[i].Destroy();
+                    EntitySystem.DestroyEntity(entity.CreatedEntities[i]);
                 }
             }
             entity.CreatedEntities = null;

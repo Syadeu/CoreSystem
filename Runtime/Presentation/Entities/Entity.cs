@@ -148,7 +148,7 @@ namespace Syadeu.Presentation.Entities
             get
             {
 #if DEBUG_MODE
-                if (IsEmpty())
+                if (IsEmpty() || Target == null)
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
