@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using System;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -21,6 +23,7 @@ namespace Syadeu.Collections
     /// <summary>
     /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
     /// </summary>
+    [BurstCompatible]
     public readonly struct TypeInfo : IValidation, IEquatable<TypeInfo>
     {
         private readonly RuntimeTypeHandle m_TypeHandle;
@@ -30,6 +33,7 @@ namespace Syadeu.Collections
 
         private readonly int m_HashCode;
 
+        [BurstDiscard]
         public Type Type => Type.GetTypeFromHandle(m_TypeHandle);
         public int Index => m_TypeIndex;
         public int Size => m_Size;

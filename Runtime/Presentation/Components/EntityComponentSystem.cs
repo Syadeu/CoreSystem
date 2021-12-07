@@ -53,8 +53,6 @@ namespace Syadeu.Presentation.Components
         public override bool EnableAfterPresentation => false;
 
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
-        private NativeQueue<DisposedComponent> m_DisposedComponents;
-        //private MethodInfo m_RemoveComponentMethod;
 
         /// <summary>
         /// Key => <see cref="ComponentBuffer.TypeInfo"/>.GetHashCode()<br/>
@@ -72,14 +70,14 @@ namespace Syadeu.Presentation.Components
             s_GetComponentReadOnlyMarker = new Unity.Profiling.ProfilerMarker("EntityComponentSystem.get_GetComponentReadOnly"),
             s_GetComponentPointerMarker = new Unity.Profiling.ProfilerMarker("EntityComponentSystem.get_GetComponentPointer");
 
+        private ActionWrapper m_CompleteAllDisposedComponents;
+
         public int BufferLength => m_ComponentArrayBuffer.Length;
 
         private EntitySystem m_EntitySystem;
         private SceneSystem m_SceneSystem;
 
         #region Presentation Methods
-
-        private ActionWrapper m_CompleteAllDisposedComponents;
 
         protected override PresentationResult OnInitialize()
         {
@@ -103,21 +101,17 @@ namespace Syadeu.Presentation.Components
             else length = types.Length * 2;
 
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
-            //ComponentBuffer[] tempBuffer = new ComponentBuffer[length];
             for (int i = 0; i < types.Length; i++)
             {
                 ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
                 m_ComponentArrayBuffer[idx] = buffer;
             }
 
-            //m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(tempBuffer, Allocator.Persistent);
-            m_DisposedComponents = new NativeQueue<DisposedComponent>(Allocator.Persistent);
-
             m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
             ref UntypedUnsafeHashMap hashMap =
                 ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
 
-            DisposedComponent.Initialize(
+            ComponentDisposer.Initialize(
                 (ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr(),
                 (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref hashMap));
 
@@ -180,12 +174,12 @@ namespace Syadeu.Presentation.Components
 
             m_SceneSystem.OnSceneChanged -= CompleteAllDisposedComponents;
 
-            int count = m_DisposedComponents.Count;
-            for (int i = 0; i < count; i++)
-            {
-                m_DisposedComponents.Dequeue().Dispose();
-            }
-            m_DisposedComponents.Dispose();
+            //int count = m_DisposedComponents.Count;
+            //for (int i = 0; i < count; i++)
+            //{
+            //    m_DisposedComponents.Dequeue().Dispose();
+            //}
+            //m_DisposedComponents.Dispose();
 
             for (int i = 0; i < m_ComponentArrayBuffer.Length; i++)
             {
@@ -233,18 +227,18 @@ namespace Syadeu.Presentation.Components
 
         private void CompleteAllDisposedComponents()
         {
-            if (m_DisposedComponents.Count > 0)
-            {
-                // Parallel Job 이 수행되고 있는 중에 컴포넌트가 제거되면 안되므로
-                // 먼저 모든 Job 을 완료합니다.
-                IJobParallelForEntitiesExtensions.CompleteAllJobs();
+            //if (m_DisposedComponents.Count > 0)
+            //{
+            //    // Parallel Job 이 수행되고 있는 중에 컴포넌트가 제거되면 안되므로
+            //    // 먼저 모든 Job 을 완료합니다.
+            //    IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
-                int count = m_DisposedComponents.Count;
-                for (int i = 0; i < count; i++)
-                {
-                    m_DisposedComponents.Dequeue().Dispose();
-                }
-            }
+            //    int count = m_DisposedComponents.Count;
+            //    for (int i = 0; i < count; i++)
+            //    {
+            //        m_DisposedComponents.Dequeue().Dispose();
+            //    }
+            //}
         }
 
         #endregion
@@ -268,7 +262,7 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
-        private static int GetComponentIndex(Type t)
+        public static int GetComponentIndex(Type t)
         {
             int idx = ComponentType.GetValue(t).Data.Index;
 #if DEBUG_MODE
@@ -283,7 +277,7 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
-        private static int GetComponentIndex(TypeInfo t)
+        public static int GetComponentIndex(TypeInfo t)
         {
             int idx = t.Index;
 #if DEBUG_MODE
@@ -309,12 +303,12 @@ namespace Syadeu.Presentation.Components
         //    //}
         //    return idx;
         //}
-        private static int GetEntityIndex(in InstanceID entity)
+        public static int GetEntityIndex(in InstanceID entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
             return idx;
         }
-        private static int2 GetIndex(in Type t, in InstanceID entity)
+        public static int2 GetIndex(in Type t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -322,7 +316,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        private static int2 GetIndex(in TypeInfo t, in InstanceID entity)
+        public static int2 GetIndex(in TypeInfo t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -330,7 +324,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        private static int2 GetIndex<TComponent>(in InstanceID entity)
+        public static int2 GetIndex<TComponent>(in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
@@ -417,9 +411,10 @@ namespace Syadeu.Presentation.Components
                 }
             }
 
-            ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] = default(TComponent);
-            m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
-            m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
+            m_ComponentArrayBuffer[index.x].SetElementAt<TComponent>(index.y, entity);
+            //((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] = default(TComponent);
+            //m_ComponentArrayBuffer[index.x].m_OccupiedBuffer[index.y] = true;
+            //m_ComponentArrayBuffer[index.x].m_EntityBuffer[index.y] = entity;
 
             m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
 
@@ -442,12 +437,12 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
+            ComponentDisposer.Dispose(index, entity);
 
             //if (CoreSystem.BlockCreateInstance)
-            {
-                dispose.Dispose();
-            }
+            //{
+            //    dispose.Dispose();
+            //}
             //else
             //{
             //    m_DisposedComponents.Enqueue(dispose);
@@ -471,12 +466,12 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
+            ComponentDisposer.Dispose(index, entity);
 
             //if (CoreSystem.BlockCreateInstance)
-            {
-                dispose.Dispose();
-            }
+            //{
+            //    dispose.Dispose();
+            //}
             //else
             //{
             //    m_DisposedComponents.Enqueue(dispose);
@@ -503,12 +498,12 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 #endif
-            DisposedComponent dispose = DisposedComponent.Construct(index, entity);
+            ComponentDisposer.Dispose(index, entity);
 
             //if (CoreSystem.BlockCreateInstance)
-            {
-                dispose.Dispose();
-            }
+            //{
+            //    dispose.Dispose();
+            //}
             //else
             //{
             //    m_DisposedComponents.Enqueue(dispose);
@@ -556,11 +551,13 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 
-            if (((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] is IValidation validation &&
-                !validation.IsValid())
-            {
-                return false;
-            }
+            //m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent* p);
+
+            //if (((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y] is IValidation validation &&
+            //    !validation.IsValid())
+            //{
+            //    return false;
+            //}
 
             return true;
         }
@@ -611,8 +608,10 @@ namespace Syadeu.Presentation.Components
             IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
             s_GetComponentMarker.End();
+            m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent* p);
 
-            return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
+            //return ref ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
+            return ref *p;
         }
         public TComponent GetComponentReadOnly<TComponent>(in InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
@@ -638,10 +637,12 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-            TComponent boxed = ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
+            m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent p);
+            //TComponent boxed = ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer)[index.y];
 
             s_GetComponentReadOnlyMarker.End();
-            return boxed;
+            //return boxed;
+            return p;
         }
         public TComponent* GetComponentPointer<TComponent>(in InstanceID entity) 
             where TComponent : unmanaged, IEntityComponent
@@ -668,28 +669,12 @@ namespace Syadeu.Presentation.Components
             }
 
             s_GetComponentPointerMarker.End();
-            return ((TComponent*)m_ComponentArrayBuffer[index.x].m_ComponentBuffer) + index.y;
+            m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent* p);
+
+            return p;
         }
 
         #endregion
-
-        //[Obsolete("Use IJobParallelForEntities")]
-        //public QueryBuilder<TComponent> CreateQueryBuilder<TComponent>() where TComponent : unmanaged, IEntityComponent
-        //{
-        //    int componentIdx = math.abs(TypeHelper.TypeOf<TComponent>.Type.GetHashCode()) % m_ComponentArrayBuffer.Length;
-            
-        //    if (!PoolContainer<QueryBuilder<TComponent>>.Initialized)
-        //    {
-        //        PoolContainer<QueryBuilder<TComponent>>.Initialize(QueryBuilder<TComponent>.QueryFactory, 32);
-        //    }
-
-        //    QueryBuilder<TComponent> builder = PoolContainer<QueryBuilder<TComponent>>.Dequeue();
-        //    builder.Entities = m_ComponentArrayBuffer[componentIdx].m_EntityBuffer;
-        //    builder.Components = (TComponent*)m_ComponentArrayBuffer[componentIdx].m_ComponentBuffer;
-        //    builder.Length = m_ComponentArrayBuffer[componentIdx].Length;
-
-        //    return builder;
-        //}
 
         [Obsolete("In development")]
         public void ECB(EntityComponentBuffer ecb)
@@ -756,7 +741,7 @@ namespace Syadeu.Presentation.Components
         /// <seealso cref="m_DisposedComponents"/> queue 에 저장되어 다음 Player Loop 의 
         /// <seealso cref="PresentationManager.PreUpdate"/> 에서 Dipose 됩니다.
         /// </remarks>
-        private struct DisposedComponent : IDisposable
+        private struct ComponentDisposer
         {
             [NativeDisableUnsafePtrRestriction] private static ComponentBuffer* s_Buffer;
             /// <summary>
@@ -764,25 +749,19 @@ namespace Syadeu.Presentation.Components
             /// </summary>
             [NativeDisableUnsafePtrRestriction] private static UntypedUnsafeHashMap* s_HashMap;
 
-            private int2 index;
-            private InstanceID entity;
-
             public static void Initialize(ComponentBuffer* buffer, UntypedUnsafeHashMap* hashMap)
             {
                 s_Buffer = buffer;
                 s_HashMap = hashMap;
             }
-            public static DisposedComponent Construct(int2 index, InstanceID entity)
+            public static void Dispose(int2 index, InstanceID entity)
             {
-                return new DisposedComponent()
-                {
-                    index = index,
-                    entity = entity
-                };
-            }
+                //return new ComponentDisposer()
+                //{
+                //    index = index,
+                //    entity = entity
+                //};
 
-            public void Dispose()
-            {
                 if (!s_Buffer[index.x].Find(entity, ref index.y))
                 {
                     $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.Hash}, {entity.GetObject().Name}) : index{index}".ToLogError();
@@ -791,36 +770,50 @@ namespace Syadeu.Presentation.Components
 
                 ref UnsafeMultiHashMap<int, int> hashMap
                     = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *s_HashMap);
-                
+
                 hashMap.Remove(s_Buffer[index.x].TypeInfo.GetHashCode(), index.y);
 
-                s_Buffer[index.x].m_OccupiedBuffer[index.y] = false;
-
-                void* buffer = s_Buffer[index.x].m_ComponentBuffer;
-
-                IntPtr p = s_Buffer[index.x].ElementAt(index.y);
-
-                try
-                {
-                    object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
-
-                    // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
-                    if (obj is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-
-                        CoreSystem.Logger.Log(Channel.Component,
-                            $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} disposed.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError(ex);
-                }
-
-                CoreSystem.Logger.Log(Channel.Component,
-                    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} removed");
+                s_Buffer[index.x].RemoveAt(index.y);
             }
+
+            //public void Dispose()
+            //{
+            //    //if (!s_Buffer[index.x].Find(entity, ref index.y))
+            //    //{
+            //    //    $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.Hash}, {entity.GetObject().Name}) : index{index}".ToLogError();
+            //    //    return;
+            //    //}
+
+            //    //ref UnsafeMultiHashMap<int, int> hashMap
+            //    //    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *s_HashMap);
+                
+            //    //hashMap.Remove(s_Buffer[index.x].TypeInfo.GetHashCode(), index.y);
+
+            //    //s_Buffer[index.x].RemoveAt(index.y);
+
+            //    //IntPtr p = s_Buffer[index.x].ElementAt(index.y);
+
+            //    //try
+            //    //{
+            //    //    object obj = Marshal.PtrToStructure(p, s_Buffer[index.x].TypeInfo.Type);
+
+            //    //    // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
+            //    //    if (obj is IDisposable disposable)
+            //    //    {
+            //    //        disposable.Dispose();
+
+            //    //        CoreSystem.Logger.Log(Channel.Component,
+            //    //            $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} disposed.");
+            //    //    }
+            //    //}
+            //    //catch (Exception ex)
+            //    //{
+            //    //    Debug.LogError(ex);
+            //    //}
+
+            //    //CoreSystem.Logger.Log(Channel.Component,
+            //    //    $"{s_Buffer[index.x].TypeInfo.Type.Name} component at {entity.Hash}:{entity.GetObject()?.Name} removed");
+            //}
         }
 
         #endregion
@@ -874,11 +867,6 @@ namespace Syadeu.Presentation.Components
     }
 
 #endif
-    
-
-    
-    
-
     
     unsafe internal struct ComponentChunk
     {

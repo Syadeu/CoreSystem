@@ -17,14 +17,17 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Actor;
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-
+using Unity.Mathematics;
 using TypeInfo = Syadeu.Collections.TypeInfo;
 
 namespace Syadeu.Presentation.Components
 {
+    [BurstCompatible]
     internal unsafe struct ComponentBuffer : IDisposable
     {
         public const int c_InitialCount = 512;
@@ -34,9 +37,9 @@ namespace Syadeu.Presentation.Components
         private int m_Length;
         private int m_Increased;
 
-        [NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
-        [NativeDisableUnsafePtrRestriction] public InstanceID* m_EntityBuffer;
-        [NativeDisableUnsafePtrRestriction] public void* m_ComponentBuffer;
+        //[NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
+        [NativeDisableUnsafePtrRestriction] private InstanceID* m_EntityBuffer;
+        [NativeDisableUnsafePtrRestriction] private void* m_ComponentBuffer;
 
         public TypeInfo TypeInfo => m_ComponentTypeInfo;
         public bool IsCreated => m_ComponentBuffer != null;
@@ -45,21 +48,21 @@ namespace Syadeu.Presentation.Components
         public void Initialize(in TypeInfo typeInfo)
         {
             int
-                occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
+                //occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
                 idxSize = UnsafeUtility.SizeOf<InstanceID>() * c_InitialCount,
                 bufferSize = typeInfo.Size * c_InitialCount;
             void*
-                occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
+                //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
                 idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
                 buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
 
-            UnsafeUtility.MemClear(occBuffer, occSize);
+            //UnsafeUtility.MemClear(occBuffer, occSize);
             // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
             UnsafeUtility.MemClear(idxBuffer, idxSize);
             UnsafeUtility.MemClear(buffer, bufferSize);
 
             this.m_ComponentTypeInfo = typeInfo;
-            this.m_OccupiedBuffer = (bool*)occBuffer;
+            //this.m_OccupiedBuffer = (bool*)occBuffer;
             this.m_EntityBuffer = (InstanceID*)idxBuffer;
             this.m_ComponentBuffer = buffer;
             this.m_Length = c_InitialCount;
@@ -76,27 +79,27 @@ namespace Syadeu.Presentation.Components
 
             int count = c_InitialCount * (m_Increased + 1);
             long
-                occSize = UnsafeUtility.SizeOf<bool>() * count,
+                //occSize = UnsafeUtility.SizeOf<bool>() * count,
                 idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
                 bufferSize = UnsafeUtility.SizeOf<TComponent>() * count;
             void*
-                occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
+                //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
                 idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
                 buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
 
-            UnsafeUtility.MemClear(occBuffer, occSize);
+            //UnsafeUtility.MemClear(occBuffer, occSize);
             UnsafeUtility.MemClear(idxBuffer, idxSize);
             UnsafeUtility.MemClear(buffer, bufferSize);
 
-            UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
+            //UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
             UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
             UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
 
-            UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
+            //UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
             UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
             UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
 
-            this.m_OccupiedBuffer = (bool*)occBuffer;
+            //this.m_OccupiedBuffer = (bool*)occBuffer;
             this.m_EntityBuffer = (InstanceID*)idxBuffer;
             this.m_ComponentBuffer = buffer;
 
@@ -113,11 +116,17 @@ namespace Syadeu.Presentation.Components
                 return false;
             }
 
+            //int index = entityIndex;
+            //for (int i = 0; i < m_Increased && m_EntityBuffer[index].IsEmpty() && !m_EntityBuffer[index].Equals(entity); i++)
+            //{
+            //    index = (c_InitialCount * i) + entityIndex;
+            //}
+
             for (int i = 0; i < m_Increased; i++)
             {
                 int idx = (c_InitialCount * i) + entityIndex;
 
-                if (!m_OccupiedBuffer[idx]) continue;
+                if (m_EntityBuffer[idx].IsEmpty()) continue;
                 else if (this.m_EntityBuffer[idx].Equals(entity))
                 {
                     entityIndex = idx;
@@ -138,7 +147,7 @@ namespace Syadeu.Presentation.Components
             {
                 int idx = (c_InitialCount * i) + entityIndex;
 
-                if (m_OccupiedBuffer[idx]) continue;
+                if (!m_EntityBuffer[idx].IsEmpty()) continue;
 
                 entityIndex = idx;
                 return true;
@@ -149,31 +158,61 @@ namespace Syadeu.Presentation.Components
 
         public void HasElementAt(int i, out bool result)
         {
-            result = m_OccupiedBuffer[i];
+            result = !m_EntityBuffer[i].IsEmpty();
         }
+        public bool HasElementAt(int i)
+        {
+            return !m_EntityBuffer[i].IsEmpty();
+        }
+        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
             where TComponent : unmanaged, IEntityComponent
         {
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer)[i];
         }
+        [BurstCompatible(GenericTypeArguments = new[] { typeof(ActorControllerComponent) })]
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent* component)
             where TComponent : unmanaged, IEntityComponent
         {
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer) + i;
         }
-
-        public IntPtr ElementAt(int i)
+        public IntPtr ElementAt(in int i)
         {
             IntPtr p = (IntPtr)m_ComponentBuffer;
             // Align 은 필요없음.
             return IntPtr.Add(p, TypeInfo.Size * i);
         }
-        public void ElementAt(int i, out IntPtr ptr, out InstanceID entity)
+
+        [BurstDiscard]
+        public void RemoveAt(in int index)
         {
-            ptr = ElementAt(i);
-            entity = m_EntityBuffer[i];
+            IntPtr p = ElementAt(in index);
+
+            object obj = System.Runtime.InteropServices.Marshal.PtrToStructure(p, TypeInfo.Type);
+
+            // 해당 컴포넌트가 IDisposable 인터페이스를 상속받으면 해당 인터페이스를 실행
+            if (obj is IDisposable disposable)
+            {
+                disposable.Dispose();
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"{TypeInfo.Type.Name} component at {m_EntityBuffer[index].Hash}:{m_EntityBuffer[index].GetObject()?.Name} disposed.");
+            }
+
+            CoreSystem.Logger.Log(Channel.Component,
+                $"{TypeInfo.Type.Name} component at {m_EntityBuffer[index].Hash}:{m_EntityBuffer[index].GetObject()?.Name} removed");
+
+            m_EntityBuffer[index] = InstanceID.Empty;
+        }
+
+        [BurstCompatible(GenericTypeArguments = new[] { typeof(ActorControllerComponent) })]
+        public void SetElementAt<TComponent>(in int index, in InstanceID entity)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            ((TComponent*)m_ComponentBuffer)[index] = default(TComponent);
+            m_EntityBuffer[index] = entity;
         }
 
         public void Dispose()
@@ -185,7 +224,7 @@ namespace Syadeu.Presentation.Components
             safety.CheckExistsAndThrow();
 #endif
 
-            UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
+            //UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
             UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
             UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
 
