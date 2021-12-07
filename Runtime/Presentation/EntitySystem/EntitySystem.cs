@@ -836,103 +836,103 @@ namespace Syadeu.Presentation
 
 #line default
 
-#if DEBUG_MODE
-        internal readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
+//#if DEBUG_MODE
+        //internal readonly Dictionary<InstanceID, List<Type>> m_AddedComponents = new Dictionary<InstanceID, List<Type>>();
 
-        private bool Debug_HasComponent(InstanceID entity, out int count, out string names)
-        {
-            if (m_AddedComponents.TryGetValue(entity, out var list))
-            {
-                count = list.Count;
-                names = list[0].Name;
-                for (int i = 1; i < list.Count; i++)
-                {
-                    names += $", {list[i].Name}";
-                }
+//        private bool Debug_HasComponent(InstanceID entity, out int count, out string names)
+//        {
+//            if (m_AddedComponents.TryGetValue(entity, out var list))
+//            {
+//                count = list.Count;
+//                names = list[0].Name;
+//                for (int i = 1; i < list.Count; i++)
+//                {
+//                    names += $", {list[i].Name}";
+//                }
 
-                return true;
-            }
+//                return true;
+//            }
 
-            count = 0;
-            names = string.Empty;
-            return false;
-        }
-        internal void Debug_AddComponent<TComponent>(EntityData<IEntityData> entity)
-        {
-            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
-            {
-                list = new List<Type>();
-                m_AddedComponents.Add(entity.Idx, list);
-            }
+//            count = 0;
+//            names = string.Empty;
+//            return false;
+//        }
+//        internal void Debug_AddComponent<TComponent>(EntityData<IEntityData> entity)
+//        {
+//            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+//            {
+//                list = new List<Type>();
+//                m_AddedComponents.Add(entity.Idx, list);
+//            }
 
-            if (!list.Contains(TypeHelper.TypeOf<TComponent>.Type))
-            {
-                list.Add(TypeHelper.TypeOf<TComponent>.Type);
-            }
-        }
-        internal void Debug_RemoveComponent<TComponent>(ObjectBase entity)
-            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
-        internal void Debug_RemoveComponent(ObjectBase entity, Type component)
-        {
-            //if (entity is Actor.IActorProvider actorProvider)
-            //{
-            //    Debug_RemoveComponent(actorProvider.Idx, component);
-            //    return;
-            //}
+//            if (!list.Contains(TypeHelper.TypeOf<TComponent>.Type))
+//            {
+//                list.Add(TypeHelper.TypeOf<TComponent>.Type);
+//            }
+//        }
+//        internal void Debug_RemoveComponent<TComponent>(ObjectBase entity)
+//            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+//        internal void Debug_RemoveComponent(ObjectBase entity, Type component)
+//        {
+//            //if (entity is Actor.IActorProvider actorProvider)
+//            //{
+//            //    Debug_RemoveComponent(actorProvider.Idx, component);
+//            //    return;
+//            //}
 
-            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have component at all but trying to remove {component.Name}.");
-                return;
-            }
+//            if (!m_AddedComponents.TryGetValue(entity.Idx, out var list))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Entity({entity.Name}) doesn\'t have component at all but trying to remove {component.Name}.");
+//                return;
+//            }
 
-            if (!list.Contains(component))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
-                return;
-            }
+//            if (!list.Contains(component))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Entity({entity.Name}) doesn\'t have {component.Name}.");
+//                return;
+//            }
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].Equals(component))
-                {
-                    list.RemoveAt(i);
-                    break;
-                }
-            }
-            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
-        }
-        internal void Debug_RemoveComponent<TComponent>(InstanceID entity)
-            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
-        internal void Debug_RemoveComponent(InstanceID entityID, Type component)
-        {
-            if (!m_AddedComponents.TryGetValue(entityID, out var list))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entityID.Hash}) doesn\'t have component at all.");
-                return;
-            }
+//            for (int i = 0; i < list.Count; i++)
+//            {
+//                if (list[i].Equals(component))
+//                {
+//                    list.RemoveAt(i);
+//                    break;
+//                }
+//            }
+//            if (list.Count == 0) m_AddedComponents.Remove(entity.Idx);
+//        }
+//        internal void Debug_RemoveComponent<TComponent>(InstanceID entity)
+//            => Debug_RemoveComponent(entity, TypeHelper.TypeOf<TComponent>.Type);
+//        internal void Debug_RemoveComponent(InstanceID entityID, Type component)
+//        {
+//            if (!m_AddedComponents.TryGetValue(entityID, out var list))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Entity({entityID.Hash}) doesn\'t have component at all.");
+//                return;
+//            }
 
-            if (!list.Contains(component))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entityID.Hash}) doesn\'t have {component.Name}.");
-                return;
-            }
+//            if (!list.Contains(component))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Entity({entityID.Hash}) doesn\'t have {component.Name}.");
+//                return;
+//            }
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].Equals(component))
-                {
-                    list.RemoveAt(i);
-                    break;
-                }
-            }
-            if (list.Count == 0) m_AddedComponents.Remove(entityID);
-        }
-#endif
+//            for (int i = 0; i < list.Count; i++)
+//            {
+//                if (list[i].Equals(component))
+//                {
+//                    list.RemoveAt(i);
+//                    break;
+//                }
+//            }
+//            if (list.Count == 0) m_AddedComponents.Remove(entityID);
+//        }
+//#endif
 
         internal EntityShortID Convert(InstanceID id)
         {

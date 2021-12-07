@@ -252,10 +252,6 @@ namespace Syadeu.Presentation
 #endif
                     );
 
-#if DEBUG_MODE
-            System.GetModule<EntityDebugModule>().CheckAllComponentIsDisposed(obj);
-#endif
-
             if (obj is EntityBase entity && entity.transform != null)
             {
                 if (entity.transform is ProxyTransform tr)

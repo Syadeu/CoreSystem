@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.TurnTable
             }
             set
             {
-                if (!m_InputSystem.System.EnableInput) return;
+                if (!PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.System.EnableInput) return;
 
                 if (RenderSystem == null)
                 {
@@ -130,8 +130,6 @@ namespace Syadeu.Presentation.TurnTable
 
         private Transform OrientationTarget => CameraComponent.CurrentCamera.VirtualCameraGameObject.transform;
 
-        private PresentationSystemID<Input.InputSystem> m_InputSystem;
-
         protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineStateDrivenCamera stateDrivenCamera, CinemachineTargetGroup targetGroup)
         {
             m_TargetGroup = targetGroup;
@@ -149,7 +147,6 @@ namespace Syadeu.Presentation.TurnTable
             m_DefaultTarget.position = m_TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
-            m_InputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.SystemID;
 
             for (int i = 0; i < m_AimTarget.Length; i++)
             {
@@ -182,7 +179,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
             
-            var inputSystem = m_InputSystem.System;
+            var inputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.System;
             while (m_TargetGroup != null)
             {
                 if (!inputSystem.EnableInput)

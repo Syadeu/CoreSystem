@@ -254,18 +254,26 @@ namespace Syadeu.Presentation.Proxy
             {
                 int2 proxyIndex = data->m_ProxyIndex;
 
+                if (!m_Instances.ContainsKey(proxyIndex.x))
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Fatal error. {((PrefabReference)proxyIndex.x).GetObjectSetting()?.Name} is not in instance list 1.");
+
+                    return;
+                }
+                else if (m_Instances[proxyIndex.x].Count <= proxyIndex.y)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Fatal error. {((PrefabReference)proxyIndex.x).GetObjectSetting()?.Name} is not in instance list 2.");
+
+                    return;
+                }
+
                 IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
                 proxy.transform.position = data->m_Translation;
                 proxy.transform.rotation = data->m_Rotation;
                 proxy.transform.localScale = data->m_Scale;
             }
-
-            //for (int i = 0; i < m_ProxyData.List[transform.m_Index]->m_ChildIndices.Length; i++)
-            //{
-            //    ProxyTransformData* childData = m_ProxyData.List[m_ProxyData.List[transform.m_Index]->m_ChildIndices[i]];
-
-
-            //}
         }
         unsafe private void UpdateProxyTransform(in ProxyTransformData* data)
         {
@@ -1169,9 +1177,8 @@ namespace Syadeu.Presentation.Proxy
                 //    return;
                 //}
 
-#if DEBUG_MODE
                 s_SetupMarker.Begin();
-#endif
+
                 CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
                 //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
                 var prefabInfo = prefabIdx.GetObjectSetting();
@@ -1201,9 +1208,8 @@ namespace Syadeu.Presentation.Proxy
                     onCompleted?.Invoke(obj);
 
                     PoolContainer<PrefabRequester>.Enqueue(this);
-#if DEBUG_MODE
+
                     s_SetupMarker.End();
-#endif
                     return;
                 }
 
@@ -1226,9 +1232,8 @@ namespace Syadeu.Presentation.Proxy
                 if (prefabInfo.m_IsRuntimeObject)
                 {
                     CreatePrefab(prefabInfo.m_Prefab);
-#if DEBUG_MODE
+
                     s_SetupMarker.End();
-#endif
                     return;
                 }
 

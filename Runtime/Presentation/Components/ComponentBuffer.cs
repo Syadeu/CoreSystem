@@ -37,7 +37,6 @@ namespace Syadeu.Presentation.Components
         private int m_Length;
         private int m_Increased;
 
-        //[NativeDisableUnsafePtrRestriction] public bool* m_OccupiedBuffer;
         [NativeDisableUnsafePtrRestriction] private InstanceID* m_EntityBuffer;
         [NativeDisableUnsafePtrRestriction] private void* m_ComponentBuffer;
 

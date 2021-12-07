@@ -30,8 +30,6 @@ namespace Syadeu.Presentation.Attributes
         internal override void InternalOnReserve()
         {
             base.InternalOnReserve();
-
-            ParentEntity = null;
         }
     }
 }

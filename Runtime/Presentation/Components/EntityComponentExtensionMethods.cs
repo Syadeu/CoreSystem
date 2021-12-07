@@ -60,10 +60,6 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#if DEBUG_MODE
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t);
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
-#endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t);
         }
         /// <summary>
@@ -276,9 +272,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t);
         }
         /// <summary>
@@ -319,9 +312,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t, componentType);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t, componentType);
         }
 
@@ -348,10 +338,6 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#if DEBUG_MODE
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
-#endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
         }
         /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
@@ -490,9 +476,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t.Idx);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
         }
         /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
@@ -520,9 +503,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t.Idx, componentType);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
         }
 
@@ -540,10 +520,6 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#if DEBUG_MODE
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
-#endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
         }
         /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
@@ -632,9 +608,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t.Idx);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
         }
         /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
@@ -655,9 +628,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t.Idx, componentType);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
         }
     }
