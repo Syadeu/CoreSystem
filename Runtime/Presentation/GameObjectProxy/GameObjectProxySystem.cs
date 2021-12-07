@@ -208,15 +208,19 @@ namespace Syadeu.Presentation.Proxy
             }
             void RemoveProxy(ProxyTransform tr)
             {
-                if (tr.Ref.m_ProxyIndex.Equals(ProxyTransform.ProxyNull))
+                ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
+
+                if (data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
+                    data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                 {
                     return;
                 }
 
-                int2 proxyIndex = tr.Ref.m_ProxyIndex;
+                int2 proxyIndex = data->m_ProxyIndex;
                 OnDataObjectProxyRemoved?.Invoke(tr, m_Instances[proxyIndex.x][proxyIndex.y]);
 
-                tr.SetProxy(ProxyTransform.ProxyNull);
+                //tr.SetProxy(ProxyTransform.ProxyNull);
+                this.RemoveProxy(data);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -238,6 +242,15 @@ namespace Syadeu.Presentation.Proxy
             if (!(ev.transform is ProxyTransform transform)) return;
 
             ProxyTransformData* data = m_ProxyData.List[transform.m_Index];
+
+            if (!data->m_IsOccupied ||
+                transform.m_Generation != data->m_Generation)
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy,
+                    $"Validation error. Target transform is not valid.");
+                return;
+            }
+
             if (!data->m_IsOccupied || data->m_DestroyQueued) return;
 
             //UpdateProxyTransform(in data);
@@ -302,8 +315,18 @@ namespace Syadeu.Presentation.Proxy
                 {
                     int index = m_OverrideRequestProxies.Dequeue();
                     ProxyTransform tr = m_ProxyData[index];
-                    if (tr.isDestroyed || tr.isDestroyQueued)
+                    ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
+
+                    if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
+                        continue;
+                    }
+                    else if (
+                        !data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
+                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Proxy,
+                            $"Already have proxy({data->m_Prefab.GetObjectSetting()?.Name}):{data->m_ProxyIndex}");
                         continue;
                     }
 
@@ -323,19 +346,23 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_RequestProxyList.Dequeue()];
+                    ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
 
-                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
+                    if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
                         CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
                         continue;
                     }
-                    else if (tr.hasProxy && !tr.hasProxyQueued)
+                    else if (
+                        !data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
+                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy, $"Already have proxy");
+                        CoreSystem.Logger.LogError(Channel.Proxy, 
+                            $"Already have proxy({data->m_Prefab.GetObjectSetting()?.Name}):{data->m_ProxyIndex}");
                         continue;
                     }
 
-                    AddProxy(tr);
+                    AddProxy(data);
                 }
             }
             
@@ -347,20 +374,23 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_RemoveProxyList.Dequeue()];
+                    ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
 
-                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued)
+                    if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
                         CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
                         continue;
                     }
-                    else if (!tr.hasProxy)
+                    else if (
+                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
+                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                     {
                         CoreSystem.Logger.LogError(Channel.Proxy,
                             $"Does not have any proxy");
                         continue;
                     }
 
-                    RemoveProxy(tr);
+                    RemoveProxy(data);
                 }
             }
 
@@ -753,7 +783,7 @@ namespace Syadeu.Presentation.Proxy
                         UnityEngine.Debug.LogError($"invalid cluster group{i}({m_ActiveData[i].Translation.x}.{m_ActiveData[i].Translation.y}.{m_ActiveData[i].Translation.z}) ?? {clusterGroup[j]} >= {List.m_Length}");
                         continue;
                     }
-                    ProxyTransformData data = List.ElementAt(clusterGroup[j]);
+                    ref ProxyTransformData data = ref List.ElementAt(clusterGroup[j]);
                     //if (data.destroyed)
                     //{
                     //    clusterGroup.RemoveAt(j);
@@ -1019,6 +1049,62 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
+        private unsafe void AddProxy(ProxyTransformData* data)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
+
+            PrefabReference prefab = data->m_Prefab;
+
+            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
+                    pool.Count == 0)
+            {
+                data->m_ProxyIndex = (ProxyTransform.ProxyQueued);
+                InstantiatePrefab(prefab, (other) =>
+                {
+                    if (!data->m_IsOccupied || data->m_DestroyQueued)
+                    {
+                        if (other.InitializeOnCall) other.Terminate();
+                        other.transform.position = INIT_POSITION;
+
+                        if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
+                        {
+                            pool = new Stack<RecycleableMonobehaviour>();
+                            m_TerminatedProxies.Add(prefab, pool);
+                        }
+                        pool.Push(other);
+                        return;
+                    }
+
+                    data->m_ProxyIndex = new int2(prefab, other.m_Idx);
+
+                    other.transform.position = data->m_Translation;
+                    other.transform.rotation = data->m_Rotation;
+                    other.transform.localScale = data->m_Scale;
+
+                    OnDataObjectProxyCreated?.Invoke(m_ProxyData.GetTransform(data->m_Index), other);
+                    CoreSystem.Logger.Log(Channel.Proxy, true,
+                        $"Prefab({prefab.GetObjectSetting().Name}) proxy created");
+                });
+
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                        $"Prefab({prefab.GetObjectSetting().Name}) proxy requested");
+            }
+            else
+            {
+                RecycleableMonobehaviour other = pool.Pop();
+                data->m_ProxyIndex = new int2(prefab, other.m_Idx);
+
+                other.transform.position = data->m_Translation;
+                other.transform.rotation = data->m_Rotation;
+                other.transform.localScale = data->m_Scale;
+
+                if (other.InitializeOnCall) other.Initialize();
+
+                OnDataObjectProxyCreated?.Invoke(m_ProxyData.GetTransform(data->m_Index), other);
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                    $"Prefab({prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
+            }
+        }
         private void AddProxy(ProxyTransform proxyTransform)
         {
             CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
@@ -1055,6 +1141,9 @@ namespace Syadeu.Presentation.Proxy
                     CoreSystem.Logger.Log(Channel.Proxy, true,
                         $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created");
                 });
+
+                CoreSystem.Logger.Log(Channel.Proxy, true,
+                        $"Prefab({prefab.GetObjectSetting().Name}) proxy created");
             }
             else
             {
@@ -1333,6 +1422,9 @@ namespace Syadeu.Presentation.Proxy
             }
             m_Instances.Clear();
             m_TerminatedProxies.Clear();
+
+            CoreSystem.Logger.Log(Channel.Proxy,
+                "Release all proxy GameObjects");
         }
 
 #endregion

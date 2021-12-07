@@ -65,11 +65,11 @@ namespace Syadeu.Presentation.Proxy
                 UnsafeUtility.Free(m_Buffer.ToPointer(), m_Allocator);
             }
 
-            public ProxyTransformData ElementAt(int index)
+            public ref ProxyTransformData ElementAt(int index)
             {
                 if (index < 0 || index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
 
-                return m_TransformBuffer[index];
+                return ref m_TransformBuffer[index];
             }
         }
 

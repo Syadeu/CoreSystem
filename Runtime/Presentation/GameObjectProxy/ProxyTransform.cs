@@ -155,7 +155,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (!value && !hasProxy && !hasProxyQueued)
                 {
-                    Ref.m_ProxyIndex = ProxyQueued;
+                    //Ref.m_ProxyIndex = ProxyQueued;
                     PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
                 }
 
