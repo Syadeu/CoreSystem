@@ -211,12 +211,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 string.Format(c_CreateStartMsg, obj.Name));
 
-            if (obj is EntityDataBase entityData)
-            {
-                ProcessEntityOnCreated(this, entityData);
-            }
-
-            OnEntityCreated?.Invoke(obj);
+            ProcessEntityOnCreated(this, obj);
         }
 
         public void ProcessDisposal(ObjectBase obj)
@@ -248,22 +243,9 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 string.Format(c_DestroyStartMsg, obj.Name));
 
-            if (obj is EntityDataBase entityData)
-            {
-                ProcessEntityOnReserve(this, entityData);
-            }
-            else
-            {
-                obj.InternalOnReserve();
-            }
+            ProcessEntityOnReserve(this, obj);
 
-            m_ComponentSystem
-                .RemoveNotifiedComponents(
-                    obj
-#if DEBUG_MODE
-                    //, system.Debug_RemoveComponent
-#endif
-                    );
+            m_ComponentSystem.RemoveNotifiedComponents(obj);
 
             if (obj is EntityBase entity && entity.transform != null)
             {
@@ -281,47 +263,53 @@ namespace Syadeu.Presentation
             }
 
             OnEntityDestroy?.Invoke(obj);
+
+            obj.InternalOnReserve();
         }
 
-        private static void ProcessEntityOnCreated(EntityProcessorModule system, EntityDataBase entity)
+        private static void ProcessEntityOnCreated(EntityProcessorModule system, ObjectBase entity)
         {
             m_ProcessEntityOnCreateMarker.Begin();
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
-
             #region Attributes
-            for (int i = 0; i < entity.m_Attributes.Length; i++)
+
+            if (entity is IEntityData entityData)
             {
-                if (entity.m_Attributes[i] == null)
+                for (int i = 0; i < entityData.Attributes.Length; i++)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                    return;
-                }
-
-                Type t = entity.Attributes[i].GetType();
-
-                if (system.m_Processors.TryGetValue(t, out var processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
+                    if (entityData.Attributes[i] == null)
                     {
-                        ProcessorBase processor = processors[j];
-
-                        try
-                        {
-                            processor.InternalOnCreated(entity.m_Attributes[i]);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
-                        }
+                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                            string.Format(c_AttributeEmptyWarning, entity.Name));
+                        return;
                     }
-                    CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
+
+                    Type t = entityData.Attributes[i].GetType();
+
+                    if (system.m_Processors.TryGetValue(t, out var processors))
+                    {
+                        for (int j = 0; j < processors.Count; j++)
+                        {
+                            ProcessorBase processor = processors[j];
+
+                            try
+                            {
+                                processor.InternalOnCreated(entityData.Attributes[i]);
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
+                            }
+                        }
+                        CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
+                    }
                 }
             }
+            
             #endregion
 
             #region Entity
+
             if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
@@ -338,6 +326,7 @@ namespace Syadeu.Presentation
                     }
                 }
             }
+
             #endregion
 
             system.OnEntityCreated?.Invoke(entity);
@@ -382,53 +371,51 @@ namespace Syadeu.Presentation
             //});
             //#endregion
         }
-        private static void ProcessEntityOnReserve(EntityProcessorModule system, EntityDataBase entity)
+        private static void ProcessEntityOnReserve(EntityProcessorModule system, ObjectBase entity)
         {
             m_ProcessEntityOnDestoryMarker.Begin();
 
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
-
             #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
+
+            if (entity is IEntityData entityData)
             {
-                IAttribute other = entity.m_Attributes[i];
-                if (other == null)
+                for (int i = 0; i < entityData.Attributes.Length; i++)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
-                        string.Format(c_AttributeEmptyWarning, entity.Name));
-                    continue;
-                }
-
-                Type t = other.GetType();
-
-                if (system.m_Processors.TryGetValue(t, out var processors))
-                {
-                    for (int j = 0; j < processors.Count; j++)
+                    IAttribute other = entityData.Attributes[i];
+                    if (other == null)
                     {
-                        ProcessorBase processor = processors[j];
+                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                            string.Format(c_AttributeEmptyWarning, entity.Name));
+                        continue;
+                    }
 
-                        try
+                    Type t = other.GetType();
+
+                    if (system.m_Processors.TryGetValue(t, out var processors))
+                    {
+                        for (int j = 0; j < processors.Count; j++)
                         {
-                            processor.InternalOnDestroy(other);
-                        }
-                        catch (Exception ex)
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
+                            ProcessorBase processor = processors[j];
+
+                            try
+                            {
+                                processor.InternalOnDestroy(other);
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
+                            }
                         }
                     }
-                }
 
-                system.m_ComponentSystem
-                    .RemoveNotifiedComponents(
-                        other
-#if DEBUG_MODE
-                        //, system.Debug_RemoveComponent
-#endif
-                    );
+                    system.m_ComponentSystem.RemoveNotifiedComponents(other);
+                }
             }
+
             #endregion
 
             #region Entity
+
             if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
                 for (int i = 0; i < entityProcessor.Count; i++)
@@ -445,9 +432,8 @@ namespace Syadeu.Presentation
                     }
                 }
             }
-            #endregion
 
-            entity.InternalOnReserve();
+            #endregion
 
             m_ProcessEntityOnDestoryMarker.End();
         }
