@@ -106,7 +106,6 @@ namespace Syadeu.Presentation.Proxy
         private RenderSystem m_RenderSystem;
         private EventSystem m_EventSystem;
 
-        private bool m_LoadingLock = false;
         private bool m_Disposed = false;
 
         public bool Disposed => m_Disposed;
@@ -180,7 +179,6 @@ namespace Syadeu.Presentation.Proxy
         }
         private unsafe void M_SceneSystem_OnLoadingEnter()
         {
-            m_LoadingLock = true;
             CoreSystem.Logger.Log(Channel.Proxy, true,
                 "Scene on loading enter lambda excute");
 
@@ -191,8 +189,8 @@ namespace Syadeu.Presentation.Proxy
 
             m_RequestProxyList.Clear();
             m_RemoveProxyList.Clear();
-            //m_VisibleList.Clear();
-            //m_InvisibleList.Clear();
+            m_VisibleList.Clear();
+            m_InvisibleList.Clear();
 
             ReleaseAllPrefabs();
 
@@ -200,8 +198,7 @@ namespace Syadeu.Presentation.Proxy
             //m_ClusterData.Dispose();
             //m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
             //m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
-            m_LoadingLock = false;
-
+            
             void DestroyTransform(ProxyTransform tr)
             {
                 OnDataObjectDestroy?.Invoke(tr);
@@ -216,8 +213,8 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                int2 proxyIndex = data->m_ProxyIndex;
-                OnDataObjectProxyRemoved?.Invoke(tr, m_Instances[proxyIndex.x][proxyIndex.y]);
+                //int2 proxyIndex = data->m_ProxyIndex;
+                //OnDataObjectProxyRemoved?.Invoke(tr, m_Instances[proxyIndex.x][proxyIndex.y]);
 
                 //tr.SetProxy(ProxyTransform.ProxyNull);
                 this.RemoveProxy(data);
@@ -302,7 +299,7 @@ namespace Syadeu.Presentation.Proxy
         {
             //const int c_ChunkSize = 100;
 
-            if (m_LoadingLock) return base.TransformPresentation();
+            if (m_SceneSystem.IsSceneLoading) return base.TransformPresentation();
 
             CameraFrustum frustum = m_RenderSystem.GetRawFrustum();
 
@@ -917,20 +914,22 @@ namespace Syadeu.Presentation.Proxy
 
             unsafe
             {
-                if ((*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued)
+                ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
+
+                if (data->m_DestroyQueued)
                 {
                     CoreSystem.Logger.LogError(Channel.Proxy, 
                         "Cannot destroy this proxy because it is already destroyed.");
                     return;
                 }
 
-                (*tr.m_Pointer)[tr.m_Index]->m_EnableCull = false;
-                (*tr.m_Pointer)[tr.m_Index]->m_DestroyQueued = true;
-            }
+                data->m_EnableCull = false;
+                data->m_DestroyQueued = true;
 
-            m_RequestDestories.Enqueue(tr.m_Index);
-            //CoreSystem.Logger.Log(Channel.Proxy,
-            //    $"Destroy({tr.Ref.m_Prefab.GetObjectSetting().m_Name}) called");
+                m_RequestDestories.Enqueue(tr.m_Index);
+                CoreSystem.Logger.Log(Channel.Proxy,
+                    $"Destroy({data->m_Prefab.GetObjectSetting()?.m_Name}) called");
+            }
         }
 
         #region Proxy Object Control
@@ -1072,6 +1071,9 @@ namespace Syadeu.Presentation.Proxy
                             m_TerminatedProxies.Add(prefab, pool);
                         }
                         pool.Push(other);
+
+                        CoreSystem.Logger.Log(Channel.Proxy, true,
+                            $"Prefab({prefab.GetObjectSetting().Name}) has been created in different scene. Terminated.");
                         return;
                     }
 

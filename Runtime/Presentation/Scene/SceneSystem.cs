@@ -293,14 +293,18 @@ namespace Syadeu.Presentation
 
         private void Instance_PostUpdate()
         {
-            if (!IsSceneLoading && m_LoadingEvent.Count > 0)
+            if (IsSceneLoading)
             {
-                m_LoadingEvent.Dequeue().Invoke();
+                if (m_LoadingRoutine != null)
+                {
+                    if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+                }
+                return;
             }
 
-            if (m_LoadingRoutine != null)
+            if (m_LoadingEvent.Count > 0)
             {
-                if (!m_LoadingRoutine.MoveNext()) m_LoadingRoutine = null;
+                m_LoadingEvent.Dequeue().Invoke();
             }
         }
 

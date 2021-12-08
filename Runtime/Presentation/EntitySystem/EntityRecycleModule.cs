@@ -30,6 +30,7 @@ namespace Syadeu.Presentation
 
         public void ExecuteDisposeAll()
         {
+            EntityProcessorModule processorModule = System.GetModule<EntityProcessorModule>();
             foreach (var item in m_ReservedObjects)
             {
                 int count = item.Value.Count;
@@ -37,17 +38,15 @@ namespace Syadeu.Presentation
                 {
                     ObjectBase targetObject = (ObjectBase)item.Value.Pop();
 
-                    targetObject.InternalOnDestroy();
-                    ((IDisposable)targetObject).Dispose();
+                    processorModule.ProcessDisposal(targetObject);
+                    //targetObject.InternalOnDestroy();
+                    //((IDisposable)targetObject).Dispose();
                 }
             }
         }
 
         public void InsertReservedObject(IObject obj)
         {
-            ObjectBase temp = (ObjectBase)obj;
-            temp.InternalOnReserve();
-
             if (obj is ConvertedEntity)
             {
                 return;

@@ -33,7 +33,7 @@ namespace Syadeu.Presentation
     {
         private static Unity.Profiling.ProfilerMarker
             m_ProcessEntityOnCreateMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntityProcessorModule)}.{nameof(ProcessEntityOnCreated)}"),
-            m_ProcessEntityOnDestoryMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntityProcessorModule)}.{nameof(ProcessEntityOnDestroy)}");
+            m_ProcessEntityOnDestoryMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntityProcessorModule)}.{nameof(ProcessEntityOnReserve)}");
 
         private const string 
             c_AttributeWarning = "Attribute({0}) on entity({1}) has invaild value. {2}. Request Ignored.",
@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 string.Format(c_CreateStartMsg, obj.Name));
 
-            if (obj is IEntityData entityData)
+            if (obj is EntityDataBase entityData)
             {
                 ProcessEntityOnCreated(this, entityData);
             }
@@ -219,16 +219,25 @@ namespace Syadeu.Presentation
             OnEntityCreated?.Invoke(obj);
         }
 
-        public void ProcessOnDestroy(ObjectBase obj)
+        public void ProcessDisposal(ObjectBase obj)
         {
-            InternalProcessOnReserve(obj);
+            if (!obj.Reserved)
+            {
+                InternalProcessOnReserve(obj);
+            }
 
-            obj.InternalOnReserve();
             obj.InternalOnDestroy();
             ((IDisposable)obj).Dispose();
         }
         public void ProcessOnReserve(ObjectBase obj)
         {
+            if (obj.Reserved)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"");
+                return;
+            }
+
             InternalProcessOnReserve(obj);
 
             System.GetModule<EntityRecycleModule>().InsertReservedObject(obj);
@@ -239,9 +248,13 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Entity,
                 string.Format(c_DestroyStartMsg, obj.Name));
 
-            if (obj is IEntityData entityData)
+            if (obj is EntityDataBase entityData)
             {
-                ProcessEntityOnDestroy(this, entityData);
+                ProcessEntityOnReserve(this, entityData);
+            }
+            else
+            {
+                obj.InternalOnReserve();
             }
 
             m_ComponentSystem
@@ -270,16 +283,16 @@ namespace Syadeu.Presentation
             OnEntityDestroy?.Invoke(obj);
         }
 
-        private static void ProcessEntityOnCreated(EntityProcessorModule system, IEntityData entity)
+        private static void ProcessEntityOnCreated(EntityProcessorModule system, EntityDataBase entity)
         {
             m_ProcessEntityOnCreateMarker.Begin();
 
             EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx);
 
             #region Attributes
-            for (int i = 0; i < entity.Attributes.Length; i++)
+            for (int i = 0; i < entity.m_Attributes.Length; i++)
             {
-                if (entity.Attributes[i] == null)
+                if (entity.m_Attributes[i] == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
@@ -296,7 +309,7 @@ namespace Syadeu.Presentation
 
                         try
                         {
-                            processor.InternalOnCreated(entity.Attributes[i]);
+                            processor.InternalOnCreated(entity.m_Attributes[i]);
                         }
                         catch (Exception ex)
                         {
@@ -369,7 +382,7 @@ namespace Syadeu.Presentation
             //});
             //#endregion
         }
-        private static void ProcessEntityOnDestroy(EntityProcessorModule system, IEntityData entity)
+        private static void ProcessEntityOnReserve(EntityProcessorModule system, EntityDataBase entity)
         {
             m_ProcessEntityOnDestoryMarker.Begin();
 
@@ -378,7 +391,7 @@ namespace Syadeu.Presentation
             #region Attributes
             for (int i = 0; i < entity.Attributes.Length; i++)
             {
-                IAttribute other = entity.Attributes[i];
+                IAttribute other = entity.m_Attributes[i];
                 if (other == null)
                 {
                     CoreSystem.Logger.LogWarning(Channel.Presentation,
@@ -433,6 +446,8 @@ namespace Syadeu.Presentation
                 }
             }
             #endregion
+
+            entity.InternalOnReserve();
 
             m_ProcessEntityOnDestoryMarker.End();
         }
@@ -556,20 +571,19 @@ namespace Syadeu.Presentation
 
                 Type t = other.GetType();
 
-                if (system.m_Processors.TryGetValue(t, out var processors))
+                if (!system.m_Processors.TryGetValue(t, out var processors)) continue;
+
+                for (int j = 0; j < processors.Count; j++)
                 {
-                    for (int j = 0; j < processors.Count; j++)
+                    if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
                     {
-                        if (processors[j] is IAttributeOnProxyRemoved onProxyRemoved)
+                        try
                         {
-                            try
-                            {
-                                onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
-                            }
-                            catch (Exception ex)
-                            {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
-                            }
+                            onProxyRemoved.OnProxyRemoved(other, entityData, monoObj);
+                        }
+                        catch (Exception ex)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
                         }
                     }
                 }

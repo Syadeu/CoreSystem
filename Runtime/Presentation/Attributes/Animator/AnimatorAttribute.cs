@@ -235,6 +235,9 @@ namespace Syadeu.Presentation.Attributes
         {
             AnimatorAttribute att = (AnimatorAttribute)attribute;
 
+            CoreSystem.Logger.NotNull(att, "att null");
+            CoreSystem.Logger.NotNull(att.AnimatorComponent, "ani null");
+
             att.AnimatorComponent.SetActive(false);
             att.AnimatorComponent.m_Transform = null;
             att.AnimatorComponent.m_AnimatorAttribute = null;

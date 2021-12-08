@@ -700,8 +700,15 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_TransformPresentations.Count; i++)
                 {
-                    PresentationResult result = m_TransformPresentations[i].TransformPresentation();
-                    LogMessage(result);
+                    try
+                    {
+                        PresentationResult result = m_TransformPresentations[i].TransformPresentation();
+                        LogMessage(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                    }
                 }
 
                 TransformPresentationModules();
@@ -720,8 +727,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
-                                ex);
+                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
                         }
                     }
                 }
@@ -756,8 +762,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
-                                ex);
+                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
                         }
                     }
                 }

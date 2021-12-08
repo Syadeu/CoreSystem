@@ -176,7 +176,7 @@ namespace Syadeu.Presentation
             var entityList = m_ObjectEntities.Values.ToArray();
             for (int i = 0; i < entityList.Length; i++)
             {
-                m_EntityProcessorModule.ProcessOnDestroy(entityList[i]);
+                m_EntityProcessorModule.ProcessDisposal(entityList[i]);
             }
 
             GetModule<EntityRecycleModule>().ExecuteDisposeAll();
