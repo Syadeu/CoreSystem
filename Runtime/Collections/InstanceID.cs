@@ -17,9 +17,11 @@
 #endif
 
 using System;
+using Unity.Collections;
 
 namespace Syadeu.Collections
 {
+    [BurstCompatible]
     public readonly struct InstanceID : IValidation, IEquatable<InstanceID>, IEquatable<Hash>
     {
         public static readonly InstanceID Empty = new InstanceID(Hash.Empty);
