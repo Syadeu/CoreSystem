@@ -460,7 +460,7 @@ namespace Syadeu.Presentation.Components
                     }
                 }
 
-                m_ComponentArrayBuffer[index.x].SetElementAt<TComponent>(index.y, entity);
+                m_ComponentArrayBuffer[index.x].SetElementAt(index.y, entity);
                 m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, TypeHelper.TypeOf<TComponent>.Type);

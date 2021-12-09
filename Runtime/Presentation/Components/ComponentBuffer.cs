@@ -72,35 +72,6 @@ namespace Syadeu.Presentation.Components
                 ComponentBufferAtomicSafety.Construct(typeInfo));
 #endif
         }
-        //public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
-        //{
-        //    if (!IsCreated) throw new Exception();
-
-        //    int count = c_InitialCount * (m_Increased + 1);
-        //    long
-        //        idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
-        //        bufferSize = UnsafeUtility.SizeOf<TComponent>() * count;
-        //    void*
-        //        idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-        //        buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
-
-        //    UnsafeUtility.MemClear(idxBuffer, idxSize);
-        //    UnsafeUtility.MemClear(buffer, bufferSize);
-
-        //    UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
-        //    UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
-
-        //    UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
-        //    UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
-
-        //    this.m_EntityBuffer = (InstanceID*)idxBuffer;
-        //    this.m_ComponentBuffer = buffer;
-
-        //    m_Increased += 1;
-        //    m_Length = c_InitialCount * m_Increased;
-
-        //    CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.TypeOf<TComponent>.Name} {m_Length} :: {m_Increased}");
-        //}
         public void Increment()
         {
             if (!IsCreated) throw new Exception();
@@ -190,6 +161,14 @@ namespace Syadeu.Presentation.Components
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
+                    $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
+            }
+#endif
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer)[i];
         }
@@ -197,9 +176,18 @@ namespace Syadeu.Presentation.Components
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent* component)
             where TComponent : unmanaged, IEntityComponent
         {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
+                    $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
+            }
+#endif
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer) + i;
         }
+        [BurstCompatible]
         public IntPtr ElementAt(in int i)
         {
             IntPtr p = (IntPtr)m_ComponentBuffer;
@@ -229,13 +217,7 @@ namespace Syadeu.Presentation.Components
             m_EntityBuffer[index] = InstanceID.Empty;
         }
 
-        [BurstCompatible(GenericTypeArguments = new[] { typeof(ActorControllerComponent) })]
-        public void SetElementAt<TComponent>(in int index, in InstanceID entity)
-            where TComponent : unmanaged, IEntityComponent
-        {
-            ((TComponent*)m_ComponentBuffer)[index] = default(TComponent);
-            m_EntityBuffer[index] = entity;
-        }
+        [BurstCompatible]
         public void SetElementAt(in int index, in InstanceID entity)
         {
             IntPtr p = ElementAt(in index);
@@ -243,6 +225,7 @@ namespace Syadeu.Presentation.Components
             m_EntityBuffer[index] = entity;
         }
 
+        [BurstDiscard]
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
