@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.Entities
     {
         private const string c_Invalid = "Invalid";
 
-        public static readonly EntityData<T> Empty = new EntityData<T>(InstanceID.Empty, 0, null);
+        public static readonly EntityData<T> Empty = new EntityData<T>(InstanceID.Empty, 0, c_Invalid);
 
         public static EntityData<T> GetEntity(InstanceID id) => EntityDataHelper.GetEntity<T>(id);
         public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => EntityDataHelper.GetEntityWithoutCheck<T>(in id);

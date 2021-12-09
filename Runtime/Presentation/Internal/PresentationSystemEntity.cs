@@ -40,6 +40,7 @@ namespace Syadeu.Presentation.Internal
         internal Hash m_GroupIndex;
         internal int m_SystemIndex;
         internal PresentationSystemModule[] m_Modules = Array.Empty<PresentationSystemModule>();
+        private bool m_Disposed = false;
 
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
@@ -56,6 +57,7 @@ namespace Syadeu.Presentation.Internal
         /// 시스템 그룹은 <seealso cref="PresentationSystemGroup{T}"/>을 통해 받아올 수 있습니다.
         /// </remarks>
         public abstract bool IsStartable { get; }
+        public bool Disposed => m_Disposed;
 
         protected abstract PresentationResult OnInitialize();
         protected abstract PresentationResult OnInitializeAsync();
@@ -115,6 +117,7 @@ namespace Syadeu.Presentation.Internal
                 ((IDisposable)m_Modules[i]).Dispose();
             }
             m_Modules = null;
+            m_Disposed = true;
         }
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();
@@ -131,6 +134,7 @@ namespace Syadeu.Presentation.Internal
             if (item is T) return true;
             return false;
         }
+
         protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);

@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Internal;
+using Syadeu.Mono;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
@@ -56,7 +57,17 @@ namespace Syadeu.Presentation.TurnTable
 
         public bool Enabled => m_TurnTableEnabled;
         public int TurnCount => m_TurnCount;
-        public EntityData<IEntityData> CurrentTurn => m_CurrentTurn.Value;
+        public EntityData<IEntityData> CurrentTurn
+        {
+            get
+            {
+                if (m_CurrentTurn == null)
+                {
+                    return EntityData<IEntityData>.Empty;
+                }
+                return m_CurrentTurn.Value;
+            }
+        }
         public IReadOnlyList<EntityData<IEntityData>> Players => m_Players;
 
         #region Presentation Methods
@@ -66,8 +77,18 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
 
+            ConsoleWindow.CreateCommand(Console_LogStatus, "status", "turntablesystem");
+
             return base.OnInitialize();
         }
+        private void Console_LogStatus(string msg)
+        {
+            ConsoleWindow.Log($"Enable : {m_TurnTableEnabled}");
+            ConsoleWindow.Log($"Turn : {m_TurnCount}");
+            ConsoleWindow.Log($"Players : {m_Players.Count}");
+            ConsoleWindow.Log($"Current Turn : {CurrentTurn.RawName}");
+        }
+
         protected override void OnShutDown()
         {
             if (m_TurnTableEnabled)
@@ -99,6 +120,8 @@ namespace Syadeu.Presentation.TurnTable
 
         public void AddPlayer(EntityData<IEntityData> player)
         {
+            DisposedCheck();
+
             if (m_Players.Contains(player))
             {
                 throw new System.Exception();
@@ -113,6 +136,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void RemovePlayer(EntityData<IEntityData> player)
         {
+            DisposedCheck();
+
             m_Players.RemoveFor(player);
 
             //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
@@ -218,6 +243,8 @@ namespace Syadeu.Presentation.TurnTable
 
         public void StartTurnTable()
         {
+            DisposedCheck();
+
             if (m_TurnTableEnabled)
             {
                 "already started".ToLogError();
@@ -243,6 +270,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void StopTurnTable()
         {
+            DisposedCheck();
+
             if (!m_TurnTableEnabled)
             {
                 "already stopped".ToLogError();
@@ -301,6 +330,8 @@ namespace Syadeu.Presentation.TurnTable
 
         public void NextTurn()
         {
+            DisposedCheck();
+
             EndTurn(m_CurrentTurn.Value);
 
             var prev = m_CurrentTurn;

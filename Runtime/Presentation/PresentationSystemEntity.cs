@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -108,6 +109,19 @@ namespace Syadeu.Presentation
                 , methodName
 #endif
                 );
+        }
+
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
+        protected void DisposedCheck()
+        {
+            const string
+                c_ErrorMsg = "You are trying to access an disposed system({0}). This is not allowed.";
+
+            if (Disposed)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    string.Format(c_ErrorMsg, TypeHelper.TypeOf<T>.ToString()));
+            }
         }
 
         protected CoreRoutine StartCoroutine(IEnumerator cor) => CoreSystem.StartUnityUpdate(this, cor);
