@@ -1960,9 +1960,9 @@ namespace Syadeu
         public struct Logger
         {
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
+            public static void ThreadBlock(string name, ThreadInfo thread, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.ThreadBlock(name, thread, scriptName);
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "") => LogManager.ThreadBlock(methodName, thread);
+            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "", [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.ThreadBlock(methodName, thread, scriptName);
 
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]

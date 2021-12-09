@@ -95,9 +95,8 @@ namespace Syadeu.Internal
 
 #line hidden
         [System.Diagnostics.Conditional("DEBUG_MODE")]
-        public static void ThreadBlock(string name, ThreadInfo acceptOnly)
+        public static void ThreadBlock(string name, ThreadInfo acceptOnly, string scriptName)
         {
-#if UNITY_EDITOR
             if ((acceptOnly & ThreadInfo.Unity) == ThreadInfo.Unity)
             {
                 if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
@@ -106,7 +105,7 @@ namespace Syadeu.Internal
                         string.Format(c_LogThreadErrorText, name,
                             TypeHelper.Enum<ThreadInfo>.ToString(ThreadInfo.Unity),
                             TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)),
-                        false);
+                        false, scriptName);
                 }
 
                 return;
@@ -119,9 +118,8 @@ namespace Syadeu.Internal
                     string.Format(c_LogThreadErrorText, name,
                         TypeHelper.Enum<ThreadInfo>.ToString(info), 
                         TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)), 
-                    false);
+                    false, scriptName);
             }
-#endif
         }
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
