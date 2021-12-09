@@ -114,7 +114,6 @@ namespace Syadeu.Presentation
                 ref CoroutineHandler handler = ref m_CoroutineHandlers.ElementAt(idx);
                 if (!handler.m_Activated)
                 {
-                    m_Coroutines[idx].Disposable.Dispose();
                     m_Coroutines[idx].Reset();
 
                     m_ReservedIndices.Enqueue(idx);

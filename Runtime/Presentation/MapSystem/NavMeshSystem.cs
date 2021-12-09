@@ -455,9 +455,15 @@ namespace Syadeu.Presentation.Map
                 NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
                 if (!agent.isOnNavMesh)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    agent.enabled = false;
+                    agent.enabled = true;
+
+                    if (!agent.isOnNavMesh)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
                         $"This entity({entity.RawName}) is not on NavMesh.");
-                    yield break;
+                        yield break;
+                    }
                 }
 
                 var animator = m_Entity.GetAttribute<AnimatorAttribute>();

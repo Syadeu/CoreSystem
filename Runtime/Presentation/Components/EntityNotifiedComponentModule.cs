@@ -55,6 +55,24 @@ namespace Syadeu.Presentation.Components
             m_EntitySystem = other;
         }
 
+        public void TryAddComponent(IObject rawObject, Action<InstanceID, Type> onAdd)
+        {
+            Hash rawID = rawObject.Hash;
+            InstanceID instanceID = (rawObject is AttributeBase att) ? att.ParentEntity.Idx : rawObject.Idx;
+
+            if (m_ZeroNotifiedObjects.Contains(rawID)) return;
+            else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
+            {
+                do
+                {
+                    System.AddComponent(instanceID, typeInfo);
+                    onAdd?.Invoke(instanceID, typeInfo.Type);
+
+                } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
+
+                return;
+            }
+        }
         public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
         {
             Hash rawID = rawObject.Hash;

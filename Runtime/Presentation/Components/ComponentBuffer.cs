@@ -72,40 +72,63 @@ namespace Syadeu.Presentation.Components
                 ComponentBufferAtomicSafety.Construct(typeInfo));
 #endif
         }
-        public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
+        //public void Increment<TComponent>() where TComponent : unmanaged, IEntityComponent
+        //{
+        //    if (!IsCreated) throw new Exception();
+
+        //    int count = c_InitialCount * (m_Increased + 1);
+        //    long
+        //        idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
+        //        bufferSize = UnsafeUtility.SizeOf<TComponent>() * count;
+        //    void*
+        //        idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
+        //        buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
+
+        //    UnsafeUtility.MemClear(idxBuffer, idxSize);
+        //    UnsafeUtility.MemClear(buffer, bufferSize);
+
+        //    UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
+        //    UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
+
+        //    UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
+        //    UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
+
+        //    this.m_EntityBuffer = (InstanceID*)idxBuffer;
+        //    this.m_ComponentBuffer = buffer;
+
+        //    m_Increased += 1;
+        //    m_Length = c_InitialCount * m_Increased;
+
+        //    CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.TypeOf<TComponent>.Name} {m_Length} :: {m_Increased}");
+        //}
+        public void Increment()
         {
             if (!IsCreated) throw new Exception();
 
             int count = c_InitialCount * (m_Increased + 1);
             long
-                //occSize = UnsafeUtility.SizeOf<bool>() * count,
                 idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
-                bufferSize = UnsafeUtility.SizeOf<TComponent>() * count;
+                bufferSize = TypeInfo.Size * count;
             void*
-                //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
                 idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-                buffer = UnsafeUtility.Malloc(bufferSize, UnsafeUtility.AlignOf<TComponent>(), Allocator.Persistent);
+                buffer = UnsafeUtility.Malloc(bufferSize, TypeInfo.Align, Allocator.Persistent);
 
-            //UnsafeUtility.MemClear(occBuffer, occSize);
             UnsafeUtility.MemClear(idxBuffer, idxSize);
             UnsafeUtility.MemClear(buffer, bufferSize);
 
-            //UnsafeUtility.MemCpy(occBuffer, m_OccupiedBuffer, UnsafeUtility.SizeOf<bool>() * m_Length);
             UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
-            UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, UnsafeUtility.SizeOf<TComponent>() * m_Length);
+            UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, TypeInfo.Size * m_Length);
 
-            //UnsafeUtility.Free(this.m_OccupiedBuffer, Allocator.Persistent);
             UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
             UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
 
-            //this.m_OccupiedBuffer = (bool*)occBuffer;
             this.m_EntityBuffer = (InstanceID*)idxBuffer;
             this.m_ComponentBuffer = buffer;
 
             m_Increased += 1;
             m_Length = c_InitialCount * m_Increased;
 
-            CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.TypeOf<TComponent>.Name} {m_Length} :: {m_Increased}");
+            CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.ToString(TypeInfo.Type)} {m_Length} :: {m_Increased}");
         }
 
         public bool Find(InstanceID entity, ref int entityIndex)
@@ -211,6 +234,12 @@ namespace Syadeu.Presentation.Components
             where TComponent : unmanaged, IEntityComponent
         {
             ((TComponent*)m_ComponentBuffer)[index] = default(TComponent);
+            m_EntityBuffer[index] = entity;
+        }
+        public void SetElementAt(in int index, in InstanceID entity)
+        {
+            IntPtr p = ElementAt(in index);
+            UnsafeUtility.MemClear(p.ToPointer(), TypeInfo.Size);
             m_EntityBuffer[index] = entity;
         }
 

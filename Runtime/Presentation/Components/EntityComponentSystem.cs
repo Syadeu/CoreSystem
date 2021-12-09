@@ -383,6 +383,49 @@ namespace Syadeu.Presentation.Components
             return (IntPtr)((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
+        public void AddComponent(in InstanceID entity, in TypeInfo type)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
+
+            using (s_AddComponentMarker.Auto())
+            {
+                int2 index = GetIndex(in type, in entity);
+#if DEBUG_MODE
+                if (!m_ComponentArrayBuffer[index.x].IsCreated)
+                {
+                    CoreSystem.Logger.LogError(Channel.Component,
+                        $"Component buffer error. " +
+                        $"Didn\'t collected this component({TypeHelper.ToString(type.Type)}) infomation at initializing stage.");
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
+                }
+#endif
+                if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y) &&
+                    !m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
+                {
+                    ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
+                    boxed.Increment();
+                    m_ComponentArrayBuffer[index.x] = boxed;
+
+                    if (!m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Component,
+                            $"Component buffer error. " +
+                            $"Component({TypeHelper.ToString(type.Type)}) Hash has been conflected twice. Maybe need to increase default buffer size?");
+
+                        throw new InvalidOperationException($"Component buffer error. See Error Log.");
+                    }
+                }
+
+                m_ComponentArrayBuffer[index.x].SetElementAt(index.y, in entity);
+                m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
+
+                OnComponentAdded?.Invoke(entity, type.Type);
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"Component {TypeHelper.ToString(type.Type)} set at entity({entity.Hash}), index {index}");
+            }
+        }
         public void AddComponent<TComponent>(in InstanceID entity) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
@@ -404,7 +447,7 @@ namespace Syadeu.Presentation.Components
                     !m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
                 {
                     ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
-                    boxed.Increment<TComponent>();
+                    boxed.Increment();
                     m_ComponentArrayBuffer[index.x] = boxed;
 
                     if (!m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
