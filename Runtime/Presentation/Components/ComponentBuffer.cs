@@ -167,6 +167,8 @@ namespace Syadeu.Presentation.Components
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
                     $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             entity = m_EntityBuffer[i];
@@ -182,6 +184,8 @@ namespace Syadeu.Presentation.Components
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
                     $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             entity = m_EntityBuffer[i];
