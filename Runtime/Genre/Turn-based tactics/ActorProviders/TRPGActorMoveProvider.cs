@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.TurnTable
     [DisplayName("ActorProvider: TRPG Move Provider")]
     public sealed class TRPGActorMoveProvider : ActorProviderBase<TRPGActorMoveComponent>
     {
-        protected override void OnCreated(ref TRPGActorMoveComponent component)
+        protected override void OnInitialize(ref TRPGActorMoveComponent component)
         {
             component.m_Parent = Parent;
         }

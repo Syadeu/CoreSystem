@@ -246,10 +246,14 @@ namespace Syadeu.Presentation
             {
                 m_IsStarted = false;
 
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnShutdown", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     m_Systems[i].InternalOnShutdown();
                 }
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnDispose", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     m_Systems[i].Dispose();
@@ -356,6 +360,9 @@ namespace Syadeu.Presentation
 
             public void Initialize()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnInitialize", TypeHelper.ToString(m_Name));
+
                 using (m_InitializeMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)
@@ -387,6 +394,9 @@ namespace Syadeu.Presentation
             }
             public void InitializeAsync()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnInitializeAsync");
+
                 using (m_InitializeAsyncMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)
@@ -418,6 +428,9 @@ namespace Syadeu.Presentation
             }
             public void OnStartPresentation()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnStartPresentation", TypeHelper.ToString(m_Name));
+
                 using (m_StartPreMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)

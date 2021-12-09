@@ -22,13 +22,12 @@ namespace Syadeu.Presentation.TurnTable
 
         [JsonIgnore] private NativeList<int> m_TempGetRange;
 
-        protected override void OnInitialize()
-        {
-            base.OnInitialize();
-        }
-        protected override void OnCreated(ref ActorAttackComponent component)
+        protected override void OnCreated()
         {
             m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
+        }
+        protected override void OnInitialize(ref ActorAttackComponent component)
+        {
             Parent.AddComponent<TRPGActorAttackComponent>();
 
             ref var com = ref Parent.GetComponent<TRPGActorAttackComponent>();

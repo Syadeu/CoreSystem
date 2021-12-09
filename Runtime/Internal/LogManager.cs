@@ -16,6 +16,10 @@
 #define DEBUG_MODE
 #endif
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 using System.Threading;
 using System.Collections.Concurrent;
 
@@ -139,17 +143,60 @@ namespace Syadeu.Internal
                 LogOnDebug(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
             }
         }
+#if DEBUG_MODE
+        [System.Diagnostics.DebuggerHidden]
+#endif
+        public static void Log(Channel channel, ResultFlag result, string msg, bool logThread, string scriptName)
+        {
+            if (channel != Channel.Editor &&
+                ((CoreSystemSettings.Instance.m_DisplayLogChannel | channel) != CoreSystemSettings.Instance.m_DisplayLogChannel))
+            {
+                if (result == ResultFlag.Normal) return;
+            }
+            UnityEngine.Object monoScript = null;
+#if UNITY_EDITOR
+            const string 
+                c_AssetFolderName = "Assets",
+                c_FindAssetFormat = "{0} t:monoscript";
+
+            if (UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
+            {
+                if (scriptName.StartsWith(Application.dataPath))
+                {
+                    scriptName = c_AssetFolderName + scriptName.Substring(Application.dataPath.Length);
+                    monoScript = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptName);
+                }
+                else
+                {
+                    scriptName = System.IO.Path.GetFileNameWithoutExtension(scriptName);
+                    var res = AssetDatabase.FindAssets(string.Format(c_FindAssetFormat, scriptName));
+                    monoScript 
+                        = res.Length > 0 ? 
+                        AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(res[0])) : null;
+                }
+            }
+#endif
+
+            if (result == ResultFlag.Error)
+            {
+                Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread, monoScript);
+            }
+            else
+            {
+                LogOnDebug(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread, monoScript);
+            }
+        }
 
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
         [System.Diagnostics.Conditional("DEBUG_MODE")]
-        public static void LogOnDebug(string channel, ResultFlag result, string msg, bool logThread)
-            => Log(channel, result, msg, logThread);
+        public static void LogOnDebug(string channel, ResultFlag result, string msg, bool logThread, UnityEngine.Object obj = null)
+            => Log(channel, result, msg, logThread, obj);
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
-        public static void Log(string channel, ResultFlag result, string msg, bool logThread)
+        public static void Log(string channel, ResultFlag result, string msg, bool logThread, UnityEngine.Object obj = null)
         {
 #if !UNITY_EDITOR
             const string c_RuntimeLog = "[CoreSystem][{0}] {1}";
@@ -174,7 +221,7 @@ namespace Syadeu.Internal
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel), 
                         msg);
 #endif
-                    Debug.LogWarning(text);
+                    Debug.LogWarning(text, obj);
                     break;
                 case ResultFlag.Error:
 #if UNITY_EDITOR
@@ -183,7 +230,7 @@ namespace Syadeu.Internal
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
 #endif
-                    Debug.LogError(text);
+                    Debug.LogError(text, obj);
                     break;
                 default:
 #if UNITY_EDITOR
@@ -192,7 +239,7 @@ namespace Syadeu.Internal
                         string.Format(c_LogText, TypeHelper.Enum<StringColor>.ToString(StringColor.white), channel),
                         msg);
 #endif
-                    Debug.Log(text);
+                    Debug.Log(text, obj);
                     break;
             }
         }

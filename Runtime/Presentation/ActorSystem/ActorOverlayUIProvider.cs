@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] public IReadOnlyList<Reference<ActorOverlayUIEntry>> UIEntries => m_UIEntries;
 
-        protected override sealed void OnCreated(ref ActorOverlayUIComponent component)
+        protected override sealed void OnInitialize(ref ActorOverlayUIComponent component)
         {
             WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
             component.m_OpenedUI = new FixedList512Bytes<Reference<ActorOverlayUIEntry>>();

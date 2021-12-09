@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] CoroutineHandler m_WeaponPoser;
 
-        protected override void OnCreated(ref ActorWeaponComponent component)
+        protected override void OnInitialize(ref ActorWeaponComponent component)
         {
             component.m_Parent = Parent.ToEntity<ActorEntity>();
 

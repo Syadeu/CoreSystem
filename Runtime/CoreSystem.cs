@@ -1973,7 +1973,8 @@ namespace Syadeu
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+            //public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+            public static void Log(Channel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Normal, msg, false, scriptName);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif

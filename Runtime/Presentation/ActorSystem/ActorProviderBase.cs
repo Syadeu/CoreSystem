@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actor
             {
                 m_Parent.AddComponent<TComponent>();
             }
-            OnCreated(ref m_Parent.GetComponent<TComponent>());
+            OnInitialize(ref m_Parent.GetComponent<TComponent>());
         }
 
         void IActorProvider.OnProxyCreated()
@@ -102,7 +102,11 @@ namespace Syadeu.Presentation.Actor
 #endif
         { }
 
-        protected virtual void OnCreated(ref TComponent component) { }
+        /// <summary><inheritdoc cref="ObjectBase.OnInitialize"/></summary>
+        /// <param name="component"></param>
+        protected virtual void OnInitialize(ref TComponent component) { }
+        /// <summary><inheritdoc cref="ObjectBase.OnReserve"/></summary>
+        /// <param name="component"></param>
         protected virtual void OnReserve(ref TComponent component) { }
 
         protected virtual void OnProxyCreated(ref TComponent component, ITransform transform) { }
