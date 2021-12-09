@@ -277,14 +277,17 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < entityData.Attributes.Length; i++)
                 {
-                    if (entityData.Attributes[i] == null)
+                    IAttribute other = entityData.Attributes[i];
+
+                    if (other == null)
                     {
                         CoreSystem.Logger.LogWarning(Channel.Presentation,
                             string.Format(c_AttributeEmptyWarning, entity.Name));
                         return;
                     }
 
-                    Type t = entityData.Attributes[i].GetType();
+                    system.m_ComponentSystem.AddNotifiedComponents(other);
+                    Type t = other.GetType();
 
                     if (system.m_Processors.TryGetValue(t, out var processors))
                     {
@@ -294,7 +297,7 @@ namespace Syadeu.Presentation
 
                             try
                             {
-                                processor.InternalOnCreated(entityData.Attributes[i]);
+                                processor.InternalOnCreated(other);
                             }
                             catch (Exception ex)
                             {
@@ -312,6 +315,8 @@ namespace Syadeu.Presentation
 
             if (system.m_Processors.TryGetValue(entity.GetType(), out var entityProcessor))
             {
+                system.m_ComponentSystem.AddNotifiedComponents(entity);
+
                 for (int i = 0; i < entityProcessor.Count; i++)
                 {
                     ProcessorBase processor = entityProcessor[i];

@@ -72,6 +72,22 @@ namespace Syadeu.Presentation.Components
 
                 return;
             }
+
+            var iter = Select(rawObject.GetType());
+            if (!iter.Any())
+            {
+                m_ZeroNotifiedObjects.Add(rawID);
+                return;
+            }
+
+            var select = iter.Select(i => i.GenericTypeArguments[0]);
+            foreach (var componentType in select)
+            {
+                System.AddComponent(instanceID, componentType);
+                onAdd?.Invoke(instanceID, componentType);
+
+                m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
+            }
         }
         public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
         {

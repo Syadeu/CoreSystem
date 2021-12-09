@@ -383,7 +383,7 @@ namespace Syadeu.Presentation.Components
             return (IntPtr)((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr() + idx);
         }
 
-        public void AddComponent(in InstanceID entity, in TypeInfo type)
+        public void AddComponent(in InstanceID entity, in Type type)
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
 
@@ -395,7 +395,7 @@ namespace Syadeu.Presentation.Components
                 {
                     CoreSystem.Logger.LogError(Channel.Component,
                         $"Component buffer error. " +
-                        $"Didn\'t collected this component({TypeHelper.ToString(type.Type)}) infomation at initializing stage.");
+                        $"Didn\'t collected this component({TypeHelper.ToString(type)}) infomation at initializing stage.");
 
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
@@ -411,7 +411,7 @@ namespace Syadeu.Presentation.Components
                     {
                         CoreSystem.Logger.LogError(Channel.Component,
                             $"Component buffer error. " +
-                            $"Component({TypeHelper.ToString(type.Type)}) Hash has been conflected twice. Maybe need to increase default buffer size?");
+                            $"Component({TypeHelper.ToString(type)}) Hash has been conflected twice. Maybe need to increase default buffer size?");
 
                         throw new InvalidOperationException($"Component buffer error. See Error Log.");
                     }
@@ -420,12 +420,13 @@ namespace Syadeu.Presentation.Components
                 m_ComponentArrayBuffer[index.x].SetElementAt(index.y, in entity);
                 m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
 
-                OnComponentAdded?.Invoke(entity, type.Type);
+                OnComponentAdded?.Invoke(entity, type);
 
                 CoreSystem.Logger.Log(Channel.Component,
-                    $"Component {TypeHelper.ToString(type.Type)} set at entity({entity.Hash}), index {index}");
+                    $"Component {TypeHelper.ToString(type)} set at entity({entity.Hash}), index {index}");
             }
         }
+        public void AddComponent(in InstanceID entity, in TypeInfo type) => AddComponent(in entity, type.Type);
         public void AddComponent<TComponent>(in InstanceID entity) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
@@ -468,6 +469,10 @@ namespace Syadeu.Presentation.Components
                 CoreSystem.Logger.Log(Channel.Component,
                     $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Hash}), index {index}");
             }
+        }
+        public void AddNotifiedComponents(IObject obj, Action<InstanceID, Type> onAdd = null)
+        {
+            GetModule<EntityNotifiedComponentModule>().TryAddComponent(obj, onAdd);
         }
         public void RemoveComponent<TComponent>(in InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
