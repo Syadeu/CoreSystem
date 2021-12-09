@@ -1387,7 +1387,10 @@ namespace Syadeu.Presentation
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
                 return new NullCustomYieldAwaiter();
             }
-            $"start call {group.m_Name.Name}".ToLog();
+
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"start call {group.m_Name.Name}");
+
             for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
@@ -1451,7 +1454,10 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
 
             List<Hash> connectedGroups = group.GetGroupDependences();
-            $"{group.m_Name.Name} has connected group {connectedGroups.Count}".ToLog();
+
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"{group.m_Name.Name} has connected group {connectedGroups.Count}");
+
             for (int i = 0; i < connectedGroups.Count; i++)
             {
                 StartPresentation(connectedGroups[i]);
