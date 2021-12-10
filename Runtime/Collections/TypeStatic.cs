@@ -12,37 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
-#define DEBUG_MODE
-#endif
-
-using Syadeu.Collections;
 using System;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 
-using TypeInfo = Syadeu.Collections.TypeInfo;
-
-namespace Syadeu.Presentation.Components
+namespace Syadeu.Collections
 {
-    [Obsolete("Use TypeStatic", true)]
-    public struct ComponentType
+    public struct TypeStatic
     {
-        public static SharedStatic<TypeInfo> GetValue(Type componentType)
+        public static SharedStatic<TypeInfo> GetValue(Type type)
         {
             return SharedStatic<TypeInfo>.GetOrCreate(
-                TypeHelper.TypeOf<EntityComponentSystem>.Type,
-                componentType, (uint)UnsafeUtility.AlignOf<TypeInfo>());
+                   TypeHelper.TypeOf<Type>.Type,
+                   type, (uint)UnsafeUtility.AlignOf<TypeInfo>());
         }
     }
-    [Obsolete("Use TypeStatic", true)]
-    public struct ComponentType<TComponent>
+    public struct TypeStatic<T>
     {
         private static readonly SharedStatic<TypeInfo> Value
-            = SharedStatic<TypeInfo>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<TypeInfo>());
+            = SharedStatic<TypeInfo>.GetOrCreate<Type, T>((uint)UnsafeUtility.AlignOf<TypeInfo>());
 
         public static Type Type => Value.Data.Type;
         public static TypeInfo TypeInfo => Value.Data;
-        public static ComponentTypeQuery Query => ComponentTypeQuery.Create(TypeInfo);
     }
 }

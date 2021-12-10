@@ -144,10 +144,10 @@ public class PresentationSystemTests
         yield return PresentationSystem<DefaultPresentationGroup, EntitySystem>.GetAwaiter();
 
         TypeInfo
-            a0 = ComponentType<TestComponent_1>.TypeInfo,
-            a1 = ComponentType<TestComponent_2>.TypeInfo,
-            a2 = ComponentType<TestComponent_3>.TypeInfo,
-            a3 = ComponentType<TestComponent_4>.TypeInfo;
+            a0 = TypeStatic<TestComponent_1>.TypeInfo,
+            a1 = TypeStatic<TestComponent_2>.TypeInfo,
+            a2 = TypeStatic<TestComponent_3>.TypeInfo,
+            a3 = TypeStatic<TestComponent_4>.TypeInfo;
 
         ComponentTypeQuery
             query1 = ComponentTypeQuery.Combine(a0, a1),

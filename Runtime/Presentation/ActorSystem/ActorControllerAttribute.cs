@@ -18,18 +18,14 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using Unity.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
@@ -75,7 +71,6 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
         {
-            entity.AddComponent<ActorControllerComponent>();
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
 
             Entity<ActorEntity> actor = entity.ToEntity<ActorEntity>();

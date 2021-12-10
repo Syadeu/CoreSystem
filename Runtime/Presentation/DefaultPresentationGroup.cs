@@ -23,6 +23,7 @@ namespace Syadeu.Presentation
         public override void Register()
         {
             RegisterSystem(
+                TypeHelper.TypeOf<UtilitySystem>.Type,
                 TypeHelper.TypeOf<Events.EventSystem>.Type,
                 TypeHelper.TypeOf<Actions.ActionSystem>.Type,
                 TypeHelper.TypeOf<CoroutineSystem>.Type,

@@ -23,10 +23,7 @@ using Syadeu.Mono;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Render;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Burst;
@@ -35,10 +32,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
-using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
@@ -48,7 +43,6 @@ namespace Syadeu.Presentation.Proxy
     internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
     {
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
-        //private const int c_InitialMemorySize = 16384;
         private const int c_InitialMemorySize = 1024;
 
         public override bool EnableBeforePresentation => false;

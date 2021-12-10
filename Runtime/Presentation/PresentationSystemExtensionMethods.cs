@@ -109,7 +109,7 @@ namespace Syadeu.Presentation
             Type t = target.GetObject().GetType();
             if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
             {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(target.Hash, float3.zero);
+                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(new Reference(target.Hash), float3.zero);
                 return new Instance<T>(temp.Idx);
             }
             else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))

@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Components
         /// </summary>
         private UnsafeMultiHashMap<int, int> m_ComponentHashMap;
 
-        private Unity.Mathematics.Random m_Random;
+        //private Unity.Mathematics.Random m_Random;
 
         private static Unity.Profiling.ProfilerMarker
             s_AddComponentMarker = new Unity.Profiling.ProfilerMarker("EntityComponentSystem.set_AddComponent"),
@@ -89,8 +89,8 @@ namespace Syadeu.Presentation.Components
         {
             // Type Hashing 을 위해 랜덤 생성자를 만듭니다.
             // 왜인지 모르겠지만 간혈적으로 Type.GetHashCode() 가 0 을 반환하여, 직접 값을 만듭니다.
-            m_Random = new Unity.Mathematics.Random();
-            m_Random.InitState();
+            //m_Random = new Unity.Mathematics.Random();
+            //m_Random.InitState();
 
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
@@ -133,7 +133,8 @@ namespace Syadeu.Presentation.Components
         }
         private ComponentBuffer BuildComponentBuffer(Type componentType, in int totalLength, out int idx)
         {
-            int hashCode = CreateHashCode();
+            TypeInfo typeInfo = componentType.ToTypeInfo();
+            int hashCode = typeInfo.GetHashCode();
             idx = math.abs(hashCode) % totalLength;
 
             if (TypeHelper.IsZeroSizeStruct(componentType))
@@ -153,14 +154,14 @@ namespace Syadeu.Presentation.Components
             ComponentBuffer temp = new ComponentBuffer();
 
             // 왜인지는 모르겠지만 Type.GetHashCode() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-            TypeInfo runtimeTypeInfo 
-                = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), TypeHelper.AlignOf(componentType), hashCode);
-            ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
+            //TypeInfo runtimeTypeInfo 
+            //    = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), TypeHelper.AlignOf(componentType), hashCode);
+            //ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
 
-            ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
+            //ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
             
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-            temp.Initialize(runtimeTypeInfo);
+            temp.Initialize(typeInfo);
 
             return temp;
         }
@@ -251,11 +252,14 @@ namespace Syadeu.Presentation.Components
 
         #region Hashing
 
-        public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
+        //public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
-        private static int GetComponentIndex<TComponent>()
+        private int GetComponentIndex<TComponent>()
         {
-            int idx = ComponentType<TComponent>.Index;
+            TypeInfo typeInfo = TypeStatic<TComponent>.TypeInfo;
+            int hashCode = typeInfo.GetHashCode();
+            int idx = math.abs(hashCode) % m_ComponentArrayBuffer.Length;
+
 #if DEBUG_MODE
             if (idx == 0)
             {
@@ -268,9 +272,12 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
-        public static int GetComponentIndex(Type t)
+        public int GetComponentIndex(Type t)
         {
-            int idx = ComponentType.GetValue(t).Data.Index;
+            TypeInfo typeInfo = t.ToTypeInfo();
+            int hashCode = typeInfo.GetHashCode();
+            int idx = math.abs(hashCode) % m_ComponentArrayBuffer.Length;
+
 #if DEBUG_MODE
             if (idx == 0)
             {
@@ -283,38 +290,29 @@ namespace Syadeu.Presentation.Components
 #endif
             return idx;
         }
-        public static int GetComponentIndex(TypeInfo t)
+        public int GetComponentIndex(TypeInfo typeInfo)
         {
-            int idx = t.Index;
+            int hashCode = typeInfo.GetHashCode();
+            int idx = math.abs(hashCode) % m_ComponentArrayBuffer.Length;
+
 #if DEBUG_MODE
             if (idx == 0)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +
-                    $"Didn\'t collected this component({t.Type.Name}) infomation at initializing stage.");
+                    $"Didn\'t collected this component({typeInfo.Type.Name}) infomation at initializing stage.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 #endif
             return idx;
         }
-        //private static int GetEntityIndex(in EntityID entity)
-        //{
-        //    int idx = math.abs(entity.GetEntityData<IEntityData>().GetHashCode()) % ComponentBuffer.c_InitialCount;
-
-        //    // 매우 우연의 확률로 나올 수 있는데, 현재 랜덤 시드값에서 좀 자주 발생
-        //    //if (idx == 0)
-        //    //{
-        //    //    $"err {entity.RawName}: {entity.GetHashCode()},{}".ToLogError();
-        //    //}
-        //    return idx;
-        //}
-        public static int GetEntityIndex(in InstanceID entity)
+        public int GetEntityIndex(in InstanceID entity)
         {
             int idx = math.abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
             return idx;
         }
-        public static int2 GetIndex(in Type t, in InstanceID entity)
+        public int2 GetIndex(in Type t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -322,7 +320,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        public static int2 GetIndex(in TypeInfo t, in InstanceID entity)
+        public int2 GetIndex(in TypeInfo t, in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex(t),
@@ -330,7 +328,7 @@ namespace Syadeu.Presentation.Components
 
             return new int2(cIdx, eIdx);
         }
-        public static int2 GetIndex<TComponent>(in InstanceID entity)
+        public int2 GetIndex<TComponent>(in InstanceID entity)
         {
             int
                 cIdx = GetComponentIndex<TComponent>(),
@@ -352,7 +350,7 @@ namespace Syadeu.Presentation.Components
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
-            if (ComponentType<TComponent>.Index == 0)
+            if (GetComponentIndex<TComponent>() == 0)
             {
                 CoreSystem.Logger.LogError(Channel.Component,
                     $"Component buffer error. " +

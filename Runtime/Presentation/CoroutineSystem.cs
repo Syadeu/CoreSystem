@@ -22,6 +22,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.LowLevel;
@@ -214,66 +215,6 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnPresentation()
         {
-            #region Sequence Iterator Jobs
-            //if (m_CurrentIterationJob != null)
-            //{
-            //    if (m_CurrentIterationJob.Iter.Current == null)
-            //    {
-            //        if (!m_CurrentIterationJob.Iter.MoveNext())
-            //        {
-            //            m_CurrentIterationJob.Disposable.Dispose();
-            //            m_CurrentIterationJob = null;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (m_CurrentIterationJob.Iter.Current is CustomYieldInstruction @yield && !yield.keepWaiting)
-            //        {
-            //            if (!m_CurrentIterationJob.Iter.MoveNext())
-            //            {
-            //                m_CurrentIterationJob.Disposable.Dispose();
-            //                m_CurrentIterationJob = null;
-            //            }
-            //        }
-            //        else if (m_CurrentIterationJob.Iter.Current is UnityEngine.AsyncOperation oper &&
-            //            oper.isDone)
-            //        {
-            //            if (!m_CurrentIterationJob.Iter.MoveNext())
-            //            {
-            //                m_CurrentIterationJob.Disposable.Dispose();
-            //                m_CurrentIterationJob = null;
-            //            }
-            //        }
-            //        else if (m_CurrentIterationJob.Iter.Current is ICustomYieldAwaiter yieldAwaiter &&
-            //            !yieldAwaiter.KeepWait)
-            //        {
-            //            if (!m_CurrentIterationJob.Iter.MoveNext())
-            //            {
-            //                m_CurrentIterationJob.Disposable.Dispose();
-            //                m_CurrentIterationJob = null;
-            //            }
-            //        }
-            //        else if (m_CurrentIterationJob.Iter.Current is YieldInstruction &&
-            //            !(m_CurrentIterationJob.Iter.Current is UnityEngine.AsyncOperation))
-            //        {
-            //            CoreSystem.Logger.LogError(Channel.Presentation,
-            //                $"해당 yield return 타입({m_CurrentIterationJob.Iter.Current.GetType().Name})은 지원하지 않습니다");
-
-            //            m_CurrentIterationJob.Disposable.Dispose();
-            //            m_CurrentIterationJob = null;
-            //        }
-            //    }
-            //}
-            //if (m_CurrentIterationJob == null)
-            //{
-            //    if (m_IterationJobs.Count > 0)
-            //    {
-            //        m_CurrentIterationJob = m_IterationJobs.Dequeue();
-            //    }
-            //}
-
-            #endregion
-
             CoroutineUpdate(m_UpdateIndices);
 
             return base.OnPresentation();

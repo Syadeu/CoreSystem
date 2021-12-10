@@ -395,7 +395,7 @@ namespace Syadeu.Presentation
         #region Create EntityBase
 
         /// <summary>
-        /// <inheritdoc cref="CreateEntity(in string, in float3, in quaternion, in float3, in bool)"/>
+        /// <inheritdoc cref="CreateEntity(in string, in float3, in quaternion, in float3)"/>
         /// </summary>
         /// <param name="name"></param>
         /// <param name="position"></param>
@@ -417,18 +417,18 @@ namespace Syadeu.Presentation
             }
         }
         /// <summary>
-        /// <inheritdoc cref="CreateEntity(in Hash, in float3, in quaternion, in float3, in bool)"/>
+        /// <inheritdoc cref="CreateEntity(in Reference, in float3, in quaternion, in float3)"/>
         /// </summary>
-        /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
+        /// <param name="reference"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position)
+        public Entity<IEntity> CreateEntity(in Reference reference, in float3 position)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
 
             using (m_CreateEntityMarker.Auto())
             {
-                if (!InternalEntityValidation(in hash, in position, out EntityBase temp))
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
                 {
                     return Entity<IEntity>.Empty;
                 }
@@ -465,20 +465,20 @@ namespace Syadeu.Presentation
             }
         }
         /// <summary>
-        /// 엔티티를 생성합니다. <paramref name="hash"/>에는 <seealso cref="Reference"/>값으로 대체 가능합니다.
+        /// 엔티티를 생성합니다. <paramref name="reference"/>에는 <seealso cref="Hash"/>값으로 대체 가능합니다.
         /// </summary>
-        /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
+        /// <param name="reference"><seealso cref="IEntityData.Hash"/> 값</param>
         /// <param name="position"></param>
         /// <param name="rotation"></param>
         /// <param name="localSize"></param>
         /// <returns></returns>
-        public Entity<IEntity> CreateEntity(in Hash hash, in float3 position, in quaternion rotation, in float3 localSize)
+        public Entity<IEntity> CreateEntity(in Reference reference, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
 
             using (m_CreateEntityMarker.Auto())
             {
-                if (!InternalEntityValidation(in hash, in position, out EntityBase temp))
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
                 {
                     return Entity<IEntity>.Empty;
                 }
@@ -674,7 +674,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
-                Entity<IEntity> entity = CreateEntity(obj.Hash, float3.zero);
+                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
                 return new Instance<T>(entity.Idx);
             }
             else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
@@ -704,7 +704,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared but not in build.");
-                Entity<IEntity> entity = CreateEntity(obj.Hash, float3.zero);
+                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
                 return new Instance(entity.Idx);
             }
             else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))

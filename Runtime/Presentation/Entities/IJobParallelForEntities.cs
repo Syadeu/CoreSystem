@@ -84,7 +84,7 @@ namespace Syadeu.Presentation.Entities
                 if (s_JobReflectionData == IntPtr.Zero)
                 {
 #if UNITY_2020_2_OR_NEWER
-                    s_JobReflectionData = JobsUtility.CreateJobReflectionData(typeof(T), typeof(T), (ExecuteJobFunction)Execute);
+                    s_JobReflectionData = JobsUtility.CreateJobReflectionData(TypeHelper.TypeOf<T>.Type, TypeHelper.TypeOf<T>.Type, (ExecuteJobFunction)Execute);
 #else
                     s_JobReflectionData = JobsUtility.CreateJobReflectionData(typeof(T), typeof(T),
                         JobType.ParallelFor, (ExecuteJobFunction)Execute);

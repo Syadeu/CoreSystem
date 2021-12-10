@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Components
                 System.AddComponent(instanceID, componentType);
                 onAdd?.Invoke(instanceID, componentType);
 
-                m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
+                m_NotifiedObjects.Add(rawID, TypeStatic.GetValue(componentType).Data);
             }
         }
         public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
@@ -120,7 +120,7 @@ namespace Syadeu.Presentation.Components
                 onRemove?.Invoke(instanceID, componentType);
                 System.RemoveComponent(instanceID, componentType);
 
-                m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
+                m_NotifiedObjects.Add(rawID, TypeStatic.GetValue(componentType).Data);
             }
         }
 
