@@ -16,7 +16,10 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "Newtonsoft.Json.dll",
-        "Newtonsoft.Json.Bson.dll"
+        "Newtonsoft.Json.Bson.dll",
+        "Mono.Data.dll",
+        "Mono.Data.Sqlite.dll",
+        "Mono.Data.SqliteClient.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

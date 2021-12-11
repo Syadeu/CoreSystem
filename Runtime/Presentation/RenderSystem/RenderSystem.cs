@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #undef UNITY_ADDRESSABLES
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
 #if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;

@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             //m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
         }
-        protected override void OnEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived(IActorEvent ev)
         {
             if (ev is ActorHitEvent hitEvent)
             {

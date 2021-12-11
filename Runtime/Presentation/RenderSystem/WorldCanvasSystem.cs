@@ -353,12 +353,7 @@ namespace Syadeu.Presentation.Render
             m_AllActorOverlayUI.Remove(uiEntity);
         }
 
-        public void PostActorOverlayUIEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        public void PostActorOverlayUIEvent(Entity<ActorEntity> entity, IActorEvent ev)
         {
             if (m_AttachedUIHashMap.TryGetFirstValue(entity.Cast<ActorEntity, IEntity>(), 
                     out Entity<UIObjectEntity> uiEntity, out var iterator))

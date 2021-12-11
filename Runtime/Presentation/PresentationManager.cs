@@ -64,7 +64,7 @@ namespace Syadeu.Presentation
             private readonly List<ITransformPresentation> m_TransformPresentations = new List<ITransformPresentation>();
             private readonly List<IAfterTransformPresentation> m_AfterTransformPresentations = new List<IAfterTransformPresentation>();
 
-            public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
+            public readonly ConcurrentQueue<Action> m_RequestSystemBindDelegates = new ConcurrentQueue<Action>();
             private readonly List<Hash> m_GroupDependences = new List<Hash>();
 
             //public CoreRoutine MainPresentation;
@@ -1497,7 +1497,7 @@ namespace Syadeu.Presentation
             }
         }
 
-        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter
+        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> bind
 #if DEBUG_MODE
             , string methodName
 #endif
@@ -1525,7 +1525,7 @@ namespace Syadeu.Presentation
 
             if (!group.m_MainthreadSignal)
             {
-                group.m_RequestSystemDelegates.Enqueue(() =>
+                group.m_RequestSystemBindDelegates.Enqueue(() =>
                 {
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
                     {
@@ -1538,7 +1538,7 @@ namespace Syadeu.Presentation
 
                     CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
-                    setter.Invoke(target);
+                    bind.Invoke(target);
                 });
                 return;
             }
@@ -1547,7 +1547,7 @@ namespace Syadeu.Presentation
             {
                 try
                 {
-                    setter.Invoke(system);
+                    bind.Invoke(system);
                 }
                 catch (Exception ex)
                 {
@@ -1709,11 +1709,11 @@ namespace Syadeu.Presentation
             group.InitializeAsync();
 
             yield return new WaitUntil(() => group.m_MainthreadSignal);
-            int requestSystemCount = group.m_RequestSystemDelegates.Count;
+            int requestSystemCount = group.m_RequestSystemBindDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
                 //$"asd : {i} = {requestSystemCount}".ToLog();
-                if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
+                if (!group.m_RequestSystemBindDelegates.TryDequeue(out Action action)) continue;
                 try
                 {
                     action?.Invoke();

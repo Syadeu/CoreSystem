@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = -9, PropertyName = "OnHit")]
         protected LogicTriggerAction[] m_OnHit = Array.Empty<LogicTriggerAction>();
 
-        protected override void OnEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived(IActorEvent ev)
         {
             if (ev is ActorAttackEvent attackEvent)
             {

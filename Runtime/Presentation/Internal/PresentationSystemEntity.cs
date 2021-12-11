@@ -42,6 +42,11 @@ namespace Syadeu.Presentation.Internal
         internal PresentationSystemModule[] m_Modules = Array.Empty<PresentationSystemModule>();
         private bool m_Disposed = false;
 
+        public event Action<PresentationSystemEntity> OnSystemShutDown;
+        public event Action OnSystemShutDownUntyped;
+        public event Action<PresentationSystemEntity> OnSystemDispose;
+        public event Action OnSystemDisposeUntyped;
+
         public abstract bool EnableBeforePresentation { get; }
         public abstract bool EnableOnPresentation { get; }
         public abstract bool EnableAfterPresentation { get; }
@@ -94,6 +99,8 @@ namespace Syadeu.Presentation.Internal
 
         internal void InternalOnShutdown()
         {
+            OnSystemShutDownUntyped?.Invoke();
+            OnSystemShutDown?.Invoke(this);
             OnShutDown();
 
             for (int i = 0; i < m_Modules.Length; i++)
@@ -108,6 +115,8 @@ namespace Syadeu.Presentation.Internal
 
         public void Dispose()
         {
+            OnSystemDisposeUntyped?.Invoke();
+            OnSystemDispose?.Invoke(this);
             InternalOnDispose();
             OnUnityJobsDispose();
             OnDispose();
@@ -118,6 +127,11 @@ namespace Syadeu.Presentation.Internal
             }
             m_Modules = null;
             m_Disposed = true;
+
+            OnSystemShutDownUntyped = null;
+            OnSystemShutDown = null;
+            OnSystemDisposeUntyped = null;
+            OnSystemDispose = null;
         }
         internal virtual void InternalOnDispose() { }
         public abstract void OnDispose();

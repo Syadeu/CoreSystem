@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Actor
             worldCanvasSystem.RemoveAllOverlayUI(Parent.ToEntity<IEntity>());
         }
 
-        protected override void OnEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived(IActorEvent ev)
         {
             WorldCanvasSystem worldCanvasSystem = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System;
 
@@ -64,12 +64,7 @@ namespace Syadeu.Presentation.Actor
             worldCanvasSystem.PostActorOverlayUIEvent(Parent.ToEntity<ActorEntity>(), ev);
         }
 
-        protected virtual void ActorEventHandler<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        protected virtual void ActorEventHandler(IActorEvent ev)
         { }
     }
 }

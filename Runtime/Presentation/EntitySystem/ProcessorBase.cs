@@ -55,9 +55,9 @@ namespace Syadeu.Presentation
         /// </summary>
         /// <typeparam name="TGroup">요청할 <typeparamref name="TSystem"/> 이 위치한 그룹입니다.</typeparam>
         /// <typeparam name="TSystem">요청할 시스템입니다.</typeparam>
-        /// <param name="setter"></param>
+        /// <param name="bind"></param>
         /// <param name="methodName"></param>
-        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> bind
 #if DEBUG_MODE
             , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
 #endif
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
-            PresentationManager.RegisterRequest<TGroup, TSystem>(setter
+            PresentationManager.RegisterRequest<TGroup, TSystem>(bind
 #if DEBUG_MODE
                 , methodName
 #endif

@@ -764,6 +764,11 @@ namespace Syadeu.Presentation.Map
             return GridMap.GetIndex(position);
         }
 
+        public float3 GridPositionToPosition(in GridPosition position)
+        {
+            return IndexToPosition(position.index);
+        }
+
         public GridPosition GetGridPosition(float3 position)
         {
             return GridMap.GetGridPosition(in position);

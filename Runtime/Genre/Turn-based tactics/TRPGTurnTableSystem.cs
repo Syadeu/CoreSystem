@@ -24,6 +24,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
 using System;
 using System.Collections;
@@ -54,6 +55,10 @@ namespace Syadeu.Presentation.TurnTable
 
         private EventSystem m_EventSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
+        private NavMeshSystem m_NavMeshSystem;
+        private GridSystem m_GridSystem;
+
+        private TRPGGridSystem m_TRPGGridSystem;
 
         public bool Enabled => m_TurnTableEnabled;
         public int TurnCount => m_TurnCount;
@@ -76,6 +81,9 @@ namespace Syadeu.Presentation.TurnTable
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGGridSystem>(Bind);
 
             ConsoleWindow.CreateCommand(Console_LogStatus, "status", "turntablesystem");
 
@@ -105,7 +113,12 @@ namespace Syadeu.Presentation.TurnTable
 
             m_EventSystem = null;
             m_WorldCanvasSystem = null;
+            m_NavMeshSystem = null;
+            m_GridSystem = null;
+            m_TRPGGridSystem = null;
         }
+
+        #region Binds
 
         private void Bind(EventSystem other)
         {
@@ -115,6 +128,20 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_WorldCanvasSystem = other;
         }
+        private void Bind(NavMeshSystem other)
+        {
+            m_NavMeshSystem = other;
+        }
+        private void Bind(GridSystem other)
+        {
+            m_GridSystem = other;
+        }
+        private void Bind(TRPGGridSystem other)
+        {
+            m_TRPGGridSystem = other;
+        }
+
+        #endregion
 
         #endregion
 
@@ -229,6 +256,8 @@ namespace Syadeu.Presentation.TurnTable
         private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
+            ref GridSizeComponent grid = ref entity.GetComponent<GridSizeComponent>();
+
             player.ActionPoint = player.MaxActionPoint;
 
             CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} reset turn");
@@ -236,6 +265,8 @@ namespace Syadeu.Presentation.TurnTable
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Reset));
 
             //entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
+            m_NavMeshSystem.MoveTo(entity.ToEntity<IEntity>(), m_GridSystem.GridPositionToPosition(grid.positions[0]), 
+                new ActorMoveEvent(entity, 0));
             player.OnResetTurnActions.Schedule(entity);
 
             return ref player;

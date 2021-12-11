@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actor
         {
             m_Parent = parent;
         }
-        void IActorProvider.ReceivedEvent<TEvent>(TEvent ev)
+        void IActorProvider.ReceivedEvent(IActorEvent ev)
         {
             try
             {
@@ -94,12 +94,7 @@ namespace Syadeu.Presentation.Actor
             m_Parent = EntityData<IEntityData>.Empty;
         }
 
-        protected virtual void OnEventReceived<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        protected virtual void OnEventReceived(IActorEvent ev)
         { }
 
         /// <summary><inheritdoc cref="ObjectBase.OnInitialize"/></summary>

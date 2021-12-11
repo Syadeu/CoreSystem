@@ -209,7 +209,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
-            "asd".ToLog();
             if (ev.Shortcut == m_CurrentShortcut)
             {
                 //"same return".ToLog();

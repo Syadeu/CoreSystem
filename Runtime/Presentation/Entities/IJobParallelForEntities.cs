@@ -29,11 +29,12 @@ using Unity.Jobs.LowLevel.Unsafe;
 namespace Syadeu.Presentation.Entities
 {
     [JobProducerType(typeof(IJobParallelForEntitiesExtensions.JobParallelForEntitiesProducer<,>))]
-    public interface IJobParallelForEntities<TComponent>
+    public interface IJobParallelForEntities<TComponent> : IJobParallelForEntities
         where TComponent : unmanaged, IEntityComponent
     {
         void Execute(in InstanceID entity, in TComponent component);
     }
+    public interface IJobParallelForEntities { }
 
     public static class IJobParallelForEntitiesInterfaces
         //where TComponent : unmanaged, IEntityComponent
@@ -73,7 +74,7 @@ namespace Syadeu.Presentation.Entities
         private static JobHandle s_GlobalJobHandle;
 
         internal struct JobParallelForEntitiesProducer<T, TComponent> 
-            where T : struct, IJobParallelForEntities<TComponent>
+            where T : struct, IJobParallelForEntities
             where TComponent : unmanaged, IEntityComponent
         {
             static IntPtr s_JobReflectionData;
@@ -129,7 +130,7 @@ namespace Syadeu.Presentation.Entities
 
                 buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
 
-                jobData.Execute(entity, in component);
+                ((IJobParallelForEntities<TComponent>)jobData).Execute(entity, in component);
             }
         }
 
@@ -137,7 +138,7 @@ namespace Syadeu.Presentation.Entities
             this ref T jobData, 
             [NoAlias] int innerloopBatchCount = 64, 
             JobHandle dependsOn = new JobHandle())
-            where T : struct, IJobParallelForEntities<TComponent>
+            where T : struct, IJobParallelForEntities
             where TComponent : unmanaged, IEntityComponent
         {
             unsafe
@@ -151,7 +152,7 @@ namespace Syadeu.Presentation.Entities
             [NoAlias] int innerloopBatchCount,
             JobHandle dependsOn) 
             
-            where T : struct, IJobParallelForEntities<TComponent>
+            where T : struct, IJobParallelForEntities
             where TComponent : unmanaged, IEntityComponent
         {
             var scheduleParams = new JobsUtility.JobScheduleParameters(

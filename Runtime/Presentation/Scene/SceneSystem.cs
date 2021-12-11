@@ -328,16 +328,15 @@ namespace Syadeu.Presentation
             }
             else
             {
+                m_IsDebugScene = true;
                 Scene currentScene = SceneManager.GetActiveScene();
 
                 SceneReference sceneRef = SceneList.Instance.GetScene(currentScene.path);
                 if (m_DebugMode && sceneRef != null)
                 {
                     m_CurrentScene = currentScene;
-                    StartSceneDependences(this, sceneRef);
+                    CoreSystem.WaitInvoke(1, () => StartSceneDependences(this, sceneRef));
                 }
-
-                m_IsDebugScene = true;
 
                 OnSceneChanged?.Invoke();
 

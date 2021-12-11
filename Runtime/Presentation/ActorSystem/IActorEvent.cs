@@ -26,8 +26,6 @@ namespace Syadeu.Presentation.Actor
     [UnityEngine.Scripting.RequireImplementors]
     public interface IActorEvent
     {
-        bool BurstCompile { get; }
-
         void OnExecute(Entity<ActorEntity> from);
     }
 }

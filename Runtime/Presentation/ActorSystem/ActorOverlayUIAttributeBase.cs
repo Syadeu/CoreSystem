@@ -44,16 +44,11 @@ namespace Syadeu.Presentation.Actor
 
             OnUICreated(parent);
         }
-        internal void EventReceived<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        internal void EventReceived(IActorEvent ev)
         {
             OnEventReceived(ev);
 
-            var actor = ParentActor.As<ActorEntity, IEntityData>();
+            var actor = ParentActor.ToEntityData<IEntityData>();
             for (int i = 0; i < m_OnParentEventReceived8.Length; i++)
             {
                 m_OnParentEventReceived8[i].Execute(Parent, actor);
@@ -70,20 +65,6 @@ namespace Syadeu.Presentation.Actor
         /// </summary>
         /// <typeparam name="TEvent"></typeparam>
         /// <param name="ev"></param>
-        protected virtual void OnEventReceived<TEvent>(TEvent ev) where TEvent : IActorEvent
-        { }
-
-        internal static void AOTCodeGenerator<TEvent>()
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
-        {
-            ActorOverlayUIAttributeBase att = null;
-
-            att.EventReceived<TEvent>(default);
-            att.OnEventReceived<TEvent>(default);
-        }
+        protected virtual void OnEventReceived(IActorEvent ev) { }
     }
 }

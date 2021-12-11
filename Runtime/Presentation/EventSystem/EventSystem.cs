@@ -326,6 +326,11 @@ namespace Syadeu.Presentation.Events
             m_SystemTickets.Insert(0, m_CurrentTicket);
             m_CurrentTicket = scheduler;
         }
+
+        /// <summary>
+        /// 현재, 혹은 곧 수행될 이벤트의 시스템을 반환합니다.
+        /// </summary>
+        /// <returns></returns>
         public PresentationSystemEntity GetNextTicketSystem()
         {
             if (m_SystemTickets.Count == 0)

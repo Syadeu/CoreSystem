@@ -116,7 +116,7 @@ namespace Syadeu.Presentation.Actor
             m_WeaponPoser = StartCoroutine(weaponPoser);
             //Parent.AddComponent(component);
         }
-        protected override void OnEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived(IActorEvent ev)
         {
             if (ev is IActorWeaponEquipEvent weaponEquipEvent)
             {

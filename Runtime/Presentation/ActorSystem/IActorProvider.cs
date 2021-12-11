@@ -17,6 +17,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
+using Unity.Burst;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -27,12 +28,13 @@ namespace Syadeu.Presentation.Actor
 
         void Bind(EntityData<IEntityData> parent);
 
-        void ReceivedEvent<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent;
-#else
-            where TEvent : unmanaged, IActorEvent;
-#endif
+        //        void ReceivedEvent<TEvent>(TEvent ev)
+        //#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+        //            where TEvent : struct, IActorEvent;
+        //#else
+        //            where TEvent : unmanaged, IActorEvent;
+        //#endif
+        void ReceivedEvent(IActorEvent ev);
         void OnCreated();
 
         void OnProxyCreated();

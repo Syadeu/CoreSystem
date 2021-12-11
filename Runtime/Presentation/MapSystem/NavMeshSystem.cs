@@ -325,6 +325,7 @@ namespace Syadeu.Presentation.Map
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(entity.transform.position);
             position.Add(point);
             ev.m_MoveJob = new MoveJob()
             {
@@ -345,6 +346,7 @@ namespace Syadeu.Presentation.Map
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(entity.transform.position);
             position.Add(point);
             ev.m_MoveJob = new MoveJob()
             {
@@ -387,6 +389,7 @@ namespace Syadeu.Presentation.Map
             }
 
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(entity.transform.position);
             for (int i = 0; i < points.Count; i++)
             {
                 position.Add(points[i]);
@@ -437,6 +440,27 @@ namespace Syadeu.Presentation.Map
             {
                 ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_Direction = dir;
+            }
+            private void UpdateNavAgentSpeed(Animator animator, NavMeshAgent agent)
+            {
+                if (animator == null) return;
+
+                Vector3 v = agent.velocity * Time.deltaTime;
+                Vector3 animatorDelta = animator.deltaPosition;
+
+                float rootSpeed = 0f;
+                if (Vector3.Angle(animatorDelta, v) < 180f)
+                {
+                    float vMag = v.magnitude;
+
+                    Vector3 projectedDelta = (Vector3.Dot(animatorDelta, v) / (vMag * vMag)) * v;
+                    rootSpeed = projectedDelta.magnitude / Time.deltaTime;
+                }
+
+                if (!float.IsNaN(rootSpeed))
+                {
+                    agent.speed = Mathf.Max(rootSpeed, 0.5f);
+                }
             }
 
             public IEnumerator Execute()
@@ -544,7 +568,6 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
 
-                    float3 dir = (float3)agent.nextPosition - tr.position;
                     SetDirection(agent.desiredVelocity);
 
                     if (!rootMotion)
@@ -566,7 +589,6 @@ namespace Syadeu.Presentation.Map
 
                 while (tr.hasProxy && agent.remainingDistance > .1f)
                 {
-                    float3 dir = (float3)agent.nextPosition - tr.position;
                     SetDirection(agent.desiredVelocity);
 
                     if (!rootMotion)
@@ -586,10 +608,10 @@ namespace Syadeu.Presentation.Map
                     yield return null;
                 }
 
-                SetDirection(0);
-
                 do
                 {
+                    SetDirection(agent.desiredVelocity);
+
                     if (!rootMotion)
                     {
                         tr.position = agent.nextPosition;
@@ -608,6 +630,7 @@ namespace Syadeu.Presentation.Map
                 } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
                         navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
 
+                SetDirection(0);
                 agent.ResetPath();
             }
         }
@@ -647,13 +670,6 @@ namespace Syadeu.Presentation.Map
         {
             m_Entity = entity;
             m_AfterDelay = afterDelay;
-
-            m_MoveJob = default;
-        }
-        public ActorMoveEvent(EntityData<IEntityData> entity)
-        {
-            m_Entity = entity;
-            m_AfterDelay = 0;
 
             m_MoveJob = default;
         }
