@@ -649,7 +649,7 @@ namespace Syadeu.Presentation.Map
         }
     }
 
-    public struct ActorMoveEvent : IActorEvent, IEventSequence
+    public struct ActorMoveEvent : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent>
     {
         private EntityData<IEntityData> m_Entity;
         private float m_AfterDelay;
@@ -687,8 +687,9 @@ namespace Syadeu.Presentation.Map
             agent.m_MoveJob 
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
         }
+        public bool Equals(ActorMoveEvent other) => m_Entity.Equals(other.m_Entity);
     }
-    public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence
+    public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent<TPredicate>>
         where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
     {
         private EntityData<IEntityData> m_Entity;
@@ -739,6 +740,7 @@ namespace Syadeu.Presentation.Map
             agent.m_MoveJob
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
         }
+        public bool Equals(ActorMoveEvent<TPredicate> other) => m_Entity.Equals(other.m_Entity);
     }
 
     public struct NavAgentComponent : IEntityComponent
