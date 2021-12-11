@@ -14,7 +14,8 @@
         "Unity.TextMeshPro",
         "DOTween.Modules",
         "DOTweenPro.Scripts",
-        "Syadeu.Presentation.Dotween"
+        "Syadeu.Presentation.Dotween",
+        "ShapesRuntime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -153,7 +153,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (Ref.m_EnableCull == value) return;
 
-                if (!value && !hasProxy && !hasProxyQueued)
+                if (!value && !prefab.IsNone() && !hasProxy && !hasProxyQueued)
                 {
                     //Ref.m_ProxyIndex = ProxyQueued;
                     PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);

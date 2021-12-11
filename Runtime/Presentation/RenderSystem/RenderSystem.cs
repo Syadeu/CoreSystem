@@ -44,6 +44,9 @@ namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
+#if CORESYSTEM_SHAPES
+        , INotifySystemModule<ShapesRenderModule>
+#endif
 #if CORESYSTEM_HDRP
         , INotifySystemModule<HDRPRenderProjectionModule>
 #endif

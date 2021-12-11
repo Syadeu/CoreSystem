@@ -106,10 +106,23 @@ namespace Syadeu.Presentation
         /// <param name="info"></param>
         /// <param name="maxDistance"></param>
         /// <returns></returns>
-        public bool Raycast(in Ray ray, out RaycastInfo info, in float maxDistance = -1)
+        public bool Raycast(in Ray ray, out RaycastInfo info, in float maxDistance = float.MaxValue)
         {
             info = RaycastInfo.Empty;
 
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+            {
+                var monoObj = hit.collider.GetComponent<RecycleableMonobehaviour>();
+                if (monoObj != null)
+                {
+                    info = new RaycastInfo(monoObj.entity, true, hit.distance, hit.point);
+
+                    return true;
+                }
+            }
+            return false;
+
+            // TODO : Temp code
             for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
             {
                 if (!m_BoundSystem.BoundCluster[i].IsCreated) continue;

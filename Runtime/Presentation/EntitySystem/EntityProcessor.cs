@@ -26,8 +26,8 @@ namespace Syadeu.Presentation
     /// </summary>
     public abstract class EntityProcessor : ProcessorBase
     {
-        internal override void InternalOnCreated(IObject obj) => OnCreated(obj);
-        internal override void InternalOnDestroy(IObject obj) => OnDestroy(obj);
+        internal override sealed void InternalOnCreated(IObject obj) => OnCreated(obj);
+        internal override sealed void InternalOnDestroy(IObject obj) => OnDestroy(obj);
 
         protected virtual void OnCreated(IObject obj) { }
         protected virtual void OnDestroy(IObject obj) { }
@@ -40,8 +40,8 @@ namespace Syadeu.Presentation
     {
         public override sealed Type Target => TypeHelper.TypeOf<TEntity>.Type;
 
-        internal override void InternalOnCreated(IObject obj) => OnCreated((TEntity)obj);
-        internal override void InternalOnDestroy(IObject obj) => OnDestroy((TEntity)obj);
+        internal override sealed void InternalOnCreated(IObject obj) => OnCreated((TEntity)obj);
+        internal override sealed void InternalOnDestroy(IObject obj) => OnDestroy((TEntity)obj);
 
         protected virtual void OnCreated(TEntity obj) { }
         protected virtual void OnDestroy(TEntity obj) { }

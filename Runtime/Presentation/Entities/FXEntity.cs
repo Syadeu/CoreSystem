@@ -26,12 +26,6 @@ namespace Syadeu.Presentation.Entities
     [DisplayName("Entity: FX Entity")]
     public sealed class FXEntity : EntityBase
     {
-        public enum PlayType
-        {
-            Sequence,
-            Random
-        }
-
         [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
         private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
 

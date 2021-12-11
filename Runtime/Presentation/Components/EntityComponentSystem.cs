@@ -362,11 +362,11 @@ namespace Syadeu.Presentation.Components
 #endif
             result = true;
         }
-        public ComponentBuffer GetComponentBuffer<TComponent>()
+        public ref ComponentBuffer GetComponentBuffer<TComponent>()
         {
             int idx = GetComponentIndex<TComponent>();
 
-            return UnsafeUtility.ReadArrayElement<ComponentBuffer>(m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr(), idx);
+            return ref UnsafeUtility.ArrayElementAsRef<ComponentBuffer>(m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr(), idx);
         }
         public ComponentBuffer* GetComponentBufferPointer<TComponent>()
         {

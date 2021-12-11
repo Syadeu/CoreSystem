@@ -64,7 +64,7 @@ namespace Syadeu.Collections
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        public bool IsNone() => Equals(None);
+        public bool IsNone() => Equals(None) || Equals(Invalid);
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
 
         public static PrefabReference Find(string name)

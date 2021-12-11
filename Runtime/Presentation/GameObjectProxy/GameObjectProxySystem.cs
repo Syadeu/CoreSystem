@@ -45,6 +45,9 @@ namespace Syadeu.Presentation.Proxy
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
         private const int c_InitialMemorySize = 1024;
 
+        const string 
+            c_ProxyCreated = "ProxyTransform({0}) has been created at {1}";
+
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
@@ -99,10 +102,6 @@ namespace Syadeu.Presentation.Proxy
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
         private EventSystem m_EventSystem;
-
-        private bool m_Disposed = false;
-
-        public bool Disposed => m_Disposed;
 
         #region Presentation Methods
         protected override PresentationResult OnInitialize()
@@ -160,8 +159,6 @@ namespace Syadeu.Presentation.Proxy
 
             m_SortedCluster.Dispose();
             m_ProxyClusterCounter.Dispose();
-
-            m_Disposed = true;
         }
 
         #region Binds
@@ -694,46 +691,7 @@ namespace Syadeu.Presentation.Proxy
                     Interlocked.Increment(ref *m_Count);
                 }
             }
-            //public void Execute()
-            //{
-            //    int a = 0;
-            //    for (int i = 0; i < m_ClusterData.Length; i++)
-            //    {
-            //        //AABB box = new AABB(m_ClusterData[i].Translation, Cluster<ProxyTransformData>.c_ClusterRange);
-
-            //        if (m_Frustum.IntersectsBox(m_ClusterData[i].AABB))
-            //        {
-            //            if (a < m_Output.Length)
-            //            {
-            //                m_Output[a] = m_ClusterData[i];
-            //                a++;
-            //            }
-            //            else
-            //            {
-            //                m_Output.Add(m_ClusterData[i]);
-            //            }
-            //        }
-            //    }
-
-            //    for (int i = a; i < m_Output.Length; i++)
-            //    {
-            //        m_Output[i] = ClusterGroup<ProxyTransformData>.Empty;
-            //    }
-            //}
         }
-        //unsafe private struct UpdateChildDependencies : IJobParallelFor
-        //{
-        //    [ReadOnly] public NativeProxyData.UnsafeList List;
-
-        //    public void Execute(int i)
-        //    {
-        //        if (!List[i]->m_IsOccupied || List[i]->m_ParentIndex < 0) return;
-
-        //        ProxyTransformData* parent = List[List[i]->m_ParentIndex];
-
-        //        List[i]->m_Translation = math.mul(parent->worldToLocal, new float4(List[i]->m_Translation, 1)).xyz;
-        //    }
-        //}
         [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
         unsafe private struct ProxyJob : IJobParallelForDefer
         {
@@ -775,11 +733,6 @@ namespace Syadeu.Presentation.Proxy
                         continue;
                     }
                     ref ProxyTransformData data = ref List.ElementAt(clusterGroup[j]);
-                    //if (data.destroyed)
-                    //{
-                    //    clusterGroup.RemoveAt(j);
-                    //    continue;
-                    //}
 
                     if (!data.m_EnableCull && !data.m_Prefab.Equals(PrefabReference.None))
                     {
@@ -790,7 +743,7 @@ namespace Syadeu.Presentation.Proxy
 
                     if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
-                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                        if (!data.m_Prefab.IsNone() &&
                             data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
@@ -804,7 +757,7 @@ namespace Syadeu.Presentation.Proxy
                     }
                     else
                     {
-                        if (!data.m_Prefab.Equals(PrefabReference.None) &&
+                        if (!data.m_Prefab.IsNone() &&
                             !data.m_ProxyIndex.Equals(-1) &&
                             !data.m_ProxyIndex.Equals(-2))
                         {
@@ -852,7 +805,19 @@ namespace Syadeu.Presentation.Proxy
 
         public ProxyTransform CreateTransform(in float3 pos, in quaternion rot, in float3 scale)
         {
-            throw new NotImplementedException();
+            ProxyTransform tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, true, 0, 1, false);
+
+            unsafe
+            {
+                m_ClusterIDRequests.Enqueue(new ClusterIDRequest(pos, tr.m_Index));
+                tr.Pointer->clusterID = ClusterID.Requested;
+            }
+            OnDataObjectCreated?.Invoke(tr);
+
+            CoreSystem.Logger.Log(Channel.Proxy, true,
+                string.Format(c_ProxyCreated, "EMPTY", pos));
+
+            return tr;
         }
         public unsafe void SetParent(in ProxyTransform parent, in ProxyTransform child)
         {
@@ -865,7 +830,6 @@ namespace Syadeu.Presentation.Proxy
             bool gpuInstanced)
         {
             const string c_ErrorToEarly = "You've call this method too early or outside of PresentationSystem";
-            const string c_Created = "ProxyTransform({0}) has been created at {1}";
 
             CoreSystem.Logger.ThreadBlock(nameof(CreateNewPrefab), ThreadInfo.Unity);
 
@@ -892,13 +856,13 @@ namespace Syadeu.Presentation.Proxy
             }
             OnDataObjectCreated?.Invoke(tr);
 
-            if (!enableCull && !prefab.Equals(PrefabReference<GameObject>.None))
+            if (!enableCull && !prefab.IsNone())
             {
                 m_OverrideRequestProxies.Enqueue(tr.m_Index);
             }
 
             CoreSystem.Logger.Log(Channel.Proxy, true,
-                string.Format(c_Created, (prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY"), pos));
+                string.Format(c_ProxyCreated, (prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY"), pos));
 
             return tr;
         }
@@ -1256,77 +1220,61 @@ namespace Syadeu.Presentation.Proxy
                 Action<RecycleableMonobehaviour> onCompleted)
             {
                 m_ProxySystem = proxySystem;
-                //if (SceneSystem.IsSceneLoading)
-                //{
-                //    CoreSystem.Logger.LogWarning(Channel.Proxy, $"{prefabIdx.Index} is returned because Scene has been changed");
-                //    return;
-                //}
-
-                s_SetupMarker.Begin();
-
-                CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
-                //var prefabInfo = PrefabList.Instance.ObjectSettings[prefabIdx];
-                var prefabInfo = prefabIdx.GetObjectSetting();
-                if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
+                using (s_SetupMarker.Auto())
                 {
-                    pool = new Stack<RecycleableMonobehaviour>();
-                    proxySystem.m_TerminatedProxies.Add(prefabIdx, pool);
-                }
-
-                if (pool.Count > 0)
-                {
-                    RecycleableMonobehaviour obj = pool.Pop();
-                    obj.transform.position = pos;
-                    obj.transform.rotation = rot;
-
-                    if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
+                    CoreSystem.Logger.True(prefabIdx.IsValid(), nameof(PrefabReference) + "not valid");
+                    PrefabList.ObjectSetting prefabInfo = prefabIdx.GetObjectSetting();
+                    if (prefabInfo == null)
                     {
-                        instances = new List<RecycleableMonobehaviour>();
-                        m_ProxySystem.m_Instances.Add(prefabIdx, instances);
+                        CoreSystem.Logger.LogError(Channel.Proxy,
+                            $"Cannot retrieve prefab setting index of {prefabIdx.Index}.");
+                        return;
                     }
 
-                    obj.m_Idx = instances.Count;
-                    instances.Add(obj);
+                    if (!proxySystem.m_TerminatedProxies.TryGetValue(prefabIdx, out var pool))
+                    {
+                        pool = new Stack<RecycleableMonobehaviour>();
+                        proxySystem.m_TerminatedProxies.Add(prefabIdx, pool);
+                    }
 
-                    obj.InternalOnCreated();
-                    if (obj.InitializeOnCall) obj.Initialize();
-                    onCompleted?.Invoke(obj);
+                    if (pool.Count > 0)
+                    {
+                        RecycleableMonobehaviour obj = pool.Pop();
+                        obj.transform.position = pos;
+                        obj.transform.rotation = rot;
 
-                    PoolContainer<PrefabRequester>.Enqueue(this);
+                        if (!m_ProxySystem.m_Instances.TryGetValue(prefabIdx, out List<RecycleableMonobehaviour> instances))
+                        {
+                            instances = new List<RecycleableMonobehaviour>();
+                            m_ProxySystem.m_Instances.Add(prefabIdx, instances);
+                        }
 
-                    s_SetupMarker.End();
-                    return;
+                        obj.m_Idx = instances.Count;
+                        instances.Add(obj);
+
+                        obj.InternalOnCreated();
+                        if (obj.InitializeOnCall) obj.Initialize();
+                        onCompleted?.Invoke(obj);
+
+                        PoolContainer<PrefabRequester>.Enqueue(this);
+
+                        return;
+                    }
+
+                    m_PrefabIdx = prefabIdx;
+                    m_RequestedScene = SceneSystem.CurrentScene;
+                    m_OnCompleted = onCompleted;
+
+                    if (prefabInfo.m_IsRuntimeObject)
+                    {
+                        CreatePrefab(prefabInfo.m_Prefab);
+
+                        return;
+                    }
+
+                    var oper = prefabInfo.InstantiateAsync(pos, rot, null);
+                    oper.Completed += CreatePrefab;
                 }
-
-                //Transform parent;
-                //if (prefabInfo.m_IsWorldUI)
-                //{
-                //    parent = PresentationSystem<DefaultPresentationGroup, WorldCanvasSystem>.System.Canvas.transform;
-                //}
-                //else
-                //{
-                //    CoreSystem.Logger.NotNull(SceneSystem.SceneInstanceFolder);
-                //    parent = SceneSystem.SceneInstanceFolder;
-                //}
-
-                //refObject = prefabInfo.m_RefPrefab;
-                m_PrefabIdx = prefabIdx;
-                m_RequestedScene = SceneSystem.CurrentScene;
-                m_OnCompleted = onCompleted;
-
-                if (prefabInfo.m_IsRuntimeObject)
-                {
-                    CreatePrefab(prefabInfo.m_Prefab);
-
-                    s_SetupMarker.End();
-                    return;
-                }
-
-                var oper = prefabInfo.InstantiateAsync(pos, rot, null);
-                oper.Completed += CreatePrefab;
-#if DEBUG_MODE
-                s_SetupMarker.End();
-#endif
             }
             private void CreatePrefab(AsyncOperationHandle<GameObject> other)
             {

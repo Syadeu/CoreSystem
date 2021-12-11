@@ -47,12 +47,53 @@ namespace Syadeu.Presentation
             private GameObjectProxySystem m_GameObjectProxySystem;
             private Components.EntityComponentSystem m_ComponentSystem;
 
-            public EntitySystem EntitySystem => m_EntitySystem;
-            public EventSystem EventSystem => m_EventSystem;
-            public DataContainerSystem DataContainerSystem => m_DataContainerSystem;
-            public GameObjectProxySystem GameObjectProxySystem => m_GameObjectProxySystem;
-            public Components.EntityComponentSystem EntityComponentSystem => m_ComponentSystem;
+            public EntitySystem EntitySystem
+            {
+                get
+                {
+                    Check(ref m_EntitySystem);
+                    return m_EntitySystem;
+                }
+            }
+            public EventSystem EventSystem
+            {
+                get
+                {
+                    Check(ref m_EventSystem);
+                    return m_EventSystem;
+                }
+            }
+            public DataContainerSystem DataContainerSystem
+            {
+                get
+                {
+                    Check(ref m_DataContainerSystem);
+                    return m_DataContainerSystem;
+                }
+            }
+            public GameObjectProxySystem GameObjectProxySystem
+            {
+                get
+                {
+                    Check(ref m_GameObjectProxySystem);
+                    return m_GameObjectProxySystem;
+                }
+            }
+            public Components.EntityComponentSystem EntityComponentSystem
+            {
+                get
+                {
+                    Check(ref m_ComponentSystem);
+                    return m_ComponentSystem;
+                }
+            }
 
+            private void Check<TSystem>(ref TSystem system) where TSystem : PresentationSystemEntity
+            {
+                if (system != null) return;
+
+                system = PresentationSystem<DefaultPresentationGroup, TSystem>.System;
+            }
             public void Initialize(
                 EntitySystem entitySystem,
                 EventSystem eventSystem,

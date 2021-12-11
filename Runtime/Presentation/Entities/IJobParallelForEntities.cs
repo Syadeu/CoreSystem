@@ -121,7 +121,7 @@ namespace Syadeu.Presentation.Entities
                     }
                 }
             }
-            private unsafe static void PrivateExecute(ref T jobData, in int i)
+            public unsafe static void PrivateExecute(ref T jobData, in int i)
             {
                 ref ComponentBuffer buffer = ref *(ComponentBuffer*)s_ComponentBuffer;
 
@@ -143,12 +143,57 @@ namespace Syadeu.Presentation.Entities
         {
             unsafe
             {
-                return ScheduleInternal<T, TComponent>(ref jobData,/* length,*/ innerloopBatchCount, dependsOn);
+                return ScheduleInternal<T, TComponent>(ref jobData, innerloopBatchCount, dependsOn);
             }
         }
 
+        private unsafe struct WrapperJobStruct<T, TComponent> : IJobParallelFor
+            where T : struct, IJobParallelForEntities
+            where TComponent : unmanaged, IEntityComponent
+        {
+            T m_Job;
+            [NativeDisableUnsafePtrRestriction] ComponentBuffer* m_Buffer;
+
+            public WrapperJobStruct(T job, ComponentBuffer* buffer)
+            {
+                m_Job = job;
+
+                EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
+                m_Buffer = system.GetComponentBufferPointer<TComponent>();
+            }
+
+            public void Execute(int i)
+            {
+                ref ComponentBuffer buffer = ref *m_Buffer;
+
+                buffer.HasElementAt(i, out bool result);
+                if (!result) return;
+
+                buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
+
+                ((IJobParallelForEntities<TComponent>)m_Job).Execute(entity, in component);
+            }
+        }
+
+        public static void Run<T, TComponent>(this ref T jobData)
+            where T : struct, IJobParallelForEntities
+            where TComponent : unmanaged, IEntityComponent
+        {
+            EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
+
+            WrapperJobStruct<T, TComponent> temp;
+            int length;
+            unsafe
+            {
+                ComponentBuffer* buffer = system.GetComponentBufferPointer<TComponent>();
+                length = buffer->Length;
+
+                temp = new WrapperJobStruct<T, TComponent>(jobData, buffer);
+            }
+            temp.Run(length);
+        }
+
         private static unsafe JobHandle ScheduleInternal<T, TComponent>(ref T jobData,
-            //[NoAlias] int length,
             [NoAlias] int innerloopBatchCount,
             JobHandle dependsOn) 
             
@@ -167,7 +212,7 @@ namespace Syadeu.Presentation.Entities
             if (!result) return default(JobHandle);
 #endif
             ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
-
+            
             JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);
             JobHandle.CombineDependencies(s_GlobalJobHandle, handle);
 
