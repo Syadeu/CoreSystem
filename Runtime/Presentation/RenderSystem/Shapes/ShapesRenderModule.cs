@@ -26,6 +26,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Profiling;
 
 namespace Syadeu.Presentation.Render
 {
@@ -36,7 +37,11 @@ namespace Syadeu.Presentation.Render
 
         private NativeQueue<InstanceID> m_BatchedShapeEntities;
 
+        private static ProfilerMarker
+            s_RenderShapesMarker = new ProfilerMarker($"{nameof(RenderSystem)}.{nameof(ShapesRenderModule)}.RenderShapes");
+
         private EntitySystem m_EntitySystem;
+        private RenderSystem m_RenderSystem;
         private GameObjectProxySystem m_ProxySystem;
 
         #region Presentation Methods
@@ -44,11 +49,10 @@ namespace Syadeu.Presentation.Render
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
 
             m_BatchedShapeEntities = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
-
-            RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
         }
 
         private void Bind(EntitySystem other)
@@ -62,17 +66,24 @@ namespace Syadeu.Presentation.Render
         {
             Add(obj.Idx);
         }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
 
+            m_RenderSystem.OnRender += RenderPipelineManager_beginCameraRendering;
+        }
         private void Bind(GameObjectProxySystem other)
         {
             m_ProxySystem = other;
         }
-        
+
+        protected override void OnShutDown()
+        {
+            m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+        }
         protected override void OnDispose()
         {
-            RenderPipelineManager.beginCameraRendering -= RenderPipelineManager_beginCameraRendering;
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-
             m_BatchedShapeEntities.Dispose();
 
             m_EntitySystem = null;
@@ -83,16 +94,7 @@ namespace Syadeu.Presentation.Render
 
         private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext arg1, Camera arg2)
         {
-            using (new CoreSystem.LogTimer("for batched", Channel.Debug))
-            {
-                for (int i = 0; i < m_Shapes.Count; i++)
-                {
-                    ref var component = ref m_Shapes[i].GetComponent<ShapesComponent>();
-                    DrawShapes(in arg2, in component);
-                }
-            }
-            
-            using (new CoreSystem.LogTimer("queue batched", Channel.Debug))
+            using (s_RenderShapesMarker.Auto())
             {
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
@@ -105,9 +107,7 @@ namespace Syadeu.Presentation.Render
                     m_BatchedQueue = m_BatchedShapeEntities.AsParallelWriter()
                 };
 
-                System.ScheduleAt<PrepareBatchShapesJob, ShapesComponent>(
-                    Internal.PresentationSystemEntity.JobPosition.Transform,
-                    prepareJob);
+                m_RenderSystem.ScheduleAtRender<PrepareBatchShapesJob, ShapesComponent>(prepareJob);
             }
         }
 
@@ -157,13 +157,6 @@ namespace Syadeu.Presentation.Render
                 if (!component.transform.isVisible) return;
 
                 m_BatchedQueue.Enqueue(entity);
-            }
-        }
-        private struct ShapesJob : IJobParallelForEntities<ShapesComponent>
-        {
-            public void Execute(in InstanceID entity, in ShapesComponent component)
-            {
-                Draw.Disc(component.transform.position, component.transform.up);
             }
         }
 #endif

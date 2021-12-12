@@ -218,7 +218,8 @@ namespace Syadeu.Presentation.Internal
 #endif
             return handle;
         }
-        public JobHandle Schedule<T>(T job, int arrayLength, int innerloopBatchCount) where T : struct, IJobParallelFor
+        public JobHandle Schedule<T>(T job, int arrayLength, int innerloopBatchCount) 
+            where T : struct, IJobParallelFor
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             s_ScheduleJobMarker.Begin();

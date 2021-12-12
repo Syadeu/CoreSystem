@@ -109,6 +109,8 @@ namespace Syadeu.Presentation.Render
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;
 
+        private JobHandle m_RenderJobHandle;
+
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
         private CameraData m_LastCameraData;
@@ -177,12 +179,12 @@ namespace Syadeu.Presentation.Render
         }
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
-#if CORESYSTEM_SHAPES
-            using (Shapes.Draw.Command(cam))
+#if UNITY_EDITOR
+            if (UnityEditor.EditorApplication.isPaused) return;
 #endif
-            {
-                OnRender?.Invoke(ctx, cam);
-            }
+            m_RenderJobHandle.Complete();
+
+            OnRender?.Invoke(ctx, cam);
         }
 
         protected override PresentationResult BeforePresentation()
@@ -279,13 +281,31 @@ namespace Syadeu.Presentation.Render
         }
 #endif
 
-        //private float4x4 GetCameraWorldMatrix()
-        //{
-        //    float4x4 projection = m_LastCameraData.projectionMatrix;
-        //    float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+        public JobHandle ScheduleAtRender<TJob>(TJob job)
+            where TJob : struct, IJob
+        {
+            JobHandle handle = Schedule<TJob>(job);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
 
-        //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
-        //}
+            return handle;
+        }
+        public JobHandle ScheduleAtRender<TJob>(TJob job, int arrayLength, int innerloopBatchCount = 64)
+            where TJob : struct, IJobParallelFor
+        {
+            JobHandle handle = Schedule<TJob>(job, arrayLength, innerloopBatchCount);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
+
+            return handle;
+        }
+        public JobHandle ScheduleAtRender<TJob, TComponent>(TJob job, int innerloopBatchCount = 64)
+            where TJob : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            JobHandle handle = Schedule<TJob, TComponent>(job, innerloopBatchCount);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
+
+            return handle;
+        }
 
 #if CORESYSTEM_HDRP
         public HDRPProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
