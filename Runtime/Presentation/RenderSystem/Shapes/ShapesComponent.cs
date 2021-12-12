@@ -29,6 +29,20 @@ namespace Syadeu.Presentation.Render
         {
             Arc
         }
+        public struct Angle
+        {
+            public float radian;
+
+            public float degree
+            {
+                get => UnityEngine.Mathf.Rad2Deg * radian;
+                set => radian = UnityEngine.Mathf.Deg2Rad * value;
+            }
+            public float turn
+            {
+                set => radian = ShapesMath.TAU * value;
+            }
+        }
         public struct Generals
         {
             public float thickness;
@@ -42,8 +56,7 @@ namespace Syadeu.Presentation.Render
         }
         public struct ArcParameters
         {
-            public float 
-                angleRadStart, angleRadEnd;
+            public Angle angleStart, angleEnd;
         }
 
         internal ProxyTransform m_Transform;

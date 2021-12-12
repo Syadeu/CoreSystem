@@ -33,8 +33,6 @@ namespace Syadeu.Presentation.Render
     public sealed class ShapesRenderModule : PresentationSystemModule<RenderSystem>
     {
 #if CORESYSTEM_SHAPES
-        //List<InstanceID> m_Shapes = new List<InstanceID>();
-
         private NativeQueue<InstanceID> m_BatchedShapeEntities;
 
         private static ProfilerMarker
@@ -180,8 +178,8 @@ namespace Syadeu.Presentation.Render
             Draw.Arc(
                 pos: tr.position,
                 rot: tr.rotation,
-                angleRadStart: Mathf.Rad2Deg * shapes.arcParameters.angleRadStart,
-                angleRadEnd: Mathf.Rad2Deg * shapes.arcParameters.angleRadEnd,
+                angleRadStart: shapes.arcParameters.angleStart.radian,
+                angleRadEnd: shapes.arcParameters.angleEnd.radian,
                 colors: shapes.generals.colors);
         }
 
