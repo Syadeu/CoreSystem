@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Render
     public sealed class ShapesRenderModule : PresentationSystemModule<RenderSystem>
     {
 #if CORESYSTEM_SHAPES
-        List<InstanceID> m_Shapes = new List<InstanceID>();
+        //List<InstanceID> m_Shapes = new List<InstanceID>();
 
         private NativeQueue<InstanceID> m_BatchedShapeEntities;
 
@@ -41,6 +41,7 @@ namespace Syadeu.Presentation.Render
             s_RenderShapesMarker = new ProfilerMarker($"{nameof(RenderSystem)}.{nameof(ShapesRenderModule)}.RenderShapes");
 
         private EntitySystem m_EntitySystem;
+        private EntityComponentSystem m_ComponentSystem;
         private RenderSystem m_RenderSystem;
         private GameObjectProxySystem m_ProxySystem;
 
@@ -49,23 +50,61 @@ namespace Syadeu.Presentation.Render
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
 
             m_BatchedShapeEntities = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
         }
 
+        #region Binds
+
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
-            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
         }
-
-        private void M_EntitySystem_OnEntityCreated(IObject obj)
+        private void Bind(EntityComponentSystem other)
         {
-            Add(obj.Idx);
+            m_ComponentSystem = other;
+
+            m_ComponentSystem.OnComponentAdded += M_ComponentSystem_OnComponentAdded;
+            m_ComponentSystem.OnComponentRemove += M_ComponentSystem_OnComponentRemove;
         }
+        private void M_ComponentSystem_OnComponentAdded(InstanceID id, System.Type arg2)
+        {
+            if (!arg2.Equals(TypeHelper.TypeOf<ShapesComponent>.Type)) return;
+
+            ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
+            float3 pos;
+            if (id.IsEntity<IEntity>())
+            {
+                Entity<IEntity> entity = id.GetEntity<IEntity>();
+                ProxyTransform parent = (ProxyTransform)entity.transform;
+                pos = parent.position;
+                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+
+                com.m_Transform.SetParent(parent);
+            }
+            else
+            {
+                pos = float3.zero;
+                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+            }
+
+            com.m_Transform.localPosition = com.offsets.position;
+            com.m_Transform.localRotation = com.offsets.rotation;
+        }
+        private void M_ComponentSystem_OnComponentRemove(InstanceID id, System.Type arg2)
+        {
+            if (!arg2.Equals(TypeHelper.TypeOf<ShapesComponent>.Type)) return;
+
+            if (!id.IsEntity<IEntity>())
+            {
+                ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
+                com.m_Transform.Destroy();
+            }
+        }
+
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
@@ -77,16 +116,22 @@ namespace Syadeu.Presentation.Render
             m_ProxySystem = other;
         }
 
+        #endregion
+
         protected override void OnShutDown()
         {
+            m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
+            m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
+
             m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
-            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
         }
         protected override void OnDispose()
         {
             m_BatchedShapeEntities.Dispose();
 
             m_EntitySystem = null;
+            m_ComponentSystem = null;
+            m_RenderSystem = null;
             m_ProxySystem = null;
         }
 
@@ -115,36 +160,49 @@ namespace Syadeu.Presentation.Render
         {
             using (Draw.Command(camera))
             {
-                Draw.Thickness = .02f;
-                Draw.DiscGeometry = DiscGeometry.Flat2D;
+                Draw.Thickness = shapes.generals.thickness;
+                Draw.DiscGeometry = shapes.generals.discGeometry;
 
-                Draw.Arc(
-                    pos: shapes.transform.position,
-                    normal: shapes.transform.up,
-                    angleRadStart: Mathf.Rad2Deg * 0,
-                    angleRadEnd: Mathf.Rad2Deg * 351,
-                    colors: DiscColors.Flat(Color.white));
+                switch (shapes.shape)
+                {
+                    case ShapesComponent.Shape.Arc:
+                        DrawArcShape(in shapes);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
-
-        public void Add(InstanceID id)
+        private static void DrawArcShape(in ShapesComponent shapes)
         {
-            m_Shapes.Add(id);
+            ProxyTransform tr = shapes.transform;
 
-            id.AddComponent<ShapesComponent>();
-
-            ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
-
-            float3 pos;
-            if (id.IsEntity<IEntity>())
-            {
-                pos = id.GetEntity<IEntity>().transform.position;
-            }
-            else pos = float3.zero;
-
-            com.m_Transform =
-                m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+            Draw.Arc(
+                pos: tr.position,
+                rot: tr.rotation,
+                angleRadStart: Mathf.Rad2Deg * shapes.arcParameters.angleRadStart,
+                angleRadEnd: Mathf.Rad2Deg * shapes.arcParameters.angleRadEnd,
+                colors: shapes.generals.colors);
         }
+
+        //public void Add(InstanceID id)
+        //{
+        //    m_Shapes.Add(id);
+
+        //    id.AddComponent<ShapesComponent>();
+
+        //    ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
+
+        //    float3 pos;
+        //    if (id.IsEntity<IEntity>())
+        //    {
+        //        pos = id.GetEntity<IEntity>().transform.position;
+        //    }
+        //    else pos = float3.zero;
+
+        //    com.m_Transform =
+        //        m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+        //}
 
         [BurstCompile(CompileSynchronously = true)]
         private struct PrepareBatchShapesJob : IJobParallelForEntities<ShapesComponent>

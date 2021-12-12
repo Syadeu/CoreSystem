@@ -13,19 +13,48 @@
 // limitations under the License.
 
 #if CORESYSTEM_SHAPES
-using Syadeu.Collections;
+using Shapes;
 #endif
 
 using Syadeu.Presentation.Proxy;
+using Unity.Mathematics;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation.Render
 {
 #if CORESYSTEM_SHAPES
     public struct ShapesComponent : IEntityComponent
     {
+        public enum Shape
+        {
+            Arc
+        }
+        public struct Generals
+        {
+            public float thickness;
+            public DiscGeometry discGeometry;
+            public DiscColors colors;
+        }
+        public struct Offsets
+        {
+            public float3 position;
+            public quaternion rotation;
+        }
+        public struct ArcParameters
+        {
+            public float 
+                angleRadStart, angleRadEnd;
+        }
+
         internal ProxyTransform m_Transform;
 
         public ProxyTransform transform => m_Transform;
+
+        public Shape shape;
+        public Generals generals;
+        public Offsets offsets;
+
+        public ArcParameters arcParameters;
     }
 #endif
 }

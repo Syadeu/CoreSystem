@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Components
 
         internal unsafe ComponentBuffer* ComponentBuffer;
     }
-    public struct ComponentType<TComponent>
+    public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
     {
         private static readonly SharedStatic<ComponentType> Value
             = SharedStatic<ComponentType>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<ComponentType>());
