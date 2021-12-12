@@ -217,15 +217,20 @@ namespace Syadeu.Presentation.TurnTable
                 select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem, tr);
             }
 
+#if CORESYSTEM_SHAPES
+            if (select.m_Shapes.EnableShapes)
+            {
+                entity.AddComponent<ShapesComponent>();
+                ref ShapesComponent shapes = ref entity.GetComponent<ShapesComponent>();
+
+                shapes.Apply(select.m_Shapes);
+            }
+#endif
             $"select entity {entity.RawName}".ToLog();
         }
-        public void DeSelectEntity(Entity<IEntity> entity)
+        public void DeselectEntity(Entity<IEntity> entity)
         {
-            var select = entity.GetAttribute<TRPGSelectionAttribute>();
-            for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
-            {
-                select.m_SelectedFloorUI[i].Stop();
-            }
+            InternalRemoveSelection(entity);
 
             m_SelectedEntities.RemoveFor(entity);
         }
@@ -235,14 +240,25 @@ namespace Syadeu.Presentation.TurnTable
             {
                 Entity<IEntity> entity = m_SelectedEntities[i];
 
-                var select = entity.GetAttribute<TRPGSelectionAttribute>();
-                for (int j = 0; j < select.m_SelectedFloorUI.Length; j++)
-                {
-                    select.m_SelectedFloorUI[j].Stop();
-                }
+                InternalRemoveSelection(entity);
             }
 
             m_SelectedEntities.Clear();
+        }
+        private void InternalRemoveSelection(Entity<IEntity> entity)
+        {
+            var select = entity.GetAttribute<TRPGSelectionAttribute>();
+            for (int j = 0; j < select.m_SelectedFloorUI.Length; j++)
+            {
+                select.m_SelectedFloorUI[j].Stop();
+            }
+
+#if CORESYSTEM_SHAPES
+            if (select.m_Shapes.EnableShapes)
+            {
+                entity.RemoveComponent<ShapesComponent>();
+            }
+#endif
         }
 
         private struct ActorPointMovePredicate : IExecutable<Entity<ActorEntity>>

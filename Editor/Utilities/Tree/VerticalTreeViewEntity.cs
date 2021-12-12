@@ -185,15 +185,16 @@ namespace SyadeuEditor.Tree
                 {
                     EditorGUI.indentLevel += 1;
 
-                    EditorGUILayout.BeginHorizontal();
-                    e.m_Opened = EditorUtilities.Foldout(e.m_Opened, $"{e.Name}", 12);
-                    if (m_DrawRemoveButton && DrawRemoveButton(e))
+                    using (new EditorGUILayout.HorizontalScope())
                     {
-                        EditorGUILayout.EndHorizontal();
-                        EditorGUI.indentLevel -= 1;
-                        return;
+                        e.m_Opened = EditorUtilities.Foldout(e.m_Opened, $"{e.Name}", 12);
+                        if (m_DrawRemoveButton && DrawRemoveButton(e))
+                        {
+                            EditorGUILayout.EndHorizontal();
+                            EditorGUI.indentLevel -= 1;
+                            return;
+                        }
                     }
-                    EditorGUILayout.EndHorizontal();
 
                     EditorGUI.indentLevel -= 1;
                     if (!e.m_Opened) return;
@@ -204,9 +205,12 @@ namespace SyadeuEditor.Tree
                 }
 
                 EditorGUI.indentLevel += 1;
-                EditorGUI.BeginChangeCheck();
-                e.OnGUI();
-                if (EditorGUI.EndChangeCheck() && m_Asset != null) EditorUtility.SetDirty(m_Asset);
+                using (var change = new EditorGUI.ChangeCheckScope())
+                {
+                    e.OnGUI();
+                    if (change.changed && m_Asset != null) EditorUtility.SetDirty(m_Asset);
+                }
+                
                 EditorGUI.indentLevel -= 1;
             }
         }
@@ -214,12 +218,14 @@ namespace SyadeuEditor.Tree
         {
             Rect rect = GUILayoutUtility.GetLastRect();
 
-            EditorGUI.BeginChangeCheck();
-            m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(rect.width, 20), m_SearchString);
-            if (EditorGUI.EndChangeCheck())
+            using (var change = new EditorGUI.ChangeCheckScope())
             {
-                SearchFieldChanged(in m_SearchString);
-                OnSearchFieldChanged?.Invoke(m_SearchString);
+                m_SearchString = m_SearchField.OnGUI(GUILayoutUtility.GetRect(rect.width, 20), m_SearchString);
+                if (change.changed)
+                {
+                    SearchFieldChanged(in m_SearchString);
+                    OnSearchFieldChanged?.Invoke(m_SearchString);
+                }
             }
         }
         internal protected bool DrawRemoveButton(VerticalTreeElement e)

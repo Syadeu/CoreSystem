@@ -178,37 +178,88 @@ namespace SyadeuEditor.Presentation.Map
 
         public void OnGUI()
         {
-            m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
-
-            using (new EditorUtilities.BoxBlock(Color.gray))
+            using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
             {
-                EditorGUI.BeginDisabledGroup(m_LoadedMapDataReference.Count == 0);
-                if (GUILayout.Button("Save"))
+                m_Scroll = scroll.scrollPosition;
+
+                using (new EditorUtilities.BoxBlock(Color.gray))
                 {
-                    for (int i = 0; i < m_LoadedMapData.Count; i++)
+                    EditorGUI.BeginDisabledGroup(m_LoadedMapDataReference.Count == 0);
+                    if (GUILayout.Button("Save"))
                     {
-                        if (!m_LoadedMapData[i].IsDirty) continue;
-
-                        EntityDataList.Instance.SaveData(m_LoadedMapData[i].Entity);
-                    }
-                }
-                EditorGUI.EndDisabledGroup();
-
-                for (int i = 0; i < m_LoadedMapDataReference.Count; i++)
-                {
-                    int index = i;
-
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        DrawMapDataSelector(m_LoadedMapDataReference[index], (other) =>
+                        for (int i = 0; i < m_LoadedMapData.Count; i++)
                         {
+                            if (!m_LoadedMapData[i].IsDirty) continue;
+
+                            EntityDataList.Instance.SaveData(m_LoadedMapData[i].Entity);
+                        }
+                    }
+                    EditorGUI.EndDisabledGroup();
+
+                    for (int i = 0; i < m_LoadedMapDataReference.Count; i++)
+                    {
+                        int index = i;
+
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            DrawMapDataSelector(m_LoadedMapDataReference[index], (other) =>
+                            {
+                                if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                                {
+                                    m_EditingMapData = null;
+                                }
+
+                                if (other.IsEmpty() || !other.IsValid())
+                                {
+                                    m_LoadedMapDataReference.RemoveAt(index);
+
+                                    if (m_LoadedMapData[index] != null)
+                                    {
+                                        m_LoadedMapData[index].Dispose();
+                                        m_LoadedMapData.RemoveAt(index);
+                                    }
+                                }
+                                else
+                                {
+                                    m_LoadedMapDataReference[index] = other;
+
+                                    if (m_LoadedMapData[index] != null)
+                                    {
+                                        m_LoadedMapData[index].Dispose();
+                                    }
+                                    m_LoadedMapData[index] = new MapData(Folder, other);
+                                }
+
+                                m_WasEditedMapDataSelector = true;
+                            });
+
+                            bool isEditing = false;
                             if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
                             {
-                                m_EditingMapData = null;
+                                isEditing = true;
                             }
 
-                            if (other.IsEmpty() || !other.IsValid())
+                            EditorGUI.BeginChangeCheck();
+                            isEditing = GUILayout.Toggle(isEditing, "E", EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                            if (EditorGUI.EndChangeCheck())
                             {
+                                if (isEditing) m_EditingMapData = m_LoadedMapData[index];
+                                else
+                                {
+                                    if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                                    {
+                                        m_EditingMapData = null;
+                                    }
+                                }
+                            }
+
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
+                                if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                                {
+                                    m_EditingMapData = null;
+                                }
+
                                 m_LoadedMapDataReference.RemoveAt(index);
 
                                 if (m_LoadedMapData[index] != null)
@@ -216,143 +267,93 @@ namespace SyadeuEditor.Presentation.Map
                                     m_LoadedMapData[index].Dispose();
                                     m_LoadedMapData.RemoveAt(index);
                                 }
-                            }
-                            else
-                            {
-                                m_LoadedMapDataReference[index] = other;
 
-                                if (m_LoadedMapData[index] != null)
+                                if (m_LoadedMapData.Count == 0)
                                 {
-                                    m_LoadedMapData[index].Dispose();
+                                    SelectObjects(null);
+
+                                    UnityEngine.Object.DestroyImmediate(m_FolderInstance.gameObject);
+                                    m_FolderInstance = null;
                                 }
-                                m_LoadedMapData[index] = new MapData(Folder, other);
+
+                                i--;
+                                continue;
                             }
+                        }
+                    }
+
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        DrawMapDataSelector(Reference<MapDataEntityBase>.Empty, (other) =>
+                        {
+                            if (other.IsEmpty() || !other.IsValid())
+                            {
+                                "not valid".ToLog();
+                                return;
+                            }
+
+                            if (m_LoadedMapDataReference.Contains(other))
+                            {
+                                "cannot load that already loaded".ToLog();
+                                return;
+                            }
+
+                            m_LoadedMapDataReference.Add(other);
+                            m_LoadedMapData.Add(new MapData(Folder, other));
 
                             m_WasEditedMapDataSelector = true;
                         });
 
-                        bool isEditing = false;
-                        if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
+                        EditorGUI.BeginDisabledGroup(true);
+                        GUILayout.Toggle(false, "E", EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                        GUILayout.Button("-", GUILayout.Width(20));
+                        EditorGUI.EndDisabledGroup();
+                    }
+
+                    if (m_WasEditedMapDataSelector)
+                    {
+                        m_CreatedObjects.Clear();
+                        for (int i = 0; i < m_LoadedMapData.Count; i++)
                         {
-                            isEditing = true;
+                            m_CreatedObjects.AddRange(m_LoadedMapData[i].CreatedObjects);
                         }
 
-                        EditorGUI.BeginChangeCheck();
-                        isEditing = GUILayout.Toggle(isEditing, "E", EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            if (isEditing) m_EditingMapData = m_LoadedMapData[index];
-                            else
-                            {
-                                if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                                {
-                                    m_EditingMapData = null;
-                                }
-                            }
-                        }
-
-                        if (GUILayout.Button("-", GUILayout.Width(20)))
-                        {
-                            if (m_EditingMapData != null && m_EditingMapData.Equals(m_LoadedMapData[index]))
-                            {
-                                m_EditingMapData = null;
-                            }
-
-                            m_LoadedMapDataReference.RemoveAt(index);
-
-                            if (m_LoadedMapData[index] != null)
-                            {
-                                m_LoadedMapData[index].Dispose();
-                                m_LoadedMapData.RemoveAt(index);
-                            }
-
-                            if (m_LoadedMapData.Count == 0)
-                            {
-                                SelectObjects(null);
-
-                                UnityEngine.Object.DestroyImmediate(m_FolderInstance.gameObject);
-                                m_FolderInstance = null;
-                            }
-
-                            i--;
-                            continue;
-                        }
+                        m_WasEditedMapDataSelector = false;
                     }
                 }
 
-                using (new EditorGUILayout.HorizontalScope())
+                EditorUtilities.Line();
+
+                using (new EditorUtilities.BoxBlock(Color.gray))
                 {
-                    DrawMapDataSelector(Reference<MapDataEntityBase>.Empty, (other) =>
-                    {
-                        if (other.IsEmpty() || !other.IsValid())
-                        {
-                            "not valid".ToLog();
-                            return;
-                        }
+                    EditorUtilities.StringRich("Lightmapping", 13);
+                    LightingSettings lightSettings = Lightmapping.GetLightingSettingsForScene(EditorSceneManager.GetActiveScene());
+                    EditorGUILayout.ObjectField("Light Settings", lightSettings, typeof(LightingSettings), false);
 
-                        if (m_LoadedMapDataReference.Contains(other))
-                        {
-                            "cannot load that already loaded".ToLog();
-                            return;
-                        }
+                    //if (GUILayout.Button("Bake"))
+                    //{
+                    //    m_FolderInstance.gameObject.hideFlags = HideFlags.None;
 
-                        m_LoadedMapDataReference.Add(other);
-                        m_LoadedMapData.Add(new MapData(Folder, other));
+                    //    if (Lightmapping.isRunning)
+                    //    {
+                    //        Lightmapping.ForceStop();
+                    //        Lightmapping.Cancel();
+                    //    }
 
-                        m_WasEditedMapDataSelector = true;
-                    });
+                    //    if (m_LoadedMapData.Count != 0)
+                    //    {
+                    //        Lightmapping.ClearLightingDataAsset();
 
-                    EditorGUI.BeginDisabledGroup(true);
-                    GUILayout.Toggle(false, "E", EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-                    GUILayout.Button("-", GUILayout.Width(20));
-                    EditorGUI.EndDisabledGroup();
-                }
-
-                if (m_WasEditedMapDataSelector)
-                {
-                    m_CreatedObjects.Clear();
-                    for (int i = 0; i < m_LoadedMapData.Count; i++)
-                    {
-                        m_CreatedObjects.AddRange(m_LoadedMapData[i].CreatedObjects);
-                    }
-
-                    m_WasEditedMapDataSelector = false;
+                    //        Lightmapping.lightingSettings = lightSettings;
+                    //        Lightmapping.BakeAsync();
+                    //    }
+                    //    else
+                    //    {
+                    //        "no loaded map data found".ToLog();
+                    //    }
+                    //}
                 }
             }
-
-            EditorUtilities.Line();
-
-            using (new EditorUtilities.BoxBlock(Color.gray))
-            {
-                EditorUtilities.StringRich("Lightmapping", 13);
-                LightingSettings lightSettings = Lightmapping.GetLightingSettingsForScene(EditorSceneManager.GetActiveScene());
-                EditorGUILayout.ObjectField("Light Settings", lightSettings, typeof(LightingSettings), false);
-
-                //if (GUILayout.Button("Bake"))
-                //{
-                //    m_FolderInstance.gameObject.hideFlags = HideFlags.None;
-
-                //    if (Lightmapping.isRunning)
-                //    {
-                //        Lightmapping.ForceStop();
-                //        Lightmapping.Cancel();
-                //    }
-
-                //    if (m_LoadedMapData.Count != 0)
-                //    {
-                //        Lightmapping.ClearLightingDataAsset();
-
-                //        Lightmapping.lightingSettings = lightSettings;
-                //        Lightmapping.BakeAsync();
-                //    }
-                //    else
-                //    {
-                //        "no loaded map data found".ToLog();
-                //    }
-                //}
-            }
-
-            EditorGUILayout.EndScrollView();
         }
 
         public void OnSceneGUI()

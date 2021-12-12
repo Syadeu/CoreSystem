@@ -68,6 +68,17 @@ namespace Syadeu.Presentation.Render
         public Offsets offsets;
 
         public ArcParameters arcParameters;
+
+        public void Apply(ShapesPropertyBlock shapesProperty)
+        {
+            shape = shapesProperty.m_Shape;
+            generals.thickness = shapesProperty.m_Thickness;
+            generals.discGeometry = shapesProperty.m_DiscGeometry;
+            generals.colors = DiscColors.Angular(shapesProperty.m_StartColor, shapesProperty.m_EndColor);
+
+            arcParameters.angleStart.degree = shapesProperty.m_ArcParameters.m_AngleDegreeStart;
+            arcParameters.angleEnd.degree = shapesProperty.m_ArcParameters.m_AngleDegreeEnd;
+        }
     }
 #endif
 }

@@ -100,18 +100,24 @@ namespace SyadeuEditor.Utilities
 
         public override sealed void OnGUI()
         {
-            //foreach (var item in m_Attributes)
-            //{
-            //    DrawSystemAttribute(in item);
-            //}
-
             using (new EditorGUI.DisabledGroupScope(m_Disable || m_Setter == null))
             {
-                if (m_Setter == null)
+                try
                 {
-                    Draw(m_Getter.Invoke());
+                    if (m_Setter == null)
+                    {
+                        Draw(m_Getter.Invoke());
+                    }
+                    else m_Setter.Invoke(Draw(m_Getter.Invoke()));
                 }
-                else m_Setter.Invoke(Draw(m_Getter.Invoke()));
+                catch (Exception e)
+                {
+                    if (ExitGUIUtility.ShouldRethrowException(e))
+                    {
+                        throw;
+                    }
+                    Debug.LogException(e);
+                }
             }
         }
         public abstract T Draw(T currentValue);

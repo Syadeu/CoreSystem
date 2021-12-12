@@ -219,22 +219,12 @@ namespace SyadeuEditor.Presentation
 
             static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
             {
-                try
-                {
-                    GUIUtility.ExitGUI();
-                }
-                catch (ExitGUIException)
-                {
-                }
-
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
                 if (targetType == null)
                 {
-                    try
-                    {
-                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                         list: EntityDataList.Instance.m_Objects.Values.ToArray(),
                         setter: setter,
                         getter: (att) =>
@@ -244,10 +234,6 @@ namespace SyadeuEditor.Presentation
                         noneValue: Hash.Empty,
                         (other) => other.Name
                         ));
-                    }
-                    catch (ExitGUIException)
-                    {
-                    }
                 }
                 else
                 {
@@ -256,9 +242,7 @@ namespace SyadeuEditor.Presentation
                                 targetType.IsAssignableFrom(other.GetType()))
                         .ToArray();
 
-                    try
-                    {
-                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                         list: actionBases,
                         setter: setter,
                         getter: (att) =>
@@ -268,10 +252,6 @@ namespace SyadeuEditor.Presentation
                         noneValue: Hash.Empty,
                         (other) => other.Name
                         ));
-                    }
-                    catch (ExitGUIException)
-                    {
-                    }
                 }
             }
         }

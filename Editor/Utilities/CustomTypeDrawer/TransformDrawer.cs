@@ -22,11 +22,15 @@ namespace SyadeuEditor.Utilities
                 EditorGUILayout.Vector3Field("Position", currentValue.position);
 
                 Vector3 eulerAngles = currentValue.eulerAngles;
-                EditorGUI.BeginChangeCheck();
-                eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
-                if (EditorGUI.EndChangeCheck())
+
+                using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    currentValue.eulerAngles = eulerAngles;
+                    eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
+
+                    if (change.changed)
+                    {
+                        currentValue.eulerAngles = eulerAngles;
+                    }
                 }
 
                 currentValue.scale

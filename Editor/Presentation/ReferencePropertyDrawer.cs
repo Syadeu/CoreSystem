@@ -52,60 +52,52 @@ namespace SyadeuEditor.Presentation
             if (current.GetObject() == null) displayName = "None";
             else displayName = current.GetObject().Name;
 
-            EditorGUI.BeginProperty(position, label, property);
-
-            //EditorGUILayout.BeginHorizontal();
-
-            position = EditorGUI.IndentedRect(position);
-
-            if (GUI.Button(position, displayName, EditorStyleUtilities.SelectorStyle))
+            using (new EditorGUI.PropertyScope(position, label, property))
             {
-                Rect rect = GUILayoutUtility.GetRect(150, 300);
-                rect.position = Event.current.mousePosition;
+                position = EditorGUI.IndentedRect(position);
 
-                ObjectBase[] actionBases;
-                var iter = EntityDataList.Instance.GetData<ObjectBase>()
-                        .Where((other) =>
-                        {
-                            if (other.GetType().Equals(targetType) ||
-                                targetType.IsAssignableFrom(other.GetType()))
+                if (GUI.Button(position, displayName, EditorStyleUtilities.SelectorStyle))
+                {
+                    Rect rect = GUILayoutUtility.GetRect(150, 300);
+                    rect.position = Event.current.mousePosition;
+
+                    ObjectBase[] actionBases;
+                    var iter = EntityDataList.Instance.GetData<ObjectBase>()
+                            .Where((other) =>
                             {
-                                return true;
-                            }
-                            return false;
-                        });
-                if (iter.Any())
-                {
-                    actionBases = iter.ToArray();
-                }
-                else
-                {
-                    actionBases = Array.Empty<ObjectBase>();
-                }
+                                if (other.GetType().Equals(targetType) ||
+                                    targetType.IsAssignableFrom(other.GetType()))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            });
+                    if (iter.Any())
+                    {
+                        actionBases = iter.ToArray();
+                    }
+                    else
+                    {
+                        actionBases = Array.Empty<ObjectBase>();
+                    }
 
-                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: actionBases,
-                        setter: (hash) =>
-                        {
-                            ulong temp = hash;
-                            hashProperty.longValue = (long)temp;
-                            hashProperty.serializedObject.ApplyModifiedProperties();
-                        },
-                        getter: (att) =>
-                        {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
-                        ));
+                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                            list: actionBases,
+                            setter: (hash) =>
+                            {
+                                ulong temp = hash;
+                                hashProperty.longValue = (long)temp;
+                                hashProperty.serializedObject.ApplyModifiedProperties();
+                            },
+                            getter: (att) =>
+                            {
+                                return att.Hash;
+                            },
+                            noneValue: Hash.Empty,
+                            (other) => other.Name
+                            ));
+                }
             }
-            //EditorGUILayout.EndHorizontal();
-            //ReflectionHelperEditor.DrawReferenceSelector(label.text, (idx) =>
-            //{
-
-            //}, current, targetType);
-
-            EditorGUI.EndProperty();
         }
     }
 }

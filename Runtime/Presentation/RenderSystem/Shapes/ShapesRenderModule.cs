@@ -98,7 +98,7 @@ namespace Syadeu.Presentation.Render
 
             if (!id.IsEntity<IEntity>())
             {
-                ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
+                ref ShapesComponent com = ref m_ComponentSystem.GetComponent<ShapesComponent>(id);
                 com.m_Transform.Destroy();
             }
         }
@@ -142,7 +142,7 @@ namespace Syadeu.Presentation.Render
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    DrawShapes(in arg2, m_BatchedShapeEntities.Dequeue().GetComponent<ShapesComponent>());
+                    DrawShapes(in arg2, m_ComponentSystem.GetComponent<ShapesComponent>(m_BatchedShapeEntities.Dequeue()));
                 }
 
                 PrepareBatchShapesJob prepareJob = new PrepareBatchShapesJob()

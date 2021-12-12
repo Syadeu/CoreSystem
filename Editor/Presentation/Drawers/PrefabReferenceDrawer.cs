@@ -98,8 +98,7 @@ namespace SyadeuEditor.Presentation
 
         public override IPrefabReference Draw(IPrefabReference currentValue)
         {
-            GUILayout.BeginVertical();
-
+            using (new GUILayout.VerticalScope())
             using (new GUILayout.HorizontalScope())
             {
                 DrawPrefabReference(DisableHeader ? string.Empty : Name,
@@ -162,8 +161,6 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
-
-            GUILayout.EndVertical();
 
             return currentValue;
         }
@@ -249,20 +246,14 @@ namespace SyadeuEditor.Presentation
                             list = PrefabList.Instance.ObjectSettings;
                         }
 
-                        try
+                        PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                         {
-                            PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
                             {
-                                for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-                                {
-                                    if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                                }
-                                return -1;
-                            }, -2));
-                        }
-                        catch (ExitGUIException)
-                        {
-                        }
+                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                            }
+                            return -1;
+                        }, -2));
 
                         Event.current.Use();
                         GUIUtility.hotControl = 0;

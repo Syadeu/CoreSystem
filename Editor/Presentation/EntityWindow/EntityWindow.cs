@@ -210,29 +210,34 @@ namespace SyadeuEditor.Presentation
             EntityListPos.height = Screen.height - 95;
             ViewPos.width = Screen.width - EntityListPos.width - 5;
             ViewPos.height = EntityListPos.height;
-            BeginWindows();
 
-            switch (m_CurrentWindow)
+            using (new WindowHelper(BeginWindows, EndWindows))
             {
-                default:
-                case WindowType.Entity:
-                    if (!Application.isPlaying)
-                    {
-                        m_DataListWindow.OnGUI(EntityListPos, 1);
-                        m_ViewWindow.OnGUI(ViewPos, 2);
-                    }
-                    
-                    break;
-                case WindowType.Converter:
+                switch (m_CurrentWindow)
+                {
+                    default:
+                    case WindowType.Entity:
+                        if (!Application.isPlaying)
+                        {
+                            m_DataListWindow.OnGUI(EntityListPos, 1);
+                            m_ViewWindow.OnGUI(ViewPos, 2);
+                        }
 
-                    break;
-                case WindowType.Debugger:
-                    m_DebuggerListWindow.OnGUI(EntityListPos, 1);
-                    m_DebuggerViewWindow.OnGUI(ViewPos, 2);
-                    break;
+                        break;
+                    case WindowType.Converter:
+
+                        break;
+                    case WindowType.Debugger:
+                        m_DebuggerListWindow.OnGUI(EntityListPos, 1);
+                        m_DebuggerViewWindow.OnGUI(ViewPos, 2);
+                        break;
+                }
             }
+            //BeginWindows();
+            
+            
 
-            EndWindows();
+            //EndWindows();
 
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
@@ -258,6 +263,25 @@ namespace SyadeuEditor.Presentation
             }
         }
         
+        private sealed class WindowHelper : IDisposable
+        {
+            public Action StartWindow, EndWindow;
+
+            public WindowHelper(Action start, Action end)
+            {
+                StartWindow = start;
+                EndWindow = end;
+
+                StartWindow.Invoke();
+            }
+            public void Dispose()
+            {
+                EndWindow.Invoke();
+
+                StartWindow = null;
+                EndWindow = null;
+            }
+        }
         public enum WindowType
         {
             Entity,

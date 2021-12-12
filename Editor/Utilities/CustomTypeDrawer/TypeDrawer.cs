@@ -19,11 +19,11 @@ namespace SyadeuEditor.Utilities
 
         public override Type Draw(Type currentValue)
         {
-            EditorGUI.BeginDisabledGroup(true);
+            using (new EditorGUI.DisabledGroupScope(true))
+            {
+                EditorGUILayout.TextField(TypeHelper.ToString(currentValue));
+            }
 
-            EditorGUILayout.TextField(TypeHelper.ToString(currentValue));
-
-            EditorGUI.EndDisabledGroup();
             return currentValue;
         }
     }

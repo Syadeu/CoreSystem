@@ -145,62 +145,68 @@ namespace SyadeuEditor
                     if (valueType == Syadeu.Collections.ValueType.Array)
                     {
                         IList list = (IList)container[i].GetValue();
-                        EditorGUILayout.BeginHorizontal();
+                        
                         if (list == null || list.Count == 0)
                         {
-                            container[i].Name = EditorGUILayout.TextField(container[i].Name);
-                            if (GUILayout.Button("+", GUILayout.Width(20)))
+                            using (new EditorGUILayout.HorizontalScope())
                             {
-                                list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
-                            }
-                            if (GUILayout.Button("-", GUILayout.Width(20)))
-                            {
-                                container.RemoveAt(i);
-                                i--;
-                                EditorGUILayout.EndHorizontal();
-                                continue;
-                            }
-                            EditorGUILayout.EndHorizontal();
-                        }
-                        else
-                        {
-                            container[i].Name = EditorGUILayout.TextField(container[i].Name);
-                            if (GUILayout.Button("+", GUILayout.Width(20)))
-                            {
-                                list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
-                            }
-                            if (GUILayout.Button("-", GUILayout.Width(20)))
-                            {
-                                list.RemoveAt(list.Count - 1);
-                            }
-                            EditorGUILayout.EndHorizontal();
-                            EditorGUI.indentLevel += 1;
-                            for (int a = 0; a < list.Count; a++)
-                            {
-                                EditorGUILayout.BeginHorizontal();
-                                if (list[a] is int intVal)
+                                container[i].Name = EditorGUILayout.TextField(container[i].Name);
+                                if (GUILayout.Button("+", GUILayout.Width(20)))
                                 {
-                                    list[a] = EditorGUILayout.IntField(intVal);
-                                }
-                                else if (list[a] is float floatVal)
-                                {
-                                    list[a] = EditorGUILayout.FloatField(floatVal);
-                                }
-                                else if (list[a] is bool boolVal)
-                                {
-                                    list[a] = EditorGUILayout.Toggle(boolVal);
-                                }
-                                else if (list[a] is string strVal)
-                                {
-                                    list[a] = EditorGUILayout.TextField(strVal);
+                                    list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
                                 }
                                 if (GUILayout.Button("-", GUILayout.Width(20)))
                                 {
-                                    list.RemoveAt(a);
-                                    a--;
+                                    container.RemoveAt(i);
+                                    i--;
+                                    EditorGUILayout.EndHorizontal();
                                     continue;
                                 }
-                                EditorGUILayout.EndHorizontal();
+                            }
+                        }
+                        else
+                        {
+                            using (new EditorGUILayout.HorizontalScope())
+                            {
+                                container[i].Name = EditorGUILayout.TextField(container[i].Name);
+                                if (GUILayout.Button("+", GUILayout.Width(20)))
+                                {
+                                    list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
+                                }
+                                if (GUILayout.Button("-", GUILayout.Width(20)))
+                                {
+                                    list.RemoveAt(list.Count - 1);
+                                }
+                            }
+                            
+                            EditorGUI.indentLevel += 1;
+                            for (int a = 0; a < list.Count; a++)
+                            {
+                                using (new EditorGUILayout.HorizontalScope())
+                                {
+                                    if (list[a] is int intVal)
+                                    {
+                                        list[a] = EditorGUILayout.IntField(intVal);
+                                    }
+                                    else if (list[a] is float floatVal)
+                                    {
+                                        list[a] = EditorGUILayout.FloatField(floatVal);
+                                    }
+                                    else if (list[a] is bool boolVal)
+                                    {
+                                        list[a] = EditorGUILayout.Toggle(boolVal);
+                                    }
+                                    else if (list[a] is string strVal)
+                                    {
+                                        list[a] = EditorGUILayout.TextField(strVal);
+                                    }
+                                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                                    {
+                                        list.RemoveAt(a);
+                                        a--;
+                                        continue;
+                                    }
+                                }
                             }
                             
                             EditorGUI.indentLevel -= 1;
@@ -246,9 +252,10 @@ namespace SyadeuEditor
                                 }
                                 break;
                             case Syadeu.Collections.ValueType.Delegate:
-                                EditorGUI.BeginDisabledGroup(true);
-                                EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}", GUILayout.MinWidth(100));
-                                EditorGUI.EndDisabledGroup();
+                                using (new EditorGUI.DisabledGroupScope(true))
+                                {
+                                    EditorGUILayout.TextField($"Delegate: {container[i].GetValue()}", GUILayout.MinWidth(100));
+                                }
                                 break;
                             default:
                                 EditorGUILayout.TextField($"{valueType}: {container[i].GetValue()}", GUILayout.MinWidth(100));
@@ -276,55 +283,61 @@ namespace SyadeuEditor
             if (valueType == Syadeu.Collections.ValueType.Array)
             {
                 IList list = (IList)valuePair.GetValue();
-                EditorGUILayout.BeginHorizontal();
+                
                 if (list == null || list.Count == 0)
                 {
-                    valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    using (new EditorGUILayout.HorizontalScope())
                     {
-                        list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
+                        valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
+                        {
+                            list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
+                        }
                     }
-                    EditorGUILayout.EndHorizontal();
                 }
                 else
                 {
-                    valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
-                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    using (new EditorGUILayout.HorizontalScope())
                     {
-                        list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
-                    }
-                    if (GUILayout.Button("-", GUILayout.Width(20)))
-                    {
-                        list.RemoveAt(list.Count - 1);
-                    }
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUI.indentLevel += 1;
-                    for (int a = 0; a < list.Count; a++)
-                    {
-                        EditorGUILayout.BeginHorizontal();
-                        if (list[a] is int intVal)
+                        valuePair.Name = EditorGUILayout.TextField(valuePair.Name);
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
-                            list[a] = EditorGUILayout.IntField(intVal);
-                        }
-                        else if (list[a] is float floatVal)
-                        {
-                            list[a] = EditorGUILayout.FloatField(floatVal);
-                        }
-                        else if (list[a] is bool boolVal)
-                        {
-                            list[a] = EditorGUILayout.Toggle(boolVal);
-                        }
-                        else if (list[a] is string strVal)
-                        {
-                            list[a] = EditorGUILayout.TextField(strVal);
+                            list.Add(Activator.CreateInstance(list.GetType().GenericTypeArguments[0]));
                         }
                         if (GUILayout.Button("-", GUILayout.Width(20)))
                         {
-                            list.RemoveAt(a);
-                            a--;
-                            continue;
+                            list.RemoveAt(list.Count - 1);
                         }
-                        EditorGUILayout.EndHorizontal();
+                    }
+                    
+                    EditorGUI.indentLevel += 1;
+                    for (int a = 0; a < list.Count; a++)
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            if (list[a] is int intVal)
+                            {
+                                list[a] = EditorGUILayout.IntField(intVal);
+                            }
+                            else if (list[a] is float floatVal)
+                            {
+                                list[a] = EditorGUILayout.FloatField(floatVal);
+                            }
+                            else if (list[a] is bool boolVal)
+                            {
+                                list[a] = EditorGUILayout.Toggle(boolVal);
+                            }
+                            else if (list[a] is string strVal)
+                            {
+                                list[a] = EditorGUILayout.TextField(strVal);
+                            }
+                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                            {
+                                list.RemoveAt(a);
+                                a--;
+                                continue;
+                            }
+                        }
                     }
 
                     EditorGUI.indentLevel -= 1;
@@ -369,9 +382,10 @@ namespace SyadeuEditor
                         //}
                         break;
                     case Syadeu.Collections.ValueType.Delegate:
-                        EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.TextField("Delegate");
-                        EditorGUI.EndDisabledGroup();
+                        using (new EditorGUI.DisabledGroupScope(true))
+                        {
+                            EditorGUILayout.TextField("Delegate");
+                        }
                         break;
                     default:
                         EditorGUILayout.TextField($"{valueType}: {valuePair.GetValue()}");
