@@ -107,10 +107,13 @@ namespace Syadeu.Presentation.Components
             else length = types.Length * 2;
 
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
+            ComponentBuffer* readPtr = ((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr());
             for (int i = 0; i < types.Length; i++)
             {
                 ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
                 m_ComponentArrayBuffer[idx] = buffer;
+
+                ComponentType.GetValue(types[i]).Data.ComponentBuffer = readPtr + idx;
             }
 
             m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
@@ -151,15 +154,7 @@ namespace Syadeu.Presentation.Components
                 return default(ComponentBuffer);
             }
 
-            ComponentBuffer temp = new ComponentBuffer();
-
-            // 왜인지는 모르겠지만 Type.GetHashCode() 의 정보가 런타임 중 간혹 유효하지 않은 값 (0) 을 뱉어서 미리 파싱합니다.
-            //TypeInfo runtimeTypeInfo 
-            //    = TypeInfo.Construct(componentType, idx, UnsafeUtility.SizeOf(componentType), TypeHelper.AlignOf(componentType), hashCode);
-            //ComponentType.GetValue(componentType).Data = runtimeTypeInfo;
-
-            //ComponentTypeQuery.s_All = ComponentTypeQuery.s_All.Add(runtimeTypeInfo);
-            
+            ComponentBuffer temp = new ComponentBuffer();            
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
             temp.Initialize(typeInfo);
 
@@ -180,13 +175,6 @@ namespace Syadeu.Presentation.Components
             m_CompleteAllDisposedComponents = null;
 
             m_SceneSystem.OnSceneChanged -= CompleteAllDisposedComponents;
-
-            //int count = m_DisposedComponents.Count;
-            //for (int i = 0; i < count; i++)
-            //{
-            //    m_DisposedComponents.Dequeue().Dispose();
-            //}
-            //m_DisposedComponents.Dispose();
 
             for (int i = 0; i < m_ComponentArrayBuffer.Length; i++)
             {
@@ -209,6 +197,8 @@ namespace Syadeu.Presentation.Components
                     safety.Dispose();
                 }
 #endif
+
+                ComponentType.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type).Data.ComponentBuffer = null;
             }
             m_ComponentArrayBuffer.Dispose();
 

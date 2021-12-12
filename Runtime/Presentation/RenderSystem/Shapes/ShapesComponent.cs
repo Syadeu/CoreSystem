@@ -12,10 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Syadeu.Presentation.Components
+#if CORESYSTEM_SHAPES
+using Syadeu.Collections;
+#endif
+
+using Syadeu.Presentation.Proxy;
+
+namespace Syadeu.Presentation.Render
 {
-    internal unsafe struct EntityComponentConstrains
+#if CORESYSTEM_SHAPES
+    public struct ShapesComponent : IEntityComponent
     {
-        public PresentationSystemID<EntityComponentSystem> SystemID;
+        internal ProxyTransform m_Transform;
+
+        public ProxyTransform transform => m_Transform;
     }
+#endif
 }

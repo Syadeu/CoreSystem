@@ -25,24 +25,22 @@ using TypeInfo = Syadeu.Collections.TypeInfo;
 
 namespace Syadeu.Presentation.Components
 {
-    [Obsolete("Use TypeStatic", true)]
     public struct ComponentType
     {
-        public static SharedStatic<TypeInfo> GetValue(Type componentType)
+        public static SharedStatic<ComponentType> GetValue(Type componentType)
         {
-            return SharedStatic<TypeInfo>.GetOrCreate(
+            return SharedStatic<ComponentType>.GetOrCreate(
                 TypeHelper.TypeOf<EntityComponentSystem>.Type,
-                componentType, (uint)UnsafeUtility.AlignOf<TypeInfo>());
+                componentType, (uint)UnsafeUtility.AlignOf<ComponentType>());
         }
+
+        internal unsafe ComponentBuffer* ComponentBuffer;
     }
-    [Obsolete("Use TypeStatic", true)]
     public struct ComponentType<TComponent>
     {
-        private static readonly SharedStatic<TypeInfo> Value
-            = SharedStatic<TypeInfo>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<TypeInfo>());
+        private static readonly SharedStatic<ComponentType> Value
+            = SharedStatic<ComponentType>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<ComponentType>());
 
-        public static Type Type => Value.Data.Type;
-        public static TypeInfo TypeInfo => Value.Data;
-        public static ComponentTypeQuery Query => ComponentTypeQuery.Create(TypeInfo);
+        internal static unsafe ComponentBuffer* ComponentBuffer => Value.Data.ComponentBuffer;
     }
 }

@@ -185,35 +185,35 @@ namespace Syadeu.Presentation.Components
             //}
         }
 
-        public EntityComponentBuffer Query<TComponent>()
-            where TComponent : unmanaged, IEntityComponent
-        {
-            m_TypeQuery = m_TypeQuery.Add(ComponentType<TComponent>.TypeInfo);
+        //public EntityComponentBuffer Query<TComponent>()
+        //    where TComponent : unmanaged, IEntityComponent
+        //{
+        //    m_TypeQuery = m_TypeQuery.Add(ComponentType<TComponent>.TypeInfo);
 
-            return this;
-        }
-        public EntityComponentBuffer Query(Type componentType)
-        {
-            if (!UnsafeUtility.IsUnmanaged(componentType))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Could not resolve type of {TypeHelper.ToString(componentType)} is not ValueType.");
+        //    return this;
+        //}
+        //public EntityComponentBuffer Query(Type componentType)
+        //{
+        //    if (!UnsafeUtility.IsUnmanaged(componentType))
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Component,
+        //            $"Could not resolve type of {TypeHelper.ToString(componentType)} is not ValueType.");
 
-                return this;
-            }
-            else if (!EntityComponentSystem.IsComponentType(componentType))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Type({TypeHelper.ToString(componentType)}) is not a component type. " +
-                    $"All components must inheritance {nameof(IEntityComponent)}.");
+        //        return this;
+        //    }
+        //    else if (!EntityComponentSystem.IsComponentType(componentType))
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Component,
+        //            $"Type({TypeHelper.ToString(componentType)}) is not a component type. " +
+        //            $"All components must inheritance {nameof(IEntityComponent)}.");
 
-                return this;
-            }
+        //        return this;
+        //    }
 
-            m_TypeQuery = m_TypeQuery.Add(ComponentType.GetValue(componentType).Data);
+        //    m_TypeQuery = m_TypeQuery.Add(ComponentType.GetValue(componentType).Data);
 
-            return this;
-        }
+        //    return this;
+        //}
 
         unsafe public void Run()
         {

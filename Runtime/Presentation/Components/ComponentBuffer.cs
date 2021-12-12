@@ -161,16 +161,16 @@ namespace Syadeu.Presentation.Components
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
             where TComponent : unmanaged, IEntityComponent
         {
-#if DEBUG_MODE
-            if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
-                    $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
+//#if DEBUG_MODE
+//            if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
+//            {
+//                UnityEngine.Debug.LogError(
+//                    $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
+//                    $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
 
-                throw new InvalidOperationException($"Component buffer error. See Error Log.");
-            }
-#endif
+//                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+//            }
+//#endif
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer)[i];
         }
@@ -181,7 +181,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                UnityEngine.Debug.LogError(
                     $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
                     $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
 
