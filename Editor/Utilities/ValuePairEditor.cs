@@ -159,7 +159,6 @@ namespace SyadeuEditor
                                 {
                                     container.RemoveAt(i);
                                     i--;
-                                    EditorGUILayout.EndHorizontal();
                                     continue;
                                 }
                             }

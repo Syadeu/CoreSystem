@@ -208,10 +208,6 @@ namespace Syadeu.Presentation.Entities
                 ScheduleMode.Parallel);
 
             EntityComponentSystem system = PresentationSystem<DefaultPresentationGroup, EntityComponentSystem>.System;
-#if DEBUG_MODE
-            system.ComponentBufferSafetyCheck<TComponent>(out bool result);
-            if (!result) return default(JobHandle);
-#endif
             ComponentBuffer buffer = system.GetComponentBuffer<TComponent>();
             
             JobHandle handle = JobsUtility.ScheduleParallelFor(ref scheduleParams, buffer.Length, innerloopBatchCount);

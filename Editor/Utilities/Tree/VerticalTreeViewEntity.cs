@@ -190,7 +190,6 @@ namespace SyadeuEditor.Tree
                         e.m_Opened = EditorUtilities.Foldout(e.m_Opened, $"{e.Name}", 12);
                         if (m_DrawRemoveButton && DrawRemoveButton(e))
                         {
-                            EditorGUILayout.EndHorizontal();
                             EditorGUI.indentLevel -= 1;
                             return;
                         }

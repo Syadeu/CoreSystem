@@ -25,37 +25,46 @@ using Unity.IO.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.IO
 {
+    [BurstCompatible]
+    [NativeContainer]
     public struct NativeFileStream : IValidation, IDisposable
     {
         [NativeDisableUnsafePtrRestriction] private unsafe ReadCommand* m_Command;
         private ReadHandle m_Handle;
 
-        [BurstDiscard]
+        [NotBurstCompatible]
         public byte[] Read(string path)
         {
             return File.ReadAllBytes(path);
         }
-        [BurstDiscard]
-        public NativeFileReader ReadAsync(string path)
+        [NotBurstCompatible]
+        public TReader ReadAsync<TReader>(string path)
+            where TReader : unmanaged, INativeReader
         {
+#if DEBUG_MODE
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException($"no files at {path}");
+            }
+#endif
             unsafe
             {
                 m_Command = (ReadCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<ReadCommand>(), UnsafeUtility.AlignOf<ReadCommand>(), Allocator.Persistent);
-                
+
                 m_Command->Offset = 0;
                 m_Command->Size = new FileInfo(path).Length;
                 m_Command->Buffer = (byte*)UnsafeUtility.Malloc(m_Command->Size, 16, Allocator.Persistent);
 
                 m_Handle = AsyncReadManager.Read(path, m_Command, 1);
 
-                NativeFileReader rdr = new NativeFileReader();
+                TReader rdr = new TReader();
                 rdr.Initialize(m_Handle, *m_Command);
 
                 return rdr;
             }
         }
-        [BurstDiscard]
-        public void Close()
+        [BurstCompatible]
+        public void Dispose()
         {
 #if DEBUG_MODE
             if (!IsValid())
@@ -75,27 +84,7 @@ namespace Syadeu.Collections.IO
                 UnsafeUtility.Free(m_Command, Allocator.Persistent);
             }
         }
-        void IDisposable.Dispose()
-        {
-#if DEBUG_MODE
-            if (!IsValid())
-            {
-                UnityEngine.Debug.LogError("Collection is not valid.");
-                return;
-            }
-#endif
-            unsafe
-            {
-                if (m_Command->Buffer != null)
-                {
-                    m_Handle.Dispose();
-                    UnsafeUtility.Free(m_Command->Buffer, Allocator.Persistent);
-                }
-                
-                UnsafeUtility.Free(m_Command, Allocator.Persistent);
-            }
-        }
-
+        [BurstCompatible]
         public bool IsValid()
         {
             unsafe

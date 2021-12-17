@@ -194,66 +194,77 @@ namespace SyadeuEditor.Presentation
                         Event.current.Use();
                         break;
                     case EventType.MouseDown:
+                        //if (!fieldRect.Contains(Event.current.mousePosition)) break;
+
+                        //if (Event.current.button == 0)
+                        //{
+                        //    GUIUtility.hotControl = selectorID;
+                        //    DrawSelectionWindow(setter, targetType);
+                            
+                        //    GUI.changed = true;
+                        //    Event.current.Use();
+                        //}
+
+                        break;
+                    case EventType.MouseUp:
                         if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
                         if (Event.current.button == 0)
                         {
                             GUIUtility.hotControl = selectorID;
                             DrawSelectionWindow(setter, targetType);
-                            
+
                             GUI.changed = true;
                             Event.current.Use();
                         }
-
-                        break;
-                    case EventType.MouseUp:
-                        if (GUIUtility.hotControl == selectorID)
-                        {
-                            GUIUtility.hotControl = 0;
-                        }
+                        //if (GUIUtility.hotControl == selectorID)
+                        //{
+                        //    GUIUtility.hotControl = 0;
+                        //}
                         break;
                     default:
                         break;
                 }
             }
+        }
+        static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
+        {
+            Rect rect = GUILayoutUtility.GetRect(150, 300);
+            rect.position = Event.current.mousePosition;
 
-            static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
+            if (targetType == null)
             {
-                Rect rect = GUILayoutUtility.GetRect(150, 300);
-                rect.position = Event.current.mousePosition;
-
-                if (targetType == null)
-                {
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: EntityDataList.Instance.m_Objects.Values.ToArray(),
-                        setter: setter,
-                        getter: (att) =>
-                        {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
-                        ));
-                }
-                else
-                {
-                    ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
-                        .Where((other) => other.GetType().Equals(targetType) ||
-                                targetType.IsAssignableFrom(other.GetType()))
-                        .ToArray();
-
-                    PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: actionBases,
-                        setter: setter,
-                        getter: (att) =>
-                        {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
-                        ));
-                }
+                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    list: EntityDataList.Instance.m_Objects.Values.ToArray(),
+                    setter: setter,
+                    getter: (att) =>
+                    {
+                        return att.Hash;
+                    },
+                    noneValue: Hash.Empty,
+                    (other) => other.Name
+                    ));
             }
+            else
+            {
+                ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
+                    .Where((other) => other.GetType().Equals(targetType) ||
+                            targetType.IsAssignableFrom(other.GetType()))
+                    .ToArray();
+
+                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    list: actionBases,
+                    setter: setter,
+                    getter: (att) =>
+                    {
+                        return att.Hash;
+                    },
+                    noneValue: Hash.Empty,
+                    (other) => other.Name
+                    ));
+            }
+
+            if (Event.current.type == EventType.Repaint) rect = GUILayoutUtility.GetLastRect();
         }
     }
 }
