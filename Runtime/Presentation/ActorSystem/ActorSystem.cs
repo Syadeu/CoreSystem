@@ -24,7 +24,6 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
@@ -32,7 +31,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
@@ -48,7 +46,7 @@ namespace Syadeu.Presentation.Actor
         private readonly EventContainer m_CurrentEvent = new EventContainer();
         private NativeHashSet<ActorEventHandler> m_ScheduledEventIDs;
 
-        private ObjectPool<IEventHandler> m_EventDataPool;
+        private CLRContainer<IEventHandler> m_EventDataPool;
 
         public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
 
@@ -60,7 +58,7 @@ namespace Syadeu.Presentation.Actor
         protected override PresentationResult OnInitialize()
         {
             m_ScheduledEventIDs = new NativeHashSet<ActorEventHandler>(1024, AllocatorManager.Persistent);
-            m_EventDataPool = new ObjectPool<IEventHandler>(EventData.Factory, actionOnRelease: EventData.Reserve);
+            m_EventDataPool = new CLRContainer<IEventHandler>(EventData.Factory);
 
             return base.OnInitialize();
         }
@@ -96,7 +94,7 @@ namespace Syadeu.Presentation.Actor
         {
             //m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             //m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
-            m_EventDataPool.Dispose();
+            //m_EventDataPool.Dispose();
             m_EventDataPool = null;
 
             m_EntitySystem = null;
@@ -202,13 +200,13 @@ namespace Syadeu.Presentation.Actor
             {
                 return Event == null;
             }
-            public void Clear(ObjectPool<IEventHandler> pool)
+            public void Clear(CLRContainer<IEventHandler> pool)
             {
                 ref ActorControllerComponent ctr = ref Event.Actor.GetComponent<ActorControllerComponent>();
                 ctr.m_IsExecutingEvent = false;
 
                 //Event.Reserve();
-                pool.Release(Event);
+                pool.Enqueue(Event);
                 Event = null;
 
                 TimerStarted = false;
@@ -373,13 +371,13 @@ namespace Syadeu.Presentation.Actor
                 if (index >= 0)
                 {
                     //m_ScheduledEvents[index].Reserve();
-                    m_EventDataPool.Release(m_ScheduledEvents[index]);
+                    m_EventDataPool.Enqueue(m_ScheduledEvents[index]);
                     m_ScheduledEvents.RemoveAt(index);
 
                     "override schedule ev".ToLog();
                 }
 
-                IEventHandler handler = m_EventDataPool.Get();
+                IEventHandler handler = m_EventDataPool.Dequeue();
                 handler.Initialize(actor, ev);
 
                 m_ScheduledEvents.Insert(0, handler);
@@ -395,10 +393,10 @@ namespace Syadeu.Presentation.Actor
             index = FindScheduledEvent<TEvent>(ev);
             if (index >= 0)
             {
-                IEventHandler handler = m_EventDataPool.Get();
+                IEventHandler handler = m_EventDataPool.Dequeue();
                 handler.Initialize(actor, ev);
 
-                m_EventDataPool.Release(m_ScheduledEvents[index]);
+                m_EventDataPool.Enqueue(m_ScheduledEvents[index]);
                 //m_ScheduledEvents[index].Reserve();
                 m_ScheduledEvents[index] = handler;
 
@@ -430,7 +428,7 @@ namespace Syadeu.Presentation.Actor
                     $"Actor event({TypeHelper.TypeOf<TEvent>.ToString()}) is not unmanaged struct.");
             }
 #endif
-            IEventHandler handler = m_EventDataPool.Get();
+            IEventHandler handler = m_EventDataPool.Dequeue();
             handler.Initialize(actor, ev);
 
             m_ScheduledEvents.Add(handler);

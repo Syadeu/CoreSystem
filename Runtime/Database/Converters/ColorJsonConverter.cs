@@ -27,13 +27,13 @@ namespace Syadeu.Collections.Converters
         public override bool CanRead => true;
         public override bool CanWrite => true;
 
-        public override Color ReadJson(JsonReader reader, Type objectType, [AllowNull] Color existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override Color ReadJson(JsonReader reader, Type objectType, Color existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             JArray jo = (JArray)JToken.Load(reader);
 
             return new Color(jo[0].Value<float>(), jo[1].Value<float>(), jo[2].Value<float>(), jo[3].Value<float>());
         }
-        public override void WriteJson(JsonWriter writer, [AllowNull] Color value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, Color value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             writer.WriteValue(value.r);
