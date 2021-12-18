@@ -248,19 +248,22 @@ namespace Syadeu.Presentation
         }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
-#if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
-                !m_ObjectEntities.ContainsKey(eCheckHash))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
-                return;
-            }
-#endif
-            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+//#if DEBUG_MODE
+//            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
+//                !m_ObjectEntities.ContainsKey(eCheckHash))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+//                return;
+//            }
+//#endif
+            //            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+
+            ObjectBase entity = GetEntityByTransform(tr);
+            if (entity == null) return;
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
-                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+                Entity<IEntity>.GetEntityWithoutCheck(entity.Idx), tr));
         }
         private void OnDataObjectInvisible(ProxyTransform tr)
         {
@@ -952,6 +955,15 @@ namespace Syadeu.Presentation
 
             CoreSystem.Logger.LogError(Channel.Entity,
                 $"ID({id.Hash}) entity not found.");
+            return null;
+        }
+        public ObjectBase GetEntityByTransform(ProxyTransform tr)
+        {
+            if (m_EntityGameObjects.TryGetValue(tr.m_Hash, out var value))
+            {
+                return GetEntityByID(value);
+            }
+
             return null;
         }
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);

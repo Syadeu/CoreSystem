@@ -54,23 +54,26 @@ namespace SyadeuEditor.Presentation
             using (new EditorGUILayout.HorizontalScope())
             {
                 m_FXBoundsDrawer.DrawHeader();
-                EditorGUI.BeginDisabledGroup(m_PreviewScene != null && m_PreviewScene.IsOpened);
-                if (GUILayout.Button("Open"))
+                using (new EditorGUI.DisabledGroupScope(m_PreviewScene != null && m_PreviewScene.IsOpened))
                 {
-                    if (m_PreviewScene == null)
+                    if (GUILayout.Button("Open"))
                     {
-                        m_PreviewScene = Stage.CreateInstance<ActorWeaponPreviewScene>();
-                    }
+                        if (m_PreviewScene == null)
+                        {
+                            m_PreviewScene = Stage.CreateInstance<ActorWeaponPreviewScene>();
+                        }
 
-                    m_PreviewScene.Open(TargetObject);
+                        m_PreviewScene.Open(TargetObject);
+                    }
                 }
-                EditorGUI.EndDisabledGroup();
-                EditorGUI.BeginDisabledGroup(m_PreviewScene == null || !m_PreviewScene.IsOpened);
-                if (GUILayout.Button("Close"))
+                
+                using (new EditorGUI.DisabledGroupScope(m_PreviewScene == null || !m_PreviewScene.IsOpened))
                 {
-                    m_PreviewScene.Close();
+                    if (GUILayout.Button("Close"))
+                    {
+                        m_PreviewScene.Close();
+                    }
                 }
-                EditorGUI.EndDisabledGroup();
             }
 
             if (!m_FXBoundsDrawer.m_Open) return;

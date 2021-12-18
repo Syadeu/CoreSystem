@@ -40,6 +40,7 @@ namespace SyadeuEditor.Utilities
                     rect.position = Event.current.mousePosition;
 
                     PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
+                    GUIUtility.ExitGUI();
                 }
             }
         }

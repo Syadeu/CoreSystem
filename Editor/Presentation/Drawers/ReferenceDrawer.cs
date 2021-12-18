@@ -234,6 +234,8 @@ namespace SyadeuEditor.Presentation
 
             if (targetType == null)
             {
+                GUIUtility.ExitGUI();
+
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                     list: EntityDataList.Instance.m_Objects.Values.ToArray(),
                     setter: setter,
@@ -251,6 +253,8 @@ namespace SyadeuEditor.Presentation
                     .Where((other) => other.GetType().Equals(targetType) ||
                             targetType.IsAssignableFrom(other.GetType()))
                     .ToArray();
+
+                GUIUtility.ExitGUI();
 
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                     list: actionBases,

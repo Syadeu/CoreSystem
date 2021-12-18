@@ -344,15 +344,26 @@ namespace Syadeu.Presentation.Proxy
 
                 if (Ref.m_ParentIndex < 0)
                 {
-                    return Ref.rotation;
+                    quaternion rot = Ref.rotation;
+                    if (rot.value.Equals(float4.zero))
+                    {
+                        rot = Quaternion.identity;
+                    }
+
+                    return rot;
                 }
                 else
                 {
                     unsafe
                     {
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
-                        
-                        quaternion result = math.mul(Ref.m_Rotation, parentData.m_Rotation);
+
+                        quaternion rot = Ref.rotation;
+                        if (rot.value.Equals(float4.zero))
+                        {
+                            rot = Quaternion.identity;
+                        }
+                        quaternion result = math.mul(rot, parentData.m_Rotation);
 
                         return result;
                     }

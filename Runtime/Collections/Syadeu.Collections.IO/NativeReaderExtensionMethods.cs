@@ -26,35 +26,35 @@ namespace Syadeu.Collections.IO
 {
     public static class NativeReaderExtensionMethods
     {
-        [BurstDiscard]
-        public static string ToString(this INativeReader rdr, Encoding encoding)
-        {
-            unsafe
-            {
-                return encoding.GetString(rdr.Data, (int)rdr.Size);
-            }
-        }
-        public static NativeArray<byte> ToByte(this INativeReader rdr, Allocator allocator)
-        {
-            unsafe
-            {
-                return NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(rdr.Data, (int)rdr.Size, allocator);
-            }
-        }
-        public static void ToByteWithoutAllocation(this INativeReader rdr, NativeArray<byte> bytes)
-        {
-#if DEBUG_MODE
-            if (bytes.Length < rdr.Size)
-            {
-                throw new Exception("out of range");
-            }
-#endif
-            unsafe
-            {
-                void* p = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(bytes);
-                UnsafeUtility.MemCpy(p, rdr.Data, rdr.Size);
-            }
-        }
+        //[BurstDiscard]
+        //public static string ToString(this INativeReader rdr, Encoding encoding)
+        //{
+        //    unsafe
+        //    {
+        //        return encoding.GetString(rdr.Data, (int)rdr.Size);
+        //    }
+        //}
+        //public static NativeArray<byte> ToByte(this INativeReader rdr, Allocator allocator)
+        //{
+        //    unsafe
+        //    {
+        //        return NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(rdr.Data, (int)rdr.Size, allocator);
+        //    }
+        //}
+//        public static void ToByteWithoutAllocation(this INativeReader rdr, NativeArray<byte> bytes)
+//        {
+//#if DEBUG_MODE
+//            if (bytes.Length < rdr.Size)
+//            {
+//                throw new Exception("out of range");
+//            }
+//#endif
+//            unsafe
+//            {
+//                void* p = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(bytes);
+//                UnsafeUtility.MemCpy(p, rdr.Data, rdr.Size);
+//            }
+//        }
 
         //public T Read<T>()
         //{

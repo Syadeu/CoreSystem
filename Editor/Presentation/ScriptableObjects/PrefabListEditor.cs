@@ -83,9 +83,10 @@ namespace SyadeuEditor
 
             m_Lock = EditorGUILayout.Toggle("Lock", m_Lock);
 
-            EditorGUI.BeginDisabledGroup(m_Lock);
-            base.OnInspectorGUI();
-            EditorGUI.EndDisabledGroup();
+            using (new EditorGUI.DisabledGroupScope(m_Lock))
+            {
+                base.OnInspectorGUI();
+            }
         }
 
         public static void Rebase()

@@ -183,91 +183,96 @@ namespace SyadeuEditor.Presentation
                 displayName = new GUIContent("INVALID");
             }
 
+            Rect fieldRect;
+            int selectorID;
             using (new GUILayout.HorizontalScope())
             {
                 GUILayout.Space(EditorGUI.indentLevel * 15);
 
                 if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
 
-                Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
-                int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+                fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
+                selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+            }
 
-                switch (Event.current.GetTypeForControl(selectorID))
-                {
-                    case EventType.Repaint:
-                        IsHover = fieldRect.Contains(Event.current.mousePosition);
-                        EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
-                        break;
-                    case EventType.ContextClick:
-                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
+            switch (Event.current.GetTypeForControl(selectorID))
+            {
+                case EventType.Repaint:
+                    IsHover = fieldRect.Contains(Event.current.mousePosition);
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                        Event.current.Use();
+                    Event.current.Use();
 
-                        GenericMenu menu = new GenericMenu();
+                    GenericMenu menu = new GenericMenu();
 
-                        menu.AddDisabledItem(displayName);
-                        menu.AddSeparator(string.Empty);
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
 
-                        menu.AddItem(new GUIContent("Select"), false, () =>
-                        {
-                            Selection.activeObject = current.GetEditorAsset();
-                            EditorGUIUtility.PingObject(Selection.activeObject);
-                        });
-                        menu.AddDisabledItem(new GUIContent("Edit"));
+                    menu.AddItem(new GUIContent("Select"), false, () =>
+                    {
+                        Selection.activeObject = current.GetEditorAsset();
+                        EditorGUIUtility.PingObject(Selection.activeObject);
+                    });
+                    menu.AddDisabledItem(new GUIContent("Edit"));
 
-                        menu.ShowAsContext();
-                        break;
-                    case EventType.MouseDown:
-                        if (!fieldRect.Contains(Event.current.mousePosition) ||
-                            Event.current.button != 0) break;
+                    menu.ShowAsContext();
+                    break;
+                case EventType.MouseDown:
+                    if (!fieldRect.Contains(Event.current.mousePosition) ||
+                        Event.current.button != 0) break;
 
-                        Rect rect = GUILayoutUtility.GetLastRect();
-                        rect.position = Event.current.mousePosition;
+                    Event.current.Use();
 
-                        Type type = current.GetType();
-                        List<PrefabList.ObjectSetting> list;
+                    Rect rect = GUILayoutUtility.GetLastRect();
+                    rect.position = Event.current.mousePosition;
 
-                        if (type.GenericTypeArguments.Length > 0)
-                        {
-                            list = PrefabList.Instance.ObjectSettings
-                                .Where((other) =>
-                                {
-                                    if (other.GetEditorAsset() == null) return false;
+                    Type type = current.GetType();
+                    List<PrefabList.ObjectSetting> list;
 
-                                    if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
-                                    {
-                                        return true;
-                                    }
-                                    return false;
-                                }).ToList();
-                        }
-                        else
-                        {
-                            list = PrefabList.Instance.ObjectSettings;
-                        }
-
-                        PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
-                        {
-                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                    if (type.GenericTypeArguments.Length > 0)
+                    {
+                        list = PrefabList.Instance.ObjectSettings
+                            .Where((other) =>
                             {
-                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                            }
-                            return -1;
-                        }, -2));
+                                if (other.GetEditorAsset() == null) return false;
 
+                                if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            }).ToList();
+                    }
+                    else
+                    {
+                        list = PrefabList.Instance.ObjectSettings;
+                    }
+
+                    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                    {
+                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        {
+                            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                        }
+                        return -1;
+                    }, -2));
+                    //GUIUtility.ExitGUI();
+
+                    
+                    GUIUtility.hotControl = 0;
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == selectorID)
+                    {
                         Event.current.Use();
                         GUIUtility.hotControl = 0;
-                        break;
-                    case EventType.MouseUp:
-                        if (GUIUtility.hotControl == selectorID)
-                        {
-                            Event.current.Use();
-                            GUIUtility.hotControl = 0;
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }

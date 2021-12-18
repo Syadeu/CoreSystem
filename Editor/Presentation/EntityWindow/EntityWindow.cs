@@ -741,11 +741,12 @@ namespace SyadeuEditor.Presentation
             }
             private void DrawDefaultInfomation(ObjectBase obj)
             {
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.TextField("Name: ", obj.Name);
-                EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
-                EditorGUILayout.TextField("Idx: ", obj.Idx.ToString());
-                EditorGUI.EndDisabledGroup();
+                using (new EditorGUI.DisabledGroupScope(true))
+                {
+                    EditorGUILayout.TextField("Name: ", obj.Name);
+                    EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
+                    EditorGUILayout.TextField("Idx: ", obj.Idx.ToString());
+                }
             }
             private void DrawEntity(EntityDataBase entity)
             {
@@ -777,14 +778,17 @@ namespace SyadeuEditor.Presentation
                         EditorGUI.indentLevel++;
 
                         entityBase.transform.position =
-                EditorGUILayout.Vector3Field("Position", entityBase.transform.position);
+                            EditorGUILayout.Vector3Field("Position", entityBase.transform.position);
 
                         Vector3 eulerAngles = entityBase.transform.eulerAngles;
-                        EditorGUI.BeginChangeCheck();
-                        eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
-                        if (EditorGUI.EndChangeCheck())
+
+                        using (var change = new EditorGUI.ChangeCheckScope())
                         {
-                            entityBase.transform.eulerAngles = eulerAngles;
+                            eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
+                            if (change.changed)
+                            {
+                                entityBase.transform.eulerAngles = eulerAngles;
+                            }
                         }
 
                         entityBase.transform.scale

@@ -142,7 +142,10 @@ namespace Syadeu.Presentation.Render
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    DrawShapes(in arg2, m_ComponentSystem.GetComponent<ShapesComponent>(m_BatchedShapeEntities.Dequeue()));
+                    var entity = m_BatchedShapeEntities.Dequeue();
+                    if (!m_ComponentSystem.HasComponent<ShapesComponent>(entity)) continue;
+
+                    DrawShapes(in arg2, m_ComponentSystem.GetComponent<ShapesComponent>(entity));
                 }
 
                 PrepareBatchShapesJob prepareJob = new PrepareBatchShapesJob()
