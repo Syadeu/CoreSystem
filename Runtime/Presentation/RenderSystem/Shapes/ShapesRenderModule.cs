@@ -82,15 +82,17 @@ namespace Syadeu.Presentation.Render
                 com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
 
                 com.m_Transform.SetParent(parent);
+                com.m_Transform.localPosition = 0;
+                //com.m_Transform.localEulerAngles = new float3(90, 0, 0);
             }
             else
             {
                 pos = float3.zero;
-                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.EulerZXY(90, 0, 0), 1);
             }
 
-            com.m_Transform.localPosition = com.offsets.position;
-            com.m_Transform.localRotation = com.offsets.rotation;
+            //com.m_Transform.localPosition = com.offsets.position;
+            //com.m_Transform.localRotation = com.offsets.rotation;
         }
         private void M_ComponentSystem_OnComponentRemove(InstanceID id, System.Type arg2)
         {
@@ -107,7 +109,7 @@ namespace Syadeu.Presentation.Render
         {
             m_RenderSystem = other;
 
-            m_RenderSystem.OnRender += RenderPipelineManager_beginCameraRendering;
+            RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
         }
         private void Bind(GameObjectProxySystem other)
         {
@@ -121,7 +123,7 @@ namespace Syadeu.Presentation.Render
             m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
 
-            m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
+            RenderPipelineManager.beginCameraRendering -= RenderPipelineManager_beginCameraRendering;
         }
         protected override void OnDispose()
         {
@@ -138,6 +140,7 @@ namespace Syadeu.Presentation.Render
         private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext arg1, Camera arg2)
         {
             using (s_RenderShapesMarker.Auto())
+            using (Draw.Command(arg2))
             {
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
@@ -159,19 +162,16 @@ namespace Syadeu.Presentation.Render
 
         private static void DrawShapes(in Camera camera, in ShapesComponent shapes)
         {
-            using (Draw.Command(camera))
-            {
-                Draw.Thickness = shapes.generals.thickness;
-                Draw.DiscGeometry = shapes.generals.discGeometry;
+            Draw.Thickness = shapes.generals.thickness;
+            Draw.DiscGeometry = shapes.generals.discGeometry;
 
-                switch (shapes.shape)
-                {
-                    case ShapesComponent.Shape.Arc:
-                        DrawArcShape(in shapes);
-                        break;
-                    default:
-                        break;
-                }
+            switch (shapes.shape)
+            {
+                case ShapesComponent.Shape.Arc:
+                    DrawArcShape(in shapes);
+                    break;
+                default:
+                    break;
             }
         }
         private static void DrawArcShape(in ShapesComponent shapes)
@@ -179,11 +179,15 @@ namespace Syadeu.Presentation.Render
             ProxyTransform tr = shapes.transform;
 
             Draw.Arc(
-                pos: tr.position,
-                rot: tr.rotation,
+                pos: tr.position + shapes.offsets.position,
+                rot: shapes.offsets.rotation,
                 angleRadStart: shapes.arcParameters.angleStart.radian,
+                //angleRadStart: 0,
+                //angleRadEnd: 350 * Mathf.Deg2Rad,
                 angleRadEnd: shapes.arcParameters.angleEnd.radian,
                 colors: shapes.generals.colors);
+
+            //$"{Draw.Thickness}, {shapes.arcParameters.angleStart.radian}, {shapes.arcParameters.angleEnd.radian}, {tr.eulerAngles}".ToLog();
         }
 
         //public void Add(InstanceID id)
@@ -213,7 +217,7 @@ namespace Syadeu.Presentation.Render
 
             public void Execute(in InstanceID entity, in ShapesComponent component)
             {
-                if (!component.transform.isVisible) return;
+                //if (!component.transform.isVisible) return;
 
                 m_BatchedQueue.Enqueue(entity);
             }

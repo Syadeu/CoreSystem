@@ -39,6 +39,8 @@ namespace Syadeu.Presentation.MotionMatching
 
             var trajectory = animator.AnimatorComponent.GetComponent<MxM.MxMTrajectoryGenerator>();
             trajectory.InputVector = navAgent.Direction;
+
+            //$"{navAgent.Direction}".ToLog();
         }
     }
 }

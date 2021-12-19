@@ -569,6 +569,7 @@ namespace Syadeu.Presentation.Map
                     }
 
                     SetDirection(agent.desiredVelocity);
+                    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
 
                     if (!rootMotion)
                     {
@@ -590,6 +591,7 @@ namespace Syadeu.Presentation.Map
                 while (tr.hasProxy && agent.remainingDistance > .1f)
                 {
                     SetDirection(agent.desiredVelocity);
+                    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
 
                     if (!rootMotion)
                     {
@@ -611,6 +613,7 @@ namespace Syadeu.Presentation.Map
                 do
                 {
                     SetDirection(agent.desiredVelocity);
+                    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
 
                     if (!rootMotion)
                     {

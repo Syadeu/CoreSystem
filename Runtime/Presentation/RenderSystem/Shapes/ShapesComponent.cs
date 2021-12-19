@@ -19,6 +19,7 @@ using Shapes;
 using Syadeu.Presentation.Proxy;
 using Unity.Mathematics;
 using Syadeu.Collections;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
@@ -41,6 +42,11 @@ namespace Syadeu.Presentation.Render
             public float turn
             {
                 set => radian = ShapesMath.TAU * value;
+            }
+
+            public Angle(float radian)
+            {
+                this.radian = radian;
             }
         }
         public struct Generals
@@ -72,12 +78,24 @@ namespace Syadeu.Presentation.Render
         public void Apply(ShapesPropertyBlock shapesProperty)
         {
             shape = shapesProperty.m_Shape;
-            generals.thickness = shapesProperty.m_Thickness;
-            generals.discGeometry = shapesProperty.m_DiscGeometry;
-            generals.colors = DiscColors.Angular(shapesProperty.m_StartColor, shapesProperty.m_EndColor);
+            generals = new Generals
+            {
+                thickness = shapesProperty.m_Thickness,
+                discGeometry = shapesProperty.m_DiscGeometry,
+                colors = DiscColors.Radial(shapesProperty.m_StartColor, shapesProperty.m_EndColor)
+            };
 
-            arcParameters.angleStart.degree = shapesProperty.m_ArcParameters.m_AngleDegreeStart;
-            arcParameters.angleEnd.degree = shapesProperty.m_ArcParameters.m_AngleDegreeEnd;
+            offsets = new Offsets
+            {
+                position = 0,
+                rotation = Quaternion.Euler(90, 0, 0)
+            };
+
+            arcParameters = new ArcParameters
+            {
+                angleStart = new Angle(shapesProperty.m_ArcParameters.m_AngleDegreeStart * Mathf.Deg2Rad),
+                angleEnd = new Angle(shapesProperty.m_ArcParameters.m_AngleDegreeEnd * Mathf.Deg2Rad),
+            };
         }
     }
 #endif

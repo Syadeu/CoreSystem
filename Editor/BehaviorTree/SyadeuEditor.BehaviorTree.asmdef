@@ -13,8 +13,11 @@
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "BehaviorDesigner.Runtime.dll",
+        "BehaviorDesigner.Editor.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [
         "CORESYSTEM_BEHAVIORTREE"
