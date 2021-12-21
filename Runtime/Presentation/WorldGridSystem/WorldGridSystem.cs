@@ -107,5 +107,16 @@ namespace Syadeu.Presentation.Grid
 
             *output = new int3(x, y, z);
         }
+        [BurstCompile]
+        public static void locationToPosition(in AABB aabb, in float cellSize, in int3 location, float3* output)
+        {
+            float
+                half = cellSize * .5f,
+                targetX = aabb.min.x + half + (cellSize * location.x),
+                //targetY = aabb.center.y,
+                targetZ = aabb.max.z - half - (cellSize * location.z);
+
+            *output = new float3(targetX, location.y, targetZ);
+        }
     }
 }

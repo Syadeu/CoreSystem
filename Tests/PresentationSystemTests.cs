@@ -211,6 +211,7 @@ public sealed class WorldGridTests
             position_1 = new float3(22, 15.52f, 12),
             position_2 = new float3(22, -15.52f, 12);
 
+        float3 outPos_1, outPos_2;
         int3 location_1, location_2;
         int index_1, index_2;
 
@@ -218,16 +219,18 @@ public sealed class WorldGridTests
         BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
 
         BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+        BurstGridMathematics.locationToPosition(aabb, cellSize, location_2, &outPos_1);
 
-        Debug.Log($"test1 {location_1} : {index_1} => {location_2}");
+        Debug.Log($"test1 {position_1} : {location_1} : {index_1} => {outPos_1} : {location_2}");
         Assert.AreEqual(location_1, location_2);
 
         BurstGridMathematics.positionToLocation(in aabb, in cellSize, position_2, &location_1);
         BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
 
         BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+        BurstGridMathematics.locationToPosition(aabb, cellSize, location_2, &outPos_1);
 
-        Debug.Log($"test2 {location_1} : {index_1} => {location_2}");
+        Debug.Log($"test2 {position_2} : {location_1} : {index_1} => {outPos_1} : {location_2}");
         Assert.AreEqual(location_1, location_2);
     }
 }
