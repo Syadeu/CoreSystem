@@ -74,7 +74,7 @@ namespace Syadeu.Presentation
 
         public bool IsDebugScene => m_IsDebugScene;
         public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
-        public bool IsStartScene => CurrentSceneRef.Equals(SceneList.Instance.StartScene);
+        public bool IsStartScene => CurrentSceneRef != null && CurrentSceneRef.Equals(SceneList.Instance.StartScene);
 
         // OnSceneLoadCall -> OnLoadingEnter -> OnWaitLoading -> OnSceneChanged -> OnAfterLoading -> OnLoadingExit
 

@@ -130,6 +130,8 @@ namespace SyadeuEditor.Presentation
                 else displayName = new GUIContent(objBase.Name);
             }
 
+            Rect fieldRect;
+            int selectorID;
             using (new GUILayout.HorizontalScope())
             {
                 GUILayout.Space(EditorGUI.indentLevel * 15);
@@ -139,92 +141,94 @@ namespace SyadeuEditor.Presentation
                     GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
                 }
 
-                Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField, GUILayout.ExpandWidth(true));
+                fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField/*, GUILayout.ExpandWidth(true)*/);
+                selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+            }
 
-                int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
+            bool isHover = fieldRect.Contains(Event.current.mousePosition);
 
-                switch (Event.current.GetTypeForControl(selectorID))
-                {
-                    case EventType.Repaint:
-                        bool isHover = fieldRect.Contains(Event.current.mousePosition);
+            switch (Event.current.GetTypeForControl(selectorID))
+            {
+                case EventType.Repaint:
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName,
+                        isHover, isActive: true, on: true, false);
 
-                        EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName,
-                            isHover, isActive: true, on: true, false);
+                    break;
+                case EventType.ContextClick:
+                    if (!isHover) break;
 
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (current.IsValid())
+                    {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+
+                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.m_DataListWindow.Select(current);
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+
+                    menu.AddSeparator(string.Empty);
+                    if (targetType != null && !targetType.IsAbstract)
+                    {
+                        menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
+                        {
+                            var obj = EntityWindow.Instance.Add(targetType);
+                            setter.Invoke(obj.Hash);
+                        });
+                    }
+                    else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
+
+                    menu.ShowAsContext();
+
+                    Event.current.Use();
+                    break;
+                case EventType.MouseDown:
+                    if (!isHover)
+                    {
                         break;
-                    case EventType.ContextClick:
-                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
+                    }
 
-                        GenericMenu menu = new GenericMenu();
-                        menu.AddDisabledItem(displayName);
-                        menu.AddSeparator(string.Empty);
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = selectorID;
+                        DrawSelectionWindow(setter, targetType);
 
-                        if (current.IsValid())
-                        {
-                            menu.AddItem(new GUIContent("Find Referencers"), false, () =>
-                            {
-                                //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
-
-                                EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
-                            });
-                            menu.AddItem(new GUIContent("To Reference"), false, () =>
-                            {
-                                EntityWindow.Instance.m_DataListWindow.Select(current);
-                            });
-                        }
-                        else
-                        {
-                            menu.AddDisabledItem(new GUIContent("Find Referencers"));
-                            menu.AddDisabledItem(new GUIContent("To Reference"));
-                        }
-
-                        menu.AddSeparator(string.Empty);
-                        if (targetType != null && !targetType.IsAbstract)
-                        {
-                            menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
-                            {
-                                var obj = EntityWindow.Instance.Add(targetType);
-                                setter.Invoke(obj.Hash);
-                            });
-                        }
-                        else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
-
-                        menu.ShowAsContext();
-
+                        GUI.changed = true;
                         Event.current.Use();
-                        break;
-                    case EventType.MouseDown:
-                        //if (!fieldRect.Contains(Event.current.mousePosition)) break;
+                    }
 
-                        //if (Event.current.button == 0)
-                        //{
-                        //    GUIUtility.hotControl = selectorID;
-                        //    DrawSelectionWindow(setter, targetType);
-                            
-                        //    GUI.changed = true;
-                        //    Event.current.Use();
-                        //}
+                    break;
+                case EventType.MouseUp:
+                    //if (!fieldRect.Contains(Event.current.mousePosition)) break;
 
-                        break;
-                    case EventType.MouseUp:
-                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
+                    //if (Event.current.button == 0)
+                    //{
+                    //    GUIUtility.hotControl = selectorID;
+                    //    DrawSelectionWindow(setter, targetType);
 
-                        if (Event.current.button == 0)
-                        {
-                            GUIUtility.hotControl = selectorID;
-                            DrawSelectionWindow(setter, targetType);
-
-                            GUI.changed = true;
-                            Event.current.Use();
-                        }
-                        //if (GUIUtility.hotControl == selectorID)
-                        //{
-                        //    GUIUtility.hotControl = 0;
-                        //}
-                        break;
-                    default:
-                        break;
-                }
+                    //    GUI.changed = true;
+                    //    Event.current.Use();
+                    //}
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
         static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
@@ -234,7 +238,7 @@ namespace SyadeuEditor.Presentation
 
             if (targetType == null)
             {
-                GUIUtility.ExitGUI();
+                //GUIUtility.ExitGUI();
 
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                     list: EntityDataList.Instance.m_Objects.Values.ToArray(),
@@ -254,7 +258,7 @@ namespace SyadeuEditor.Presentation
                             targetType.IsAssignableFrom(other.GetType()))
                     .ToArray();
 
-                GUIUtility.ExitGUI();
+                //GUIUtility.ExitGUI();
 
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
                     list: actionBases,

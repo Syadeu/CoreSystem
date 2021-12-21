@@ -4,6 +4,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using System;
 using System.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -194,5 +195,39 @@ public class PresentationSystemTests
         //Debug.Log($"{query3.GetHashCode()} == {query4.GetHashCode()} ? {query3.GetHashCode() == query4.GetHashCode()}");
         //Debug.Log($"{query5.GetHashCode()} == {query6.GetHashCode()} ? {query5.GetHashCode() == query6.GetHashCode()}");
         //Debug.Log($"{query7.GetHashCode()} == {query1.GetHashCode()} ? {query7.GetHashCode() == query1.GetHashCode()}");
+    }
+}
+
+public sealed class WorldGridTests
+{
+    [Test]
+    public unsafe void IndexTest()
+    {
+        AABB aabb = new AABB(0, new float3(100, 100, 100));
+        float cellSize = 2.5f;
+
+        float3 
+            //position_1 = new float3(3.4f, 6, 85),
+            position_1 = new float3(22, 15.52f, 12),
+            position_2 = new float3(22, -15.52f, 12);
+
+        int3 location_1, location_2;
+        int index_1, index_2;
+
+        BurstGridMathematics.positionToLocation(in aabb, in cellSize, position_1, &location_1);
+        BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
+
+        BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+
+        Debug.Log($"test1 {location_1} : {index_1} => {location_2}");
+        Assert.AreEqual(location_1, location_2);
+
+        BurstGridMathematics.positionToLocation(in aabb, in cellSize, position_2, &location_1);
+        BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
+
+        BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+
+        Debug.Log($"test2 {location_1} : {index_1} => {location_2}");
+        Assert.AreEqual(location_1, location_2);
     }
 }

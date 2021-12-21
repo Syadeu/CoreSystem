@@ -12,13 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Render;
+using System.ComponentModel;
+
 namespace Syadeu.Presentation.TurnTable.UI
 {
-    public enum ShortcutType
+    [EntityAcceptOnly(null)]
+    [DisplayName("EntityData: TRPG Mouse Cursor")]
+    public sealed class TRPGMouseCursorEntity : EntityDataBase
+#if CORESYSTEM_SHAPES
+        , INotifyComponent<ShapesComponent>
+#endif
     {
-        None        =   0,
+#if CORESYSTEM_SHAPES
 
-        Move        =   1,
-        Attack      =   2
+#endif
+    }
+    internal sealed class TRPGMouseCursorEntityProcessor : EntityProcessor<TRPGMouseCursorEntity>
+    {
+
     }
 }
