@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Grid
             if (location.y == 0)
             {
                 *output = calculated;
-                *output ^= 397;
+                *output ^= 751;
                 return;
             }
 
@@ -70,7 +70,7 @@ namespace Syadeu.Presentation.Grid
                 dSize = xSize * zSize;
 
             *output = calculated + (dSize * math.abs(location.y));
-            *output ^= 397;
+            *output ^= 751;
 
             if (location.y < 0)
             {
@@ -89,7 +89,7 @@ namespace Syadeu.Presentation.Grid
             float3
                 _size = aabb.size;
             int
-                temp = math.abs(index) ^ 397,
+                temp = math.abs(index) ^ 751,
                 xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
                 zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
@@ -153,6 +153,8 @@ namespace Syadeu.Presentation.Grid
                 );
         }
 
+        #endregion
+
         [BurstCompile]
         public static void containIndex(in AABB aabb, in float cellSize, in int index, bool* output)
         {
@@ -167,7 +169,7 @@ namespace Syadeu.Presentation.Grid
                 _min = aabb.min,
                 _max = aabb.max;
             int
-                temp = math.abs(index) ^ 397,
+                temp = math.abs(index) ^ 751,
                 xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
                 zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
@@ -206,7 +208,5 @@ namespace Syadeu.Presentation.Grid
             *output
                 = x > 0 && x < maxX && y > minY && y < maxY && z > 0 && z < maxZ;
         }
-
-        #endregion
     }
 }
