@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-
 using Syadeu.Collections;
 using System;
 using Unity.Burst;
@@ -34,6 +33,9 @@ namespace Syadeu.Presentation.Grid
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, OptimizeFor = OptimizeFor.Performance)]
     public unsafe static class BurstGridMathematics
     {
+        #region Indexing
+
+        // https://www.koreascience.or.kr/article/JAKO201113663898554.pdf
         [BurstCompile]
         public static void positionToLocation(in AABB aabb, in float cellSize, in float3 position, int3* output)
         {
@@ -83,11 +85,13 @@ namespace Syadeu.Presentation.Grid
                 *output = int3.zero;
                 return;
             }
-            
+
+            float3
+                _size = aabb.size;
             int
                 temp = math.abs(index) ^ 397,
-                xSize = Convert.ToInt32(math.floor(aabb.size.x / cellSize)),
-                zSize = Convert.ToInt32(math.floor(aabb.size.z / cellSize)),
+                xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
+                zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
 
                 y = temp / dSize,
@@ -118,5 +122,91 @@ namespace Syadeu.Presentation.Grid
 
             *output = new float3(targetX, location.y, targetZ);
         }
+
+        [BurstCompile]
+        public static void minMaxLocation(in AABB aabb, in float cellSize, int3* min, int3* max)
+        {
+            float3
+                _min = aabb.min,
+                _max = aabb.max;
+
+            float
+                half = cellSize * .5f;
+            int
+                // Left Up
+                minY = Convert.ToInt32(math.round(_min.y)),
+
+                // Right Down
+                maxX = math.abs(Convert.ToInt32((aabb.size.x - half) / cellSize)),
+                maxY = Convert.ToInt32(math.round(_max.y)),
+                maxZ = math.abs(Convert.ToInt32((aabb.size.z + half) / cellSize));
+
+            *min = new int3(
+                0,
+                minY,
+                0
+                );
+            *max = new int3(
+                maxX,
+                maxY,
+                maxZ
+                );
+        }
+
+        [BurstCompile]
+        public static void containIndex(in AABB aabb, in float cellSize, in int index, bool* output)
+        {
+            if (index == 0)
+            {
+                *output = true;
+                return;
+            }
+
+            float3
+                _size = aabb.size,
+                _min = aabb.min,
+                _max = aabb.max;
+            int
+                temp = math.abs(index) ^ 397,
+                xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
+                zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
+                dSize = xSize * zSize,
+
+                y = temp / dSize,
+                calculated = temp % dSize;
+
+            if (index < 0) y *= -1;
+
+            if (calculated == 0)
+            {
+                if (y > _min.y && y < _max.y)
+                {
+                    *output = true;
+                }
+                else *output = false;
+
+                return;
+            }
+
+            int
+                z = calculated / zSize,
+                x = calculated - (zSize * z);
+
+            float
+                half = cellSize * .5f;
+            int
+                // Left Up
+                minY = Convert.ToInt32(math.round(_min.y)),
+
+                // Right Down
+                maxX = math.abs(Convert.ToInt32((_size.x - half) / cellSize)),
+                maxY = Convert.ToInt32(math.round(_max.y)),
+                maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
+
+            *output
+                = x > 0 && x < maxX && y > minY && y < maxY && z > 0 && z < maxZ;
+        }
+
+        #endregion
     }
 }
