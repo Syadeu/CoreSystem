@@ -30,6 +30,11 @@ namespace Syadeu.Presentation.Grid
         public override bool EnableAfterPresentation => false;
     }
 
+    public struct WorldGrid
+    {
+        private AABB aabb;
+    }
+
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, OptimizeFor = OptimizeFor.Performance)]
     public unsafe static class BurstGridMathematics
     {
@@ -51,6 +56,12 @@ namespace Syadeu.Presentation.Grid
 
             *output = new int3(x, y, z);
         }
+        public static void positionToIndex(in AABB aabb, in float cellSize, in float3 position, int* output)
+        {
+            int3 location;
+            positionToLocation(in aabb, in cellSize, in position, &location);
+            locationToIndex(in aabb, in cellSize, in location, output);
+        }
         [BurstCompile]
         public static void locationToIndex(in AABB aabb, in float cellSize, in int3 location, int* output)
         {
@@ -61,7 +72,7 @@ namespace Syadeu.Presentation.Grid
             if (location.y == 0)
             {
                 *output = calculated;
-                *output ^= 751;
+                *output ^= 0b1011101111;
                 return;
             }
 
@@ -70,7 +81,7 @@ namespace Syadeu.Presentation.Grid
                 dSize = xSize * zSize;
 
             *output = calculated + (dSize * math.abs(location.y));
-            *output ^= 751;
+            *output ^= 0b1011101111;
 
             if (location.y < 0)
             {
@@ -89,7 +100,7 @@ namespace Syadeu.Presentation.Grid
             float3
                 _size = aabb.size;
             int
-                temp = math.abs(index) ^ 751,
+                temp = math.abs(index) ^ 0b1011101111,
                 xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
                 zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
@@ -111,16 +122,21 @@ namespace Syadeu.Presentation.Grid
 
             *output = new int3(x, y, z);
         }
+        public static void indexToPosition(in AABB aabb, in float cellSize, in int index, float3* output)
+        {
+            int3 location;
+            indexToLocation(in aabb, in cellSize, in index, &location);
+            locationToPosition(in aabb, in cellSize, in location, output);
+        }
         [BurstCompile]
         public static void locationToPosition(in AABB aabb, in float cellSize, in int3 location, float3* output)
         {
             float
                 half = cellSize * .5f,
-                targetX = aabb.min.x + half + (cellSize * location.x),
-                //targetY = aabb.center.y,
-                targetZ = aabb.max.z - half - (cellSize * location.z);
+                x = aabb.min.x + half + (cellSize * location.x),
+                z = aabb.max.z - half - (cellSize * location.z);
 
-            *output = new float3(targetX, location.y, targetZ);
+            *output = new float3(x, location.y, z);
         }
 
         [BurstCompile]
@@ -155,6 +171,26 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
+        public static void indexToAABB(in AABB aabb, in float cellSize, in int index, AABB* output)
+        {
+            float3 position;
+            indexToPosition(in aabb, in cellSize, in index, &position);
+
+            *output = new AABB(position, cellSize);
+        }
+        [BurstCompile]
+        public static void indexToAABB(in AABB aabb, in float cellSize, [NoAlias] in int min, [NoAlias] in int max, AABB* output)
+        {
+            float3 minPos, maxPos;
+            indexToPosition(in aabb, in cellSize, in min, &minPos);
+            indexToPosition(in aabb, in cellSize, in max, &maxPos);
+
+            AABB temp = new AABB(minPos, cellSize);
+            temp.Encapsulate(new AABB(maxPos, cellSize));
+
+            *output = temp;
+        }
+
         [BurstCompile]
         public static void containIndex(in AABB aabb, in float cellSize, in int index, bool* output)
         {
@@ -169,7 +205,7 @@ namespace Syadeu.Presentation.Grid
                 _min = aabb.min,
                 _max = aabb.max;
             int
-                temp = math.abs(index) ^ 751,
+                temp = math.abs(index) ^ 0b1011101111,
                 xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
                 zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
@@ -207,6 +243,51 @@ namespace Syadeu.Presentation.Grid
 
             *output
                 = x > 0 && x < maxX && y > minY && y < maxY && z > 0 && z < maxZ;
+        }
+        [BurstCompile]
+        public static void containLocation(in AABB aabb, in float cellSize, in int3 location, bool* output)
+        {
+            float3
+                _size = aabb.size,
+                _min = aabb.min,
+                _max = aabb.max;
+            float
+                half = cellSize * .5f;
+            int
+                // Left Up
+                minY = Convert.ToInt32(math.round(_min.y)),
+
+                // Right Down
+                maxX = math.abs(Convert.ToInt32((_size.x - half) / cellSize)),
+                maxY = Convert.ToInt32(math.round(_max.y)),
+                maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
+
+            *output
+                = location.x > 0 && location.x < maxX &&
+                location.y > minY && location.y < maxY &&
+                location.z > 0 && location.z < maxZ;
+        }
+
+        [BurstCompile]
+        public static void distanceBetweenLocation(in AABB aabb, in float cellSize, in int3 a, in int3 b, float* output)
+        {
+            int3 d = b - a;
+            float
+                x = d.x * cellSize,
+                z = d.z * cellSize,
+                
+                p = (x * x) + (d.y * d.y) + (z * z);
+
+            *output = math.sqrt(p);
+        }
+        public static void distanceBetweenindex(in AABB aabb, in float cellSize, in int a, in int b, float* output)
+        {
+            // TODO : 인덱스만으로 거리계산이 안될까?
+            int3 x, y;
+            indexToLocation(in aabb, in cellSize, in a, &x);
+            indexToLocation(in aabb, in cellSize, in a, &y);
+
+            distanceBetweenLocation(in aabb, in cellSize, in x, in y, output);
         }
     }
 }

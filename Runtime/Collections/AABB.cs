@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
+    [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB : IEquatable<AABB>
