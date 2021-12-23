@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Grid
                 half = cellSize * .5f;
             int
                 // Left Up
-                minY = Convert.ToInt32(math.round(_min.y)),
+                minY = Convert.ToInt32(math.round(_min.y / cellSize)),
 
                 // Right Down
                 maxX = math.abs(Convert.ToInt32((aabb.size.x - half) / cellSize)),
