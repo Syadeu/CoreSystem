@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.Grid
             int
                 x = math.abs(Convert.ToInt32((position.x - firstCenterX) / cellSize)),
                 z = math.abs(Convert.ToInt32((position.z - firstCenterZ) / cellSize)),
-                y = Convert.ToInt32(math.round(position.y));
+                y = Convert.ToInt32(math.round(position.y) / cellSize);
 
             *output = new int3(x, y, z);
         }
@@ -136,7 +136,7 @@ namespace Syadeu.Presentation.Grid
                 x = aabb.min.x + half + (cellSize * location.x),
                 z = aabb.max.z - half - (cellSize * location.z);
 
-            *output = new float3(x, location.y, z);
+            *output = new float3(x, location.y * cellSize, z);
         }
 
         [BurstCompile]
@@ -154,7 +154,7 @@ namespace Syadeu.Presentation.Grid
 
                 // Right Down
                 maxX = math.abs(Convert.ToInt32((aabb.size.x - half) / cellSize)),
-                maxY = Convert.ToInt32(math.round(_max.y)),
+                maxY = Convert.ToInt32(math.round(_max.y / cellSize)),
                 maxZ = math.abs(Convert.ToInt32((aabb.size.z + half) / cellSize));
 
             *min = new int3(
@@ -210,7 +210,7 @@ namespace Syadeu.Presentation.Grid
                 zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
                 dSize = xSize * zSize,
 
-                y = temp / dSize,
+                y = Convert.ToInt32(math.floor(temp / dSize * cellSize)),
                 calculated = temp % dSize;
 
             if (index < 0) y *= -1;
@@ -274,9 +274,10 @@ namespace Syadeu.Presentation.Grid
             int3 d = b - a;
             float
                 x = d.x * cellSize,
+                y = d.y * cellSize,
                 z = d.z * cellSize,
                 
-                p = (x * x) + (d.y * d.y) + (z * z);
+                p = (x * x) + (y * y) + (z * z);
 
             *output = math.sqrt(p);
         }
