@@ -18,8 +18,10 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
@@ -29,6 +31,87 @@ namespace Syadeu.Presentation.Grid
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+
+        private WorldGrid m_Grid;
+        private bool m_InitializedGrid;
+        private NativeMultiHashMap<int, InstanceID> m_GridEntities;
+
+        private EntityComponentSystem m_ComponentSystem;
+
+        #region Presentation Methods
+
+        protected override PresentationResult OnInitialize()
+        {
+            m_InitializedGrid = false;
+            m_GridEntities = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
+
+            RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
+
+            return base.OnInitialize();
+        }
+        protected override void OnShutDown()
+        {
+            m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
+            m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
+        }
+        protected override void OnDispose()
+        {
+            m_GridEntities.Dispose();
+
+            m_ComponentSystem = null;
+        }
+
+        #region Binds
+
+        private void Bind(EntityComponentSystem other)
+        {
+            m_ComponentSystem = other;
+
+            m_ComponentSystem.OnComponentAdded += M_ComponentSystem_OnComponentAdded;
+            m_ComponentSystem.OnComponentRemove += M_ComponentSystem_OnComponentRemove;
+        }
+
+        private void M_ComponentSystem_OnComponentAdded(InstanceID arg1, Type arg2)
+        {
+
+        }
+        private void M_ComponentSystem_OnComponentRemove(InstanceID arg1, Type arg2)
+        {
+
+        }
+
+        #endregion
+
+        #endregion
+
+        public void InitializeGrid(in AABB aabb, in float cellSize)
+        {
+            m_Grid = new WorldGrid(in aabb, in cellSize);
+
+            m_InitializedGrid = true;
+        }
+
+        public void AddEntity(InstanceID entity)
+        {
+            if (!entity.IsEntity())
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    "");
+
+                return;
+            }
+            else if (m_ComponentSystem.HasComponent<GridComponent>(in entity))
+            {
+
+                return;
+            }
+
+            m_ComponentSystem.AddComponent<GridComponent>(in entity);
+        }
+        public void RemoveEntity(InstanceID entity)
+        {
+
+        }
     }
 
     public struct WorldGrid

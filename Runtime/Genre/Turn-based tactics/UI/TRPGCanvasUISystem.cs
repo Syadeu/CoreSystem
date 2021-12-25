@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             for (int i = 0; i < m_Shortcuts.Length; i++)
             {

@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_EventSystem.RemoveEvent<OnAppStateChangedEvent>(OnAppStateChangedEventHandler);
             //m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);

@@ -104,7 +104,7 @@ namespace Syadeu.Presentation.TurnTable
                 StopTurnTable();
             }
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_CurrentTurn = null;
 

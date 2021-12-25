@@ -135,7 +135,7 @@ namespace Syadeu.Presentation.Proxy
 
             return base.OnInitializeAsync();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             ReleaseAllPrefabs();
 

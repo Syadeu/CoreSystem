@@ -158,6 +158,12 @@ namespace Syadeu.Presentation.Components
             return !m_EntityBuffer[i].IsEmpty();
         }
         [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
+        public ref TComponent ElementAt<TComponent>(in int i)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            return ref ((TComponent*)m_ComponentBuffer)[i];
+        }
+        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
             where TComponent : unmanaged, IEntityComponent
         {

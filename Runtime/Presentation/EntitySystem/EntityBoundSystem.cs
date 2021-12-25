@@ -74,7 +74,7 @@ namespace Syadeu.Presentation
             m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();

@@ -63,34 +63,8 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
-            //if (m_CurrentIterationJob != null)
-            //{
-            //    m_CurrentIterationJob.Disposable.Dispose();
-            //}
-            //m_CurrentIterationJob = null;
-            //int m_iterjobCount = m_IterationJobs.Count;
-            //for (int i = 0; i < m_iterjobCount; i++)
-            //{
-            //    m_IterationJobs.Dequeue().Disposable.Dispose();
-            //}
-
-            //for (int i = 0; i < m_CoroutineIterators.Count; i++)
-            //{
-            //    if (m_CoroutineIterators[i] == null) continue;
-
-            //    else if (!CoreSystem.BlockCreateInstance)
-            //    {
-            //        m_CoroutineIterators[i].Disposable.Dispose();
-            //    }
-            //}
-
-            //m_CoroutineJobs.Clear();
-            //m_CoroutineIterators.Clear();
-            //m_UsedUpdateIndices.Clear();
-            //m_TerminatedCoroutineIndices.Clear();
-
             for (int i = 0; i < m_Coroutines.Count; i++)
             {
                 m_Coroutines[i].Dispose();
@@ -98,7 +72,6 @@ namespace Syadeu.Presentation
 
             m_Coroutines.Clear();
 
-            //PresentationManager.Instance.Update -= PresenationUpdateHandler;
             PresentationManager.Instance.TransformUpdate -= PresentationTransformUpdateHandler;
             PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
 

@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Map
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             //PoolContainer<NavMeshQueryContainer>.Dispose();
 

@@ -35,6 +35,26 @@ namespace Syadeu.Presentation.Components
         }
 
         internal unsafe ComponentBuffer* ComponentBuffer;
+
+        public int Length
+        {
+            get
+            {
+                unsafe
+                {
+                    return ComponentBuffer->Length;
+                }
+            }
+        }
+
+        public ref TComponent ComponentAt<TComponent>(in int index) 
+            where TComponent : unmanaged, IEntityComponent
+        {
+            unsafe
+            {
+                return ref ComponentBuffer->ElementAt<TComponent>(in index);
+            }
+        }
     }
     public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
     {
@@ -42,5 +62,8 @@ namespace Syadeu.Presentation.Components
             = SharedStatic<ComponentType>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<ComponentType>());
 
         internal static unsafe ComponentBuffer* ComponentBuffer => Value.Data.ComponentBuffer;
+
+        public static int Length => Value.Data.Length;
+        public static ref TComponent ComponentAt(in int index) => ref Value.Data.ComponentAt<TComponent>(in index);
     }
 }

@@ -98,7 +98,7 @@ namespace Syadeu.Presentation.Events
 
         #endregion
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_UpdateEvents.Clear();
             m_TransformEvents.Clear();

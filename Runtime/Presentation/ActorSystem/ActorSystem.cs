@@ -90,7 +90,7 @@ namespace Syadeu.Presentation.Actor
             //$"{ev.Entity.Name}: {ev.State}".ToLog();
         }
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             //m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             //m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;

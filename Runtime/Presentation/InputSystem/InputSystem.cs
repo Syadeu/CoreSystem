@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Input
             EnableInput = !opened;
         }
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             for (int i = 0; i < m_CreatedInputActions.Count; i++)
             {

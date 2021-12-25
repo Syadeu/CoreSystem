@@ -66,7 +66,7 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_LayerMap.Dispose();
 

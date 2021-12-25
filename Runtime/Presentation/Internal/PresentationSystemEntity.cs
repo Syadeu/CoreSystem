@@ -135,7 +135,7 @@ namespace Syadeu.Presentation.Internal
             OnSystemDispose = null;
         }
         internal virtual void InternalOnDispose() { }
-        public abstract void OnDispose();
+        protected abstract void OnDispose();
 
         public T GetModule<T>() where T : PresentationSystemModule
         {

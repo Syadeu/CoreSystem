@@ -67,7 +67,7 @@ namespace Syadeu.Presentation
             }
             m_CreatedGameObjects.Clear();
         }
-        public override void OnDispose() { }
+        protected override void OnDispose() { }
 
         /// <summary>
         /// <see cref="OnInitialize"/> 혹은 <see cref="OnInitializeAsync"/> 에서만 수행되야됩니다.

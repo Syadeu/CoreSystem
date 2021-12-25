@@ -38,6 +38,7 @@ using UnityEngine.Rendering;
 
 namespace Syadeu.Presentation.Map
 {
+    [Obsolete("Use WorldGridSystem Instead")]
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>,
         INotifySystemModule<GridDetectionModule>,
         INotifySystemModule<ObstacleLayerModule>
@@ -244,7 +245,7 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             //ClearUICell();
 

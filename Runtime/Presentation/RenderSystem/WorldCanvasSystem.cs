@@ -113,7 +113,7 @@ namespace Syadeu.Presentation.Render
                 Destroy(m_Canvas.gameObject);
             }
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_AttachedUIHashMap.Dispose();
 

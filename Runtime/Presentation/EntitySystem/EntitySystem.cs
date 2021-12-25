@@ -181,7 +181,7 @@ namespace Syadeu.Presentation
 
             GetModule<EntityRecycleModule>().ExecuteDisposeAll();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             PresentationManager.Instance.PreUpdate -= m_DestroyedObjectsInThisFrameAction.Invoke;
             m_SceneSystem.OnSceneChanged -= M_SceneSystem_OnSceneLoadCall;

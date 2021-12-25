@@ -107,7 +107,7 @@ namespace Syadeu.Presentation.Components
             else length = types.Length * 2;
 
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
-            ComponentBuffer* readPtr = ((ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafeReadOnlyPtr());
+            ComponentBuffer* readPtr = ((ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ComponentArrayBuffer));
             for (int i = 0; i < types.Length; i++)
             {
                 ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
@@ -167,8 +167,8 @@ namespace Syadeu.Presentation.Components
             //UntypedUnsafeHashMap test = new UntypedUnsafeHashMap();
             
         }
-        
-        public override void OnDispose()
+
+        protected override void OnDispose()
         {
             PresentationManager.Instance.PreUpdate -= m_CompleteAllDisposedComponents.Invoke;
             m_CompleteAllDisposedComponents.Reserve();

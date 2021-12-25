@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_SelectedEntities.Dispose();
 

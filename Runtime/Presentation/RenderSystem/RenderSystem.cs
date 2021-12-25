@@ -143,7 +143,7 @@ namespace Syadeu.Presentation.Render
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_Camera.OnValueChange -= OnCameraChangedHandler;
             //CoreSystem.Instance.OnRender -= Instance_OnRender;

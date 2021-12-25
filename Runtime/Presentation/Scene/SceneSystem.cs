@@ -275,7 +275,7 @@ namespace Syadeu.Presentation
         {
             PresentationManager.Instance.PostUpdate -= Instance_PostUpdate;
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_LoadingEvent.Clear();
 

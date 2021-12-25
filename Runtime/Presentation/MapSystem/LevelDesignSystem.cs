@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.Map
         {
             m_MapSystem = other;
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_SceneSystem = null;
             m_MapSystem = null;
