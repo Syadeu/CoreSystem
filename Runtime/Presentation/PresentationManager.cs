@@ -851,10 +851,15 @@ namespace Syadeu.Presentation
         }
         private IEnumerator ThreadStart()
         {
+            const string c_ThreadName = "core.pre";
+
             m_PresentationThread = new Thread(PresentationAsyncUpdate)
             {
-                IsBackground = true
+                Name = c_ThreadName,
+                IsBackground = true,
+                CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture
             };
+
             m_PresentationThread.Start(this);
 
             yield break;
@@ -1157,7 +1162,6 @@ namespace Syadeu.Presentation
             UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
 #endif
             PresentationManager mgr = (PresentationManager)obj;
-            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
             CoreSystem.SimulateWatcher.WaitOne();
 
