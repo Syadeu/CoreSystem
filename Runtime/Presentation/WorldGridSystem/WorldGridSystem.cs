@@ -17,8 +17,10 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Threading;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using Unity.Collections;
@@ -31,9 +33,11 @@ namespace Syadeu.Presentation.Grid
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterTransformPresentation => true;
 
         private WorldGrid m_Grid;
-        private bool m_InitializedGrid;
+        private bool m_GridInitialized;
+        private AtomicSafeBoolen m_RequireGridUpdate;
         private NativeMultiHashMap<int, InstanceID> m_GridEntities;
 
         private EntityComponentSystem m_ComponentSystem;
@@ -42,7 +46,7 @@ namespace Syadeu.Presentation.Grid
 
         protected override PresentationResult OnInitialize()
         {
-            m_InitializedGrid = false;
+            m_GridInitialized = false;
             m_GridEntities = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
 
             RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
@@ -82,35 +86,88 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
+        protected override PresentationResult AfterTransformPresentation()
+        {
+            ScheduleGridUpdate();
+
+            return base.AfterTransformPresentation();
+        }
+
+        private void ScheduleGridUpdate()
+        {
+            if (!m_GridInitialized || !m_RequireGridUpdate.Value) return;
+
+            UpdateGridJob job = new UpdateGridJob
+            {
+
+            };
+
+            ScheduleAt<UpdateGridJob, GridComponent>(JobPosition.AfterTransform, job);
+
+            m_RequireGridUpdate.Value = false;
+        }
+        private struct UpdateGridJob : IJobParallelForEntities<GridComponent>
+        {
+            [ReadOnly] public WorldGrid grid;
+
+            public void Execute(in InstanceID entity, ref GridComponent component)
+            {
+                
+            }
+        }
+
         #endregion
 
         public void InitializeGrid(in AABB aabb, in float cellSize)
         {
             m_Grid = new WorldGrid(in aabb, in cellSize);
 
-            m_InitializedGrid = true;
+            m_GridInitialized = true;
         }
 
         public void AddEntity(InstanceID entity)
         {
+#if DEBUG_MODE
             if (!entity.IsEntity())
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
-                    "");
+                    $"This entity is not inherted from {nameof(EntityBase)}. " +
+                    $"This is not allowed.");
 
                 return;
             }
             else if (m_ComponentSystem.HasComponent<GridComponent>(in entity))
             {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"This entity already registered.");
 
                 return;
             }
-
+#endif
             m_ComponentSystem.AddComponent<GridComponent>(in entity);
+            m_RequireGridUpdate.Value = true;
         }
         public void RemoveEntity(InstanceID entity)
         {
+#if DEBUG_MODE
+            if (!entity.IsEntity())
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"This entity is not inherted from {nameof(EntityBase)}. " +
+                    $"This is not allowed.");
 
+                return;
+            }
+            else if (m_ComponentSystem.HasComponent<GridComponent>(in entity))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"This entity already registered.");
+
+                return;
+            }
+#endif
+            m_ComponentSystem.RemoveComponent<GridComponent>(in entity);
+            m_RequireGridUpdate.Value = true;
         }
     }
 
@@ -194,6 +251,7 @@ namespace Syadeu.Presentation.Grid
 
     public struct GridComponent : IEntityComponent
     {
+        internal bool m_Initialized;
         internal int m_Index;
 
         public int index => m_Index;

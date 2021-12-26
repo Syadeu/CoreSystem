@@ -34,7 +34,9 @@ namespace Syadeu.Presentation.Components
                 componentType, (uint)UnsafeUtility.AlignOf<ComponentType>());
         }
 
-        internal unsafe ComponentBuffer* ComponentBuffer;
+        internal unsafe UntypedUnsafeHashMap* m_ComponentHashMap;
+        internal unsafe ComponentBuffer* m_ComponentBuffer;
+        internal int m_ComponentIndex;
 
         public int Length
         {
@@ -42,9 +44,14 @@ namespace Syadeu.Presentation.Components
             {
                 unsafe
                 {
-                    return ComponentBuffer->Length;
+                    return m_ComponentBuffer->Length;
                 }
             }
+        }
+
+        private static int GetEntityIndex(in InstanceID entity)
+        {
+            return Math.Abs(entity.GetHashCode()) % ComponentBuffer.c_InitialCount;
         }
 
         public ref TComponent ComponentAt<TComponent>(in int index) 
@@ -52,16 +59,53 @@ namespace Syadeu.Presentation.Components
         {
             unsafe
             {
-                return ref ComponentBuffer->ElementAt<TComponent>(in index);
+                return ref m_ComponentBuffer->ElementAt<TComponent>(in index);
+            }
+        }
+
+        public bool HasComponent(in InstanceID entity)
+        {
+            int index = GetEntityIndex(in entity);
+            unsafe
+            {
+                if (!m_ComponentBuffer->Find(in entity, ref index))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        public void AddComponent(in InstanceID entity)
+        {
+            int index = GetEntityIndex(in entity);
+            unsafe
+            {
+                if (!m_ComponentBuffer->Find(in entity, ref index) &&
+                    !m_ComponentBuffer->FindEmpty(in entity, ref index))
+                {
+                    do
+                    {
+                        ComponentBuffer boxed = *m_ComponentBuffer;
+                        boxed.Increment();
+                        *m_ComponentBuffer = boxed;
+                    } while (!m_ComponentBuffer->FindEmpty(in entity, ref index));
+                }
+
+                m_ComponentBuffer->SetElementAt(in index, in entity);
+
+                ref UnsafeMultiHashMap<int, int> hashMap
+                    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *m_ComponentHashMap);
+                hashMap.Add(m_ComponentBuffer->TypeInfo.GetHashCode(), index);
             }
         }
     }
     public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
     {
-        private static readonly SharedStatic<ComponentType> Value
-            = SharedStatic<ComponentType>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<ComponentType>());
+        private static SharedStatic<ComponentType> Value
+            => SharedStatic<ComponentType>.GetOrCreate<EntityComponentSystem, TComponent>((uint)UnsafeUtility.AlignOf<ComponentType>());
 
-        internal static unsafe ComponentBuffer* ComponentBuffer => Value.Data.ComponentBuffer;
+        internal static unsafe ComponentBuffer* ComponentBuffer => Value.Data.m_ComponentBuffer;
 
         public static int Length => Value.Data.Length;
         public static ref TComponent ComponentAt(in int index) => ref Value.Data.ComponentAt<TComponent>(in index);

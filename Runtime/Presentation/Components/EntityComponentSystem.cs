@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Components
         , INotifySystemModule<EntityComponentDebugModule>
 #endif
     {
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
@@ -106,6 +106,11 @@ namespace Syadeu.Presentation.Components
             }
             else length = types.Length * 2;
 
+            m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
+            ref UntypedUnsafeHashMap hashMap =
+                ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
+            UntypedUnsafeHashMap* hashMapPointer = (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref hashMap);
+
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
             ComponentBuffer* readPtr = ((ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ComponentArrayBuffer));
             for (int i = 0; i < types.Length; i++)
@@ -113,16 +118,16 @@ namespace Syadeu.Presentation.Components
                 ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
                 m_ComponentArrayBuffer[idx] = buffer;
 
-                ComponentType.GetValue(types[i]).Data.ComponentBuffer = readPtr + idx;
-            }
+                ref ComponentType data = ref ComponentType.GetValue(types[i]).Data;
 
-            m_ComponentHashMap = new UnsafeMultiHashMap<int, int>(length, AllocatorManager.Persistent);
-            ref UntypedUnsafeHashMap hashMap =
-                ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
+                data.m_ComponentHashMap = hashMapPointer;
+                data.m_ComponentBuffer = readPtr + idx;
+                data.m_ComponentIndex = idx;
+            }
 
             ComponentDisposer.Initialize(
                 (ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr(),
-                (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref hashMap));
+                hashMapPointer);
 
             ConstructSharedStatics();
 
@@ -198,7 +203,7 @@ namespace Syadeu.Presentation.Components
                 }
 #endif
 
-                ComponentType.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type).Data.ComponentBuffer = null;
+                ComponentType.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type).Data.m_ComponentBuffer = null;
             }
             m_ComponentArrayBuffer.Dispose();
 
@@ -236,6 +241,13 @@ namespace Syadeu.Presentation.Components
             //        m_DisposedComponents.Dequeue().Dispose();
             //    }
             //}
+        }
+
+        protected override PresentationResult AfterTransformPresentation()
+        {
+
+
+            return base.AfterTransformPresentation();
         }
 
         #endregion
@@ -756,6 +768,7 @@ namespace Syadeu.Presentation.Components
                     $"couldn\'t find component({s_Buffer[index.x].TypeInfo.Type.Name}) target in entity({entity.Hash}, {entity.GetObject().Name}) : index{index}".ToLogError();
                     return;
                 }
+                IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
                 ref UnsafeMultiHashMap<int, int> hashMap
                     = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *s_HashMap);

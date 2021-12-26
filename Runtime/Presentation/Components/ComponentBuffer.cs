@@ -17,7 +17,9 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Presentation.Actor;
+using Syadeu.Presentation.Entities;
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -39,6 +41,8 @@ namespace Syadeu.Presentation.Components
 
         [NativeDisableUnsafePtrRestriction] private InstanceID* m_EntityBuffer;
         [NativeDisableUnsafePtrRestriction] private void* m_ComponentBuffer;
+
+        private UnsafeReference<EntityComponentBuffer> m_ECB;
 
         public TypeInfo TypeInfo => m_ComponentTypeInfo;
         public bool IsCreated => m_ComponentBuffer != null;
@@ -76,6 +80,8 @@ namespace Syadeu.Presentation.Components
         {
             if (!IsCreated) throw new Exception();
 
+            IJobParallelForEntitiesExtensions.CompleteAllJobs();
+
             int count = c_InitialCount * (m_Increased + 1);
             long
                 idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
@@ -102,7 +108,19 @@ namespace Syadeu.Presentation.Components
             CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.ToString(TypeInfo.Type)} {m_Length} :: {m_Increased}");
         }
 
-        public bool Find(InstanceID entity, ref int entityIndex)
+        //public ref EntityComponentBuffer ECB(int bufferCount = 32)
+        //{
+        //    m_ECB = (new EntityComponentBuffer(bufferCount));
+
+        //    unsafe
+        //    {
+        //        EntityComponentBuffer* ptr = m_ECB.Ptr + index;
+
+        //        return ref *ptr;
+        //    }
+        //}
+
+        public bool Find(in InstanceID entity, ref int entityIndex)
         {
             if (m_Length == 0)
             {
@@ -129,7 +147,7 @@ namespace Syadeu.Presentation.Components
 
             return false;
         }
-        public bool FindEmpty(InstanceID entity, ref int entityIndex)
+        public bool FindEmpty(in InstanceID entity, ref int entityIndex)
         {
             if (m_Length == 0)
             {
@@ -161,6 +179,13 @@ namespace Syadeu.Presentation.Components
         public ref TComponent ElementAt<TComponent>(in int i)
             where TComponent : unmanaged, IEntityComponent
         {
+            return ref ((TComponent*)m_ComponentBuffer)[i];
+        }
+        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
+        public ref TComponent ElementAt<TComponent>(in int i, out InstanceID entity)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            entity = m_EntityBuffer[i];
             return ref ((TComponent*)m_ComponentBuffer)[i];
         }
         [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]

@@ -215,7 +215,7 @@ namespace Syadeu.Presentation.Render
             public NativeQueue<InstanceID>.ParallelWriter
                 m_BatchedQueue;
 
-            public void Execute(in InstanceID entity, in ShapesComponent component)
+            public void Execute(in InstanceID entity, ref ShapesComponent component)
             {
                 //if (!component.transform.isVisible) return;
 

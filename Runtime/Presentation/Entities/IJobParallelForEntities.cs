@@ -32,40 +32,7 @@ namespace Syadeu.Presentation.Entities
     public interface IJobParallelForEntities<TComponent>
         where TComponent : unmanaged, IEntityComponent
     {
-        void Execute(in InstanceID entity, in TComponent component);
-    }
-
-    public static class IJobParallelForEntitiesInterfaces
-        //where TComponent : unmanaged, IEntityComponent
-    {
-        public delegate void EntityComponentDelegate<TComponent>(in EntityData<IEntityData> entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
-
-        public static void Temp<TComponent>(EntityComponentDelegate<EntityData<IEntityData>, TComponent> action)
-            where TComponent : unmanaged, IEntityComponent
-        {
-
-        }
-
-        //public static void Temp1(in EntityData<IEntityData> entity, in TComponent component)
-        //{
-
-        //}
-
-        public struct Job<TComponent> : IJobParallelForEntities<TComponent>
-            where TComponent : unmanaged, IEntityComponent
-        {
-            public void Execute(in InstanceID entity, in TComponent component)
-            {
-                throw new NotImplementedException();
-            }
-        }
-        internal struct JobTestProducer<TComponent>
-            where TComponent : unmanaged, IEntityComponent
-        {
-            public IntPtr m_JobReflectionData;
-
-
-        }
+        void Execute(in InstanceID entity, ref TComponent component);
     }
 
     public static class IJobParallelForEntitiesExtensions
@@ -130,9 +97,9 @@ namespace Syadeu.Presentation.Entities
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
 
-                buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
+                ref TComponent com = ref buffer.ElementAt<TComponent>(i, out var entity);
 
-                jobData.Execute(entity, in component);
+                jobData.Execute(entity, ref com);
             }
         }
 
@@ -170,9 +137,9 @@ namespace Syadeu.Presentation.Entities
                 buffer.HasElementAt(i, out bool result);
                 if (!result) return;
 
-                buffer.ElementAt<TComponent>(i, out var entity, out TComponent component);
+                ref TComponent com = ref buffer.ElementAt<TComponent>(i, out var entity);
 
-                m_Job.Execute(entity, in component);
+                m_Job.Execute(entity, ref com);
             }
         }
 
