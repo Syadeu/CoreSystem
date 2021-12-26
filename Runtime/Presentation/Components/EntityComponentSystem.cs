@@ -51,9 +51,10 @@ namespace Syadeu.Presentation.Components
         , INotifySystemModule<EntityComponentDebugModule>
 #endif
     {
-        public override bool EnableBeforePresentation => true;
+        public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
+        public override bool EnableAfterTransformPresentation => true;
 
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
         private NativeArray<EntityComponentBuffer> m_ECBBuffer;
@@ -129,7 +130,6 @@ namespace Syadeu.Presentation.Components
                 ref ComponentType data = ref ComponentType.GetValue(types[i]).Data;
                 data.m_ComponentECBRequester = requestECBPointer;
 
-                data.m_ComponentHashMap = hashMapPointer;
                 data.m_ComponentBuffer = readPtr + idx;
                 data.m_ComponentIndex = idx;
             }
@@ -256,7 +256,7 @@ namespace Syadeu.Presentation.Components
 
         protected override PresentationResult AfterTransformPresentation()
         {
-            ComponentBuffer* componentBuffer = (ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ECBBuffer);
+            ComponentBuffer* componentBuffer = (ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ComponentArrayBuffer);
 
             int requestedEcbCount = m_RequestedECBComponentIndices.Length;
             for (int i = 0; i < requestedEcbCount; i++)
@@ -271,7 +271,13 @@ namespace Syadeu.Presentation.Components
             void HandleECB(ref ComponentBuffer buffer)
             {
                 buffer.m_ECB.Value.EndOfWriting();
-                if (!buffer.m_ECB.Value.TryReadAdded(out var rdr)) return;
+                if (!buffer.m_ECB.Value.TryReadAdded(out var rdr))
+                {
+                    $"1 {rdr.Count()} :: {rdr.ForEachCount} :: {rdr.RemainingItemCount}".ToLog();
+
+                    buffer.m_ECB.Value.Dispose();
+                    return;
+                }
 
                 int count = rdr.BeginForEachIndex(0);
                 for (int i = 0; i < count; i+=2)
@@ -283,11 +289,12 @@ namespace Syadeu.Presentation.Components
                     {
                         byte* p = rdr.ReadUnsafePtr(buffer.TypeInfo.Size);
 
-                        ComponentType.GetValue(buffer.TypeInfo.Type).Data.AddComponent(in entity, p);
+                        AddComponent(in entity, buffer.TypeInfo, p);
+                        i++;
                     }
                     else if ((type & EntityComponentBuffer.BinaryType.Remove) == EntityComponentBuffer.BinaryType.Remove)
                     {
-                        ComponentType.GetValue(buffer.TypeInfo.Type).Data.RemoveComponent(in entity);
+                        RemoveComponent(in entity, buffer.TypeInfo);
                     }
                 }
                 rdr.EndForEachIndex();
@@ -473,6 +480,49 @@ namespace Syadeu.Presentation.Components
             }
         }
         public void AddComponent(in InstanceID entity, in TypeInfo type) => AddComponent(in entity, type.Type);
+        public void AddComponent(in InstanceID entity, in TypeInfo type, byte* data)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
+
+            using (s_AddComponentMarker.Auto())
+            {
+                int2 index = GetIndex(in type, in entity);
+#if DEBUG_MODE
+                if (!m_ComponentArrayBuffer[index.x].IsCreated)
+                {
+                    CoreSystem.Logger.LogError(Channel.Component,
+                        $"Component buffer error. " +
+                        $"Didn\'t collected this component({type.Type.Name}) infomation at initializing stage.");
+
+                    throw new InvalidOperationException($"Component buffer error. See Error Log.");
+                }
+#endif
+                if (!m_ComponentArrayBuffer[index.x].Find(in entity, ref index.y) &&
+                    !m_ComponentArrayBuffer[index.x].FindEmpty(in entity, ref index.y))
+                {
+                    ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
+                    boxed.Increment();
+                    m_ComponentArrayBuffer[index.x] = boxed;
+
+                    if (!m_ComponentArrayBuffer[index.x].FindEmpty(in entity, ref index.y))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Component,
+                            $"Component buffer error. " +
+                            $"Component({type.Type.Name}) Hash has been conflected twice. Maybe need to increase default buffer size?");
+
+                        throw new InvalidOperationException($"Component buffer error. See Error Log.");
+                    }
+                }
+
+                m_ComponentArrayBuffer[index.x].SetElementAt(in index.y, in entity, data);
+                m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
+
+                OnComponentAdded?.Invoke(entity, type.Type);
+
+                CoreSystem.Logger.Log(Channel.Component,
+                    $"Component {type.Type.Name} set at entity({entity.Hash}), index {index}");
+            }
+        }
         public void AddComponent<TComponent>(in InstanceID entity) where TComponent : unmanaged, IEntityComponent
         {
             CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
@@ -786,7 +836,6 @@ namespace Syadeu.Presentation.Components
             public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
         }
         
-        [Obsolete]
         /// <summary>
         /// Frame 단위로 Presentation 이 진행되기 떄문에, 해당 프레임에서 제거된 프레임일지어도
         /// 같은 프레임내에서 접근하는 Data Access Call 을 허용하기 위해 다음 프레임에 제거되도록 합니다.

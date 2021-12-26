@@ -36,7 +36,6 @@ namespace Syadeu.Presentation.Components
 
         internal unsafe UnsafeRingQueue<int>* m_ComponentECBRequester;
 
-        internal unsafe UntypedUnsafeHashMap* m_ComponentHashMap;
         internal unsafe ComponentBuffer* m_ComponentBuffer;
         internal int m_ComponentIndex;
 
@@ -47,6 +46,29 @@ namespace Syadeu.Presentation.Components
                 unsafe
                 {
                     return m_ComponentBuffer->Length;
+                }
+            }
+        }
+        public ref EntityComponentBuffer ECB
+        {
+            get
+            {
+                unsafe
+                {
+                    if (!m_ComponentBuffer->m_ECB.Value.IsCreated)
+                    {
+                        ref var ecb = ref m_ComponentBuffer->m_ECB.Value;
+                        ecb = new EntityComponentBuffer(128);
+
+                        ref UnsafeRingQueue<int> requester
+                            = ref UnsafeUtility.AsRef<UnsafeRingQueue<int>>(m_ComponentECBRequester);
+
+                        requester.Enqueue(m_ComponentIndex);
+
+                        "new ecb init".ToLog();
+                    }
+
+                    return ref m_ComponentBuffer->m_ECB.Value;
                 }
             }
         }
@@ -65,83 +87,27 @@ namespace Syadeu.Presentation.Components
             }
         }
 
-        public bool HasComponent(in InstanceID entity)
+        //public bool HasComponent(in InstanceID entity)
+        //{
+        //    int index = GetEntityIndex(in entity);
+        //    unsafe
+        //    {
+        //        if (!m_ComponentBuffer->Find(in entity, ref index))
+        //        {
+        //            return false;
+        //        }
+        //    }
+
+        //    return true;
+        //}
+        public void AddComponent<T>(in InstanceID entity, ref T component) 
+            where T : unmanaged, IEntityComponent
         {
-            int index = GetEntityIndex(in entity);
-            unsafe
-            {
-                if (!m_ComponentBuffer->Find(in entity, ref index))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        public unsafe void AddComponent(in InstanceID entity, byte* data)
-        {
-            int index = GetEntityIndex(in entity);
-            unsafe
-            {
-                if (!m_ComponentBuffer->Find(in entity, ref index) &&
-                    !m_ComponentBuffer->FindEmpty(in entity, ref index))
-                {
-                    do
-                    {
-                        ComponentBuffer boxed = *m_ComponentBuffer;
-                        boxed.Increment();
-                        *m_ComponentBuffer = boxed;
-                    } while (!m_ComponentBuffer->FindEmpty(in entity, ref index));
-                }
-
-                m_ComponentBuffer->SetElementAt(in index, in entity, data);
-
-                ref UnsafeMultiHashMap<int, int> hashMap
-                    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *m_ComponentHashMap);
-                hashMap.Add(m_ComponentBuffer->TypeInfo.GetHashCode(), index);
-            }
-        }
-        public void AddComponent(in InstanceID entity)
-        {
-            int index = GetEntityIndex(in entity);
-            unsafe
-            {
-                if (!m_ComponentBuffer->Find(in entity, ref index) &&
-                    !m_ComponentBuffer->FindEmpty(in entity, ref index))
-                {
-                    do
-                    {
-                        ComponentBuffer boxed = *m_ComponentBuffer;
-                        boxed.Increment();
-                        *m_ComponentBuffer = boxed;
-                    } while (!m_ComponentBuffer->FindEmpty(in entity, ref index));
-                }
-
-                m_ComponentBuffer->SetElementAt(in index, in entity);
-
-                ref UnsafeMultiHashMap<int, int> hashMap
-                    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *m_ComponentHashMap);
-                hashMap.Add(m_ComponentBuffer->TypeInfo.GetHashCode(), index);
-            }
+            ECB.Add(in entity, ref component);
         }
         public void RemoveComponent(in InstanceID entity)
         {
-            int index = GetEntityIndex(in entity);
-
-            unsafe
-            {
-                if (!m_ComponentBuffer->Find(entity, ref index))
-                {
-                    $"couldn\'t find component({m_ComponentBuffer->TypeInfo.Type.Name}) target in entity({entity.Hash}, {entity.GetObject().Name}) : index{index}".ToLogError();
-                    return;
-                }
-
-                ref UnsafeMultiHashMap<int, int> hashMap
-                    = ref UnsafeUtility.As<UntypedUnsafeHashMap, UnsafeMultiHashMap<int, int>>(ref *m_ComponentHashMap);
-                hashMap.Remove(m_ComponentBuffer->TypeInfo.GetHashCode(), index);
-
-                m_ComponentBuffer->RemoveAt(index);
-            }
+            ECB.Remove(in entity);
         }
     }
     public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent
@@ -154,24 +120,6 @@ namespace Syadeu.Presentation.Components
         public static int Length => Value.Data.Length;
         public static ref TComponent ComponentAt(in int index) => ref Value.Data.ComponentAt<TComponent>(in index);
 
-        public static ref EntityComponentBuffer ECB
-        {
-            get
-            {
-                unsafe
-                {
-                    if (!ComponentBuffer->m_ECB.IsCreated)
-                    {
-                        ComponentBuffer->m_ECB.Value.Initialize(128);
-                        ref UnsafeRingQueue<int> requester
-                            = ref UnsafeUtility.AsRef<UnsafeRingQueue<int>>(Value.Data.m_ComponentECBRequester);
-
-                        requester.Enqueue(Value.Data.m_ComponentIndex);
-                    }
-
-                    return ref ComponentBuffer->m_ECB.Value;
-                }
-            }
-        }
+        public static ref EntityComponentBuffer ECB => ref Value.Data.ECB;
     }
 }

@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Components
 
         public bool IsCreated => m_IsCreated;
 
-        internal void Initialize(int bufferCount)
+        internal EntityComponentBuffer(int bufferCount)
         {
             m_Stream = new UnsafeStream(bufferCount, AllocatorManager.Temp);
 
@@ -66,18 +66,17 @@ namespace Syadeu.Presentation.Components
         internal bool TryReadAdded(out UnsafeStream.Reader rdr)
         {
             rdr = m_Stream.AsReader();
-            if (rdr.RemainingItemCount == 0) return false;
+            if (rdr.Count() == 0) return false;
 
             return true;
         }
 
         public void Dispose()
         {
-            if (!m_IsCreated) return;
-
             m_Stream.Dispose();
 
             m_IsCreated = false;
+            "ecb disposed".ToLog();
         }
     }
 }

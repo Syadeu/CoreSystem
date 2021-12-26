@@ -220,10 +220,14 @@ namespace Syadeu.Presentation.TurnTable
 #if CORESYSTEM_SHAPES
             if (select.m_Shapes.EnableShapes)
             {
-                entity.AddComponent<ShapesComponent>();
-                ref ShapesComponent shapes = ref entity.GetComponent<ShapesComponent>();
+                var shapes = new ShapesComponent();
+                
+                //entity.AddComponent<ShapesComponent>();
+                //ref ShapesComponent shapes = ref entity.GetComponent<ShapesComponent>();
 
                 shapes.Apply(select.m_Shapes);
+
+                ComponentType<ShapesComponent>.ECB.Add(entity.Idx, ref shapes);
             }
 #endif
             $"select entity {entity.RawName}".ToLog();

@@ -110,18 +110,6 @@ namespace Syadeu.Presentation.Components
             CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.ToString(TypeInfo.Type)} {m_Length} :: {m_Increased}");
         }
 
-        //public ref EntityComponentBuffer ECB(int bufferCount = 32)
-        //{
-        //    m_ECB = (new EntityComponentBuffer(bufferCount));
-
-        //    unsafe
-        //    {
-        //        EntityComponentBuffer* ptr = m_ECB.Ptr + index;
-
-        //        return ref *ptr;
-        //    }
-        //}
-
         public bool Find(in InstanceID entity, ref int entityIndex)
         {
             if (m_Length == 0)
@@ -177,20 +165,17 @@ namespace Syadeu.Presentation.Components
         {
             return !m_EntityBuffer[i].IsEmpty();
         }
-        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
         public ref TComponent ElementAt<TComponent>(in int i)
             where TComponent : unmanaged, IEntityComponent
         {
             return ref ((TComponent*)m_ComponentBuffer)[i];
         }
-        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
         public ref TComponent ElementAt<TComponent>(in int i, out InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
         {
             entity = m_EntityBuffer[i];
             return ref ((TComponent*)m_ComponentBuffer)[i];
         }
-        [BurstCompatible(GenericTypeArguments = new [] {typeof(ActorControllerComponent)})]
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -207,7 +192,6 @@ namespace Syadeu.Presentation.Components
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer)[i];
         }
-        [BurstCompatible(GenericTypeArguments = new[] { typeof(ActorControllerComponent) })]
         public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent* component)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -224,7 +208,6 @@ namespace Syadeu.Presentation.Components
             entity = m_EntityBuffer[i];
             component = ((TComponent*)m_ComponentBuffer) + i;
         }
-        [BurstCompatible]
         public IntPtr ElementAt(in int i)
         {
             IntPtr p = (IntPtr)m_ComponentBuffer;
@@ -254,14 +237,12 @@ namespace Syadeu.Presentation.Components
             m_EntityBuffer[index] = InstanceID.Empty;
         }
 
-        [BurstCompatible]
         public void SetElementAt(in int index, in InstanceID entity)
         {
             IntPtr p = ElementAt(in index);
             UnsafeUtility.MemClear(p.ToPointer(), TypeInfo.Size);
             m_EntityBuffer[index] = entity;
         }
-        [BurstCompatible]
         public void SetElementAt(in int index, in InstanceID entity, byte* binary)
         {
             IntPtr p = ElementAt(in index);
