@@ -42,14 +42,16 @@ namespace Syadeu.Presentation.Components
         [NativeDisableUnsafePtrRestriction] private InstanceID* m_EntityBuffer;
         [NativeDisableUnsafePtrRestriction] private void* m_ComponentBuffer;
 
-        private UnsafeReference<EntityComponentBuffer> m_ECB;
+        internal UnsafeReference<EntityComponentBuffer> m_ECB;
 
         public TypeInfo TypeInfo => m_ComponentTypeInfo;
         public bool IsCreated => m_ComponentBuffer != null;
         public int Length => m_Length;
 
-        public void Initialize(in TypeInfo typeInfo)
+        public void Initialize(in EntityComponentBuffer* ecb, in TypeInfo typeInfo)
         {
+            m_ECB = new UnsafeReference<EntityComponentBuffer>(ecb);
+
             int
                 //occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
                 idxSize = UnsafeUtility.SizeOf<InstanceID>() * c_InitialCount,
@@ -257,6 +259,13 @@ namespace Syadeu.Presentation.Components
         {
             IntPtr p = ElementAt(in index);
             UnsafeUtility.MemClear(p.ToPointer(), TypeInfo.Size);
+            m_EntityBuffer[index] = entity;
+        }
+        [BurstCompatible]
+        public void SetElementAt(in int index, in InstanceID entity, byte* binary)
+        {
+            IntPtr p = ElementAt(in index);
+            UnsafeUtility.MemCpy(p.ToPointer(), binary, TypeInfo.Size);
             m_EntityBuffer[index] = entity;
         }
 

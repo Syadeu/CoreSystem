@@ -56,6 +56,8 @@ namespace Syadeu.Presentation.Components
         public override bool EnableAfterPresentation => false;
 
         private NativeArray<ComponentBuffer> m_ComponentArrayBuffer;
+        private NativeArray<EntityComponentBuffer> m_ECBBuffer;
+        private UnsafeRingQueue<int> m_RequestedECBComponentIndices;
 
         /// <summary>
         /// Key => <see cref="ComponentBuffer.TypeInfo"/>.GetHashCode()<br/>
@@ -111,14 +113,21 @@ namespace Syadeu.Presentation.Components
                 ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
             UntypedUnsafeHashMap* hashMapPointer = (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref hashMap);
 
+            m_ECBBuffer = new NativeArray<EntityComponentBuffer>(types.Length, Allocator.Persistent);
+            EntityComponentBuffer* ecbPointer = (EntityComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ECBBuffer);
+
+            m_RequestedECBComponentIndices = new UnsafeRingQueue<int>(64, AllocatorManager.Persistent);
+            UnsafeRingQueue<int>* requestECBPointer = (UnsafeRingQueue<int>*)UnsafeUtility.AddressOf(ref m_RequestedECBComponentIndices);
+
             m_ComponentArrayBuffer = new NativeArray<ComponentBuffer>(length, Allocator.Persistent);
             ComponentBuffer* readPtr = ((ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ComponentArrayBuffer));
             for (int i = 0; i < types.Length; i++)
             {
-                ComponentBuffer buffer = BuildComponentBuffer(types[i], length, out int idx);
+                ComponentBuffer buffer = BuildComponentBuffer(ecbPointer + i, types[i], length, out int idx);
                 m_ComponentArrayBuffer[idx] = buffer;
 
                 ref ComponentType data = ref ComponentType.GetValue(types[i]).Data;
+                data.m_ComponentECBRequester = requestECBPointer;
 
                 data.m_ComponentHashMap = hashMapPointer;
                 data.m_ComponentBuffer = readPtr + idx;
@@ -139,7 +148,7 @@ namespace Syadeu.Presentation.Components
 
             return base.OnInitialize();
         }
-        private ComponentBuffer BuildComponentBuffer(Type componentType, in int totalLength, out int idx)
+        private ComponentBuffer BuildComponentBuffer(EntityComponentBuffer* ecb, Type componentType, in int totalLength, out int idx)
         {
             TypeInfo typeInfo = componentType.ToTypeInfo();
             int hashCode = typeInfo.GetHashCode();
@@ -161,7 +170,7 @@ namespace Syadeu.Presentation.Components
 
             ComponentBuffer temp = new ComponentBuffer();            
             // 새로운 버퍼를 생성하고, heap 에 메모리를 할당합니다.
-            temp.Initialize(typeInfo);
+            temp.Initialize(ecb, typeInfo);
 
             return temp;
         }
@@ -206,6 +215,8 @@ namespace Syadeu.Presentation.Components
                 ComponentType.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type).Data.m_ComponentBuffer = null;
             }
             m_ComponentArrayBuffer.Dispose();
+            m_ECBBuffer.Dispose();
+            m_RequestedECBComponentIndices.Dispose();
 
             m_ComponentHashMap.Dispose();
 
@@ -245,9 +256,44 @@ namespace Syadeu.Presentation.Components
 
         protected override PresentationResult AfterTransformPresentation()
         {
+            ComponentBuffer* componentBuffer = (ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ECBBuffer);
 
+            int requestedEcbCount = m_RequestedECBComponentIndices.Length;
+            for (int i = 0; i < requestedEcbCount; i++)
+            {
+                int componentIdx = m_RequestedECBComponentIndices.Dequeue();
+
+                HandleECB(ref UnsafeUtility.ArrayElementAsRef<ComponentBuffer>(componentBuffer, componentIdx));
+            }
 
             return base.AfterTransformPresentation();
+
+            void HandleECB(ref ComponentBuffer buffer)
+            {
+                buffer.m_ECB.Value.EndOfWriting();
+                if (!buffer.m_ECB.Value.TryReadAdded(out var rdr)) return;
+
+                int count = rdr.BeginForEachIndex(0);
+                for (int i = 0; i < count; i+=2)
+                {
+                    EntityComponentBuffer.BinaryType type = (EntityComponentBuffer.BinaryType)rdr.Read<int>();
+                    InstanceID entity = rdr.Read<InstanceID>();
+
+                    if ((type & EntityComponentBuffer.BinaryType.Add) == EntityComponentBuffer.BinaryType.Add)
+                    {
+                        byte* p = rdr.ReadUnsafePtr(buffer.TypeInfo.Size);
+
+                        ComponentType.GetValue(buffer.TypeInfo.Type).Data.AddComponent(in entity, p);
+                    }
+                    else if ((type & EntityComponentBuffer.BinaryType.Remove) == EntityComponentBuffer.BinaryType.Remove)
+                    {
+                        ComponentType.GetValue(buffer.TypeInfo.Type).Data.RemoveComponent(in entity);
+                    }
+                }
+                rdr.EndForEachIndex();
+
+                buffer.m_ECB.Value.Dispose();
+            }
         }
 
         #endregion
@@ -740,6 +786,7 @@ namespace Syadeu.Presentation.Components
             public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
         }
         
+        [Obsolete]
         /// <summary>
         /// Frame 단위로 Presentation 이 진행되기 떄문에, 해당 프레임에서 제거된 프레임일지어도
         /// 같은 프레임내에서 접근하는 Data Access Call 을 허용하기 위해 다음 프레임에 제거되도록 합니다.

@@ -61,5 +61,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
             m_IsCreated = true;
         }
+        public unsafe UnsafeReference(T* ptr)
+        {
+            m_Ptr = ptr;
+            m_IsCreated = true;
+        }
     }
 }
