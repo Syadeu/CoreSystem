@@ -103,11 +103,15 @@ namespace Syadeu.Presentation.Components
         public void AddComponent<T>(in InstanceID entity, ref T component) 
             where T : unmanaged, IEntityComponent
         {
-            ECB.Add(in entity, ref component);
+            var wr = ECB.Begin();
+            ECB.Add(ref wr, in entity, ref component);
+            ECB.End(ref wr);
         }
         public void RemoveComponent(in InstanceID entity)
         {
-            ECB.Remove(in entity);
+            var wr = ECB.Begin();
+            ECB.Remove(ref wr, in entity);
+            ECB.End(ref wr);
         }
     }
     public struct ComponentType<TComponent> where TComponent : unmanaged, IEntityComponent

@@ -227,7 +227,9 @@ namespace Syadeu.Presentation.TurnTable
 
                 shapes.Apply(select.m_Shapes);
 
-                ComponentType<ShapesComponent>.ECB.Add(entity.Idx, ref shapes);
+                var wr = ComponentType<ShapesComponent>.ECB.Begin();
+                ComponentType<ShapesComponent>.ECB.Add(ref wr, entity.Idx, ref shapes);
+                ComponentType<ShapesComponent>.ECB.End(ref wr);
             }
 #endif
             $"select entity {entity.RawName}".ToLog();
@@ -260,7 +262,11 @@ namespace Syadeu.Presentation.TurnTable
 #if CORESYSTEM_SHAPES
             if (select.m_Shapes.EnableShapes)
             {
-                entity.RemoveComponent<ShapesComponent>();
+                //entity.RemoveComponent<ShapesComponent>();
+
+                var wr = ComponentType<ShapesComponent>.ECB.Begin();
+                ComponentType<ShapesComponent>.ECB.Remove(ref wr, entity.Idx);
+                ComponentType<ShapesComponent>.ECB.End(ref wr);
             }
 #endif
         }

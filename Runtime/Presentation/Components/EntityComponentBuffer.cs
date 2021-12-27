@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Syadeu.Collections;
+using Syadeu.Collections.Threading;
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -28,39 +29,65 @@ namespace Syadeu.Presentation.Components
             Add = 0b0001,
             Remove = 0b0010
         }
+        public struct Writer : IDisposable
+        {
+            internal UnsafeStream.Writer m_Writer;
+            internal AtomicSafeInteger m_Count;
+            private bool m_Disposed;
+
+            public void Dispose()
+            {
+                m_Disposed = true;
+            }
+        }
 
         private bool m_IsCreated;
 
         private UnsafeStream m_Stream;
-        private UnsafeStream.Writer m_CurrentWriter;
+        private AtomicSafeInteger m_Count;
 
         public bool IsCreated => m_IsCreated;
 
         internal EntityComponentBuffer(int bufferCount)
         {
             m_Stream = new UnsafeStream(bufferCount, AllocatorManager.Temp);
-
-            m_CurrentWriter = m_Stream.AsWriter();
-
-            m_CurrentWriter.BeginForEachIndex(0);
+            m_Count = 0;
 
             m_IsCreated = true;
         }
-        internal void EndOfWriting()
-        {
-            m_CurrentWriter.EndForEachIndex();
-        }
 
-        public void Add<T>(in InstanceID entity, ref T data) where T : unmanaged, IEntityComponent
+        public Writer Begin()
         {
-            m_CurrentWriter.Write((int)BinaryType.Add);
-            m_CurrentWriter.Write(entity);
-            m_CurrentWriter.Write(data);
+            Writer wr = new Writer
+            {
+                m_Writer = m_Stream.AsWriter(),
+                m_Count = 0
+            };
+            wr.m_Writer.BeginForEachIndex(m_Count.Value);
+
+            return wr;
         }
-        public void Remove(in InstanceID entity)
+        public void Add<T>(ref Writer wr, in InstanceID entity, ref T data) where T : unmanaged, IEntityComponent
         {
-            m_CurrentWriter.Write((int)BinaryType.Remove);
-            m_CurrentWriter.Write(entity);
+            wr.m_Writer.Write((int)BinaryType.Add);
+            wr.m_Writer.Write(entity);
+            wr.m_Writer.Write(data);
+
+            wr.m_Count.Value += 3;
+        }
+        public void Remove(ref Writer wr, in InstanceID entity)
+        {
+            wr.m_Writer.Write((int)BinaryType.Remove);
+            wr.m_Writer.Write(entity);
+
+            wr.m_Count.Value += 2;
+        }
+        public void End(ref Writer wr)
+        {
+            wr.m_Writer.EndForEachIndex();
+            m_Count.Value += wr.m_Count.Value;
+
+            wr.Dispose();
         }
 
         internal bool TryReadAdded(out UnsafeStream.Reader rdr)
