@@ -169,7 +169,12 @@ namespace Syadeu.Presentation.Components
         public ref TComponent ElementAt<TComponent>(in int i)
             where TComponent : unmanaged, IEntityComponent
         {
-            return ref ((TComponent*)m_ComponentBuffer)[i];
+            return ref *(((TComponent*)m_ComponentBuffer) + i);
+        }
+        public TComponent* ElementAtPointer<TComponent>(in int i)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            return ((TComponent*)m_ComponentBuffer) + i;
         }
         public ref TComponent ElementAt<TComponent>(in int i, out InstanceID entity)
             where TComponent : unmanaged, IEntityComponent

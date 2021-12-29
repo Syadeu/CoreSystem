@@ -167,6 +167,7 @@ namespace Syadeu.Presentation
 
             return false;
         }
+        public static Entity<IEntity> GetEntity(this InstanceID id) => GetEntity<IEntity>(id);
         public static Entity<T> GetEntity<T>(this InstanceID id)
             where T : class, IEntity
         {

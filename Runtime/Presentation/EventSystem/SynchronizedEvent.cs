@@ -65,7 +65,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Event,
                     $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
-                    $"doesn\'t have method({ev.Method.Name}) but you trying to remove.");
+                    $"doesn\'t have method({ev.Method.DeclaringType.Name}.{ev.Method.Name}) but you trying to remove.");
 
                 return;
             }

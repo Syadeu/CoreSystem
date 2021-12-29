@@ -104,6 +104,7 @@ namespace Syadeu.Presentation.Proxy
         private EventSystem m_EventSystem;
 
         #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             if (!PoolContainer<PrefabRequester>.Initialized) PoolContainer<PrefabRequester>.Initialize(() => new PrefabRequester(), 10);
@@ -162,7 +163,7 @@ namespace Syadeu.Presentation.Proxy
         }
 
         #region Binds
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
@@ -173,10 +174,7 @@ namespace Syadeu.Presentation.Proxy
             CoreSystem.Logger.Log(Channel.Proxy, true,
                 "Scene on loading enter lambda excute");
 
-            //m_ProxyData.For(DestroyTransform);
             m_ProxyData.For(RemoveProxy);
-
-            //m_RequestDestories.Clear();
 
             m_RequestProxyList.Clear();
             m_RemoveProxyList.Clear();
@@ -185,15 +183,6 @@ namespace Syadeu.Presentation.Proxy
 
             ReleaseAllPrefabs();
 
-            //m_ProxyData.Dispose();
-            //m_ClusterData.Dispose();
-            //m_ProxyData = new NativeProxyData(c_InitialMemorySize, Allocator.Persistent);
-            //m_ClusterData = new Cluster<ProxyTransformData>(c_InitialMemorySize);
-            
-            void DestroyTransform(ProxyTransform tr)
-            {
-                OnDataObjectDestroy?.Invoke(tr);
-            }
             void RemoveProxy(ProxyTransform tr)
             {
                 ProxyTransformData* data = m_ProxyData.List[tr.m_Index];
@@ -204,19 +193,13 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                //int2 proxyIndex = data->m_ProxyIndex;
-                //OnDataObjectProxyRemoved?.Invoke(tr, m_Instances[proxyIndex.x][proxyIndex.y]);
-
-                //tr.SetProxy(ProxyTransform.ProxyNull);
                 this.RemoveProxy(data);
             }
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;

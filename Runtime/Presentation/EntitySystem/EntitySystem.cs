@@ -546,11 +546,8 @@ namespace Syadeu.Presentation
         private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
         {
             EntityBase entity = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityBase>(entityBase);
-            //EntityBase entity = (EntityBase)entityBase.Clone();
-
+            
             entity.transform = obj;
-            //entity.m_IsCreated = true;
-            //entity.m_HashCode = m_Random.NextInt(0, int.MaxValue);
 
             m_ObjectEntities.Add(entity.Idx, entity);
             m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
