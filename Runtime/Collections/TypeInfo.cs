@@ -13,16 +13,16 @@
 // limitations under the License.
 
 using System;
-using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace Syadeu.Collections
 {
     /// <summary>
     /// Runtime 중 기본 <see cref="System.Type"/> 의 정보를 저장하고, 해당 타입의 binary 크기, alignment를 저장합니다.
     /// </summary>
+    /// <remarks>
+    /// 24 bytes
+    /// </remarks>
     [BurstCompatible]
     public readonly struct TypeInfo : IValidation, IEquatable<TypeInfo>
     {
@@ -32,7 +32,7 @@ namespace Syadeu.Collections
 
         private readonly int m_HashCode;
 
-        [BurstDiscard]
+        [NotBurstCompatible]
         public Type Type
         {
             get
@@ -60,7 +60,9 @@ namespace Syadeu.Collections
             }
         }
 
+        [NotBurstCompatible]
         public static TypeInfo GetTypeInfo(Type type) => CollectionUtility.GetTypeInfo(type);
+        [NotBurstCompatible]
         public static TypeInfo GetTypeInfo<T>() => CollectionUtility.GetTypeInfo(TypeHelper.TypeOf<T>.Type);
 
         public override int GetHashCode() => m_HashCode;

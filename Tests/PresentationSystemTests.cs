@@ -195,4 +195,15 @@ public class PresentationSystemTests
         //Debug.Log($"{query5.GetHashCode()} == {query6.GetHashCode()} ? {query5.GetHashCode() == query6.GetHashCode()}");
         //Debug.Log($"{query7.GetHashCode()} == {query1.GetHashCode()} ? {query7.GetHashCode() == query1.GetHashCode()}");
     }
+
+    [Test]
+    public void CommonTypeInfo()
+    {
+        Log<TypeInfo>();
+
+        void Log<T>() where T : struct
+        {
+            Debug.Log($"{TypeHelper.TypeOf<T>.Type.FullName} = {UnsafeUtility.SizeOf<T>()} : {UnsafeUtility.AlignOf<T>()}");
+        }
+    }
 }

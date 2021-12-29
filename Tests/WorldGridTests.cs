@@ -5,10 +5,10 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
-public sealed class WorldGridTests
+public unsafe sealed class WorldGridTests
 {
     [Test]
-    public unsafe void a0_IndexTest()
+    public void a0_IndexTest()
     {
         AABB aabb = new AABB(3, new float3(100, 100, 100));
         float cellSize = 2.5f;
@@ -52,7 +52,7 @@ public sealed class WorldGridTests
     }
 
     [Test]
-    public unsafe void b0_CLRIndexingTest()
+    public void b0_CLRIndexingTest()
     {
         for (int i = 0; i < 1000000; i++)
         {
@@ -101,7 +101,7 @@ public sealed class WorldGridTests
         }
     }
     [Test]
-    public unsafe void b1_BurstIndexingTest()
+    public void b1_BurstIndexingTest()
     {
         for (int i = 0; i < 1000000; i++)
         {
