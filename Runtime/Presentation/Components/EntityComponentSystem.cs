@@ -17,12 +17,10 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.LowLevel;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -197,8 +195,8 @@ namespace Syadeu.Presentation.Components
                 m_ComponentArrayBuffer[i].Dispose();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                ComponentBufferAtomicSafety safety
-                    = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type);
+                UnsafeAtomicSafety safety
+                    = CLSTypedDictionary<UnsafeAtomicSafety>.GetValue(m_ComponentArrayBuffer[i].TypeInfo.Type);
 
                 if (!safety.Disposed)
                 {
@@ -778,32 +776,6 @@ namespace Syadeu.Presentation.Components
 
         #endregion
 
-        [Obsolete("In development")]
-        public void ECB(EntityComponentBuffer ecb)
-        {
-            ref UntypedUnsafeHashMap hashMap = 
-                ref UnsafeUtility.As<UnsafeMultiHashMap<int, int>, UntypedUnsafeHashMap>(ref m_ComponentHashMap);
-            //UnsafeUtility.
-
-            unsafe
-            {
-                //m_ComponentHashMap.ke
-
-                //if (m_ComponentHashMap.TryGetFirstValue(m_TypeIndex, out int i, out var iterator))
-                //{
-                //    do
-                //    {
-                //        target->HasElementAt(i, out bool has);
-                //        if (!has) continue;
-
-                //        target->ElementAt(i, out IntPtr componentPtr, out EntityData<IEntityData> entity);
-
-
-                //    } while (cache.TryGetNextValue(out i, ref iterator));
-                //}
-            }
-        }
-
         #region Utils
 
         internal static bool CollectTypes<T>(Type t)
@@ -879,52 +851,52 @@ namespace Syadeu.Presentation.Components
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
 
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-    internal unsafe sealed class ComponentBufferAtomicSafety : IDisposable
-    {
-        private AtomicSafetyHandle m_SafetyHandle;
-        private DisposeSentinel m_DisposeSentinel;
-        private TypeInfo m_TypeInfo;
+//#if ENABLE_UNITY_COLLECTIONS_CHECKS
+//    internal unsafe sealed class ComponentBufferAtomicSafety : Collections.Buffer.LowLevel.UnsafeAtomicSafety
+//    {
+//        private AtomicSafetyHandle m_SafetyHandle;
+//        private DisposeSentinel m_DisposeSentinel;
+//        private TypeInfo m_TypeInfo;
 
-        private bool m_Disposed;
+//        private bool m_Disposed;
 
-        public AtomicSafetyHandle SafetyHandle => m_SafetyHandle;
-        public bool Disposed => m_Disposed;
+//        public AtomicSafetyHandle SafetyHandle => m_SafetyHandle;
+//        public bool Disposed => m_Disposed;
 
-        private ComponentBufferAtomicSafety()
-        {
-            DisposeSentinel.Create(out m_SafetyHandle, out m_DisposeSentinel, 1, Allocator.Persistent);
-        }
+//        private ComponentBufferAtomicSafety()
+//        {
+//            DisposeSentinel.Create(out m_SafetyHandle, out m_DisposeSentinel, 1, Allocator.Persistent);
+//        }
 
-        public static ComponentBufferAtomicSafety Construct(TypeInfo typeInfo)
-        {
-            ComponentBufferAtomicSafety temp = new ComponentBufferAtomicSafety();
-            temp.m_TypeInfo = typeInfo;
-            return temp;
-        }
+//        public static ComponentBufferAtomicSafety Construct(TypeInfo typeInfo)
+//        {
+//            ComponentBufferAtomicSafety temp = new ComponentBufferAtomicSafety();
+//            temp.m_TypeInfo = typeInfo;
+//            return temp;
+//        }
 
-        public void CheckExistsAndThrow()
-        {
-            if (m_Disposed)
-            {
-                throw new Exception();
-            }
+//        public void CheckExistsAndThrow()
+//        {
+//            if (m_Disposed)
+//            {
+//                throw new Exception();
+//            }
 
-            AtomicSafetyHandle.CheckExistsAndThrow(m_SafetyHandle);
-        }
-        public void Dispose()
-        {
-            CheckExistsAndThrow();
+//            AtomicSafetyHandle.CheckExistsAndThrow(m_SafetyHandle);
+//        }
+//        public void Dispose()
+//        {
+//            CheckExistsAndThrow();
 
-            CoreSystem.Logger.Log(Channel.Component,
-                $"Safely disposed component buffer of {TypeHelper.ToString(m_TypeInfo.Type)}");
+//            CoreSystem.Logger.Log(Channel.Component,
+//                $"Safely disposed component buffer of {TypeHelper.ToString(m_TypeInfo.Type)}");
 
-            DisposeSentinel.Dispose(ref m_SafetyHandle, ref m_DisposeSentinel);
-            m_Disposed = true;
-        }
-    }
+//            DisposeSentinel.Dispose(ref m_SafetyHandle, ref m_DisposeSentinel);
+//            m_Disposed = true;
+//        }
+//    }
 
-#endif
+//#endif
     
     unsafe internal struct ComponentChunk
     {

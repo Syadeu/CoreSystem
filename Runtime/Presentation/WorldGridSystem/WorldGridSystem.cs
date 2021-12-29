@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Grid
 
             public void Execute(in InstanceID entity, ref GridComponent component)
             {
-                
+
             }
         }
 

@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections.LowLevel;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using System;
@@ -74,8 +75,8 @@ namespace Syadeu.Presentation.Components
             m_Increased = 1;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CLSTypedDictionary<ComponentBufferAtomicSafety>.SetValue(m_ComponentTypeInfo.Type,
-                ComponentBufferAtomicSafety.Construct(typeInfo));
+            CLSTypedDictionary<UnsafeAtomicSafety>.SetValue(m_ComponentTypeInfo.Type,
+                new UnsafeAtomicSafety(1, Allocator.Persistent));
 #endif
         }
         public void Increment()
@@ -254,10 +255,8 @@ namespace Syadeu.Presentation.Components
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            ComponentBufferAtomicSafety safety
-                = CLSTypedDictionary<ComponentBufferAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
-
-            safety.CheckExistsAndThrow();
+            UnsafeAtomicSafety safety
+                = CLSTypedDictionary<UnsafeAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
 #endif
             //UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
             UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
