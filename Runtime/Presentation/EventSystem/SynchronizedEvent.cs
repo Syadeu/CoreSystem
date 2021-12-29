@@ -64,7 +64,9 @@ namespace Syadeu.Presentation
             if (!s_EventActions.TryGetValue(hash, out var temp))
             {
                 CoreSystem.Logger.LogError(Channel.Event,
-                    $"");
+                    $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
+                    $"doesn\'t have method({ev.Method.Name}) but you trying to remove.");
+
                 return;
             }
 
