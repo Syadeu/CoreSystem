@@ -259,7 +259,6 @@ namespace Syadeu.Presentation.Components
 
             safety.CheckExistsAndThrow();
 #endif
-
             //UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
             UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
             UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);

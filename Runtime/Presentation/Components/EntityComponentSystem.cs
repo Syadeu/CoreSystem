@@ -270,7 +270,6 @@ namespace Syadeu.Presentation.Components
 
             void HandleECB(ref ComponentBuffer buffer)
             {
-                //buffer.m_ECB.Value.EndOfWriting();
                 if (!buffer.m_ECB.Value.TryReadAdded(out var rdr))
                 {
                     $"1 {rdr.Count()} :: {rdr.ForEachCount} :: {rdr.RemainingItemCount}".ToLog();
@@ -298,8 +297,6 @@ namespace Syadeu.Presentation.Components
                     }
                 }
                 rdr.EndForEachIndex();
-
-                $"ecb process {buffer.TypeInfo.Type.Name} : {count}".ToLog();
 
                 buffer.m_ECB.Value.Dispose();
             }

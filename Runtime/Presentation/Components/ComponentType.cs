@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using System;
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -55,18 +56,21 @@ namespace Syadeu.Presentation.Components
             {
                 unsafe
                 {
+                    Interlocked.MemoryBarrier();
                     if (!m_ComponentBuffer->m_ECB.Value.IsCreated)
                     {
                         ref var ecb = ref m_ComponentBuffer->m_ECB.Value;
-                        ecb = new EntityComponentBuffer(128);
+                        ecb = new EntityComponentBuffer(1024);
 
                         ref UnsafeRingQueue<int> requester
                             = ref UnsafeUtility.AsRef<UnsafeRingQueue<int>>(m_ComponentECBRequester);
 
                         requester.Enqueue(m_ComponentIndex);
 
-                        "new ecb init".ToLog();
+                        CoreSystem.Logger.Log(Channel.Component, true,
+                            $"New ECB has been created for component({TypeHelper.ToString(m_ComponentBuffer->TypeInfo.Type)})");
                     }
+                    Interlocked.MemoryBarrier();
 
                     return ref m_ComponentBuffer->m_ECB.Value;
                 }

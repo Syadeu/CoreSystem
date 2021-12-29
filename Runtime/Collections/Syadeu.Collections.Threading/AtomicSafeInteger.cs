@@ -25,7 +25,12 @@ namespace Syadeu.Collections.Threading
         {
             get
             {
-                return m_Value;
+                int temp;
+                Interlocked.MemoryBarrier();
+                temp = m_Value;
+                Interlocked.MemoryBarrier();
+
+                return temp;
             }
             set
             {
