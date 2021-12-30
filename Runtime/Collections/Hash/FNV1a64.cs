@@ -62,5 +62,22 @@ namespace Syadeu.Collections
 
             return hashValue;
         }
+        public static unsafe ulong Calculate(byte* data, int length)
+        {
+            if (data == null)
+            {
+                return kOffsetBasis64;
+            }
+
+            ulong hashValue = kOffsetBasis64;
+
+            for (int i = 0; i < length; i++)
+            {
+                hashValue *= kPrime64;
+                hashValue ^= (ulong)data[i];
+            }
+
+            return hashValue;
+        }
     }
 }

@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    internal sealed class CollectionUtility : CLRSingleTone<CollectionUtility>
+    public sealed class CollectionUtility : CLRSingleTone<CollectionUtility>
     {
         private Unity.Mathematics.Random m_Random;
 
@@ -29,7 +29,8 @@ namespace Syadeu.Collections
             m_Random.InitState();
         }
 
-        public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
+        public static int CreateHashCodeInt32() => Instance.m_Random.NextInt(int.MinValue, int.MaxValue);
+        public static short CreateHashInt16() => unchecked((short)CreateHashCodeInt32());
 
         public static TypeInfo GetTypeInfo(Type type)
         {
@@ -46,7 +47,7 @@ namespace Syadeu.Collections
             if (typeStatic.Data.Type == null)
             {
                 typeStatic.Data 
-                    = new TypeInfo(type, UnsafeUtility.SizeOf(type), TypeHelper.AlignOf(type), Instance.CreateHashCode());
+                    = new TypeInfo(type, UnsafeUtility.SizeOf(type), TypeHelper.AlignOf(type), CreateHashCodeInt32());
             }
 
             return typeStatic.Data;

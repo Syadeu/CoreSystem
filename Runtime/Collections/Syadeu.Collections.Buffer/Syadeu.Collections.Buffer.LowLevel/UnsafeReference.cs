@@ -41,6 +41,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return IntPtr.Add(ptr, offset);
             }
         }
+        public IntPtr this[long offset]
+        {
+            get
+            {
+                IntPtr ptr;
+                unsafe
+                {
+                    ptr = (IntPtr)m_Ptr;
+                }
+
+                return IntPtr.Add(ptr, (int)offset);
+            }
+        }
 
         public unsafe void* Ptr => m_Ptr;
         public IntPtr IntPtr { get { unsafe { return (IntPtr)m_Ptr; } } }
@@ -62,6 +75,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
+        public static unsafe implicit operator void*(UnsafeReference p) => p.m_Ptr;
 
         public bool Equals(UnsafeReference other)
         {
@@ -169,6 +183,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public static unsafe implicit operator UnsafeReference<T>(T* p) => new UnsafeReference<T>(p);
         public static unsafe implicit operator UnsafeReference<T>(UnsafeReference p) => new UnsafeReference<T>(p.IntPtr);
+        public static unsafe implicit operator UnsafeReference(UnsafeReference<T> p) => new UnsafeReference(p.IntPtr);
         public static unsafe implicit operator T*(UnsafeReference<T> p) => p.m_Ptr;
     }
 }

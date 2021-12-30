@@ -99,6 +99,7 @@ namespace Syadeu.Internal
         {
             if ((acceptOnly & ThreadInfo.Unity) == ThreadInfo.Unity)
             {
+#if DEBUG_MODE
                 if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
                 {
                     Log(Channel.Thread, ResultFlag.Error,
@@ -107,7 +108,7 @@ namespace Syadeu.Internal
                             TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)),
                         false, scriptName);
                 }
-
+#endif
                 return;
             }
 

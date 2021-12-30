@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Proxy
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
         internal readonly int m_Generation;
-        internal readonly Hash m_Hash;
+        internal readonly ProxyTransformID m_Hash;
 
         unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation, Hash hash)
         {
@@ -683,5 +683,20 @@ namespace Syadeu.Presentation.Proxy
         }
 
         public override int GetHashCode() => m_Index * 397 ^ m_Generation;
+    }
+
+    public struct ProxyTransformID : IEquatable<ProxyTransformID>
+    {
+        public readonly Hash Hash;
+
+        private ProxyTransformID(Hash hash)
+        {
+            Hash = hash;
+        }
+
+        public bool Equals(ProxyTransformID other) => Hash.Equals(other.Hash);
+
+        public static implicit operator Hash(ProxyTransformID t) => t.Hash;
+        public static implicit operator ProxyTransformID(Hash t) => new ProxyTransformID(t);
     }
 }

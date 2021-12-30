@@ -24,6 +24,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
@@ -38,7 +39,6 @@ namespace Syadeu.Presentation.Grid
         private WorldGrid m_Grid;
         private bool m_GridInitialized;
         private AtomicSafeBoolen m_RequireGridUpdate;
-        private NativeMultiHashMap<int, InstanceID> m_GridEntities;
 
         private EntityComponentSystem m_ComponentSystem;
 
@@ -47,7 +47,6 @@ namespace Syadeu.Presentation.Grid
         protected override PresentationResult OnInitialize()
         {
             m_GridInitialized = false;
-            m_GridEntities = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
 
             RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
 
@@ -60,8 +59,6 @@ namespace Syadeu.Presentation.Grid
         }
         protected override void OnDispose()
         {
-            m_GridEntities.Dispose();
-
             m_ComponentSystem = null;
         }
 
@@ -171,22 +168,50 @@ namespace Syadeu.Presentation.Grid
         }
     }
 
-    public struct WorldGrid
+    [BurstCompatible]
+    public struct WorldGrid : IDisposable
     {
-        public struct Data
-        {
-            public IntPtr data;
-        }
+        private readonly short m_CheckSum;
 
         private AABB m_AABB;
         private float m_CellSize;
 
-        public float cellSize { get => m_CellSize; set => m_CellSize = value; }
+        [NativeDisableUnsafePtrRestriction]
+        private UnsafeMultiHashMap<int, InstanceID> m_Entries;
 
-        public WorldGrid(in AABB aabb, in float cellSize)
+        public int length
         {
+            get
+            {
+                float3 size = m_AABB.size;
+                int
+                    xSize = Convert.ToInt32(math.floor(size.x / m_CellSize)),
+                    zSize = Convert.ToInt32(math.floor(size.z / m_CellSize));
+                return xSize * zSize;
+            }
+        }
+        public float cellSize { get => m_CellSize; set => m_CellSize = value; }
+        public int2 gridSize
+        {
+            get
+            {
+                float3 size = m_AABB.size;
+                return new int2(
+                    Convert.ToInt32(math.floor(size.x / m_CellSize)),
+                    Convert.ToInt32(math.floor(size.z / m_CellSize)));
+            }
+        }
+
+        internal WorldGrid(in AABB aabb, in float cellSize)
+        {
+            this = default(WorldGrid);
+
+            m_CheckSum = CollectionUtility.CreateHashInt16();
+
             m_AABB = aabb;
             m_CellSize = cellSize;
+
+            m_Entries = new UnsafeMultiHashMap<int, InstanceID>(length, AllocatorManager.Persistent);
         }
 
         #region Index
@@ -247,6 +272,30 @@ namespace Syadeu.Presentation.Grid
         }
 
         #endregion
+
+        public bool Contains(in int index)
+        {
+            bool result;
+            unsafe
+            {
+                BurstGridMathematics.containIndex(in m_AABB, in m_CellSize, in index, &result);
+            }
+            return result;
+        }
+        public bool Contains(in int3 location)
+        {
+            bool result;
+            unsafe
+            {
+                BurstGridMathematics.containLocation(in m_AABB, in m_CellSize, in location, &result);
+            }
+            return result;
+        }
+
+        public void Dispose()
+        {
+            m_Entries.Dispose();
+        }
     }
 
     public struct GridComponent : IEntityComponent

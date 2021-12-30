@@ -25,6 +25,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+//using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -853,12 +854,16 @@ namespace Syadeu.Presentation
         {
             const string c_ThreadName = "core.pre";
 
+            //ProcessThread.
+
             m_PresentationThread = new Thread(PresentationAsyncUpdate)
             {
                 Name = c_ThreadName,
                 IsBackground = true,
-                CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture
+                CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture,
+                CurrentUICulture = global::System.Globalization.CultureInfo.InvariantCulture
             };
+            //m_PresentationThread.SetApartmentState(ApartmentState.STA);
 
             m_PresentationThread.Start(this);
 

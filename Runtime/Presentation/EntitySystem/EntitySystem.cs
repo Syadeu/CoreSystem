@@ -96,7 +96,7 @@ namespace Syadeu.Presentation
         private Unity.Mathematics.Random m_Random;
 
         internal readonly Dictionary<InstanceID, ObjectBase> m_ObjectEntities = new Dictionary<InstanceID, ObjectBase>();
-        internal NativeHashMap<Hash, InstanceID> m_EntityGameObjects;
+        internal NativeHashMap<ProxyTransformID, InstanceID> m_EntityGameObjects;
 
         private readonly Stack<InstanceID> m_DestroyedObjectsInThisFrame = new Stack<InstanceID>();
         
@@ -121,7 +121,7 @@ namespace Syadeu.Presentation
             m_Random = new Unity.Mathematics.Random();
             m_Random.InitState();
 
-            m_EntityGameObjects = new NativeHashMap<Hash, InstanceID>(10240, Allocator.Persistent);
+            m_EntityGameObjects = new NativeHashMap<ProxyTransformID, InstanceID>(10240, Allocator.Persistent);
 
             m_DestroyedObjectsInThisFrameAction = ActionWrapper.GetWrapper();
             m_DestroyedObjectsInThisFrameAction.SetProfiler("DestroyedObjectsInThisFrame");
