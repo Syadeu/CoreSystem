@@ -24,6 +24,13 @@ namespace Syadeu.Collections.Threading
     [BurstCompatible]
     public struct ThreadInfo : IEquatable<ThreadInfo>, IEquatable<Thread>
     {
+        /// <summary>
+        /// 현재 스레드 정보를 가져옵니다.
+        /// </summary>
+        public static ThreadInfo CurrentThread => new ThreadInfo(Thread.CurrentThread);
+
+        //
+        //
         // https://www.sysnet.pe.kr/2/0/492
 
         private readonly int m_ManagedThreadID;
@@ -37,7 +44,12 @@ namespace Syadeu.Collections.Threading
         {
             m_ManagedThreadID = thread.ManagedThreadId;
             m_HashCode = thread.GetHashCode();
-            m_Name = thread.Name;
+
+            if (string.IsNullOrEmpty(thread.Name))
+            {
+                m_Name = "None";
+            }
+            else m_Name = thread.Name;
         }
 
         [NotBurstCompatible]
