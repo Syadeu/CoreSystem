@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -19,14 +23,16 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
-    public struct UnsafeAllocator : IDisposable
+    public struct UnsafeAllocator : IDisposable, IEquatable<UnsafeAllocator>
     {
-        private UnsafeReference m_Ptr;
+        private readonly UnsafeReference m_Ptr;
+        private readonly long m_Size;
         private readonly Allocator m_Allocator;
 
         private bool m_Created;
 
         public UnsafeReference Ptr => m_Ptr;
+        public long Size => m_Size;
         public bool Created => m_Created;
 
         public UnsafeAllocator(long size, int alignment, Allocator allocator)
@@ -35,6 +41,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 m_Ptr = UnsafeUtility.Malloc(size, alignment, allocator);
             }
+            m_Size = size;
             m_Allocator = allocator;
 
             m_Created = true;
@@ -49,6 +56,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             m_Created = false;
         }
+
+        public bool Equals(UnsafeAllocator other) => m_Ptr.Equals(other.m_Ptr);
     }
     [BurstCompatible]
     public struct UnsafeAllocator<T> : IDisposable
@@ -58,6 +67,21 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public UnsafeReference<T> Ptr => m_Allocator.Ptr;
         public bool Created => m_Allocator.Created;
+
+        public ref T this[int index]
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (index < 0 || index >= Length)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+#endif
+                return ref Ptr[index];
+            }
+        }
+        public int Length => Convert.ToInt32(m_Allocator.Size / UnsafeUtility.SizeOf<T>());
 
         public UnsafeAllocator(int count, Allocator allocator)
         {

@@ -23,7 +23,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     /// <see cref="System.IntPtr"/> 접근을 unsafe 없이 접근을 도와주는 구조체입니다.
     /// </summary>
     [BurstCompatible]
-    public struct UnsafeReference : IUnsafeReference
+    public struct UnsafeReference : IUnsafeReference, IEquatable<UnsafeReference>
     {
         private bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction]
@@ -62,6 +62,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
+
+        public bool Equals(UnsafeReference other)
+        {
+            unsafe
+            {
+                return m_Ptr == other.m_Ptr;
+            }
+        }
     }
     [BurstCompatible]
     public struct UnsafeReference<T> : IUnsafeReference,
