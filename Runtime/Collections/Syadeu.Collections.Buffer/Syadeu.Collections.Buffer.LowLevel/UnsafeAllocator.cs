@@ -19,95 +19,57 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
-    public unsafe struct UnsafeAllocator : IDisposable
+    public struct UnsafeAllocator : IDisposable
     {
-        [NativeDisableUnsafePtrRestriction]
-        private IntPtr m_Buffer;
+        private UnsafeReference m_Ptr;
         private readonly Allocator m_Allocator;
 
-        private FixedList512Bytes<UnsafeBuffer> m_PtrList;
+        private bool m_Created;
 
-        public UnsafeAllocator(long size, Allocator allocator)
+        public UnsafeReference Ptr => m_Ptr;
+        public bool Created => m_Created;
+
+        public UnsafeAllocator(long size, int alignment, Allocator allocator)
         {
-            this = default(UnsafeAllocator);
-
-            m_Buffer = (IntPtr)UnsafeUtility.Malloc(size, 8, allocator);
-            
+            unsafe
+            {
+                m_Ptr = UnsafeUtility.Malloc(size, alignment, allocator);
+            }
             m_Allocator = allocator;
-        }
 
-        //private UnsafeBuffer FindUnusedPtr(int size)
-        //{
-        //    m_PtrList.Sort();
-
-        //    UnsafeBuffer buffer;
-        //    if (m_PtrList.Length == 0)
-        //    {
-        //        buffer = new UnsafeBuffer(m_Buffer.ToPointer(), size);
-        //    }
-        //    else if (m_PtrList.Length == 1)
-        //    {
-        //        IntPtr ptr = IntPtr.Add(m_Buffer, m_PtrList[0].Size);
-        //        buffer = new UnsafeBuffer(ptr.ToPointer(), size);
-        //    }
-        //    else
-        //    {
-        //        int i = 0;
-        //        while (i < m_PtrList.Length)
-        //        {
-        //            void*
-        //                p1 = m_PtrList[i].Pointer,
-        //                p2 = m_PtrList[i + 1].Pointer;
-        //            int
-        //                s1 = m_PtrList[i].Size,
-        //                s2 = m_PtrList[i].Size;
-
-        //            //sizeof(p1);
-
-        //            i += 2;
-        //        }
-        //    }
-
-        //    m_PtrList.Add(buffer);
-
-        //    return buffer;
-        //}
-
-        public void Take(int size, int align)
-        {
-
-        }
-        public void Reserve()
-        {
-
+            m_Created = true;
         }
 
         public void Dispose()
         {
-            UnsafeUtility.Free(m_Buffer.ToPointer(), m_Allocator);
+            unsafe
+            {
+                UnsafeUtility.Free(m_Ptr.Ptr, m_Allocator);
+            }
+
+            m_Created = false;
         }
     }
-    public unsafe struct UnsafeBuffer : IComparable<UnsafeBuffer>
+    [BurstCompatible]
+    public struct UnsafeAllocator<T> : IDisposable
+        where T : unmanaged
     {
-        private readonly void* m_Pointer;
-        private readonly int m_Size;
+        private UnsafeAllocator m_Allocator;
 
-        public void* Pointer => m_Pointer;
-        public int Size => m_Size;
+        public UnsafeReference<T> Ptr => m_Allocator.Ptr;
+        public bool Created => m_Allocator.Created;
 
-        public UnsafeBuffer(void* p, int size)
+        public UnsafeAllocator(int count, Allocator allocator)
         {
-            m_Pointer = p;
-            m_Size = size;
+            m_Allocator = new UnsafeAllocator(
+                UnsafeUtility.SizeOf<T>() * count,
+                UnsafeUtility.AlignOf<T>(),
+                allocator
+                );
         }
-
-        public int CompareTo(UnsafeBuffer other)
+        public void Dispose()
         {
-            if (m_Pointer < other.m_Pointer)
-            {
-                return -1;
-            }
-            return 1;
+            m_Allocator.Dispose();
         }
     }
 }
