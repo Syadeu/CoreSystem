@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 using System.Threading;
 using Unity.Collections;
@@ -53,7 +57,7 @@ namespace Syadeu.Collections.Threading
         }
 
         [NotBurstCompatible]
-        public void Validate()
+        public void ValidateAndThrow()
         {
             Thread currentThread = Thread.CurrentThread;
 
@@ -62,6 +66,13 @@ namespace Syadeu.Collections.Threading
                 UnityEngine.Debug.LogError(
                     $"Thread affinity error. Expected thread({this}) but {currentThread}");
             }
+        }
+        [NotBurstCompatible]
+        public bool Validate()
+        {
+            Thread currentThread = Thread.CurrentThread;
+
+            return Equals(currentThread);
         }
 
         public bool Equals(ThreadInfo other)

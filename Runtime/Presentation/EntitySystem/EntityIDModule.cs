@@ -77,9 +77,4 @@ namespace Syadeu.Presentation
             return m_EntityConversions[id];
         }
     }
-
-    internal sealed class EntityTransformModule : PresentationSystemModule<EntitySystem>
-    {
-
-    }
 }

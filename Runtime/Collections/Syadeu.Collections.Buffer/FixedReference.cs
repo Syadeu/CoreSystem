@@ -44,7 +44,7 @@ namespace Syadeu.Collections.Buffer
             get
             {
 #if DEBUG_MODE
-                m_Owner.Validate();
+                m_Owner.ValidateAndThrow();
 #endif
                 return ref m_Ptr[index];
             }
@@ -56,7 +56,7 @@ namespace Syadeu.Collections.Buffer
             get
             {
 #if DEBUG_MODE
-                m_Owner.Validate();
+                m_Owner.ValidateAndThrow();
 #endif
                 return ref m_Ptr.Value;
             }

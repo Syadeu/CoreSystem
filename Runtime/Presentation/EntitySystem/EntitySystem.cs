@@ -42,7 +42,8 @@ namespace Syadeu.Presentation
         INotifySystemModule<EntityRecycleModule>,
         INotifySystemModule<EntityProcessorModule>,
         INotifySystemModule<EntityIDModule>,
-        INotifySystemModule<EntityHierarchyModule>
+        INotifySystemModule<EntityHierarchyModule>,
+        INotifySystemModule<EntityTransformModule>
 #if DEBUG_MODE
         , INotifySystemModule<EntityDebugModule>
 #endif

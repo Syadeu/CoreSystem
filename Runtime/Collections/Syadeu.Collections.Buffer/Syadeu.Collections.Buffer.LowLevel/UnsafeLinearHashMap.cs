@@ -16,20 +16,16 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
     public struct UnsafeLinearHashMap<TKey, TValue> 
-        : IEquatable<UnsafeLinearHashMap<TKey,TValue>>, IDisposable
+        : IEquatable<UnsafeLinearHashMap<TKey,TValue>>, IDisposable, IEnumerable<TValue>
 
         where TKey : unmanaged
         where TValue : unmanaged, IEquatable<TValue>
@@ -43,8 +39,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             get
             {
-                if (!m_Created) throw new InvalidOperationException();
-                
                 if (!TryFindIndexFor(key, out int index))
                 {
                     throw new ArgumentOutOfRangeException();
@@ -53,6 +47,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return ref m_Buffer[index];
             }
         }
+        public UnsafeAllocator<TValue>.ReadOnly Buffer => m_Buffer.AsReadOnly();
         public bool Created => m_Created;
         public int Capacity => m_Buffer.Length;
         public int Count => m_Count;
@@ -140,32 +135,45 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Buffer.Dispose();
         }
 
-        //private struct SortValueJob : IJobParallelFor
-        //{
-        //    [ReadOnly] public NativeArray<TValue>.ReadOnly m_Allocator;
-        //    [WriteOnly] public NativeList<TValue>.ParallelWriter m_Buffer;
+        [BurstCompatible]
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private UnsafeAllocator<TValue>.ReadOnly m_Buffer;
+            private int m_Index;
 
-        //    public void Execute(int i)
-        //    {
-        //        if (m_Allocator[i].IsEmpty()) return;
+            public TValue Current => m_Buffer[m_Index];
+            [NotBurstCompatible]
+            object IEnumerator.Current => m_Buffer[m_Index];
 
-        //        m_Buffer.AddNoResize(m_Allocator[i]);
-        //    }
-        //}
-        //private struct IndexingJob : IJobParallelFor
-        //{
-        //    [ReadOnly] public int m_Length;
+            internal Enumerator(UnsafeLinearHashMap<TKey, TValue> hashMap)
+            {
+                m_Buffer = hashMap.Buffer;
+                m_Index = 0;
+            }
 
-        //    [WriteOnly] public UnsafeAllocator<TValue> m_Allocator;
-        //    [ReadOnly] public NativeArray<TValue>.ReadOnly m_Buffer;
+            public bool MoveNext()
+            {
+                while (m_Index < m_Buffer.Length &&
+                        Current.Equals(default(TValue)))
+                {
+                    m_Index++;
+                }
 
-        //    public void Execute(int i)
-        //    {
-        //        ulong hash = key.Calculate() ^ 0b1011101111;
-        //        int index = Convert.ToInt32(hash % (uint)m_Length);
+                if (Current.Equals(default(TValue))) return false;
+                return true;
+            }
 
-        //        m_Allocator
-        //    }
-        //}
+            public void Reset()
+            {
+                m_Index = 0;
+            }
+            public void Dispose()
+            {
+                m_Index = -1;
+            }
+        }
+
+        public IEnumerator<TValue> GetEnumerator() => new Enumerator(this);
+        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
     }
 }

@@ -74,9 +74,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_IsCreated = true;
         }
 
-        public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
-        public static unsafe implicit operator void*(UnsafeReference p) => p.m_Ptr;
-
         public bool Equals(UnsafeReference other)
         {
             unsafe
@@ -84,7 +81,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return m_Ptr == other.m_Ptr;
             }
         }
+
+        public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
+        public static unsafe implicit operator void*(UnsafeReference p) => p.m_Ptr;
     }
+    /// <summary><inheritdoc cref="UnsafeReference"/></summary>
+    /// <typeparam name="T"></typeparam>
     [BurstCompatible]
     public struct UnsafeReference<T> : IUnsafeReference,
         IEquatable<UnsafeReference<T>>, IEquatable<UnsafeReference>
@@ -142,6 +144,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Ptr = ptr;
             m_IsCreated = true;
         }
+        public ReadOnly AsReadOnly() { unsafe { return new ReadOnly(m_Ptr); } }
 
         public ref T GetValue()
         {
@@ -185,5 +188,28 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public static unsafe implicit operator UnsafeReference<T>(UnsafeReference p) => new UnsafeReference<T>(p.IntPtr);
         public static unsafe implicit operator UnsafeReference(UnsafeReference<T> p) => new UnsafeReference(p.IntPtr);
         public static unsafe implicit operator T*(UnsafeReference<T> p) => p.m_Ptr;
+
+        [BurstCompatible]
+        public struct ReadOnly
+        {
+            private unsafe T* m_Ptr;
+
+            public T this[int index]
+            {
+                get
+                {
+                    unsafe
+                    {
+                        return m_Ptr[index];
+                    }
+                }
+            }
+            public T Value { get { unsafe { return *m_Ptr; } } }
+
+            internal unsafe ReadOnly(T* ptr)
+            {
+                m_Ptr = ptr;
+            }
+        }
     }
 }

@@ -104,6 +104,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator other) => m_Ptr.Equals(other.m_Ptr);
 
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference m_Ptr;
@@ -178,9 +179,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
 
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
-            private readonly UnsafeReference<T> m_Ptr;
+            private readonly UnsafeReference<T>.ReadOnly m_Ptr;
             private readonly int m_Length;
 
             public int Length => m_Length;
@@ -201,7 +203,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             internal ReadOnly(UnsafeAllocator<T> allocator)
             {
-                m_Ptr = allocator.Ptr;
+                m_Ptr = allocator.Ptr.AsReadOnly();
                 m_Length = allocator.Length;
             }
         }
