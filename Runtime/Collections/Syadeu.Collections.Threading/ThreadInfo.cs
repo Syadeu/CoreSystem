@@ -53,11 +53,15 @@ namespace Syadeu.Collections.Threading
         }
 
         [NotBurstCompatible]
-        public bool Validate()
+        public void Validate()
         {
             Thread currentThread = Thread.CurrentThread;
 
-            return Equals(currentThread);
+            if (!Equals(currentThread))
+            {
+                UnityEngine.Debug.LogError(
+                    $"Thread affinity error. Expected thread({this}) but {currentThread}");
+            }
         }
 
         public bool Equals(ThreadInfo other)

@@ -14,28 +14,25 @@
 
 using System;
 
-namespace Syadeu.Collections
+namespace Syadeu.Collections.Buffer.LowLevel
 {
-    /// <summary>
-    /// <see cref="Int64"/> 까지 지원하는 "나름" 정확도가 높은 타이머입니다.
-    /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
-    public struct HighPrecisionTimer
+    public interface IUnsafeReference
     {
-        private long m_TimeStamp;
-
-        public void Reset() => m_TimeStamp = 0;
-        public void Begin() => m_TimeStamp = HighPrecisionTime.Now;
         /// <summary>
-        /// 
+        /// <paramref name="offset"/> 만큼 
+        /// 포인터를 오른쪽으로 밀어서 반환합니다.
         /// </summary>
-        /// <returns>eclapsed time</returns>
-        public TimeSpan End()
-        {
-            TimeSpan span = HighPrecisionTime.CalculateDelta(m_TimeStamp, HighPrecisionTime.Now);
-            return span;
-        }
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        IntPtr this[int offset] { get; }
+
+        /// <summary>
+        /// 포인터가 할당되었는지 반환합니다.
+        /// </summary>
+        bool IsCreated { get; }
+        /// <summary>
+        /// 포인터입니다.
+        /// </summary>
+        IntPtr IntPtr { get; }
     }
 }
