@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-
 using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections.Threading;
 using System;
