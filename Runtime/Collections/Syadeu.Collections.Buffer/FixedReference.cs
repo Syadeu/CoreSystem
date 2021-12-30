@@ -18,6 +18,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer
 {
+    [BurstCompatible]
     public struct FixedReference<T> where T : unmanaged
     {
         private UnsafeReference<T> m_Ptr;
