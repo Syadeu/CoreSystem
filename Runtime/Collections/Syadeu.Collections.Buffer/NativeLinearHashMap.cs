@@ -160,20 +160,4 @@ namespace Syadeu.Collections.Buffer
         public IEnumerator<KeyValue<TKey, TValue>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
     }
-
-    public struct KeyValue<TKey, TValue> : IEquatable<KeyValue<TKey, TValue>>
-        where TKey : unmanaged, IEquatable<TKey>
-        where TValue : unmanaged, IEquatable<TValue>
-    {
-        public readonly TKey key;
-        public TValue value;
-
-        public KeyValue(TKey key, TValue value)
-        {
-            this.key = key;
-            this.value = value;
-        }
-
-        public bool Equals(KeyValue<TKey, TValue> other) => key.Equals(other.key) && value.Equals(other.value);
-    }
 }

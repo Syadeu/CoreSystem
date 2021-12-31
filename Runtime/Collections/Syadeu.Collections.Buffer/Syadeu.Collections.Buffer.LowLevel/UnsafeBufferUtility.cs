@@ -46,5 +46,22 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
             return hash;
         }
+
+        public static unsafe bool BinaryComparer<T>(ref T x, ref T y)
+            where T : unmanaged
+        {
+            byte*
+                a = AsBytes(ref x, out int length),
+                b = (byte*)UnsafeUtility.AddressOf(ref y);
+
+            int index = 0;
+            while (index < length && a[index].Equals(b[index]))
+            {
+                index++;
+            }
+
+            if (index != length) return false;
+            return true;
+        }
     }
 }

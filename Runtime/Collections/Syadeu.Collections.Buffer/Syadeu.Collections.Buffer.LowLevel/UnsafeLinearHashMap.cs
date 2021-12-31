@@ -58,8 +58,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
         public UnsafeAllocator<KeyValue<TKey, TValue>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
+        /// <summary>
+        /// 이 해시맵이 생성되었나요?
+        /// </summary>
         public bool Created => m_Created;
+        /// <summary>
+        /// 이 해시맵의 현재 최대 크기를 반환합니다.
+        /// </summary>
         public int Capacity => m_Buffer.Length;
+        /// <summary>
+        /// 이 해시맵이 가진 아이템의 갯수를 반환합니다.
+        /// </summary>
         public int Count => m_Count;
 
         public UnsafeLinearHashMap(int initialCount, Allocator allocator)
@@ -79,8 +88,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 index = Convert.ToInt32(hash % (uint)(m_InitialCount * i));
 
-                if (m_Buffer[index].key.Equals(default(TKey)) ||
-                    m_Buffer[index].key.Equals(key))
+                if (m_Buffer[index].IsKeyEmptyOrEquals(key))
                 {
                     return true;
                 }
