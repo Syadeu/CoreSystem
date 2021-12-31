@@ -23,6 +23,7 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
+    [Obsolete("", true)]
     /// <summary>
     /// <see cref="EntitySystem.Convert(GameObject)"/>를 통해 컨버트된 <see cref="Entity{T}"/>의 트랜스폼입니다.
     /// </summary>

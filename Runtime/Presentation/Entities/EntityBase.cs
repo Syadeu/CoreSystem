@@ -17,6 +17,7 @@ using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
+using System;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
@@ -53,19 +54,19 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.
         /// </summary>
-        [JsonIgnore] public ITransform transform { get; internal set; }
+        [JsonIgnore, Obsolete("", true)] public ITransform transform { get; internal set; }
 
         public override bool IsValid()
         {
-            if (Reserved || transform == null) return false;
-            else if (!CoreSystem.BlockCreateInstance)
-            {
-                if (transform is ProxyTransform proxyTransform &&
-                (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
-                {
-                    return false;
-                }
-            }
+            if (Reserved/* || transform == null*/) return false;
+            //else if (!CoreSystem.BlockCreateInstance)
+            //{
+            //    if (transform is ProxyTransform proxyTransform &&
+            //    (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
+            //    {
+            //        return false;
+            //    }
+            //}
 
             return true;
         }
@@ -73,7 +74,7 @@ namespace Syadeu.Presentation.Entities
         {
             base.InternalOnReserve();
 
-            transform = null;
+            //transform = null;
         }
 
         [Preserve]

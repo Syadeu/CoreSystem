@@ -63,60 +63,60 @@ namespace Syadeu.Presentation.Map
 
         }
 
-        public static ITransform InstantiateObject(Transform parent, Reference<EntityBase> entityRef, EntitySystem entitySystem = null)
-        {
-            if (entityRef.IsEmpty() || !entityRef.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"{entityRef.GetObject().Name} is not valid.");
+//        public static ITransform InstantiateObject(Transform parent, Reference<EntityBase> entityRef, EntitySystem entitySystem = null)
+//        {
+//            if (entityRef.IsEmpty() || !entityRef.IsValid())
+//            {
+//                CoreSystem.Logger.LogError(Channel.Presentation,
+//                    $"{entityRef.GetObject().Name} is not valid.");
 
-                return null;
-            }
+//                return null;
+//            }
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying) return EditorInstantiateObject(parent, entityRef);
-#endif
-            if (entitySystem == null)
-            {
-                entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-                if (entitySystem == null)
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        "EntitySystem is not initialized. You\'ve called too early or outside presentation system");
-                    return null;
-                }
-            }
+//#if UNITY_EDITOR
+//            if (!Application.isPlaying) return EditorInstantiateObject(parent, entityRef);
+//#endif
+//            if (entitySystem == null)
+//            {
+//                entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+//                if (entitySystem == null)
+//                {
+//                    CoreSystem.Logger.LogError(Channel.Presentation,
+//                        "EntitySystem is not initialized. You\'ve called too early or outside presentation system");
+//                    return null;
+//                }
+//            }
 
-            Entity<IEntity> entity = entitySystem.CreateEntity(entityRef, 0);
-            return entity.transform;
-        }
-#if UNITY_EDITOR
-        private static ITransform EditorInstantiateObject(Transform parent, Reference<EntityBase> entityRef)
-        {
-            EntityBase entity = entityRef.GetObject();
-            if (entity.Prefab.IsNone() || !entity.Prefab.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"{entityRef.GetObject().Name} is not valid.");
+//            Entity<IEntity> entity = entitySystem.CreateEntity(entityRef, 0);
+//            return entity.transform;
+//        }
+//#if UNITY_EDITOR
+//        private static ITransform EditorInstantiateObject(Transform parent, Reference<EntityBase> entityRef)
+//        {
+//            EntityBase entity = entityRef.GetObject();
+//            if (entity.Prefab.IsNone() || !entity.Prefab.IsValid())
+//            {
+//                CoreSystem.Logger.LogError(Channel.Presentation,
+//                    $"{entityRef.GetObject().Name} is not valid.");
 
-                return null;
-            }
+//                return null;
+//            }
 
-            UnityEngine.Object asset = entity.Prefab.GetEditorAsset();
-            if (!(asset is GameObject prefab))
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Type error, {entity.Name} is not a GameObject.");
-                return null;
-            }
+//            UnityEngine.Object asset = entity.Prefab.GetEditorAsset();
+//            if (!(asset is GameObject prefab))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Presentation,
+//                        $"Type error, {entity.Name} is not a GameObject.");
+//                return null;
+//            }
 
-            GameObject ins = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
-            ins.tag = c_EditorOnly;
-            ins.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+//            GameObject ins = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+//            ins.tag = c_EditorOnly;
+//            ins.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
-            return new CustomTransform(ins.transform);
-        }
-#endif
+//            return new CustomTransform(ins.transform);
+//        }
+//#endif
 
         public static GameObject InstantiateObjectaa(Transform parent, MapDataEntityBase.Object target)
         {

@@ -47,10 +47,10 @@ namespace Syadeu.Presentation
 
         public void InsertReservedObject(IObject obj)
         {
-            if (obj is ConvertedEntity)
-            {
-                return;
-            }
+            //if (obj is ConvertedEntity)
+            //{
+            //    return;
+            //}
 
             if (!m_ReservedObjects.TryGetValue(obj.Hash, out var list))
             {

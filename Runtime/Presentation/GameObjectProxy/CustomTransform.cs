@@ -22,6 +22,7 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
+    [Obsolete("", true)]
     public sealed class CustomTransform : IUnityTransform
     {
         public ConvertedEntity entity => throw new NotImplementedException();

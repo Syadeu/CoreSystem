@@ -14,10 +14,12 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Entities
 {
+    [Obsolete("", true)]
     public sealed class ConvertedEntity : EntityBase
     {
         public override bool IsValid() => transform != null;

@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Entities
     {
         protected override void OnCreated(FXEntity entity)
         {
-            ((ProxyTransform)entity.transform).enableCull = false;
+            entity.GetTransform().enableCull = false;
         }
         //protected override void OnDestroy(FXEntity entity)
         //{

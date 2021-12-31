@@ -18,6 +18,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Entities
 {
+    [System.Obsolete("", true)]
     public sealed class ConvertedEntityComponent : MonoBehaviour
     {
         internal ConvertedEntity m_Entity;

@@ -288,20 +288,25 @@ namespace Syadeu.Presentation
 
             m_ComponentSystem.RemoveNotifiedComponents(obj);
 
-            if (obj is EntityBase entity && entity.transform != null)
+            EntityTransformModule transformModule = System.GetModule<EntityTransformModule>();
+            if (transformModule.HasTransform(obj.Idx))
             {
-                if (entity.transform is ProxyTransform tr)
-                {
-                    tr.Destroy();
-                }
-                else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
-                {
-                    UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                    ((IDisposable)unityTr).Dispose();
-                }
-
-                entity.transform = null;
+                transformModule.RemoveTransform(obj.Idx);
             }
+            //if (obj is EntityBase entity && entity.transform != null)
+            //{
+            //    if (entity.transform is ProxyTransform tr)
+            //    {
+            //        tr.Destroy();
+            //    }
+            //    else if (entity.transform is UnityTransform unityTr && unityTr.provider != null)
+            //    {
+            //        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
+            //        ((IDisposable)unityTr).Dispose();
+            //    }
+
+            //    entity.transform = null;
+            //}
 
             OnEntityDestroy?.Invoke(obj);
 

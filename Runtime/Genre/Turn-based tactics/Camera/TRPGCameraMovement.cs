@@ -216,10 +216,10 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
-        public void SetTarget(Transform tr)
-        {
-            m_TargetTransform = new CustomTransform(tr);
-        }
+        //public void SetTarget(Transform tr)
+        //{
+        //    m_TargetTransform = new CustomTransform(tr);
+        //}
         public void SetTarget(ITransform tr)
         {
             m_TargetTransform = tr;

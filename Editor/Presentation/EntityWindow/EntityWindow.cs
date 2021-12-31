@@ -752,18 +752,14 @@ namespace SyadeuEditor.Presentation
             {
                 if (entity is EntityBase entityBase)
                 {
+                    ProxyTransform proxy = entityBase.GetTransform();
                     using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                     {
                         EntityDrawer.DrawPrefab(entityBase, true);
 
-                        if (entityBase.transform is ProxyTransform proxy &&
-                            proxy.hasProxy)
+                        if (proxy.hasProxy)
                         {
                             EditorGUILayout.ObjectField((UnityEngine.Object)proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
-                        }
-                        else if (entityBase.transform is UnityTransform unityTr)
-                        {
-                            EditorGUILayout.ObjectField(unityTr.provider, TypeHelper.TypeOf<Transform>.Type, true);
                         }
 
                         entityBase.Center
@@ -777,22 +773,22 @@ namespace SyadeuEditor.Presentation
                         EditorUtilities.StringRich("Transform", 15);
                         EditorGUI.indentLevel++;
 
-                        entityBase.transform.position =
-                            EditorGUILayout.Vector3Field("Position", entityBase.transform.position);
+                        proxy.position =
+                            EditorGUILayout.Vector3Field("Position", proxy.position);
 
-                        Vector3 eulerAngles = entityBase.transform.eulerAngles;
+                        Vector3 eulerAngles = proxy.eulerAngles;
 
                         using (var change = new EditorGUI.ChangeCheckScope())
                         {
                             eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
                             if (change.changed)
                             {
-                                entityBase.transform.eulerAngles = eulerAngles;
+                                proxy.eulerAngles = eulerAngles;
                             }
                         }
 
-                        entityBase.transform.scale
-                            = EditorGUILayout.Vector3Field("Scale", entityBase.transform.scale);
+                        proxy.scale
+                            = EditorGUILayout.Vector3Field("Scale", proxy.scale);
 
                         EditorGUI.indentLevel--;
                     }

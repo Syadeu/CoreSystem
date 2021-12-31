@@ -16,11 +16,125 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
+using Syadeu.Presentation.Proxy;
+using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
     internal sealed class EntityTransformModule : PresentationSystemModule<EntitySystem>
     {
+        private NativeHashMap<InstanceID, ProxyTransform> m_TransformHashMap;
+        private NativeHashMap<ProxyTransform, InstanceID> m_EntityHashMap;
 
+        private GameObjectProxySystem m_ProxySystem;
+
+        protected override void OnInitialize()
+        {
+            m_TransformHashMap = new NativeHashMap<InstanceID, ProxyTransform>(10240, AllocatorManager.Persistent);
+            m_EntityHashMap = new NativeHashMap<ProxyTransform, InstanceID>(10240, AllocatorManager.Persistent);
+
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+        }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+        }
+
+        protected override void OnShutDown()
+        {
+            base.OnShutDown();
+        }
+        protected override void OnDispose()
+        {
+            m_TransformHashMap.Dispose();
+            m_EntityHashMap.Dispose();
+
+            m_ProxySystem = null;
+        }
+
+        public ProxyTransform CreateTransform(
+            in InstanceID entity,
+            in PrefabReference<UnityEngine.GameObject> prefab, 
+            in float3 pos, in quaternion rot, in float3 scale,
+            in bool enableCull,
+            in float3 center, in float3 size, in bool staticBatching)
+        {
+#if DEBUG_MODE
+            if (!prefab.IsNone() && !prefab.IsValid())
+            {
+                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+                    $"{entity.GetEntity().Name} has an invalid prefab. This is not allowed.");
+            }
+#endif
+            ProxyTransform tr = m_ProxySystem.CreateNewPrefab(
+                in prefab, in pos, in rot, in scale, 
+                in enableCull, in center, in size, staticBatching);
+
+            m_TransformHashMap.Add(entity, tr);
+            m_EntityHashMap.Add(tr, entity);
+
+            return tr;
+        }
+
+        public bool HasTransform(in InstanceID entity) => m_TransformHashMap.ContainsKey(entity);
+        public ProxyTransform GetTransform(in InstanceID entity)
+        {
+            if (!m_TransformHashMap.ContainsKey(entity))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"");
+
+                return ProxyTransform.Null;
+            }
+
+            return m_TransformHashMap[entity];
+        }
+        public void RemoveTransform(in InstanceID entity)
+        {
+            if (!m_TransformHashMap.ContainsKey(entity))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"");
+
+                return;
+            }
+
+            ProxyTransform tr = m_TransformHashMap[entity];
+
+            m_TransformHashMap.Remove(entity);
+            m_EntityHashMap.Remove(tr);
+
+            tr.Destroy();
+        }
+
+        public bool HasEntity(in ProxyTransform transform) => m_EntityHashMap.ContainsKey(transform);
+        public InstanceID GetEntity(in ProxyTransform transform)
+        {
+            if (!m_EntityHashMap.ContainsKey(transform))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"");
+
+                return InstanceID.Empty;
+            }
+
+            return m_EntityHashMap[transform];
+        }
+    }
+    public static class EntityTransformExtensions
+    {
+        public static bool HasTransform(this ObjectBase entity)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+            return entitySystem.GetModule<EntityTransformModule>().HasTransform(entity.Idx);
+        }
+        public static ProxyTransform GetTransform(this ObjectBase entity)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+            return entitySystem.GetModule<EntityTransformModule>().GetTransform(entity.Idx);
+        }
     }
 }

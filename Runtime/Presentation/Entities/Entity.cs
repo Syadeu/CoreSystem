@@ -155,7 +155,7 @@ namespace Syadeu.Presentation.Entities
 
 #pragma warning disable IDE1006 // Naming Styles
         /// <inheritdoc cref="EntityBase.transform"/>
-        public ITransform transform
+        public ProxyTransform transform
         {
             get
             {
@@ -164,10 +164,18 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
-                    return null;
+
+                    return ProxyTransform.Null;
                 }
 #endif
-                return Target.transform;
+                EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
+                if (transformModule.HasTransform(Idx))
+                {
+                    return transformModule.GetTransform(Idx);
+                }
+
+                return ProxyTransform.Null;
             }
         }
         public bool hasProxy
@@ -188,22 +196,24 @@ namespace Syadeu.Presentation.Entities
                     return false;
                 }
 #endif
-                if (transform is IUnityTransform) return true;
-                else
-                {
-                    IProxyTransform tr = (IProxyTransform)transform;
-                    return tr.hasProxy && !tr.hasProxyQueued;
-                }
+                ProxyTransform tr = transform;
+                return tr.hasProxy && !tr.hasProxyQueued;
             }
         }
-        public UnityEngine.Object proxy
+        public RecycleableMonobehaviour proxy
         {
             get
             {
-                if (transform is IUnityTransform unity) return unity.provider;
+#if DEBUG_MODE
+                if (IsEmpty() || Target == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access proxy.");
 
-                IProxyTransform tr = (IProxyTransform)transform;
-                return (UnityEngine.Object)tr.proxy;
+                    return null;
+                }
+#endif
+                return transform.proxy;
             }
         }
 

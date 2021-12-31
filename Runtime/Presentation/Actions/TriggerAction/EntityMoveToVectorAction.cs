@@ -49,10 +49,10 @@ namespace Syadeu.Presentation.Actions
             switch (m_UpdateType)
             {
                 case UpdateType.Lerp:
-                    CoreSystem.StartUnityUpdate(this, Lerp(entity.transform, m_Target, m_Speed));
+                    CoreSystem.StartUnityUpdate(this, Lerp(entity.GetTransform(), m_Target, m_Speed));
                     break;
                 default:
-                    entity.transform.position = m_Target;
+                    entity.GetTransform().position = m_Target;
                     break;
             }
         }

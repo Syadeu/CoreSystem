@@ -430,7 +430,8 @@ namespace Syadeu.Presentation.Render
 
                 if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                 {
-                    m_InstanceObject.transform.position = targetPosition + setting.m_PositionOffset.m_Offset;
+                    var tr = m_InstanceObject.transform;
+                    tr.position = targetPosition + setting.m_PositionOffset.m_Offset;
                 }
                 else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                 {

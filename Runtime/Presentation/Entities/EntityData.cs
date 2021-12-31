@@ -20,6 +20,7 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -124,6 +125,30 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Idx"/>
         public InstanceID Idx => m_Idx;
         public Type Type => m_Idx.IsEmpty() ? null : Target?.GetType();
+
+        public ProxyTransform transform
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (IsEmpty() || Target == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+
+                    return ProxyTransform.Null;
+                }
+#endif
+                EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
+                if (transformModule.HasTransform(Idx))
+                {
+                    return transformModule.GetTransform(Idx);
+                }
+
+                return ProxyTransform.Null;
+            }
+        }
 
         internal EntityData(InstanceID id, int hashCode, string name)
         {

@@ -171,7 +171,7 @@ namespace Syadeu.Presentation.Actions
                 {
                     if (m_Executer.Target is EntityBase entityBase)
                     {
-                        pos = entityBase.transform.position + data.m_PositionOffset;
+                        pos = m_Executer.transform.position + data.m_PositionOffset;
                         rot = math.mul(m_Executer.As<IEntityData, IEntity>().transform.rotation, quaternion.EulerZXY(data.m_RotationOffset));
                     }
                     else

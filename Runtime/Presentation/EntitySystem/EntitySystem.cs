@@ -97,6 +97,7 @@ namespace Syadeu.Presentation
         private Unity.Mathematics.Random m_Random;
 
         internal readonly Dictionary<InstanceID, ObjectBase> m_ObjectEntities = new Dictionary<InstanceID, ObjectBase>();
+        [Obsolete("", true)]
         internal NativeHashMap<ProxyTransformID, InstanceID> m_EntityGameObjects;
 
         private readonly Stack<InstanceID> m_DestroyedObjectsInThisFrame = new Stack<InstanceID>();
@@ -122,7 +123,7 @@ namespace Syadeu.Presentation
             m_Random = new Unity.Mathematics.Random();
             m_Random.InitState();
 
-            m_EntityGameObjects = new NativeHashMap<ProxyTransformID, InstanceID>(10240, Allocator.Persistent);
+            //m_EntityGameObjects = new NativeHashMap<ProxyTransformID, InstanceID>(10240, Allocator.Persistent);
 
             m_DestroyedObjectsInThisFrameAction = ActionWrapper.GetWrapper();
             m_DestroyedObjectsInThisFrameAction.SetProfiler("DestroyedObjectsInThisFrame");
@@ -194,14 +195,13 @@ namespace Syadeu.Presentation
 
             m_ObjectEntities.Clear();
             
-            m_ProxySystem.OnDataObjectDestroy -= M_ProxySystem_OnDataObjectDestroyAsync;
             m_ProxySystem.OnDataObjectVisible -= OnDataObjectVisible;
             m_ProxySystem.OnDataObjectInvisible -= OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated -= M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved -= M_ProxySystem_OnDataObjectProxyRemoved;
 
-            m_EntityGameObjects.Dispose();
+            //m_EntityGameObjects.Dispose();
 
             m_DataContainerSystem = null;
             m_ProxySystem = null;
@@ -221,92 +221,97 @@ namespace Syadeu.Presentation
         {
             m_ProxySystem = other;
 
-            m_ProxySystem.OnDataObjectDestroy += M_ProxySystem_OnDataObjectDestroyAsync;
             m_ProxySystem.OnDataObjectVisible += OnDataObjectVisible;
             m_ProxySystem.OnDataObjectInvisible += OnDataObjectInvisible;
 
             m_ProxySystem.OnDataObjectProxyCreated += M_ProxySystem_OnDataObjectProxyCreated;
             m_ProxySystem.OnDataObjectProxyRemoved += M_ProxySystem_OnDataObjectProxyRemoved;
         }
-        private void M_ProxySystem_OnDataObjectDestroyAsync(ProxyTransform obj)
-        {
-            //InstanceID entity = m_EntityGameObjects[obj.m_Hash];
-            //m_EntityGameObjects.Remove(obj.m_Hash);
-
-            //if (!m_ObjectEntities.TryGetValue(entity, out ObjectBase entityObj)) return;
-
-            //if (entityObj is EntityBase entityBase)
-            //{
-            //    entityBase.transform = null;
-            //}
-
-            ////ObjectBase entityObj = m_ObjectEntities[entity];
-
-            ////ProcessEntityDestroy(entityObj, true);
-            ////m_ObjectEntities.Remove(entity);
-
-            //InternalDestroyEntity(in entity);
-        }
         private void OnDataObjectVisible(ProxyTransform tr)
         {
-//#if DEBUG_MODE
-//            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
-//                !m_ObjectEntities.ContainsKey(eCheckHash))
-//            {
-//                CoreSystem.Logger.LogError(Channel.Entity,
-//                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
-//                return;
-//            }
-//#endif
+            //#if DEBUG_MODE
+            //            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
+            //                !m_ObjectEntities.ContainsKey(eCheckHash))
+            //            {
+            //                CoreSystem.Logger.LogError(Channel.Entity,
+            //                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+            //                return;
+            //            }
+            //#endif
             //            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
-
-            ObjectBase entity = GetEntityByTransform(tr);
-            if (entity == null) return;
-
-            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
-                Entity<IEntity>.GetEntityWithoutCheck(entity.Idx), tr));
-        }
-        private void OnDataObjectInvisible(ProxyTransform tr)
-        {
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
-                !m_ObjectEntities.ContainsKey(eCheckHash))
+            EntityTransformModule transformModule = GetModule<EntityTransformModule>();
+            if (!transformModule.HasEntity(in tr))
             {
-                //CoreSystem.Logger.LogError(Channel.Entity,
-                //    $"Internal EntitySystem error. ProxyTransform({tr.prefab.GetObjectSetting().Name}) doesn\'t have entity.");
                 return;
             }
 
-            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = transformModule.GetEntity(in tr);
+
+            //ObjectBase entity = GetEntityByTransform(tr);
+            //if (entity == null) return;
+
+            m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
+                Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
+        }
+        private void OnDataObjectInvisible(ProxyTransform tr)
+        {
+            EntityTransformModule transformModule = GetModule<EntityTransformModule>();
+            if (!transformModule.HasEntity(in tr))
+            {
+                return;
+            }
+            //if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
+            //    !m_ObjectEntities.ContainsKey(eCheckHash))
+            //{
+            //    //CoreSystem.Logger.LogError(Channel.Entity,
+            //    //    $"Internal EntitySystem error. ProxyTransform({tr.prefab.GetObjectSetting().Name}) doesn\'t have entity.");
+            //    return;
+            //}
+
+            //InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = transformModule.GetEntity(in tr);
 
             m_EventSystem.PostEvent<OnEntityVisibleEvent>(OnEntityVisibleEvent.GetEvent(
                 Entity<IEntity>.GetEntityWithoutCheck(entityHash), tr));
         }
         private void M_ProxySystem_OnDataObjectProxyCreated(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
-#if DEBUG_MODE
-            if (!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||
-                !m_ObjectEntities.ContainsKey(eCheckHash))
+            EntityTransformModule transformModule = GetModule<EntityTransformModule>();
+//#if DEBUG_MODE
+            if (/*!m_EntityGameObjects.TryGetValue(tr.m_Hash, out InstanceID eCheckHash) ||*/
+                /*!m_ObjectEntities.ContainsKey(eCheckHash)*/
+                !transformModule.HasEntity(in tr))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"Internal EntitySystem error. ProxyTransform doesn\'t have entity.");
                 return;
             }
-#endif
-            InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+//#endif
+            //InstanceID entityHash = m_EntityGameObjects[tr.m_Hash];
+            InstanceID entityHash = transformModule.GetEntity(in tr);
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
-            monoObj.m_Entity = Entity<IEntity>.GetEntity(entity.Idx);
+            monoObj.m_Entity = Entity<IEntity>.GetEntityWithoutCheck(in entityHash);
             EntityProcessorModule.ProcessEntityOnProxyCreated(GetModule<EntityProcessorModule>(), entity, monoObj);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
         {
-            if (!m_EntityGameObjects.ContainsKey(tr.m_Hash))
+            //if (!m_EntityGameObjects.ContainsKey(tr.m_Hash))
+            //{
+            //    "?? error".ToLogError();
+            //    return;
+            //}
+            EntityTransformModule transformModule = GetModule<EntityTransformModule>();
+            if (!transformModule.HasEntity(in tr))
             {
-                "?? error".ToLogError();
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"Internal EntitySystem error. ProxyTransform({tr.prefab}) doesn\'t have entity.");
                 return;
             }
 
-            if (!m_ObjectEntities.TryGetValue(m_EntityGameObjects[tr.m_Hash], out ObjectBase objectBase))
+            InstanceID entityHash = transformModule.GetEntity(in tr);
+            //if (!m_ObjectEntities.TryGetValue(m_EntityGameObjects[tr.m_Hash], out ObjectBase objectBase))
+            if (!m_ObjectEntities.TryGetValue(entityHash, out ObjectBase objectBase))
             {
                 // Intended.
 
@@ -414,8 +419,9 @@ namespace Syadeu.Presentation
                     return Entity<IEntity>.Empty;
                 }
 
-                ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
-                Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, quaternion.identity, 1);
 
                 return entity;
             }
@@ -437,8 +443,9 @@ namespace Syadeu.Presentation
                     return Entity<IEntity>.Empty;
                 }
 
-                ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
-                Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, quaternion.identity, 1);
 
                 return entity;
             }
@@ -462,8 +469,9 @@ namespace Syadeu.Presentation
                     return Entity<IEntity>.Empty;
                 }
 
-                ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
-                Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, in rotation, in localSize);
 
                 return entity;
             }
@@ -487,8 +495,9 @@ namespace Syadeu.Presentation
                     return Entity<IEntity>.Empty;
                 }
 
-                ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
-                Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, in rotation, in localSize);
 
                 return entity;
             }
@@ -532,26 +541,31 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-        private ProxyTransform InternalCreateProxy(in EntityBase from,
-            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
-        {
-#if DEBUG_MODE
-            if (!prefab.IsNone() && !prefab.IsValid())
-            {
-                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                    $"{from.Name} has an invalid prefab. This is not allowed.");
-            }
-#endif
-            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size, from.StaticBatching);
-        }
-        private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in ProxyTransform obj)
+//        private ProxyTransform InternalCreateProxy(in EntityBase from,
+//            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
+//        {
+//#if DEBUG_MODE
+//            if (!prefab.IsNone() && !prefab.IsValid())
+//            {
+//                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
+//                    $"{from.Name} has an invalid prefab. This is not allowed.");
+//            }
+//#endif
+//            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size, from.StaticBatching);
+//        }
+        private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in float3 position, in quaternion rotation, in float3 localSize)
         {
             EntityBase entity = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityBase>(entityBase);
             
-            entity.transform = obj;
+            //entity.transform = obj;
 
             m_ObjectEntities.Add(entity.Idx, entity);
-            m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
+            //m_EntityGameObjects.Add(obj.m_Hash, entity.Idx);
+            GetModule<EntityTransformModule>()
+                .CreateTransform(
+                entity.Idx, entityBase.Prefab, 
+                in position, in rotation, in localSize, 
+                in entityBase.m_EnableCull, entityBase.Center, entityBase.Size, entityBase.StaticBatching);
 
             GetModule<EntityProcessorModule>().ProceessOnCreated(entity);
             return Entity<IEntity>.GetEntity(entity.Idx);
@@ -957,9 +971,16 @@ namespace Syadeu.Presentation
         }
         public ObjectBase GetEntityByTransform(ProxyTransform tr)
         {
-            if (m_EntityGameObjects.TryGetValue(tr.m_Hash, out var value))
+            //if (m_EntityGameObjects.TryGetValue(tr.m_Hash, out var value))
+            //{
+            //    return GetEntityByID(value);
+            //}
+
+            EntityTransformModule transformModule = GetModule<EntityTransformModule>();
+            if (transformModule.HasEntity(in tr))
             {
-                return GetEntityByID(value);
+                InstanceID entityHash = transformModule.GetEntity(in tr);
+                return GetEntityByID(entityHash);
             }
 
             return null;
@@ -968,6 +989,7 @@ namespace Syadeu.Presentation
 
         #region Experiments
 
+        [Obsolete("", true)]
         /// <summary>
         /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
         /// </summary>

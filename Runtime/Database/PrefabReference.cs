@@ -15,6 +15,7 @@
 using Syadeu.Mono;
 using System;
 using System.Runtime.InteropServices;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -65,7 +66,15 @@ namespace Syadeu.Collections
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
         public bool IsNone() => Equals(None) || Equals(Invalid);
+        [NotBurstCompatible]
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        [NotBurstCompatible]
+        public override string ToString()
+        {
+            if (IsNone() || !IsValid()) return "Prefab(Invalid)";
+
+            return $"Prefab({m_Idx}: {(Asset == null ? "NotLoaded" : Asset.name)})";
+        }
 
         public static PrefabReference Find(string name)
         {
@@ -167,6 +176,12 @@ namespace Syadeu.Collections
 
         public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        public override string ToString()
+        {
+            if (IsNone() || !IsValid()) return "Prefab(Invalid)";
+
+            return $"Prefab({m_Idx}: {Asset.name})";
+        }
 
         public static PrefabReference<T> Find(string name)
         {

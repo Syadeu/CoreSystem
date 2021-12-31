@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Entities
                 FXEntity fx = m_FXEntity.GetObject();
                 //fx.SetPlayOptions(m_PlayOption);
 
-                ITransform tr = fx.transform;
+                ITransform tr = fx.GetTransform();
 
                 TRS trs = TRS.Project(new TRS(Parent));
                 tr.position = trs.m_Position;

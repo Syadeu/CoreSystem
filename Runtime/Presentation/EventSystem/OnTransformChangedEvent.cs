@@ -49,10 +49,10 @@ namespace Syadeu.Presentation.Events
                 }
                 else temp.entity = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
             }
-            else if (tr is UnityTransform unityTr)
-            {
-                temp.entity = unityTr.entity;
-            }
+            //else if (tr is UnityTransform unityTr)
+            //{
+            //    temp.entity = unityTr.entity;
+            //}
             else throw new NotImplementedException();
 
             temp.transform = tr;

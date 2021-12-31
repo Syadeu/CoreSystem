@@ -98,11 +98,8 @@ namespace Syadeu.Presentation.Render
         {
             if (!arg2.Equals(TypeHelper.TypeOf<ShapesComponent>.Type)) return;
 
-            if (!id.IsEntity<IEntity>())
-            {
-                ref ShapesComponent com = ref m_ComponentSystem.GetComponent<ShapesComponent>(id);
-                com.m_Transform.Destroy();
-            }
+            ref ShapesComponent com = ref m_ComponentSystem.GetComponent<ShapesComponent>(id);
+            com.m_Transform.Destroy();
         }
 
         private void Bind(RenderSystem other)
