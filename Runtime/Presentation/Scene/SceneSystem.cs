@@ -194,9 +194,16 @@ namespace Syadeu.Presentation
             return base.OnInitialize();
 
             #region Setups
-            void SetupMasterScene()
+            bool SetupMasterScene()
             {
-                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene)) throw new Exception("master scene is empty");
+                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene))
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"You\'re trying to start the game while MasterScene is not setted. " +
+                        $"This is not allowed. Forcing to debug.");
+
+                    return false;
+                }
 
                 Scene temp = SceneManager.GetActiveScene();
                 string masterSceneName = Path.GetFileNameWithoutExtension(SceneList.Instance.MasterScene.ScenePath);
@@ -206,8 +213,13 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    throw new Exception("not master scene");
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"You\'re trying to start the game outside of MasterScene while Debug mode is true. " +
+                        $"This is not allowed.");
+                    return false;
                 }
+
+                return true;
             }
             void SetupLoadingScene()
             {

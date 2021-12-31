@@ -156,12 +156,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
             public bool MoveNext()
             {
                 while (m_Index < m_Buffer.Length &&
-                        Current.Equals(default(TValue)))
+                        Current.IsEmpty())
                 {
                     m_Index++;
                 }
 
-                if (Current.Equals(default(TValue))) return false;
+                if (Current.IsEmpty()) return false;
                 return true;
             }
 
