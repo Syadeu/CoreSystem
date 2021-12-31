@@ -22,6 +22,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
+    // https://github.com/Eothaun/DOTS-Playground/blob/master/Assets/Articles/CustomNativeContainer/NativeValue.cs
     [BurstCompatible, Obsolete("", true)]
     public struct UnsafeStrideAllocator<T> : IDisposable, IEquatable<UnsafeStrideAllocator<T>>
         where T : unmanaged
