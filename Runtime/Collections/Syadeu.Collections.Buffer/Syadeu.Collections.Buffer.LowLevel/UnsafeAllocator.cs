@@ -20,6 +20,8 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine.UIElements;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -92,6 +94,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
+        public void Write<T>(T item) where T : unmanaged
+        {
+            unsafe
+            {
+                byte* bytes = UnsafeBufferUtility.AsBytes(ref item, out int length);
+                UnsafeUtility.MemCpy(m_Ptr.Ptr, bytes, length);
+            }
+        }
+        public unsafe void Write(byte* bytes, int length)
+        {
+            UnsafeUtility.MemCpy(m_Ptr.Ptr, bytes, length);
+        }
+
         public void Dispose()
         {
             unsafe
@@ -104,7 +119,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator other) => m_Ptr.Equals(other.m_Ptr);
 
-        [BurstCompatible]
+        [BurstCompatible, NativeContainerIsReadOnly]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference m_Ptr;
@@ -117,6 +132,89 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 m_Ptr = allocator.m_Ptr;
                 m_Size = allocator.m_Size;
+            }
+        }
+    }
+    [BurstCompatible, Obsolete("", true)]
+    public struct UnsafeStrideAllocator<T> : IDisposable, IEquatable<UnsafeStrideAllocator<T>>
+        where T : unmanaged
+    {
+        private UnsafeAllocator m_Allocator;
+        private readonly int m_StrideSize, m_ThreadBlockSize;
+
+        public UnsafeReference<T> Ptr => m_Allocator.Ptr;
+        public bool Created => m_Allocator.Created;
+
+        public UnsafeStrideAllocator(
+            in int stride, 
+            in int length, Allocator allocator, 
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        {
+            int size = UnsafeUtility.SizeOf<T>();
+            m_StrideSize = JobsUtility.CacheLineSize;
+            m_ThreadBlockSize = size * stride;
+
+            int totalSize = m_ThreadBlockSize * length * JobsUtility.MaxJobThreadCount;
+
+            m_Allocator 
+                = new UnsafeAllocator(totalSize, UnsafeUtility.AlignOf<T>(), allocator, options);
+        }
+        private UnsafeReference<T> ElementAt(in int index, in int threadID)
+        {
+            UnsafeReference<T> element = Ptr + (index * m_StrideSize);
+            element += m_ThreadBlockSize * threadID;
+
+            return element;
+        }
+
+        public T ReadElement(int index, int threadID = 0)
+        {
+            UnsafeReference<T> element = ElementAt(in index, in threadID);
+
+            for (int i = 1; i < m_StrideSize; i++)
+            {
+                var target = element + i;
+
+
+            }
+
+            return element.Value;
+        }
+        public void WriteElement(int index, T value, int threadID = 0)
+        {
+            UnsafeReference<T> element = ElementAt(in index, in threadID);
+
+            element.Value = value;
+        }
+
+        public void Dispose()
+        {
+            m_Allocator.Dispose();
+        }
+
+        public bool Equals(UnsafeStrideAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
+
+        [BurstCompatible]
+        public struct ParallelWriter
+        {
+            internal UnsafeReference<T> m_Buffer;
+            internal int m_StrideSize, m_ThreadBlockSize;
+            [NativeSetThreadIndex]
+            internal int m_ThreadID;
+
+            private UnsafeReference<T> ElementAt(in int index, in int threadID)
+            {
+                UnsafeReference<T> element = m_Buffer + (index * m_StrideSize);
+                element += m_ThreadBlockSize * threadID;
+
+                return element;
+            }
+
+            public void WriteElement(int index, T value)
+            {
+                var element = ElementAt(in index, m_ThreadID);
+
+                element.Value = value;
             }
         }
     }
@@ -190,7 +288,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
 
-        [BurstCompatible]
+        [BurstCompatible, NativeContainerIsReadOnly]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference<T>.ReadOnly m_Ptr;

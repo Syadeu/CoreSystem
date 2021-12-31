@@ -20,6 +20,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -135,7 +137,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Buffer.Dispose();
         }
 
-        [BurstCompatible]
+        [BurstCompatible, NativeContainerIsReadOnly]
         public struct Enumerator : IEnumerator<KeyValue<TKey, TValue>>
         {
             private UnsafeAllocator<KeyValue<TKey, TValue>>.ReadOnly m_Buffer;
