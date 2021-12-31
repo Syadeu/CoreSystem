@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,25 +24,18 @@ using Unity.Collections;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
-    /// <summary>
-    /// 리니어 해시 알고리즘을 사용하는 해시맵입니다.
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
-    [BurstCompatible]
-    public struct UnsafeLinearHashMap<TKey, TValue> :   
-        IEquatable<UnsafeLinearHashMap<TKey, TValue>>, IDisposable, 
-        IEnumerable<KeyValue<TKey, TValue>>
+    public struct UnsafeLinearPtrHashMap<TKey, TValue> :
+        IEquatable<UnsafeLinearPtrHashMap<TKey, TValue>>, IDisposable, IEnumerable<KeyValuePtr<TKey, TValue>>
 
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         private readonly int m_InitialCount;
-        private UnsafeAllocator<KeyValue<TKey, TValue>> m_Buffer;
+        private UnsafeAllocator<KeyValuePtr<TKey, TValue>> m_Buffer;
         private int m_Count;
         private bool m_Created;
-        
-        public ref TValue this[TKey key]
+
+        public UnsafeReference<TValue> this[TKey key]
         {
             get
             {
@@ -50,31 +44,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
                     throw new ArgumentOutOfRangeException();
                 }
 
-                UnsafeReference<KeyValue<TKey, TValue>> ptr = m_Buffer.ElementAt(in index);
-                unsafe
-                {
-                    return ref ptr.Ptr->value;
-                }
+                UnsafeReference<KeyValuePtr<TKey, TValue>> ptr = m_Buffer.ElementAt(in index);
+                return (UnsafeReference<TValue>)ptr.Value.value;
             }
         }
-        public UnsafeAllocator<KeyValue<TKey, TValue>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
-        /// <summary>
-        /// 이 해시맵이 생성되었나요?
-        /// </summary>
+        public UnsafeAllocator<KeyValuePtr<TKey, TValue>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
         public bool Created => m_Created;
-        /// <summary>
-        /// 이 해시맵의 현재 최대 크기를 반환합니다.
-        /// </summary>
         public int Capacity => m_Buffer.Length;
-        /// <summary>
-        /// 이 해시맵이 가진 아이템의 갯수를 반환합니다.
-        /// </summary>
         public int Count => m_Count;
 
-        public UnsafeLinearHashMap(int initialCount, Allocator allocator)
+        public UnsafeLinearPtrHashMap(int initialCount, Allocator allocator)
         {
             m_InitialCount = initialCount;
-            m_Buffer = new UnsafeAllocator<KeyValue<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
+            m_Buffer = new UnsafeAllocator<KeyValuePtr<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
             m_Count = 0;
             m_Created = true;
         }
@@ -100,7 +82,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool ContainsKey(TKey key) => TryFindIndexFor(key, out _);
 
-        public void Add(TKey key, TValue value)
+        public void Add(TKey key, UnsafeReference<TValue> value)
         {
             if (!TryFindIndexFor(key, out int index))
             {
@@ -112,7 +94,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return;
             }
 
-            m_Buffer[index] = new KeyValue<TKey, TValue>(key, value);
+            m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);
             m_Count++;
         }
         public bool Remove(TKey key)
@@ -122,13 +104,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return false;
             }
 
-            m_Buffer[index] = default(KeyValue<TKey, TValue>);
+            m_Buffer[index] = default(KeyValuePtr<TKey, TValue>);
             m_Count--;
 
             return true;
         }
 
-        public bool Equals(UnsafeLinearHashMap<TKey, TValue> other) => m_Buffer.Equals(other.m_Buffer);
+        public bool Equals(UnsafeLinearPtrHashMap<TKey, TValue> other) => m_Buffer.Equals(other.m_Buffer);
 
         public void Dispose()
         {
@@ -136,16 +118,16 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         [BurstCompatible]
-        public struct Enumerator : IEnumerator<KeyValue<TKey, TValue>>
+        public struct Enumerator : IEnumerator<KeyValuePtr<TKey, TValue>>
         {
-            private UnsafeAllocator<KeyValue<TKey, TValue>>.ReadOnly m_Buffer;
+            private UnsafeAllocator<KeyValuePtr<TKey, TValue>>.ReadOnly m_Buffer;
             private int m_Index;
 
-            public KeyValue<TKey, TValue> Current => m_Buffer[m_Index];
+            public KeyValuePtr<TKey, TValue> Current => m_Buffer[m_Index];
             [NotBurstCompatible]
             object IEnumerator.Current => m_Buffer[m_Index];
 
-            internal Enumerator(UnsafeLinearHashMap<TKey, TValue> hashMap)
+            internal Enumerator(UnsafeLinearPtrHashMap<TKey, TValue> hashMap)
             {
                 m_Buffer = hashMap.Buffer;
                 m_Index = 0;
@@ -173,7 +155,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
-        public IEnumerator<KeyValue<TKey, TValue>> GetEnumerator() => new Enumerator(this);
+        public IEnumerator<KeyValuePtr<TKey, TValue>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
     }
 }
