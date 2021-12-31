@@ -25,7 +25,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
     public struct UnsafeLinearHashMap<TKey, TValue> 
-        : IEquatable<UnsafeLinearHashMap<TKey,TValue>>, IDisposable, IEnumerable<TValue>
+        :   IEquatable<UnsafeLinearHashMap<TKey,TValue>>, IDisposable, 
+            IEnumerable<TValue>
 
         where TKey : unmanaged
         where TValue : unmanaged, IEquatable<TValue>
