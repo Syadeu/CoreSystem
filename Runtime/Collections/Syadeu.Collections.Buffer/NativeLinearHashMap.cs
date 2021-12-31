@@ -28,13 +28,14 @@ namespace Syadeu.Collections.Buffer
 {
     [NativeContainer]
     public struct NativeLinearHashMap<TKey, TValue> : 
-        IEquatable<NativeLinearHashMap<TKey, TValue>>, IDisposable, IEnumerable<TValue>
+        IEquatable<NativeLinearHashMap<TKey, TValue>>, IDisposable, 
+        IEnumerable<KeyValue<TKey, TValue>>
 
-        where TKey : unmanaged
+        where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged, IEquatable<TValue>
     {
         private UnsafeLinearHashMap<TKey, TValue> m_HashMap;
-        private ThreadInfo m_Owner;
+        private readonly ThreadInfo m_Owner;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_SafetyHandle;
@@ -101,20 +102,24 @@ namespace Syadeu.Collections.Buffer
 
         [BurstCompatible]
         [NativeContainerIsReadOnly]
-        public struct Enumerator : IEnumerator<TValue>
+        public struct Enumerator : IEnumerator<KeyValue<TKey, TValue>>
         {
-            private UnsafeAllocator<TValue>.ReadOnly m_Buffer;
+            private readonly ThreadInfo m_Owner;
+
+            private UnsafeAllocator<KeyValue<TKey, TValue>>.ReadOnly m_Buffer;
             private int m_Index;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_SafetyHandle;
 #endif
 
-            public TValue Current => m_Buffer[m_Index];
+            public KeyValue<TKey, TValue> Current => m_Buffer[m_Index];
             [NotBurstCompatible]
             object IEnumerator.Current => m_Buffer[m_Index];
 
             internal Enumerator(NativeLinearHashMap<TKey, TValue> hashMap)
             {
+                m_Owner = hashMap.m_Owner;
+
                 m_Buffer = hashMap.m_HashMap.Buffer;
                 m_Index = 0;
 
@@ -127,6 +132,8 @@ namespace Syadeu.Collections.Buffer
             public bool MoveNext()
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+                m_Owner.ValidateAndThrow();
+
                 AtomicSafetyHandle.CheckExistsAndThrow(m_SafetyHandle);
                 AtomicSafetyHandle.CheckReadAndThrow(m_SafetyHandle);
 #endif
@@ -150,7 +157,23 @@ namespace Syadeu.Collections.Buffer
             }
         }
 
-        public IEnumerator<TValue> GetEnumerator() => new Enumerator(this);
+        public IEnumerator<KeyValue<TKey, TValue>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+    }
+
+    public struct KeyValue<TKey, TValue> : IEquatable<KeyValue<TKey, TValue>>
+        where TKey : unmanaged, IEquatable<TKey>
+        where TValue : unmanaged, IEquatable<TValue>
+    {
+        public readonly TKey key;
+        public TValue value;
+
+        public KeyValue(TKey key, TValue value)
+        {
+            this.key = key;
+            this.value = value;
+        }
+
+        public bool Equals(KeyValue<TKey, TValue> other) => key.Equals(other.key) && value.Equals(other.value);
     }
 }

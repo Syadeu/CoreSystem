@@ -172,6 +172,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         public void Clear() => m_Allocator.Clear();
 
+        public UnsafeReference<T> ElementAt(in int index)
+        {
+#if DEBUG_MODE
+            if (index < 0 || index >= Length)
+            {
+                throw new IndexOutOfRangeException();
+            }
+#endif
+            return Ptr + index;
+        }
+
         public void Dispose()
         {
             m_Allocator.Dispose();
