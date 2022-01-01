@@ -18,6 +18,7 @@
 
 
 using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -86,12 +87,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             if (!TryFindIndexFor(key, out int index))
             {
-                int targetIncrement = Capacity / m_InitialCount + 1;
+                throw new ArgumentOutOfRangeException();
+                //int targetIncrement = Capacity / m_InitialCount + 1;
 
-                m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
+                //m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
 
-                Add(key, value);
-                return;
+                //Add(key, value);
+                //return;
             }
 
             m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);

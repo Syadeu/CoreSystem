@@ -440,8 +440,10 @@ namespace Syadeu.Presentation.Components
             using (s_AddComponentMarker.Auto())
             {
                 int2 index = GetIndex(in type, in entity);
+                Collections.Buffer.NativeReference<ComponentBuffer> buffer
+                    = new Collections.Buffer.NativeReference<ComponentBuffer>(m_ComponentArrayBuffer, index.x);
 #if DEBUG_MODE
-                if (!m_ComponentArrayBuffer[index.x].IsCreated)
+                if (!buffer.Value.IsCreated)
                 {
                     CoreSystem.Logger.LogError(Channel.Component,
                         $"Component buffer error. " +
@@ -450,14 +452,12 @@ namespace Syadeu.Presentation.Components
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
 #endif
-                if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y) &&
-                    !m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
+                if (!buffer.Value.Find(in entity, ref index.y) &&
+                    !buffer.Value.FindEmpty(ref index.y))
                 {
-                    ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
-                    boxed.Increment();
-                    m_ComponentArrayBuffer[index.x] = boxed;
+                    buffer.Value.Increment();
 
-                    if (!m_ComponentArrayBuffer[index.x].FindEmpty(entity, ref index.y))
+                    if (!buffer.Value.FindEmpty(ref index.y))
                     {
                         CoreSystem.Logger.LogError(Channel.Component,
                             $"Component buffer error. " +
@@ -467,8 +467,8 @@ namespace Syadeu.Presentation.Components
                     }
                 }
 
-                m_ComponentArrayBuffer[index.x].SetElementAt(index.y, in entity);
-                m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
+                buffer.Value.SetElementAt(index.y, in entity);
+                m_ComponentHashMap.Add(buffer.Value.TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, type);
 
@@ -484,8 +484,10 @@ namespace Syadeu.Presentation.Components
             using (s_AddComponentMarker.Auto())
             {
                 int2 index = GetIndex(in type, in entity);
+                Collections.Buffer.NativeReference<ComponentBuffer> buffer
+                    = new Collections.Buffer.NativeReference<ComponentBuffer>(m_ComponentArrayBuffer, index.x);
 #if DEBUG_MODE
-                if (!m_ComponentArrayBuffer[index.x].IsCreated)
+                if (!buffer.Value.IsCreated)
                 {
                     CoreSystem.Logger.LogError(Channel.Component,
                         $"Component buffer error. " +
@@ -494,14 +496,14 @@ namespace Syadeu.Presentation.Components
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
 #endif
-                if (!m_ComponentArrayBuffer[index.x].Find(in entity, ref index.y) &&
-                    !m_ComponentArrayBuffer[index.x].FindEmpty(in entity, ref index.y))
+                if (!buffer.Value.Find(in entity, ref index.y) &&
+                    !buffer.Value.FindEmpty(ref index.y))
                 {
                     ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
                     boxed.Increment();
                     m_ComponentArrayBuffer[index.x] = boxed;
 
-                    if (!m_ComponentArrayBuffer[index.x].FindEmpty(in entity, ref index.y))
+                    if (!buffer.Value.FindEmpty(ref index.y))
                     {
                         CoreSystem.Logger.LogError(Channel.Component,
                             $"Component buffer error. " +
@@ -527,11 +529,10 @@ namespace Syadeu.Presentation.Components
             using (s_AddComponentMarker.Auto())
             {
                 int2 index = GetIndex<TComponent>(entity);
-                ComponentBuffer* buffer
-                    = (ComponentBuffer*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(m_ComponentArrayBuffer);
-                buffer += index.x;
+                Collections.Buffer.NativeReference<ComponentBuffer> buffer
+                    = new Collections.Buffer.NativeReference<ComponentBuffer>(m_ComponentArrayBuffer, index.x);
 #if DEBUG_MODE
-                if (!buffer->IsCreated)
+                if (!buffer.Value.IsCreated)
                 {
                     CoreSystem.Logger.LogError(Channel.Component,
                         $"Component buffer error. " +
@@ -540,14 +541,12 @@ namespace Syadeu.Presentation.Components
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
 #endif
-                if (!buffer->Find(entity, ref index.y) &&
-                    !buffer->FindEmpty(entity, ref index.y))
+                if (!buffer.Value.Find(in entity, ref index.y) &&
+                    !buffer.Value.FindEmpty(ref index.y))
                 {
-                    //ComponentBuffer boxed = m_ComponentArrayBuffer[index.x];
-                    buffer->Increment();
-                    //m_ComponentArrayBuffer[index.x] = boxed;
-
-                    if (!buffer->FindEmpty(entity, ref index.y))
+                    buffer.Value.Increment();
+                    
+                    if (!buffer.Value.FindEmpty(ref index.y))
                     {
                         CoreSystem.Logger.LogError(Channel.Component,
                             $"Component buffer error. " +
@@ -557,15 +556,15 @@ namespace Syadeu.Presentation.Components
                     }
                 }
 
-                buffer->SetElementAt(index.y, entity);
-                m_ComponentHashMap.Add(buffer->TypeInfo.GetHashCode(), index.y);
+                buffer.Value.SetElementAt(index.y, entity);
+                m_ComponentHashMap.Add(buffer.Value.TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, TypeHelper.TypeOf<TComponent>.Type);
 
                 CoreSystem.Logger.Log(Channel.Component,
                     $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Hash}), index {index}");
 
-                return ref *buffer->ElementAtPointer<TComponent>(in index.y);
+                return ref *buffer.Value.ElementAtPointer<TComponent>(in index.y);
             }
         }
         public void AddNotifiedComponents(IObject obj, Action<InstanceID, Type> onAdd = null)
@@ -715,8 +714,8 @@ namespace Syadeu.Presentation.Components
 
                 IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
-                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent* p);
-                return ref *p;
+                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out var p);
+                return ref p.Value;
             }
         }
         public TComponent GetComponentReadOnly<TComponent>(in InstanceID entity)
@@ -743,9 +742,9 @@ namespace Syadeu.Presentation.Components
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
                 }
 
-                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent p);
+                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out var p);
 
-                return p;
+                return p.Value;
             }
         }
         public TComponent* GetComponentPointer<TComponent>(in InstanceID entity) 
@@ -773,9 +772,9 @@ namespace Syadeu.Presentation.Components
                 }
 
                 s_GetComponentPointerMarker.End();
-                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out TComponent* p);
+                m_ComponentArrayBuffer[index.x].ElementAt<TComponent>(index.y, out _, out var p);
 
-                return p;
+                return p.Ptr;
             }
         }
 

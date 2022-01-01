@@ -40,13 +40,13 @@ namespace Syadeu.Presentation.Components
         private int m_Length;
         private int m_Increased;
 
-        [NativeDisableUnsafePtrRestriction] private InstanceID* m_EntityBuffer;
-        [NativeDisableUnsafePtrRestriction] private void* m_ComponentBuffer;
+        private UnsafeAllocator<InstanceID> m_EntityBuffer;
+        private UnsafeAllocator m_ComponentBuffer;
 
         internal UnsafeReference<EntityComponentBuffer> m_ECB;
 
         public TypeInfo TypeInfo => m_ComponentTypeInfo;
-        public bool IsCreated => m_ComponentBuffer != null;
+        public bool IsCreated => m_ComponentBuffer.IsCreated;
         public int Length => m_Length;
 
         public void Initialize(in EntityComponentBuffer* ecb, in TypeInfo typeInfo)
@@ -55,22 +55,24 @@ namespace Syadeu.Presentation.Components
 
             int
                 //occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
-                idxSize = UnsafeUtility.SizeOf<InstanceID>() * c_InitialCount,
+                //idxSize = UnsafeUtility.SizeOf<InstanceID>() * c_InitialCount,
                 bufferSize = typeInfo.Size * c_InitialCount;
-            void*
-                //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
-                idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-                buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
+            m_EntityBuffer = new UnsafeAllocator<InstanceID>(c_InitialCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            m_ComponentBuffer = new UnsafeAllocator(bufferSize, typeInfo.Align, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            //void*
+            //    //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
+            //    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
+            //    buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
 
             //UnsafeUtility.MemClear(occBuffer, occSize);
             // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
-            UnsafeUtility.MemClear(idxBuffer, idxSize);
-            UnsafeUtility.MemClear(buffer, bufferSize);
+            //UnsafeUtility.MemClear(idxBuffer, idxSize);
+            //UnsafeUtility.MemClear(buffer, bufferSize);
 
             this.m_ComponentTypeInfo = typeInfo;
-            //this.m_OccupiedBuffer = (bool*)occBuffer;
-            this.m_EntityBuffer = (InstanceID*)idxBuffer;
-            this.m_ComponentBuffer = buffer;
+            ////this.m_OccupiedBuffer = (bool*)occBuffer;
+            //this.m_EntityBuffer = (InstanceID*)idxBuffer;
+            //this.m_ComponentBuffer = buffer;
             this.m_Length = c_InitialCount;
             m_Increased = 1;
 
@@ -96,15 +98,15 @@ namespace Syadeu.Presentation.Components
             UnsafeUtility.MemClear(idxBuffer, idxSize);
             UnsafeUtility.MemClear(buffer, bufferSize);
 
-            UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
-            UnsafeUtility.MemCpy(buffer, m_ComponentBuffer, TypeInfo.Size * m_Length);
+            UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer.Ptr, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
+            UnsafeUtility.MemCpy(buffer, m_ComponentBuffer.Ptr, TypeInfo.Size * m_Length);
 
-            UnsafeUtility.Free(this.m_EntityBuffer, Allocator.Persistent);
-            UnsafeUtility.Free(this.m_ComponentBuffer, Allocator.Persistent);
+            m_EntityBuffer.Dispose();
+            m_ComponentBuffer.Dispose();
 
-            this.m_EntityBuffer = (InstanceID*)idxBuffer;
-            this.m_ComponentBuffer = buffer;
-
+            m_EntityBuffer = new UnsafeAllocator<InstanceID>((InstanceID*)idxBuffer, count, Allocator.Persistent);
+            m_ComponentBuffer = new UnsafeAllocator(buffer, bufferSize, Allocator.Persistent);
+            
             m_Increased += 1;
             m_Length = c_InitialCount * m_Increased;
 
@@ -117,12 +119,6 @@ namespace Syadeu.Presentation.Components
             {
                 return false;
             }
-
-            //int index = entityIndex;
-            //for (int i = 0; i < m_Increased && m_EntityBuffer[index].IsEmpty() && !m_EntityBuffer[index].Equals(entity); i++)
-            //{
-            //    index = (c_InitialCount * i) + entityIndex;
-            //}
 
             for (int i = 0; i < m_Increased; i++)
             {
@@ -138,7 +134,7 @@ namespace Syadeu.Presentation.Components
 
             return false;
         }
-        public bool FindEmpty(in InstanceID entity, ref int entityIndex)
+        public bool FindEmpty(ref int entityIndex)
         {
             if (m_Length == 0)
             {
@@ -169,36 +165,20 @@ namespace Syadeu.Presentation.Components
         public ref TComponent ElementAt<TComponent>(in int i)
             where TComponent : unmanaged, IEntityComponent
         {
-            return ref *(((TComponent*)m_ComponentBuffer) + i);
+            return ref ((UnsafeAllocator<TComponent>)m_ComponentBuffer).ElementAt(i).Value;
         }
         public TComponent* ElementAtPointer<TComponent>(in int i)
             where TComponent : unmanaged, IEntityComponent
         {
-            return ((TComponent*)m_ComponentBuffer) + i;
+            return ((UnsafeAllocator<TComponent>)m_ComponentBuffer).ElementAt(i).Ptr;
         }
         public ref TComponent ElementAt<TComponent>(in int i, out InstanceID entity)
             where TComponent : unmanaged, IEntityComponent
         {
             entity = m_EntityBuffer[i];
-            return ref ((TComponent*)m_ComponentBuffer)[i];
+            return ref ((UnsafeAllocator<TComponent>)m_ComponentBuffer).ElementAt(i).Value;
         }
-        public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent component)
-            where TComponent : unmanaged, IEntityComponent
-        {
-//#if DEBUG_MODE
-//            if (!TypeHelper.TypeOf<TComponent>.Type.Equals(TypeInfo.Type))
-//            {
-//                UnityEngine.Debug.LogError(
-//                    $"Trying to access component with an invalid type({TypeHelper.TypeOf<TComponent>.ToString()}). " +
-//                    $"This buffer type is {TypeHelper.ToString(TypeInfo.Type)}.");
-
-//                throw new InvalidOperationException($"Component buffer error. See Error Log.");
-//            }
-//#endif
-            entity = m_EntityBuffer[i];
-            component = ((TComponent*)m_ComponentBuffer)[i];
-        }
-        public void ElementAt<TComponent>(int i, out InstanceID entity, out TComponent* component)
+        public void ElementAt<TComponent>(int i, out InstanceID entity, out UnsafeReference<TComponent> component)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
@@ -212,13 +192,14 @@ namespace Syadeu.Presentation.Components
             }
 #endif
             entity = m_EntityBuffer[i];
-            component = ((TComponent*)m_ComponentBuffer) + i;
+            component = ((UnsafeAllocator<TComponent>)m_ComponentBuffer).ElementAt(i);
         }
         public IntPtr ElementAt(in int i)
         {
-            IntPtr p = (IntPtr)m_ComponentBuffer;
-            // Align 은 필요없음.
-            return IntPtr.Add(p, TypeInfo.Size * i);
+            //IntPtr p = (IntPtr)m_ComponentBuffer;
+            //// Align 은 필요없음.
+            //return IntPtr.Add(p, TypeInfo.Size * i);
+            return (m_ComponentBuffer.Ptr + (TypeInfo.Size * i)).IntPtr;
         }
 
         [BurstDiscard]
@@ -264,9 +245,10 @@ namespace Syadeu.Presentation.Components
                 = CLSTypedDictionary<UnsafeAtomicSafety>.GetValue(m_ComponentTypeInfo.Type);
 #endif
             //UnsafeUtility.Free(m_OccupiedBuffer, Allocator.Persistent);
-            UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
-            UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
-
+            //UnsafeUtility.Free(m_EntityBuffer, Allocator.Persistent);
+            //UnsafeUtility.Free(m_ComponentBuffer, Allocator.Persistent);
+            m_EntityBuffer.Dispose();
+            m_ComponentBuffer.Dispose();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             safety.Dispose();
 #endif

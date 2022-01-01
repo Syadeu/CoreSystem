@@ -32,10 +32,10 @@ namespace Syadeu.Presentation.Events
 
 #pragma warning disable IDE1006 // Naming Styles
         public Entity<IEntity> entity { get; private set; }
-        public ITransform transform { get; private set; }
+        public ProxyTransform transform { get; private set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-        public static OnTransformChangedEvent GetEvent(ITransform tr)
+        public static OnTransformChangedEvent GetEvent(ProxyTransform tr)
         {
             var temp = Dequeue();
 

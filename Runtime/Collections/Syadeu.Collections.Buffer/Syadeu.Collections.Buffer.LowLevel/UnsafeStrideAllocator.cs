@@ -30,8 +30,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
         private UnsafeAllocator m_Allocator;
         private readonly int m_Stride;
 
-        public UnsafeReference<T> Ptr => m_Allocator.Ptr;
-        public bool Created => m_Allocator.Created;
+        public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Allocator.Ptr;
+        public bool Created => m_Allocator.IsCreated;
 
         public UnsafeStrideAllocator(
             in int stride, 
