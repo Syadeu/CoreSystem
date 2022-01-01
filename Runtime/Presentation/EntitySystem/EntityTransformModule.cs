@@ -19,24 +19,40 @@
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer;
 using Syadeu.Presentation.Proxy;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
     internal sealed class EntityTransformModule : PresentationSystemModule<EntitySystem>
     {
-        private NativeHashMap<InstanceID, ProxyTransform> m_TransformHashMap;
-        private NativeHashMap<ProxyTransform, InstanceID> m_EntityHashMap;
+        private UnsafeHashMap<InstanceID, ProxyTransform> m_TransformHashMap;
+        private UnsafeHashMap<ProxyTransform, InstanceID> m_EntityHashMap;
 
         private GameObjectProxySystem m_ProxySystem;
 
         protected override void OnInitialize()
         {
-            m_TransformHashMap = new NativeHashMap<InstanceID, ProxyTransform>(10240, AllocatorManager.Persistent);
-            m_EntityHashMap = new NativeHashMap<ProxyTransform, InstanceID>(10240, AllocatorManager.Persistent);
+            m_TransformHashMap = new UnsafeHashMap<InstanceID, ProxyTransform>(10240, AllocatorManager.Persistent);
+            m_EntityHashMap = new UnsafeHashMap<ProxyTransform, InstanceID>(10240, AllocatorManager.Persistent);
+
+            ConstructSharedStatic();
 
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+        }
+        private unsafe void ConstructSharedStatic()
+        {
+            SharedStatic<EntityTransformStatic> shared = EntityTransformStatic.GetValue();
+
+            ref UntypedUnsafeHashMap trHashMap =
+                ref UnsafeUtility.As<UnsafeHashMap<InstanceID, ProxyTransform>, UntypedUnsafeHashMap>(ref m_TransformHashMap);
+            shared.Data.m_TransformHashMap = (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref trHashMap);
+
+            ref UntypedUnsafeHashMap entityHashMap =
+                ref UnsafeUtility.As<UnsafeHashMap<ProxyTransform, InstanceID>, UntypedUnsafeHashMap>(ref m_EntityHashMap);
+            shared.Data.m_EntityHashMap = (UntypedUnsafeHashMap*)UnsafeUtility.AddressOf(ref entityHashMap);
         }
         private void Bind(GameObjectProxySystem other)
         {

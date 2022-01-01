@@ -26,7 +26,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
-    [Serializable, StructLayout(LayoutKind.Sequential)]
+    [BurstCompatible, StructLayout(LayoutKind.Sequential)]
     /// <summary><inheritdoc cref="IEntity"/></summary>
     /// <remarks>
     /// 사용자가 <see cref="ObjectBase"/>를 좀 더 안전하게 접근할 수 있도록 랩핑하는 struct 입니다.<br/>
@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Entities
             get
             {
 #if DEBUG_MODE
-                if (IsEmpty() || Target == null)
+                if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
@@ -137,11 +137,16 @@ namespace Syadeu.Presentation.Entities
                     return ProxyTransform.Null;
                 }
 #endif
-                EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-                EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
-                if (transformModule.HasTransform(Idx))
+                //EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                //EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
+                //if (transformModule.HasTransform(Idx))
+                //{
+                //    return transformModule.GetTransform(Idx);
+                //}
+                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.GetValue().Data;
+                if (transformStatic.HasTransform(Idx))
                 {
-                    return transformModule.GetTransform(Idx);
+                    return transformStatic.GetTransform(Idx);
                 }
 
                 CoreSystem.Logger.Log(Channel.Entity,

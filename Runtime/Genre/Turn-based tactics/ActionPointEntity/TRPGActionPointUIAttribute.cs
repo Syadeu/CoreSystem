@@ -57,13 +57,13 @@ namespace Syadeu.Presentation.TurnTable
         private void ActorHitEventHandler(ActorHitEvent ev)
         {
             if (m_CurrentProxy == null) return;
-
-            ActorStatAttribute stat = ParentActor.GetAttribute<ActorStatAttribute>();
-            if (stat == null)
+            else if (!ParentActor.HasComponent<ActorStatComponent>())
             {
                 "no stat".ToLogError();
                 return;
             }
+
+            ActorStatComponent stat = ParentActor.GetComponent<ActorStatComponent>();
 
             int hp = (int)stat.HP;
 
