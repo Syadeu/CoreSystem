@@ -70,17 +70,20 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntity(t.Idx);
         }
 
-        public static Entity<T> As<T>(this Instance<T> t)
+        public static Reference<T> AsOriginal<T>(this Entity<T> t)
             where T : class, IObject
         {
-            return Entity<T>.GetEntity(t.Idx);
-        }
-        public static Instance<T> AsInstance<T>(this Entity<T> entity)
-            where T : class, IObject
-        {
-            return new Instance<T>(entity.Idx);
+            return new Reference<T>(t.Hash);
         }
 
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other)
+            where T : class, IObject
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<IObject> ins = system.CreateEntity(other);
+            return ins.ToEntity<T>();
+        }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, in float3 pos)
             where T : class, IObject
         {

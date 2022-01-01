@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 #endif
-            var temp = ctr.GetProvider<TRPGActorAttackProvider>().GetObject().GetTargetsWithin(m_DesireRange);
+            var temp = ctr.GetProvider<TRPGActorAttackProvider>().Target.GetTargetsWithin(m_DesireRange);
             //if (temp.Length > 0)
             //{
 

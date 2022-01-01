@@ -291,6 +291,11 @@ namespace Syadeu.Presentation.Grid
             return result;
         }
 
+        public void Add(int index, InstanceID entity)
+        {
+            m_Entries.Add(index, entity);
+        }
+
         public void Dispose()
         {
             m_Entries.Dispose();

@@ -21,6 +21,7 @@ namespace Syadeu.Collections
     /// Contains only instance
     /// </summary>
     /// <typeparam name="T"></typeparam>
+    [Obsolete("Use Entity<T>", true)]
     public struct Instance<T> : IInstance<T>, IEquatable<Instance<T>>
         where T : class, IObject
     {
@@ -66,7 +67,7 @@ namespace Syadeu.Collections
         public bool Equals(Instance<T> other) => m_Idx.Equals(other.m_Idx);
         public bool Equals(IInstance other) => m_Idx.Equals(other.Idx);
     }
-
+    [Obsolete("Use Entity<T>", true)]
     public struct Instance : IInstance, IEquatable<Instance>
     {
         public static readonly Instance Empty = new Instance(InstanceID.Empty);

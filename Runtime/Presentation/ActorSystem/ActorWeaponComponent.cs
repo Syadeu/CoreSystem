@@ -47,13 +47,13 @@ namespace Syadeu.Presentation.Actor
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
         public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
-        public Instance<ActorWeaponData> SelectedWeapon
+        public Entity<ActorWeaponData> SelectedWeapon
         {
             get
             {
                 if (m_EquipedWeapons.Length == 0 || m_SelectedWeaponIndex >= m_EquipedWeapons.Length)
                 {
-                    return Instance<ActorWeaponData>.Empty;
+                    return Entity<ActorWeaponData>.Empty;
                 }
 
                 return m_EquipedWeapons[m_SelectedWeaponIndex];
@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Actor
                     return m_DefaultWeapon.GetObject().Damage;
                 }
 
-                return EquipedWeapons[m_SelectedWeaponIndex].GetObject().Damage;
+                return EquipedWeapons[m_SelectedWeaponIndex].GetEntity<ActorWeaponData>().Target.Damage;
             }
         }
 
@@ -104,10 +104,10 @@ namespace Syadeu.Presentation.Actor
             m_SelectedWeaponIndex = index;
             m_OnWeaponSelected.Execute(m_Parent.ToEntity<IObject>());
         }
-        public bool IsEquipable(Instance<ActorWeaponData> weapon)
+        public bool IsEquipable(Entity<ActorWeaponData> weapon)
         {
             var original = weapon.AsOriginal();
-            var weaponObj = weapon.GetObject();
+            var weaponObj = weapon.Target;
 
             //ActorWeaponProvider provider = Provider;
 
@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Actor
         {
             for (int i = 0; i < m_EquipedWeapons.Length; i++)
             {
-                m_EquipedWeapons[i].Destroy();
+                m_EquipedWeapons[i].GetEntity().Destroy();
             }
             m_EquipedWeapons.Clear();
         }

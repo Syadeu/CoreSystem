@@ -108,10 +108,6 @@ namespace Syadeu.Presentation.Entities
         [Preserve]
         static void AOTCodeGeneration()
         {
-            AotHelper.EnsureType<Instance<FXEntity>>();
-            AotHelper.EnsureList<Instance<FXEntity>>();
-            AotHelper.EnsureType<InstanceArray<FXEntity>>();
-
             AotHelper.EnsureType<Reference<FXEntity>>();
             AotHelper.EnsureList<Reference<FXEntity>>();
             AotHelper.EnsureType<Entity<FXEntity>>();

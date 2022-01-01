@@ -62,10 +62,6 @@ namespace Syadeu.Presentation.Actor
         {
             return entity.GetAttribute<ActorControllerAttribute>();
         }
-        public static ActorControllerAttribute GetController(this Instance<ActorEntity> instance)
-        {
-            return instance.As().GetAttribute<ActorControllerAttribute>();
-        }
 
         public static bool IsActorEntity(this in InstanceID entityID)
         {

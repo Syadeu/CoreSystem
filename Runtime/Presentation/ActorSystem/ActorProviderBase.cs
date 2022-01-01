@@ -107,7 +107,7 @@ namespace Syadeu.Presentation.Actor
         protected virtual void OnProxyCreated(ref TComponent component, ITransform transform) { }
         protected virtual void OnProxyRemoved(ref TComponent component, ITransform transform) { }
 
-        protected Instance<TProvider> GetProvider<TProvider>()
+        protected Entity<TProvider> GetProvider<TProvider>()
             where TProvider : class, IActorProvider
         {
             ref ActorControllerComponent ctr = ref Parent.GetComponent<ActorControllerComponent>();

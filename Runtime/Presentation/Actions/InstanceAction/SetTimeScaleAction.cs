@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System.Collections;
 using System.ComponentModel;
@@ -60,7 +61,7 @@ namespace Syadeu.Presentation.Actions
             m_KeepWait = true;
             UpdateJob job = new UpdateJob()
             {
-                m_Caller = new Instance<SetTimeScaleAction>(Idx),
+                m_Caller = Idx.GetEntity<SetTimeScaleAction>(),
                 m_TargetTimeScale = m_TargetScale,
                 m_TargetUpdateTime = m_TargetUpdateTime
             };
@@ -70,7 +71,7 @@ namespace Syadeu.Presentation.Actions
 
         private struct UpdateJob : ICoroutineJob
         {
-            public Instance<SetTimeScaleAction> m_Caller;
+            public Entity<SetTimeScaleAction> m_Caller;
             public float m_TargetUpdateTime, m_TargetTimeScale;
 
             public UpdateLoop Loop => UpdateLoop.Default;
@@ -78,7 +79,7 @@ namespace Syadeu.Presentation.Actions
             public void Dispose()
             {
                 Time.timeScale = m_TargetTimeScale;
-                m_Caller.GetObject().m_KeepWait = false;
+                m_Caller.Target.m_KeepWait = false;
             }
             public IEnumerator Execute()
             {

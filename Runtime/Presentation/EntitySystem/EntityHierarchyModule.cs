@@ -58,7 +58,7 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < list.Length; i++)
                 {
-                    RemoveChild(obj.Idx, list[i].Idx);
+                    RemoveChild(obj.Idx, list[i]);
                 }
             }
 

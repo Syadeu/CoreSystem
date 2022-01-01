@@ -13,12 +13,13 @@
 // limitations under the License.
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
     public class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
     {
-        public void Insert(Instance<IObject> item)
+        public void Insert(Entity<IObject> item)
         {
 
         }

@@ -63,8 +63,8 @@ namespace Syadeu.Presentation.Actions
                 return false;
             }
 
-            Instance<T> ins = other.CreateInstance();
-            T action = ins.GetObject();
+            Entity<T> ins = other.CreateEntity();
+            T action = ins.Target;
             bool result = action.InternalExecute(entity, out predicate);
             ins.Destroy();
 
@@ -86,8 +86,8 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this IFixedReference<ParamAction<T>> other, T t)
         {
-            Instance<ParamAction<T>> ins = other.CreateInstance();
-            ParamAction<T> action = ins.GetObject();
+            Entity<ParamAction<T>> ins = other.CreateEntity();
+            ParamAction<T> action = ins.Target;
             bool result = action.InternalExecute(t);
             ins.Destroy();
 
@@ -100,8 +100,8 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T, TA>(this IFixedReference<ParamAction<T, TA>> other, T t, TA ta)
         {
-            Instance<ParamAction<T, TA>> ins = other.CreateInstance();
-            ParamAction<T, TA> action = ins.GetObject();
+            Entity<ParamAction<T, TA>> ins = other.CreateEntity();
+            ParamAction<T, TA> action = ins.Target;
             bool result = action.InternalExecute(t, ta);
             ins.Destroy();
 

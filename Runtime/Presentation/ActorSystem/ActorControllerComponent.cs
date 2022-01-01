@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Actor
             }
             return false;
         }
-        public Instance<TProvider> GetProvider<TProvider>() where TProvider : class, IActorProvider
+        public Entity<TProvider> GetProvider<TProvider>() where TProvider : class, IActorProvider
         {
             if (TypeHelper.TypeOf<TProvider>.IsAbstract)
             {
@@ -81,21 +81,21 @@ namespace Syadeu.Presentation.Actor
                 {
                     if (TypeHelper.TypeOf<TProvider>.Type.IsAssignableFrom(m_InstanceProviders[i].GetObject().GetType()))
                     {
-                        return m_InstanceProviders[i].Cast<IActorProvider, TProvider>();
+                        return m_InstanceProviders[i].GetEntity<TProvider>();
                     }
                 }
 
-                return Instance<TProvider>.Empty;
+                return Entity<TProvider>.Empty;
             }
 
             for (int i = 0; i < m_InstanceProviders.Length; i++)
             {
                 if (m_InstanceProviders[i].GetObject() is TProvider)
                 {
-                    return m_InstanceProviders[i].Cast<IActorProvider, TProvider>();
+                    return m_InstanceProviders[i].GetEntity<TProvider>();
                 }
             }
-            return Instance<TProvider>.Empty;
+            return Entity<TProvider>.Empty;
         }
     }
 }

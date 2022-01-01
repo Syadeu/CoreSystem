@@ -31,23 +31,23 @@ namespace Syadeu.Collections
             }
             return list;
         }
-        public static FixedInstanceList64<T> ToFixedList64<T>(this IEnumerable<Instance<T>> t)
+        public static FixedInstanceList64<T> ToFixedList64<T>(this IEnumerable<InstanceID> t)
             where T : class, IObject
         {
             FixedInstanceList64<T> list = new FixedInstanceList64<T>();
             foreach (var item in t)
             {
-                list.Add(item.Idx);
+                list.Add(item);
             }
             return list;
         }
-        public static FixedInstanceList16<T> ToFixedList16<T>(this IEnumerable<Instance<T>> t)
+        public static FixedInstanceList16<T> ToFixedList16<T>(this IEnumerable<InstanceID> t)
             where T : class, IObject
         {
             FixedInstanceList16<T> list = new FixedInstanceList16<T>();
             foreach (var item in t)
             {
-                list.Add(item.Idx);
+                list.Add(item);
             }
             return list;
         }

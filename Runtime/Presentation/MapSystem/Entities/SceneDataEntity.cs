@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Map
                 }
 
                 Entity<MapDataEntityBase> temp = EntitySystem.CreateEntity(mapData[i]);
-                sceneData.m_CreatedMapData.Add(new Instance<MapDataEntity>(temp));
+                sceneData.m_CreatedMapData.Add(temp.Idx);
             }
 
             sceneData.m_CreatedTerrains = new FixedInstanceList64<TerrainData>();
@@ -166,12 +166,12 @@ namespace Syadeu.Presentation.Map
                 }
 
                 Entity<TerrainData> temp = EntitySystem.CreateEntity(sceneDataEntity.m_TerrainData[i]);
-                sceneData.m_CreatedTerrains.Add(temp.AsInstance());
+                sceneData.m_CreatedTerrains.Add(temp.Idx);
             }
 
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
             {
-                sceneData.m_CreatedTerrains[i].GetObject().Create(null);
+                sceneData.m_CreatedTerrains[i].GetEntity<TerrainData>().Target.Create(null);
             }
         }
         protected override void OnDestroy(SceneDataEntity entity)
@@ -184,12 +184,12 @@ namespace Syadeu.Presentation.Map
 
             for (int i = 0; i < sceneData.m_CreatedMapData.Length; i++)
             {
-                sceneData.m_CreatedMapData[i].Destroy();
+                sceneData.m_CreatedMapData[i].GetEntity().Destroy();
             }
 
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)
             {
-                sceneData.m_CreatedTerrains[i].Destroy();
+                sceneData.m_CreatedTerrains[i].GetEntity().Destroy();
             }
             //sceneData.m_CreatedTerrains.Dispose();
         }

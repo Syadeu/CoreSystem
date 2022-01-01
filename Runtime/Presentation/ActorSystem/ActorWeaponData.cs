@@ -36,23 +36,23 @@ namespace Syadeu.Presentation.Actor
         }
         public readonly struct OverrideData
         {
-            private readonly Instance<ActorWeaponData> m_Instance;
+            private readonly Entity<ActorWeaponData> m_Instance;
 
-            public OverrideOptions HolsterOverrideOptions => m_Instance.GetObject().m_HolsterPosition.m_OverrideOptions;
-            public bool HolsterUseBone => m_Instance.GetObject().m_HolsterPosition.m_UseBone;
-            public HumanBodyBones HolsterAttachedBone => m_Instance.GetObject().m_HolsterPosition.m_AttachedBone;
-            public float3 HolsterWeaponPosOffset => m_Instance.GetObject().m_HolsterPosition.m_WeaponPosOffset;
-            public float3 HolsterWeaponRotOffset => m_Instance.GetObject().m_HolsterPosition.m_WeaponRotOffset;
+            public OverrideOptions HolsterOverrideOptions => m_Instance.Target.m_HolsterPosition.m_OverrideOptions;
+            public bool HolsterUseBone => m_Instance.Target.m_HolsterPosition.m_UseBone;
+            public HumanBodyBones HolsterAttachedBone => m_Instance.Target.m_HolsterPosition.m_AttachedBone;
+            public float3 HolsterWeaponPosOffset => m_Instance.Target.m_HolsterPosition.m_WeaponPosOffset;
+            public float3 HolsterWeaponRotOffset => m_Instance.Target.m_HolsterPosition.m_WeaponRotOffset;
 
-            public OverrideOptions DrawOverrideOptions => m_Instance.GetObject().m_DrawPosition.m_OverrideOptions;
-            public bool DrawUseBone => m_Instance.GetObject().m_DrawPosition.m_UseBone;
-            public HumanBodyBones DrawAttachedBone => m_Instance.GetObject().m_DrawPosition.m_AttachedBone;
-            public float3 DrawWeaponPosOffset => m_Instance.GetObject().m_DrawPosition.m_WeaponPosOffset;
-            public float3 DrawWeaponRotOffset => m_Instance.GetObject().m_DrawPosition.m_WeaponRotOffset;
+            public OverrideOptions DrawOverrideOptions => m_Instance.Target.m_DrawPosition.m_OverrideOptions;
+            public bool DrawUseBone => m_Instance.Target.m_DrawPosition.m_UseBone;
+            public HumanBodyBones DrawAttachedBone => m_Instance.Target.m_DrawPosition.m_AttachedBone;
+            public float3 DrawWeaponPosOffset => m_Instance.Target.m_DrawPosition.m_WeaponPosOffset;
+            public float3 DrawWeaponRotOffset => m_Instance.Target.m_DrawPosition.m_WeaponRotOffset;
 
             public OverrideData(ActorWeaponData data)
             {
-                m_Instance = new Instance<ActorWeaponData>(data.Idx);
+                m_Instance = Entity<ActorWeaponData>.GetEntity(data.Idx);
             }
         }
         public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>

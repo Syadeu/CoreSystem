@@ -371,7 +371,7 @@ namespace Syadeu.Presentation.Render
             private Entity<ActorEntity> m_Entity;
             private Reference<ActorOverlayUIEntry> m_UI;
 
-            private Instance<ActorOverlayUIEntry> m_UISettingInstance;
+            private Entity<ActorOverlayUIEntry> m_UISettingInstance;
             private Entity<UIObjectEntity> m_InstanceObject;
 
             private bool m_UseBone;
@@ -385,7 +385,7 @@ namespace Syadeu.Presentation.Render
                 m_Entity = entity;
                 m_UI = ui;
 
-                m_UISettingInstance = ui.CreateInstance();
+                m_UISettingInstance = ui.CreateEntity();
                 ActorOverlayUIEntry setting = m_UI.GetObject();
 
                 m_UseBone = setting.m_PositionOffset.m_UseBone;
@@ -398,7 +398,7 @@ namespace Syadeu.Presentation.Render
                     m_UseBone = false;
                 }
 
-                m_InstanceObject = setting.m_Prefab.CreateInstance();
+                m_InstanceObject = setting.m_Prefab.CreateEntity();
                 SetPosition(in setting);
                 m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(entity);
             }
@@ -448,7 +448,7 @@ namespace Syadeu.Presentation.Render
                     entityTr = m_Entity.transform,
                     uiTr = m_InstanceObject.transform;
 
-                ActorOverlayUIEntry setting = m_UISettingInstance.GetObject();
+                ActorOverlayUIEntry setting = m_UISettingInstance.Target;
                 RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 Transform camTr;
 

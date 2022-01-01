@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.TurnTable
         public FixedList512Bytes<InstanceID> GetTargetsInRange()
         {
             int
-                weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range),
+                weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.Target.Range),
                 searchRange = Parent.GetComponent<TRPGActorAttackComponent>().m_SearchRange;
 
             return GetTargetsWithin(math.max(weaponRange, searchRange));

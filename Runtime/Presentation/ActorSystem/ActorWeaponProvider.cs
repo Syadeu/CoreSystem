@@ -130,7 +130,7 @@ namespace Syadeu.Presentation.Actor
             if (!component.IsEquipable(ev.Weapon))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.GetObject().Name}) that doesn\'t fit.");
+                    $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.Target.Name}) that doesn\'t fit.");
                 return;
             }
 
@@ -138,17 +138,17 @@ namespace Syadeu.Presentation.Actor
             {
                 component.m_OnUnequipWeapon.Execute(Parent);
 
-                ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().GetObject();
+                ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Target;
                 if (inventory == null)
                 {
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Destroying weapon instance({component.SelectedWeapon.GetObject().Name}) because there\'s no inventory in this actor({Parent.Name}).");
+                        $"Destroying weapon instance({component.SelectedWeapon.Target.Name}) because there\'s no inventory in this actor({Parent.Name}).");
 
                     //if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
                     //{
                     //    component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
                     //}
-                    component.m_EquipedWeapons[component.m_SelectedWeaponIndex].Destroy();
+                    component.m_EquipedWeapons[component.m_SelectedWeaponIndex].GetEntity().Destroy();
                 }
                 else
                 {
@@ -159,10 +159,10 @@ namespace Syadeu.Presentation.Actor
                     //}
                     //else inventory.Insert(component.SelectedWeapon.Cast<ActorWeaponData, IObject>());
 
-                    inventory.Insert(component.SelectedWeapon.Cast<ActorWeaponData, IObject>());
+                    inventory.Insert(component.SelectedWeapon);
                 }
 
-                component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon;
+                component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon.Idx;
 
                 component.m_OnEquipWeapon.Execute(Parent.ToEntity<IObject>());
 
@@ -172,7 +172,7 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 CoreSystem.Logger.Log(Channel.Entity,
-                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).");
             }
             else
             {
@@ -184,16 +184,16 @@ namespace Syadeu.Presentation.Actor
                     }
                     else if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
                     {
-                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().GetObject();
+                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Target;
                         if (inventory == null)
                         {
                             CoreSystem.Logger.LogError(Channel.Entity,
-                                $"Destroying equip request weapon instance({ev.Weapon.GetObject().Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
+                                $"Destroying equip request weapon instance({ev.Weapon.Target.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
                             ev.Weapon.Destroy();
                         }
                         else
                         {
-                            inventory.Insert(ev.Weapon.Cast<ActorWeaponData, IObject>());
+                            inventory.Insert(ev.Weapon);
                         }
                     }
                     else
@@ -204,7 +204,7 @@ namespace Syadeu.Presentation.Actor
                 else
                 {
                     int index = component.Equiped;
-                    component.m_EquipedWeapons.Add(ev.Weapon);
+                    component.m_EquipedWeapons.Add(ev.Weapon.Idx);
                     m_OnEquipWeapon.Execute(Parent);
 
                     if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
@@ -213,10 +213,10 @@ namespace Syadeu.Presentation.Actor
                     }
 
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).");
+                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).");
 
 
-                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetObject().Name}).".ToLog();
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).".ToLog();
                 }
             }
         }
@@ -239,9 +239,9 @@ namespace Syadeu.Presentation.Actor
             public void Dispose()
             {
             }
-            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Instance<ActorWeaponData> weapon, bool weaponDrawn)
+            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Entity<ActorWeaponData> weapon, bool weaponDrawn)
             {
-                ActorWeaponData data = weapon.GetObject();
+                ActorWeaponData data = weapon.Target;
                 if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
                 {
                     return;

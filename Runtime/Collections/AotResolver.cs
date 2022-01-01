@@ -54,7 +54,6 @@ namespace Syadeu.Collections
             //AotHelper.EnsureList<EntityID>();
             AotHelper.EnsureList<EntityShortID>();
             AotHelper.EnsureList<IInstance>();
-            AotHelper.EnsureList<Instance>();
             AotHelper.EnsureList<InstanceID>();
             AotHelper.EnsureList<IObject>();
         }

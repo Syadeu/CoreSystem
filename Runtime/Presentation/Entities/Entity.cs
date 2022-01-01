@@ -233,10 +233,7 @@ namespace Syadeu.Presentation.Entities
         }
 
         public static implicit operator T(Entity<T> a) => a.Target;
-        //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
-        //public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
         public static implicit operator Entity<T>(InstanceID a) => GetEntity(a);
-        //public static implicit operator Entity<T>(EntityData<T> a) => GetEntity(a.Idx);
         public static implicit operator Entity<T>(T a)
         {
             if (a == null)
@@ -244,11 +241,6 @@ namespace Syadeu.Presentation.Entities
                 return Empty;
             }
             return GetEntity(a.Idx);
-        }
-        public static implicit operator Entity<T>(Instance<T> a)
-        {
-            if (a.IsEmpty() || !a.IsValid()) return Empty;
-            return GetEntityWithoutCheck(a.Idx);
         }
 
         public static implicit operator Entity<IObject>(Entity<T> a)

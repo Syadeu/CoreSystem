@@ -166,9 +166,9 @@ namespace Syadeu.Presentation.TurnTable.UI
                 ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
                 if (!ctr.HasProvider<ActorOverlayUIProvider>()) continue;
 
-                Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+                Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
                 for (int j = 0; j < list.Count; j++)
                 {
                     ActorOverlayUIEntry obj = list[j].GetObject();
@@ -254,8 +254,8 @@ namespace Syadeu.Presentation.TurnTable.UI
                         return;
                     }
 
-                    Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
-                    var targets = attProvider.GetObject().GetTargetsInRange();
+                    Entity<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+                    var targets = attProvider.Target.GetTargetsInRange();
                     var tr = m_TurnTableSystem.CurrentTurn.ToEntity<IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();
@@ -299,7 +299,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void TRPGFireUIPressedEventHandler(TRPGFireUIPressedEvent ev)
         {
             m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
-                .GetProvider<TRPGActorAttackProvider>().GetObject().Attack();
+                .GetProvider<TRPGActorAttackProvider>().Target.Attack();
 
             // TODO : temp code
             //m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
@@ -385,9 +385,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
-            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+            Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();
@@ -406,9 +406,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
-            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+            Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();

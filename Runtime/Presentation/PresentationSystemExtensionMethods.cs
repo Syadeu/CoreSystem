@@ -59,18 +59,6 @@ namespace Syadeu.Presentation
             return new Reference<T>(reference.Hash);
         }
 
-        public static Instance<TA> Cast<T, TA>(this Instance<T> t)
-            where T : class, IObject
-            where TA : class, IObject
-        {
-            return new Instance<TA>(t.Idx);
-        }
-        public static Reference<T> AsOriginal<T>(this Instance<T> t)
-            where T : class, IObject
-        {
-            return new Reference<T>(t.GetObject().Hash);
-        }
-
         public static T GetObject<T>(this IFixedReference<T> t)
             where T : class, IObject
         {
@@ -96,29 +84,6 @@ namespace Syadeu.Presentation
                 return value;
             }
             return null;
-        }
-        public static Instance<T> CreateInstance<T>(this IFixedReference<T> target)
-            where T : class, IObject
-        {
-            if (target.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
-                return Instance<T>.Empty;
-            }
-
-            Type t = target.GetObject().GetType();
-            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
-            {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(new Reference(target.Hash), float3.zero);
-                return new Instance<T>(temp.Idx);
-            }
-            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
-            {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(new Reference(target.Hash));
-                return new Instance<T>(temp.Idx);
-            }
-
-            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity<T>(target).AsInstance();
         }
     }
 }

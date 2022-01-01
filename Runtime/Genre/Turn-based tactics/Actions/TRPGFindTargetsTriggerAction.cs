@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 #endif
-            Instance<TRPGActorAttackProvider> attProvider = actor.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
+            Entity<TRPGActorAttackProvider> attProvider = actor.GetComponent<ActorControllerComponent>().GetProvider<TRPGActorAttackProvider>();
 #if DEBUG_MODE
             if (attProvider.IsEmpty())
             {
@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 #endif
-            var list = attProvider.GetObject().GetTargetsInRange();
+            var list = attProvider.Target.GetTargetsInRange();
             CoreSystem.Logger.Log(Channel.Debug,
                 $"Entity({entity.Name}) found {list.Length} targets.");
         }

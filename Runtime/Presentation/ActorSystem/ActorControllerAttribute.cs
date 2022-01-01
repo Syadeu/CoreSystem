@@ -91,12 +91,12 @@ namespace Syadeu.Presentation.Actor
 #endif
                 Entity<IActorProvider> clone = EntitySystem.CreateEntity(attribute.m_Providers[i]);
                 Initialize(entity, clone.Target);
-                component.m_InstanceProviders.Add(clone.AsInstance());
+                component.m_InstanceProviders.Add(clone.Idx);
             }
 
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnCreated(component.m_InstanceProviders[i].GetObject());
+                ExecuteOnCreated(component.m_InstanceProviders[i].GetEntity<IActorProvider>().Target);
             }
 
             if (attribute.m_SetAliveOnCreated)
@@ -129,7 +129,7 @@ namespace Syadeu.Presentation.Actor
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnProxyCreated(component.m_InstanceProviders[i].GetObject());
+                ExecuteOnProxyCreated(component.m_InstanceProviders[i].GetEntity<IActorProvider>().Target);
             }
         }
         public void OnProxyRemoved(IAttribute attribute, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.Actor
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
-                ExecuteOnProxyRemoved(component.m_InstanceProviders[i].GetObject());
+                ExecuteOnProxyRemoved(component.m_InstanceProviders[i].GetEntity<IActorProvider>().Target);
             }
         }
         private static void ExecuteOnProxyCreated(IActorProvider provider)

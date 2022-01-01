@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Actions
 
             PayloadJob job = new PayloadJob
             {
-                m_Caller = new Instance<PlayPlayableDirectorAction>(Idx),
+                m_Caller = Idx.GetEntity<PlayPlayableDirectorAction>(),
                 m_Data = m_Data,
                 m_Executer = entity,
 
@@ -119,7 +119,7 @@ namespace Syadeu.Presentation.Actions
 
         private struct PayloadJob : ICoroutineJob
         {
-            public Instance<PlayPlayableDirectorAction> m_Caller;
+            public Entity<PlayPlayableDirectorAction> m_Caller;
             public Reference<TimelineData> m_Data;
             public Entity<IObject> m_Executer;
 
@@ -139,9 +139,9 @@ namespace Syadeu.Presentation.Actions
 
             public void Dispose()
             {
-                m_Caller.GetObject().m_KeepWait = false;
+                m_Caller.Target.m_KeepWait = false;
 
-                m_Caller = Instance<PlayPlayableDirectorAction>.Empty;
+                m_Caller = Entity<PlayPlayableDirectorAction>.Empty;
                 m_Data = Reference<TimelineData>.Empty;
                 m_Executer = Entity<IObject>.Empty;
             }
@@ -288,7 +288,7 @@ namespace Syadeu.Presentation.Actions
                     }
                 }
 
-                if (m_Caller.GetObject().m_DestroyTimelineAfterFinished)
+                if (m_Caller.Target.m_DestroyTimelineAfterFinished)
                 {
                     entity.Destroy();
                 }

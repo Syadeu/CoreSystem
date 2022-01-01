@@ -23,7 +23,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
-    [NativeContainer]
+    [NativeContainer, Obsolete("",true)]
     public struct InstanceArray<T> : IValidation, IDisposable
         where T : ObjectBase
     {
@@ -155,7 +155,7 @@ namespace Syadeu.Presentation
                 int i = 0;
                 foreach (Reference<T> item in iter)
                 {
-                    m_Buffer[i] = item.CreateInstance();
+                    //m_Buffer[i] = item.CreateInstance();
                     i++;
                 }
             }
