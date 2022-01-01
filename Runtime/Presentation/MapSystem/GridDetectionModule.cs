@@ -153,7 +153,7 @@ namespace Syadeu.Presentation.Map
                         //"already detect".ToLog();
                         continue;
                     }
-                    else if (detector.m_DetectRemoveCondition.Execute(entity.As<IEntity, IEntityData>(), out bool predicate) && predicate)
+                    else if (detector.m_DetectRemoveCondition.Execute(entity.ToEntity<IObject>(), out bool predicate) && predicate)
                     {
                         continue;
                     }
@@ -205,9 +205,9 @@ namespace Syadeu.Presentation.Map
                     continue;
                 }
 
-                EntityData<IEntityData>
-                    myDat = entity.As<IEntity, IEntityData>(),
-                    targetDat = target.As<IEntity, IEntityData>();
+                Entity<IObject>
+                    myDat = entity.ToEntity<IObject>(),
+                    targetDat = target.ToEntity<IObject>();
 
                 detector.m_OnDetectedPredicate.Execute(myDat, out bool predicate);
                 if (!predicate)
@@ -278,7 +278,7 @@ namespace Syadeu.Presentation.Map
                     {
                         continue;
                     }
-                    var detectorEntity = detectorID.GetEntityData<IEntityData>();
+                    var detectorEntity = detectorID.GetEntity<IObject>();
                     ref var detector = ref detectorEntity.GetComponent<GridDetectorComponent>();
                     if (detector.m_DetectRemoveCondition.Execute(detectorEntity, out bool predicate) && predicate)
                     {
@@ -322,10 +322,10 @@ namespace Syadeu.Presentation.Map
             }
 
             EntityShortID targetShortID = entity.Idx.GetShortID();
-            EntityData<IEntityData> targetData = entity.As<IEntity, IEntityData>();
+            Entity<IObject> targetData = entity.ToEntity<IObject>();
             do
             {
-                EntityData<IEntityData> observer = observerID.GetEntityData<IEntityData>();
+                Entity<IObject> observer = observerID.GetEntity<IObject>();
                 ref GridDetectorComponent detector = ref observer.GetComponent<GridDetectorComponent>();
 
                 if (observerID.Equals(entity.Idx) || !IsDetectorTriggerable(in detector, entity)) continue;

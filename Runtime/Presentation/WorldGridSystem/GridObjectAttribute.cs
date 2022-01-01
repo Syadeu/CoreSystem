@@ -46,11 +46,11 @@ namespace Syadeu.Presentation.Grid.LowLevel
             m_GridSystem = null;
         }
 
-        protected override void OnCreated(GridObjectAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
             m_GridSystem.AddEntity(entity.Idx);
         }
-        protected override void OnDestroy(GridObjectAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
             m_GridSystem.RemoveEntity(entity.Idx);
         }

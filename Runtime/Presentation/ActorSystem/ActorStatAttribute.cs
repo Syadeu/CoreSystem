@@ -81,13 +81,13 @@ namespace Syadeu.Presentation.Actor
     [Preserve]
     internal sealed class ActorStatProcessor : AttributeProcessor<ActorStatAttribute>
     {
-        protected override void OnCreated(ActorStatAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(ActorStatAttribute attribute, Entity<IEntityData> entity)
         {
             entity.AddComponent<ActorStatComponent>();
             ref ActorStatComponent stat = ref entity.GetComponent<ActorStatComponent>();
             stat = new ActorStatComponent(attribute.HP);
         }
-        protected override void OnDestroy(ActorStatAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(ActorStatAttribute attribute, Entity<IEntityData> entity)
         {
             entity.RemoveComponent<ActorStatComponent>();
         }

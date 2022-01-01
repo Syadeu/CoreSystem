@@ -9,7 +9,7 @@ namespace Syadeu.Presentation.Actions
         public Reference<EntityDataBase> Test;
         public PrefabReference<GameObject> TestGame;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             "executed".ToLog();
         }

@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 2, PropertyName = "OnMatchAction")]
         private Reference<InstanceAction>[] m_OnMatchAction = Array.Empty<Reference<InstanceAction>>();
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             ActorStateAttribute actorState = entity.GetAttribute<ActorStateAttribute>();
             if (actorState == null)

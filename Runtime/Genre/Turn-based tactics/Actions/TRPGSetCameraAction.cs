@@ -18,7 +18,7 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 0, PropertyName = "Follow")]
         private bool m_Follow = false;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (!(entity.Target is IEntity))
             {
@@ -29,7 +29,7 @@ namespace Syadeu.Presentation.TurnTable
 
             RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
             var movement = renderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
-            ITransform tr = entity.As<IEntityData, IEntity>().transform;
+            ITransform tr = entity.transform;
 
             if (m_Follow)
             {

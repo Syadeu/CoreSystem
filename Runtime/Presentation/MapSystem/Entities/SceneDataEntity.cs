@@ -119,8 +119,8 @@ namespace Syadeu.Presentation.Map
         {
             AotHelper.EnsureType<Reference<SceneDataEntity>>();
             AotHelper.EnsureList<Reference<SceneDataEntity>>();
-            AotHelper.EnsureType<EntityData<SceneDataEntity>>();
-            AotHelper.EnsureList<EntityData<SceneDataEntity>>();
+            AotHelper.EnsureType<Entity<SceneDataEntity>>();
+            AotHelper.EnsureList<Entity<SceneDataEntity>>();
             AotHelper.EnsureType<SceneDataEntity>();
             AotHelper.EnsureList<SceneDataEntity>();
         }
@@ -132,7 +132,7 @@ namespace Syadeu.Presentation.Map
         {
             IReadOnlyList<Reference<MapDataEntityBase>> mapData = sceneDataEntity.MapData;
 
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
+            Entity<IEntityData> entity = Entity<IEntityData>.GetEntityWithoutCheck(sceneDataEntity.Idx);
             entity.AddComponent<SceneDataComponent>();
 
             ref SceneDataComponent sceneData = ref entity.GetComponent<SceneDataComponent>();
@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Map
                     continue;
                 }
 
-                EntityData<IEntityData> temp = EntitySystem.CreateObject(mapData[i]);
+                Entity<MapDataEntityBase> temp = EntitySystem.CreateEntity(mapData[i]);
                 sceneData.m_CreatedMapData.Add(new Instance<MapDataEntity>(temp));
             }
 
@@ -165,8 +165,8 @@ namespace Syadeu.Presentation.Map
                     continue;
                 }
 
-                Instance<TerrainData> temp = EntitySystem.CreateInstance(sceneDataEntity.m_TerrainData[i]);
-                sceneData.m_CreatedTerrains.Add(temp);
+                Entity<TerrainData> temp = EntitySystem.CreateEntity(sceneDataEntity.m_TerrainData[i]);
+                sceneData.m_CreatedTerrains.Add(temp.AsInstance());
             }
 
             for (int i = 0; i < sceneData.m_CreatedTerrains.Length; i++)

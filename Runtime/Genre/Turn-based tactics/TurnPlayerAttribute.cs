@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.TurnTable
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
     {
         private TRPGTurnTableSystem m_TurnTableSystem;
-        private readonly Queue<EntityData<IEntityData>> m_WaitForRegister = new Queue<EntityData<IEntityData>>();
+        private readonly Queue<Entity<IEntityData>> m_WaitForRegister = new Queue<Entity<IEntityData>>();
 
         protected override void OnInitialize()
         {
@@ -80,7 +80,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        protected override void OnCreated(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(TurnPlayerAttribute attribute, Entity<IEntityData> entity)
         {
             entity.AddComponent<TurnPlayerComponent>();
             ref var com = ref entity.GetComponent<TurnPlayerComponent>();
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.TurnTable
             }
             stateAttribute.AddEvent(ActorStateChangedEventHandler);
         }
-        protected override void OnDestroy(TurnPlayerAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(TurnPlayerAttribute attribute, Entity<IEntityData> entity)
         {
             m_TurnTableSystem.RemovePlayer(entity);
             ActorStateAttribute stateAttribute = entity.GetAttribute<ActorStateAttribute>();

@@ -101,10 +101,10 @@ namespace Syadeu.Presentation
         internal NativeHashMap<ProxyTransformID, InstanceID> m_EntityGameObjects;
 
         private readonly Stack<InstanceID> m_DestroyedObjectsInThisFrame = new Stack<InstanceID>();
-        
+
         private static Unity.Profiling.ProfilerMarker
-            m_CreateEntityMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateEntity)}"),
-            m_CreateEntityDataMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateObject)}");
+            m_CreateEntityMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateEntity)}")
+            /*m_CreateEntityDataMarker = new Unity.Profiling.ProfilerMarker($"{nameof(EntitySystem)}.{nameof(CreateObject)}")*/;
 
         private ActionWrapper m_DestroyedObjectsInThisFrameAction;
         private EntityProcessorModule m_EntityProcessorModule;
@@ -495,12 +495,51 @@ namespace Syadeu.Presentation
                     return Entity<IEntity>.Empty;
                 }
 
-                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, in rotation, in localSize);
-                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
                 Entity<IEntity> entity = InternalCreateEntity(in temp, in position, in rotation, in localSize);
 
                 return entity;
             }
+        }
+        public Entity<IObject> CreateEntity(Reference obj)
+        {
+            ObjectBase baseObj = obj.GetObject();
+            if (baseObj is EntityBase entityBase)
+            {
+                return InternalCreateEntity(in entityBase, 0, quaternion.identity, 1).ToEntity<IObject>();
+            }
+
+            return InternalCreateEntity(baseObj);
+        }
+        public Entity<T> CreateEntity<T>(Reference<T> obj) where T : class, IObject
+        {
+            T baseObj = obj.GetObject();
+            if (baseObj is EntityBase entityBase)
+            {
+                return InternalCreateEntity(in entityBase, 0, quaternion.identity, 1).ToEntity<T>();
+            }
+
+            return InternalCreateEntity(baseObj).ToEntity<T>();
+        }
+        public Entity<IObject> CreateEntity(IFixedReference obj)
+        {
+            ObjectBase baseObj = obj.GetObject();
+            if (baseObj is EntityBase entityBase)
+            {
+                return InternalCreateEntity(in entityBase, 0, quaternion.identity, 1).ToEntity<IObject>();
+            }
+
+            return InternalCreateEntity(baseObj);
+        }
+        public Entity<T> CreateEntity<T>(IFixedReference<T> obj)
+            where T : class, IObject
+        {
+            T baseObj = obj.GetObject();
+            if (baseObj is EntityBase entityBase)
+            {
+                return InternalCreateEntity(in entityBase, 0, quaternion.identity, 1).ToEntity<T>();
+            }
+
+            return InternalCreateEntity(baseObj).ToEntity<T>();
         }
 
         #region Entity Validation
@@ -541,18 +580,15 @@ namespace Syadeu.Presentation
         }
         #endregion
 
-//        private ProxyTransform InternalCreateProxy(in EntityBase from,
-//            in PrefabReference<GameObject> prefab, in float3 pos, in quaternion rot, in float3 scale)
-//        {
-//#if DEBUG_MODE
-//            if (!prefab.IsNone() && !prefab.IsValid())
-//            {
-//                throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-//                    $"{from.Name} has an invalid prefab. This is not allowed.");
-//            }
-//#endif
-//            return m_ProxySystem.CreateNewPrefab(in prefab, in pos, in rot, in scale, from.m_EnableCull, from.Center, from.Size, from.StaticBatching);
-//        }
+        private Entity<IObject> InternalCreateEntity(in IObject entityBase)
+        {
+            ObjectBase objClone = GetModule<EntityRecycleModule>().GetOrCreateInstance<ObjectBase>(entityBase);
+
+            m_ObjectEntities.Add(objClone.Idx, objClone);
+
+            GetModule<EntityProcessorModule>().ProceessOnCreated(objClone);
+            return Entity<IObject>.GetEntity(objClone.Idx);
+        }
         private Entity<IEntity> InternalCreateEntity(in EntityBase entityBase, in float3 position, in quaternion rotation, in float3 localSize)
         {
             EntityBase entity = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityBase>(entityBase);
@@ -573,180 +609,180 @@ namespace Syadeu.Presentation
 
         #endregion
 
-        #region Create EntityDataBase
+//        #region Create EntityDataBase
 
-        /// <summary>
-        /// 데이터 엔티티를 생성합니다. <paramref name="hash"/>는 <seealso cref="Reference"/> 값으로 대체 가능합니다.
-        /// </summary>
-        /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
-        /// <returns></returns>
-        public EntityData<IEntityData> CreateObject(Hash hash)
-        {
-            using (m_CreateEntityDataMarker.Auto())
-            {
-                if (!InternalEntityDataValidation(hash, out EntityDataBase original))
-                {
-                    return EntityData<IEntityData>.Empty;
-                }
-                EntityData<IEntityData> entity = InternalCreateObject(original);
+//        /// <summary>
+//        /// 데이터 엔티티를 생성합니다. <paramref name="hash"/>는 <seealso cref="Reference"/> 값으로 대체 가능합니다.
+//        /// </summary>
+//        /// <param name="hash"><seealso cref="IEntityData.Hash"/> 값</param>
+//        /// <returns></returns>
+//        public Entity<IEntityData> CreateObject(Hash hash)
+//        {
+//            using (m_CreateEntityDataMarker.Auto())
+//            {
+//                if (!InternalEntityDataValidation(hash, out EntityDataBase original))
+//                {
+//                    return Entity<IEntityData>.Empty;
+//                }
+//                Entity<IEntityData> entity = InternalCreateObject(original);
 
-                return entity;
-            }            
-        }
-        /// <summary>
-        /// 데이터 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/>입니다.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public EntityData<IEntityData> CreateObject(string name)
-        {
-            using (m_CreateEntityDataMarker.Auto())
-            {
-                if (!InternalEntityDataValidation(name, out EntityDataBase original))
-                {
-                    return EntityData<IEntityData>.Empty;
-                }
-                EntityData<IEntityData> entity = InternalCreateObject(original);
+//                return entity;
+//            }            
+//        }
+//        /// <summary>
+//        /// 데이터 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/>입니다.
+//        /// </summary>
+//        /// <param name="name"></param>
+//        /// <returns></returns>
+//        public Entity<IEntityData> CreateObject(string name)
+//        {
+//            using (m_CreateEntityDataMarker.Auto())
+//            {
+//                if (!InternalEntityDataValidation(name, out EntityDataBase original))
+//                {
+//                    return Entity<IEntityData>.Empty;
+//                }
+//                Entity<IEntityData> entity = InternalCreateObject(original);
 
-                return entity;
-            }
-        }
+//                return entity;
+//            }
+//        }
 
-        #region EntityData Validation
-        private bool InternalEntityDataValidation(string name, out EntityDataBase entityData)
-        {
-            entityData = null;
-            ObjectBase original = EntityDataList.Instance.GetObject(name);
-            return InternalEntityDataValidation(name, original, out entityData);
-        }
-        private bool InternalEntityDataValidation(Hash hash, out EntityDataBase entityData)
-        {
-            entityData = null;
-            ObjectBase original = EntityDataList.Instance.GetObject(hash);
-            return InternalEntityDataValidation(hash.ToString(), original, out entityData);
-        }
-        private bool InternalEntityDataValidation(string name, ObjectBase original, out EntityDataBase entityData)
-        {
-#if DEBUG_MODE
-            entityData = null;
-            if (original == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_ObjectNotFoundError, name));
-                return false;
-            }
-            if (original is EntityBase)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed.");
-                return false;
-            }
-            else if (original is AttributeBase)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
-                return false;
-            }
-#endif
-            entityData = (EntityDataBase)original;
-            return true;
-        }
-        #endregion
+//        #region EntityData Validation
+//        private bool InternalEntityDataValidation(string name, out EntityDataBase entityData)
+//        {
+//            entityData = null;
+//            ObjectBase original = EntityDataList.Instance.GetObject(name);
+//            return InternalEntityDataValidation(name, original, out entityData);
+//        }
+//        private bool InternalEntityDataValidation(Hash hash, out EntityDataBase entityData)
+//        {
+//            entityData = null;
+//            ObjectBase original = EntityDataList.Instance.GetObject(hash);
+//            return InternalEntityDataValidation(hash.ToString(), original, out entityData);
+//        }
+//        private bool InternalEntityDataValidation(string name, ObjectBase original, out EntityDataBase entityData)
+//        {
+//#if DEBUG_MODE
+//            entityData = null;
+//            if (original == null)
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_ObjectNotFoundError, name));
+//                return false;
+//            }
+//            if (original is EntityBase)
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity, "You're creating entity with CreateObject method. This is not allowed.");
+//                return false;
+//            }
+//            else if (original is AttributeBase)
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity, "This object is attribute and cannot be created. Request ignored.");
+//                return false;
+//            }
+//#endif
+//            entityData = (EntityDataBase)original;
+//            return true;
+//        }
+//        #endregion
 
-        private EntityData<IEntityData> InternalCreateObject(EntityDataBase obj)
-        {
-            EntityDataBase objClone = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityDataBase>(obj);
+//        private Entity<IEntityData> InternalCreateObject(EntityDataBase obj)
+//        {
+//            EntityDataBase objClone = GetModule<EntityRecycleModule>().GetOrCreateInstance<EntityDataBase>(obj);
             
-            m_ObjectEntities.Add(objClone.Idx, objClone);
+//            m_ObjectEntities.Add(objClone.Idx, objClone);
 
-            GetModule<EntityProcessorModule>().ProceessOnCreated(objClone);
-            return EntityData<IEntityData>.GetEntity(objClone.Idx);
-        }
+//            GetModule<EntityProcessorModule>().ProceessOnCreated(objClone);
+//            return Entity<IEntityData>.GetEntity(objClone.Idx);
+//        }
 
-        #endregion
+//        #endregion
 
-        #region Create Instance
+//        #region Create Instance
 
-        internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
-            => CreateInstance<T>(obj.GetObject());
-        internal Instance<T> CreateInstance<T>(IFixedReference<T> obj) where T : class, IObject
-            => CreateInstance<T>(obj.GetObject());
-        internal Instance CreateInstance(Reference obj)
-            => CreateInstance(obj.GetObject());
-        internal Instance CreateInstance(IFixedReference obj)
-        {
-            return CreateInstance(obj.GetObject());
-        }
-        internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
-        {
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot create an null object.");
+//        internal Instance<T> CreateInstance<T>(Reference<T> obj) where T : class, IObject
+//            => CreateInstance<T>(obj.GetObject());
+//        internal Instance<T> CreateInstance<T>(IFixedReference<T> obj) where T : class, IObject
+//            => CreateInstance<T>(obj.GetObject());
+//        internal Instance CreateInstance(Reference obj)
+//            => CreateInstance(obj.GetObject());
+//        internal Instance CreateInstance(IFixedReference obj)
+//        {
+//            return CreateInstance(obj.GetObject());
+//        }
+//        internal Instance<T> CreateInstance<T>(IObject obj) where T : class, IObject
+//        {
+//#if DEBUG_MODE
+//            if (obj == null)
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Cannot create an null object.");
 
-                return Instance<T>.Empty;
-            }
-            Type objType = obj.GetType();
-            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
-                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
-                return new Instance<T>(entity.Idx);
-            }
-            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared.");
-                EntityData<IEntityData> entity = CreateObject(obj.Hash);
-                return new Instance<T>(entity.Idx);
-            }
-#endif
-            ObjectBase clone = InternalCreateInstance(obj);
+//                return Instance<T>.Empty;
+//            }
+//            Type objType = obj.GetType();
+//            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared.");
+//                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
+//                return new Instance<T>(entity.Idx);
+//            }
+//            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared.");
+//                EntityData<IEntityData> entity = CreateObject(obj.Hash);
+//                return new Instance<T>(entity.Idx);
+//            }
+//#endif
+//            ObjectBase clone = InternalCreateInstance(obj);
 
-            return new Instance<T>(clone.Idx);
-        }
-        internal Instance CreateInstance(IObject obj)
-        {
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Cannot create an null object.");
+//            return new Instance<T>(clone.Idx);
+//        }
+//        internal Instance CreateInstance(IObject obj)
+//        {
+//#if DEBUG_MODE
+//            if (obj == null)
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"Cannot create an null object.");
 
-                return Instance.Empty;
-            }
-            Type objType = obj.GetType();
-            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared but not in build.");
-                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
-                return new Instance(entity.Idx);
-            }
-            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared but not in build.");
-                EntityData<IEntityData> entity = CreateObject(obj.Hash);
-                return new Instance(entity.Idx);
-            }
-#endif
-            ObjectBase clone = InternalCreateInstance(obj);
+//                return Instance.Empty;
+//            }
+//            Type objType = obj.GetType();
+//            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(objType))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"You should you {nameof(CreateEntity)} on create entity({obj.Name}). This will be slightly cared but not in build.");
+//                Entity<IEntity> entity = CreateEntity(new Reference(obj.Hash), float3.zero);
+//                return new Instance(entity.Idx);
+//            }
+//            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(objType))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    $"You should you {nameof(CreateObject)} on create entity({obj.Name}). This will be slightly cared but not in build.");
+//                Entity<IEntityData> entity = CreateObject(obj.Hash);
+//                return new Instance(entity.Idx);
+//            }
+//#endif
+//            ObjectBase clone = InternalCreateInstance(obj);
 
-            return new Instance(clone.Idx);
-        }
-        private ObjectBase InternalCreateInstance(IObject obj)
-        {
-            var module = GetModule<EntityRecycleModule>();
+//            return new Instance(clone.Idx);
+//        }
+//        private ObjectBase InternalCreateInstance(IObject obj)
+//        {
+//            var module = GetModule<EntityRecycleModule>();
 
-            ObjectBase clone = module.GetOrCreateInstance<ObjectBase>(obj);
+//            ObjectBase clone = module.GetOrCreateInstance<ObjectBase>(obj);
 
-            m_ObjectEntities.Add(clone.Idx, clone);
+//            m_ObjectEntities.Add(clone.Idx, clone);
 
-            GetModule<EntityProcessorModule>().ProceessOnCreated(clone);
-            return clone;
-        }
+//            GetModule<EntityProcessorModule>().ProceessOnCreated(clone);
+//            return clone;
+//        }
 
-        #endregion
+//        #endregion
 
         #region Destroy
 

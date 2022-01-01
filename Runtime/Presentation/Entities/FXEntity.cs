@@ -116,8 +116,6 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<Reference<FXEntity>>();
             AotHelper.EnsureType<Entity<FXEntity>>();
             AotHelper.EnsureList<Entity<FXEntity>>();
-            AotHelper.EnsureType<EntityData<FXEntity>>();
-            AotHelper.EnsureList<EntityData<FXEntity>>();
             AotHelper.EnsureType<FXEntity>();
             AotHelper.EnsureList<FXEntity>();
         }

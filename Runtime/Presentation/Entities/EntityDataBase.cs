@@ -267,8 +267,6 @@ namespace Syadeu.Presentation.Entities
         {
             AotHelper.EnsureType<Reference<EntityDataBase>>();
             AotHelper.EnsureList<Reference<EntityDataBase>>();
-            AotHelper.EnsureType<EntityData<EntityDataBase>>();
-            AotHelper.EnsureList<EntityData<EntityDataBase>>();
             AotHelper.EnsureList<EntityDataBase>();
         }
     }

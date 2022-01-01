@@ -40,8 +40,6 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<Reference<UIObjectEntity>>();
             AotHelper.EnsureType<Entity<UIObjectEntity>>();
             AotHelper.EnsureList<Entity<UIObjectEntity>>();
-            AotHelper.EnsureType<EntityData<UIObjectEntity>>();
-            AotHelper.EnsureList<EntityData<UIObjectEntity>>();
             AotHelper.EnsureType<UIObjectEntity>();
             AotHelper.EnsureList<UIObjectEntity>();
         }
@@ -66,7 +64,7 @@ namespace Syadeu.Presentation.Entities
 
         protected override void OnCreated(UIObjectEntity e)
         {
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(e.Idx);
+            Entity<IEntityData> entity = Entity<IEntityData>.GetEntityWithoutCheck(e.Idx);
             entity.AddComponent<UIObjectCanvasGroupComponent>();
             ref var com = ref entity.GetComponent<UIObjectCanvasGroupComponent>();
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
@@ -91,7 +89,7 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg);
+            m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.ToEntity<UIObjectEntity>(), cg);
         }
         public void OnProxyRemoved(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
         {

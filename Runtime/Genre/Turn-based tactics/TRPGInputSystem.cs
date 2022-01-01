@@ -289,7 +289,7 @@ namespace Syadeu.Presentation.TurnTable
                 RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 TRPGCameraMovement cameraMovement = renderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
-                cameraMovement.SetAim(turnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform, attComponent.GetTarget().GetEntity<IEntity>().transform);
+                cameraMovement.SetAim(turnTableSystem.CurrentTurn.transform, attComponent.GetTarget().GetEntity<IEntity>().transform);
             }
         }
 

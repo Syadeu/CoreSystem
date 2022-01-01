@@ -22,7 +22,7 @@ namespace Syadeu.Presentation.Attributes
     public abstract class AttributeBase : ObjectBase, IAttribute
     {
         [JsonIgnore] public IEntityData ParentEntity { get; internal set; }
-        [JsonIgnore] public EntityData<IEntityData> Parent => EntityData<IEntityData>.GetEntityWithoutCheck(ParentEntity.Idx);
+        [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(ParentEntity.Idx);
 
         public override sealed string ToString() => Name;
         public override sealed object Clone() => base.Clone();

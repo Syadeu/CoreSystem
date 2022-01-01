@@ -66,13 +66,13 @@ namespace Syadeu.Presentation
             return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(Reference, 
                 in position, in rotation, in localScale);
         }
-        public EntityData<IEntityData> CreateObject()
+        public Entity<IObject> CreateObject()
         {
             if (!Validate())
             {
                 throw new System.Exception();
             }
-            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(Reference);
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(Reference);
         }
     }
 }

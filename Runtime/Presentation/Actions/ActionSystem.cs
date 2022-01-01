@@ -116,7 +116,7 @@ namespace Syadeu.Presentation.Actions
             switch (temp.actionType)
             {
                 case ActionType.Instance:
-                    InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
+                    InstanceAction action = (InstanceAction)m_EntitySystem.CreateEntity(temp.action).Target;
 
                     if (action is IEventSequence sequence)
                     {
@@ -162,7 +162,7 @@ namespace Syadeu.Presentation.Actions
                         return;
                     }
 #endif
-                    Instance<ActionBase> ins = m_EntitySystem.CreateInstance(temp.action);
+                    Entity<ActionBase> ins = m_EntitySystem.CreateEntity(temp.action);
 #if DEBUG_MODE
                     if (ins.IsEmpty() || !ins.IsValid())
                     {
@@ -173,7 +173,7 @@ namespace Syadeu.Presentation.Actions
                     }
 #endif
 
-                    TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
+                    TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateEntity(temp.action).Target;
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
@@ -245,7 +245,7 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp).GetObject();
+            InstanceAction action = (InstanceAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = action.InternalExecute();
             m_EntitySystem.DestroyObject(action);
@@ -277,7 +277,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, EntityData<IEntityData> entity)
+        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, Entity<IObject> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -299,7 +299,7 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp).GetObject();
+            TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = triggerAction.InternalExecute(entity);
             m_EntitySystem.DestroyObject(triggerAction);

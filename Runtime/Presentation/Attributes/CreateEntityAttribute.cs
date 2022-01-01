@@ -36,9 +36,9 @@ namespace Syadeu.Presentation.Attributes
     [Preserve, Obsolete]
     internal sealed class CreateEntityProcessor : AttributeProcessor<CreateEntityAttribute>
     {
-        protected override void OnCreated(CreateEntityAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(CreateEntityAttribute attribute, Entity<IEntityData> entity)
         {
-            ITransform tr = entity.As<IEntityData, IEntity>().Target.transform;
+            ITransform tr = entity.transform;
             attribute.CreatedEntity = CreateEntity(attribute.m_Entity, tr.position, tr.rotation);
         }
     }

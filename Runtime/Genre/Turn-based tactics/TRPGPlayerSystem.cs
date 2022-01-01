@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.TurnTable
 
         public override bool IsStartable => m_RenderSystem.CameraComponent != null;
 
-        private readonly HashSet<EntityData<IEntityData>> m_InBattlePlayerFaction = new HashSet<EntityData<IEntityData>>();
+        private readonly HashSet<Entity<IEntityData>> m_InBattlePlayerFaction = new HashSet<Entity<IEntityData>>();
 
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;

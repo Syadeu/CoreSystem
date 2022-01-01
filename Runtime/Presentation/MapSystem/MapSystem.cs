@@ -114,7 +114,7 @@ namespace Syadeu.Presentation.Map
         private sealed class SceneDependence
         {
             public Reference<SceneDataEntity> m_SceneData;
-            private EntityData<SceneDataEntity> m_InstanceHash;
+            private Entity<SceneDataEntity> m_InstanceHash;
 
             public ICustomYieldAwaiter RegisterOnSceneLoad()
             {
@@ -129,8 +129,8 @@ namespace Syadeu.Presentation.Map
                 //    mapSystem.m_SceneDataObjects.Add(targetScene, list);
                 //}
 
-                var ins = mapSystem.m_EntitySystem.CreateObject(data.Hash);
-                EntityData<SceneDataEntity> entity = ins.Cast<IEntityData, SceneDataEntity>();
+                var ins = mapSystem.m_EntitySystem.CreateEntity(new Reference(data.Hash));
+                Entity<SceneDataEntity> entity = ins.ToEntity<SceneDataEntity>();
                 //list.Add(entity);
 
                 //mapSystem.m_LoadedSceneData.Add(entity);
@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Map
                 MapSystem mapSystem = PresentationSystem<DefaultPresentationGroup, MapSystem>.System;
 
                 m_InstanceHash.Destroy();
-                m_InstanceHash = EntityData<SceneDataEntity>.Empty;
+                m_InstanceHash = Entity<SceneDataEntity>.Empty;
                 //mapSystem.m_EntitySystem.InternalDestroyEntity(data.Idx);
 
                 //mapSystem.m_LoadedSceneData.Remove(data);
@@ -163,7 +163,7 @@ namespace Syadeu.Presentation.Map
                 //    }
                 //}
             }
-            private bool Predicate(EntityData<SceneDataEntity> sceneData)
+            private bool Predicate(Entity<SceneDataEntity> sceneData)
             {
                 if (sceneData.Idx.Equals(m_InstanceHash)) return true;
                 return false;

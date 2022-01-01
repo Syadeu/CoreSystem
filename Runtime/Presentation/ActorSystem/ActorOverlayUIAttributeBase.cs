@@ -48,10 +48,10 @@ namespace Syadeu.Presentation.Actor
         {
             OnEventReceived(ev);
 
-            var actor = ParentActor.ToEntityData<IEntityData>();
+            var actor = ParentActor.ToEntity<IEntityData>();
             for (int i = 0; i < m_OnParentEventReceived8.Length; i++)
             {
-                m_OnParentEventReceived8[i].Execute(Parent, actor);
+                m_OnParentEventReceived8[i].Execute(Parent.ToEntity<IObject>(), actor);
             }
         }
 

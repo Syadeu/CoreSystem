@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.MotionMatching
         [JsonProperty(Order = 0, PropertyName = "Tags")]
         private MxM.EUserTags m_Tags = MxM.EUserTags.None;
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();

@@ -13,7 +13,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     public struct TRPGActorMoveComponent : IActorProviderComponent
     {
-        internal EntityData<IEntityData> m_Parent;
+        internal Entity<IEntityData> m_Parent;
 
         [BurstDiscard]
         private bool SafetyChecks()
@@ -92,13 +92,13 @@ namespace Syadeu.Presentation.TurnTable
         public void MoveTo(in float3 point, in ActorMoveEvent ev)
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
-            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
+            navMesh.MoveTo(m_Parent.ToEntity<IEntity>(), point, ev);
         }
         public void MoveTo<TPredicate>(in float3 point, in ActorMoveEvent<TPredicate> ev)
             where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
         {
             NavMeshSystem navMesh = PresentationSystem<DefaultPresentationGroup, NavMeshSystem>.System;
-            navMesh.MoveTo(m_Parent.As<IEntityData, IEntity>(), point, ev);
+            navMesh.MoveTo(m_Parent.ToEntity<IEntity>(), point, ev);
         }
 
         public void CalculateMoveableOutline(NativeArray<GridPosition> moveables, 

@@ -164,7 +164,7 @@ namespace Syadeu.Presentation.Actor
 
                 component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon;
 
-                component.m_OnEquipWeapon.Execute(Parent);
+                component.m_OnEquipWeapon.Execute(Parent.ToEntity<IObject>());
 
                 if ((ev.EquipOptions & ActorWeaponEquipOptions.SelectWeapon) == ActorWeaponEquipOptions.SelectWeapon)
                 {

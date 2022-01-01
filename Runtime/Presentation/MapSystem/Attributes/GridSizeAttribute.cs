@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Map
             m_GridSystem = other;
         }
 
-        protected override void OnCreated(GridSizeAttribute attribute, EntityData<IEntityData> e)
+        protected override void OnCreated(GridSizeAttribute attribute, Entity<IEntityData> e)
         {
             e.AddComponent<GridSizeComponent>();
             ref var com = ref e.GetComponent<GridSizeComponent>();
@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Map
 
             m_GridSystem.RegisterGridSize(attribute);
         }
-        protected override void OnDestroy(GridSizeAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(GridSizeAttribute attribute, Entity<IEntityData> entity)
         {
             m_GridSystem.UnregisterGridSize(attribute);
         }

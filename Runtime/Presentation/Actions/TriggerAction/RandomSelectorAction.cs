@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Actions
         [Range(0, 100)]
         private int m_RandomPossiblity = 100;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (m_TriggerActions.Length == 0)
             {

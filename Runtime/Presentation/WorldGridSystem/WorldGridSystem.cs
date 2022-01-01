@@ -125,7 +125,7 @@ namespace Syadeu.Presentation.Grid
         public void AddEntity(InstanceID entity)
         {
 #if DEBUG_MODE
-            if (!entity.IsEntity())
+            if (!entity.IsEntity<IEntity>())
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"This entity is not inherted from {nameof(EntityBase)}. " +
@@ -147,7 +147,7 @@ namespace Syadeu.Presentation.Grid
         public void RemoveEntity(InstanceID entity)
         {
 #if DEBUG_MODE
-            if (!entity.IsEntity())
+            if (!entity.IsEntity<IEntity>())
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"This entity is not inherted from {nameof(EntityBase)}. " +
@@ -176,7 +176,6 @@ namespace Syadeu.Presentation.Grid
         private AABB m_AABB;
         private float m_CellSize;
 
-        [NativeDisableUnsafePtrRestriction]
         private UnsafeMultiHashMap<int, InstanceID> m_Entries;
 
         public int length

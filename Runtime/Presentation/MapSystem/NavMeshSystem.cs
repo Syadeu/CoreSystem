@@ -329,11 +329,11 @@ namespace Syadeu.Presentation.Map
             position.Add(point);
             ev.m_MoveJob = new MoveJob()
             {
-                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Entity = entity.ToEntity<IEntityData>(),
                 m_Positions = position
             };
 
-            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
+            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev, true);
         }
         public ActorEventHandler MoveTo<TPredicate>(Entity<IEntity> entity, float3 point, ActorMoveEvent<TPredicate> ev)
             where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
@@ -350,11 +350,11 @@ namespace Syadeu.Presentation.Map
             position.Add(point);
             ev.m_MoveJob = new MoveJob()
             {
-                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Entity = entity.ToEntity<IEntityData>(),
                 m_Positions = position
             };
 
-            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev, true);
+            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev, true);
         }
         public ActorEventHandler MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
         {
@@ -373,11 +373,11 @@ namespace Syadeu.Presentation.Map
 
             ev.m_MoveJob = new MoveJob()
             {
-                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Entity = entity.ToEntity<IEntityData>(),
                 m_Positions = position
             };
 
-            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
+            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev);
         }
         public ActorEventHandler MoveTo(Entity<IEntity> entity, IList<float3> points, ActorMoveEvent ev)
         {
@@ -397,15 +397,15 @@ namespace Syadeu.Presentation.Map
 
             ev.m_MoveJob = new MoveJob()
             {
-                m_Entity = entity.As<IEntity,IEntityData>(),
+                m_Entity = entity.ToEntity<IEntityData>(),
                 m_Positions = position
             };
 
-            return m_ActorSystem.ScheduleEvent(entity.Cast<IEntity, ActorEntity>(), ev);
+            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev);
         }
         internal struct MoveJob : ICoroutineJob
         {
-            public EntityData<IEntityData> m_Entity;
+            public Entity<IEntityData> m_Entity;
             public FixedList4096Bytes<float3> m_Positions;
 
             public UpdateLoop Loop => UpdateLoop.Transform;
@@ -417,9 +417,9 @@ namespace Syadeu.Presentation.Map
                 agent.m_Direction = 0;
                 agent.m_IsMoving = false;
 
-                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnMoveStateChangedEvent.GetEvent(m_Entity.As<IEntityData, IEntity>(),
+                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnMoveStateChangedEvent.GetEvent(m_Entity.ToEntity<IEntity>(),
                     OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
-                agent.m_OnMoveActions.Execute(m_Entity);
+                agent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
             }
             private void SetPreviousPosition(float3 pos)
             {
@@ -474,7 +474,7 @@ namespace Syadeu.Presentation.Map
 
                 EventSystem eventSystem = PresentationSystem<DefaultPresentationGroup, EventSystem>.System;
                 NavAgentComponent navAgent = m_Entity.GetComponentReadOnly<NavAgentComponent>();
-                Entity<IEntity> entity = m_Entity.As<IEntityData, IEntity>();
+                Entity<IEntity> entity = m_Entity.ToEntity<IEntity>();
                 ProxyTransform tr = (ProxyTransform)entity.transform;
                 NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
                 if (!agent.isOnNavMesh)
@@ -503,7 +503,7 @@ namespace Syadeu.Presentation.Map
                     eventSystem.PostEvent(
                         OnMoveStateChangedEvent.GetEvent(entity,
                             OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
-                    navAgent.m_OnMoveActions.Execute(m_Entity);
+                    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
                     m_Positions.Clear();
 
@@ -583,7 +583,7 @@ namespace Syadeu.Presentation.Map
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
-                    navAgent.m_OnMoveActions.Execute(m_Entity);
+                    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
                     yield return null;
                 }
@@ -605,7 +605,7 @@ namespace Syadeu.Presentation.Map
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
-                    navAgent.m_OnMoveActions.Execute(m_Entity);
+                    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
                     yield return null;
                 }
@@ -627,11 +627,11 @@ namespace Syadeu.Presentation.Map
 
                     eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
-                    navAgent.m_OnMoveActions.Execute(m_Entity);
+                    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
                     yield return null;
                 } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
-                        navAgent.m_UpdateTRSWhile.Execute(m_Entity, out bool predicate) && predicate);
+                        navAgent.m_UpdateTRSWhile.Execute(m_Entity.ToEntity<IObject>(), out bool predicate) && predicate);
 
                 SetDirection(0);
                 agent.ResetPath();
@@ -654,7 +654,7 @@ namespace Syadeu.Presentation.Map
 
     public struct ActorMoveEvent : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent>
     {
-        private EntityData<IEntityData> m_Entity;
+        private Entity<IEntityData> m_Entity;
         private float m_AfterDelay;
         internal NavMeshSystem.MoveJob m_MoveJob;
 
@@ -669,7 +669,7 @@ namespace Syadeu.Presentation.Map
         public float AfterDelay => m_AfterDelay;
         public bool BurstCompile => false;
 
-        public ActorMoveEvent(EntityData<IEntityData> entity, float afterDelay)
+        public ActorMoveEvent(Entity<IEntityData> entity, float afterDelay)
         {
             m_Entity = entity;
             m_AfterDelay = afterDelay;
@@ -695,7 +695,7 @@ namespace Syadeu.Presentation.Map
     public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent<TPredicate>>
         where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
     {
-        private EntityData<IEntityData> m_Entity;
+        private Entity<IEntityData> m_Entity;
         private float m_AfterDelay;
         internal NavMeshSystem.MoveJob m_MoveJob;
         private TPredicate m_Predicate;
@@ -711,7 +711,7 @@ namespace Syadeu.Presentation.Map
         public float AfterDelay => m_AfterDelay;
         public bool BurstCompile => false;
 
-        public ActorMoveEvent(EntityData<IEntityData> entity, float afterDelay, TPredicate predicate)
+        public ActorMoveEvent(Entity<IEntityData> entity, float afterDelay, TPredicate predicate)
         {
             m_Entity = entity;
             m_AfterDelay = afterDelay;
@@ -719,7 +719,7 @@ namespace Syadeu.Presentation.Map
             m_MoveJob = default;
             m_Predicate = predicate;
         }
-        public ActorMoveEvent(EntityData<IEntityData> entity, TPredicate predicate)
+        public ActorMoveEvent(Entity<IEntityData> entity, TPredicate predicate)
         {
             m_Entity = entity;
             m_AfterDelay = 0;

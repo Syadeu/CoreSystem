@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.BehaviorTree
             $"1. path length {tempPath.Length} :: {path.Length}".ToLog();
 
             m_ActorEventHandler = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+                .MoveToCell(Entity, path, new ActorMoveEvent(Entity.ToEntity<IEntityData>(), 1));
 
             //TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
             //move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));

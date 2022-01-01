@@ -38,12 +38,12 @@ namespace Syadeu.Presentation.TurnTable
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private readonly List<EntityData<IEntityData>> m_Players = new List<EntityData<IEntityData>>();
-        private readonly LinkedList<EntityData<IEntityData>> m_TurnTable = new LinkedList<EntityData<IEntityData>>();
-        private LinkedListNode<EntityData<IEntityData>> m_CurrentTurn = null;
+        private readonly List<Entity<IEntityData>> m_Players = new List<Entity<IEntityData>>();
+        private readonly LinkedList<Entity<IEntityData>> m_TurnTable = new LinkedList<Entity<IEntityData>>();
+        private LinkedListNode<Entity<IEntityData>> m_CurrentTurn = null;
 
-        public event Action<EntityData<IEntityData>> OnStartTurn;
-        public event Action<EntityData<IEntityData>> OnEndTurn;
+        public event Action<Entity<IEntityData>> OnStartTurn;
+        public event Action<Entity<IEntityData>> OnEndTurn;
 #if DEBUG_MODE
         private readonly HashSet<int>
             m_AddedOnStartTurnEvent = new HashSet<int>(),
@@ -62,18 +62,18 @@ namespace Syadeu.Presentation.TurnTable
 
         public bool Enabled => m_TurnTableEnabled;
         public int TurnCount => m_TurnCount;
-        public EntityData<IEntityData> CurrentTurn
+        public Entity<IEntityData> CurrentTurn
         {
             get
             {
                 if (m_CurrentTurn == null)
                 {
-                    return EntityData<IEntityData>.Empty;
+                    return Entity<IEntityData>.Empty;
                 }
                 return m_CurrentTurn.Value;
             }
         }
-        public IReadOnlyList<EntityData<IEntityData>> Players => m_Players;
+        public IReadOnlyList<Entity<IEntityData>> Players => m_Players;
 
         #region Presentation Methods
 
@@ -145,7 +145,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public void AddPlayer(EntityData<IEntityData> player)
+        public void AddPlayer(Entity<IEntityData> player)
         {
             DisposedCheck();
 
@@ -161,7 +161,7 @@ namespace Syadeu.Presentation.TurnTable
             //    stateAttribute.AddEvent(OnActorStateChangedEventHandler);
             //}
         }
-        public void RemovePlayer(EntityData<IEntityData> player)
+        public void RemovePlayer(Entity<IEntityData> player)
         {
             DisposedCheck();
 
@@ -176,7 +176,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #region Events
 
-        public void AddOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        public void AddOnStartTurnEvent(Action<Entity<IEntityData>> ev)
         {
 #if DEBUG_MODE
             int hash = ev.GetHashCode();
@@ -191,7 +191,7 @@ namespace Syadeu.Presentation.TurnTable
 
             OnStartTurn += ev;
         }
-        public void RemoveOnStartTurnEvent(Action<EntityData<IEntityData>> ev)
+        public void RemoveOnStartTurnEvent(Action<Entity<IEntityData>> ev)
         {
 #if DEBUG_MODE
             int hash = ev.GetHashCode();
@@ -200,7 +200,7 @@ namespace Syadeu.Presentation.TurnTable
 
             OnStartTurn -= ev;
         }
-        public void AddOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        public void AddOnEndTurnEvent(Action<Entity<IEntityData>> ev)
         {
 #if DEBUG_MODE
             int hash = ev.GetHashCode();
@@ -215,7 +215,7 @@ namespace Syadeu.Presentation.TurnTable
 
             OnEndTurn += ev;
         }
-        public void RemoveOnEndTurnEvent(Action<EntityData<IEntityData>> ev)
+        public void RemoveOnEndTurnEvent(Action<Entity<IEntityData>> ev)
         {
 #if DEBUG_MODE
             int hash = ev.GetHashCode();
@@ -227,7 +227,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        private void StartTurn(EntityData<IEntityData> entity)
+        private void StartTurn(Entity<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
             player.IsMyTurn = true;
@@ -240,7 +240,7 @@ namespace Syadeu.Presentation.TurnTable
 
             OnStartTurn?.Invoke(entity);
         }
-        private void EndTurn(EntityData<IEntityData> entity)
+        private void EndTurn(Entity<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
             player.IsMyTurn = false;
@@ -253,7 +253,7 @@ namespace Syadeu.Presentation.TurnTable
 
             OnEndTurn?.Invoke(entity);
         }
-        private ref TurnPlayerComponent ResetTurn(EntityData<IEntityData> entity)
+        private ref TurnPlayerComponent ResetTurn(Entity<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
             ref GridSizeComponent grid = ref entity.GetComponent<GridSizeComponent>();
@@ -334,7 +334,7 @@ namespace Syadeu.Presentation.TurnTable
         private void InternalInitializeTable()
         {
             m_TurnTable.Clear();
-            List<EntityData<IEntityData>> tempList = new List<EntityData<IEntityData>>();
+            List<Entity<IEntityData>> tempList = new List<Entity<IEntityData>>();
             for (int i = 0; i < m_Players.Count; i++)
             {
                 TurnPlayerComponent player = ResetTurn(m_Players[i]);
@@ -378,9 +378,9 @@ namespace Syadeu.Presentation.TurnTable
             StartTurn(m_CurrentTurn.Value);
         }
 
-        private struct TurnPlayerComparer : IComparer<EntityData<IEntityData>>
+        private struct TurnPlayerComparer : IComparer<Entity<IEntityData>>
         {
-            public int Compare(EntityData<IEntityData> xE, EntityData<IEntityData> yE)
+            public int Compare(Entity<IEntityData> xE, Entity<IEntityData> yE)
             {
                 TurnPlayerComponent 
                     x = xE.GetComponent<TurnPlayerComponent>(),

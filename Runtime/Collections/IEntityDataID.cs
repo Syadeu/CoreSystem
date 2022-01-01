@@ -25,7 +25,7 @@ namespace Syadeu.Collections
         InstanceID Idx { get; }
         Type Type { get; }
 
-        IEntityData Target { get; }
+        IObject Target { get; }
 
         int GetHashCode();
     }

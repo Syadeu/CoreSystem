@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 1, PropertyName = "Value")]
         private Reference<ActorFaction>[] m_Value = Array.Empty<Reference<ActorFaction>>();
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
 #if DEBUG
             if (!entity.IsValid())

@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actions
     [Description("Unity Animator 전용입니다")]
     public sealed class AnimationTriggerKeyAction : AnimatorParameterActionBase
     {
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (!IsExecutable(entity, out AnimatorAttribute animator))
             {

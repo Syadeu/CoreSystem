@@ -87,15 +87,15 @@ namespace Syadeu.Presentation.Attributes
             m_EntityRaycastSystem = null;
         }
 
-        protected override void OnCreated(TriggerBoundAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(TriggerBoundAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.m_Triggered = new List<Entity<IEntity>>();
 
-            m_EntityRaycastSystem.AddLayerEntity(attribute.m_Layer, entity.As<IEntityData, IEntity>());
+            m_EntityRaycastSystem.AddLayerEntity(attribute.m_Layer, entity.ToEntity<IEntity>());
         }
-        protected override void OnDestroy(TriggerBoundAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(TriggerBoundAttribute attribute, Entity<IEntityData> entity)
         {
-            m_EntityRaycastSystem.RemoveLayerEntity(attribute.m_Layer, entity.As<IEntityData, IEntity>());
+            m_EntityRaycastSystem.RemoveLayerEntity(attribute.m_Layer, entity.ToEntity<IEntity>());
         }
 
         private void EntityTriggerBoundEventHandler(EntityTriggerBoundEvent ev)
@@ -107,11 +107,11 @@ namespace Syadeu.Presentation.Attributes
             var target = ev.Target.GetAttribute<TriggerBoundAttribute>();
             if (ev.IsEnter)
             {
-                result = target.m_OnTriggerEnter.Execute(ev.Source.As<IEntity, IEntityData>());
+                result = target.m_OnTriggerEnter.Execute(ev.Source.ToEntity<IEntityData>());
             }
             else
             {
-                result = target.m_OnTriggerExit.Execute(ev.Source.As<IEntity, IEntityData>());
+                result = target.m_OnTriggerExit.Execute(ev.Source.ToEntity<IEntityData>());
             }
 
             if (!result)

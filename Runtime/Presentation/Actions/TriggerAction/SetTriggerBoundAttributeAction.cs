@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Actions
     {
         [JsonProperty(Order = 0, PropertyName = "Enable")] private bool m_Enable;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             var att = entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null)

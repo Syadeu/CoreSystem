@@ -273,7 +273,7 @@ namespace Syadeu.Presentation.Map
                     {
                         if (!m_WaitForRegister.TryDequeue(out var att)) continue;
 
-                        Entity<IEntity> entity = att.Parent.As<IEntityData, IEntity>();
+                        Entity<IEntity> entity = att.Parent.ToEntity<IEntity>();
                         if (att.m_FixedToCenter)
                         {
                             ITransform tr = entity.transform;
@@ -461,7 +461,7 @@ namespace Syadeu.Presentation.Map
         }
         public void UnregisterGridSize(GridSizeAttribute gridSize)
         {
-            RemoveGridEntity(gridSize.Parent.As<IEntityData, IEntity>());
+            RemoveGridEntity(gridSize.Parent.ToEntity<IEntity>());
         }
 
         #endregion

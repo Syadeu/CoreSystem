@@ -73,9 +73,9 @@ namespace Syadeu.Presentation.Actor
         }
         public static bool IsAlly(this in InstanceID entityID, in InstanceID targetID)
         {
-            EntityData<IEntityData>
-                entity = entityID.GetEntityData<IEntityData>(),
-                target = targetID.GetEntityData<IEntityData>();
+            Entity<IEntityData>
+                entity = entityID.GetEntity<IEntityData>(),
+                target = targetID.GetEntity<IEntityData>();
 
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())
@@ -90,9 +90,9 @@ namespace Syadeu.Presentation.Actor
         }
         public static bool IsEnemy(this in InstanceID entityID, in InstanceID targetID)
         {
-            EntityData<IEntityData>
-                entity = entityID.GetEntityData<IEntityData>(),
-                target = targetID.GetEntityData<IEntityData>();
+            Entity<IEntityData>
+                entity = entityID.GetEntity<IEntityData>(),
+                target = targetID.GetEntity<IEntityData>();
 
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())

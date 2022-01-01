@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             m_SelectedWeaponIndex = index;
-            m_OnWeaponSelected.Execute(m_Parent.As<ActorEntity, IEntityData>());
+            m_OnWeaponSelected.Execute(m_Parent.ToEntity<IObject>());
         }
         public bool IsEquipable(Instance<ActorWeaponData> weapon)
         {

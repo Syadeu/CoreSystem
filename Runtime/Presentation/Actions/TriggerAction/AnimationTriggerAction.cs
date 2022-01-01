@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 1, PropertyName = "OnExecute")]
         private Reference<TriggerAction>[] m_OnExecute = Array.Empty<Reference<TriggerAction>>();
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             for (int i = 0; i < m_OnExecute.Length; i++)
             {

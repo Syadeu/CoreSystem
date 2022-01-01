@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore]
         object Component { get; }
 
-        void Bind(EntityData<IEntityData> parent);
+        void Bind(Entity<IEntityData> parent);
 
         //        void ReceivedEvent<TEvent>(TEvent ev)
         //#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS

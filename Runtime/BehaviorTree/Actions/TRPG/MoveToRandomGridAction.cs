@@ -76,7 +76,7 @@ namespace Syadeu.Presentation.BehaviorTree
             gridSize.GetPath64(range[rnd], ref tempPath, avoidEntity: true);
 
             PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+                .MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.ToEntity<IEntityData>(), 1));
 
             return TaskStatus.Success;
         }

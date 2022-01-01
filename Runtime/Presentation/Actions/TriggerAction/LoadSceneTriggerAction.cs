@@ -38,7 +38,7 @@ namespace Syadeu.Presentation.Actions
         public bool KeepWait => false;
         public float AfterDelay => .5f;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (m_ToMain)
             {

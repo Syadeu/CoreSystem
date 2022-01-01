@@ -72,10 +72,10 @@ namespace Syadeu.Presentation
                 );
         }
 
-        protected EntityData<IEntityData> CreateObject(IFixedReference obj)
+        protected Entity<IEntityData> CreateObject(IFixedReference obj)
         {
             CoreSystem.Logger.NotNull(obj, "Target object cannot be null");
-            return EntitySystem.CreateObject(obj.Hash);
+            return EntitySystem.CreateEntity(new Reference<IEntityData>(obj.Hash));
         }
 
         protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation) where T : EntityBase

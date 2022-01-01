@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.BehaviorTree
         {
             get
             {
-                Entity<IEntity> entity = Parent.As<IEntityData, IEntity>();
+                Entity<IEntity> entity = Parent.ToEntity<IEntity>();
                 if (!entity.hasProxy)
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
@@ -96,7 +96,7 @@ namespace Syadeu.Presentation.BehaviorTree
             }
         }
 
-        protected override void OnCreated(BehaviorTreeAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(BehaviorTreeAttribute attribute, Entity<IEntityData> entity)
         {
             if (attribute.BehaviorTree.IsNone() || !attribute.BehaviorTree.IsValid())
             {
@@ -114,14 +114,14 @@ namespace Syadeu.Presentation.BehaviorTree
 
             if (entity.Target is IEntity)
             {
-                var tr = entity.As<IEntityData, IEntity>().transform;
+                var tr = entity.ToEntity<IEntity>().transform;
                 if (tr is ProxyTransform proxy)
                 {
                     proxy.enableCull = false;
                 }
             }
         }
-        protected override void OnDestroy(BehaviorTreeAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(BehaviorTreeAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.DestroyBehaviorTree();
         }

@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.TurnTable
     }
     internal sealed class TRPGSelectionProcessor : AttributeProcessor<TRPGSelectionAttribute>
     {
-        protected override void OnCreated(TRPGSelectionAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(TRPGSelectionAttribute attribute, Entity<IEntityData> entity)
         {
             ref var com = ref entity.GetComponent<TRPGSelectionComponent>();
 

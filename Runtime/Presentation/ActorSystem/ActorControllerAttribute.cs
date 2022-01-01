@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.Actor
             m_ActorSystem = null;
         }
 
-        protected override void OnCreated(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(ActorControllerAttribute attribute, Entity<IEntityData> entity)
         {
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
 
@@ -89,9 +89,9 @@ namespace Syadeu.Presentation.Actor
                     continue;
                 }
 #endif
-                Instance<IActorProvider> clone = EntitySystem.CreateInstance(attribute.m_Providers[i]);
-                Initialize(entity, clone.GetObject());
-                component.m_InstanceProviders.Add(clone);
+                Entity<IActorProvider> clone = EntitySystem.CreateEntity(attribute.m_Providers[i]);
+                Initialize(entity, clone.Target);
+                component.m_InstanceProviders.Add(clone.AsInstance());
             }
 
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.Actor
                 ActorSystem.PostEvent(actor, ev);
             }
         }
-        protected override void OnDestroy(ActorControllerAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(ActorControllerAttribute attribute, Entity<IEntityData> entity)
         {
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
@@ -115,7 +115,7 @@ namespace Syadeu.Presentation.Actor
                 EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
             }
         }
-        private void Initialize(EntityData<IEntityData> parent, IActorProvider provider)
+        private void Initialize(Entity<IEntityData> parent, IActorProvider provider)
         {
             provider.Bind(parent);
         }

@@ -159,7 +159,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             var players = m_TurnTableSystem.Players;
             for (int i = 0; i < players.Count; i++)
             {
-                EntityData<IEntityData> entity = players[i];
+                Entity<IEntityData> entity = players[i];
 
                 if (!entity.HasComponent<ActorControllerComponent>()) continue;
 
@@ -176,11 +176,11 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                     if (ev.Enabled)
                     {
-                        m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[j]);
+                        m_WorldCanvasSystem.RegisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[j]);
                     }
                     else
                     {
-                        m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[j]);
+                        m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[j]);
                     }
                 }
             }
@@ -256,7 +256,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                     Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
                     var targets = attProvider.GetObject().GetTargetsInRange();
-                    var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
+                    var tr = m_TurnTableSystem.CurrentTurn.ToEntity<IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();
                     if (targets.Length == 0) break;
@@ -378,7 +378,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         #region ActorOverlayUI Provider
 
-        private void CheckStartTurnActorOverlayUI(EntityData<IEntityData> entity)
+        private void CheckStartTurnActorOverlayUI(Entity<IEntityData> entity)
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
@@ -395,11 +395,11 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 if (obj.m_OnStartTurnPredicate.Execute(entity, out bool result) && result)
                 {
-                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[i]);
                 }
             }
         }
-        private void CheckEndTurnActorOverlayUI(EntityData<IEntityData> entity)
+        private void CheckEndTurnActorOverlayUI(Entity<IEntityData> entity)
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
@@ -416,7 +416,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 if (obj.m_OnEndTurnPredicate.Execute(entity, out bool result) && result)
                 {
-                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[i]);
                 }
             }
         }

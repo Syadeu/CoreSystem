@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 0, PropertyName = "State")]
         private ActorStateAttribute.StateInfo m_State = ActorStateAttribute.StateInfo.Idle;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             ActorStateAttribute stateAttribute = entity.GetAttribute<ActorStateAttribute>();
             if (stateAttribute == null)

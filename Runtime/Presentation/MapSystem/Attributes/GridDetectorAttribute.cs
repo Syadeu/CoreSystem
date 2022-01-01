@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Map
             m_GridSystem = other;
         }
 
-        protected override void OnCreated(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(GridDetectorAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.m_EventSystem = EventSystem;
             attribute.m_GridSize = entity.GetAttribute<GridSizeAttribute>();
@@ -108,7 +108,7 @@ namespace Syadeu.Presentation.Map
 
             //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
         }
-        protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(GridDetectorAttribute attribute, Entity<IEntityData> entity)
         {
             if (attribute.m_GridSize != null)
             {

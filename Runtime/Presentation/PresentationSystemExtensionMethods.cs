@@ -114,11 +114,11 @@ namespace Syadeu.Presentation
             }
             else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
             {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(target.Hash);
+                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(new Reference(target.Hash));
                 return new Instance<T>(temp.Idx);
             }
 
-            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateInstance<T>(target.GetObject());
+            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity<T>(target).AsInstance();
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 0, PropertyName = "AddActionPoint")]
         private int m_AddActionPoint = 0;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE
             if (!entity.HasComponent<TurnPlayerComponent>())

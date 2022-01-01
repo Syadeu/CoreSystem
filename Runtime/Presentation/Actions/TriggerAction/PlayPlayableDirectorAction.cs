@@ -87,7 +87,7 @@ namespace Syadeu.Presentation.Actions
         {
             m_CoroutineSystem = null;
         }
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             m_KeepWait = true;
 
@@ -121,7 +121,7 @@ namespace Syadeu.Presentation.Actions
         {
             public Instance<PlayPlayableDirectorAction> m_Caller;
             public Reference<TimelineData> m_Data;
-            public EntityData<IEntityData> m_Executer;
+            public Entity<IObject> m_Executer;
 
             public DirectorUpdateMode m_UpdateMode;
             public float m_StartDelay;
@@ -143,13 +143,7 @@ namespace Syadeu.Presentation.Actions
 
                 m_Caller = Instance<PlayPlayableDirectorAction>.Empty;
                 m_Data = Reference<TimelineData>.Empty;
-                m_Executer = EntityData<IEntityData>.Empty;
-
-                //m_Conditional.Dispose();
-                //m_OnStart.Dispose();
-                //m_OnEnd.Dispose();
-                //m_OnStartAction.Dispose();
-                //m_OnEndAction.Dispose();
+                m_Executer = Entity<IObject>.Empty;
             }
             public IEnumerator Execute()
             {
@@ -172,7 +166,7 @@ namespace Syadeu.Presentation.Actions
                     if (m_Executer.Target is EntityBase entityBase)
                     {
                         pos = m_Executer.transform.position + data.m_PositionOffset;
-                        rot = math.mul(m_Executer.As<IEntityData, IEntity>().transform.rotation, quaternion.EulerZXY(data.m_RotationOffset));
+                        rot = math.mul(m_Executer.ToEntity<IEntity>().transform.rotation, quaternion.EulerZXY(data.m_RotationOffset));
                     }
                     else
                     {
@@ -265,7 +259,7 @@ namespace Syadeu.Presentation.Actions
                 }
 
                 director.Play();
-                data.m_OnTimelineStart.Execute(entity.As<IEntity, IEntityData>());
+                data.m_OnTimelineStart.Execute(entity.ToEntity<IObject>());
                 data.m_OnTimelineStartAction.Execute();
 
                 yield return null;
@@ -274,7 +268,7 @@ namespace Syadeu.Presentation.Actions
                     yield return null;
                 }
 
-                data.m_OnTimelineEnd.Execute(entity.As<IEntity, IEntityData>());
+                data.m_OnTimelineEnd.Execute(entity.ToEntity<IObject>());
                 data.m_OnTimelineEndAction.Execute();
 
                 time = Time.realtimeSinceStartup;
@@ -320,7 +314,7 @@ namespace Syadeu.Presentation.Actions
 
                     if (item.sourceObject is EntityControlTrack entityControlTrack)
                     {
-                        director.SetGenericBinding(item.sourceObject, m_Executer.As<IEntityData, IEntity>().proxy);
+                        director.SetGenericBinding(item.sourceObject, m_Executer.ToEntity<IEntity>().proxy);
 
                         //foreach (EntityControlTrackClip clip in
                         //    entityControlTrack.GetClips().Select((other) => (EntityControlTrackClip)other.asset))

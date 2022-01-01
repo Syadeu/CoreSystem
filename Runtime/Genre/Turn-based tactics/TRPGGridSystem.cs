@@ -176,7 +176,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #region UI
 
-        public void DrawUICell(EntityData<IEntityData> entity)
+        public void DrawUICell(Entity<IEntityData> entity)
         {
             using (m_DrawUICellMarker.Auto())
             {
@@ -343,7 +343,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx),
-                path, new ActorMoveEvent(EntityData<IEntityData>.GetEntityWithoutCheck(entity.Idx), 1));
+                path, new ActorMoveEvent(Entity<IEntityData>.GetEntityWithoutCheck(entity.Idx), 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = path.Length;

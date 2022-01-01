@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.TurnTable
     [DisplayName("TriggerAction: TRPG Find Targets")]
     public sealed class TRPGFindTargetsTriggerAction : TriggerAction
     {
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE
             if (!(entity.Target is ActorEntity))
@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.TurnTable
                 return;
             }
 #endif
-            Entity<ActorEntity> actor = entity.As<IEntityData, ActorEntity>();
+            Entity<ActorEntity> actor = entity.ToEntity<ActorEntity>();
             ActorControllerAttribute ctr = actor.GetController();
 #if DEBUG_MODE
             if (!actor.HasComponent<ActorControllerComponent>())

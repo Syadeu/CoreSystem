@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.Attributes
         /// </remarks>
         /// <param name="attribute"><see cref="Target"/></param>
         /// <param name="entity"></param>
-        protected virtual void OnCreated(IAttribute attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnCreated(IAttribute attribute, Entity<IEntityData> entity) { }
         /// <summary>
         /// <see cref="Target"/>에 설정된 <see cref="AttributeBase"/>가 부착된 <see cref="IEntityData"/>가
         /// 파괴되었을 때 실행되는 메소드입니다.
@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Attributes
         /// <remarks>
         /// 비동기 작업입니다. Unity API에 접근하면 에러를 뱉습니다.
         /// </remarks>
-        protected virtual void OnDestroy(IAttribute attribute, EntityData<IEntityData> entity) { }
+        protected virtual void OnDestroy(IAttribute attribute, Entity<IEntityData> entity) { }
     }
     /// <inheritdoc cref="AttributeProcessor"/>
     /// <typeparam name="TEntity"></typeparam>
@@ -86,11 +86,10 @@ namespace Syadeu.Presentation.Attributes
 
         public override sealed Type Target => TypeHelper.TypeOf<TEntity>.Type;
 
-        /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, EntityData{IEntityData})"/>
-        protected virtual void OnCreated(TEntity attribute, EntityData<IEntityData> entity) { }
-        /// <inheritdoc cref="IAttributeProcessor.OnCreatedSync(AttributeBase, EntityData{IEntityData})"/>
-        /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, EntityData{IEntityData})"/>
-        protected virtual void OnDestroy(TEntity attribute, EntityData<IEntityData> entity) { }
-        /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, EntityData{IEntityData})"/>
+        /// <inheritdoc cref="IAttributeProcessor.OnCreated(AttributeBase, Entity{IEntityData})"/>
+        protected virtual void OnCreated(TEntity attribute, Entity<IEntityData> entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnDestroy(AttributeBase, Entity{IEntityData})"/>
+        protected virtual void OnDestroy(TEntity attribute, Entity<IEntityData> entity) { }
+        /// <inheritdoc cref="IAttributeProcessor.OnDestroySync(AttributeBase, Entity{IEntityData})"/>
     }
 }

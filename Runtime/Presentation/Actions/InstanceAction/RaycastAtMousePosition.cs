@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Actions
             Ray ray = m_RenderSystem.ScreenPointToRay(new float3(Mouse.current.position.ReadValue(), 0));
             if (!m_RaycastSystem.Raycast(in ray, out m_RaycastInfo)) return;
 
-            m_OnHit.Execute(m_RaycastInfo.entity.As<IEntity, IEntityData>());
+            m_OnHit.Execute(m_RaycastInfo.entity.ToEntity<IObject>());
             m_OnHitAction.Execute();
         }
     }

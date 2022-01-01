@@ -28,15 +28,15 @@ namespace Syadeu.Presentation.Actor
     public abstract class ActorProviderBase<TComponent> : DataObjectBase, IActorProvider<TComponent>
         where TComponent : unmanaged, IActorProviderComponent
     {
-        [JsonIgnore] private EntityData<IEntityData> m_Parent = EntityData<IEntityData>.Empty;
+        [JsonIgnore] private Entity<IEntityData> m_Parent = Entity<IEntityData>.Empty;
 
-        [JsonIgnore] public EntityData<IEntityData> Parent => m_Parent;
+        [JsonIgnore] public Entity<IEntityData> Parent => m_Parent;
 
         #region IActorProvider
 
         object IActorProvider.Component => m_Parent.GetComponent<TComponent>();
 
-        void IActorProvider.Bind(EntityData<IEntityData> parent)
+        void IActorProvider.Bind(Entity<IEntityData> parent)
         {
             m_Parent = parent;
         }
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.Actor
             OnReserve(ref m_Parent.GetComponent<TComponent>());
 
             m_Parent.RemoveComponent<TComponent>();
-            m_Parent = EntityData<IEntityData>.Empty;
+            m_Parent = Entity<IEntityData>.Empty;
         }
 
         protected virtual void OnEventReceived(IActorEvent ev)

@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Actor
         protected void HitEventHandler(IActorHitEvent ev)
         {
             ref ActorStatComponent stat = ref Parent.GetComponent<ActorStatComponent>();
-            EntityData<IEntityData> target = ev.AttackFrom.ToEntityData<IEntityData>();
+            Entity<IEntityData> target = ev.AttackFrom.ToEntity<IEntityData>();
 
             float hp = stat.HP;
             hp -= ev.Damage;
@@ -92,7 +92,7 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            EntityData<IEntityData> target = ev.Target.GetEntityData<IEntityData>();
+            Entity<IEntityData> target = ev.Target.GetEntity<IEntityData>();
             Entity<ActorEntity> parent = Parent.ToEntity<ActorEntity>();
 
             bool isFailed = false;

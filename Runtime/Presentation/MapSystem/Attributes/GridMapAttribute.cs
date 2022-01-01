@@ -536,12 +536,12 @@ namespace Syadeu.Presentation.Map
             m_GridSystem = other;
         }
 
-        protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(GridMapAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.CreateGrid();
             m_GridSystem.RegisterGrid(attribute);
         }
-        protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(GridMapAttribute attribute, Entity<IEntityData> entity)
         {
             m_GridSystem.UnregisterGrid(attribute);
             attribute.DestroyGrid();

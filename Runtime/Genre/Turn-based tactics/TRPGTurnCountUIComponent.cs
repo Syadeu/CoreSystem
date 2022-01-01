@@ -42,7 +42,7 @@ namespace Syadeu.Presentation.TurnTable
             m_TurnTableSystem.OnStartTurn += System_OnStartTurn;
         }
 
-        private void System_OnStartTurn(EntityData<IEntityData> obj)
+        private void System_OnStartTurn(Entity<IEntityData> obj)
         {
             m_Text.text = string.Format(m_TextFormat, m_TurnTableSystem.TurnCount);
         }

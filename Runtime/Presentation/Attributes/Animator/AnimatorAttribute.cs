@@ -144,7 +144,7 @@ namespace Syadeu.Presentation.Attributes
     internal sealed class AnimatorProcessor : AttributeProcessor<AnimatorAttribute>,
         IAttributeOnProxy
     {
-        protected override void OnCreated(AnimatorAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(AnimatorAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.AnimationTriggers = new Dictionary<Hash, List<Reference<AnimationTriggerAction>>>();
             for (int i = 0; i < attribute.m_AnimationTriggers.Length; i++)
@@ -160,7 +160,7 @@ namespace Syadeu.Presentation.Attributes
                 list.Add(attribute.m_AnimationTriggers[i]);
             }
         }
-        protected override void OnDestroy(AnimatorAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(AnimatorAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.Parameters = null;
             attribute.AnimationTriggers = null;

@@ -133,12 +133,12 @@ namespace Syadeu.Presentation.TurnTable
             ref TRPGActorAttackComponent attackComponent = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
             ActorAttackEvent ev = new ActorAttackEvent(attackComponent.GetTarget().GetEntity<IEntity>());
-            ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+            ev.ScheduleEvent(Parent.ToEntity<ActorEntity>());
         }
         public void Attack(Entity<ActorEntity> target)
         {
             ActorAttackEvent ev = new ActorAttackEvent(target);
-            ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+            ev.ScheduleEvent(Parent.ToEntity<ActorEntity>());
         }
         public void Attack(int index)
         {

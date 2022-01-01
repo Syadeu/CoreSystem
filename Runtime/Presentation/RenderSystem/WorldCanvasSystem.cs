@@ -220,7 +220,7 @@ namespace Syadeu.Presentation.Render
         }
         public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, float alpha)
         {
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -236,7 +236,7 @@ namespace Syadeu.Presentation.Render
         }
         public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry, float alpha)
         {
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -298,7 +298,7 @@ namespace Syadeu.Presentation.Render
 #endif
 
             ActorOverlayUpdateJob updateJob = new ActorOverlayUpdateJob(entity, uiEntry);
-            m_AttachedUIHashMap.Add(entity.Cast<ActorEntity, IEntity>(), updateJob.UIInstance);
+            m_AttachedUIHashMap.Add(entity.ToEntity<IEntity>(), updateJob.UIInstance);
 
             m_AllActorOverlayUI.Add(updateJob.UIInstance);
 
@@ -318,7 +318,7 @@ namespace Syadeu.Presentation.Render
             }
             ui.m_OpenedUI.Remove(uiEntry);
 
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -355,7 +355,7 @@ namespace Syadeu.Presentation.Render
 
         public void PostActorOverlayUIEvent(Entity<ActorEntity> entity, IActorEvent ev)
         {
-            if (m_AttachedUIHashMap.TryGetFirstValue(entity.Cast<ActorEntity, IEntity>(), 
+            if (m_AttachedUIHashMap.TryGetFirstValue(entity.ToEntity<IEntity>(), 
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
                 do

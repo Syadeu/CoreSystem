@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.MotionMatching
         [JsonProperty(Order = 0, PropertyName = "DesireValue")]
         private bool m_DesireValue = false;
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             if (animator.AnimatorComponent == null) return true;

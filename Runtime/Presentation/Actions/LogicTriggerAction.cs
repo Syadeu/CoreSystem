@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Actions
             return true;
         }
         [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
-        public bool Predicate(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Predicate(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable()) return true;
 
@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Actions
             return false;
         }
         [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
-        public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Execute(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable())
             {
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation.Actions
             return false;
         }
         [Obsolete("Need to deprecate this. Use FixedLogicTriggerAction Instead")]
-        public bool Schedule(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Schedule(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable())
             {

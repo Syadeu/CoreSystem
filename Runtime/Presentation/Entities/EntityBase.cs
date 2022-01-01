@@ -86,9 +86,6 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureType<Entity<EntityBase>>();
             AotHelper.EnsureList<Entity<EntityBase>>();
 
-            AotHelper.EnsureType<EntityData<EntityBase>>();
-            AotHelper.EnsureList<EntityData<EntityBase>>();
-
             AotHelper.EnsureList<EntityBase>();
         }
     }

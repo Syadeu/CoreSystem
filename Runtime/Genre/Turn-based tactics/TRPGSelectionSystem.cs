@@ -193,7 +193,7 @@ namespace Syadeu.Presentation.TurnTable
                 move.MoveTo(
                     hit.point, 
                     new ActorMoveEvent<ActorPointMovePredicate>(
-                        m_SelectedEntities[i].As<IEntity, IEntityData>(), 
+                        m_SelectedEntities[i].ToEntity<IEntityData>(), 
                         0,
                         new ActorPointMovePredicate()));
             }

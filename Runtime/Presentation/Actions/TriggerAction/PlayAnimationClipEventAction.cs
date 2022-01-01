@@ -48,9 +48,9 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 6, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndActions = Array.Empty<Reference<InstanceAction>>();
 
-        [JsonIgnore] private EntityData<IEntityData> Executer { get; set; } = EntityData<IEntityData>.Empty;
+        [JsonIgnore] private Entity<IObject> Executer { get; set; } = Entity<IObject>.Empty;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             Executer = entity;
             EntityAnimationClipEventData data = m_Data.GetObject();
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Actions
             CoreSystem.StartUnityUpdate(this, Update(Executer, m_Data.GetObject(), obj.Result));
         }
 
-        private IEnumerator Update(EntityData<IEntityData> executer, EntityAnimationClipEventData data, AnimationClip clip)
+        private IEnumerator Update(Entity<IObject> executer, EntityAnimationClipEventData data, AnimationClip clip)
         {
             if (!clip.legacy)
             {
@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Actions
 
             proxy.gameObject.SetActive(true);
 
-            data.m_OnClipStart.Execute(entity.As<IEntity, IEntityData>());
+            data.m_OnClipStart.Execute(entity.ToEntity<IObject>());
             data.m_OnClipStartAction.Execute();
 
             animation.clip = clip;
@@ -151,7 +151,7 @@ namespace Syadeu.Presentation.Actions
 
             "2".ToLog();
 
-            data.m_OnClipEnd.Execute(entity.As<IEntity, IEntityData>());
+            data.m_OnClipEnd.Execute(entity.ToEntity<IObject>());
             data.m_OnClipEndAction.Execute();
 
             passed = 0;
@@ -172,7 +172,7 @@ namespace Syadeu.Presentation.Actions
 
         private void Terminate()
         {
-            Executer = EntityData<IEntityData>.Empty;
+            Executer = Entity<IObject>.Empty;
         }
     }
 }

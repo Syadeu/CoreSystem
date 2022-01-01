@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Actions
             m_CoroutineSystem = null;
         }
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE
             if (!(entity.Target is IEntity))
@@ -79,7 +79,7 @@ namespace Syadeu.Presentation.Actions
             {
                 m_GameObject = FixedGameObject.CreateInstance(),
                 m_AudioClip = m_AudioClip,
-                m_Transform = (ProxyTransform)entity.As<IEntityData, IEntity>().transform,
+                m_Transform = (ProxyTransform)entity.ToEntity<IEntity>().transform,
                 m_PlayOptions = m_PlayOptions,
                 m_Loop = (m_PlayOptions & PlayOptions.UpdatePosition) == PlayOptions.UpdatePosition ? UpdateLoop.AfterTransform : UpdateLoop.Default,
 

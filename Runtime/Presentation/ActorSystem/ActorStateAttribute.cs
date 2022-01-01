@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.ComponentModel;
@@ -68,16 +69,18 @@ namespace Syadeu.Presentation.Actor
 
                 m_OnStateChangedEvent?.Invoke(this, prev, m_State);
 
-                if ((value & StateInfo.Spawn) == StateInfo.Spawn) m_OnSpawn.Execute(Parent);
-                if ((value & StateInfo.Idle) == StateInfo.Idle) m_OnIdle.Execute(Parent);
-                if ((value & StateInfo.Alert) == StateInfo.Alert) m_OnAlert.Execute(Parent);
-                if ((value & StateInfo.Battle) == StateInfo.Battle) m_OnBattle.Execute(Parent);
-                if ((value & StateInfo.Dead) == StateInfo.Dead) m_OnDead.Execute(Parent);
-                m_OnStateChanged.Execute(Parent);
+                Entity<IObject> temp = Parent.ToEntity<IObject>();
+
+                if ((value & StateInfo.Spawn) == StateInfo.Spawn) m_OnSpawn.Execute(temp);
+                if ((value & StateInfo.Idle) == StateInfo.Idle) m_OnIdle.Execute(temp);
+                if ((value & StateInfo.Alert) == StateInfo.Alert) m_OnAlert.Execute(temp);
+                if ((value & StateInfo.Battle) == StateInfo.Battle) m_OnBattle.Execute(temp);
+                if ((value & StateInfo.Dead) == StateInfo.Dead) m_OnDead.Execute(temp);
+                m_OnStateChanged.Execute(temp);
 
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System
                     .PostEvent(OnActorStateChangedEvent.GetEvent(
-                        Parent.As<IEntityData, ActorEntity>(), prev, m_State));
+                        Parent.ToEntity<ActorEntity>(), prev, m_State));
             }
         }
 

@@ -386,7 +386,7 @@ namespace Syadeu.Presentation
         }
         private static void ProcessEntityOnPresentation(EntityProcessorModule system, IEntityData entity)
         {
-            EntityData<IEntityData> entityData = EntityData<IEntityData>.GetEntity(entity.Idx);
+            Entity<IEntityData> entityData = Entity<IEntityData>.GetEntity(entity.Idx);
 
             //#region Entity
             //if (system.m_EntityProcessors.TryGetValue(t, out List<IEntityProcessor> entityProcessor))

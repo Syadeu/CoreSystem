@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.TurnTable
     public struct TurnPlayerComponent : IEntityComponent, 
         IEquatable<TurnPlayerComponent>, IComparable<TurnPlayerComponent>
     {
-        private EntityData<IEntityData> m_Parent;
+        private Entity<IEntityData> m_Parent;
         private int m_HashCode;
 
         private float m_TurnSpeed;

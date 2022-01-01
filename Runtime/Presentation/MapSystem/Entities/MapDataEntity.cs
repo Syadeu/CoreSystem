@@ -54,8 +54,8 @@ namespace Syadeu.Presentation.Map
         {
             AotHelper.EnsureType<Reference<MapDataEntity>>();
             AotHelper.EnsureList<Reference<MapDataEntity>>();
-            AotHelper.EnsureType<EntityData<MapDataEntity>>();
-            AotHelper.EnsureList<EntityData<MapDataEntity>>();
+            AotHelper.EnsureType<Entity<MapDataEntity>>();
+            AotHelper.EnsureList<Entity<MapDataEntity>>();
             AotHelper.EnsureType<MapDataEntity>();
             AotHelper.EnsureList<MapDataEntity>();
         }

@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         public FixedList512Bytes<InstanceID> GetTargets() => m_Targets;
         public InstanceID GetTargetAt(int index) => m_Targets[index];
-        public EntityData<T> GetTargetAt<T>(int index) where T : class, IEntityData
+        public Entity<T> GetTargetAt<T>(int index) where T : class, IEntityData
         {
 #if DEBUG_MODE
             if (m_Targets.Length == 0)
@@ -38,17 +38,17 @@ namespace Syadeu.Presentation.TurnTable
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Doesn\'t have any targets.");
 
-                return EntityData<T>.Empty;
+                return Entity<T>.Empty;
             }
             else if (m_Targets.Length >= index || index < 0)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Target range is out of range.");
 
-                return EntityData<T>.Empty;
+                return Entity<T>.Empty;
             }
 #endif
-            return m_Targets[index].GetEntityData<T>();
+            return m_Targets[index].GetEntity<T>();
         }
 
         public void SetTarget(int i)
