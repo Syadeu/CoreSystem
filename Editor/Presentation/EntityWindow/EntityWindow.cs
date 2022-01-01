@@ -594,7 +594,7 @@ namespace SyadeuEditor.Presentation
                 ListTreeView.OnGUI(pos);
             }
 
-            public void Select(IInstance instance)
+            public void Select(IEntityDataID instance)
             {
                 ListTreeView.Select(instance);
             }

@@ -51,9 +51,7 @@ namespace Syadeu.Collections
             AotHelper.EnsureList<IFixedReference>();
             AotHelper.EnsureList<FixedReference>();
             AotHelper.EnsureList<IEntityDataID>();
-            //AotHelper.EnsureList<EntityID>();
             AotHelper.EnsureList<EntityShortID>();
-            AotHelper.EnsureList<IInstance>();
             AotHelper.EnsureList<InstanceID>();
             AotHelper.EnsureList<IObject>();
         }

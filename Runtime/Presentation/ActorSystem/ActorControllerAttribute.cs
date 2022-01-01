@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Actor
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
                 //ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());
-                EntitySystem.DestroyObject(component.m_InstanceProviders[i]);
+                EntitySystem.DestroyEntity(component.m_InstanceProviders[i]);
             }
         }
         private void Initialize(Entity<IEntityData> parent, IActorProvider provider)

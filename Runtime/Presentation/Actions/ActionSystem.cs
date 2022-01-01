@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Actions
 
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
+                m_EntitySystem.DestroyEntity(m_CurrentAction.Payload.m_ActionInstanceID);
                 m_CurrentAction.Clear();
 
                 return;
@@ -103,7 +103,7 @@ namespace Syadeu.Presentation.Actions
                     //$"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                     handler.SetEvent(SystemEventResult.Success, temp.Sequence.GetType());
 
-                    m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
+                    m_EntitySystem.DestroyEntity(m_CurrentAction.Payload.m_ActionInstanceID);
                     m_CurrentAction.Clear();
 
                     return;
@@ -133,7 +133,7 @@ namespace Syadeu.Presentation.Actions
                         {
                             handler.SetEvent(SystemEventResult.Success, sequence.GetType());
 
-                            m_EntitySystem.DestroyObject(action);
+                            m_EntitySystem.DestroyEntity(action);
                             m_CurrentAction.Clear();
                             return;
                         }
@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Actions
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
 
-                    m_EntitySystem.DestroyObject(action);
+                    m_EntitySystem.DestroyEntity(action);
                     m_CurrentAction.Clear();
                     return;
                 case ActionType.Trigger:
@@ -190,7 +190,7 @@ namespace Syadeu.Presentation.Actions
                         {
                             handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                            m_EntitySystem.DestroyObject(triggerAction);
+                            m_EntitySystem.DestroyEntity(triggerAction);
                             m_CurrentAction.Clear();
                             return;
                         }
@@ -206,7 +206,7 @@ namespace Syadeu.Presentation.Actions
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
 
-                    m_EntitySystem.DestroyObject(triggerAction);
+                    m_EntitySystem.DestroyEntity(triggerAction);
                     m_CurrentAction.Clear();
                     return;
             }
@@ -248,7 +248,7 @@ namespace Syadeu.Presentation.Actions
             InstanceAction action = (InstanceAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = action.InternalExecute();
-            m_EntitySystem.DestroyObject(action);
+            m_EntitySystem.DestroyEntity(action);
             //action.InternalTerminate();
 
             return result;
@@ -302,7 +302,7 @@ namespace Syadeu.Presentation.Actions
             TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = triggerAction.InternalExecute(entity);
-            m_EntitySystem.DestroyObject(triggerAction);
+            m_EntitySystem.DestroyEntity(triggerAction);
 
             return result;
         }

@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("", true)]
     public sealed class InstanceDrawer : ObjectDrawer<IInstance>
     {
         private MemberInfo m_MemberInfo;
@@ -19,11 +20,11 @@ namespace SyadeuEditor.Presentation
             m_MemberInfo = memberInfo;
 
             IInstance target = Getter.Invoke();
-            if (target.IsValid())
-            {
-                m_DisplayName = new GUIContent(target.GetObject().Name);
-            }
-            else
+            //if (target.IsValid())
+            //{
+            //    m_DisplayName = new GUIContent(target.GetObject().Name);
+            //}
+            //else
             {
                 m_DisplayName = new GUIContent("INVALID");
             }
@@ -69,8 +70,8 @@ namespace SyadeuEditor.Presentation
 
                             menu.AddItem(new GUIContent("To Reference"), false, () =>
                             {
-                                EntityWindow.Instance.m_DebuggerListWindow.Select(Getter.Invoke());
-                                EntityWindow.Instance.m_DebuggerViewWindow.Selected = Entity<ObjectBase>.GetEntityWithoutCheck(Getter.Invoke().Idx);
+                                //EntityWindow.Instance.m_DebuggerListWindow.Select(Getter.Invoke());
+                                //EntityWindow.Instance.m_DebuggerViewWindow.Selected = Entity<ObjectBase>.GetEntityWithoutCheck(Getter.Invoke().Idx);
                             });
                         }
 

@@ -204,6 +204,8 @@ namespace Syadeu.Presentation.Grid
             }
         }
 
+        public UnsafeMultiHashMap<int, InstanceID> Entries => m_Entries;
+
         internal WorldGrid(in AABB aabb, in float cellSize)
         {
             this = default(WorldGrid);

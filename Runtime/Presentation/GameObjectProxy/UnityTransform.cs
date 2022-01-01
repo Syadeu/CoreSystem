@@ -163,7 +163,7 @@ namespace Syadeu.Presentation.Proxy
         {
             if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyObject(entity.Idx);
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyEntity(entity.Idx);
         }
         public bool Equals(ITransform other)
         {

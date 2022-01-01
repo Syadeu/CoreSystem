@@ -181,7 +181,7 @@ namespace SyadeuEditor.Presentation
             base.SelectionChanged(selectedIds);
         }
 
-        public void Select(IInstance instance)
+        public void Select(IEntityDataID instance)
         {
             var iter = GetRows().Where((other) => other is ObjectTreeViewItem item && item.m_ObjectBase.Idx.Equals(instance.Idx));
 
