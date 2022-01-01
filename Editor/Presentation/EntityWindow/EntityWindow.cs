@@ -605,11 +605,11 @@ namespace SyadeuEditor.Presentation
             Rect m_Position;
             Vector2 m_Scroll;
 
-            private Instance<ObjectBase> m_Selected;
+            private Entity<ObjectBase> m_Selected;
             private string m_SelectedName = string.Empty;
             private ObjectDrawerBase[] m_SelectedMembers = null;
 
-            public Instance<ObjectBase> Selected
+            public Entity<ObjectBase> Selected
             {
                 get => m_Selected;
                 set
@@ -617,13 +617,13 @@ namespace SyadeuEditor.Presentation
                     if (value.IsEmpty() || !value.IsValid())
                     {
                         $"1: {value.IsEmpty()} :: {value.IsValid()}".ToLog();
-                        m_Selected = Instance<ObjectBase>.Empty;
+                        m_Selected = Entity<ObjectBase>.Empty;
                         m_SelectedName = string.Empty;
                         m_SelectedMembers = null;
                         return;
                     }
 
-                    var entity = value.GetObject();
+                    var entity = value.Target;
                     m_SelectedName = entity.Name + EditorUtilities.String($": {entity.GetType().Name}", 11);
 
                     MemberInfo[] temp = entity.GetType()
@@ -699,7 +699,7 @@ namespace SyadeuEditor.Presentation
                         return;
                     }
 
-                    ObjectBase obj = m_Selected.GetObject();
+                    ObjectBase obj = m_Selected.Target;
 
                     EditorUtilities.StringRich(m_SelectedName, 20);
                     EditorGUILayout.Space(3);

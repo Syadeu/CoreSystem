@@ -201,11 +201,11 @@ namespace SyadeuEditor.Presentation
 
         private class ObjectTreeViewItem : TreeViewItem
         {
-            public Instance<ObjectBase> m_ObjectBase;
+            public Entity<ObjectBase> m_ObjectBase;
 
             public ObjectTreeViewItem(int id, int depth, string displayName, ObjectBase obj) : base(id, depth, displayName)
             {
-                m_ObjectBase = new Instance<ObjectBase>(obj);
+                m_ObjectBase = Entity<ObjectBase>.GetEntityWithoutCheck(obj.Idx);
             }
         }
     }

@@ -120,7 +120,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         private UnsafeAllocator m_Allocator;
 
         public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Allocator.Ptr;
-        public bool Created => m_Allocator.IsCreated;
+        public bool IsCreated => m_Allocator.IsCreated;
 
         public ref T this[int index]
         {

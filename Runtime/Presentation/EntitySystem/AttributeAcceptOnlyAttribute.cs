@@ -12,13 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Syadeu.Internal;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Entities;
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// <see cref="Attributes.AttributeBase"/> 를 참조할 수 있는 <see cref="Entities.EntityDataBase"/> 를 선언할 수 있습니다.
+    /// </summary>
+    /// <remarks>
+    /// 타입은 <see cref="Entities.EntityDataBase"/> 를 상속받는 클래스 이어야 합니다.
+    /// </remarks>
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class AttributeAcceptOnlyAttribute : Attribute
@@ -26,15 +33,17 @@ namespace Syadeu.Presentation
         public Type[] Types;
         public AttributeAcceptOnlyAttribute(params Type[] types)
         {
-            //for (int i = 0; i < types.Length; i++)
-            //{
-            //    if (!TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(types[i]))
-            //    {
-            //        CoreSystem.Logger.LogError(Channel.Entity, $"Type({types[i].Name}) is not a entity type.");
-            //        throw new Exception();
-            //    }
-            //}
-            
+#if DEBUG_MODE
+            for (int i = 0; i < types.Length; i++)
+            {
+                if (!typeof(Entities.EntityDataBase).IsAssignableFrom(types[i]))
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity, 
+                        $"Type({types[i].Name}) is not a entity type.");
+                    throw new Exception();
+                }
+            }
+#endif
             Types = types;
         }
     }

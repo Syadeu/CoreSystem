@@ -17,12 +17,15 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections.Threading;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -169,7 +172,7 @@ namespace Syadeu.Presentation.Grid
     }
 
     [BurstCompatible]
-    public struct WorldGrid : IDisposable
+    internal unsafe struct WorldGrid : IDisposable
     {
         private readonly short m_CheckSum;
 
@@ -275,25 +278,98 @@ namespace Syadeu.Presentation.Grid
         public bool Contains(in int index)
         {
             bool result;
-            unsafe
-            {
-                BurstGridMathematics.containIndex(in m_AABB, in m_CellSize, in index, &result);
-            }
+            BurstGridMathematics.containIndex(in m_AABB, in m_CellSize, in index, &result);
             return result;
         }
         public bool Contains(in int3 location)
         {
             bool result;
-            unsafe
-            {
-                BurstGridMathematics.containLocation(in m_AABB, in m_CellSize, in location, &result);
-            }
+            BurstGridMathematics.containLocation(in m_AABB, in m_CellSize, in location, &result);
             return result;
         }
 
         public void Add(int index, InstanceID entity)
         {
             m_Entries.Add(index, entity);
+        }
+        public void Remove(int index, InstanceID entity)
+        {
+            m_Entries.Remove(index, entity);
+        }
+        public bool HasEntityAt(in int3 location)
+        {
+            return m_Entries.ContainsKey(LocationToIndex(in location));
+        }
+
+        public void GetNearbyEntities(
+            in int index, in int xzRange, in int yRange, 
+            ref UnsafeAllocator<InstanceID> output)
+        {
+            if (!output.IsCreated)
+            {
+                throw new Exception();
+            }
+            if (!Contains(in index))
+            {
+                throw new Exception();
+            }
+
+            int3 
+                location = IndexToLocation(index),
+                start = new int3(location.x - xzRange, location.y - yRange, location.z - xzRange),
+                end = new int3(location.x + xzRange, location.y + yRange, location.z + xzRange);
+
+            int maxCount = (xzRange + 1) * (yRange + 1);
+            int3* buffer = stackalloc int3[maxCount];
+            for (int y = 0, i = 0; y < yRange + 1 && i < maxCount; y++)
+            {
+                for (int x = 0; x < xzRange && i < maxCount; x++)
+                {
+                    for (int z = 0; z < xzRange && i < maxCount; z++, i++)
+                    {
+                        buffer[i] = start + new int3(x, y, z);
+                    }
+                }
+            }
+
+            UnsafeBufferUtility.Sort(buffer, maxCount, new CloseDistanceComparer(location));
+
+            for (int i = 0, added = 0; 
+                i < maxCount && added < output.Length; 
+                i++)
+            {
+                if (!HasEntityAt(buffer[i])) continue;
+
+                m_Entries.TryGetFirstValue(LocationToIndex(buffer[i]), out InstanceID entity, out var iter);
+                do
+                {
+                    output[added++] = entity;
+                } while (added < output.Length && m_Entries.TryGetNextValue(out entity, ref iter));
+            }
+        }
+        private struct CloseDistanceComparer : IComparer<int3>
+        {
+            private int3 from;
+
+            public CloseDistanceComparer(int3 from)
+            {
+                this.from = from;
+            }
+
+            public int Compare(int3 x, int3 y)
+            {
+                int3
+                    reletiveX = from - x,
+                    reletiveY = from - y;
+
+                int
+                    sqrX = math.mul(reletiveX, reletiveX),
+                    sqrY = math.mul(reletiveY, reletiveY);
+
+                if (sqrX == sqrY) return 0;
+                else if (sqrX < sqrY) return -1;
+                else return 1;
+            }
         }
 
         public void Dispose()

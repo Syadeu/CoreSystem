@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Entities;
 using SyadeuEditor.Utilities;
 using System.Reflection;
 using UnityEditor;
@@ -69,7 +70,7 @@ namespace SyadeuEditor.Presentation
                             menu.AddItem(new GUIContent("To Reference"), false, () =>
                             {
                                 EntityWindow.Instance.m_DebuggerListWindow.Select(Getter.Invoke());
-                                EntityWindow.Instance.m_DebuggerViewWindow.Selected = new Instance<ObjectBase>(Getter.Invoke().Idx);
+                                EntityWindow.Instance.m_DebuggerViewWindow.Selected = Entity<ObjectBase>.GetEntityWithoutCheck(Getter.Invoke().Idx);
                             });
                         }
 

@@ -144,6 +144,10 @@ namespace Syadeu.Presentation.Entities
                     return transformModule.GetTransform(Idx);
                 }
 
+                CoreSystem.Logger.Log(Channel.Entity,
+                    $"This entity({RawName}) doesn\'t have any transform. " +
+                    $"If you want to access transform, create it before access.");
+
                 return ProxyTransform.Null;
             }
         }
