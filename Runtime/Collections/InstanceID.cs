@@ -41,6 +41,7 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();
 
+        [NotBurstCompatible]
         public override string ToString()
         {
             return m_Hash.ToString();

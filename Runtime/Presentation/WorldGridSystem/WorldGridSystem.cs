@@ -22,12 +22,15 @@ using Syadeu.Collections.Threading;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
@@ -44,6 +47,7 @@ namespace Syadeu.Presentation.Grid
         private AtomicSafeBoolen m_RequireGridUpdate;
 
         private EntityComponentSystem m_ComponentSystem;
+        private EventSystem m_EventSystem;
 
         #region Presentation Methods
 
@@ -52,6 +56,7 @@ namespace Syadeu.Presentation.Grid
             m_GridInitialized = false;
 
             RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -59,10 +64,13 @@ namespace Syadeu.Presentation.Grid
         {
             m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
+
+            m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
         }
         protected override void OnDispose()
         {
             m_ComponentSystem = null;
+            m_EventSystem = null;
         }
 
         #region Binds
@@ -74,12 +82,27 @@ namespace Syadeu.Presentation.Grid
             m_ComponentSystem.OnComponentAdded += M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove += M_ComponentSystem_OnComponentRemove;
         }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+
+            m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+        }
 
         private void M_ComponentSystem_OnComponentAdded(InstanceID arg1, Type arg2)
         {
 
         }
         private void M_ComponentSystem_OnComponentRemove(InstanceID arg1, Type arg2)
+        {
+
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
 
         }
@@ -125,6 +148,12 @@ namespace Syadeu.Presentation.Grid
             m_GridInitialized = true;
         }
 
+        public void UpdateEntity(InstanceID entity)
+        {
+            if (!m_GridInitialized) return;
+
+            m_Grid.Update(entity);
+        }
         public void AddEntity(InstanceID entity)
         {
 #if DEBUG_MODE
@@ -179,7 +208,8 @@ namespace Syadeu.Presentation.Grid
         private AABB m_AABB;
         private float m_CellSize;
 
-        private UnsafeMultiHashMap<int, InstanceID> m_Entries;
+        private UnsafeMultiHashMap<int, InstanceID> m_Indices;
+        private UnsafeHashMap<InstanceID, int> m_Entities;
 
         public int length
         {
@@ -204,7 +234,7 @@ namespace Syadeu.Presentation.Grid
             }
         }
 
-        public UnsafeMultiHashMap<int, InstanceID> Entries => m_Entries;
+        public UnsafeMultiHashMap<int, InstanceID> Entries => m_Indices;
 
         internal WorldGrid(in AABB aabb, in float cellSize)
         {
@@ -215,7 +245,8 @@ namespace Syadeu.Presentation.Grid
             m_AABB = aabb;
             m_CellSize = cellSize;
 
-            m_Entries = new UnsafeMultiHashMap<int, InstanceID>(length, AllocatorManager.Persistent);
+            m_Indices = new UnsafeMultiHashMap<int, InstanceID>(length, AllocatorManager.Persistent);
+            m_Entities = new UnsafeHashMap<InstanceID, int>(length, AllocatorManager.Persistent);
         }
 
         #region Index
@@ -290,17 +321,37 @@ namespace Syadeu.Presentation.Grid
             return result;
         }
 
-        public void Add(int index, InstanceID entity)
+        public void Add(in int index, in InstanceID entity)
         {
-            m_Entries.Add(index, entity);
+            m_Indices.Add(index, entity);
+            m_Entities.Add(entity, index);
         }
-        public void Remove(int index, InstanceID entity)
+        public void Add(in InstanceID entity)
         {
-            m_Entries.Remove(index, entity);
+            int index = PositionToIndex(entity.GetTransformWithoutCheck().position);
+
+            m_Indices.Add(index, entity);
+            m_Entities.Add(entity, index);
+        }
+        public void Remove(in int index, in InstanceID entity)
+        {
+            m_Indices.Remove(index, entity);
+            m_Entities.Remove(entity);
+        }
+        public void Remove(in InstanceID entity)
+        {
+            int index = m_Entities[entity];
+
+            m_Indices.Remove(index, entity);
+            m_Entities.Remove(entity);
         }
         public bool HasEntityAt(in int3 location)
         {
-            return m_Entries.ContainsKey(LocationToIndex(in location));
+            return m_Indices.ContainsKey(LocationToIndex(in location));
+        }
+        public int GetIndex(in InstanceID entity)
+        {
+            return m_Entities[entity];
         }
 
         public void GetNearbyEntities(
@@ -342,13 +393,27 @@ namespace Syadeu.Presentation.Grid
             {
                 if (!HasEntityAt(buffer[i])) continue;
 
-                m_Entries.TryGetFirstValue(LocationToIndex(buffer[i]), out InstanceID entity, out var iter);
+                m_Indices.TryGetFirstValue(LocationToIndex(buffer[i]), out InstanceID entity, out var iter);
                 do
                 {
                     output[added++] = entity;
-                } while (added < output.Length && m_Entries.TryGetNextValue(out entity, ref iter));
+                } while (added < output.Length && m_Indices.TryGetNextValue(out entity, ref iter));
             }
         }
+
+        public void Update(in InstanceID entity)
+        {
+            Remove(entity);
+            Add(entity);
+        }
+        public JobHandle Update()
+        {
+            var entries = m_Entities.GetKeyArray(AllocatorManager.TempJob);
+            UpdateGridJob job = new UpdateGridJob(this, entries);
+
+            return job.Schedule(entries.Length, 64);
+        }
+
         private struct CloseDistanceComparer : IComparer<int3>
         {
             private int3 from;
@@ -373,10 +438,44 @@ namespace Syadeu.Presentation.Grid
                 else return 1;
             }
         }
+        [BurstCompile(CompileSynchronously = true)]
+        private struct UpdateGridJob : IJobParallelFor
+        {
+            [ReadOnly, DeallocateOnJobCompletion]
+            private NativeArray<InstanceID> entries;
+            [ReadOnly]
+            private WorldGrid grid;
+            [ReadOnly]
+            private EntityTransformHashMap m_TrHashMap;
+
+            [WriteOnly]
+            private UnsafeMultiHashMap<int, InstanceID>.ParallelWriter indices;
+            [WriteOnly]
+            private UnsafeHashMap<InstanceID, int>.ParallelWriter entities;
+
+            public UpdateGridJob(WorldGrid worldGrid, NativeArray<InstanceID> entries)
+            {
+                this.entries = entries;
+                grid = worldGrid;
+                m_TrHashMap = EntityTransformStatic.GetHashMap();
+
+                worldGrid.m_Indices.Clear(); worldGrid.m_Entities.Clear();
+                indices = worldGrid.m_Indices.AsParallelWriter();
+                entities = worldGrid.m_Entities.AsParallelWriter();
+            }
+
+            public void Execute(int i)
+            {
+                int index = grid.PositionToIndex(m_TrHashMap.GetTransform(entries[i]).position);
+                indices.Add(index, entries[i]);
+                entities.TryAdd(entries[i], index);
+            }
+        }
 
         public void Dispose()
         {
-            m_Entries.Dispose();
+            m_Indices.Dispose();
+            m_Entities.Dispose();
         }
     }
 

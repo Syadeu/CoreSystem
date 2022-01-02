@@ -67,14 +67,12 @@ namespace Syadeu.Presentation
             if (TryGetObject(original.Hash, out IObject obj))
             {
                 ObjectBase temp = (ObjectBase)obj;
-                temp.m_HashCode = System.CreateHashCode();
                 temp.InternalInitialize();
 
                 return temp;
             }
 
             var clone = (ObjectBase)original.Clone();
-            clone.m_HashCode = System.CreateHashCode();
 
             return clone;
         }

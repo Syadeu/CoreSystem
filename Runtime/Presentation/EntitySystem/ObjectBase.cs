@@ -32,8 +32,6 @@ namespace Syadeu.Presentation
     {
         const string c_NameBase = "New {0}";
 
-        [JsonIgnore] internal int m_HashCode;
-
         /// <summary>
         /// 이 오브젝트의 이름입니다.
         /// </summary>
@@ -142,7 +140,8 @@ namespace Syadeu.Presentation
         }
         public override sealed int GetHashCode()
         {
-            return m_HashCode;
+            ulong hash = Idx.Hash;
+            return unchecked((int)hash);
         }
 
         public bool Equals(IObject other) => Hash.Equals(other.Hash);

@@ -21,7 +21,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System.ComponentModel;
 
-namespace Syadeu.Presentation.Grid.LowLevel
+namespace Syadeu.Presentation.Grid
 {
     [AttributeAcceptOnly(typeof(EntityBase))]
     [DisplayName("Attribute: Grid Object")]

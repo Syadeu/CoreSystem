@@ -109,6 +109,12 @@ namespace Syadeu.Presentation
             return ins;
         }
 
+        /// <summary>
+        /// 이 엔티티의 부모가 <typeparamref name="T"/>를 부모로 삼는지 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static bool IsEntity<T>(this in InstanceID id) where T : IEntityData
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
@@ -118,30 +124,24 @@ namespace Syadeu.Presentation
 
             return false;
         }
-        public static Entity<IObject> GetEntity(this InstanceID id) => GetEntity<IObject>(id);
-        public static Entity<T> GetEntity<T>(this InstanceID id)
-            where T : class, IObject
+        public static bool IsEntity(this in InstanceID id, Type type)
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({id.Hash}) is invalid id.");
-                return Entity<T>.Empty;
-            }
-            else if (!(obj is T))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(InstanceID)}.");
-                return Entity<T>.Empty;
-            }
-#endif
-            return Entity<T>.GetEntityWithoutCheck(id);
-        }
+            if (type.IsAssignableFrom(obj.GetType())) return true;
 
+            return false;
+        }
+        public static Entity<IObject> GetEntity(this InstanceID id) => GetEntity<IObject>(id);
+        public static Entity<T> GetEntity<T>(this InstanceID id)
+            where T : class, IObject
+        {
+            return Entity<T>.GetEntity(id);
+        }
+        public static Entity<T> GetEntityWithoutCheck<T>(this in InstanceID idx)
+            where T : class, IObject
+            => Entity<T>.GetEntityWithoutCheck(in idx);
 
         public static ObjectBase GetObject(this InstanceID id)
         {
@@ -336,27 +336,13 @@ namespace Syadeu.Presentation
 
             #endregion
 
-            int hash = target.GetHashCode();
+            int hash = idx.GetHashCode();
             if (hash == 0)
             {
                 "internal error hash 0".ToLogError();
             }
 
-            return new Entity<T>(idx, target.GetHashCode(), target.Name);
-        }
-        public static Entity<T> GetEntityWithoutCheck<T>(in InstanceID idx)
-            where T : class, IObject
-        {
-            ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
-#if DEBUG_MODE
-            if (target == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target Not Found.");
-                return Entity<T>.Empty;
-            }
-#endif
-            return new Entity<T>(idx, target.GetHashCode(), target.Name);
+            return new Entity<T>(idx, idx.GetHashCode(), target.Name);
         }
     }
 }

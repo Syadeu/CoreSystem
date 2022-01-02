@@ -41,14 +41,16 @@ namespace Syadeu.Presentation.Entities
         public static Entity<T> Empty => new Entity<T>(InstanceID.Empty, 0, null);
 
         public static Entity<T> GetEntity(in InstanceID idx) => EntityDataHelper.GetEntity<T>(idx);
-        public static Entity<T> GetEntityWithoutCheck(in InstanceID id) => EntityDataHelper.GetEntityWithoutCheck<T>(id);
+        public static Entity<T> GetEntityWithoutCheck(in InstanceID idx) => new Entity<T>(idx, idx.GetHashCode());
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly InstanceID m_Idx;
         private readonly int m_HashCode;
         private FixedString128Bytes m_Name;
 
+        [NotBurstCompatible]
         IObject IEntityDataID.Target => Target;
+        [NotBurstCompatible]
         public T Target
         {
             get
@@ -88,6 +90,7 @@ namespace Syadeu.Presentation.Entities
                 return t;
             }
         }
+        [NotBurstCompatible]
         public bool HasTarget
         {
             get
@@ -120,6 +123,7 @@ namespace Syadeu.Presentation.Entities
         }
         /// <inheritdoc cref="IObject.Idx"/>
         public InstanceID Idx => m_Idx;
+        [NotBurstCompatible]
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
@@ -137,22 +141,16 @@ namespace Syadeu.Presentation.Entities
                     return ProxyTransform.Null;
                 }
 #endif
-                //EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-                //EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
-                //if (transformModule.HasTransform(Idx))
-                //{
-                //    return transformModule.GetTransform(Idx);
-                //}
-                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.GetValue().Data;
+                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
                 if (transformStatic.HasTransform(Idx))
                 {
                     return transformStatic.GetTransform(Idx);
                 }
-
+#if DEBUG_MODE
                 CoreSystem.Logger.Log(Channel.Entity,
                     $"This entity({RawName}) doesn\'t have any transform. " +
                     $"If you want to access transform, create it before access.");
-
+#endif
                 return ProxyTransform.Null;
             }
         }
@@ -178,6 +176,7 @@ namespace Syadeu.Presentation.Entities
                 return tr.hasProxy && !tr.hasProxyQueued;
             }
         }
+        [NotBurstCompatible]
         public RecycleableMonobehaviour proxy
         {
             get
@@ -197,6 +196,7 @@ namespace Syadeu.Presentation.Entities
 
 #pragma warning restore IDE1006 // Naming Styles
 
+        [NotBurstCompatible]
         internal Entity(InstanceID id, int hashCode, string name)
         {
             m_Idx = id;
@@ -212,6 +212,13 @@ namespace Syadeu.Presentation.Entities
         {
             m_Idx = id;
             m_Name = name;
+
+            m_HashCode = hashCode;
+        }
+        private Entity(InstanceID id, int hashCode)
+        {
+            m_Idx = id;
+            m_Name = default(FixedString128Bytes);
 
             m_HashCode = hashCode;
         }

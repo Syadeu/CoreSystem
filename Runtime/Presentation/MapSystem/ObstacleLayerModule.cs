@@ -74,7 +74,7 @@ namespace Syadeu.Presentation.Map
                 return GridLayer.Empty;
             }
 
-            int hash = unchecked(index * 397 ^ m_Grid.m_HashCode);
+            int hash = unchecked(index * 397 ^ m_Grid.GetHashCode());
             bool inverse = m_Grid.m_Layers[index].m_Inverse;
 
             return new GridLayer(hash, inverse);

@@ -645,38 +645,6 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            if (m_ObjectEntities[hash] is IEntityData entityData)
-            {
-                // M_ProxySystem_OnDataObjectDestroyAsync 에서 전부 핸들
-
-                //ProcessEntityOnDestroy(this, entityData);
-
-                //if (!CoreSystem.BlockCreateInstance && m_ObjectEntities[hash] is IEntity entity)
-                //{
-                //    if (entity.transform is ProxyTransform tr)
-                //    {
-                //        Hash index = tr.m_Hash;
-                //        tr.Destroy();
-                //        m_EntityGameObjects.Remove(index);
-                //    }
-                //    else if (entity.transform is UnityTransform unityTr)
-                //    {
-                //        UnityEngine.Object.Destroy(unityTr.provider.gameObject);
-                //        ((IDisposable)unityTr).Dispose();
-                //    }
-                //}
-            }
-            else
-            {
-                //if (m_ObjectEntities[hash] is DataObjectBase dataObject)
-                //{
-                //    dataObject.InternalOnDestroy();
-                //}
-
-                //RemoveAllComponents(in hash);
-            }
-
-
             if (CoreSystem.BlockCreateInstance) return;
 
             m_DestroyedObjectsInThisFrame.Push(hash);

@@ -44,7 +44,7 @@ namespace Syadeu.Presentation
         }
         private unsafe void ConstructSharedStatic()
         {
-            SharedStatic<EntityTransformStatic> shared = EntityTransformStatic.GetValue();
+            SharedStatic<EntityTransformStatic> shared = EntityTransformStatic.Value;
 
             ref UntypedUnsafeHashMap trHashMap =
                 ref UnsafeUtility.As<UnsafeHashMap<InstanceID, ProxyTransform>, UntypedUnsafeHashMap>(ref m_TransformHashMap);
@@ -151,6 +151,32 @@ namespace Syadeu.Presentation
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
             return entitySystem.GetModule<EntityTransformModule>().GetTransform(entity.Idx);
+        }
+
+        public static bool HasTransform(this InstanceID id)
+        {
+            ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+            return transformStatic.HasTransform(id);
+        }
+        public static ProxyTransform GetTransform(this InstanceID id)
+        {
+            ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+#if DEBUG_MODE
+            if (!transformStatic.HasTransform(id))
+            {
+                CoreSystem.Logger.Log(Channel.Entity,
+                    $"This entity({id.GetObject().Name}) doesn\'t have any transform. " +
+                    $"If you want to access transform, create it before access.");
+
+                return ProxyTransform.Null;
+            }
+#endif
+            return transformStatic.GetTransform(id);
+        }
+        public static ProxyTransform GetTransformWithoutCheck(this InstanceID id)
+        {
+            ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+            return transformStatic.GetTransform(id);
         }
     }
 }
