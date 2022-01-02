@@ -23,7 +23,6 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
-using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,13 +36,11 @@ namespace Syadeu.Presentation.Grid
 {
     public sealed class WorldGridSystem : PresentationSystemEntity<WorldGridSystem>
     {
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
-        public override bool EnableAfterTransformPresentation => true;
 
         private WorldGrid m_Grid;
-        private bool m_GridInitialized;
         private JobHandle m_GridUpdateJob;
 
         private NativeMultiHashMap<int, InstanceID> m_Indices;
@@ -58,8 +55,7 @@ namespace Syadeu.Presentation.Grid
 
         protected override PresentationResult OnInitialize()
         {
-            m_GridInitialized = false;
-            m_Grid = new WorldGrid(new AABB(0, 10), 2.5f);
+            m_Grid = new WorldGrid(new AABB(0, 0), 2.5f);
 
             m_WaitForAdd = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
             m_WaitForRemove = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
@@ -109,15 +105,19 @@ namespace Syadeu.Presentation.Grid
 
         private void M_ComponentSystem_OnComponentAdded(InstanceID arg1, Type arg2)
         {
+            if (!TypeHelper.TypeOf<GridComponent>.Type.IsAssignableFrom(arg2)) return;
+
             m_GridUpdateJob.Complete();
 
-            Add(arg1);
+            m_WaitForAdd.Enqueue(arg1);
         }
         private void M_ComponentSystem_OnComponentRemove(InstanceID arg1, Type arg2)
         {
+            if (!TypeHelper.TypeOf<GridComponent>.Type.IsAssignableFrom(arg2)) return;
+
             m_GridUpdateJob.Complete();
 
-            Remove(arg1);
+            m_WaitForRemove.Enqueue(arg1);
         }
 
         #endregion
@@ -136,24 +136,49 @@ namespace Syadeu.Presentation.Grid
             int removeCount = m_WaitForRemove.Count;
             for (int i = 0; i < removeCount; i++)
             {
+                InstanceID entity = m_WaitForRemove.Dequeue();
+                int index = m_Entities[entity];
 
+                m_Indices.Remove(index, entity);
+                m_Entities.Remove(entity);
+
+                $"remove grid {index} at {entity}".ToLog();
             }
+
+            int addCount = m_WaitForAdd.Count;
+            bool requireReindex = false;
+            for (int i = 0; i < addCount; i++)
+            {
+                InstanceID entity = m_WaitForAdd.Dequeue();
+                float3 pos = entity.GetTransformWithoutCheck().position;
+
+                requireReindex |= !m_Grid.Contains(pos);
+                if (requireReindex)
+                {
+                    AABB temp = m_Grid.aabb;
+                    temp.Encapsulate(pos);
+                    m_Grid.aabb = temp;
+
+                    m_WaitForAdd.Enqueue(entity);
+                    $"require encapsulate for {entity}".ToLog();
+                    continue;
+                }
+
+                int index = m_Grid.PositionToIndex(pos);
+
+                m_Indices.Add(index, entity);
+                m_Entities.Add(entity, index);
+
+                $"add grid {index} at {entity}\n{pos}::{m_Grid.Contains(pos)}".ToLog();
+            }
+
+            if (requireReindex) FullIndexingUpdate();
 
             return base.BeforePresentation();
         }
 
         #endregion
 
-        private void Add(in int index, in InstanceID entity)
-        {
-            m_Indices.Add(index, entity);
-
-            if (m_Entities.Count() == m_Entities.Capacity)
-            {
-                m_Entities.Capacity += 256;
-            }
-            m_Entities.Add(entity, index);
-        }
         private void Add(in InstanceID entity)
         {
             int index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
@@ -165,11 +190,6 @@ namespace Syadeu.Presentation.Grid
                 m_Entities.Capacity += 256;
             }
             m_Entities.Add(entity, index);
-        }
-        private void Remove(in int index, in InstanceID entity)
-        {
-            m_Indices.Remove(index, entity);
-            m_Entities.Remove(entity);
         }
         private void Remove(in InstanceID entity)
         {
@@ -234,20 +254,48 @@ namespace Syadeu.Presentation.Grid
             }
         }
 
-        private unsafe JobHandle Update()
+        private void FullIndexingUpdate()
         {
-            var entries = m_Entities.GetKeyArray(AllocatorManager.TempJob);
+            m_GridUpdateJob.Complete();
 
+            int removeCount = m_WaitForRemove.Count;
+            for (int i = 0; i < removeCount; i++)
+            {
+                InstanceID entity = m_WaitForRemove.Dequeue();
+                m_Entities.Remove(entity);
+            }
+
+            int prevCount = m_Entities.Count();
             m_Entities.Dispose(); m_Indices.Dispose();
             m_Indices = new NativeMultiHashMap<int, InstanceID>(m_Grid.length, AllocatorManager.Persistent);
-            m_Entities = new NativeHashMap<InstanceID, int>(entries.Length * 2, AllocatorManager.Persistent);
 
+            int addCount = m_WaitForAdd.Count;
+            m_Entities = new NativeHashMap<InstanceID, int>(prevCount * 2 + addCount, AllocatorManager.Persistent);
+            for (int i = 0; i < addCount; i++)
+            {
+                InstanceID entity = m_WaitForAdd.Dequeue();
+                int index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
+
+                m_Indices.Add(index, entity);
+                m_Entities.Add(entity, index);
+            }
+
+            var entries = m_Entities.GetKeyArray(AllocatorManager.TempJob);
             UpdateGridJob job = new UpdateGridJob(
                 m_Grid, ref entries,
                 ref m_Indices,
                 ref m_Entities);
 
-            return job.Schedule(entries.Length, 64);
+            var jobHandle = ScheduleAt(JobPosition.Before, job, entries.Length);
+            m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, jobHandle);
+
+            UpdateGridComponentJob componentJob = new UpdateGridComponentJob(m_Entities);
+
+            var handle = 
+                ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
+            m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle);
+
+            "schedule full re indexing".ToLog();
         }
 
         private struct CloseDistanceComparer : IComparer<int3>
@@ -312,20 +360,33 @@ namespace Syadeu.Presentation.Grid
                 entities.TryAdd(entries[i], index);
             }
         }
+        private struct UpdateGridComponentJob : IJobParallelForEntities<GridComponent>
+        {
+            [ReadOnly]
+            private NativeHashMap<InstanceID, int> entities;
+
+            public UpdateGridComponentJob(
+                NativeHashMap<InstanceID, int> entities)
+            {
+                this.entities = entities;
+            }
+
+            public void Execute(in InstanceID entity, ref GridComponent component)
+            {
+                component.m_Index = entities[entity];
+            }
+        }
 
         public void InitializeGrid(in AABB aabb, in float cellSize)
         {
             m_Grid.aabb = aabb;
             m_Grid.cellSize = cellSize;
 
-            m_GridInitialized = true;
-            m_GridUpdateJob = Update();
+            FullIndexingUpdate();
         }
 
         public void UpdateEntity(in InstanceID entity)
         {
-            if (!m_GridInitialized) return;
-
             m_GridUpdateJob.Complete();
 
             Remove(entity);
@@ -333,125 +394,8 @@ namespace Syadeu.Presentation.Grid
         }
     }
 
-    [BurstCompatible]
-    internal unsafe struct WorldGrid
-    {
-        private readonly short m_CheckSum;
-
-        private AABB m_AABB;
-        private float m_CellSize;
-
-        public int length
-        {
-            get
-            {
-                float3 size = m_AABB.size;
-                int
-                    xSize = Convert.ToInt32(math.floor(size.x / m_CellSize)),
-                    zSize = Convert.ToInt32(math.floor(size.z / m_CellSize));
-                return xSize * zSize;
-            }
-        }
-        public AABB aabb { get => m_AABB; set => m_AABB = value; }
-        public float cellSize { get => m_CellSize; set => m_CellSize = value; }
-        public int3 gridSize
-        {
-            get
-            {
-                float3 size = m_AABB.size;
-                return new int3(
-                    Convert.ToInt32(math.floor(size.x / m_CellSize)),
-                    Convert.ToInt32(math.floor(size.y / m_CellSize)),
-                    Convert.ToInt32(math.floor(size.z / m_CellSize)));
-            }
-        }
-
-        internal WorldGrid(AABB aabb, float cellSize)
-        {
-            this = default(WorldGrid);
-
-            m_CheckSum = CollectionUtility.CreateHashInt16();
-
-            m_AABB = aabb;
-            m_CellSize = cellSize;
-        }
-
-        #region Index
-
-        public int3 PositionToLocation(in float3 position)
-        {
-            int3 location;
-            unsafe
-            {
-                BurstGridMathematics.positionToLocation(in m_AABB, in m_CellSize, in position, &location);
-            }
-            return location;
-        }
-        public int PositionToIndex(in float3 position)
-        {
-            int index;
-            unsafe
-            {
-                BurstGridMathematics.positionToIndex(in m_AABB, in m_CellSize, in position, &index);
-            }
-            return index;
-        }
-        public int LocationToIndex(in int3 location)
-        {
-            int index;
-            unsafe
-            {
-                BurstGridMathematics.locationToIndex(in m_AABB, in m_CellSize, in location, &index);
-            }
-            return index;
-        }
-        public float3 LocationToPosition(in int3 location)
-        {
-            float3 position;
-            unsafe
-            {
-                BurstGridMathematics.locationToPosition(in m_AABB, in m_CellSize, in location, &position);
-            }
-            return position;
-        }
-        public int3 IndexToLocation(in int index)
-        {
-            int3 location;
-            unsafe
-            {
-                BurstGridMathematics.indexToLocation(in m_AABB, in m_CellSize, in index, &location);
-            }
-            return location;
-        }
-        public float3 IndexToPosition(in int index)
-        {
-            float3 position;
-            unsafe
-            {
-                BurstGridMathematics.indexToPosition(in m_AABB, in m_CellSize, in index, &position);
-            }
-            return position;
-        }
-
-        #endregion
-
-        public bool Contains(in int index)
-        {
-            bool result;
-            BurstGridMathematics.containIndex(in m_AABB, in m_CellSize, in index, &result);
-            return result;
-        }
-        public bool Contains(in int3 location)
-        {
-            bool result;
-            BurstGridMathematics.containLocation(in m_AABB, in m_CellSize, in location, &result);
-            return result;
-        }
-    }
-
     public struct GridComponent : IEntityComponent
     {
-        internal bool m_Initialized;
         internal int m_Index;
 
         public int index => m_Index;
