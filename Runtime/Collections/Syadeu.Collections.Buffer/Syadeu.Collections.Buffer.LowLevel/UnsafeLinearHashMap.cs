@@ -40,14 +40,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
     {
         private readonly int m_InitialCount;
         private UnsafeAllocator<KeyValue<TKey, TValue>> m_Buffer;
-        private int m_Count;
         private bool m_Created;
         
         public ref TValue this[TKey key]
         {
             get
             {
-                if (!TryFindIndexFor(key, out int index))
+                if (!TryFindEmptyIndexFor(key, out int index))
                 {
                     throw new ArgumentOutOfRangeException();
                 }
@@ -71,16 +70,44 @@ namespace Syadeu.Collections.Buffer.LowLevel
         /// <summary>
         /// 이 해시맵이 가진 아이템의 갯수를 반환합니다.
         /// </summary>
-        public int Count => m_Count;
+        public int Count
+        {
+            get
+            {
+                int count = 0;
+                foreach (var item in this)
+                {
+                    count++;
+                }
+                return count;
+            }
+        }
 
         public UnsafeLinearHashMap(int initialCount, Allocator allocator)
         {
             m_InitialCount = initialCount;
             m_Buffer = new UnsafeAllocator<KeyValue<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
-            m_Count = 0;
             m_Created = true;
         }
 
+        private bool TryFindEmptyIndexFor(TKey key, out int index)
+        {
+            ulong hash = key.Calculate() ^ 0b1011101111;
+            int increment = Capacity / m_InitialCount + 1;
+
+            for (int i = 1; i < increment; i++)
+            {
+                index = Convert.ToInt32(hash % (uint)(m_InitialCount * i));
+
+                if (m_Buffer[index].IsEmpty())
+                {
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
+        }
         private bool TryFindIndexFor(TKey key, out int index)
         {
             ulong hash = key.Calculate() ^ 0b1011101111;
@@ -90,7 +117,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 index = Convert.ToInt32(hash % (uint)(m_InitialCount * i));
 
-                if (m_Buffer[index].IsKeyEmptyOrEquals(key))
+                if (m_Buffer[index].IsKeyEquals(key))
                 {
                     return true;
                 }
@@ -104,7 +131,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Add(TKey key, TValue value)
         {
-            if (!TryFindIndexFor(key, out int index))
+            if (!TryFindEmptyIndexFor(key, out int index))
             {
                 throw new ArgumentOutOfRangeException();
                 //int targetIncrement = Capacity / m_InitialCount + 1;
@@ -116,7 +143,16 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             m_Buffer[index] = new KeyValue<TKey, TValue>(key, value);
-            m_Count++;
+        }
+        public void AddOrUpdate(TKey key, TValue value)
+        {
+            if (!TryFindIndexFor(key, out int index) &&
+                !TryFindEmptyIndexFor(key, out index))
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            m_Buffer[index] = new KeyValue<TKey, TValue>(key, value);
         }
         public bool Remove(TKey key)
         {
@@ -126,7 +162,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             m_Buffer[index] = default(KeyValue<TKey, TValue>);
-            m_Count--;
 
             return true;
         }

@@ -25,7 +25,8 @@ namespace Syadeu.Presentation.Grid
 {
     [AttributeAcceptOnly(typeof(EntityBase))]
     [DisplayName("Attribute: Grid Object")]
-    public sealed class GridObjectAttribute : AttributeBase
+    public sealed class GridObjectAttribute : AttributeBase,
+        Components.INotifyComponent<GridComponent>
     {
 
     }
@@ -48,11 +49,11 @@ namespace Syadeu.Presentation.Grid
 
         protected override void OnCreated(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
-            m_GridSystem.AddEntity(entity.Idx);
+            //m_GridSystem.AddEntity(entity.Idx);
         }
         protected override void OnDestroy(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
-            m_GridSystem.RemoveEntity(entity.Idx);
+            //m_GridSystem.RemoveEntity(entity.Idx);
         }
     }
 }
