@@ -22,19 +22,22 @@ using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
+    [BurstCompatible]
+    [NativeContainerSupportsDeallocateOnJobCompletion]
     public struct UnsafeLinearPtrHashMap<TKey, TValue> :
-        IEquatable<UnsafeLinearPtrHashMap<TKey, TValue>>, IDisposable, IEnumerable<KeyValuePtr<TKey, TValue>>
+        IEquatable<UnsafeLinearPtrHashMap<TKey, TValue>>, INativeDisposable, IDisposable, 
+        IEnumerable<KeyValuePtr<TKey, TValue>>
 
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         private readonly int m_InitialCount;
         private UnsafeAllocator<KeyValuePtr<TKey, TValue>> m_Buffer;
-        private int m_Count;
-        private bool m_Created;
 
         public UnsafeReference<TValue> this[TKey key]
         {
@@ -50,18 +53,45 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
         public UnsafeAllocator<KeyValuePtr<TKey, TValue>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
-        public bool Created => m_Created;
+        public bool IsCreated => m_Buffer.IsCreated;
         public int Capacity => m_Buffer.Length;
-        public int Count => m_Count;
+        public int Count
+        {
+            get
+            {
+                int count = 0;
+                foreach (var item in this)
+                {
+                    count++;
+                }
+                return count;
+            }
+        }
 
         public UnsafeLinearPtrHashMap(int initialCount, Allocator allocator)
         {
             m_InitialCount = initialCount;
             m_Buffer = new UnsafeAllocator<KeyValuePtr<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
-            m_Count = 0;
-            m_Created = true;
         }
 
+        private bool TryFindEmptyIndexFor(TKey key, out int index)
+        {
+            ulong hash = key.Calculate() ^ 0b1011101111;
+            int increment = Capacity / m_InitialCount + 1;
+
+            for (int i = 1; i < increment; i++)
+            {
+                index = Convert.ToInt32(hash % (uint)(m_InitialCount * i));
+
+                if (m_Buffer[index].IsEmpty())
+                {
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
+        }
         private bool TryFindIndexFor(TKey key, out int index)
         {
             ulong hash = key.Calculate() ^ 0b1011101111;
@@ -71,7 +101,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 index = Convert.ToInt32(hash % (uint)(m_InitialCount * i));
 
-                if (m_Buffer[index].IsKeyEmptyOrEquals(key))
+                if (m_Buffer[index].IsKeyEquals(key))
                 {
                     return true;
                 }
@@ -85,19 +115,32 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Add(TKey key, UnsafeReference<TValue> value)
         {
-            if (!TryFindIndexFor(key, out int index))
+            if (!TryFindEmptyIndexFor(key, out int index))
             {
-                throw new ArgumentOutOfRangeException();
-                //int targetIncrement = Capacity / m_InitialCount + 1;
+                int targetIncrement = Capacity / m_InitialCount + 1;
 
-                //m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
+                m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
 
-                //Add(key, value);
-                //return;
+                Add(key, value);
+                return;
             }
 
             m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);
-            m_Count++;
+        }
+        public void AddOrUpdate(TKey key, UnsafeReference<TValue> value)
+        {
+            if (!TryFindIndexFor(key, out int index) &&
+                !TryFindEmptyIndexFor(key, out index))
+            {
+                int targetIncrement = Capacity / m_InitialCount + 1;
+
+                m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
+
+                AddOrUpdate(key, value);
+                return;
+            }
+
+            m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);
         }
         public bool Remove(TKey key)
         {
@@ -107,8 +150,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             m_Buffer[index] = default(KeyValuePtr<TKey, TValue>);
-            m_Count--;
-
             return true;
         }
 
@@ -117,6 +158,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public void Dispose()
         {
             m_Buffer.Dispose();
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            var result = m_Buffer.Dispose(inputDeps);
+
+            m_Buffer = default(UnsafeAllocator<KeyValuePtr<TKey, TValue>>);
+            return result;
         }
 
         [BurstCompatible]

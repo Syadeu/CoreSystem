@@ -20,25 +20,28 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.UIElements;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
-    public struct UnsafeAllocator : IDisposable, IEquatable<UnsafeAllocator>
+    [NativeContainerSupportsDeallocateOnJobCompletion]
+    public struct UnsafeAllocator : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator>
     {
+        [BurstCompatible]
         internal struct Buffer
         {
-            internal UnsafeReference m_Ptr;
-            internal long m_Size;
+            internal UnsafeReference Ptr;
+            internal long Size;
         }
 
         internal UnsafeReference<Buffer> m_Buffer;
         internal readonly Allocator m_Allocator;
 
-        public UnsafeReference Ptr => m_Buffer.Value.m_Ptr;
-        public long Size => m_Buffer.Value.m_Size;
+        public UnsafeReference Ptr => m_Buffer.Value.Ptr;
+        public long Size => m_Buffer.Value.Size;
         public bool IsCreated => m_Buffer.IsCreated;
 
         public UnsafeAllocator(long size, int alignment, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
@@ -53,13 +56,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
                 m_Buffer.Value = new Buffer
                 {
-                    m_Ptr = UnsafeUtility.Malloc(size, alignment, allocator),
-                    m_Size = size
+                    Ptr = UnsafeUtility.Malloc(size, alignment, allocator),
+                    Size = size
                 };
 
                 if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
                 {
-                    UnsafeUtility.MemClear(m_Buffer.Value.m_Ptr, size);
+                    UnsafeUtility.MemClear(m_Buffer.Value.Ptr, size);
                 }
             }
             m_Allocator = allocator;
@@ -76,8 +79,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
                 m_Buffer.Value = new Buffer
                 {
-                    m_Ptr = ptr,
-                    m_Size = size
+                    Ptr = ptr,
+                    Size = size
                 };
             }
             m_Allocator = allocator;
@@ -88,7 +91,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             unsafe
             {
-                UnsafeUtility.MemClear(m_Buffer.Value.m_Ptr, m_Buffer.Value.m_Size);
+                UnsafeUtility.MemClear(m_Buffer.Value.Ptr, m_Buffer.Value.Size);
             }
         }
 
@@ -97,21 +100,34 @@ namespace Syadeu.Collections.Buffer.LowLevel
             unsafe
             {
                 byte* bytes = UnsafeBufferUtility.AsBytes(ref item, out int length);
-                UnsafeUtility.MemCpy(m_Buffer.Value.m_Ptr, bytes, length);
+                UnsafeUtility.MemCpy(m_Buffer.Value.Ptr, bytes, length);
             }
         }
         public unsafe void Write(byte* bytes, int length)
         {
-            UnsafeUtility.MemCpy(m_Buffer.Value.m_Ptr, bytes, length);
+            UnsafeUtility.MemCpy(m_Buffer.Value.Ptr, bytes, length);
         }
 
         public void Dispose()
         {
             unsafe
             {
-                UnsafeUtility.Free(m_Buffer.Value.m_Ptr, m_Allocator);
+                UnsafeUtility.Free(m_Buffer.Value.Ptr, m_Allocator);
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
             }
+            m_Buffer = default(UnsafeReference<Buffer>);
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            DisposeJob disposeJob = new DisposeJob()
+            {
+                Buffer = m_Buffer,
+                Allocator = m_Allocator
+            };
+            JobHandle result = disposeJob.Schedule(inputDeps);
+
+            m_Buffer = default(UnsafeReference<Buffer>);
+            return result;
         }
 
         public bool Equals(UnsafeAllocator other) => m_Buffer.Equals(other.m_Buffer);
@@ -127,13 +143,29 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             internal ReadOnly(UnsafeAllocator allocator)
             {
-                m_Ptr = allocator.m_Buffer.Value.m_Ptr;
-                m_Size = allocator.m_Buffer.Value.m_Size;
+                m_Ptr = allocator.m_Buffer.Value.Ptr;
+                m_Size = allocator.m_Buffer.Value.Size;
+            }
+        }
+        [BurstCompatible]
+        private struct DisposeJob : IJob
+        {
+            public UnsafeReference<Buffer> Buffer;
+            public Allocator Allocator;
+
+            public void Execute()
+            {
+                unsafe
+                {
+                    UnsafeUtility.Free(Buffer.Value.Ptr, Allocator);
+                    UnsafeUtility.Free(Buffer, Allocator);
+                }
             }
         }
     }
     [BurstCompatible]
-    public struct UnsafeAllocator<T> : IDisposable, IEquatable<UnsafeAllocator<T>>
+    [NativeContainerSupportsDeallocateOnJobCompletion]
+    public struct UnsafeAllocator<T> : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator<T>>
         where T : unmanaged
     {
         internal UnsafeAllocator m_Allocator;
@@ -189,6 +221,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             m_Allocator.Dispose();
         }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            JobHandle result = m_Allocator.Dispose(inputDeps);
+
+            m_Allocator = default(UnsafeAllocator);
+            return result;
+        }
 
         public bool Equals(UnsafeAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
 
@@ -235,7 +274,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             if (size < 0) throw new Exception();
 
-            UnityEngine.Debug.Log($"re allocate from {t.m_Buffer.Value.m_Size} -> {size}");
+            UnityEngine.Debug.Log($"re allocate from {t.m_Buffer.Value.Size} -> {size}");
             unsafe
             {
                 void* ptr = UnsafeUtility.Malloc(size, alignment, t.m_Allocator);
@@ -243,7 +282,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeUtility.MemCpy(ptr, t.Ptr, math.min(size, t.Size));
                 UnsafeUtility.Free(t.Ptr, t.m_Allocator);
 
-                t.m_Buffer.Value.m_Ptr = ptr;
+                t.m_Buffer.Value.Ptr = ptr;
 
                 if (size > t.Size &&
                     (options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
@@ -251,7 +290,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                     UnsafeUtility.MemClear(t.Ptr[t.Size].ToPointer(), size - t.Size);
                 }
 
-                t.m_Buffer.Value.m_Size = size;
+                t.m_Buffer.Value.Size = size;
             }
         }
         public static void Resize<T>(this ref UnsafeAllocator<T> t, int length, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)

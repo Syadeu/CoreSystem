@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
@@ -31,8 +32,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
     [BurstCompatible]
+    [NativeContainerSupportsDeallocateOnJobCompletion]
     public struct UnsafeLinearHashMap<TKey, TValue> :   
-        IEquatable<UnsafeLinearHashMap<TKey, TValue>>, IDisposable, 
+        IEquatable<UnsafeLinearHashMap<TKey, TValue>>, INativeDisposable, IDisposable, 
         IEnumerable<KeyValue<TKey, TValue>>
 
         where TKey : unmanaged, IEquatable<TKey>
@@ -40,8 +42,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     {
         private readonly int m_InitialCount;
         private UnsafeAllocator<KeyValue<TKey, TValue>> m_Buffer;
-        private bool m_Created;
-        
+
         public ref TValue this[TKey key]
         {
             get
@@ -62,7 +63,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         /// <summary>
         /// 이 해시맵이 생성되었나요?
         /// </summary>
-        public bool Created => m_Created;
+        public bool IsCreated => m_Buffer.IsCreated;
         /// <summary>
         /// 이 해시맵의 현재 최대 크기를 반환합니다.
         /// </summary>
@@ -87,7 +88,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             m_InitialCount = initialCount;
             m_Buffer = new UnsafeAllocator<KeyValue<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
-            m_Created = true;
         }
 
         private bool TryFindEmptyIndexFor(TKey key, out int index)
@@ -133,13 +133,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             if (!TryFindEmptyIndexFor(key, out int index))
             {
-                throw new ArgumentOutOfRangeException();
-                //int targetIncrement = Capacity / m_InitialCount + 1;
+                int targetIncrement = Capacity / m_InitialCount + 1;
 
-                //m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
+                m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
 
-                //Add(key, value);
-                //return;
+                Add(key, value);
+                return;
             }
 
             m_Buffer[index] = new KeyValue<TKey, TValue>(key, value);
@@ -149,7 +148,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
             if (!TryFindIndexFor(key, out int index) &&
                 !TryFindEmptyIndexFor(key, out index))
             {
-                throw new ArgumentOutOfRangeException();
+                int targetIncrement = Capacity / m_InitialCount + 1;
+
+                m_Buffer.Resize(m_InitialCount * targetIncrement, NativeArrayOptions.ClearMemory);
+
+                AddOrUpdate(key, value);
+                return;
             }
 
             m_Buffer[index] = new KeyValue<TKey, TValue>(key, value);
@@ -162,7 +166,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             m_Buffer[index] = default(KeyValue<TKey, TValue>);
-
             return true;
         }
 
@@ -171,6 +174,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public void Dispose()
         {
             m_Buffer.Dispose();
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            var result = m_Buffer.Dispose(inputDeps);
+
+            m_Buffer = default(UnsafeAllocator<KeyValue<TKey, TValue>>);
+            return result;
         }
 
         [BurstCompatible, NativeContainerIsReadOnly]

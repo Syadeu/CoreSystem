@@ -54,7 +54,7 @@ namespace Syadeu.Collections.Buffer
                 return ref m_HashMap[key];
             }
         }
-        public bool Created => m_HashMap.Created;
+        public bool Created => m_HashMap.IsCreated;
         public int Capacity => m_HashMap.Capacity;
         public int Count => m_HashMap.Count;
 
