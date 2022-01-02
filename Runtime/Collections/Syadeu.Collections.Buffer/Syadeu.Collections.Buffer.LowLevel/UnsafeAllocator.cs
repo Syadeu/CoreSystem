@@ -28,39 +28,59 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompatible]
     public struct UnsafeAllocator : IDisposable, IEquatable<UnsafeAllocator>
     {
-        internal UnsafeReference m_Ptr;
-        internal long m_Size;
+        internal struct Buffer
+        {
+            internal UnsafeReference m_Ptr;
+            internal long m_Size;
+        }
+
+        internal UnsafeReference<Buffer> m_Buffer;
         internal readonly Allocator m_Allocator;
 
-        private bool m_Created;
-
-        public UnsafeReference Ptr => m_Ptr;
-        public long Size => m_Size;
-        public bool IsCreated => m_Created;
+        public UnsafeReference Ptr => m_Buffer.Value.m_Ptr;
+        public long Size => m_Buffer.Value.m_Size;
+        public bool IsCreated => m_Buffer.IsCreated;
 
         public UnsafeAllocator(long size, int alignment, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
         {
             unsafe
             {
-                m_Ptr = UnsafeUtility.Malloc(size, alignment, allocator);
+                m_Buffer = (Buffer*)UnsafeUtility.Malloc(
+                    UnsafeUtility.SizeOf<Buffer>(),
+                    UnsafeUtility.AlignOf<Buffer>(),
+                    allocator
+                    );
+
+                m_Buffer.Value = new Buffer
+                {
+                    m_Ptr = UnsafeUtility.Malloc(size, alignment, allocator),
+                    m_Size = size
+                };
 
                 if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
                 {
-                    UnsafeUtility.MemClear(m_Ptr, size);
+                    UnsafeUtility.MemClear(m_Buffer.Value.m_Ptr, size);
                 }
             }
-            m_Size = size;
             m_Allocator = allocator;
-
-            m_Created = true;
         }
         public UnsafeAllocator(UnsafeReference ptr, long size, Allocator allocator)
         {
-            m_Ptr = ptr;
-            m_Size = size;
-            m_Allocator = allocator;
+            unsafe
+            {
+                m_Buffer = (Buffer*)UnsafeUtility.Malloc(
+                    UnsafeUtility.SizeOf<Buffer>(),
+                    UnsafeUtility.AlignOf<Buffer>(),
+                    allocator
+                    );
 
-            m_Created = true;
+                m_Buffer.Value = new Buffer
+                {
+                    m_Ptr = ptr,
+                    m_Size = size
+                };
+            }
+            m_Allocator = allocator;
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
@@ -68,7 +88,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             unsafe
             {
-                UnsafeUtility.MemClear(m_Ptr, m_Size);
+                UnsafeUtility.MemClear(m_Buffer.Value.m_Ptr, m_Buffer.Value.m_Size);
             }
         }
 
@@ -77,25 +97,24 @@ namespace Syadeu.Collections.Buffer.LowLevel
             unsafe
             {
                 byte* bytes = UnsafeBufferUtility.AsBytes(ref item, out int length);
-                UnsafeUtility.MemCpy(m_Ptr.Ptr, bytes, length);
+                UnsafeUtility.MemCpy(m_Buffer.Value.m_Ptr, bytes, length);
             }
         }
         public unsafe void Write(byte* bytes, int length)
         {
-            UnsafeUtility.MemCpy(m_Ptr.Ptr, bytes, length);
+            UnsafeUtility.MemCpy(m_Buffer.Value.m_Ptr, bytes, length);
         }
 
         public void Dispose()
         {
             unsafe
             {
-                UnsafeUtility.Free(m_Ptr, m_Allocator);
+                UnsafeUtility.Free(m_Buffer.Value.m_Ptr, m_Allocator);
+                UnsafeUtility.Free(m_Buffer, m_Allocator);
             }
-
-            m_Created = false;
         }
 
-        public bool Equals(UnsafeAllocator other) => m_Ptr.Equals(other.m_Ptr);
+        public bool Equals(UnsafeAllocator other) => m_Buffer.Equals(other.m_Buffer);
 
         [BurstCompatible, NativeContainerIsReadOnly]
         public readonly struct ReadOnly
@@ -108,8 +127,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             internal ReadOnly(UnsafeAllocator allocator)
             {
-                m_Ptr = allocator.m_Ptr;
-                m_Size = allocator.m_Size;
+                m_Ptr = allocator.m_Buffer.Value.m_Ptr;
+                m_Size = allocator.m_Buffer.Value.m_Size;
             }
         }
     }
@@ -117,7 +136,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     public struct UnsafeAllocator<T> : IDisposable, IEquatable<UnsafeAllocator<T>>
         where T : unmanaged
     {
-        private UnsafeAllocator m_Allocator;
+        internal UnsafeAllocator m_Allocator;
 
         public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Allocator.Ptr;
         public bool IsCreated => m_Allocator.IsCreated;
@@ -153,18 +172,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
-        /// <inheritdoc cref="UnsafeAllocatorExtensions.Resize(ref UnsafeAllocator, long, int, NativeArrayOptions)"/>
-        [Obsolete("Do not use. This is intented method for inform", true)]
-        public void Resize(int length, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
-        {
-            if (length < 0) throw new Exception();
-
-            m_Allocator.Resize(
-                UnsafeUtility.SizeOf<T>() * length,
-                UnsafeUtility.AlignOf<T>(),
-                options
-                );
-        }
         public void Clear() => m_Allocator.Clear();
 
         public UnsafeReference<T> ElementAt(in int index)
@@ -224,20 +231,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
     }
     public static class UnsafeAllocatorExtensions
     {
-        /// <summary>
-        /// native 코드내에서 다시 메모리 할당을 하면 Unity internal 에러가 발생함. 해결방법 없음
-        /// </summary>
-        /// <param name="t"></param>
-        /// <param name="size"></param>
-        /// <param name="alignment"></param>
-        /// <param name="options"></param>
-        /// <exception cref="Exception"></exception>
-        [Obsolete("Do not use. This is intented method for inform", true)]
         public static void Resize(this ref UnsafeAllocator t, long size, int alignment, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
         {
             if (size < 0) throw new Exception();
 
-            UnityEngine.Debug.Log($"re allocate from {t.m_Size} -> {size}");
+            UnityEngine.Debug.Log($"re allocate from {t.m_Buffer.Value.m_Size} -> {size}");
             unsafe
             {
                 void* ptr = UnsafeUtility.Malloc(size, alignment, t.m_Allocator);
@@ -245,16 +243,27 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeUtility.MemCpy(ptr, t.Ptr, math.min(size, t.Size));
                 UnsafeUtility.Free(t.Ptr, t.m_Allocator);
 
-                t.m_Ptr = ptr;
+                t.m_Buffer.Value.m_Ptr = ptr;
 
                 if (size > t.Size &&
                     (options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
                 {
-                    UnsafeUtility.MemClear(t.Ptr[size].ToPointer(), size - t.Size);
+                    UnsafeUtility.MemClear(t.Ptr[t.Size].ToPointer(), size - t.Size);
                 }
 
-                t.m_Size = size;
+                t.m_Buffer.Value.m_Size = size;
             }
+        }
+        public static void Resize<T>(this ref UnsafeAllocator<T> t, int length, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+            where T : unmanaged
+        {
+            if (length < 0) throw new Exception();
+
+            t.m_Allocator.Resize(
+                UnsafeUtility.SizeOf<T>() * length,
+                UnsafeUtility.AlignOf<T>(),
+                options
+                );
         }
 
         public static NativeArray<T> ToNativeArray<T>(this in UnsafeAllocator<T> other, Allocator allocator) where T : unmanaged

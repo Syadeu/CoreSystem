@@ -254,6 +254,33 @@ namespace Syadeu.Presentation.Grid
             }
         }
 
+        private struct CloseDistanceComparer : IComparer<int3>
+        {
+            private int3 from;
+
+            public CloseDistanceComparer(int3 from)
+            {
+                this.from = from;
+            }
+
+            public int Compare(int3 x, int3 y)
+            {
+                int3
+                    reletiveX = from - x,
+                    reletiveY = from - y;
+
+                int
+                    sqrX = math.mul(reletiveX, reletiveX),
+                    sqrY = math.mul(reletiveY, reletiveY);
+
+                if (sqrX == sqrY) return 0;
+                else if (sqrX < sqrY) return -1;
+                else return 1;
+            }
+        }
+
+        #region Jobs
+
         private void FullIndexingUpdate()
         {
             m_GridUpdateJob.Complete();
@@ -281,6 +308,7 @@ namespace Syadeu.Presentation.Grid
             }
 
             var entries = m_Entities.GetKeyArray(AllocatorManager.TempJob);
+
             UpdateGridJob job = new UpdateGridJob(
                 m_Grid, ref entries,
                 ref m_Indices,
@@ -289,39 +317,15 @@ namespace Syadeu.Presentation.Grid
             var jobHandle = ScheduleAt(JobPosition.Before, job, entries.Length);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, jobHandle);
 
-            UpdateGridComponentJob componentJob = new UpdateGridComponentJob(m_Entities);
+            UpdateGridComponentJob componentJob = new UpdateGridComponentJob(m_Grid, m_Entities);
 
-            var handle = 
+            var handle =
                 ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle);
 
             "schedule full re indexing".ToLog();
         }
 
-        private struct CloseDistanceComparer : IComparer<int3>
-        {
-            private int3 from;
-
-            public CloseDistanceComparer(int3 from)
-            {
-                this.from = from;
-            }
-
-            public int Compare(int3 x, int3 y)
-            {
-                int3
-                    reletiveX = from - x,
-                    reletiveY = from - y;
-
-                int
-                    sqrX = math.mul(reletiveX, reletiveX),
-                    sqrY = math.mul(reletiveY, reletiveY);
-
-                if (sqrX == sqrY) return 0;
-                else if (sqrX < sqrY) return -1;
-                else return 1;
-            }
-        }
         [BurstCompile(CompileSynchronously = true)]
         private struct UpdateGridJob : IJobParallelFor
         {
@@ -360,22 +364,29 @@ namespace Syadeu.Presentation.Grid
                 entities.TryAdd(entries[i], index);
             }
         }
+        [BurstCompile(CompileSynchronously = true)]
         private struct UpdateGridComponentJob : IJobParallelForEntities<GridComponent>
         {
+            [ReadOnly]
+            private WorldGrid grid;
             [ReadOnly]
             private NativeHashMap<InstanceID, int> entities;
 
             public UpdateGridComponentJob(
+                WorldGrid grid,
                 NativeHashMap<InstanceID, int> entities)
             {
+                this.grid = grid;
                 this.entities = entities;
             }
 
             public void Execute(in InstanceID entity, ref GridComponent component)
             {
-                component.m_Index = entities[entity];
+                component.m_Index = new GridIndex(grid, entities[entity]);
             }
         }
+
+        #endregion
 
         public void InitializeGrid(in AABB aabb, in float cellSize)
         {
@@ -396,13 +407,8 @@ namespace Syadeu.Presentation.Grid
 
     public struct GridComponent : IEntityComponent
     {
-        internal int m_Index;
+        internal GridIndex m_Index;
 
-        public int index => m_Index;
-    }
-
-    public sealed class GridAttribute : AttributeBase
-    {
-
+        public GridIndex index => m_Index;
     }
 }

@@ -42,6 +42,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Map.MapSystem>.Type,
                 TypeHelper.TypeOf<Map.GridSystem>.Type,
                 TypeHelper.TypeOf<Map.NavMeshSystem>.Type,
+                TypeHelper.TypeOf<Grid.WorldGridSystem>.Type,
                 TypeHelper.TypeOf<Actor.ActorSystem>.Type,
 
                 TypeHelper.TypeOf<Render.RenderSystem>.Type,

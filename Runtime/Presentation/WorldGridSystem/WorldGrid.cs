@@ -145,7 +145,7 @@ namespace Syadeu.Presentation.Grid
     }
 
     [BurstCompatible]
-    public struct GridIndex
+    public struct GridIndex : IEquatable<GridIndex>
     {
         private readonly short m_CheckSum;
         private readonly int m_Index;
@@ -155,5 +155,7 @@ namespace Syadeu.Presentation.Grid
             m_CheckSum = grid.m_CheckSum;
             m_Index = index;
         }
+
+        public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
     }
 }

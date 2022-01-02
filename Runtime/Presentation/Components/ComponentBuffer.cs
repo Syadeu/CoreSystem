@@ -89,24 +89,27 @@ namespace Syadeu.Presentation.Components
 
             int count = c_InitialCount * (m_Increased + 1);
             long
-                idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
+            //    idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
                 bufferSize = TypeInfo.Size * count;
-            void*
-                idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-                buffer = UnsafeUtility.Malloc(bufferSize, TypeInfo.Align, Allocator.Persistent);
+            //void*
+            //    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
+            //    buffer = UnsafeUtility.Malloc(bufferSize, TypeInfo.Align, Allocator.Persistent);
 
-            UnsafeUtility.MemClear(idxBuffer, idxSize);
-            UnsafeUtility.MemClear(buffer, bufferSize);
+            //UnsafeUtility.MemClear(idxBuffer, idxSize);
+            //UnsafeUtility.MemClear(buffer, bufferSize);
 
-            UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer.Ptr, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
-            UnsafeUtility.MemCpy(buffer, m_ComponentBuffer.Ptr, TypeInfo.Size * m_Length);
+            //UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer.Ptr, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
+            //UnsafeUtility.MemCpy(buffer, m_ComponentBuffer.Ptr, TypeInfo.Size * m_Length);
 
-            m_EntityBuffer.Dispose();
-            m_ComponentBuffer.Dispose();
+            //m_EntityBuffer.Dispose();
+            //m_ComponentBuffer.Dispose();
 
-            m_EntityBuffer = new UnsafeAllocator<InstanceID>((InstanceID*)idxBuffer, count, Allocator.Persistent);
-            m_ComponentBuffer = new UnsafeAllocator(buffer, bufferSize, Allocator.Persistent);
-            
+            //m_EntityBuffer = new UnsafeAllocator<InstanceID>((InstanceID*)idxBuffer, count, Allocator.Persistent);
+            //m_ComponentBuffer = new UnsafeAllocator(buffer, bufferSize, Allocator.Persistent);
+
+            m_EntityBuffer.Resize(count, NativeArrayOptions.ClearMemory);
+            m_ComponentBuffer.Resize(bufferSize, TypeInfo.Align, NativeArrayOptions.ClearMemory);
+
             m_Increased += 1;
             m_Length = c_InitialCount * m_Increased;
 

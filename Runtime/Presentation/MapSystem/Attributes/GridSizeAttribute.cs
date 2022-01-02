@@ -17,6 +17,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using System;
 using System.ComponentModel;
 using Unity.Mathematics;
@@ -30,7 +31,8 @@ namespace Syadeu.Presentation.Map
     /// 엔티티를 그리드에 등록하는 어트리뷰트입니다.
     /// </summary>
     public sealed class GridSizeAttribute : GridAttributeBase,
-        INotifyComponent<GridSizeComponent>
+        INotifyComponent<GridSizeComponent>,
+        INotifyComponent<GridComponent>
     {
         [Description("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
         [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
