@@ -17,7 +17,6 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Collections.SQLite;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;

@@ -41,7 +41,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         where TValue : unmanaged
     {
         private readonly int m_InitialCount;
-        private UnsafeAllocator<KeyValue<TKey, TValue>> m_Buffer;
+        internal UnsafeAllocator<KeyValue<TKey, TValue>> m_Buffer;
 
         public ref TValue this[TKey key]
         {
@@ -169,6 +169,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
+        public bool TryGetIndex(TKey key, out int index) => TryFindIndexFor(key, out index);
+
         public bool Equals(UnsafeLinearHashMap<TKey, TValue> other) => m_Buffer.Equals(other.m_Buffer);
 
         public void Dispose()
@@ -223,5 +225,15 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public IEnumerator<KeyValue<TKey, TValue>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+    }
+
+    public static class UnsafeLinearHashMapExtensions
+    {
+        public static UnsafeAllocator<KeyValue<TKey, TValue>> GetUnsafeAllocator<TKey, TValue>(this UnsafeLinearHashMap<TKey, TValue> t)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            return t.m_Buffer;
+        }
     }
 }

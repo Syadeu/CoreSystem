@@ -260,6 +260,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
+        public static implicit operator UnsafeAllocator(UnsafeAllocator<T> t) => t.m_Allocator;
         public static explicit operator UnsafeAllocator<T>(UnsafeAllocator t)
         {
             return new UnsafeAllocator<T>
