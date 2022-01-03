@@ -53,26 +53,11 @@ namespace Syadeu.Presentation.Components
         {
             m_ECB = new UnsafeReference<EntityComponentBuffer>(ecb);
 
-            int
-                //occSize = UnsafeUtility.SizeOf<bool>() * c_InitialCount,
-                //idxSize = UnsafeUtility.SizeOf<InstanceID>() * c_InitialCount,
-                bufferSize = typeInfo.Size * c_InitialCount;
+            int bufferSize = typeInfo.Size * c_InitialCount;
             m_EntityBuffer = new UnsafeAllocator<InstanceID>(c_InitialCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             m_ComponentBuffer = new UnsafeAllocator(bufferSize, typeInfo.Align, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            //void*
-            //    //occBuffer = UnsafeUtility.Malloc(occSize, UnsafeUtility.AlignOf<bool>(), Allocator.Persistent),
-            //    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-            //    buffer = UnsafeUtility.Malloc(bufferSize, typeInfo.Align, Allocator.Persistent);
-
-            //UnsafeUtility.MemClear(occBuffer, occSize);
-            // TODO: 할당되지도 않았는데 엔티티와 데이터 버퍼는 초기화 할 필요가 있나?
-            //UnsafeUtility.MemClear(idxBuffer, idxSize);
-            //UnsafeUtility.MemClear(buffer, bufferSize);
-
+            
             this.m_ComponentTypeInfo = typeInfo;
-            ////this.m_OccupiedBuffer = (bool*)occBuffer;
-            //this.m_EntityBuffer = (InstanceID*)idxBuffer;
-            //this.m_ComponentBuffer = buffer;
             this.m_Length = c_InitialCount;
             m_Increased = 1;
 
@@ -88,25 +73,7 @@ namespace Syadeu.Presentation.Components
             IJobParallelForEntitiesExtensions.CompleteAllJobs();
 
             int count = c_InitialCount * (m_Increased + 1);
-            long
-            //    idxSize = UnsafeUtility.SizeOf<InstanceID>() * count,
-                bufferSize = TypeInfo.Size * count;
-            //void*
-            //    idxBuffer = UnsafeUtility.Malloc(idxSize, UnsafeUtility.AlignOf<InstanceID>(), Allocator.Persistent),
-            //    buffer = UnsafeUtility.Malloc(bufferSize, TypeInfo.Align, Allocator.Persistent);
-
-            //UnsafeUtility.MemClear(idxBuffer, idxSize);
-            //UnsafeUtility.MemClear(buffer, bufferSize);
-
-            //UnsafeUtility.MemCpy(idxBuffer, m_EntityBuffer.Ptr, UnsafeUtility.SizeOf<InstanceID>() * m_Length);
-            //UnsafeUtility.MemCpy(buffer, m_ComponentBuffer.Ptr, TypeInfo.Size * m_Length);
-
-            //m_EntityBuffer.Dispose();
-            //m_ComponentBuffer.Dispose();
-
-            //m_EntityBuffer = new UnsafeAllocator<InstanceID>((InstanceID*)idxBuffer, count, Allocator.Persistent);
-            //m_ComponentBuffer = new UnsafeAllocator(buffer, bufferSize, Allocator.Persistent);
-
+            long bufferSize = TypeInfo.Size * count;
             m_EntityBuffer.Resize(count, NativeArrayOptions.ClearMemory);
             m_ComponentBuffer.Resize(bufferSize, TypeInfo.Align, NativeArrayOptions.ClearMemory);
 

@@ -25,38 +25,38 @@ namespace Syadeu.Collections
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        public readonly TKey key;
-        public TValue value;
+        public readonly TKey Key;
+        public TValue Value;
 
         public KeyValue(TKey key, TValue value)
         {
-            this.key = key;
-            this.value = value;
+            this.Key = key;
+            this.Value = value;
         }
 
         public bool IsEmpty()
         {
-            if (key is IEmpty emptyAble)
+            if (Key is IEmpty emptyAble)
             {
                 return emptyAble.IsEmpty();
             }
 
-            return this.key.Equals(default(TKey));
+            return this.Key.Equals(default(TKey));
         }
         public bool IsKeyEmptyOrEquals(in TKey key)
         {
-            return IsEmpty() || this.key.Equals(key);
+            return IsEmpty() || this.Key.Equals(key);
         }
         public bool IsKeyEquals(in TKey key)
         {
-            return this.key.Equals(key);
+            return this.Key.Equals(key);
         }
 
         public bool Equals(KeyValue<TKey, TValue> other)
         {
-            if (!key.Equals(other.key)) return false;
+            if (!Key.Equals(other.Key)) return false;
 
-            return UnsafeBufferUtility.BinaryComparer(ref value, ref other.value);
+            return UnsafeBufferUtility.BinaryComparer(ref Value, ref other.Value);
         }
     }
 }

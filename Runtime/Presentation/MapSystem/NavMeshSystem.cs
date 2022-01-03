@@ -412,6 +412,8 @@ namespace Syadeu.Presentation.Map
 
             public void Dispose()
             {
+                if (!m_Entity.IsValid() || !m_Entity.HasComponent<NavAgentComponent>()) return;
+
                 ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
 
                 agent.m_Direction = 0;

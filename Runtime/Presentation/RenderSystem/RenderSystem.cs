@@ -180,7 +180,7 @@ namespace Syadeu.Presentation.Render
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
 #if UNITY_EDITOR
-            if (!Application.isPlaying)
+            if (UnityEditor.EditorApplication.isPaused || !Application.isPlaying)
             {
                 RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
                 return;

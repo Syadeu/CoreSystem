@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.Components
 {
     public static class EntityComponentExtensionMethods
     {
+#line hidden
         /// <summary>
         /// <typeparamref name="TComponent"/> 를 이 엔티티에 추가합니다.
         /// </summary>
@@ -630,5 +631,6 @@ namespace Syadeu.Presentation.Components
 
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
         }
+#line default
     }
 }

@@ -55,7 +55,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeReference<KeyValue<TKey, TValue>> ptr = m_Buffer.ElementAt(in index);
                 unsafe
                 {
-                    return ref ptr.Ptr->value;
+                    return ref ptr.Ptr->Value;
                 }
             }
         }
@@ -84,6 +84,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
+        private UnsafeLinearHashMap(int initialCount, UnsafeAllocator<KeyValue<TKey, TValue>> allocator)
+        {
+            m_InitialCount = initialCount;
+            m_Buffer = allocator;
+        }
         public UnsafeLinearHashMap(int initialCount, Allocator allocator)
         {
             m_InitialCount = initialCount;
@@ -230,6 +235,15 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public struct ParallelWriter
         {
 
+        }
+
+        public static implicit operator UntypedUnsafeLinearHashMap(UnsafeLinearHashMap<TKey, TValue> t)
+        {
+            return new UntypedUnsafeLinearHashMap(t.m_InitialCount, t.m_Buffer);
+        }
+        public static explicit operator UnsafeLinearHashMap<TKey, TValue>(UntypedUnsafeLinearHashMap t)
+        {
+            return new UnsafeLinearHashMap<TKey, TValue>(t.m_InitialCount, (UnsafeAllocator<KeyValue<TKey, TValue>>)t.m_Buffer);
         }
     }
 

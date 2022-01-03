@@ -31,13 +31,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [NativeContainerSupportsDeallocateOnJobCompletion]
     public struct UnsafeLinearPtrHashMap<TKey, TValue> :
         IEquatable<UnsafeLinearPtrHashMap<TKey, TValue>>, INativeDisposable, IDisposable, 
-        IEnumerable<KeyValuePtr<TKey, TValue>>
+        IEnumerable<KeyValue<TKey, UnsafeReference<TValue>>>
 
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         private readonly int m_InitialCount;
-        private UnsafeAllocator<KeyValuePtr<TKey, TValue>> m_Buffer;
+        private UnsafeAllocator<KeyValue<TKey, UnsafeReference<TValue>>> m_Buffer;
 
         public UnsafeReference<TValue> this[TKey key]
         {
@@ -48,11 +48,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
                     throw new ArgumentOutOfRangeException();
                 }
 
-                UnsafeReference<KeyValuePtr<TKey, TValue>> ptr = m_Buffer.ElementAt(in index);
-                return (UnsafeReference<TValue>)ptr.Value.value;
+                UnsafeReference<KeyValue<TKey, UnsafeReference<TValue>>> ptr = m_Buffer.ElementAt(in index);
+                return (UnsafeReference<TValue>)ptr.Value.Value;
             }
         }
-        public UnsafeAllocator<KeyValuePtr<TKey, TValue>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
+        public UnsafeAllocator<KeyValue<TKey, UnsafeReference<TValue>>>.ReadOnly Buffer => m_Buffer.AsReadOnly();
         public bool IsCreated => m_Buffer.IsCreated;
         public int Capacity => m_Buffer.Length;
         public int Count
@@ -71,7 +71,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public UnsafeLinearPtrHashMap(int initialCount, Allocator allocator)
         {
             m_InitialCount = initialCount;
-            m_Buffer = new UnsafeAllocator<KeyValuePtr<TKey, TValue>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
+            m_Buffer = new UnsafeAllocator<KeyValue<TKey, UnsafeReference<TValue>>>(initialCount, allocator, NativeArrayOptions.ClearMemory);
         }
 
         private bool TryFindEmptyIndexFor(TKey key, out int index)
@@ -125,7 +125,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return;
             }
 
-            m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);
+            m_Buffer[index] = new KeyValue<TKey, UnsafeReference<TValue>>(key, value);
         }
         public void AddOrUpdate(TKey key, UnsafeReference<TValue> value)
         {
@@ -140,7 +140,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return;
             }
 
-            m_Buffer[index] = new KeyValuePtr<TKey, TValue>(key, value);
+            m_Buffer[index] = new KeyValue<TKey, UnsafeReference<TValue>>(key, value);
         }
         public bool Remove(TKey key)
         {
@@ -149,7 +149,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return false;
             }
 
-            m_Buffer[index] = default(KeyValuePtr<TKey, TValue>);
+            m_Buffer[index] = default(KeyValue<TKey, UnsafeReference<TValue>>);
             return true;
         }
 
@@ -163,17 +163,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             var result = m_Buffer.Dispose(inputDeps);
 
-            m_Buffer = default(UnsafeAllocator<KeyValuePtr<TKey, TValue>>);
+            m_Buffer = default(UnsafeAllocator<KeyValue<TKey, UnsafeReference<TValue>>>);
             return result;
         }
 
         [BurstCompatible]
-        public struct Enumerator : IEnumerator<KeyValuePtr<TKey, TValue>>
+        public struct Enumerator : IEnumerator<KeyValue<TKey, UnsafeReference<TValue>>>
         {
-            private UnsafeAllocator<KeyValuePtr<TKey, TValue>>.ReadOnly m_Buffer;
+            private UnsafeAllocator<KeyValue<TKey, UnsafeReference<TValue>>>.ReadOnly m_Buffer;
             private int m_Index;
 
-            public KeyValuePtr<TKey, TValue> Current => m_Buffer[m_Index];
+            public KeyValue<TKey, UnsafeReference<TValue>> Current => m_Buffer[m_Index];
             [NotBurstCompatible]
             object IEnumerator.Current => m_Buffer[m_Index];
 
@@ -204,8 +204,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 m_Index = -1;
             }
         }
-
-        public IEnumerator<KeyValuePtr<TKey, TValue>> GetEnumerator() => new Enumerator(this);
+        
+        public IEnumerator<KeyValue<TKey, UnsafeReference<TValue>>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
     }
 }

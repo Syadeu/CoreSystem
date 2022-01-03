@@ -106,7 +106,7 @@ namespace Syadeu.Presentation.Render
         {
             m_RenderSystem = other;
 
-            RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
+            m_RenderSystem.OnRender += RenderPipelineManager_beginCameraRendering;
         }
         private void Bind(GameObjectProxySystem other)
         {
@@ -120,7 +120,7 @@ namespace Syadeu.Presentation.Render
             m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
 
-            RenderPipelineManager.beginCameraRendering -= RenderPipelineManager_beginCameraRendering;
+            m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
         }
         protected override void OnDispose()
         {

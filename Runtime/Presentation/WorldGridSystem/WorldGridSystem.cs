@@ -48,6 +48,8 @@ namespace Syadeu.Presentation.Grid
         private NativeQueue<InstanceID>
             m_WaitForAdd, m_WaitForRemove;
 
+        private UnsafeFixedQueue<InstanceID> m_NeedUpdateEntities;
+
         private EntityComponentSystem m_ComponentSystem;
         private EventSystem m_EventSystem;
 
@@ -62,6 +64,8 @@ namespace Syadeu.Presentation.Grid
 
             m_Indices = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
             m_Entities = new NativeHashMap<InstanceID, int>(1024, AllocatorManager.Persistent);
+
+            m_NeedUpdateEntities = new UnsafeFixedQueue<InstanceID>(128, Allocator.Persistent, NativeArrayOptions.ClearMemory);
 
             RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
@@ -82,6 +86,8 @@ namespace Syadeu.Presentation.Grid
 
             m_Indices.Dispose();
             m_Entities.Dispose();
+
+            m_NeedUpdateEntities.Dispose();
 
             m_ComponentSystem = null;
             m_EventSystem = null;
@@ -126,6 +132,10 @@ namespace Syadeu.Presentation.Grid
 
         private void OnTransformChangedEventHandler(OnTransformChangedEvent ev)
         {
+            if (ev.entity.HasComponent<GridComponent>())
+            {
+                m_NeedUpdateEntities.Enqueue(ev.entity.Idx);
+            }
 
         }
 
@@ -133,6 +143,12 @@ namespace Syadeu.Presentation.Grid
 
         protected override PresentationResult BeforePresentation()
         {
+            while (m_NeedUpdateEntities.TryDequeue(out InstanceID entity))
+            {
+                Remove(entity);
+                Add(entity);
+            }
+
             int removeCount = m_WaitForRemove.Count;
             for (int i = 0; i < removeCount; i++)
             {
@@ -179,7 +195,7 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
-        private void Add(in InstanceID entity)
+        private int Add(in InstanceID entity)
         {
             int index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
 
@@ -190,6 +206,8 @@ namespace Syadeu.Presentation.Grid
                 m_Entities.Capacity += 256;
             }
             m_Entities.Add(entity, index);
+
+            return index;
         }
         private void Remove(in InstanceID entity)
         {
