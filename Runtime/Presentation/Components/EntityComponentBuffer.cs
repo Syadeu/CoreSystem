@@ -24,6 +24,10 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Components
 {
+    /// <summary>
+    /// EntityComponentBuffer, 일명 ECB 는 Single-threaded 가 아닌 Parallel 에서 
+    /// 타겟 <see cref="Entities.Entity{T}"/> 의 컴포넌트를 안전하게 추가하거나 제거하기 위한 버퍼입니다.
+    /// </summary>
     [BurstCompatible]
     public struct EntityComponentBuffer : IDisposable
     {
