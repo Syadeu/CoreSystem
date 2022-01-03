@@ -225,6 +225,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public IEnumerator<KeyValue<TKey, TValue>> GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+
+        // https://dotsplayground.com/2020/03/customnativecontainerpt5/
+        public struct ParallelWriter
+        {
+
+        }
     }
 
     public static class UnsafeLinearHashMapExtensions
