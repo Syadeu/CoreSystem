@@ -143,46 +143,51 @@ namespace Syadeu.Presentation.Grid
 
         protected override PresentationResult BeforePresentation()
         {
+            bool requireReindex = false;
+
             while (m_NeedUpdateEntities.TryDequeue(out InstanceID entity))
             {
                 Remove(entity);
-                Add(entity);
+                requireReindex |= !Add(entity);
             }
 
-            int removeCount = m_WaitForRemove.Count;
-            for (int i = 0; i < removeCount; i++)
+            if (!requireReindex)
             {
-                InstanceID entity = m_WaitForRemove.Dequeue();
-                Remove(entity);
-            }
-
-            int addCount = m_WaitForAdd.Count;
-            bool requireReindex = false;
-            for (int i = 0; i < addCount; i++)
-            {
-                InstanceID entity = m_WaitForAdd.Dequeue();
-                AABB aabb = entity.GetTransformWithoutCheck().aabb;
-
-                requireReindex |= !m_Grid.Contains(aabb);
-                if (requireReindex)
+                int removeCount = m_WaitForRemove.Count;
+                for (int i = 0; i < removeCount; i++)
                 {
-                    AABB temp = m_Grid.aabb;
-                    temp.Encapsulate(aabb);
-                    m_Grid.aabb = temp;
-
-                    m_WaitForAdd.Enqueue(entity);
-                    $"require encapsulate for {entity}".ToLog();
-                    continue;
+                    InstanceID entity = m_WaitForRemove.Dequeue();
+                    Remove(entity);
                 }
 
-                var indices = m_Grid.AABBToIndices(aabb);
-                for (int j = 0; j < indices.Length; j++)
+                int addCount = m_WaitForAdd.Count;
+
+                for (int i = 0; i < addCount; i++)
                 {
-                    m_Indices.Add(indices[j].Index, entity);
-                    m_Entities.Add(entity, indices[j].Index);
+                    InstanceID entity = m_WaitForAdd.Dequeue();
+                    AABB aabb = entity.GetTransformWithoutCheck().aabb;
+
+                    requireReindex |= !m_Grid.Contains(aabb);
+                    if (requireReindex)
+                    {
+                        AABB temp = m_Grid.aabb;
+                        temp.Encapsulate(aabb);
+                        m_Grid.aabb = temp;
+
+                        m_WaitForAdd.Enqueue(entity);
+                        //$"require encapsulate for {entity}".ToLog();
+                        continue;
+                    }
+
+                    var indices = m_Grid.AABBToIndices(aabb);
+                    for (int j = 0; j < indices.Length; j++)
+                    {
+                        m_Indices.Add(indices[j].Index, entity);
+                        m_Entities.Add(entity, indices[j].Index);
+                    }
                 }
             }
-
+            
             if (requireReindex) FullIndexingUpdate();
 
             return base.BeforePresentation();
@@ -190,7 +195,7 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
-        private void Add(in InstanceID entity)
+        private bool Add(in InstanceID entity)
         {
             AABB aabb = entity.GetTransformWithoutCheck().aabb;
             if (!m_Grid.Contains(aabb))
@@ -199,9 +204,8 @@ namespace Syadeu.Presentation.Grid
                 temp.Encapsulate(aabb);
                 m_Grid.aabb = temp;
 
-                $"require encapsulate for {entity}".ToLog();
-
-                return;
+                //$"require encapsulate for {entity}".ToLog();
+                return false;
             }
 
             var indices = m_Grid.AABBToIndices(aabb);
@@ -210,6 +214,8 @@ namespace Syadeu.Presentation.Grid
                 m_Indices.Add(indices[i].Index, entity);
                 m_Entities.Add(entity, indices[i].Index);
             }
+
+            return true;
         }
         private void Remove(in InstanceID entity)
         {
