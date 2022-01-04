@@ -219,96 +219,13 @@ public class PresentationSystemTests
             d = 0x55
 
             ;
-        
-        uint sum = Convert.ToUInt32(a + b + c + d),
-            removed = RemoveHighNibble(sum);
-        ;
-
-        $"{sum} :: {removed} : {Convert.ToString(removed, toBase: 2)}".ToLog();
-        //Assert.AreEqual(removed, 0x1DB);
-        //Assert.AreEqual((sum & GetHighNibble), 0b11011011);
-
-        BitField32 bitField32 = new BitField32(removed);
-        $"{bitField32.CountBits()} :: {bitField32.CountLeadingZeros()} :: {bitField32.CountTrailingZeros()}".ToLog();
-
-        $"{bitField32.GetBits(0, 8)} :: {bitField32.GetBits(8, 8)} :: {bitField32.GetBits(16, 8)}".ToLog();
-
-        uint checkSum = Complement(removed) + 1;
+        uint checkSum = CheckSum.Calculate(new byte[] { a, b, c, d });
         $"{checkSum} : {Convert.ToString(checkSum, toBase: 2)}".ToLog();
-        //checkSum ^= 0xFFF;
-        //checkSum += 1;
 
         Assert.AreEqual(0x25, checkSum);
 
-        uint recieve = sum + checkSum;
-        uint check2 = RemoveHighNibble(recieve);
+        uint check2 = CheckSum.Validate(new byte[] { a, b, c, d }, in checkSum);
 
         Assert.AreEqual(check2, 0);
-    }
-
-    private uint Complement(in uint value)
-    {
-        BitField32 bitField32 = new BitField32(value);
-
-        int endIndex = 31;
-        while (endIndex >= 0 && !bitField32.IsSet(endIndex))
-        {
-            endIndex--;
-        }
-
-        for (int i = 0; i <= endIndex; i++)
-        {
-            bitField32.SetBits(i, !bitField32.IsSet(i));
-        }
-
-        return bitField32.Value;
-    }
-    private uint RemoveHighNibble(in uint value)
-    {
-        uint output = value;
-        unsafe
-        {
-            byte* bytes = (byte*)&output;
-
-            for (int i = 0; i < 4; i++)
-            {
-                $"{i} : {bytes[i]}".ToLog();
-            }
-
-            // https://pretagteam.com/question/converting-c-byte-to-bitarray
-            //if (BitConverter.IsLittleEndian)
-            {
-                for (int i = 4 - 1; i >= 0; i--)
-                {
-                    if ((bytes[i] & 0xF0) != 0)
-                    {
-                        bytes[i] &= 0x0F;
-                        break;
-                    }
-                    else if ((bytes[i] & 0x0F) != 0)
-                    {
-                        bytes[i] = 0;
-                        break;
-                    }
-                }
-            }
-            //else
-            //{
-            //    for (int i = 0; i < 4; i++)
-            //    {
-            //        if ((bytes[i] & 0xF0) != 0)
-            //        {
-            //            bytes[i] &= 0x0F;
-            //            break;
-            //        }
-            //        else if ((bytes[i] & 0x0F) != 0)
-            //        {
-            //            bytes[i] = 0;
-            //            break;
-            //        }
-            //    }
-            //}
-        }
-        return output;
     }
 }
