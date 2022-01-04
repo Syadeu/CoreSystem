@@ -47,7 +47,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             get
             {
-                if (!TryFindEmptyIndexFor(key, out int index))
+                if (!TryFindIndexFor(key, out int index))
                 {
                     throw new ArgumentOutOfRangeException();
                 }
