@@ -33,6 +33,7 @@ namespace Syadeu.Presentation.Entities
     /// 해당 값을 복사하여 인스턴스를 만들기 위해 <see cref="ObjectBase.Copy"/>을 override 하여 해당 값을 복사하여야합니다.
     /// <br/>
     /// </remarks>
+    [InternalLowLevelEntity]
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
         ///// <summary><inheritdoc cref="isCreated"/></summary>

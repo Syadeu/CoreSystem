@@ -19,6 +19,7 @@
 using Syadeu.Collections;
 using System;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid.LowLevel
@@ -180,6 +181,52 @@ namespace Syadeu.Presentation.Grid.LowLevel
         }
 
         [BurstCompile]
+        public static void aabbToIndices(in AABB grid, in float cellSize, in AABB aabb, 
+            FixedList4096Bytes<int>* output)
+        {
+            int3 minLocation, maxLocation;
+            positionToLocation(in grid, in cellSize, aabb.min, &minLocation);
+            positionToLocation(in grid, in cellSize, aabb.max, &maxLocation);
+
+            float3
+                _size = grid.size,
+                _min = grid.min,
+                _max = grid.max;
+            float
+                half = cellSize * .5f;
+            int
+                // Left Up
+                minY = Convert.ToInt32(math.round(_min.y)),
+
+                // Right Down
+                maxX = math.abs(Convert.ToInt32((_size.x - half) / cellSize)),
+                maxY = Convert.ToInt32(math.round(_max.y)),
+                maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
+            
+            for (int y = minLocation.y; y <= maxLocation.y; y++)
+            {
+                for (int x = minLocation.x; x <= maxLocation.x; x++)
+                {
+                    for (int z = minLocation.z; z <= maxLocation.z; z++)
+                    {
+                        //Unity.Burst.CompilerServices.Loop.ExpectVectorized();
+
+                        bool result = x >= 0 && x <= maxX &&
+                                      y >= minY && y <= maxY &&
+                                      z >= 0 && z <= maxZ;
+                        if (result)
+                        {
+                            int index;
+                            locationToIndex(in aabb, in cellSize, new int3(x, y, z), &index);
+
+                            (*output).Add(index);
+                        }
+                    }
+                }
+            }
+        }
+
+        [BurstCompile]
         public static void containIndex(in AABB aabb, in float cellSize, in int index, bool* output)
         {
             if (index == 0)
@@ -250,10 +297,20 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 maxY = Convert.ToInt32(math.round(_max.y)),
                 maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
 
+            containLocation(in minY, in maxY, in maxX, in maxZ, in location, output);
+        }
+        [BurstCompile]
+        public static void containLocation(
+            [NoAlias] in int minY,
+            [NoAlias] in int maxY,
+            [NoAlias] in int maxX,
+            [NoAlias] in int maxZ,
+            in int3 location, bool* output)
+        {
             *output
-                = location.x > 0 && location.x < maxX &&
-                location.y > minY && location.y < maxY &&
-                location.z > 0 && location.z < maxZ;
+                = location.x >= 0 && location.x <= maxX &&
+                location.y >= minY && location.y <= maxY &&
+                location.z >= 0 && location.z <= maxZ;
         }
 
         [BurstCompile]

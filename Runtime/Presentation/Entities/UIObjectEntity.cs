@@ -25,6 +25,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Entities
 {
     [DisplayName("Entity: UI Object Entity")]
+    [InternalLowLevelEntity]
     public sealed class UIObjectEntity : EntityBase,
         INotifyComponent<UIObjectCanvasGroupComponent>
     {

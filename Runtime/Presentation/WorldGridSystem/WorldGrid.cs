@@ -124,6 +124,23 @@ namespace Syadeu.Presentation.Grid
             return position;
         }
 
+        public FixedList128Bytes<GridIndex> AABBToIndices(in AABB aabb)
+        {
+            FixedList4096Bytes<int> temp;
+            unsafe
+            {
+                BurstGridMathematics.aabbToIndices(in m_AABB, in m_CellSize, aabb, &temp);
+            }
+            FixedList128Bytes<GridIndex> list = new FixedList128Bytes<GridIndex>();
+
+            for (int i = 0; i < temp.Length; i++)
+            {
+                list.Add(new GridIndex(this, temp[i]));
+            }
+
+            return list;
+        }
+
         #endregion
 
         public bool Contains(in int index)
@@ -142,6 +159,10 @@ namespace Syadeu.Presentation.Grid
         {
             return m_AABB.Contains(position);
         }
+        public bool Contains(in AABB aabb)
+        {
+            return m_AABB.Contains(aabb.min) && m_AABB.Contains(aabb.max);
+        }
     }
 
     [BurstCompatible]
@@ -150,6 +171,8 @@ namespace Syadeu.Presentation.Grid
         private readonly short m_CheckSum;
         private readonly int m_Index;
 
+        public int Index => m_Index;
+
         internal GridIndex(WorldGrid grid, int index)
         {
             m_CheckSum = grid.m_CheckSum;
@@ -157,5 +180,10 @@ namespace Syadeu.Presentation.Grid
         }
 
         public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
+    }
+
+    public struct GridLocation 
+    {
+
     }
 }

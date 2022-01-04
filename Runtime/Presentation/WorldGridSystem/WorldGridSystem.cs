@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Grid
         private JobHandle m_GridUpdateJob;
 
         private NativeMultiHashMap<int, InstanceID> m_Indices;
-        private NativeHashMap<InstanceID, int> m_Entities;
+        private NativeMultiHashMap<InstanceID, int> m_Entities;
         private NativeQueue<InstanceID>
             m_WaitForAdd, m_WaitForRemove;
 
@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Grid
             m_WaitForRemove = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
 
             m_Indices = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
-            m_Entities = new NativeHashMap<InstanceID, int>(1024, AllocatorManager.Persistent);
+            m_Entities = new NativeMultiHashMap<InstanceID, int>(1024, AllocatorManager.Persistent);
 
             m_NeedUpdateEntities = new UnsafeFixedQueue<InstanceID>(128, Allocator.Persistent, NativeArrayOptions.ClearMemory);
 
@@ -153,12 +153,7 @@ namespace Syadeu.Presentation.Grid
             for (int i = 0; i < removeCount; i++)
             {
                 InstanceID entity = m_WaitForRemove.Dequeue();
-                int index = m_Entities[entity];
-
-                m_Indices.Remove(index, entity);
-                m_Entities.Remove(entity);
-
-                $"remove grid {index} at {entity}".ToLog();
+                Remove(entity);
             }
 
             int addCount = m_WaitForAdd.Count;
@@ -166,13 +161,13 @@ namespace Syadeu.Presentation.Grid
             for (int i = 0; i < addCount; i++)
             {
                 InstanceID entity = m_WaitForAdd.Dequeue();
-                float3 pos = entity.GetTransformWithoutCheck().position;
+                AABB aabb = entity.GetTransformWithoutCheck().aabb;
 
-                requireReindex |= !m_Grid.Contains(pos);
+                requireReindex |= !m_Grid.Contains(aabb);
                 if (requireReindex)
                 {
                     AABB temp = m_Grid.aabb;
-                    temp.Encapsulate(pos);
+                    temp.Encapsulate(aabb);
                     m_Grid.aabb = temp;
 
                     m_WaitForAdd.Enqueue(entity);
@@ -180,12 +175,12 @@ namespace Syadeu.Presentation.Grid
                     continue;
                 }
 
-                int index = m_Grid.PositionToIndex(pos);
-
-                m_Indices.Add(index, entity);
-                m_Entities.Add(entity, index);
-
-                $"add grid {index} at {entity}\n{pos}::{m_Grid.Contains(pos)}".ToLog();
+                var indices = m_Grid.AABBToIndices(aabb);
+                for (int j = 0; j < indices.Length; j++)
+                {
+                    m_Indices.Add(indices[j].Index, entity);
+                    m_Entities.Add(entity, indices[j].Index);
+                }
             }
 
             if (requireReindex) FullIndexingUpdate();
@@ -195,34 +190,30 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
-        private int Add(in InstanceID entity)
+        private void Add(in InstanceID entity)
         {
-            int index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
-
-            m_Indices.Add(index, entity);
-
-            if (m_Entities.Count() == m_Entities.Capacity)
+            AABB aabb = entity.GetTransformWithoutCheck().aabb;
+            var indices = m_Grid.AABBToIndices(aabb);
+            for (int i = 0; i < indices.Length; i++)
             {
-                m_Entities.Capacity += 256;
+                m_Indices.Add(indices[i].Index, entity);
+                m_Entities.Add(entity, indices[i].Index);
             }
-            m_Entities.Add(entity, index);
-
-            return index;
         }
         private void Remove(in InstanceID entity)
         {
-            int index = m_Entities[entity];
+            if (!m_Entities.TryGetFirstValue(entity, out int index, out var iter)) return;
 
-            m_Indices.Remove(index, entity);
+            do
+            {
+                m_Indices.Remove(index, entity);
+            } while (m_Entities.TryGetNextValue(out index, ref iter));
+
             m_Entities.Remove(entity);
         }
         private bool HasEntityAt(in int3 location)
         {
             return m_Indices.ContainsKey(m_Grid.LocationToIndex(in location));
-        }
-        private int GetIndex(in InstanceID entity)
-        {
-            return m_Entities[entity];
         }
 
         private unsafe void GetNearbyEntities(
@@ -302,40 +293,24 @@ namespace Syadeu.Presentation.Grid
         private void FullIndexingUpdate()
         {
             m_GridUpdateJob.Complete();
-
-            int removeCount = m_WaitForRemove.Count;
-            for (int i = 0; i < removeCount; i++)
-            {
-                InstanceID entity = m_WaitForRemove.Dequeue();
-                m_Entities.Remove(entity);
-            }
+            
+            m_WaitForRemove.Clear();
 
             int prevCount = m_Entities.Count();
             m_Entities.Dispose(); m_Indices.Dispose();
             m_Indices = new NativeMultiHashMap<int, InstanceID>(m_Grid.length, AllocatorManager.Persistent);
 
             int addCount = m_WaitForAdd.Count;
-            m_Entities = new NativeHashMap<InstanceID, int>(prevCount * 2 + addCount, AllocatorManager.Persistent);
-            for (int i = 0; i < addCount; i++)
-            {
-                InstanceID entity = m_WaitForAdd.Dequeue();
-                int index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
+            m_Entities = new NativeMultiHashMap<InstanceID, int>(prevCount * 2 + addCount, AllocatorManager.Persistent);
+            
+            m_WaitForAdd.Clear();
+            m_Indices.Clear();
+            m_Entities.Clear();
 
-                m_Indices.Add(index, entity);
-                m_Entities.Add(entity, index);
-            }
-
-            var entries = m_Entities.GetKeyArray(AllocatorManager.TempJob);
-
-            UpdateGridJob job = new UpdateGridJob(
-                m_Grid, ref entries,
+            UpdateGridComponentJob componentJob = new UpdateGridComponentJob(
+                m_Grid,
                 ref m_Indices,
                 ref m_Entities);
-
-            var jobHandle = ScheduleAt(JobPosition.Before, job, entries.Length);
-            m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, jobHandle);
-
-            UpdateGridComponentJob componentJob = new UpdateGridComponentJob(m_Grid, m_Entities);
 
             var handle =
                 ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
@@ -345,10 +320,8 @@ namespace Syadeu.Presentation.Grid
         }
 
         [BurstCompile(CompileSynchronously = true)]
-        private struct UpdateGridJob : IJobParallelFor
+        private struct UpdateGridComponentJob : IJobParallelForEntities<GridComponent>
         {
-            [ReadOnly, DeallocateOnJobCompletion]
-            private NativeArray<InstanceID> entries;
             [ReadOnly]
             private WorldGrid grid;
             [ReadOnly]
@@ -356,51 +329,33 @@ namespace Syadeu.Presentation.Grid
 
             [WriteOnly]
             private NativeMultiHashMap<int, InstanceID>.ParallelWriter indices;
-            [WriteOnly]
-            private NativeHashMap<InstanceID, int>.ParallelWriter entities;
+            [ReadOnly]
+            private NativeMultiHashMap<InstanceID, int>.ParallelWriter entities;
 
-            public UpdateGridJob(
-                in WorldGrid worldGrid, 
-                ref NativeArray<InstanceID> entries,
+            public UpdateGridComponentJob(
+                WorldGrid grid,
                 ref NativeMultiHashMap<int, InstanceID> indices,
-                ref NativeHashMap<InstanceID, int> entities
-                )
+                ref NativeMultiHashMap<InstanceID, int> entities)
             {
-                this.entries = entries;
-                grid = worldGrid;
+                this.grid = grid;
                 m_TrHashMap = EntityTransformStatic.GetHashMap();
 
-                indices.Clear(); entities.Clear();
                 this.indices = indices.AsParallelWriter();
                 this.entities = entities.AsParallelWriter();
             }
 
-            public void Execute(int i)
-            {
-                int index = grid.PositionToIndex(m_TrHashMap.GetTransform(entries[i]).position);
-                indices.Add(index, entries[i]);
-                entities.TryAdd(entries[i], index);
-            }
-        }
-        [BurstCompile(CompileSynchronously = true)]
-        private struct UpdateGridComponentJob : IJobParallelForEntities<GridComponent>
-        {
-            [ReadOnly]
-            private WorldGrid grid;
-            [ReadOnly]
-            private NativeHashMap<InstanceID, int> entities;
-
-            public UpdateGridComponentJob(
-                WorldGrid grid,
-                NativeHashMap<InstanceID, int> entities)
-            {
-                this.grid = grid;
-                this.entities = entities;
-            }
-
             public void Execute(in InstanceID entity, ref GridComponent component)
             {
-                component.m_Index = new GridIndex(grid, entities[entity]);
+                AABB aabb = m_TrHashMap.GetTransform(entity).aabb;
+
+                component.m_Indices = grid.AABBToIndices(aabb);
+                for (int i = 0; i < component.m_Indices.Length; i++)
+                {
+                    UnityEngine.Debug.Log($"{component.m_Indices[i]} add");
+
+                    indices.Add(component.m_Indices[i].Index, entity);
+                    entities.Add(entity, component.m_Indices[i].Index);
+                }
             }
         }
 
@@ -425,8 +380,7 @@ namespace Syadeu.Presentation.Grid
 
     public struct GridComponent : IEntityComponent
     {
-        internal GridIndex m_Index;
+        internal FixedList128Bytes<GridIndex> m_Indices;
 
-        public GridIndex index => m_Index;
     }
 }

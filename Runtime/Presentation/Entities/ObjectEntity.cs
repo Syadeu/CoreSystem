@@ -20,6 +20,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Entities
 {
     [DisplayName("Entity: Object Entity")]
+    [InternalLowLevelEntity]
     public sealed class ObjectEntity : EntityBase
     {
         protected override ObjectBase Copy()

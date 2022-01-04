@@ -33,6 +33,7 @@ namespace Syadeu.Presentation.Entities
     /// 이 클래스를 상속받음으로서 새로운 오브젝트를 선언할 수 있습니다.<br/>
     /// 선언된 클래스는 <seealso cref="EntityDataList"/>에 자동으로 타입이 등록되어 추가할 수 있게 됩니다.
     /// </remarks>
+    [InternalLowLevelEntity]
     public abstract class EntityBase : EntityDataBase, IEntity
     {
         /// <summary>

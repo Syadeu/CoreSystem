@@ -18,7 +18,9 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using System.ComponentModel;
 
 namespace Syadeu.Presentation.Grid
@@ -49,7 +51,10 @@ namespace Syadeu.Presentation.Grid
 
         protected override void OnCreated(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
-            //m_GridSystem.AddEntity(entity.Idx);
+            ref GridComponent gridCom = ref entity.GetComponent<GridComponent>();
+            ProxyTransform tr = entity.transform;
+
+            //tr.aabb
         }
         protected override void OnDestroy(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {

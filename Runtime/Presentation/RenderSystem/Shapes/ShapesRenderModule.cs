@@ -138,7 +138,7 @@ namespace Syadeu.Presentation.Render
         {
             using (s_RenderShapesMarker.Auto())
             using (Draw.Command(arg2))
-            {
+            { 
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
                 {
