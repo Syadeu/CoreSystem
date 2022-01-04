@@ -193,6 +193,17 @@ namespace Syadeu.Presentation.Grid
         private void Add(in InstanceID entity)
         {
             AABB aabb = entity.GetTransformWithoutCheck().aabb;
+            if (!m_Grid.Contains(aabb))
+            {
+                AABB temp = m_Grid.aabb;
+                temp.Encapsulate(aabb);
+                m_Grid.aabb = temp;
+
+                $"require encapsulate for {entity}".ToLog();
+
+                return;
+            }
+
             var indices = m_Grid.AABBToIndices(aabb);
             for (int i = 0; i < indices.Length; i++)
             {
