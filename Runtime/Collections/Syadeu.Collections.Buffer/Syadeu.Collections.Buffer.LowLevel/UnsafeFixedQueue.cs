@@ -71,21 +71,24 @@ namespace Syadeu.Collections.Buffer.LowLevel
             };
         }
 
-        public void Enqueue(T item)
+        public bool Enqueue(T item)
         {
             ref List list = ref m_List[0];
             ref Item temp = ref list.Buffer[list.NextIndex];
+#if DEBUG_MODE
             if (temp.Occupied)
             {
                 UnityEngine.Debug.LogError("Exceeding max count");
-                return;
+                return false;
             }
-
+#endif
             temp.Occupied = true;
             temp.Data = item;
 
             list.NextIndex++;
             if (list.NextIndex >= list.Buffer.Length) list.NextIndex = 0;
+
+            return true;
         }
         public T Dequeue()
         {
@@ -95,7 +98,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             if (!temp.Occupied)
             {
                 UnityEngine.Debug.LogError(
-                    $"{nameof(UnsafeFixedQueue<T>)} Doesn\'t have items.");
+                    $"{nameof(UnsafeFixedQueue<T>)} Doesn\'t have any items.");
                 return default(T);
             }
 #endif
