@@ -223,7 +223,12 @@ namespace Syadeu.Presentation.Grid
 
             do
             {
-                m_Indices.Remove(index, entity);
+                if (m_Indices.CountValuesForKey(index) == 1)
+                {
+                    m_Indices.Remove(index);
+                }
+                else m_Indices.Remove(index, entity);
+
             } while (m_Entities.TryGetNextValue(out index, ref iter));
 
             m_Entities.Remove(entity);
@@ -312,17 +317,22 @@ namespace Syadeu.Presentation.Grid
             m_GridUpdateJob.Complete();
             
             m_WaitForRemove.Clear();
-
-            int prevCount = m_Entities.Count();
-            m_Entities.Dispose(); m_Indices.Dispose();
-            m_Indices = new NativeMultiHashMap<int, InstanceID>(m_Grid.length, AllocatorManager.Persistent);
-
-            int addCount = m_WaitForAdd.Count;
-            m_Entities = new NativeMultiHashMap<InstanceID, int>(prevCount * 2 + addCount, AllocatorManager.Persistent);
-            
             m_WaitForAdd.Clear();
-            m_Indices.Clear();
-            m_Entities.Clear();
+
+            int prevCount = m_Entities.Capacity;
+            int targetCap = prevCount - m_Entities.Count() < prevCount / 3 ? prevCount * 2 : prevCount;
+
+            if (prevCount != targetCap)
+            {
+                m_Entities.Dispose(); m_Indices.Dispose();
+                m_Indices = new NativeMultiHashMap<int, InstanceID>(targetCap, AllocatorManager.Persistent);
+                m_Entities = new NativeMultiHashMap<InstanceID, int>(targetCap, AllocatorManager.Persistent);
+            }
+            else
+            {
+                m_Indices.Clear();
+                m_Entities.Clear();
+            }
 
             UpdateGridComponentJob componentJob = new UpdateGridComponentJob(
                 m_Grid,
@@ -333,7 +343,7 @@ namespace Syadeu.Presentation.Grid
                 ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle);
 
-            "schedule full re indexing".ToLog();
+            //"schedule full re indexing".ToLog();
         }
 
         [BurstCompile(CompileSynchronously = true)]
@@ -395,7 +405,7 @@ namespace Syadeu.Presentation.Grid
 
     public struct GridComponent : IEntityComponent
     {
-        internal FixedList128Bytes<GridIndex> m_Indices;
+        internal FixedList512Bytes<GridIndex> m_Indices;
 
     }
 }
