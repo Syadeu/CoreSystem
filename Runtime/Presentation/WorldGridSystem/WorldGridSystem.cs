@@ -346,7 +346,7 @@ namespace Syadeu.Presentation.Grid
 
             [WriteOnly]
             private NativeMultiHashMap<int, InstanceID>.ParallelWriter indices;
-            [ReadOnly]
+            [WriteOnly]
             private NativeMultiHashMap<InstanceID, int>.ParallelWriter entities;
 
             public UpdateGridComponentJob(
