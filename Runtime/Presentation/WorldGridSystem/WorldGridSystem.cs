@@ -351,8 +351,6 @@ namespace Syadeu.Presentation.Grid
                 component.m_Indices = grid.AABBToIndices(aabb);
                 for (int i = 0; i < component.m_Indices.Length; i++)
                 {
-                    UnityEngine.Debug.Log($"{component.m_Indices[i]} add");
-
                     indices.Add(component.m_Indices[i].Index, entity);
                     entities.Add(entity, component.m_Indices[i].Index);
                 }
