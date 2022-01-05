@@ -219,7 +219,7 @@ public class PresentationSystemTests
             d = 0x55
 
             ;
-        CheckSum checkSum = CheckSum.Calculate(new byte[] { a, b, c, d });
+        CheckSum checkSum = CheckSum.CalculateBytes(new byte[] { a, b, c, d });
         //$"{checkSum} : {Convert.ToString(checkSum, toBase: 2)}".ToLog();
 
         Assert.AreEqual(0x25, checkSum);

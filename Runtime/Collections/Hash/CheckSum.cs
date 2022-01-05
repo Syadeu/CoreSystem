@@ -24,7 +24,7 @@ namespace Syadeu.Collections
         {
             return new CheckSum(CheckSumMathematics.Calculate(data));
         }
-        public static CheckSum Calculate(byte[] data)
+        public static CheckSum CalculateBytes(byte[] data)
         {
             return new CheckSum(CheckSumMathematics.Calculate(data));
         }
