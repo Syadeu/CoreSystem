@@ -12,117 +12,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections
 {
-    public static class CheckSum
+    [BurstCompatible]
+    public struct CheckSum : IEquatable<CheckSum>, IEquatable<int>, IEquatable<uint>
     {
-        public static uint Calculate(byte[] data)
+        public static CheckSum Calculate<T>(T data) where T : unmanaged
         {
-            uint output;
-            unsafe
-            {
-                fixed (byte* ptr = data)
-                {
-                    output = GetSum(ptr, data.Length);
-                }
-                
-                // https://pretagteam.com/question/converting-c-byte-to-bitarray
-                //if (BitConverter.IsLittleEndian)
-                output = RemoveHighNibble(in output);
-
-                // Complement
-                output = Complement(in output) + 1;
-            }
-
-            return output;
+            return new CheckSum(CheckSumMathematics.Calculate(data));
         }
-        public static uint Calculate<T>(T data) where T : unmanaged
+        public static CheckSum Calculate(byte[] data)
         {
-            uint output;
-            unsafe
-            {
-                output = GetSum((byte*)&data, UnsafeUtility.SizeOf<T>());
-
-                // https://pretagteam.com/question/converting-c-byte-to-bitarray
-                //if (BitConverter.IsLittleEndian)
-                output = RemoveHighNibble(in output);
-
-                // Complement
-                output = Complement(in output) + 1;
-            }
-
-            return output;
+            return new CheckSum(CheckSumMathematics.Calculate(data));
         }
 
-        public static uint Validate(byte[] data, in uint checkSum)
+        private readonly uint m_Hash;
+
+        public uint Hash => m_Hash;
+
+        private CheckSum(uint hash)
         {
-            uint output;
-            unsafe
-            {
-                fixed (byte* ptr = data)
-                {
-                    output = GetSum(ptr, data.Length);
-                }
-                output += checkSum;
-
-                // https://pretagteam.com/question/converting-c-byte-to-bitarray
-                //if (BitConverter.IsLittleEndian)
-                output = RemoveHighNibble(in output);
-            }
-
-            return output;
+            m_Hash = hash;
         }
 
-        private static unsafe uint GetSum(byte* bytes, int size)
+        public bool Validate<T>(in T data) where T : unmanaged
         {
-            uint output = 0;
-            for (int i = 0; i < size; i++)
-            {
-                output += bytes[i];
-            }
-            return output;
+            uint result = CheckSumMathematics.Validate(data, in m_Hash);
+            return result == 0;
         }
-        private static unsafe uint RemoveHighNibble(in uint sum)
+        public bool Validate(in byte[] data)
         {
-            uint output = sum;
-            byte* bytes = (byte*)&output;
-
-            for (int i = 3; i >= 0; i--)
-            {
-                if (bytes[i] == 0x00) continue;
-                else if ((bytes[i] & 0xF0) != 0)
-                {
-                    bytes[i] &= 0x0F;
-                    break;
-                }
-                else if ((bytes[i] & 0x0F) != 0)
-                {
-                    bytes[i] = 0;
-                    break;
-                }
-            }
-
-            return output;
+            uint result = CheckSumMathematics.Validate(data, in m_Hash);
+            return result == 0;
         }
-        private static uint Complement(in uint value)
+
+        [NotBurstCompatible]
+        public override string ToString() => m_Hash.ToString();
+        
+        [NotBurstCompatible]
+        public override bool Equals(object obj)
         {
-            BitField32 bitField32 = new BitField32(value);
+            if (obj == null || !(obj is CheckSum other)) return false;
 
-            int endIndex = 31;
-            while (endIndex >= 0 && !bitField32.IsSet(endIndex))
-            {
-                endIndex--;
-            }
-
-            for (int i = 0; i <= endIndex; i++)
-            {
-                bitField32.SetBits(i, !bitField32.IsSet(i));
-            }
-
-            return bitField32.Value;
+            return Equals(other);
         }
+        public bool Equals(CheckSum other) => m_Hash == other.m_Hash;
+        public bool Equals(int other) => m_Hash == other;
+        public bool Equals(uint other) => m_Hash == other;
+        public override int GetHashCode() => Convert.ToInt32(m_Hash);
     }
 }

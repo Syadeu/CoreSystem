@@ -219,13 +219,13 @@ public class PresentationSystemTests
             d = 0x55
 
             ;
-        uint checkSum = CheckSum.Calculate(new byte[] { a, b, c, d });
-        $"{checkSum} : {Convert.ToString(checkSum, toBase: 2)}".ToLog();
+        CheckSum checkSum = CheckSum.Calculate(new byte[] { a, b, c, d });
+        //$"{checkSum} : {Convert.ToString(checkSum, toBase: 2)}".ToLog();
 
         Assert.AreEqual(0x25, checkSum);
 
-        uint check2 = CheckSum.Validate(new byte[] { a, b, c, d }, in checkSum);
-
-        Assert.AreEqual(check2, 0);
+        bool check2 = checkSum.Validate(new byte[] { a, b, c, d });
+        Assert.IsTrue(check2); 
+        //Assert.AreEqual(check2, 0);
     }
 }
