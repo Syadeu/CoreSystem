@@ -45,73 +45,42 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             *output = new int3(x, y, z);
         }
-        public static void positionToIndex(in AABB aabb, in float cellSize, in float3 position, int* output)
+        public static void positionToIndex(in AABB aabb, in float cellSize, in float3 position, ulong* output)
         {
             int3 location;
             positionToLocation(in aabb, in cellSize, in position, &location);
             locationToIndex(in aabb, in cellSize, in location, output);
         }
         [BurstCompile]
-        public static void locationToIndex(in AABB aabb, in float cellSize, in int3 location, int* output)
+        public static void locationToIndex(in AABB aabb, in float cellSize, in int3 location, ulong* output)
         {
-            int
-                zSize = Convert.ToInt32(math.floor(aabb.size.z / cellSize)),
-                calculated = zSize * location.z + location.x;
-            
-            if (location.y == 0)
-            {
-                *output = calculated;
-                *output ^= 0b1011101111;
-                return;
-            }
+            BitArray64 bits = new BitArray64();
+            bits.SetValue(0, (uint)location.x, 20);
 
-            int
-                xSize = Convert.ToInt32(math.floor(aabb.size.x / cellSize)),
-                dSize = xSize * zSize;
+            bits.SetValue(20, (uint)location.z, 20);
 
-            *output = calculated + (dSize * math.abs(location.y));
-            *output ^= 0b1011101111;
+            bits.SetValue(40, (uint)math.abs(location.y), 20);
 
-            if (location.y < 0)
-            {
-                *output *= -1;
-            }
+            bits[62] = location.y < 0;
+            bits[63] = true;
+
+            *output = bits.Value;
         }
         [BurstCompile]
-        public static void indexToLocation(in AABB aabb, in float cellSize, in int index, int3* output)
+        public static void indexToLocation(in AABB aabb, in float cellSize, in ulong index, int3* output)
         {
-            if (index == 0)
-            {
-                *output = int3.zero;
-                return;
-            }
-
-            float3
-                _size = aabb.size;
-            int
-                temp = math.abs(index) ^ 0b1011101111,
-                xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
-                zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
-                dSize = xSize * zSize,
-
-                y = temp / dSize,
-                calculated = temp % dSize;
-
-            if (index < 0) y *= -1;
-
-            if (calculated == 0)
-            {
-                *output = new int3(0, y, 0);
-                return;
-            }
+            BitArray64 bits = index;
 
             int
-                z = calculated / zSize,
-                x = calculated - (zSize * z);
+                x = (int)bits.ReadValue(0, 20),
+                z = (int)bits.ReadValue(20, 20),
+                y = (int)bits.ReadValue(40, 20);
+
+            if (bits[62]) y *= -1;
 
             *output = new int3(x, y, z);
         }
-        public static void indexToPosition(in AABB aabb, in float cellSize, in int index, float3* output)
+        public static void indexToPosition(in AABB aabb, in float cellSize, in ulong index, float3* output)
         {
             int3 location;
             indexToLocation(in aabb, in cellSize, in index, &location);
@@ -160,7 +129,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
         #endregion
 
-        public static void indexToAABB(in AABB aabb, in float cellSize, in int index, AABB* output)
+        public static void indexToAABB(in AABB aabb, in float cellSize, in ulong index, AABB* output)
         {
             float3 position;
             indexToPosition(in aabb, in cellSize, in index, &position);
@@ -168,7 +137,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             *output = new AABB(position, cellSize);
         }
         [BurstCompile]
-        public static void indexToAABB(in AABB aabb, in float cellSize, [NoAlias] in int min, [NoAlias] in int max, AABB* output)
+        public static void indexToAABB(in AABB aabb, in float cellSize, [NoAlias] in ulong min, [NoAlias] in ulong max, AABB* output)
         {
             float3 minPos, maxPos;
             indexToPosition(in aabb, in cellSize, in min, &minPos);
@@ -182,16 +151,24 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
         [BurstCompile]
         public static void aabbToIndices(in AABB grid, in float cellSize, in AABB aabb, 
-            FixedList4096Bytes<int>* output)
+            FixedList4096Bytes<ulong>* output)
         {
             int3 minLocation, maxLocation;
-            positionToLocation(in grid, in cellSize, aabb.min, &minLocation);
-            positionToLocation(in grid, in cellSize, aabb.max, &maxLocation);
+
+            {
+                positionToLocation(in grid, in cellSize, aabb.min, &minLocation);
+                positionToLocation(in grid, in cellSize, aabb.max, &maxLocation);
+            }
 
             float3
                 _size = grid.size,
                 _min = grid.min,
                 _max = grid.max;
+                
+            int3 gridSize = new int3(
+                    Convert.ToInt32(math.floor(_size.x / cellSize)),
+                    Convert.ToInt32(math.floor(_size.y / cellSize)),
+                    Convert.ToInt32(math.floor(_size.z / cellSize)));
             float
                 half = cellSize * .5f;
             int
@@ -203,21 +180,21 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 maxY = Convert.ToInt32(math.round(_max.y)),
                 maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
             
-            for (int y = minLocation.y; y <= maxLocation.y; y++)
+            for (int y = minLocation.y; y <= maxLocation.y && y <= gridSize.y; y++)
             {
-                for (int x = minLocation.x; x <= maxLocation.x; x++)
+                for (int x = minLocation.x; x <= maxLocation.x && x <= gridSize.x; x++)
                 {
-                    for (int z = minLocation.z; z <= maxLocation.z; z++)
+                    for (int z = minLocation.z; z <= maxLocation.z && z <= gridSize.z; z++)
                     {
                         //Unity.Burst.CompilerServices.Loop.ExpectVectorized();
 
-                        bool result = x >= 0 && x <= maxX &&
-                                      y >= minY && y <= maxY &&
-                                      z >= 0 && z <= maxZ;
-                        if (result)
+                        //bool result = x >= 0 && x <= maxX &&
+                        //              y >= minY && y <= maxY &&
+                        //              z >= 0 && z <= maxZ;
+                        //if (result)
                         {
-                            int index;
-                            locationToIndex(in aabb, in cellSize, new int3(x, y, z), &index);
+                            ulong index;
+                            locationToIndex(in grid, in cellSize, new int3(x, y, z), &index);
 
                             (*output).Add(index);
                         }
@@ -227,57 +204,11 @@ namespace Syadeu.Presentation.Grid.LowLevel
         }
 
         [BurstCompile]
-        public static void containIndex(in AABB aabb, in float cellSize, in int index, bool* output)
+        public static void containIndex(in AABB aabb, in float cellSize, in ulong index, bool* output)
         {
-            if (index == 0)
-            {
-                *output = true;
-                return;
-            }
-
-            float3
-                _size = aabb.size,
-                _min = aabb.min,
-                _max = aabb.max;
-            int
-                temp = math.abs(index) ^ 0b1011101111,
-                xSize = Convert.ToInt32(math.floor(_size.x / cellSize)),
-                zSize = Convert.ToInt32(math.floor(_size.z / cellSize)),
-                dSize = xSize * zSize,
-
-                y = Convert.ToInt32(math.floor(temp / dSize * cellSize)),
-                calculated = temp % dSize;
-
-            if (index < 0) y *= -1;
-
-            if (calculated == 0)
-            {
-                if (y > _min.y && y < _max.y)
-                {
-                    *output = true;
-                }
-                else *output = false;
-
-                return;
-            }
-
-            int
-                z = calculated / zSize,
-                x = calculated - (zSize * z);
-
-            float
-                half = cellSize * .5f;
-            int
-                // Left Up
-                minY = Convert.ToInt32(math.round(_min.y)),
-
-                // Right Down
-                maxX = math.abs(Convert.ToInt32((_size.x - half) / cellSize)),
-                maxY = Convert.ToInt32(math.round(_max.y)),
-                maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
-
-            *output
-                = x > 0 && x < maxX && y > minY && y < maxY && z > 0 && z < maxZ;
+            int3 location;
+            indexToLocation(in aabb, in cellSize, in index, &location);
+            containLocation(in aabb, in cellSize, in location, output);
         }
         [BurstCompile]
         public static void containLocation(in AABB aabb, in float cellSize, in int3 location, bool* output)
@@ -326,7 +257,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             *output = math.sqrt(p);
         }
-        public static void distanceBetweenindex(in AABB aabb, in float cellSize, in int a, in int b, float* output)
+        public static void distanceBetweenindex(in AABB aabb, in float cellSize, in ulong a, in int b, float* output)
         {
             // TODO : 인덱스만으로 거리계산이 안될까?
             int3 x, y;

@@ -21,6 +21,7 @@ using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Grid
 {
@@ -78,18 +79,18 @@ namespace Syadeu.Presentation.Grid
             }
             return location;
         }
-        public int PositionToIndex(in float3 position)
+        public ulong PositionToIndex(in float3 position)
         {
-            int index;
+            ulong index;
             unsafe
             {
                 BurstGridMathematics.positionToIndex(in m_AABB, in m_CellSize, in position, &index);
             }
             return index;
         }
-        public int LocationToIndex(in int3 location)
+        public ulong LocationToIndex(in int3 location)
         {
-            int index;
+            ulong index;
             unsafe
             {
                 BurstGridMathematics.locationToIndex(in m_AABB, in m_CellSize, in location, &index);
@@ -105,7 +106,7 @@ namespace Syadeu.Presentation.Grid
             }
             return position;
         }
-        public int3 IndexToLocation(in int index)
+        public int3 IndexToLocation(in ulong index)
         {
             int3 location;
             unsafe
@@ -114,7 +115,7 @@ namespace Syadeu.Presentation.Grid
             }
             return location;
         }
-        public float3 IndexToPosition(in int index)
+        public float3 IndexToPosition(in ulong index)
         {
             float3 position;
             unsafe
@@ -126,7 +127,7 @@ namespace Syadeu.Presentation.Grid
 
         public FixedList512Bytes<GridIndex> AABBToIndices(in AABB aabb)
         {
-            FixedList4096Bytes<int> temp;
+            FixedList4096Bytes<ulong> temp;
             unsafe
             {
                 BurstGridMathematics.aabbToIndices(in m_AABB, in m_CellSize, aabb, &temp);
@@ -143,7 +144,7 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
-        public bool Contains(in int index)
+        public bool Contains(in ulong index)
         {
             bool result;
             BurstGridMathematics.containIndex(in m_AABB, in m_CellSize, in index, &result);
@@ -169,21 +170,16 @@ namespace Syadeu.Presentation.Grid
     public struct GridIndex : IEquatable<GridIndex>
     {
         private readonly short m_CheckSum;
-        private readonly int m_Index;
+        private readonly ulong m_Index;
 
-        public int Index => m_Index;
+        public ulong Index => m_Index;
 
-        internal GridIndex(WorldGrid grid, int index)
+        internal GridIndex(WorldGrid grid, ulong index)
         {
             m_CheckSum = grid.m_CheckSum;
             m_Index = index;
         }
 
         public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
-    }
-
-    public struct GridLocation 
-    {
-
     }
 }

@@ -34,7 +34,8 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
 {
-    public sealed class WorldGridSystem : PresentationSystemEntity<WorldGridSystem>
+    public sealed class WorldGridSystem : PresentationSystemEntity<WorldGridSystem>,
+        INotifySystemModule<WorldGridGLModule>
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -43,8 +44,8 @@ namespace Syadeu.Presentation.Grid
         private WorldGrid m_Grid;
         private JobHandle m_GridUpdateJob;
 
-        private NativeMultiHashMap<int, InstanceID> m_Indices;
-        private NativeMultiHashMap<InstanceID, int> m_Entities;
+        internal NativeMultiHashMap<ulong, InstanceID> m_Indices;
+        private NativeMultiHashMap<InstanceID, ulong> m_Entities;
         private NativeQueue<InstanceID>
             m_WaitForAdd, m_WaitForRemove;
 
@@ -52,6 +53,8 @@ namespace Syadeu.Presentation.Grid
 
         private EntityComponentSystem m_ComponentSystem;
         private EventSystem m_EventSystem;
+
+        internal WorldGrid Grid => m_Grid;
 
         #region Presentation Methods
 
@@ -62,8 +65,8 @@ namespace Syadeu.Presentation.Grid
             m_WaitForAdd = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
             m_WaitForRemove = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
 
-            m_Indices = new NativeMultiHashMap<int, InstanceID>(1024, AllocatorManager.Persistent);
-            m_Entities = new NativeMultiHashMap<InstanceID, int>(1024, AllocatorManager.Persistent);
+            m_Indices = new NativeMultiHashMap<ulong, InstanceID>(1024, AllocatorManager.Persistent);
+            m_Entities = new NativeMultiHashMap<InstanceID, ulong>(1024, AllocatorManager.Persistent);
 
             m_NeedUpdateEntities = new UnsafeFixedQueue<InstanceID>(128, Allocator.Persistent, NativeArrayOptions.ClearMemory);
 
@@ -170,9 +173,7 @@ namespace Syadeu.Presentation.Grid
                     requireReindex |= !m_Grid.Contains(aabb);
                     if (requireReindex)
                     {
-                        AABB temp = m_Grid.aabb;
-                        temp.Encapsulate(aabb);
-                        m_Grid.aabb = temp;
+                        Increase(aabb);
 
                         m_WaitForAdd.Enqueue(entity);
                         //$"require encapsulate for {entity}".ToLog();
@@ -185,6 +186,10 @@ namespace Syadeu.Presentation.Grid
                         m_Indices.Add(indices[j].Index, entity);
                         m_Entities.Add(entity, indices[j].Index);
                     }
+
+                    //ulong index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
+                    //m_Indices.Add(index, entity);
+                    //m_Entities.Add(entity, index);
                 }
             }
             
@@ -195,14 +200,30 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
+        private void Increase(AABB aabb)
+        {
+            AABB temp = m_Grid.aabb;
+
+            float3
+                min = math.round(aabb.min),
+                max = math.round(aabb.max),
+
+                restMin = min % m_Grid.cellSize,
+                restMax = max % m_Grid.cellSize,
+
+                targetMin = min + restMin - m_Grid.cellSize,
+                targetMax = max - restMax + m_Grid.cellSize;
+
+            temp.Encapsulate(targetMin);
+            temp.Encapsulate(targetMax);
+            m_Grid.aabb = temp;
+        }
         private bool Add(in InstanceID entity)
         {
             AABB aabb = entity.GetTransformWithoutCheck().aabb;
             if (!m_Grid.Contains(aabb))
             {
-                AABB temp = m_Grid.aabb;
-                temp.Encapsulate(aabb);
-                m_Grid.aabb = temp;
+                Increase(aabb);
 
                 //$"require encapsulate for {entity}".ToLog();
                 return false;
@@ -215,11 +236,15 @@ namespace Syadeu.Presentation.Grid
                 m_Entities.Add(entity, indices[i].Index);
             }
 
+            //ulong index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
+            //m_Indices.Add(index, entity);
+            //m_Entities.Add(entity, index);
+
             return true;
         }
         private void Remove(in InstanceID entity)
         {
-            if (!m_Entities.TryGetFirstValue(entity, out int index, out var iter)) return;
+            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter)) return;
 
             do
             {
@@ -233,13 +258,9 @@ namespace Syadeu.Presentation.Grid
 
             m_Entities.Remove(entity);
         }
-        private bool HasEntityAt(in int3 location)
-        {
-            return m_Indices.ContainsKey(m_Grid.LocationToIndex(in location));
-        }
-
+        
         private unsafe void GetNearbyEntities(
-            in int index, in int xzRange, in int yRange,
+            in ulong index, in int xzRange, in int yRange,
             ref UnsafeAllocator<InstanceID> output)
         {
             if (!output.IsCreated)
@@ -312,6 +333,10 @@ namespace Syadeu.Presentation.Grid
 
         #region Jobs
 
+        internal void CompleteJobs()
+        {
+            m_GridUpdateJob.Complete();
+        }
         private void FullIndexingUpdate()
         {
             m_GridUpdateJob.Complete();
@@ -325,8 +350,8 @@ namespace Syadeu.Presentation.Grid
             if (prevCount != targetCap)
             {
                 m_Entities.Dispose(); m_Indices.Dispose();
-                m_Indices = new NativeMultiHashMap<int, InstanceID>(targetCap, AllocatorManager.Persistent);
-                m_Entities = new NativeMultiHashMap<InstanceID, int>(targetCap, AllocatorManager.Persistent);
+                m_Indices = new NativeMultiHashMap<ulong, InstanceID>(targetCap, AllocatorManager.Persistent);
+                m_Entities = new NativeMultiHashMap<InstanceID, ulong>(targetCap, AllocatorManager.Persistent);
             }
             else
             {
@@ -355,14 +380,14 @@ namespace Syadeu.Presentation.Grid
             private EntityTransformHashMap m_TrHashMap;
 
             [WriteOnly]
-            private NativeMultiHashMap<int, InstanceID>.ParallelWriter indices;
+            private NativeMultiHashMap<ulong, InstanceID>.ParallelWriter indices;
             [WriteOnly]
-            private NativeMultiHashMap<InstanceID, int>.ParallelWriter entities;
+            private NativeMultiHashMap<InstanceID, ulong>.ParallelWriter entities;
 
             public UpdateGridComponentJob(
                 WorldGrid grid,
-                ref NativeMultiHashMap<int, InstanceID> indices,
-                ref NativeMultiHashMap<InstanceID, int> entities)
+                ref NativeMultiHashMap<ulong, InstanceID> indices,
+                ref NativeMultiHashMap<InstanceID, ulong> entities)
             {
                 this.grid = grid;
                 m_TrHashMap = EntityTransformStatic.GetHashMap();
@@ -381,6 +406,10 @@ namespace Syadeu.Presentation.Grid
                     indices.Add(component.m_Indices[i].Index, entity);
                     entities.Add(entity, component.m_Indices[i].Index);
                 }
+
+                //ulong index = grid.PositionToIndex(m_TrHashMap.GetTransform(entity).position);
+                //indices.Add(index, entity);
+                //entities.Add(entity, index);
             }
         }
 
@@ -401,11 +430,14 @@ namespace Syadeu.Presentation.Grid
             Remove(entity);
             Add(entity);
         }
+        public bool HasEntityAt(in int3 location)
+        {
+            return m_Indices.ContainsKey(m_Grid.LocationToIndex(in location));
+        }
     }
 
     public struct GridComponent : IEntityComponent
     {
         internal FixedList512Bytes<GridIndex> m_Indices;
-
     }
 }

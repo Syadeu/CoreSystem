@@ -20,7 +20,7 @@ public unsafe sealed class WorldGridTests
 
         float3 outPos_1, outPos_2;
         int3 location_1, location_2, min, max;
-        int index_1, index_2;
+        ulong index_1, index_2;
         bool contains;
 
         BurstGridMathematics.minMaxLocation(aabb, cellSize, &min, &max);
@@ -114,7 +114,7 @@ public unsafe sealed class WorldGridTests
             float cellSize = 2.5f;
             float3 position = new float3(22, 15.52f, 12);
 
-            int output;
+            ulong output;
             BurstGridMathematics.positionToIndex(in aabb, in cellSize, in position, &output);
         }
     }
