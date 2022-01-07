@@ -153,51 +153,34 @@ namespace Syadeu.Presentation.Grid.LowLevel
         public static void aabbToIndices(in AABB grid, in float cellSize, in AABB aabb, 
             FixedList4096Bytes<ulong>* output)
         {
-            int3 minLocation, maxLocation;
+            int3 minLocation, maxLocation, tempMin, tempMax;
 
             {
-                positionToLocation(in grid, in cellSize, aabb.min, &minLocation);
-                positionToLocation(in grid, in cellSize, aabb.max, &maxLocation);
+                positionToLocation(in grid, in cellSize, aabb.min, &tempMin);
+                positionToLocation(in grid, in cellSize, aabb.max, &tempMax);
+
+                minLocation = math.min(tempMin, tempMax);
+                maxLocation = math.max(tempMin, tempMax);
+
+                if (minLocation.Equals(maxLocation))
+                {
+                    ulong index;
+                    locationToIndex(in aabb, in cellSize, in minLocation, &index);
+                    (*output).Add(index);
+                    return;
+                }
             }
 
-            float3
-                _size = grid.size,
-                _min = grid.min,
-                _max = grid.max;
-                
-            int3 gridSize = new int3(
-                    Convert.ToInt32(math.floor(_size.x / cellSize)),
-                    Convert.ToInt32(math.floor(_size.y / cellSize)),
-                    Convert.ToInt32(math.floor(_size.z / cellSize)));
-            float
-                half = cellSize * .5f;
-            int
-                // Left Up
-                minY = Convert.ToInt32(math.round(_min.y)),
-
-                // Right Down
-                maxX = math.abs(Convert.ToInt32((_size.x - half) / cellSize)),
-                maxY = Convert.ToInt32(math.round(_max.y)),
-                maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
-            
-            for (int y = minLocation.y; y <= maxLocation.y && y <= gridSize.y; y++)
+            for (int y = minLocation.y; y <= maxLocation.y; y++)
             {
-                for (int x = minLocation.x; x <= maxLocation.x && x <= gridSize.x; x++)
+                for (int x = minLocation.x; x <= maxLocation.x; x++)
                 {
-                    for (int z = minLocation.z; z <= maxLocation.z && z <= gridSize.z; z++)
+                    for (int z = minLocation.z; z <= maxLocation.z; z++)
                     {
-                        //Unity.Burst.CompilerServices.Loop.ExpectVectorized();
+                        ulong index;
+                        locationToIndex(in grid, in cellSize, new int3(x, y, z), &index);
 
-                        //bool result = x >= 0 && x <= maxX &&
-                        //              y >= minY && y <= maxY &&
-                        //              z >= 0 && z <= maxZ;
-                        //if (result)
-                        {
-                            ulong index;
-                            locationToIndex(in grid, in cellSize, new int3(x, y, z), &index);
-
-                            (*output).Add(index);
-                        }
+                        (*output).Add(index);
                     }
                 }
             }

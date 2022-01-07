@@ -27,8 +27,6 @@ using UnityEngine.UIElements;
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     [BurstCompatible]
-    [NativeContainerSupportsDeallocateOnJobCompletion]
-    [NativeContainerSupportsMinMaxWriteRestriction]
     public struct UnsafeAllocator : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator>
     {
         [BurstCompatible]
@@ -165,7 +163,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
     }
     [BurstCompatible]
-    [NativeContainerSupportsDeallocateOnJobCompletion]
     public struct UnsafeAllocator<T> : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator<T>>
         where T : unmanaged
     {

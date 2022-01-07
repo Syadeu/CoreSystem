@@ -16,12 +16,14 @@
 #define DEBUG_MODE
 #endif
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System.ComponentModel;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
 {
@@ -30,7 +32,8 @@ namespace Syadeu.Presentation.Grid
     public sealed class GridObjectAttribute : AttributeBase,
         Components.INotifyComponent<GridComponent>
     {
-
+        [JsonProperty(Order = 0, PropertyName = "FixedSize")]
+        internal int3 m_FixedSize = 0;
     }
     internal sealed class GridObjectAttributeProcessor : AttributeProcessor<GridObjectAttribute>
     {
@@ -52,8 +55,8 @@ namespace Syadeu.Presentation.Grid
         protected override void OnCreated(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
             ref GridComponent gridCom = ref entity.GetComponent<GridComponent>();
-            ProxyTransform tr = entity.transform;
 
+            gridCom.fixedSize = attribute.m_FixedSize;
             //tr.aabb
         }
         protected override void OnDestroy(GridObjectAttribute attribute, Entity<IEntityData> entity)

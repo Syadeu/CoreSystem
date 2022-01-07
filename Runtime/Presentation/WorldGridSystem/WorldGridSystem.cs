@@ -230,6 +230,10 @@ namespace Syadeu.Presentation.Grid
             }
 
             var indices = m_Grid.AABBToIndices(aabb);
+            if (indices.Length == 0)
+            {
+                $"no index found to {entity}".ToLog();
+            }
             for (int i = 0; i < indices.Length; i++)
             {
                 m_Indices.Add(indices[i].Index, entity);
@@ -406,10 +410,6 @@ namespace Syadeu.Presentation.Grid
                     indices.Add(component.m_Indices[i].Index, entity);
                     entities.Add(entity, component.m_Indices[i].Index);
                 }
-
-                //ulong index = grid.PositionToIndex(m_TrHashMap.GetTransform(entity).position);
-                //indices.Add(index, entity);
-                //entities.Add(entity, index);
             }
         }
 
@@ -439,5 +439,8 @@ namespace Syadeu.Presentation.Grid
     public struct GridComponent : IEntityComponent
     {
         internal FixedList512Bytes<GridIndex> m_Indices;
+        private int3 m_FixedSize;
+
+        public int3 fixedSize { get => m_FixedSize; set => m_FixedSize = value; }
     }
 }
