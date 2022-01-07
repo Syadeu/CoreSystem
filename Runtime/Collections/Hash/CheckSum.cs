@@ -17,6 +17,9 @@ using Unity.Collections;
 
 namespace Syadeu.Collections
 {
+    /// <summary>
+    /// 데이터 무결성 검사를 위해 CheckSum 알고리즘으로 계산된 uint 값을 가지는 구조체입니다.
+    /// </summary>
     [BurstCompatible]
     public struct CheckSum : IEquatable<CheckSum>, IEquatable<int>, IEquatable<uint>
     {

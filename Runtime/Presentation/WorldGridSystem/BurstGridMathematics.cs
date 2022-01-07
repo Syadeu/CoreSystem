@@ -49,16 +49,14 @@ namespace Syadeu.Presentation.Grid.LowLevel
         {
             int3 location;
             positionToLocation(in aabb, in cellSize, in position, &location);
-            locationToIndex(in aabb, in cellSize, in location, output);
+            locationToIndex(in location, output);
         }
         [BurstCompile]
-        public static void locationToIndex(in AABB aabb, in float cellSize, in int3 location, ulong* output)
+        public static void locationToIndex(in int3 location, ulong* output)
         {
             BitArray64 bits = new BitArray64();
             bits.SetValue(0, (uint)location.x, 20);
-
             bits.SetValue(20, (uint)location.z, 20);
-
             bits.SetValue(40, (uint)math.abs(location.y), 20);
 
             bits[62] = location.y < 0;
@@ -67,7 +65,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             *output = bits.Value;
         }
         [BurstCompile]
-        public static void indexToLocation(in AABB aabb, in float cellSize, in ulong index, int3* output)
+        public static void indexToLocation(in ulong index, int3* output)
         {
             BitArray64 bits = index;
 
@@ -83,7 +81,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
         public static void indexToPosition(in AABB aabb, in float cellSize, in ulong index, float3* output)
         {
             int3 location;
-            indexToLocation(in aabb, in cellSize, in index, &location);
+            indexToLocation(in index, &location);
             locationToPosition(in aabb, in cellSize, in location, output);
         }
         [BurstCompile]
@@ -165,7 +163,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 if (minLocation.Equals(maxLocation))
                 {
                     ulong index;
-                    locationToIndex(in aabb, in cellSize, in minLocation, &index);
+                    locationToIndex(in minLocation, &index);
                     (*output).Add(index);
                     return;
                 }
@@ -178,7 +176,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                     for (int z = minLocation.z; z <= maxLocation.z; z++)
                     {
                         ulong index;
-                        locationToIndex(in grid, in cellSize, new int3(x, y, z), &index);
+                        locationToIndex(new int3(x, y, z), &index);
 
                         (*output).Add(index);
                     }
@@ -190,7 +188,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
         public static void containIndex(in AABB aabb, in float cellSize, in ulong index, bool* output)
         {
             int3 location;
-            indexToLocation(in aabb, in cellSize, in index, &location);
+            indexToLocation(in index, &location);
             containLocation(in aabb, in cellSize, in location, output);
         }
         [BurstCompile]
@@ -244,8 +242,8 @@ namespace Syadeu.Presentation.Grid.LowLevel
         {
             // TODO : 인덱스만으로 거리계산이 안될까?
             int3 x, y;
-            indexToLocation(in aabb, in cellSize, in a, &x);
-            indexToLocation(in aabb, in cellSize, in a, &y);
+            indexToLocation(in a, &x);
+            indexToLocation(in a, &y);
 
             distanceBetweenLocation(in aabb, in cellSize, in x, in y, output);
         }

@@ -77,6 +77,16 @@ namespace Syadeu.Collections
 
             return output;
         }
+        /// <summary>
+        /// CheckSum(<paramref name="checkSum"/>)으로 해당 데이터가 올바른지 검사합니다.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="checkSum"/> 은 <seealso cref="CheckSum"/> 을 통해 연산될 수 있습니다.
+        /// </remarks>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <param name="checkSum"></param>
+        /// <returns></returns>
         public static uint Validate<T>(T data, in uint checkSum) where T : unmanaged
         {
             uint output;

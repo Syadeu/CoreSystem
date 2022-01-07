@@ -29,7 +29,7 @@ namespace Syadeu.Collections
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB : IEquatable<AABB>
     {
-        public static readonly AABB Zero = new AABB(float3.zero, float3.zero);
+        public static AABB Zero => new AABB(float3.zero, float3.zero);
 
         internal float3 m_Center;
         internal float3 m_Extents;
@@ -367,6 +367,7 @@ namespace Syadeu.Collections
         {
             return m_Center.Equals(other.m_Center) && m_Extents.Equals(other.m_Extents);
         }
+        public bool IsZero() => Equals(Zero);
 
         public static implicit operator AABB(Bounds a) => new AABB(a.center, a.size);
         public static implicit operator Bounds(AABB a) => new Bounds(a.center, a.size);

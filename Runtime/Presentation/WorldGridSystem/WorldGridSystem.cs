@@ -168,28 +168,7 @@ namespace Syadeu.Presentation.Grid
                 for (int i = 0; i < addCount; i++)
                 {
                     InstanceID entity = m_WaitForAdd.Dequeue();
-                    AABB aabb = entity.GetTransformWithoutCheck().aabb;
-
-                    requireReindex |= !m_Grid.Contains(aabb);
-                    if (requireReindex)
-                    {
-                        Increase(aabb);
-
-                        m_WaitForAdd.Enqueue(entity);
-                        //$"require encapsulate for {entity}".ToLog();
-                        continue;
-                    }
-
-                    var indices = m_Grid.AABBToIndices(aabb);
-                    for (int j = 0; j < indices.Length; j++)
-                    {
-                        m_Indices.Add(indices[j].Index, entity);
-                        m_Entities.Add(entity, indices[j].Index);
-                    }
-
-                    //ulong index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
-                    //m_Indices.Add(index, entity);
-                    //m_Entities.Add(entity, index);
+                    requireReindex |= !Add(entity);
                 }
             }
             
@@ -202,8 +181,6 @@ namespace Syadeu.Presentation.Grid
 
         private void Increase(AABB aabb)
         {
-            AABB temp = m_Grid.aabb;
-
             float3
                 min = math.round(aabb.min),
                 max = math.round(aabb.max),
@@ -214,8 +191,20 @@ namespace Syadeu.Presentation.Grid
                 targetMin = min + restMin - m_Grid.cellSize,
                 targetMax = max - restMax + m_Grid.cellSize;
 
-            temp.Encapsulate(targetMin);
-            temp.Encapsulate(targetMax);
+            AABB temp;
+            if (m_Grid.aabb.IsZero())
+            {
+                temp = new AABB(targetMin, 0);
+                temp.Encapsulate(targetMax);
+            }
+            else
+            {
+                temp = m_Grid.aabb;
+
+                temp.Encapsulate(targetMin);
+                temp.Encapsulate(targetMax);
+            }
+            
             m_Grid.aabb = temp;
         }
         private bool Add(in InstanceID entity)
@@ -229,20 +218,37 @@ namespace Syadeu.Presentation.Grid
                 return false;
             }
 
-            var indices = m_Grid.AABBToIndices(aabb);
-            if (indices.Length == 0)
+            GridComponent component = entity.GetComponent<GridComponent>();
+            if (component.fixedSize.Equals(0))
             {
-                $"no index found to {entity}".ToLog();
+                var indices = m_Grid.AABBToIndices(aabb);
+                if (indices.Length == 0)
+                {
+                    $"no index found to {entity}".ToLog();
+                }
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    m_Indices.Add(indices[i].Index, entity);
+                    m_Entities.Add(entity, indices[i].Index);
+                }
             }
-            for (int i = 0; i < indices.Length; i++)
+            else
             {
-                m_Indices.Add(indices[i].Index, entity);
-                m_Entities.Add(entity, indices[i].Index);
-            }
+                int3 location = m_Grid.PositionToLocation(aabb.min);
+                for (int y = 0; y < component.fixedSize.y; y++)
+                {
+                    for (int x = 0; x < component.fixedSize.x; x++)
+                    {
+                        for (int z = 0; z < component.fixedSize.z; z++)
+                        {
+                            ulong index = m_Grid.LocationToIndex(location + new int3(x, y, z));
 
-            //ulong index = m_Grid.PositionToIndex(entity.GetTransformWithoutCheck().position);
-            //m_Indices.Add(index, entity);
-            //m_Entities.Add(entity, index);
+                            m_Indices.Add(index, entity);
+                            m_Entities.Add(entity, index);
+                        }
+                    }
+                }
+            }
 
             return true;
         }
@@ -404,11 +410,31 @@ namespace Syadeu.Presentation.Grid
             {
                 AABB aabb = m_TrHashMap.GetTransform(entity).aabb;
 
-                component.m_Indices = grid.AABBToIndices(aabb);
-                for (int i = 0; i < component.m_Indices.Length; i++)
+                if (component.fixedSize.Equals(0))
                 {
-                    indices.Add(component.m_Indices[i].Index, entity);
-                    entities.Add(entity, component.m_Indices[i].Index);
+                    component.m_Indices = grid.AABBToIndices(aabb);
+                    for (int i = 0; i < component.m_Indices.Length; i++)
+                    {
+                        indices.Add(component.m_Indices[i].Index, entity);
+                        entities.Add(entity, component.m_Indices[i].Index);
+                    }
+
+                    return;
+                }
+
+                int3 location = grid.PositionToLocation(aabb.min);
+                for (int y = 0; y < component.fixedSize.y; y++)
+                {
+                    for (int x = 0; x < component.fixedSize.x; x++)
+                    {
+                        for (int z = 0; z < component.fixedSize.z; z++)
+                        {
+                            ulong index = grid.LocationToIndex(location + new int3(x, y, z));
+
+                            indices.Add(index, entity);
+                            entities.Add(entity, index);
+                        }
+                    }
                 }
             }
         }

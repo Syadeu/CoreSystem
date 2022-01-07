@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Grid
             ulong index;
             unsafe
             {
-                BurstGridMathematics.locationToIndex(in m_AABB, in m_CellSize, in location, &index);
+                BurstGridMathematics.locationToIndex(in location, &index);
             }
             return index;
         }
@@ -111,7 +111,7 @@ namespace Syadeu.Presentation.Grid
             int3 location;
             unsafe
             {
-                BurstGridMathematics.indexToLocation(in m_AABB, in m_CellSize, in index, &location);
+                BurstGridMathematics.indexToLocation(in index, &location);
             }
             return location;
         }
@@ -167,16 +167,33 @@ namespace Syadeu.Presentation.Grid
     }
 
     [BurstCompatible]
-    public struct GridIndex : IEquatable<GridIndex>
+    public readonly struct GridIndex : IEquatable<GridIndex>
     {
         private readonly short m_CheckSum;
         private readonly ulong m_Index;
 
         public ulong Index => m_Index;
+        public int3 Location
+        {
+            get
+            {
+                int3 location;
+                unsafe
+                {
+                    BurstGridMathematics.indexToLocation(in m_Index, &location);
+                }
+                return location;
+            }
+        }
 
         internal GridIndex(WorldGrid grid, ulong index)
         {
             m_CheckSum = grid.m_CheckSum;
+            m_Index = index;
+        }
+        internal GridIndex(short checkSum, ulong index)
+        {
+            m_CheckSum = checkSum;
             m_Index = index;
         }
 

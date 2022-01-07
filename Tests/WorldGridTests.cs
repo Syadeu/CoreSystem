@@ -27,9 +27,9 @@ public unsafe sealed class WorldGridTests
         Debug.Log($"min : {min}, max : {max}");
 
         BurstGridMathematics.positionToLocation(in aabb, in cellSize, position_1, &location_1);
-        BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
+        BurstGridMathematics.locationToIndex(location_1, &index_1);
 
-        BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+        BurstGridMathematics.indexToLocation(index_1, &location_2);
         BurstGridMathematics.locationToPosition(aabb, cellSize, location_2, &outPos_1);
 
         BurstGridMathematics.containIndex(aabb, cellSize, index_1, &contains);
@@ -39,9 +39,9 @@ public unsafe sealed class WorldGridTests
         Assert.IsTrue(contains);
 
         BurstGridMathematics.positionToLocation(in aabb, in cellSize, position_2, &location_1);
-        BurstGridMathematics.locationToIndex(aabb, cellSize, location_1, &index_1);
+        BurstGridMathematics.locationToIndex(location_1, &index_1);
 
-        BurstGridMathematics.indexToLocation(aabb, cellSize, index_1, &location_2);
+        BurstGridMathematics.indexToLocation(index_1, &location_2);
         BurstGridMathematics.locationToPosition(aabb, cellSize, location_2, &outPos_1);
 
         BurstGridMathematics.containIndex(aabb, cellSize, index_1, &contains);

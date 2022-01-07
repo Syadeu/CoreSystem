@@ -17,11 +17,13 @@
 #endif
 
 using System;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 
 namespace Syadeu.Collections
 {
     [BurstCompatible]
+    [StructLayout(LayoutKind.Sequential)]
     public struct BitArray64
     {
         private BitArray32 x, y;
