@@ -130,8 +130,11 @@ namespace Syadeu.Presentation.Events
                     UnityEngine.Debug.LogException(ex);
                 }
 
-                CoreSystem.Logger.Log(Channel.Event,
-                    string.Format(c_LogPostedEvent, ev.Name));
+                if (ev.DisplayLog)
+                {
+                    CoreSystem.Logger.Log(Channel.Event,
+                        string.Format(c_LogPostedEvent, ev.Name));
+                }
             }
         }
         protected override PresentationResult OnPresentation()
@@ -164,8 +167,12 @@ namespace Syadeu.Presentation.Events
                             $"Invalid event({ev.Name}) has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
-                    CoreSystem.Logger.Log(Channel.Event, 
-                        string.Format(c_LogPostedEvent, ev.Name));
+
+                    if (ev.DisplayLog)
+                    {
+                        CoreSystem.Logger.Log(Channel.Event, 
+                            string.Format(c_LogPostedEvent, ev.Name));
+                    }
                 }
             }
             

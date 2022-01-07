@@ -22,6 +22,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Map
 {
+    [Obsolete]
     public struct GridDetectorComponent : IEntityComponent, IDisposable
     {
         internal EntityShortID m_MyShortID;

@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Collections;
 using Syadeu.Presentation.Render;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -96,9 +95,9 @@ namespace Syadeu.Presentation.Grid
             var xTemp = new float3(thickness * .5f, 0, 0);
             var zTemp = new float3(0, 0, thickness * .5f);
             //$"{minPos} :: {maxPos}".ToLog();
-            for (int z = 0; z < gridSize.z + 1; z++)
+            for (int z = 0; z < gridSize.z + 2; z++)
             {
-                for (int x = 0; x < gridSize.x + 1; x++)
+                for (int x = 0; x < gridSize.x + 2; x++)
                 {
                     float3
                         p1 = new float3(
@@ -106,7 +105,7 @@ namespace Syadeu.Presentation.Grid
                             minPos.y + yOffset,
                             minPos.z - (grid.cellSize * z)),
                         p2 = new float3(
-                            maxPos.x,
+                            maxPos.x + grid.cellSize,
                             minPos.y + yOffset,
                             minPos.z - (grid.cellSize * z)),
                         p3 = new float3(
@@ -116,7 +115,7 @@ namespace Syadeu.Presentation.Grid
                         p4 = new float3(
                             minPos.x + (grid.cellSize * x),
                             minPos.y + yOffset,
-                            maxPos.z)
+                            maxPos.z - grid.cellSize)
                         ;
 
                     Shapes.Draw.Line(p1, p2);
@@ -143,7 +142,7 @@ namespace Syadeu.Presentation.Grid
                 var pos = System.Grid.IndexToPosition(arr[i]);
 
                 float3 target = pos + new float3(0, .15f, 0);
-                Shapes.Draw.Rectangle(target, Vector3.up, System.Grid.cellSize, System.Grid.cellSize);
+                Shapes.Draw.Rectangle(target, Vector3.up, System.Grid.cellSize, System.Grid.cellSize, new Color(1, 1, 1, .5f));
 
                 string nameSum = string.Empty;
                 foreach (var entity in System.m_Indices.GetValuesForKey(arr[i]))

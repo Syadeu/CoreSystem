@@ -21,7 +21,6 @@ using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Grid
 {
@@ -164,39 +163,5 @@ namespace Syadeu.Presentation.Grid
         {
             return m_AABB.Contains(aabb.min) && m_AABB.Contains(aabb.max);
         }
-    }
-
-    [BurstCompatible]
-    public readonly struct GridIndex : IEquatable<GridIndex>
-    {
-        private readonly short m_CheckSum;
-        private readonly ulong m_Index;
-
-        public ulong Index => m_Index;
-        public int3 Location
-        {
-            get
-            {
-                int3 location;
-                unsafe
-                {
-                    BurstGridMathematics.indexToLocation(in m_Index, &location);
-                }
-                return location;
-            }
-        }
-
-        internal GridIndex(WorldGrid grid, ulong index)
-        {
-            m_CheckSum = grid.m_CheckSum;
-            m_Index = index;
-        }
-        internal GridIndex(short checkSum, ulong index)
-        {
-            m_CheckSum = checkSum;
-            m_Index = index;
-        }
-
-        public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
     }
 }

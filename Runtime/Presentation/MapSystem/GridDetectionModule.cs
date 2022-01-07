@@ -27,6 +27,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Map
 {
+    [Obsolete]
     internal unsafe sealed class GridDetectionModule : PresentationSystemModule<GridSystem>
     {
         /// <summary>

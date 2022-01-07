@@ -116,8 +116,6 @@ namespace Syadeu.Presentation.Grid
         {
             if (!TypeHelper.TypeOf<GridComponent>.Type.IsAssignableFrom(arg2)) return;
 
-            m_GridUpdateJob.Complete();
-
             m_WaitForAdd.Enqueue(arg1);
         }
         private void M_ComponentSystem_OnComponentRemove(InstanceID arg1, Type arg2)
@@ -151,7 +149,12 @@ namespace Syadeu.Presentation.Grid
             while (m_NeedUpdateEntities.TryDequeue(out InstanceID entity))
             {
                 Remove(entity);
-                requireReindex |= !Add(entity);
+                requireReindex |= !Add(entity, out bool locationChanged);
+
+                if (locationChanged)
+                {
+                    m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+                }
             }
 
             if (!requireReindex)
@@ -168,7 +171,12 @@ namespace Syadeu.Presentation.Grid
                 for (int i = 0; i < addCount; i++)
                 {
                     InstanceID entity = m_WaitForAdd.Dequeue();
-                    requireReindex |= !Add(entity);
+                    requireReindex |= !Add(entity, out bool locationChanged);
+
+                    if (locationChanged)
+                    {
+                        m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+                    }
                 }
             }
             
@@ -207,9 +215,10 @@ namespace Syadeu.Presentation.Grid
             
             m_Grid.aabb = temp;
         }
-        private bool Add(in InstanceID entity)
+        private bool Add(in InstanceID entity, out bool locationChanged)
         {
             AABB aabb = entity.GetTransformWithoutCheck().aabb;
+            locationChanged = false;
             if (!m_Grid.Contains(aabb))
             {
                 Increase(aabb);
@@ -218,7 +227,7 @@ namespace Syadeu.Presentation.Grid
                 return false;
             }
 
-            GridComponent component = entity.GetComponent<GridComponent>();
+            ref GridComponent component = ref entity.GetComponent<GridComponent>();
             if (component.fixedSize.Equals(0))
             {
                 var indices = m_Grid.AABBToIndices(aabb);
@@ -226,15 +235,35 @@ namespace Syadeu.Presentation.Grid
                 {
                     $"no index found to {entity}".ToLog();
                 }
-                for (int i = 0; i < indices.Length; i++)
+
+                if (component.m_Indices.Length != indices.Length)
                 {
-                    m_Indices.Add(indices[i].Index, entity);
-                    m_Entities.Add(entity, indices[i].Index);
+                    locationChanged = true;
+
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        m_Indices.Add(indices[i].Index, entity);
+                        m_Entities.Add(entity, indices[i].Index);
+                    }
                 }
+                else
+                {
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        m_Indices.Add(indices[i].Index, entity);
+                        m_Entities.Add(entity, indices[i].Index);
+
+                        locationChanged |= component.m_Indices[i].Index != indices[i].Index;
+                    }
+                }
+                
+                component.m_Indices = indices;
             }
             else
             {
                 int3 location = m_Grid.PositionToLocation(aabb.min);
+                var indices = new FixedList512Bytes<GridIndex>();
+
                 for (int y = 0; y < component.fixedSize.y; y++)
                 {
                     for (int x = 0; x < component.fixedSize.x; x++)
@@ -245,9 +274,25 @@ namespace Syadeu.Presentation.Grid
 
                             m_Indices.Add(index, entity);
                             m_Entities.Add(entity, index);
+
+                            indices.Add(new GridIndex(m_Grid, index));
                         }
                     }
                 }
+
+                if (component.m_Indices.Length != indices.Length)
+                {
+                    locationChanged = true;
+                }
+                else
+                {
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        locationChanged |= component.m_Indices[i].Index != indices[i].Index;
+                    }
+                }
+
+                component.m_Indices = indices;
             }
 
             return true;
@@ -373,10 +418,18 @@ namespace Syadeu.Presentation.Grid
                 m_Grid,
                 ref m_Indices,
                 ref m_Entities);
+            PostChangedEventJob postChangedEventJob = new PostChangedEventJob(
+                ref m_Entities,
+                m_EventSystem
+                );
 
             var handle =
                 ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle);
+
+            var handle2 =
+                ScheduleAt(JobPosition.Before, postChangedEventJob);
+            m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle2);
 
             //"schedule full re indexing".ToLog();
         }
@@ -438,6 +491,29 @@ namespace Syadeu.Presentation.Grid
                 }
             }
         }
+        private struct PostChangedEventJob : IJob
+        {
+            private NativeMultiHashMap<InstanceID, ulong> entities;
+            private PresentationSystemID<EventSystem> m_EventSystemID;
+
+            public PostChangedEventJob(
+                ref NativeMultiHashMap<InstanceID, ulong> entities, EventSystem eventSystem)
+            {
+                this.entities = entities;
+                m_EventSystemID = eventSystem.SystemID;
+            }
+
+            public void Execute()
+            {
+                EventSystem eventSystem = m_EventSystemID.System;
+                var array = entities.GetKeyArray(AllocatorManager.Temp);
+
+                for (int i = 0; i < array.Length; i++)
+                {
+                    eventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(array[i]));
+                }
+            }
+        }
 
         #endregion
 
@@ -454,7 +530,12 @@ namespace Syadeu.Presentation.Grid
             m_GridUpdateJob.Complete();
 
             Remove(entity);
-            Add(entity);
+            Add(entity, out bool changed);
+
+            if (changed)
+            {
+                m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+            }
         }
         public bool HasEntityAt(in int3 location)
         {

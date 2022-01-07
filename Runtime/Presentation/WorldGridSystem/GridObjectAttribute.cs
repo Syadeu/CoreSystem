@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Grid
     [AttributeAcceptOnly(typeof(EntityBase))]
     [DisplayName("Attribute: Grid Object")]
     public sealed class GridObjectAttribute : AttributeBase,
-        Components.INotifyComponent<GridComponent>
+        INotifyComponent<GridComponent>
     {
         [JsonProperty(Order = 0, PropertyName = "FixedSize")]
         internal int3 m_FixedSize = 0;

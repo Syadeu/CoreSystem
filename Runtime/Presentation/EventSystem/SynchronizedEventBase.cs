@@ -25,6 +25,7 @@ namespace Syadeu.Presentation
     {
         public abstract string Name { get; }
         public abstract Type EventType { get; }
+        public virtual bool DisplayLog => true;
 
         public virtual UpdateLoop Loop => UpdateLoop.Default;
 
