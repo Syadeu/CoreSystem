@@ -4,6 +4,7 @@ using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
@@ -20,11 +21,11 @@ namespace Syadeu.Presentation.TurnTable
     {
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
 
-        [JsonIgnore] private NativeList<int> m_TempGetRange;
+        [JsonIgnore] private NativeList<GridIndex> m_TempGetRange;
 
         protected override void OnCreated()
         {
-            m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
+            m_TempGetRange = new NativeList<GridIndex>(512, Allocator.Persistent);
         }
         protected override void OnInitialize(ref ActorAttackComponent component)
         {
@@ -58,39 +59,46 @@ namespace Syadeu.Presentation.TurnTable
         }
         public FixedList512Bytes<InstanceID> GetTargetsWithin(in int range, bool sort = true)
         {
-            if (!Parent.HasComponent<GridSizeComponent>())
+            if (!Parent.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridComponent)}.");
 
                 return new FixedList512Bytes<InstanceID>();
             }
 
-            GridSizeComponent gridSize = Parent.GetComponent<GridSizeComponent>();
-            gridSize.GetRange(ref m_TempGetRange, in range);
+            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+
+            GridComponent gridSize = Parent.GetComponent<GridComponent>();
+            gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange);
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             
             FixedList512Bytes<InstanceID> list = new FixedList512Bytes<InstanceID>();
             for (int i = 0; i < m_TempGetRange.Length; i++)
             {
-                if (PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetEntitiesAt(m_TempGetRange[i], out var iter))
+                if (gridSystem.TryGetEntitiesAt(m_TempGetRange[i], out var iter))
                 {
-                    foreach (var item in iter)
+                    using (iter)
                     {
-                        if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
-                        else if (!item.IsEnemy(Parent.Idx)) continue;
-                        // TODO : 임시코드
-                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+                        while (iter.MoveNext())
+                        {
+                            var item = iter.Current;
 
-                        list.Add(item);
+                            if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+                            else if (!item.IsEnemy(Parent.Idx)) continue;
+                            // TODO : 임시코드
+                            else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+                            list.Add(item);
+                        }
                     }
                 }
             }
             
             if (sort)
             {
-                IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
+                IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSystem.IndexToPosition(gridSize.Indices[0])));
                 
                 att.InitializeTargets(sorted.ToFixedList512());
             }

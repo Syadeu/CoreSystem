@@ -11,6 +11,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Presentation.Grid;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
@@ -34,10 +35,10 @@ namespace Syadeu.Presentation.BehaviorTree
                     $"{Entity.RawName} doesn\'t have any {nameof(TRPGActorAttackComponent)}.");
                 return TaskStatus.Failure;
             }
-            else if (!Entity.HasComponent<GridSizeComponent>())
+            else if (!Entity.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{Entity.RawName} doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"{Entity.RawName} doesn\'t have any {nameof(GridComponent)}.");
                 return TaskStatus.Failure;
             }
 #endif
@@ -49,15 +50,18 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            var targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridSizeComponent>().positions;
+            var targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridComponent>().Indices;
 
-            FixedList4096Bytes<int> list = new FixedList4096Bytes<int>();
-            GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();
-            gridSize.GetRange(ref list, in m_DesireRange);
+            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            GridComponent gridSize = Entity.GetComponentReadOnly<GridComponent>();
+
+            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+
+            gridSystem.GetRange(gridSize.Indices[0], m_DesireRange, ref list);
 
             for (int i = 0; i < targetPos.Length; i++)
             {
-                if (list.Contains(targetPos[i].index))
+                if (list.Contains(targetPos[i]))
                 {
                     return TaskStatus.Success;
                 }

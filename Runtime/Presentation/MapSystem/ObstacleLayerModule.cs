@@ -23,6 +23,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal sealed class ObstacleLayerModule : PresentationSystemModule<GridSystem>
     {
         private NativeHashMap<GridLayer, UnsafeHashSet<int>> m_Layers;

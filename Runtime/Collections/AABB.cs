@@ -47,6 +47,30 @@ namespace Syadeu.Collections
 
 #pragma warning disable IDE1006 // Naming Styles
         [JsonIgnore] public float3 center { get => m_Center; set { m_Center = value; } }
+        [JsonIgnore] public float3 lowerCenter
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterLeft
+        {
+            get => new float3(m_Center.x - m_Extents.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterRight
+        {
+            get => new float3(m_Center.x + m_Extents.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterUp
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z + m_Extents.z);
+        }
+        [JsonIgnore] public float3 lowerCenterDown
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z - m_Extents.z);
+        }
+        [JsonIgnore] public float3 upperCenter
+        {
+            get => new float3(m_Center.x, m_Center.y + m_Extents.y, m_Center.z);
+        }
         [JsonIgnore] public float3 size { get => m_Extents * 2; set { m_Extents = value * 0.5F; } }
         [JsonIgnore] public float3 extents { get => m_Extents; set { m_Extents = value; } }
         [JsonIgnore] public float3 min { get => center - extents; set { SetMinMax(value, max); } }

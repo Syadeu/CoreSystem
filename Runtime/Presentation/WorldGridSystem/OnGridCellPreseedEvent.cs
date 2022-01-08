@@ -12,15 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Syadeu.Collections;
-using Syadeu.Presentation.Components;
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
-namespace Syadeu.Presentation.Map
+
+namespace Syadeu.Presentation.Grid
 {
-    [System.Obsolete("Use WorldGridSystem Instead", true)]
-    public struct GridCellComponent : IEntityComponent
+    public sealed class OnGridCellPreseedEvent : SynchronizedEvent<OnGridCellPreseedEvent>
     {
-        public GridPosition m_GridPosition;
-        public bool m_IsDetectionCell;
+        public GridIndex Index { get; private set; }
+
+        public static OnGridCellPreseedEvent GetEvent(GridIndex index)
+        {
+            var temp = Dequeue();
+
+            temp.Index = index;
+
+            return temp;
+        }
+        protected override void OnTerminate()
+        {
+        }
     }
 }

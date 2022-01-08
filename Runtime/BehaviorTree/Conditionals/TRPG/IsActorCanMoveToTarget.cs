@@ -9,6 +9,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Presentation.Grid;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
@@ -30,15 +31,15 @@ namespace Syadeu.Presentation.BehaviorTree
                     $"{Entity.RawName} doesn\'t have any {nameof(TRPGActorAttackComponent)}.");
                 return TaskStatus.Failure;
             }
-            else if (!Entity.HasComponent<GridSizeComponent>())
+            else if (!Entity.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{Entity.RawName} doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"{Entity.RawName} doesn\'t have any {nameof(GridComponent)}.");
                 return TaskStatus.Failure;
             }
 #endif
 
-            GridSizeComponent gridSize = Entity.GetComponent<GridSizeComponent>();
+            GridComponent gridSize = Entity.GetComponent<GridComponent>();
             TRPGActorAttackComponent att = Entity.GetComponent<TRPGActorAttackComponent>();
 
             if (att.TargetCount == 0)
@@ -46,7 +47,9 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            if (gridSize.HasPath(att.GetTargetAt<IEntityData>(0).GetComponent<GridSizeComponent>().positions[0].index))
+            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+
+            if (gridSystem.HasPath(gridSize.Indices[0], att.GetTargetAt<IEntityData>(0).GetComponent<GridComponent>().Indices[0], out _))
             {
                 return TaskStatus.Success;
             }

@@ -70,14 +70,9 @@ namespace Syadeu.Collections
         {
             if (index < 0 || length + index > 64) throw new IndexOutOfRangeException();
 
-            ulong maxValue = 0;
-            for (int i = 0; i < length; i++)
+            if (IsExceedingRange(in length, in value, out ulong maxValue))
             {
-                maxValue += (ulong)1 << i;
-            }
-            if (value > maxValue)
-            {
-                UnityEngine.Debug.LogError($"{value} > {maxValue}");
+                UnityEngine.Debug.LogError($"{value} is exeeding >{maxValue}. length : {length}");
                 throw new ArgumentOutOfRangeException();
             }
 
@@ -95,5 +90,16 @@ namespace Syadeu.Collections
 
         public static implicit operator BitArray64(ulong other) => new BitArray64(other);
         public static implicit operator ulong(BitArray64 other) => other.Value;
+
+        public static bool IsExceedingRange(in int length, in ulong value, out ulong maxValue)
+        {
+            maxValue = 0;
+            for (int i = 0; i < length; i++)
+            {
+                maxValue += (ulong)1 << i;
+            }
+
+            return value > maxValue;
+        }
     }
 }

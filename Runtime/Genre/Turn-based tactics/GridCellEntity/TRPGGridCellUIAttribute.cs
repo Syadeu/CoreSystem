@@ -8,11 +8,13 @@ using System.ComponentModel;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     [DisplayName("Attribute: TRPG GridCell UI")]
     public sealed class TRPGGridCellUIAttribute : AttributeBase
     {
 
     }
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal sealed class TRPGGridCellUIProcessor : AttributeProcessor<TRPGGridCellUIAttribute>,
         IAttributeOnProxy
     {

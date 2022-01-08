@@ -21,6 +21,7 @@ using System;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public readonly struct GridLayerChain : IEmpty, IEquatable<GridLayerChain>
     {
         public static GridLayerChain Empty => new GridLayerChain(0);

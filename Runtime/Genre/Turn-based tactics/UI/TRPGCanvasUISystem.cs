@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System;
@@ -76,7 +77,6 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
@@ -141,7 +141,6 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
@@ -183,6 +182,15 @@ namespace Syadeu.Presentation.TurnTable.UI
                         m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[j]);
                     }
                 }
+            }
+
+            if (ev.Enabled)
+            {
+                m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
+            }
+            else
+            {
+                m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
             }
         }
 
@@ -279,12 +287,12 @@ namespace Syadeu.Presentation.TurnTable.UI
                     break;
             }
         }
-        private void TRPGGridCellUIPressedEventHandler(TRPGGridCellUIPressedEvent ev)
+        private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
         {
             DisableCurrentShortcut();
             m_CurrentShortcut = ShortcutType.None;
 
-            m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Position);
+            m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
             //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
             //move.movet
         }

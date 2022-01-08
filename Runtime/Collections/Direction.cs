@@ -14,14 +14,16 @@
 
 namespace Syadeu.Collections
 {
-    public enum Direction
+    public enum Direction : int
     {
         NONE = 0,
 
-        Up = 1 << 0,
-        Down = 1 << 1,
-        Left = 1 << 2,
-        Right = 1 << 3,
+        Up          = 0b000001,
+        Down        = 0b000010,
+        Left        = 0b000100,
+        Right       = 0b001000,
+        Forward     = 0b010000,
+        Backward    = 0b100000,
 
         UpDown = Up | Down,
         UpLeft = Up | Left,

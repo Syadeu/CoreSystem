@@ -26,13 +26,13 @@ using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     [DisplayName("Attribute: Entity Size On Grid")]
     /// <summary>
     /// 엔티티를 그리드에 등록하는 어트리뷰트입니다.
     /// </summary>
     public sealed class GridSizeAttribute : GridAttributeBase,
-        INotifyComponent<GridSizeComponent>,
-        INotifyComponent<GridComponent>
+        INotifyComponent<GridSizeComponent>
     {
         [Description("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
         [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
@@ -47,39 +47,39 @@ namespace Syadeu.Presentation.Map
 
         [JsonIgnore] public bool AllowOverlapping => m_AllowOverlapping;
     }
+    //[System.Obsolete("Use WorldGridSystem Instead", true)]
+    //[Preserve]
+    //internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
+    //{
+    //    private GridSystem m_GridSystem;
 
-    [Preserve]
-    internal sealed class GridSizeProcessor : AttributeProcessor<GridSizeAttribute>
-    {
-        private GridSystem m_GridSystem;
+    //    protected override void OnInitialize()
+    //    {
+    //        RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+    //    }
+    //    protected override void OnDispose()
+    //    {
+    //        m_GridSystem = null;
+    //    }
+    //    private void Bind(GridSystem other)
+    //    {
+    //        m_GridSystem = other;
+    //    }
 
-        protected override void OnInitialize()
-        {
-            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
-        }
-        protected override void OnDispose()
-        {
-            m_GridSystem = null;
-        }
-        private void Bind(GridSystem other)
-        {
-            m_GridSystem = other;
-        }
+    //    protected override void OnCreated(GridSizeAttribute attribute, Entity<IEntityData> e)
+    //    {
+    //        e.AddComponent<GridSizeComponent>();
+    //        ref var com = ref e.GetComponent<GridSizeComponent>();
+    //        com = new GridSizeComponent
+    //        {
+    //            m_ObstacleLayers = m_GridSystem.GetLayer(attribute.m_ObstacleLayers)
+    //        };
 
-        protected override void OnCreated(GridSizeAttribute attribute, Entity<IEntityData> e)
-        {
-            e.AddComponent<GridSizeComponent>();
-            ref var com = ref e.GetComponent<GridSizeComponent>();
-            com = new GridSizeComponent
-            {
-                m_ObstacleLayers = m_GridSystem.GetLayer(attribute.m_ObstacleLayers)
-            };
-
-            m_GridSystem.RegisterGridSize(attribute);
-        }
-        protected override void OnDestroy(GridSizeAttribute attribute, Entity<IEntityData> entity)
-        {
-            m_GridSystem.UnregisterGridSize(attribute);
-        }
-    }
+    //        m_GridSystem.RegisterGridSize(attribute);
+    //    }
+    //    protected override void OnDestroy(GridSizeAttribute attribute, Entity<IEntityData> entity)
+    //    {
+    //        m_GridSystem.UnregisterGridSize(attribute);
+    //    }
+    //}
 }

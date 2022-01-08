@@ -54,6 +54,12 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [BurstCompile]
         public static void locationToIndex(in int3 location, ulong* output)
         {
+            //if (BitArray64.IsExceedingRange(20, (uint)location.x, out ulong maxValue) ||
+            //    BitArray64.IsExceedingRange(20, (uint)location.y, out maxValue) ||
+            //    BitArray64.IsExceedingRange(20, (uint)location.z, out maxValue))
+            //{
+            //    UnityEngine.Debug.Log(location);
+            //}
             BitArray64 bits = new BitArray64();
             bits.SetValue(0, (uint)location.x, 20);
             bits.SetValue(20, (uint)location.z, 20);

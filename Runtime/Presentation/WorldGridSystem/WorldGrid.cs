@@ -143,6 +143,15 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
+        public void GetMinMaxLocation(out int3 min, out int3 max)
+        {
+            int3 tempMin, tempMax;
+            BurstGridMathematics.minMaxLocation(aabb, cellSize, &tempMin, &tempMax);
+
+            min = tempMin;
+            max = tempMax;
+        }
+
         public bool Contains(in ulong index)
         {
             bool result;

@@ -21,6 +21,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
@@ -51,7 +52,7 @@ namespace Syadeu.Presentation.Map
 
         private EventSystem m_EventSystem;
         private CoroutineSystem m_CoroutineSystem;
-        private GridSystem m_GridSystem;
+        private WorldGridSystem m_GridSystem;
         private ActorSystem m_ActorSystem;
 
         #region Presentation Methods
@@ -60,7 +61,7 @@ namespace Syadeu.Presentation.Map
         {
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
-            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
 
             //PoolContainer<NavMeshQueryContainer>.Initialize(NavMeshQueryFactory, 16);
@@ -129,7 +130,7 @@ namespace Syadeu.Presentation.Map
         {
             m_CoroutineSystem = other;
         }
-        private void Bind(GridSystem other)
+        private void Bind(WorldGridSystem other)
         {
             m_GridSystem = other;
         }
@@ -356,7 +357,7 @@ namespace Syadeu.Presentation.Map
 
             return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev, true);
         }
-        public ActorEventHandler MoveTo(Entity<IEntity> entity, GridPath64 path, ActorMoveEvent ev)
+        public ActorEventHandler MoveTo(Entity<IEntity> entity, FixedList4096Bytes<GridIndex> path, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (navAgent == null)
@@ -368,7 +369,7 @@ namespace Syadeu.Presentation.Map
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
             for (int i = 1; i < path.Length; i++)
             {
-                position.Add(m_GridSystem.IndexToPosition(path[i].index));
+                position.Add(m_GridSystem.IndexToPosition(path[i]));
             }
 
             ev.m_MoveJob = new MoveJob()

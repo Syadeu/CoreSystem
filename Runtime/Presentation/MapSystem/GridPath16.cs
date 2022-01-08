@@ -16,6 +16,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public struct GridPath16
    {
         public static GridPath16 Create()
@@ -45,6 +46,7 @@ namespace Syadeu.Presentation.Map
         public void Add(in GridTile pathTile) => m_Paths.Add(in pathTile);
         public void RemoveAt(in int index) => m_Paths.RemoveAt(index);
     }
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public struct GridPath64
     {
         public static GridPath64 Create()

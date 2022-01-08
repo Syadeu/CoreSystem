@@ -22,6 +22,7 @@ using UnityEngine.InputSystem.LowLevel;
 using Syadeu.Collections;
 using Syadeu.Mono;
 using System.Collections.Generic;
+using Syadeu.Presentation.Render;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -35,12 +36,18 @@ namespace Syadeu.Presentation.Input
         private const string c_KeyboardBinding = "<Keyboard>/{0}";
         private const string c_MouseBinding = "<Mouse>/{0}";
 
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         private bool m_EnableInput = false;
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
+
+        private Vector2 m_PrecalculatedCursorPosition;
+        private Ray m_PrecalculatedCursorRay;
+        private bool m_PrecalculatedCursorPreseedInThisFrame;
+
+        private RenderSystem m_RenderSystem;
 
         public bool EnableInput
         {
@@ -61,11 +68,22 @@ namespace Syadeu.Presentation.Input
                 m_EnableInput = value;
             }
         }
-        public Vector2 MousePosition => Mouse.current.position.ReadValue();
+        public Vector2 MousePosition => m_PrecalculatedCursorPosition;
+        public Ray CursorRay => m_PrecalculatedCursorRay;
+        public bool IsCursorPressedInThisFrame
+        {
+            get
+            {
+                return m_PrecalculatedCursorPreseedInThisFrame;
+            }
+        }
 
         protected override PresentationResult OnInitialize()
         {
             ConsoleWindow.OnWindowOpened += ConsoleWindow_OnWindowOpened;
+
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+
             return base.OnInitialize();
         }
         private void ConsoleWindow_OnWindowOpened(bool opened)
@@ -81,6 +99,13 @@ namespace Syadeu.Presentation.Input
                 m_CreatedInputActions[i].Dispose();
             }
             m_CreatedInputActions.Clear();
+
+            m_RenderSystem = null;
+        }
+
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
         }
 
         protected override PresentationResult OnStartPresentation()
@@ -88,6 +113,14 @@ namespace Syadeu.Presentation.Input
             EnableInput = true;
 
             return base.OnStartPresentation();
+        }
+        protected override PresentationResult BeforePresentation()
+        {
+            m_PrecalculatedCursorPosition = Mouse.current.position.ReadValue();
+            m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
+            m_PrecalculatedCursorPreseedInThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
+
+            return base.BeforePresentation();
         }
 
         public InputAction GetMouseButtonBinding(MouseButton mouseButton, InputActionType type)

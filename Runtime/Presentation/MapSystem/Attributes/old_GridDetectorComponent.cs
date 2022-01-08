@@ -23,7 +23,7 @@ using Unity.Collections;
 namespace Syadeu.Presentation.Map
 {
     [Obsolete]
-    public struct GridDetectorComponent : IEntityComponent, IDisposable
+    public struct old_GridDetectorComponent : IEntityComponent, IDisposable
     {
         internal EntityShortID m_MyShortID;
         internal int m_MaxDetectionRange;
@@ -62,20 +62,20 @@ namespace Syadeu.Presentation.Map
             for (int i = 0; i < m_Detected.Length; i++)
             {
                 var target = m_Detected[i].GetID().GetEntity<IEntity>();
-                if (!target.HasComponent<GridDetectorComponent>())
+                if (!target.HasComponent<old_GridDetectorComponent>())
                 {
                     continue;
                 }
 
-                ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+                ref var targetDetector = ref target.GetComponent<old_GridDetectorComponent>();
                 targetDetector.m_TargetedBy.Remove(m_MyShortID);
             }
             for (int i = 0; i < m_TargetedBy.Length; i++)
             {
                 var target = m_TargetedBy[i].GetID().GetEntity<IEntity>();
-                if (!target.HasComponent<GridDetectorComponent>()) continue;
+                if (!target.HasComponent<old_GridDetectorComponent>()) continue;
 
-                ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+                ref var targetDetector = ref target.GetComponent<old_GridDetectorComponent>();
 
                 targetDetector.m_Detected.Remove(m_MyShortID);
             }

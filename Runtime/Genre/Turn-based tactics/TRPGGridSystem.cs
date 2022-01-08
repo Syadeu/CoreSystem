@@ -22,6 +22,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Render;
@@ -32,7 +33,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [SubSystem(typeof(DefaultPresentationGroup), typeof(GridSystem))]
+    [SubSystem(typeof(DefaultPresentationGroup), typeof(WorldGridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
     {
         public override bool EnableBeforePresentation => false;
@@ -42,7 +43,7 @@ namespace Syadeu.Presentation.TurnTable
         private LineRenderer 
             m_GridOutlineRenderer, m_GridPathlineRenderer;
 
-        private NativeList<GridPosition> m_GridTempMoveables;
+        private NativeList<GridIndex> m_GridTempMoveables;
         private NativeList<Vector3> 
             m_GridTempOutlines, m_GridTempPathlines;
 
@@ -55,7 +56,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private Unity.Profiling.ProfilerMarker
             m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
-            m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
+            //m_PlaceUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(PlaceUICell)}"),
             m_ClearUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(ClearUICell)}");
 
 #if CORESYSTEM_HDRP
@@ -66,9 +67,11 @@ namespace Syadeu.Presentation.TurnTable
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
         private InputSystem m_InputSystem;
-        private GridSystem m_GridSystem;
+        private WorldGridSystem m_GridSystem;
         private RenderSystem m_RenderSystem;
         private NavMeshSystem m_NavMeshSystem;
+
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -113,12 +116,12 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridPathlineRenderer.positionCount = 0;
             }
 
-            m_GridTempMoveables = new NativeList<GridPosition>(512, Allocator.Persistent);
+            m_GridTempMoveables = new NativeList<GridIndex>(512, Allocator.Persistent);
             m_GridTempOutlines = new NativeList<Vector3>(512, Allocator.Persistent);
             m_GridTempPathlines = new NativeList<Vector3>(512, Allocator.Persistent);
 
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
-            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
 
@@ -147,7 +150,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_InputSystem = other;
         }
-        private void Bind(GridSystem other)
+        private void Bind(WorldGridSystem other)
         {
             m_GridSystem = other;
         }
@@ -174,6 +177,153 @@ namespace Syadeu.Presentation.TurnTable
             return base.AfterPresentation();
         }
 
+        #endregion
+
+        public void GetMoveablePositions(in InstanceID entity,
+            ref NativeList<GridIndex> gridPositions)
+        {
+            var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
+            var gridsize = entity.GetComponent<GridComponent>();
+
+            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            m_GridSystem.GetRange(in entity, turnPlayer.ActionPoint, ref list);
+
+            gridPositions.Clear();
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (m_GridSystem.HasEntityAt(list[i]))
+                {
+                    continue;
+                }
+                else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+                    pathCount > turnPlayer.ActionPoint)
+                {
+                    continue;
+                }
+
+                gridPositions.Add((list[i]));
+            }
+        }
+        public void CalculateMoveableOutlineVertices(
+            in InstanceID entity,
+            NativeArray<GridIndex> moveables,
+            ref NativeList<Vector3> vertices, float heightOffset = .25f)
+        {
+            var gridsize = entity.GetComponent<GridComponent>();
+            float cellsize = m_GridSystem.CellSize * .5f;
+
+            float3
+                upleft = new float3(-cellsize, heightOffset, cellsize),
+                upright = new float3(cellsize, heightOffset, cellsize),
+                downleft = new float3(-cellsize, heightOffset, -cellsize),
+                downright = new float3(cellsize, heightOffset, -cellsize);
+
+            vertices.Clear();
+            float3 gridPos;
+
+            if (moveables.Length == 0)
+            {
+                gridPos = m_GridSystem.IndexToPosition(gridsize.Indices[0]);
+
+                vertices.Add(gridPos + upright);
+                vertices.Add(gridPos + downright);
+                vertices.Add(gridPos + downleft);
+                vertices.Add(gridPos + upleft);
+
+                return;
+            }
+            else if (moveables.Length == 1)
+            {
+                gridPos = m_GridSystem.IndexToPosition(moveables[0]);
+
+                vertices.Add(gridPos + upright);
+                vertices.Add(gridPos + downright);
+                vertices.Add(gridPos + downleft);
+                vertices.Add(gridPos + upleft);
+
+                return;
+            }
+
+            List<float3x2> temp = new List<float3x2>();
+            for (int i = 0; i < moveables.Length; i++)
+            {
+                gridPos = m_GridSystem.IndexToPosition(moveables[i]);
+
+                //GridIndex
+                //    right = moveables[i].GetDirection(Direction.Right),
+                //    down = moveables[i].GetDirection(Direction.Down),
+                //    left = moveables[i].GetDirection(Direction.Left),
+                //    up = moveables[i].GetDirection(Direction.Up);
+
+                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var right) &&
+                    !moveables.Contains(right))
+                {
+                    temp.Add(new float3x2(
+                        gridPos + upright,
+                        gridPos + downright
+                        ));
+                }
+
+                // Down
+                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var down) &&
+                    !moveables.Contains(down))
+                {
+                    temp.Add(new float3x2(
+                        gridPos + downright,
+                        gridPos + downleft
+                        ));
+                }
+
+                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var left) &&
+                    !moveables.Contains(left))
+                {
+                    temp.Add(new float3x2(
+                        gridPos + downleft,
+                        gridPos + upleft
+                        ));
+                }
+
+                // Up
+                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var up) &&
+                    !moveables.Contains(up))
+                {
+                    temp.Add(new float3x2(
+                        gridPos + upleft,
+                        gridPos + upright
+                        ));
+                }
+            }
+
+            float3x2 current = temp[temp.Count - 1];
+            temp.RemoveAt(temp.Count - 1);
+
+            for (int i = temp.Count - 1; i >= 0; i--)
+            {
+                vertices.Add(current.c0);
+                vertices.Add(current.c1);
+
+                if (!FindFloat3x2(temp, current.c1, out current))
+                {
+                    break;
+                }
+            }
+        }
+
+        private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
+        {
+            found = 0;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
+                {
+                    found = list[i];
+                    list.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         #region UI
 
         public void DrawUICell(Entity<IEntityData> entity)
@@ -192,60 +342,44 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-                move.GetMoveablePositions(ref m_GridTempMoveables, out int count);
-                move.CalculateMoveableOutlineVertices(m_GridTempMoveables, ref m_GridTempOutlines, count);
-
-                //m_OutlineMesh.SetVertices<Vector3>(m_GridTempOutlines);
-                
-                //Graphics.drawmesh
+                GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
+                CalculateMoveableOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
                 m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
                 m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
-                //m_GridOutlineRenderer.Simplify(.5f);
 
-                //var buffer = m_GridOutlineBuffer.BeginWrite<float3>(0, m_GridTempOutlines.Length);
-                //for (int i = 0; i < m_GridTempOutlines.Length; i++)
+                GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
+
+                //for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 //{
-                //    buffer[i] = m_GridTempOutlines[i];
+                //    PlaceUICell(in gridSize, m_GridTempMoveables[i]);
                 //}
-                //m_GridOutlineBuffer.EndWrite<float3>(m_GridTempOutlines.Length);
-
-                //m_OutlineMesh.SetVertices(m_GridTempOutlines.AsArray());
-                //m_OutlineMesh.SetIndices()
-                //m_DrawMesh = true;
-
-                GridSizeComponent gridSize = entity.GetComponentReadOnly<GridSizeComponent>();
-
-                for (int i = 0; i < m_GridTempMoveables.Length; i++)
-                {
-                    PlaceUICell(in gridSize, m_GridTempMoveables[i]);
-                }
 
 #if CORESYSTEM_HDRP
                 m_GridOutlineCamera = m_RenderSystem.GetProjectionCamera(
                     CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
                     CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
-                m_GridOutlineCamera.SetPosition(gridSize.IndexToPosition(gridSize.positions[0].index));
+                m_GridOutlineCamera.SetPosition(m_GridSystem.IndexToPosition(gridSize.Indices[0]));
 #endif
                 m_IsDrawingGrids = true;
             }
         }
-        private void PlaceUICell(in GridSizeComponent gridSize, in GridPosition position)
-        {
-            using (m_PlaceUICellMarker.Auto())
-            {
-                if (gridSize.IsMyIndex(position.index)) return;
+        //private void PlaceUICell(in GridComponent gridSize, in GridIndex position)
+        //{
+        //    using (m_PlaceUICellMarker.Auto())
+        //    {
+        //        if (gridSize.IsMyIndex(position)) return;
 
-                Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
-            }
-        }
+        //        Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
+        //    }
+        //}
         public void ClearUICell()
         {
             using (m_ClearUICellMarker.Auto())
             {
                 if (!m_IsDrawingGrids) return;
 
-                m_GridSystem.ClearUICell();
+                //m_GridSystem.ClearUICell();
 
                 m_GridOutlineRenderer.positionCount = 0;
 
@@ -258,7 +392,7 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
-        public void DrawUIPath(in GridPath64 path, float heightOffset = .5f)
+        public void DrawUIPath(in FixedList4096Bytes<GridIndex> path, float heightOffset = .5f)
         {
             if (m_IsDrawingPaths)
             {
@@ -271,7 +405,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridPathlineRenderer.positionCount = path.Length;
             for (int i = 0; i < path.Length; i++)
             {
-                m_GridTempPathlines.Add(m_GridSystem.IndexToPosition(path[i].index) + offset);
+                m_GridTempPathlines.Add(m_GridSystem.IndexToPosition(path[i]) + offset);
             }
             m_GridPathlineRenderer.SetPositions(m_GridTempPathlines);
 
@@ -288,7 +422,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public ActorEventHandler MoveToCell(IEntityDataID entity, in GridPath64 path, in ActorMoveEvent ev)
+        public ActorEventHandler MoveToCell(IEntityDataID entity, in FixedList4096Bytes<GridIndex> path, in ActorMoveEvent ev)
         {
 #if DEBUG_MODE
             if (!entity.HasComponent<TRPGActorMoveComponent>())
@@ -316,7 +450,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return handler;
         }
-        public ActorEventHandler MoveToCell(IEntityDataID entity, GridPosition position)
+        public ActorEventHandler MoveToCell(IEntityDataID entity, GridIndex position)
         {
 #if DEBUG_MODE
             if (!entity.HasComponent<TRPGActorMoveComponent>())
@@ -335,8 +469,8 @@ namespace Syadeu.Presentation.TurnTable
             }
 #endif
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
-            GridPath64 path = new GridPath64();
-            if (!move.GetPath(in position, ref path))
+            FixedList4096Bytes<GridIndex> path = new FixedList4096Bytes<GridIndex>();
+            if (!m_GridSystem.GetPath(entity.Idx, position, ref path))
             {
                 "path error not found".ToLogError();
                 return ActorEventHandler.Empty;

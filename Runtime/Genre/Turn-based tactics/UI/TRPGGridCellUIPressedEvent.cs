@@ -2,6 +2,7 @@
 
 namespace Syadeu.Presentation.TurnTable.UI
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public sealed class TRPGGridCellUIPressedEvent : SynchronizedEvent<TRPGGridCellUIPressedEvent>
     {
         public GridPosition Position { get; private set; }

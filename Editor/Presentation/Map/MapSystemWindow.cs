@@ -125,7 +125,7 @@ namespace SyadeuEditor.Presentation.Map
                     {
                         m_SceneDataTarget = m_SceneData.GetObject();
 
-                        m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
+                        //m_GridMap = new GridMapExtension(m_SceneDataTarget.GetAttribute<GridMapAttribute>());
                         SceneView.lastActiveSceneView.Repaint();
                     }
                 }, m_SceneData, TypeHelper.TypeOf<SceneDataEntity>.Type);
@@ -204,6 +204,7 @@ namespace SyadeuEditor.Presentation.Map
         private SceneDataEntity m_SceneDataTarget;
 
         #region GridMapAttribute
+        [Obsolete]
         private sealed class GridMapExtension : IDisposable
         {
             public readonly GridMapAttribute m_SceneDataGridAtt;

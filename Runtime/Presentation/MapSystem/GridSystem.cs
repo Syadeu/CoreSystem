@@ -38,7 +38,7 @@ using UnityEngine.Rendering;
 
 namespace Syadeu.Presentation.Map
 {
-    [Obsolete("Use WorldGridSystem Instead")]
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>,
         INotifySystemModule<GridDetectionModule>,
         INotifySystemModule<ObstacleLayerModule>
@@ -166,7 +166,7 @@ namespace Syadeu.Presentation.Map
 
                 using (m_UpdateObserver.Auto())
                 {
-                    if (entity.HasComponent<GridDetectorComponent>())
+                    if (entity.HasComponent<old_GridDetectorComponent>())
                     {
                         detectionModule.UpdateGridDetection(entity, in component, postEvent);
                     }

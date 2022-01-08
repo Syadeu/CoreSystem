@@ -27,7 +27,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Map
 {
-    [Obsolete]
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal unsafe sealed class GridDetectionModule : PresentationSystemModule<GridSystem>
     {
         /// <summary>
@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Map
         {
             using (m_UpdateGridDetectionMarker.Auto())
             {
-                ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
+                ref old_GridDetectorComponent detector = ref entity.GetComponent<old_GridDetectorComponent>();
                 // 새로운 그리드 Observation 을 위해 이 Entity 의 기존 Observe 그리드 인덱스를 제거합니다.
                 ClearDetectorObserveIndices(ref m_GridObservers, entity.Idx, ref detector);
 
@@ -163,9 +163,9 @@ namespace Syadeu.Presentation.Map
                     Entity<IEntity> target = targetID.GetEntity<IEntity>();
 
                     // 만약 이전 타겟이 GridDetectorAttribute 를 상속받고있으면 내가 발견을 이제 못하게 됬음을 알립니다.
-                    if (target.HasComponent<GridDetectorComponent>())
+                    if (target.HasComponent<old_GridDetectorComponent>())
                     {
-                        ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+                        ref var targetDetector = ref target.GetComponent<old_GridDetectorComponent>();
                         EntityShortID myShortID = entity.Idx.GetShortID();
 
                         if (targetDetector.m_TargetedBy.Contains(myShortID))
@@ -186,7 +186,7 @@ namespace Syadeu.Presentation.Map
                 detector.m_Detected = newDetected;
             }
         }
-        private void Detection(Entity<IEntity> entity, ref GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected, bool postEvent)
+        private void Detection(Entity<IEntity> entity, ref old_GridDetectorComponent detector, in int index, ref FixedList512Bytes<EntityShortID> newDetected, bool postEvent)
         {
             if (!m_GridEntities.TryGetFirstValue(index, out InstanceID targetID, out var iter))
             {
@@ -233,9 +233,9 @@ namespace Syadeu.Presentation.Map
                 }
 
                 //$"1. detect {entity.Name} spot {target.Name}".ToLog();
-                if (target.HasComponent<GridDetectorComponent>())
+                if (target.HasComponent<old_GridDetectorComponent>())
                 {
-                    ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+                    ref var targetDetector = ref target.GetComponent<old_GridDetectorComponent>();
                     EntityShortID myShortID = entity.Idx.GetShortID();
 
                     if (!targetDetector.m_TargetedBy.Contains(myShortID))
@@ -265,7 +265,7 @@ namespace Syadeu.Presentation.Map
                     CheckObservers(entity, gridSize.positions[i].index, ref detectors, postEvent);
                 }
 
-                bool entityHasDetector = entity.HasComponent<GridDetectorComponent>();
+                bool entityHasDetector = entity.HasComponent<old_GridDetectorComponent>();
 
                 //$"1. detect count {detectors.Length} : {m_TargetedEntities.CountValuesForKey(entity.Idx)}".ToLog();
 
@@ -280,7 +280,7 @@ namespace Syadeu.Presentation.Map
                         continue;
                     }
                     var detectorEntity = detectorID.GetEntity<IObject>();
-                    ref var detector = ref detectorEntity.GetComponent<GridDetectorComponent>();
+                    ref var detector = ref detectorEntity.GetComponent<old_GridDetectorComponent>();
                     if (detector.m_DetectRemoveCondition.Execute(detectorEntity, out bool predicate) && predicate)
                     {
                         continue;
@@ -288,7 +288,7 @@ namespace Syadeu.Presentation.Map
 
                     if (entityHasDetector)
                     {
-                        ref var myDetector = ref entity.GetComponent<GridDetectorComponent>();
+                        ref var myDetector = ref entity.GetComponent<old_GridDetectorComponent>();
                         EntityShortID detectorShortID = detectorID.GetShortID();
 
                         if (myDetector.m_TargetedBy.Contains(detectorShortID))
@@ -327,7 +327,7 @@ namespace Syadeu.Presentation.Map
             do
             {
                 Entity<IObject> observer = observerID.GetEntity<IObject>();
-                ref GridDetectorComponent detector = ref observer.GetComponent<GridDetectorComponent>();
+                ref old_GridDetectorComponent detector = ref observer.GetComponent<old_GridDetectorComponent>();
 
                 if (observerID.Equals(entity.Idx) || !IsDetectorTriggerable(in detector, entity)) continue;
 
@@ -363,9 +363,9 @@ namespace Syadeu.Presentation.Map
                 }
 
                 //$"2. detect {observer.Name} spot {entity.Name}".ToLog();
-                if (targetData.HasComponent<GridDetectorComponent>())
+                if (targetData.HasComponent<old_GridDetectorComponent>())
                 {
-                    ref var targetDetector = ref targetData.GetComponent<GridDetectorComponent>();
+                    ref var targetDetector = ref targetData.GetComponent<old_GridDetectorComponent>();
 
                     if (!targetDetector.m_TargetedBy.Contains(targetShortID))
                     {
@@ -396,7 +396,7 @@ namespace Syadeu.Presentation.Map
 
             RemoveValueAtHashMap(ref hashMap, in targetID, in detectorID);
         }
-        private static bool IsDetectorTriggerable(in GridDetectorComponent detector, Entity<IEntity> target)
+        private static bool IsDetectorTriggerable(in old_GridDetectorComponent detector, Entity<IEntity> target)
         {
             if (detector.m_TriggerOnly.Length == 0) return true;
 
@@ -411,7 +411,7 @@ namespace Syadeu.Presentation.Map
             }
             return false;
         }
-        private static void ClearDetectorObserveIndices(ref UnsafeMultiHashMap<int, InstanceID> hashMap, in InstanceID entityID, ref GridDetectorComponent detector)
+        private static void ClearDetectorObserveIndices(ref UnsafeMultiHashMap<int, InstanceID> hashMap, in InstanceID entityID, ref old_GridDetectorComponent detector)
         {
             for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
             {

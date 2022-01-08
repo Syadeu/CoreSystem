@@ -12,15 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Syadeu.Collections;
-using Syadeu.Presentation.Components;
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
-namespace Syadeu.Presentation.Map
+
+namespace Syadeu.Presentation.Grid
 {
-    [System.Obsolete("Use WorldGridSystem Instead", true)]
-    public struct GridCellComponent : IEntityComponent
+    public enum Alignment : int
     {
-        public GridPosition m_GridPosition;
-        public bool m_IsDetectionCell;
+        None        = 0,
+
+        Left        = 0b0001,
+        Right       = 0b0010,
+        Down        = 0b0100,
+        Up          = 0b1000,
+
+        Center = Left | Right | Down | Up,
+        DownLeft = Down | Left,
     }
 }

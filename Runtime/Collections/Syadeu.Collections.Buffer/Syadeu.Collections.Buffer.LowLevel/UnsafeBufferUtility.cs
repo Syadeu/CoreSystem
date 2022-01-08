@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using System;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
@@ -87,6 +88,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
             T temp = buffer[from];
             buffer[from] = buffer[to];
             buffer[to] = temp;
+        }
+
+        public static bool Contains<T>(T* buffer, in int length, in T value) where T : unmanaged, IEquatable<T>
+        {
+            unsafe
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    if (buffer[i].Equals(value)) return true;
+                }
+            }
+
+            return false;
         }
     }
 }

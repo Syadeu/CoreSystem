@@ -25,6 +25,7 @@ using UnityEngine.UI;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     [AddComponentMenu("CoreSystem/TRPG/UI/Grid Cell")]
     public sealed class TRPGGridCellOverlayUI : OnScreenControl, ITerminate, IValidation,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
@@ -180,14 +181,15 @@ namespace Syadeu.Presentation.TurnTable
             SetState(State.Highlighted);
 
             var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-            if (move.GetPath(GridPosition, ref m_TempPath))
-            {
-                m_TRPGGridSystem.DrawUIPath(in m_TempPath);
-            }
-            else
-            {
-                "path not found".ToLog();
-            }
+            //if (move.GetPath(GridPosition, ref m_TempPath))
+            //{
+            //    m_TRPGGridSystem.DrawUIPath(in m_TempPath);
+            //}
+            //else
+            //{
+            //    "path not found".ToLog();
+            //}
+            throw new NotImplementedException();
         }
         public void OnPointerExit(PointerEventData eventData)
         {
