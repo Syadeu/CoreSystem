@@ -46,15 +46,6 @@ namespace SyadeuEditor
                 CoreSystemMenuItems.CoreSystemSetupWizard();
             }
         }
-        public enum ToolbarNames
-        {
-            General,
-            Scene,
-            Prefab,
-            Test2,
-            Test3,
-            Test4,
-        }
 
         private Texture2D m_EnableTexture;
         private Texture2D m_DisableTexture;
@@ -62,9 +53,7 @@ namespace SyadeuEditor
         GUIStyle titleStyle;
         GUIStyle iconStyle;
 
-        private GeneralMenu m_GeneralMenu;
-        private SceneMenu m_SceneMenu;
-        private PrefabMenu m_PrefabMenu;
+        private SetupWizardMenuItem[] m_MenuItems;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
 
         private void OnEnable()
@@ -81,18 +70,23 @@ namespace SyadeuEditor
             iconStyle = new GUIStyle();
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
-            m_GeneralMenu = new GeneralMenu();
-            m_SceneMenu = new SceneMenu();
-            m_PrefabMenu = new PrefabMenu();
-            AddSetup(ToolbarNames.General, m_GeneralMenu.Predicate);
-            AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
-            AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
+            Type[] menuItemTypes = TypeHelper.GetTypes(t => !t.IsAbstract && TypeHelper.TypeOf<SetupWizardMenuItem>.Type.IsAssignableFrom(t));
+            m_MenuItems = new SetupWizardMenuItem[menuItemTypes.Length];
+            for (int i = 0; i < menuItemTypes.Length; i++)
+            {
+                m_MenuItems[i] = (SetupWizardMenuItem)Activator.CreateInstance(menuItemTypes[i]);
+            }
+            Array.Sort(m_MenuItems);
+
+            m_SelectedToolbar = m_MenuItems[0];
 
             CoreSystemSettings.Instance.m_HideSetupWizard = true;
             EditorUtility.SetDirty(CoreSystemSettings.Instance);
         }
         private void OnGUI()
         {
+            const string c_Copyrights = "Copyright 2021 Syadeu. All rights reserved.";
+
             GUILayout.Space(20);
             EditorUtilities.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
@@ -105,35 +99,17 @@ namespace SyadeuEditor
 
             using (new EditorUtilities.BoxBlock(Color.black))
             {
-                switch ((ToolbarNames)m_SelectedToolbar)
-                {
-                    case ToolbarNames.General:
-                        m_GeneralMenu.OnGUI();
-                        break;
-                    case ToolbarNames.Scene:
-                        m_SceneMenu.OnGUI();
-                        break;
-                    case ToolbarNames.Prefab:
-                        m_PrefabMenu.OnGUI();
-                        break;
-                    default:
-                        break;
-                }
+                m_SelectedToolbar.OnGUI();
             }
 
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorStyleUtilities.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String(c_Copyrights, 11), EditorStyleUtilities.CenterStyle);
         }
 
-        public ToolbarNames SelectedToolbar => (ToolbarNames)m_SelectedToolbar;
-        private void AddSetup(ToolbarNames toolbar, Func<bool> predictate)
-        {
-            m_IsSetupDone.Add(toolbar, predictate);
-        }
+        public SetupWizardMenuItem SelectedToolbar => m_SelectedToolbar;
 
-        private int m_SelectedToolbar = 0;
+        private SetupWizardMenuItem m_SelectedToolbar;
         #region Toolbar
 
-        private readonly Dictionary<ToolbarNames, Func<bool>> m_IsSetupDone = new Dictionary<ToolbarNames, Func<bool>>();
         private void DrawToolbar()
         {
             const float spacing = 50;
@@ -141,16 +117,9 @@ namespace SyadeuEditor
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
             GUILayout.Space(spacing);
 
-            string[] toolbarNames = Enum.GetNames(typeof(ToolbarNames));
-            for (int i = 0; i < toolbarNames.Length; i++)
+            for (int i = 0; i < m_MenuItems.Length; i++)
             {
-                bool done;
-                if (m_IsSetupDone.ContainsKey((ToolbarNames)i))
-                {
-                    done = m_IsSetupDone[(ToolbarNames)i].Invoke();
-                }
-                else done = true;
-                DrawToolbarButton(i, toolbarNames[i], done);
+                DrawToolbarButton(i, m_MenuItems[i].Name, m_MenuItems[i].Predicate());
             }
 
             GUILayout.Space(spacing);
@@ -163,7 +132,7 @@ namespace SyadeuEditor
                 EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
                 if (GUILayout.Button(name, titleStyle))
                 {
-                    m_SelectedToolbar = i;
+                    m_SelectedToolbar = m_MenuItems[i];
                 }
                 GUILayout.Label(enable ? m_EnableTexture : m_DisableTexture, iconStyle);
                 EditorGUILayout.EndHorizontal();
@@ -172,8 +141,11 @@ namespace SyadeuEditor
         #endregion
 
         #region General Menu
-        private sealed class GeneralMenu
+        private sealed class GeneralMenu : SetupWizardMenuItem
         {
+            public override string Name => "General";
+            public override int Order => -9999;
+
             #region Constraints
 
             const string
@@ -302,7 +274,7 @@ namespace SyadeuEditor
                 
                 #endregion
             }
-            public void OnGUI()
+            public override void OnGUI()
             {
                 using (new EditorUtilities.BoxBlock(Color.black))
                 {
@@ -325,7 +297,7 @@ namespace SyadeuEditor
                     DrawUnityAudio();
                 }
             }
-            public bool Predicate()
+            public override bool Predicate()
             {
                 if (!TagManagerPredicate()) return false;
                 return true;
@@ -641,8 +613,11 @@ namespace SyadeuEditor
         #endregion
 
         #region Scene Menu
-        private sealed class SceneMenu
+        private sealed class SceneMenu : SetupWizardMenuItem
         {
+            public override string Name => "Scene";
+            public override int Order => -9998;
+
             private SerializedObject serializedObject;
 
             private SerializedProperty 
@@ -681,7 +656,7 @@ namespace SyadeuEditor
                     !SceneList.Instance.Scenes[0].IsInBuild;
             }
 
-            public void OnGUI()
+            public override void OnGUI()
             {
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
@@ -856,7 +831,7 @@ namespace SyadeuEditor
                 EditorGUILayout.EndScrollView();
                 serializedObject.ApplyModifiedProperties();
             }
-            public bool Predicate()
+            public override bool Predicate()
             {
                 if (string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath) ||
                     string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath) ||
@@ -883,8 +858,11 @@ namespace SyadeuEditor
 
         #region Prefab Menu
 
-        private sealed class PrefabMenu
+        private sealed class PrefabMenu : SetupWizardMenuItem
         {
+            public override string Name => "Prefab";
+            public override int Order => -9997;
+
             SerializedObject serializedObject;
             SerializedProperty
                 m_ObjectSettings;
@@ -941,12 +919,12 @@ namespace SyadeuEditor
                 }
             }
 
-            public bool Predicate()
+            public override bool Predicate()
             {
                 if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
                 return true;
             }
-            public void OnGUI()
+            public override void OnGUI()
             {
                 if (GUILayout.Button("Rebase"))
                 {
@@ -1011,5 +989,21 @@ namespace SyadeuEditor
         }
 
         #endregion
+    }
+
+    public abstract class SetupWizardMenuItem : IComparable<SetupWizardMenuItem>
+    {
+        public abstract string Name { get; }
+        public abstract int Order { get; }
+
+        public abstract void OnGUI();
+        public abstract bool Predicate();
+
+        int IComparable<SetupWizardMenuItem>.CompareTo(SetupWizardMenuItem other)
+        {
+            if (Order < other.Order) return -1;
+            else if (Order > other.Order) return 1;
+            return 0;
+        }
     }
 }
