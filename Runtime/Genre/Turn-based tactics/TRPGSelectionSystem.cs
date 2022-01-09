@@ -49,6 +49,7 @@ namespace Syadeu.Presentation.TurnTable
         private InputSystem m_InputSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
         private CoroutineSystem m_CoroutineSystem;
+        private NavMeshSystem m_NavMeshSystem;
 
         // LevelDesignPresentationGroup
         private LevelDesignSystem m_LevelDesignSystem;
@@ -61,6 +62,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
@@ -76,6 +78,7 @@ namespace Syadeu.Presentation.TurnTable
             m_InputSystem = null;
             m_EntityRaycastSystem = null;
             m_CoroutineSystem = null;
+            m_NavMeshSystem = null;
             m_LevelDesignSystem = null;
             m_TurnTableSystem = null;
         }
@@ -129,6 +132,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(CoroutineSystem other)
         {
             m_CoroutineSystem = other;
+        }
+        private void Bind(NavMeshSystem other)
+        {
+            m_NavMeshSystem = other;
         }
 
         private void Bind(LevelDesignSystem other)
@@ -189,8 +196,9 @@ namespace Syadeu.Presentation.TurnTable
                     continue;
                 }
 
-                var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
-                move.MoveTo(
+                //var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
+                m_NavMeshSystem.MoveTo(
+                    m_SelectedEntities[i],
                     hit.point, 
                     new ActorMoveEvent<ActorPointMovePredicate>(
                         m_SelectedEntities[i].ToEntity<IEntityData>(), 

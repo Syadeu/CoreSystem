@@ -114,7 +114,10 @@ namespace Syadeu.Presentation.Grid
         }
         protected override void OnDestroy(GridObjectAttribute attribute, Entity<IEntityData> entity)
         {
-            //m_GridSystem.RemoveEntity(entity.Idx);
+            if (attribute.m_Detection.m_Enable)
+            {
+                entity.RemoveComponent<GridDetectorComponent>();
+            }
         }
     }
 }

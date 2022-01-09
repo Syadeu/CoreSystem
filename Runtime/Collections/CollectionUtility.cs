@@ -36,8 +36,8 @@ namespace Syadeu.Collections
         {
             if (!UnsafeUtility.IsUnmanaged(type))
             {
-                Debug.LogError(
-                    $"Could not resovle type of {TypeHelper.ToString(type)} is not ValueType.");
+                //Debug.LogError(
+                //    $"Could not resovle type of {TypeHelper.ToString(type)} is not ValueType.");
 
                 return new TypeInfo(type, 0, 0, 0);
             }

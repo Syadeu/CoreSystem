@@ -990,20 +990,4 @@ namespace SyadeuEditor
 
         #endregion
     }
-
-    public abstract class SetupWizardMenuItem : IComparable<SetupWizardMenuItem>
-    {
-        public abstract string Name { get; }
-        public abstract int Order { get; }
-
-        public abstract void OnGUI();
-        public abstract bool Predicate();
-
-        int IComparable<SetupWizardMenuItem>.CompareTo(SetupWizardMenuItem other)
-        {
-            if (Order < other.Order) return -1;
-            else if (Order > other.Order) return 1;
-            return 0;
-        }
-    }
 }

@@ -512,6 +512,8 @@ namespace Syadeu.Presentation.Render
         //}
         public Ray ScreenPointToRay(float3 screenPoint)
         {
+            if (m_Camera.Value == null) return default(Ray);
+
             return m_Camera.Value.ScreenPointToRay(screenPoint);
         }
 

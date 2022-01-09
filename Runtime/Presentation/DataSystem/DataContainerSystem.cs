@@ -61,7 +61,9 @@ namespace Syadeu.Presentation.Data
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
-
+        }
+        protected override PresentationResult OnStartPresentation()
+        {
             ConstantData[] constantEntities = EntityDataList.Instance.GetData<ConstantData>();
             m_ConstantEntities = new NativeMultiHashMap<TypeInfo, InstanceID>(constantEntities.Length, Allocator.Persistent);
 
@@ -73,8 +75,9 @@ namespace Syadeu.Presentation.Data
                     );
             }
             m_CreatedConstantEntityCount = constantEntities.Length;
-        }
 
+            return base.OnStartPresentation();
+        }
 
         public bool TryGetConstantEntities(TypeInfo type, out FixedList4096Bytes<InstanceID> entities)
         {

@@ -44,6 +44,7 @@ namespace Syadeu.Presentation.Grid
         private EntityRaycastSystem m_RaycastSystem;
         private EventSystem m_EventSystem;
         private LevelDesignSystem m_LevelDesignSystem;
+        private SceneSystem m_SceneSystem;
 
         protected override void OnInitialize()
         {
@@ -56,6 +57,7 @@ namespace Syadeu.Presentation.Grid
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
         }
 
         #region Binds
@@ -82,12 +84,19 @@ namespace Syadeu.Presentation.Grid
         {
             m_LevelDesignSystem = other;
         }
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
+            m_SceneSystem.OnSceneLoadCall += M_SceneSystem_OnSceneLoadCall;
+        }
 
         #endregion
 
         protected override void OnShutDown()
         {
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+
+            m_SceneSystem.OnSceneLoadCall -= M_SceneSystem_OnSceneLoadCall;
         }
         protected override void OnDispose()
         {
@@ -100,17 +109,26 @@ namespace Syadeu.Presentation.Grid
             m_LevelDesignSystem = null;
         }
 
+        #region Event Handlers
+
         private void M_RenderSystem_OnRender(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
         {
             if (!m_DrawGrid) return;
 
-            using (Shapes.Draw.Command(arg2))
-            {
-                //DrawGridGL(System.Grid, .05f);
-                //DrawOcc(arg2);
-                //DrawIndices(arg2);
-            }
+            //using (Shapes.Draw.Command(arg2))
+            //{
+            //    //DrawGridGL(System.Grid, .05f);
+            //    //DrawOcc(arg2);
+            //    //DrawIndices(arg2);
+            //}
         }
+        private void M_SceneSystem_OnSceneLoadCall()
+        {
+            m_DrawGrid = false;
+        }
+
+        #endregion
+
         private GridIndex m_CurrentOverlayIndex;
         protected override void OnPresentation()
         {

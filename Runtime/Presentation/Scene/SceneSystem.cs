@@ -478,7 +478,11 @@ namespace Syadeu.Presentation
             }
             list.Add(awaiter);
         }
-
+        /// <summary>
+        /// 현재 씬에 종속된 <see cref="GameObject"/> 를 생성하여 반환합니다.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public GameObject CreateGameObject(string name)
         {
             CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);

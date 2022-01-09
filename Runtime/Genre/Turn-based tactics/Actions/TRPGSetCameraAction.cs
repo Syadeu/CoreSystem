@@ -7,6 +7,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.ComponentModel;
 
@@ -29,7 +30,7 @@ namespace Syadeu.Presentation.TurnTable
 
             RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
             var movement = renderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
-            ITransform tr = entity.transform;
+            ProxyTransform tr = entity.transform;
 
             if (m_Follow)
             {
