@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Unity.Collections;
 
@@ -55,6 +56,26 @@ namespace Syadeu.Presentation.Grid
         {
             int height = ((range * 2) + 1);
             return height * height * height;
+        }
+    }
+    internal sealed class GridDetectorComponentProcessor : ComponentProcessor<GridDetectorComponent>
+    {
+        protected override void OnInitialize()
+        {
+            $"{nameof(GridDetectorComponent)} processor init".ToLog();
+        }
+        protected override void OnCreated(in InstanceID entity, ref GridDetectorComponent component)
+        {
+            "GridDetectorComponent proces creat".ToLog();
+        }
+        protected override void OnDestroy(in InstanceID entity, ref GridDetectorComponent component)
+        {
+            "GridDetectorComponent proces destroy".ToLog();
+
+            PresentationSystem<DefaultPresentationGroup, WorldGridSystem>
+                .System.GetModule<GridDetectorModule>()
+                .RemoveDetector(in entity, ref component);
+            //component.m_ObserveIndices
         }
     }
 }

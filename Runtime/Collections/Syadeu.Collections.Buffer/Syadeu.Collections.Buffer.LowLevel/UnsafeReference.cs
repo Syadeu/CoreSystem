@@ -98,6 +98,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
+        public static unsafe implicit operator UnsafeReference(IntPtr p) => new UnsafeReference(p);
         public static unsafe implicit operator void*(UnsafeReference p) => p.m_Ptr;
     }
     /// <summary><inheritdoc cref="UnsafeReference"/></summary>

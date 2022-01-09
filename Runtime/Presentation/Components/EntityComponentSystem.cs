@@ -44,7 +44,8 @@ namespace Syadeu.Presentation.Components
     /// 등과 같은 간접 메소드를 통해 작업을 수행할 수 있습니다. 자세한 기능은 <seealso cref="EntityData{T}"/> 를 참조하세요.
     /// </remarks>
     unsafe internal sealed class EntityComponentSystem : PresentationSystemEntity<EntityComponentSystem>,
-        INotifySystemModule<EntityNotifiedComponentModule>
+        INotifySystemModule<EntityNotifiedComponentModule>,
+        INotifySystemModule<EntityComponentProcessorModule>
 #if DEBUG_MODE
         , INotifySystemModule<EntityComponentDebugModule>
 #endif
@@ -471,6 +472,8 @@ namespace Syadeu.Presentation.Components
                 m_ComponentHashMap.Add(buffer.Value.TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, type);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnCreated(entity, type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 CoreSystem.Logger.Log(Channel.Component,
                     $"Component {TypeHelper.ToString(type)} set at entity({entity.Hash}), index {index}");
@@ -517,6 +520,8 @@ namespace Syadeu.Presentation.Components
                 m_ComponentHashMap.Add(m_ComponentArrayBuffer[index.x].TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, type.Type);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnCreated(entity, type.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 CoreSystem.Logger.Log(Channel.Component,
                     $"Component {type.Type.Name} set at entity({entity.Hash}), index {index}");
@@ -560,6 +565,8 @@ namespace Syadeu.Presentation.Components
                 m_ComponentHashMap.Add(buffer.Value.TypeInfo.GetHashCode(), index.y);
 
                 OnComponentAdded?.Invoke(entity, TypeHelper.TypeOf<TComponent>.Type);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnCreated(entity, TypeHelper.TypeOf<TComponent>.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 CoreSystem.Logger.Log(Channel.Component,
                     $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Hash}), index {index}");
@@ -588,6 +595,8 @@ namespace Syadeu.Presentation.Components
                 }
 #endif
                 OnComponentRemove?.Invoke(entity, TypeHelper.TypeOf<TComponent>.Type);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnDestroy(entity, TypeHelper.TypeOf<TComponent>.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 ComponentDisposer.Dispose(index, entity);
             }
@@ -608,6 +617,8 @@ namespace Syadeu.Presentation.Components
                 }
 #endif
                 OnComponentRemove?.Invoke(entity, componentType);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnDestroy(entity, componentType, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 ComponentDisposer.Dispose(index, entity);
             }
@@ -628,6 +639,8 @@ namespace Syadeu.Presentation.Components
                 }
 #endif
                 OnComponentRemove?.Invoke(entity, componentType.Type);
+                GetModule<EntityComponentProcessorModule>()
+                    .ProcessOnDestroy(entity, componentType.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
                 ComponentDisposer.Dispose(index, entity);
             }
@@ -854,68 +867,4 @@ namespace Syadeu.Presentation.Components
     }
 
     public delegate void EntityComponentDelegate<TEntity, TComponent>(in TEntity entity, in TComponent component) where TComponent : unmanaged, IEntityComponent;
-
-//#if ENABLE_UNITY_COLLECTIONS_CHECKS
-//    internal unsafe sealed class ComponentBufferAtomicSafety : Collections.Buffer.LowLevel.UnsafeAtomicSafety
-//    {
-//        private AtomicSafetyHandle m_SafetyHandle;
-//        private DisposeSentinel m_DisposeSentinel;
-//        private TypeInfo m_TypeInfo;
-
-//        private bool m_Disposed;
-
-//        public AtomicSafetyHandle SafetyHandle => m_SafetyHandle;
-//        public bool Disposed => m_Disposed;
-
-//        private ComponentBufferAtomicSafety()
-//        {
-//            DisposeSentinel.Create(out m_SafetyHandle, out m_DisposeSentinel, 1, Allocator.Persistent);
-//        }
-
-//        public static ComponentBufferAtomicSafety Construct(TypeInfo typeInfo)
-//        {
-//            ComponentBufferAtomicSafety temp = new ComponentBufferAtomicSafety();
-//            temp.m_TypeInfo = typeInfo;
-//            return temp;
-//        }
-
-//        public void CheckExistsAndThrow()
-//        {
-//            if (m_Disposed)
-//            {
-//                throw new Exception();
-//            }
-
-//            AtomicSafetyHandle.CheckExistsAndThrow(m_SafetyHandle);
-//        }
-//        public void Dispose()
-//        {
-//            CheckExistsAndThrow();
-
-//            CoreSystem.Logger.Log(Channel.Component,
-//                $"Safely disposed component buffer of {TypeHelper.ToString(m_TypeInfo.Type)}");
-
-//            DisposeSentinel.Dispose(ref m_SafetyHandle, ref m_DisposeSentinel);
-//            m_Disposed = true;
-//        }
-//    }
-
-//#endif
-    
-    unsafe internal struct ComponentChunk
-    {
-        public void* m_Pointer;
-        public int m_Count;
-
-        public ComponentChunk(void* p, int count)
-        {
-            m_Pointer = p;
-            m_Count = count;
-        }
-        public ComponentChunk(IntPtr p, int count)
-        {
-            m_Pointer = p.ToPointer();
-            m_Count = count;
-        }
-    }
 }

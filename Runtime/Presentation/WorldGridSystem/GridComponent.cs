@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Components;
 using Unity.Collections;
 using Unity.Mathematics;
 
@@ -54,6 +55,15 @@ namespace Syadeu.Presentation.Grid
                 if (m_Indices[i].Equals(index)) return true;
             }
             return false;
+        }
+    }
+    internal sealed class GridComponentProcessor : ComponentProcessor<GridComponent>
+    {
+        protected override void OnDestroy(in InstanceID entity, ref GridComponent component)
+        {
+            PresentationSystem<DefaultPresentationGroup, WorldGridSystem>
+                .System.GetModule<GridDetectorModule>()
+                .Remove(in entity);
         }
     }
 }

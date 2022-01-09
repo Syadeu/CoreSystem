@@ -137,6 +137,13 @@ namespace Syadeu.Presentation
 
             return false;
         }
+        public static bool IsDestroyed(this in InstanceID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            return entitySystem.IsDestroyed(in id) || entitySystem.IsMarkedAsDestroyed(in id);
+        }
+
         public static Entity<IObject> GetEntity(this InstanceID id) => GetEntity<IObject>(id);
         public static Entity<T> GetEntity<T>(this InstanceID id)
             where T : class, IObject

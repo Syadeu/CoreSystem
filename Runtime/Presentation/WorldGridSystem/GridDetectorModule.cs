@@ -41,6 +41,7 @@ namespace Syadeu.Presentation.Grid
             m_UpdateDetectPositionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateDetectPosition");
 
         private EventSystem m_EventSystem;
+        //private EntitySystem m_EntitySystem;
 
         #region Presentation Methods
 
@@ -54,6 +55,8 @@ namespace Syadeu.Presentation.Grid
         protected override void OnShutDown()
         {
             m_EventSystem.RemoveEvent<OnGridLocationChangedEvent>(OnGridLocationChangedEventHandler);
+
+            //m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
         }
         protected override void OnDispose()
         {
@@ -61,6 +64,7 @@ namespace Syadeu.Presentation.Grid
             m_TargetedEntities.Dispose();
 
             m_EventSystem = null;
+            //m_EntitySystem = null;
         }
 
         private void Bind(EventSystem other)
@@ -69,7 +73,16 @@ namespace Syadeu.Presentation.Grid
 
             m_EventSystem.AddEvent<OnGridLocationChangedEvent>(OnGridLocationChangedEventHandler);
         }
+        //private void Bind(EntitySystem other)
+        //{
+        //    m_EntitySystem = other;
+        //    m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
+        //}
 
+        //private void M_EntitySystem_OnEntityDestroy(IObject obj)
+        //{
+        //    throw new NotImplementedException();
+        //}
         private void OnGridLocationChangedEventHandler(OnGridLocationChangedEvent ev)
         {
             if (ev.Entity.HasComponent<GridDetectorComponent>())
@@ -81,6 +94,34 @@ namespace Syadeu.Presentation.Grid
         }
 
         #endregion
+
+        public void Remove(in InstanceID entity)
+        {
+            if (!m_TargetedEntities.TryGetFirstValue(entity, out InstanceID observerID, out var iter)) return;
+
+            do
+            {
+                ref GridDetectorComponent observer = ref observerID.GetComponent<GridDetectorComponent>();
+
+                observer.m_Detected.Remove(entity);
+            } while (m_TargetedEntities.TryGetNextValue(out observerID, ref iter));
+
+            m_TargetedEntities.Remove(entity);
+        }
+        public void RemoveDetector(in InstanceID entity, ref GridDetectorComponent detector)
+        {
+            for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
+            {
+                RemoveValueAtHashMap(ref m_GridObservers, detector.m_ObserveIndices[i], entity);
+            }
+            //for (int i = 0; i < detector.m_TargetedBy.Length; i++)
+            //{
+            //    ref GridDetectorComponent observer = ref detector.m_TargetedBy[i].GetComponent<GridDetectorComponent>();
+
+            //    observer.m_Detected.Remove(entity);
+            //}
+            //m_TargetedEntities.Remove(entity);
+        }
 
         /// <summary>
         /// 해당 그리드 인덱스가 Observer에 의해 감시되고 있는지를 반환하고, 감시하는 Observer 들을 반환합니다.
@@ -320,6 +361,8 @@ namespace Syadeu.Presentation.Grid
             Entity<IObject> targetData = entity.ToEntity<IObject>();
             do
             {
+                //observerID.IsEntity
+
                 Entity<IObject> observer = observerID.GetEntity<IObject>();
                 ref GridDetectorComponent detector = ref observer.GetComponent<GridDetectorComponent>();
 
@@ -370,10 +413,6 @@ namespace Syadeu.Presentation.Grid
             } while (m_GridObservers.TryGetNextValue(out observerID, ref iter));
         }
 
-        public void RemoveDetectorObserve(in Entity<IEntity> observer)
-        {
-
-        }
 
         #region Static Functions
 
