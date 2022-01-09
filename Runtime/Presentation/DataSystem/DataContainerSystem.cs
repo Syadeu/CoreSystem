@@ -13,8 +13,12 @@
 // limitations under the License.
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections.Threading;
 using Syadeu.Internal;
+using System;
 using System.Collections.Concurrent;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.Data
 {
@@ -28,6 +32,66 @@ namespace Syadeu.Presentation.Data
         public override bool EnableAfterPresentation => false;
 
         private readonly ConcurrentDictionary<Hash, object> m_DataContainer = new ConcurrentDictionary<Hash, object>();
+
+        private NativeMultiHashMap<TypeInfo, InstanceID> m_ConstantEntities;
+        private AtomicSafeInteger m_CreatedConstantEntityCount;
+
+        private EntitySystem m_EntitySystem;
+
+        protected override PresentationResult OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
+
+            return base.OnInitialize();
+        }
+        protected override void OnShutDown()
+        {
+            foreach (var item in m_ConstantEntities)
+            {
+                m_EntitySystem.DestroyEntity(item.Value);
+            }
+        }
+        protected override void OnDispose()
+        {
+            m_ConstantEntities.Dispose();
+
+            m_EntitySystem = null;
+        }
+
+        private void Bind(EntitySystem other)
+        {
+            m_EntitySystem = other;
+
+            ConstantData[] constantEntities = EntityDataList.Instance.GetData<ConstantData>();
+            m_ConstantEntities = new NativeMultiHashMap<TypeInfo, InstanceID>(constantEntities.Length, Allocator.Persistent);
+
+            for (int i = 0; i < constantEntities.Length; i++)
+            {
+                m_ConstantEntities.Add(
+                    constantEntities[i].GetType().ToTypeInfo(),
+                    m_EntitySystem.CreateEntity(constantEntities[i].AsOriginal()).Idx
+                    );
+            }
+            m_CreatedConstantEntityCount = constantEntities.Length;
+        }
+
+
+        public bool TryGetConstantEntities(TypeInfo type, out FixedList4096Bytes<InstanceID> entities)
+        {
+            entities = new FixedList4096Bytes<InstanceID>();
+
+            if (!m_ConstantEntities.TryGetFirstValue(type, out InstanceID entity, out var iter))
+            {
+                return false;
+            }
+
+            do
+            {
+                entities.Add(entity);
+            } while (m_ConstantEntities.TryGetNextValue(out entity, ref iter));
+
+            return true;
+        }
 
         public static Hash ToDataHash(string value) => Hash.NewHash(value, Hash.Algorithm.FNV1a64);
 

@@ -107,7 +107,8 @@ namespace Syadeu.Presentation.Grid
             using (Shapes.Draw.Command(arg2))
             {
                 //DrawGridGL(System.Grid, .05f);
-                DrawOcc(arg2);
+                //DrawOcc(arg2);
+                //DrawIndices(arg2);
             }
         }
         private GridIndex m_CurrentOverlayIndex;
@@ -207,10 +208,30 @@ namespace Syadeu.Presentation.Grid
                 {
                     nameSum += entity.GetEntity().Target.Name + ", ";
                 }
-                Shapes.Draw.Text(target, camForward, nameSum, 3.5f, Color.red);
+                Shapes.Draw.Text(target, camForward, nameSum, 6f, Color.red);
             }
 
             arr.Dispose();
+        }
+        void DrawIndices(Camera cam)
+        {
+            System.CompleteJobs();
+
+            float3 camForward = cam.transform.forward;
+            
+            System.Grid.GetMinMaxLocation(out int3 min, out int3 max);
+            for (int x = min.x; x < max.x; x++)
+            {
+                for (int z = min.z; z < max.z; z++)
+                {
+                    var loc = new int3(x, 0, z);
+                    var pos = System.Grid.LocationToPosition(loc);
+
+                    float3 target = pos + new float3(0, .15f, 0);
+
+                    Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}\n{pos.x},{pos.y},{pos.z}", 3.5f, Color.red);
+                }
+            }
         }
 
         [Obsolete]

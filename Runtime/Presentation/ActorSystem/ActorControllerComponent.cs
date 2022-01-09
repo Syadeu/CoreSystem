@@ -17,34 +17,23 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using System;
-using Unity.Burst;
-using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actor
 {
     public struct ActorControllerComponent : IEntityComponent
     {
         internal bool m_IsExecutingEvent;
+        internal TypeInfo m_LastExecuteEventName;
+
         internal Entity<ActorEntity> m_Parent;
         internal FixedInstanceList64<IActorProvider> m_InstanceProviders;
         internal FixedReferenceList64<ParamAction<IActorEvent>> m_OnEventReceived;
 
-        public bool IsBusy()
+        public bool IsBusy(out TypeInfo executingEvent)
         {
-            //ActorSystem system = PresentationSystem<DefaultPresentationGroup, ActorSystem>.System;
-            //if (!system.CurrentEventActor.IsEmpty())
-            //{
-            //    if (system.CurrentEventActor.Idx.Equals(m_Parent.Idx))
-            //    {
-            //        return true;
-            //    }
-            //}
-            //return false;
+            executingEvent = m_LastExecuteEventName;
 
             return m_IsExecutingEvent;
         }

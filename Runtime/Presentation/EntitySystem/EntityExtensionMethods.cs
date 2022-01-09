@@ -69,6 +69,11 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntity(t.Idx);
         }
 
+        public static Reference<T> AsOriginal<T>(this T t)
+            where T : class, IObject
+        {
+            return new Reference<T>(t.Hash);
+        }
         public static Reference<T> AsOriginal<T>(this Entity<T> t)
             where T : class, IObject
         {

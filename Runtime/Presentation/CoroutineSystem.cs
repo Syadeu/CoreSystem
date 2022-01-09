@@ -17,15 +17,13 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.LowLevel;
 
 namespace Syadeu.Presentation
 {
@@ -35,7 +33,7 @@ namespace Syadeu.Presentation
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
 
-        private NativeList<CoroutineHandler> m_CoroutineHandlers;
+        private UnsafeAllocator<UnsafeCoroutineHandler> m_CoroutineHandlers;
         private List<CoroutineJobPayload> m_Coroutines;
 
         private NativeQueue<int> m_ReservedIndices;
@@ -49,7 +47,7 @@ namespace Syadeu.Presentation
 
         protected override PresentationResult OnInitialize()
         {
-            m_CoroutineHandlers = new NativeList<CoroutineHandler>(128, AllocatorManager.Persistent);
+            m_CoroutineHandlers = new UnsafeAllocator<UnsafeCoroutineHandler>(128, Allocator.Persistent);
             m_Coroutines = new List<CoroutineJobPayload>();
 
             m_ReservedIndices = new NativeQueue<int>(AllocatorManager.Persistent);
@@ -85,7 +83,7 @@ namespace Syadeu.Presentation
             for (int i = updateIndices.Count - 1; i >= 0; i--)
             {
                 int idx = updateIndices[i];
-                ref CoroutineHandler handler = ref m_CoroutineHandlers.ElementAt(idx);
+                ref UnsafeCoroutineHandler handler = ref m_CoroutineHandlers.ElementAt(idx).Value;
                 if (!handler.m_Activated)
                 {
                     m_Coroutines[idx].Reset();
@@ -224,35 +222,35 @@ namespace Syadeu.Presentation
             }
         }
 
-        public bool IsValidHandler(CoroutineHandler handler)
-        {
-            int index = handler.Index;
-            if (index < 0) return false;
+        //public bool IsValidHandler(CoroutineHandler handler)
+        //{
+        //    int index = handler.Index;
+        //    if (index < 0) return false;
 
-            return m_CoroutineHandlers[index].Generation == handler.Generation;
-        }
-        public bool IsActivatedHandler(CoroutineHandler handler)
-        {
-            int index = handler.Index;
-            if (index < 0) return false;
+        //    return m_CoroutineHandlers[index].Generation == handler.Generation;
+        //}
+        //public bool IsActivatedHandler(CoroutineHandler handler)
+        //{
+        //    int index = handler.Index;
+        //    if (index < 0) return false;
 
-            return m_CoroutineHandlers[index].m_Activated;
-        }
+        //    return m_CoroutineHandlers[index].m_Activated;
+        //}
 
         public CoroutineHandler StartCoroutine<T>(T job) where T : ICoroutineJob
         {
             CoreSystem.Logger.ThreadBlock(nameof(StartCoroutine), ThreadInfo.Unity);
 
-            CoroutineHandler coroutineJob;
+            UnsafeCoroutineHandler coroutineJob;
             if (m_ReservedIndices.Count == 0)
             {
-                coroutineJob = new CoroutineHandler(SystemID, m_Coroutines.Count)
+                coroutineJob = new UnsafeCoroutineHandler(m_Coroutines.Count)
                 {
                     m_Generation = 0,
                     m_Loop = job.Loop,
                     m_Activated = true
                 };
-                m_CoroutineHandlers.Add(coroutineJob);
+                m_CoroutineHandlers[m_Coroutines.Count] = (coroutineJob);
                 m_Coroutines.Add(new CoroutineJobPayload
                 {
                     Iter = job.Execute(),
@@ -263,7 +261,7 @@ namespace Syadeu.Presentation
             {
                 int index = m_ReservedIndices.Dequeue();
 
-                ref CoroutineHandler corJob = ref m_CoroutineHandlers.ElementAt(index);
+                ref UnsafeCoroutineHandler corJob = ref m_CoroutineHandlers.ElementAt(index).Value;
                 corJob.m_Generation++;
 
                 corJob.m_Loop = job.Loop;
@@ -277,28 +275,28 @@ namespace Syadeu.Presentation
 
             if (job.Loop == UpdateLoop.Transform)
             {
-                m_TransformIndices.Add(coroutineJob.Index);
+                m_TransformIndices.Add(coroutineJob.m_Idx);
             }
             else if (job.Loop == UpdateLoop.AfterTransform)
             {
-                m_AfterTransformIndices.Add(coroutineJob.Index);
+                m_AfterTransformIndices.Add(coroutineJob.m_Idx);
             }
-            else m_UpdateIndices.Add(coroutineJob.Index);
+            else m_UpdateIndices.Add(coroutineJob.m_Idx);
 
-            return coroutineJob;
+            return new CoroutineHandler(m_CoroutineHandlers.ElementAt(coroutineJob.m_Idx));
         }
-        public void StopCoroutine(CoroutineHandler job)
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(StopCoroutine), ThreadInfo.Unity);
+        //public void StopCoroutine(CoroutineHandler job)
+        //{
+        //    CoreSystem.Logger.ThreadBlock(nameof(StopCoroutine), ThreadInfo.Unity);
 
-            if (!IsValidHandler(job))
-            {
+        //    if (!IsValidHandler(job))
+        //    {
 
-                return;
-            }
+        //        return;
+        //    }
 
-            ref CoroutineHandler handler = ref m_CoroutineHandlers.ElementAt(job.Index);
-            handler.m_Activated = false;
-        }
+        //    ref CoroutineHandler handler = ref m_CoroutineHandlers.ElementAt(job.Index);
+        //    handler.m_Activated = false;
+        //}
     }
 }

@@ -183,15 +183,6 @@ namespace Syadeu.Presentation.TurnTable.UI
                     }
                 }
             }
-
-            if (ev.Enabled)
-            {
-                m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-            }
-            else
-            {
-                m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-            }
         }
 
         private void DisableCurrentShortcut()
@@ -203,6 +194,8 @@ namespace Syadeu.Presentation.TurnTable.UI
                 case ShortcutType.Move:
                     m_TRPGGridSystem.ClearUICell();
                     m_TRPGGridSystem.ClearUIPath();
+
+                    m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
                     break;
                 case ShortcutType.Attack:
@@ -231,9 +224,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
-            if (ctr.IsBusy())
+            if (ctr.IsBusy(out TypeInfo lastExecutedEv))
             {
-                "busy out".ToLog();
+                $"busy out :: {lastExecutedEv.Type.Name}".ToLog();
                 return;
             }
 
@@ -251,6 +244,10 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                     m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
                     m_TRPGInputSystem.SetIngame_Default();
+
+                    m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
+
+                    //m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
 
                     break;
                 case ShortcutType.Attack:

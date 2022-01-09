@@ -17,53 +17,57 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Unity.Burst;
 
 namespace Syadeu.Presentation
 {
-    public struct CoroutineHandler : IValidation
+    public struct CoroutineHandler : IEmpty, IValidation
     {
-        public static readonly CoroutineHandler Null = new CoroutineHandler(PresentationSystemID<CoroutineSystem>.Null, -1);
+        public static readonly CoroutineHandler Null = new CoroutineHandler();
 
-        private readonly PresentationSystemID<CoroutineSystem> m_System;
+        private readonly UnsafeReference<UnsafeCoroutineHandler> m_Pointer;
+        private readonly int m_Generation;
 
-        private readonly int m_Idx;
-        internal int m_Generation;
-        internal UpdateLoop m_Loop;
-        internal bool m_Activated;
+        public bool Running => m_Pointer.Value.m_Activated;
 
-        public int Index => m_Idx;
-        public int Generation => m_Generation;
-
-        internal CoroutineHandler(PresentationSystemID<CoroutineSystem> system, int index)
+        internal CoroutineHandler(UnsafeReference<UnsafeCoroutineHandler> p)
         {
-            m_System = system;
-
-            m_Idx = index;
-            m_Generation = 0;
-            m_Loop = 0;
-            m_Activated = false;
+            m_Pointer = p;
+            m_Generation = p.Value.m_Generation;
         }
 
-        public bool IsNull() => m_Idx < 0;
+        public bool IsEmpty() => !m_Pointer.IsCreated;
 
         [BurstDiscard]
         public bool IsValid()
         {
-            if (m_Idx < 0
-#if DEBUG_MODE
-                || m_System.IsNull() 
-                || !m_System.IsValid()
-#endif
-                ) return false;
+            if (IsEmpty() || m_Generation != m_Pointer.Value.m_Generation) return false;
 
-            CoroutineSystem system = m_System.System;
-
-            return system.IsValidHandler(this);
+            return Running;
         }
         public void Stop()
         {
-            m_System.System.StopCoroutine(this);
+            if (!IsValid())
+            {
+                return;
+            }
+
+            m_Pointer.Value.m_Activated = false;
+        }
+    }
+    internal unsafe struct UnsafeCoroutineHandler
+    {
+        public readonly int m_Idx;
+        public int m_Generation;
+        public UpdateLoop m_Loop;
+        public bool m_Activated;
+
+        public UnsafeCoroutineHandler(int index)
+        {
+            this = default(UnsafeCoroutineHandler);
+
+            m_Idx = index;
         }
     }
 }

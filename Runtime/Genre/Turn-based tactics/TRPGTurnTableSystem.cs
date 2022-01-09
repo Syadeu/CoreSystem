@@ -156,12 +156,6 @@ namespace Syadeu.Presentation.TurnTable
                 throw new System.Exception();
             }
             m_Players.Add(player);
-
-            //ActorStateAttribute stateAttribute = player.GetAttribute<ActorStateAttribute>();
-            //if (stateAttribute != null)
-            //{
-            //    stateAttribute.AddEvent(OnActorStateChangedEventHandler);
-            //}
         }
         public void RemovePlayer(Entity<IEntityData> player)
         {
@@ -258,7 +252,7 @@ namespace Syadeu.Presentation.TurnTable
         private ref TurnPlayerComponent ResetTurn(Entity<IEntityData> entity)
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
-            ref GridComponent grid = ref entity.GetComponent<GridComponent>();
+            //ref GridComponent grid = ref entity.GetComponent<GridComponent>();
 
             player.ActionPoint = player.MaxActionPoint;
 
@@ -268,8 +262,7 @@ namespace Syadeu.Presentation.TurnTable
 
             // TODO : Temp code
             //entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
-            m_NavMeshSystem.MoveTo(entity.ToEntity<IEntity>(), m_GridSystem.IndexToPosition(grid.Indices[0]), 
-                new ActorMoveEvent(entity, 0));
+            m_NavMeshSystem.FixCurrentGridPosition(entity.ToEntity<IEntity>());
             player.OnResetTurnActions.Schedule(entity);
 
             return ref player;

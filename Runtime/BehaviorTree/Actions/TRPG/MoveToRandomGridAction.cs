@@ -18,8 +18,6 @@ namespace Syadeu.Presentation.BehaviorTree
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class MoveToRandomGridAction : ActionBase
     {
-        [SerializeField] private int m_DesireRange = 1;
-
         public override TaskStatus OnUpdate()
         {
 #if DEBUG_MODE
@@ -49,21 +47,15 @@ namespace Syadeu.Presentation.BehaviorTree
             }
 #endif
             WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+            TRPGGridSystem trpgGridSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System;
             GridComponent gridSize = Entity.GetComponent<GridComponent>();
 
             FixedList4096Bytes<GridIndex> range = new FixedList4096Bytes<GridIndex>();
-            gridSystem.GetRange(Entity.Idx, m_DesireRange, ref range);
+            trpgGridSystem.GetMoveablePositions(Entity.Idx, ref range);
 
             for (int i = 0; i < gridSize.Indices.Length; i++)
             {
                 range.Remove(gridSize.Indices[i]);
-            }
-            for (int i = range.Length - 1; i >= 0; i--)
-            {
-                if (gridSystem.HasEntityAt(range[i]))
-                {
-                    range.RemoveAt(i);
-                }
             }
             if (range.Length == 0)
             {
@@ -76,8 +68,7 @@ namespace Syadeu.Presentation.BehaviorTree
             FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
             gridSystem.GetPath(Entity.Idx, range[rnd], ref tempPath);
 
-            PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.ToEntity<IEntityData>(), 1));
+            trpgGridSystem.MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.Idx, 1));
 
             return TaskStatus.Success;
         }

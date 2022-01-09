@@ -186,7 +186,35 @@ namespace Syadeu.Presentation.TurnTable
             var gridsize = entity.GetComponent<GridComponent>();
 
             FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
-            m_GridSystem.GetRange(in entity, turnPlayer.ActionPoint, ref list);
+            // TODO : Temp code
+            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref list);
+
+            gridPositions.Clear();
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (m_GridSystem.HasEntityAt(list[i]) && !gridsize.IsMyIndex(list[i]))
+                {
+                    continue;
+                }
+                else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+                    pathCount > turnPlayer.ActionPoint)
+                {
+                    continue;
+                }
+
+                gridPositions.Add((list[i]));
+                //$"{list[i].Location} added".ToLog();
+            }
+        }
+        public void GetMoveablePositions(in InstanceID entity,
+            ref FixedList4096Bytes<GridIndex> gridPositions)
+        {
+            var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
+            var gridsize = entity.GetComponent<GridComponent>();
+
+            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            // TODO : Temp code
+            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref list);
 
             gridPositions.Clear();
             for (int i = 0; i < list.Length; i++)
@@ -202,21 +230,22 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 gridPositions.Add((list[i]));
+                //$"{list[i].Location} added".ToLog();
             }
         }
-        public void CalculateMoveableOutlineVertices(
+        public void CalculateOutlineVertices(
             in InstanceID entity,
             NativeArray<GridIndex> moveables,
             ref NativeList<Vector3> vertices, float heightOffset = .25f)
         {
             var gridsize = entity.GetComponent<GridComponent>();
-            float cellsize = m_GridSystem.CellSize * .5f;
+            float half = m_GridSystem.CellSize * .5f;
 
             float3
-                upleft = new float3(-cellsize, heightOffset, cellsize),
-                upright = new float3(cellsize, heightOffset, cellsize),
-                downleft = new float3(-cellsize, heightOffset, -cellsize),
-                downright = new float3(cellsize, heightOffset, -cellsize);
+                upleft = new float3(-half, heightOffset, half),
+                upright = new float3(half, heightOffset, half),
+                downleft = new float3(-half, heightOffset, -half),
+                downright = new float3(half, heightOffset, -half);
 
             vertices.Clear();
             float3 gridPos;
@@ -248,14 +277,8 @@ namespace Syadeu.Presentation.TurnTable
             for (int i = 0; i < moveables.Length; i++)
             {
                 gridPos = m_GridSystem.IndexToPosition(moveables[i]);
-
-                //GridIndex
-                //    right = moveables[i].GetDirection(Direction.Right),
-                //    down = moveables[i].GetDirection(Direction.Down),
-                //    left = moveables[i].GetDirection(Direction.Left),
-                //    up = moveables[i].GetDirection(Direction.Up);
-
-                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var right) &&
+                //$"{gridPos}".ToLog();
+                if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var right) ||
                     !moveables.Contains(right))
                 {
                     temp.Add(new float3x2(
@@ -265,7 +288,7 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 // Down
-                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var down) &&
+                if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Forward, out var down) ||
                     !moveables.Contains(down))
                 {
                     temp.Add(new float3x2(
@@ -274,7 +297,7 @@ namespace Syadeu.Presentation.TurnTable
                         ));
                 }
 
-                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var left) &&
+                if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Left, out var left) ||
                     !moveables.Contains(left))
                 {
                     temp.Add(new float3x2(
@@ -284,7 +307,7 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 // Up
-                if (m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var up) &&
+                if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Backward, out var up) ||
                     !moveables.Contains(up))
                 {
                     temp.Add(new float3x2(
@@ -297,16 +320,22 @@ namespace Syadeu.Presentation.TurnTable
             float3x2 current = temp[temp.Count - 1];
             temp.RemoveAt(temp.Count - 1);
 
-            for (int i = temp.Count - 1; i >= 0; i--)
+            do
             {
                 vertices.Add(current.c0);
-                vertices.Add(current.c1);
+            } while (FindFloat3x2(temp, current.c1, out current));
 
-                if (!FindFloat3x2(temp, current.c1, out current))
-                {
-                    break;
-                }
-            }
+            //vertices.Add(current.c1);
+            //for (int i = temp.Count - 1; i >= 0; i--)
+            //{
+            //    vertices.Add(current.c0);
+            //    vertices.Add(current.c1);
+
+            //    if (!FindFloat3x2(temp, current.c1, out current))
+            //    {
+            //        break;
+            //    }
+            //}
         }
 
         private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
@@ -343,7 +372,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
-                CalculateMoveableOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
+                CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
                 m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
                 m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
@@ -477,7 +506,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx),
-                path, new ActorMoveEvent(Entity<IEntityData>.GetEntityWithoutCheck(entity.Idx), 1));
+                path, new ActorMoveEvent(entity.Idx, 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = path.Length;

@@ -42,6 +42,8 @@ namespace Syadeu.Presentation.Actor
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        private readonly List<InstanceID> m_PlayableActors = new List<InstanceID>();
+
         private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
         private readonly EventContainer m_CurrentEvent = new EventContainer();
         private NativeHashSet<ActorEventHandler> m_ScheduledEventIDs;
@@ -49,6 +51,7 @@ namespace Syadeu.Presentation.Actor
         private CLRContainer<IEventHandler> m_EventDataPool;
 
         public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
+        public IReadOnlyList<InstanceID> PlayableActors => m_PlayableActors;
 
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
@@ -75,7 +78,30 @@ namespace Syadeu.Presentation.Actor
         private void Bind(EntitySystem other)
         {
             m_EntitySystem = other;
+
+            m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
+            m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
+
+        private void M_EntitySystem_OnEntityDestroy(IObject obj)
+        {
+            if (!obj.Idx.HasComponent<ActorFactionComponent>()) return;
+
+            if (obj.Idx.GetComponent<ActorFactionComponent>().FactionType == FactionType.Player)
+            {
+                m_PlayableActors.Remove(obj.Idx);
+            }
+        }
+        private void M_EntitySystem_OnEntityCreated(IObject obj)
+        {
+            if (!obj.Idx.HasComponent<ActorFactionComponent>()) return;
+
+            if (obj.Idx.GetComponent<ActorFactionComponent>().FactionType == FactionType.Player)
+            {
+                m_PlayableActors.Add(obj.Idx);
+            }
+        }
+
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
@@ -90,19 +116,18 @@ namespace Syadeu.Presentation.Actor
             //$"{ev.Entity.Name}: {ev.State}".ToLog();
         }
 
+        protected override void OnShutDown()
+        {
+            m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
+
+            m_EventSystem.RemoveEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
+        }
         protected override void OnDispose()
         {
-            //m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
-            //m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
-            //m_EventDataPool.Dispose();
+            m_ScheduledEventIDs.Dispose();
             m_EventDataPool = null;
 
             m_EntitySystem = null;
-
-            m_EventSystem.RemoveEvent<OnMoveStateChangedEvent>(OnActorMoveStateChanged);
-
-            m_ScheduledEventIDs.Dispose();
-
             m_EventSystem = null;
         }
         #endregion
@@ -115,8 +140,17 @@ namespace Syadeu.Presentation.Actor
             {
                 if (m_CurrentEvent.Event.EventSequence.KeepWait)
                 {
-                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
-                    return;
+                    if (Time.time - m_CurrentEvent.EventSetTime > 10)
+                    {
+                        m_CurrentEvent.StartTime += m_CurrentEvent.Event.EventSequence.AfterDelay;
+
+                        "somethings wrong. exit event".ToLogError();
+                    }
+                    else
+                    {
+                        handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
+                        return;
+                    }
                 }
 
                 if (!m_CurrentEvent.TimerStarted)
@@ -133,9 +167,8 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 handler.SetEvent(SystemEventResult.Success, m_CurrentEvent.Event.EventType);
-                m_ScheduledEventIDs.Remove(new ActorEventHandler(m_CurrentEvent.Event.Hash));
-
-                m_CurrentEvent.Clear(m_EventDataPool);
+                
+                m_CurrentEvent.Clear(m_EventDataPool, m_ScheduledEventIDs);
 
                 return;
             }
@@ -153,9 +186,11 @@ namespace Syadeu.Presentation.Actor
 
             if (ev.EventSequence != null)
             {
-                m_CurrentEvent.Event = ev;
+                m_CurrentEvent.SetEvent(ev);
+
                 ref ActorControllerComponent ctr = ref ev.Actor.GetComponent<ActorControllerComponent>();
                 ctr.m_IsExecutingEvent = true;
+                ctr.m_LastExecuteEventName = ev.EventType.ToTypeInfo();
 
                 CoreSystem.Logger.Log(Channel.Event,
                     $"Execute scheduled actor event({ev.GetEventName()})");
@@ -166,9 +201,8 @@ namespace Syadeu.Presentation.Actor
                 if (!ev.EventSequence.KeepWait)
                 {
                     handler.SetEvent(SystemEventResult.Success, ev.EventType);
-                    m_ScheduledEventIDs.Remove(new ActorEventHandler(m_CurrentEvent.Event.Hash));
-
-                    m_CurrentEvent.Clear(m_EventDataPool);
+                    
+                    m_CurrentEvent.Clear(m_EventDataPool, m_ScheduledEventIDs);
 
                     return;
                 }
@@ -191,7 +225,8 @@ namespace Syadeu.Presentation.Actor
 
         private class EventContainer
         {
-            public IEventHandler Event;
+            public IEventHandler Event { get; private set; }
+            public float EventSetTime { get; private set; }
 
             public bool TimerStarted;
             public float StartTime;
@@ -200,12 +235,18 @@ namespace Syadeu.Presentation.Actor
             {
                 return Event == null;
             }
-            public void Clear(CLRContainer<IEventHandler> pool)
+
+            public void SetEvent(IEventHandler ev)
+            {
+                Event = ev;
+                EventSetTime = Time.time;
+            }
+            public void Clear(CLRContainer<IEventHandler> pool, NativeHashSet<ActorEventHandler> scheduledEventIDs)
             {
                 ref ActorControllerComponent ctr = ref Event.Actor.GetComponent<ActorControllerComponent>();
                 ctr.m_IsExecutingEvent = false;
 
-                //Event.Reserve();
+                scheduledEventIDs.Remove(new ActorEventHandler(Event.Hash));
                 pool.Enqueue(Event);
                 Event = null;
 
@@ -365,7 +406,7 @@ namespace Syadeu.Presentation.Actor
                 m_EventSystem.GetNextTicketSystem() == null)
             {
                 bool wasSequence = m_CurrentEvent.Event.EventSequence != null;
-                m_CurrentEvent.Clear(m_EventDataPool);
+                m_CurrentEvent.Clear(m_EventDataPool, m_ScheduledEventIDs);
 
                 index = FindScheduledEvent<TEvent>(ev);
                 if (index >= 0)

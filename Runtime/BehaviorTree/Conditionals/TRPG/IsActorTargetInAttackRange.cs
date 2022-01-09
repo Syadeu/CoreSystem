@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.BehaviorTree
 
             WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
 
-            gridSystem.GetRange(gridSize.Indices[0], m_DesireRange, ref list);
+            gridSystem.GetRange(gridSize.Indices[0], m_DesireRange, ref list, WorldGridSystem.SortOption.CloseDistance);
 
             for (int i = 0; i < targetPos.Length; i++)
             {

@@ -316,6 +316,29 @@ namespace Syadeu.Presentation.Map
             m_RequireReload = true;
         }
 
+        public ActorEventHandler FixCurrentGridPosition(Entity<IEntity> entity)
+        {
+            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
+            if (navAgent == null)
+            {
+                "no agent".ToLogError();
+                return ActorEventHandler.Empty;
+            }
+
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(entity.transform.position);
+            position.Add(m_GridSystem.IndexToPosition(entity.GetComponent<GridComponent>().Indices[0]));
+            ActorMoveEvent ev = new ActorMoveEvent(entity.Idx, 0)
+            {
+                m_MoveJob = new MoveJob()
+                {
+                    m_Entity = entity.ToEntity<IEntityData>(),
+                    m_Positions = position
+                }
+            };
+
+            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev, true);
+        }
         public ActorEventHandler MoveTo(Entity<IEntity> entity, float3 point, ActorMoveEvent ev)
         {
             NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
@@ -546,14 +569,20 @@ namespace Syadeu.Presentation.Map
                     agent.autoBraking = false;
                 }
 
-                while (tr.hasProxy && m_Positions.Length > 0)
+                float pendingStartTime = CoreSystem.time;
+                while (agent.pathPending)
                 {
-                    if (agent.pathPending)
+                    if (CoreSystem.time - pendingStartTime > 5)
                     {
-                        yield return null;
-                        continue;
+                        "something is wrong".ToLogError();
+                        yield break;
                     }
 
+                    yield return null;
+                }
+
+                while (tr.hasProxy && m_Positions.Length > 0 && !agent.isStopped)
+                {
                     if (agent.remainingDistance < 1f)
                     {
                         m_Positions.RemoveAt(0);
@@ -591,7 +620,7 @@ namespace Syadeu.Presentation.Map
                     yield return null;
                 }
 
-                while (tr.hasProxy && agent.remainingDistance > .1f)
+                while (tr.hasProxy && agent.remainingDistance > .1f && !agent.isStopped)
                 {
                     SetDirection(agent.desiredVelocity);
                     //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
@@ -634,7 +663,7 @@ namespace Syadeu.Presentation.Map
 
                     yield return null;
                 } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
-                        navAgent.m_UpdateTRSWhile.Execute(m_Entity.ToEntity<IObject>(), out bool predicate) && predicate);
+                        navAgent.m_UpdateTRSWhile.Execute(m_Entity.ToEntity<IObject>(), out bool predicate) && predicate && !agent.isStopped);
 
                 SetDirection(0);
                 agent.ResetPath();
@@ -657,7 +686,7 @@ namespace Syadeu.Presentation.Map
 
     public struct ActorMoveEvent : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent>
     {
-        private Entity<IEntityData> m_Entity;
+        private InstanceID m_Entity;
         private float m_AfterDelay;
         internal NavMeshSystem.MoveJob m_MoveJob;
 
@@ -666,13 +695,13 @@ namespace Syadeu.Presentation.Map
             get
             {
                 NavAgentComponent agent = m_Entity.GetComponent<NavAgentComponent>();
-                return agent.m_IsMoving;
+                return agent.m_MoveJob.Running;
             }
         }
         public float AfterDelay => m_AfterDelay;
         public bool BurstCompile => false;
 
-        public ActorMoveEvent(Entity<IEntityData> entity, float afterDelay)
+        public ActorMoveEvent(InstanceID entity, float afterDelay)
         {
             m_Entity = entity;
             m_AfterDelay = afterDelay;

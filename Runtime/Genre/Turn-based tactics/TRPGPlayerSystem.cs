@@ -25,6 +25,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using Syadeu.Presentation.TurnTable.UI;
 using System;
@@ -32,6 +33,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -47,6 +50,8 @@ namespace Syadeu.Presentation.TurnTable
 
         private readonly HashSet<Entity<IEntityData>> m_InBattlePlayerFaction = new HashSet<Entity<IEntityData>>();
 
+        private InputAction m_LookPlayerKey;
+
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
@@ -54,6 +59,7 @@ namespace Syadeu.Presentation.TurnTable
         private EntityRaycastSystem m_EntityRaycastSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
         private InputSystem m_InputSystem;
+        private ActorSystem m_ActorSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGCameraMovement m_TRPGCameraMovement;
@@ -71,6 +77,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
 
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGGridSystem>(Bind);
@@ -78,13 +85,18 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnInitialize();
         }
-        protected override void OnDispose()
+        protected override void OnShutDown()
         {
+            m_LookPlayerKey.performed -= OnLookPlayerKeyPressed;
+            m_LookPlayerKey.Dispose();
+
             m_EventSystem.RemoveEvent<TRPGEndTurnEvent>(TRPGEndTurnEventHandler);
             m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
 
             m_EventSystem.RemoveEvent<OnPlayerFactionStateChangedEvent>(OnPlayerFactionStateChangedEventHandler);
-
+        }
+        protected override void OnDispose()
+        {
             m_RenderSystem = null;
             m_CoroutineSystem = null;
             m_NavMeshSystem = null;
@@ -92,6 +104,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EntityRaycastSystem = null;
             m_WorldCanvasSystem = null;
             m_InputSystem = null;
+            m_ActorSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGCameraMovement = null;
@@ -124,6 +137,14 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
+
+            m_LookPlayerKey = m_InputSystem.GetKeyboardBinding(Key.Space, InputActionType.Button);
+            m_LookPlayerKey.performed += OnLookPlayerKeyPressed;
+            m_LookPlayerKey.Enable();
+        }
+        private void Bind(ActorSystem other)
+        {
+            m_ActorSystem = other;
         }
 
         private void Bind(EntityRaycastSystem other)
@@ -165,6 +186,24 @@ namespace Syadeu.Presentation.TurnTable
         #endregion
 
         #region Event Handlers
+
+        private int m_CurrentLookPlayerIndex = 0;
+        private void OnLookPlayerKeyPressed(InputAction.CallbackContext obj)
+        {
+            if (m_ActorSystem.PlayableActors.Count == 0) return;
+
+            if (m_ActorSystem.PlayableActors.Count >= m_CurrentLookPlayerIndex)
+            {
+                m_CurrentLookPlayerIndex = 0;
+            }
+
+            ProxyTransform tr = m_ActorSystem.PlayableActors[m_CurrentLookPlayerIndex++].GetTransform();
+
+            var movement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
+            movement.SetTarget(tr);
+
+            "look player".ToLog();
+        }
 
         private void TRPGEndTurnEventHandler(TRPGEndTurnEvent ev)
         {

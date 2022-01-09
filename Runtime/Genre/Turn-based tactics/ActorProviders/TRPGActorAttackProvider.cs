@@ -70,7 +70,7 @@ namespace Syadeu.Presentation.TurnTable
             WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
 
             GridComponent gridSize = Parent.GetComponent<GridComponent>();
-            gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange);
+            gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange, WorldGridSystem.SortOption.CloseDistance);
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             
@@ -96,13 +96,13 @@ namespace Syadeu.Presentation.TurnTable
                 }
             }
             
-            if (sort)
-            {
-                IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSystem.IndexToPosition(gridSize.Indices[0])));
+            //if (sort)
+            //{
+            //    IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSystem.IndexToPosition(gridSize.Indices[0])));
                 
-                att.InitializeTargets(sorted.ToFixedList512());
-            }
-            else
+            //    att.InitializeTargets(sorted.ToFixedList512());
+            //}
+            //else
             {
                 att.InitializeTargets(list);
             }

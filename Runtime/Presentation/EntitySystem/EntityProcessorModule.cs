@@ -246,6 +246,13 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        public EntityProcessor<T> GetProcessor<T>() where T : class, IObject
+        {
+            if (!m_Processors.TryGetValue(TypeHelper.TypeOf<T>.Type, out var list)) return null;
+
+            return list[0] as EntityProcessor<T>;
+        }
+
         public void ProceessOnCreated(ObjectBase obj)
         {
             const string c_CreateStartMsg = "Create entity({0})";

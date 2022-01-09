@@ -715,6 +715,11 @@ namespace Syadeu.Presentation
         }
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
 
+        public EntityProcessor<T> GetProcessor<T>() where T : class, IObject
+        {
+            return GetModule<EntityProcessorModule>().GetProcessor<T>();
+        }
+
         #region Experiments
 
         [Obsolete("", true)]
