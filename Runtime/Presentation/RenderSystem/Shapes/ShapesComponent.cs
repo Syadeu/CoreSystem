@@ -20,6 +20,8 @@ using Syadeu.Presentation.Proxy;
 using Unity.Mathematics;
 using Syadeu.Collections;
 using UnityEngine;
+using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Render
 {
@@ -28,7 +30,8 @@ namespace Syadeu.Presentation.Render
     {
         public enum Shape
         {
-            Arc
+            Disc,
+            Rectangle
         }
         public struct Angle
         {
@@ -52,17 +55,28 @@ namespace Syadeu.Presentation.Render
         public struct Generals
         {
             public float thickness;
-            public DiscGeometry discGeometry;
-            public DiscColors colors;
         }
         public struct Offsets
         {
             public float3 position;
             public quaternion rotation;
         }
-        public struct ArcParameters
+        public struct DiscParameters
         {
+            public DiscType discType;
+            public DiscGeometry discGeometry;
             public Angle angleStart, angleEnd;
+            public DiscColors colors;
+        }
+        public struct RectangleParameters
+        {
+            public Rectangle.RectangleType type;
+            public RectPivot pivot;
+            public float2 size;
+            public DashStyle dashStyle;
+
+            public bool enableFill;
+            public GradientFill fill;
         }
 
         internal ProxyTransform m_Transform;
@@ -73,7 +87,8 @@ namespace Syadeu.Presentation.Render
         public Generals generals;
         public Offsets offsets;
 
-        public ArcParameters arcParameters;
+        public DiscParameters discParameters;
+        public RectangleParameters rectangleParameters; 
 
         public void Apply(ShapesPropertyBlock shapesProperty)
         {
@@ -81,8 +96,6 @@ namespace Syadeu.Presentation.Render
             generals = new Generals
             {
                 thickness = shapesProperty.m_Thickness,
-                discGeometry = shapesProperty.m_DiscGeometry,
-                colors = DiscColors.Radial(shapesProperty.m_StartColor, shapesProperty.m_EndColor)
             };
 
             offsets = new Offsets
@@ -91,11 +104,115 @@ namespace Syadeu.Presentation.Render
                 rotation = Quaternion.Euler(90, 0, 0)
             };
 
-            arcParameters = new ArcParameters
+            switch (shapesProperty.m_Shape)
             {
+                default:
+                case Shape.Disc:
+                    ApplyDiscParameters(shapesProperty);
+                    break;
+                case Shape.Rectangle:
+                    ApplyRectangleParameters(shapesProperty);
+                    break;
+            }
+        }
+
+        private void ApplyDiscParameters(ShapesPropertyBlock shapesProperty)
+        {
+            discParameters = new DiscParameters
+            {
+                discType = shapesProperty.m_ArcParameters.m_DiscType,
+                discGeometry = shapesProperty.m_ArcParameters.m_DiscGeometry,
+
                 angleStart = new Angle(shapesProperty.m_ArcParameters.m_AngleDegreeStart * Mathf.Deg2Rad),
                 angleEnd = new Angle(shapesProperty.m_ArcParameters.m_AngleDegreeEnd * Mathf.Deg2Rad),
+
+                colors = DiscColors.Radial(shapesProperty.m_StartColor, shapesProperty.m_EndColor)
             };
+        }
+        private void ApplyRectangleParameters(ShapesPropertyBlock shapesProperty)
+        {
+            rectangleParameters = new RectangleParameters
+            {
+                type = shapesProperty.m_RectangleParameters.m_Type,
+                pivot = shapesProperty.m_RectangleParameters.m_Pivot,
+                size = shapesProperty.m_RectangleParameters.m_Size,
+                dashStyle = shapesProperty.m_RectangleParameters.m_DashStyle,
+
+                enableFill = shapesProperty.m_RectangleParameters.m_EnableFill
+            };
+
+            if (rectangleParameters.enableFill)
+            {
+                switch (shapesProperty.m_RectangleParameters.m_FillType)
+                {
+                    default:
+                    case FillType.LinearGradient:
+                        rectangleParameters.fill =
+                            GradientFill.Linear(
+                                start: shapesProperty.m_RectangleParameters.m_FillStart,
+                                end: shapesProperty.m_RectangleParameters.m_FillEnd,
+
+                                colorStart: shapesProperty.m_StartColor,
+                                colorEnd: shapesProperty.m_EndColor,
+                                space: shapesProperty.m_RectangleParameters.m_FillSpace);
+
+                        break;
+                    case FillType.RadialGradient:
+                        rectangleParameters.fill =
+                            GradientFill.Radial(
+                                origin: shapesProperty.m_RectangleParameters.m_FillOrigin,
+                                radius: shapesProperty.m_RectangleParameters.m_FillRadius,
+
+                                colorInner: shapesProperty.m_StartColor,
+                                colorOuter: shapesProperty.m_EndColor,
+                                space: shapesProperty.m_RectangleParameters.m_FillSpace);
+                        break;
+                }
+            }
+            else rectangleParameters.fill = GradientFill.defaultFill;
+        }
+    }
+
+    internal sealed class ShapesComponentProcessor : ComponentProcessor<ShapesComponent>
+    {
+        private GameObjectProxySystem m_ProxySystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_ProxySystem = null;
+        }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+        }
+
+        protected override void OnCreated(in InstanceID id, ref ShapesComponent com)
+        {
+            float3 pos;
+            if (id.IsEntity<IEntity>())
+            {
+                Entity<IEntity> entity = id.GetEntity<IEntity>();
+                ProxyTransform parent = entity.transform;
+                pos = parent.position;
+                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
+
+                com.m_Transform.SetParent(parent);
+                com.m_Transform.localPosition = 0;
+                //com.m_Transform.localEulerAngles = new float3(90, 0, 0);
+            }
+            else
+            {
+                pos = float3.zero;
+                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.EulerZXY(90, 0, 0), 1);
+            }
+        }
+        protected override void OnDestroy(in InstanceID entity, ref ShapesComponent com)
+        {
+            com.m_Transform.Destroy();
         }
     }
 #endif

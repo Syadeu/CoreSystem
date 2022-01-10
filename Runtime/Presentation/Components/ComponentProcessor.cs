@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Presentation.Internal;
 using System;
 
 namespace Syadeu.Presentation.Components
@@ -62,5 +63,28 @@ namespace Syadeu.Presentation.Components
         protected virtual void OnDestroy(in InstanceID entity, ref TComponent component) { }
 
         protected virtual void OnDispose() { }
+
+        /// <summary>
+        /// <see cref="DefaultPresentationGroup"/> 은 즉시 등록되지만 나머지 그룹에 한하여,
+        /// <typeparamref name="TGroup"/> 이 시작될 때 등록됩니다.
+        /// </summary>
+        /// <typeparam name="TGroup">요청할 <typeparamref name="TSystem"/> 이 위치한 그룹입니다.</typeparam>
+        /// <typeparam name="TSystem">요청할 시스템입니다.</typeparam>
+        /// <param name="bind"></param>
+        /// <param name="methodName"></param>
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> bind
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
+            where TGroup : PresentationGroupEntity
+            where TSystem : PresentationSystemEntity
+        {
+            PresentationManager.RegisterRequest<TGroup, TSystem>(bind
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
+        }
     }
 }

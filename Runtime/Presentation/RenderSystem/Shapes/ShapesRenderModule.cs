@@ -68,44 +68,7 @@ namespace Syadeu.Presentation.Render
         private void Bind(EntityComponentSystem other)
         {
             m_ComponentSystem = other;
-
-            m_ComponentSystem.OnComponentAdded += M_ComponentSystem_OnComponentAdded;
-            m_ComponentSystem.OnComponentRemove += M_ComponentSystem_OnComponentRemove;
         }
-        private void M_ComponentSystem_OnComponentAdded(InstanceID id, System.Type arg2)
-        {
-            if (!arg2.Equals(TypeHelper.TypeOf<ShapesComponent>.Type)) return;
-
-            ref ShapesComponent com = ref id.GetComponent<ShapesComponent>();
-            float3 pos;
-            if (id.IsEntity<IEntity>())
-            {
-                Entity<IEntity> entity = id.GetEntity<IEntity>();
-                ProxyTransform parent = (ProxyTransform)entity.transform;
-                pos = parent.position;
-                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.identity, 1);
-
-                com.m_Transform.SetParent(parent);
-                com.m_Transform.localPosition = 0;
-                //com.m_Transform.localEulerAngles = new float3(90, 0, 0);
-            }
-            else
-            {
-                pos = float3.zero;
-                com.m_Transform = m_ProxySystem.CreateTransform(pos, quaternion.EulerZXY(90, 0, 0), 1);
-            }
-
-            //com.m_Transform.localPosition = com.offsets.position;
-            //com.m_Transform.localRotation = com.offsets.rotation;
-        }
-        private void M_ComponentSystem_OnComponentRemove(InstanceID id, System.Type arg2)
-        {
-            if (!arg2.Equals(TypeHelper.TypeOf<ShapesComponent>.Type)) return;
-
-            ref ShapesComponent com = ref m_ComponentSystem.GetComponent<ShapesComponent>(id);
-            com.m_Transform.Destroy();
-        }
-
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
@@ -121,9 +84,6 @@ namespace Syadeu.Presentation.Render
 
         protected override void OnShutDown()
         {
-            m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
-            m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
-
             m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
         }
         protected override void OnDispose()
@@ -163,32 +123,84 @@ namespace Syadeu.Presentation.Render
 
         private static void DrawShapes(in Camera camera, in ShapesComponent shapes)
         {
-            Draw.Thickness = shapes.generals.thickness;
-            Draw.DiscGeometry = shapes.generals.discGeometry;
-
             switch (shapes.shape)
             {
-                case ShapesComponent.Shape.Arc:
-                    DrawArcShape(in shapes);
+                case ShapesComponent.Shape.Disc:
+                    DrawDiscShape(in shapes);
+                    break;
+                case ShapesComponent.Shape.Rectangle:
                     break;
                 default:
                     break;
             }
         }
-        private static void DrawArcShape(in ShapesComponent shapes)
+        public static void DrawDiscShape(in ShapesComponent shapes)
         {
             ProxyTransform tr = shapes.transform;
+            Draw.Thickness = shapes.generals.thickness;
+            Draw.DiscGeometry = shapes.discParameters.discGeometry;
 
             Draw.Arc(
                 pos: tr.position + shapes.offsets.position,
                 rot: shapes.offsets.rotation,
-                angleRadStart: shapes.arcParameters.angleStart.radian,
-                //angleRadStart: 0,
-                //angleRadEnd: 350 * Mathf.Deg2Rad,
-                angleRadEnd: shapes.arcParameters.angleEnd.radian,
-                colors: shapes.generals.colors);
+                angleRadStart: shapes.discParameters.angleStart.radian,
+                angleRadEnd: shapes.discParameters.angleEnd.radian,
+                colors: shapes.discParameters.colors);
 
             //$"{Draw.Thickness}, {shapes.arcParameters.angleStart.radian}, {shapes.arcParameters.angleEnd.radian}, {tr.eulerAngles}".ToLog();
+        }
+        public static void DrawRectangleShape(in ShapesComponent shapes)
+        {
+            ProxyTransform tr = shapes.transform;
+
+            if (shapes.rectangleParameters.enableFill)
+            {
+                Draw.UseGradientFill = true;
+                Draw.GradientFill = shapes.rectangleParameters.fill;
+            }
+
+            switch (shapes.rectangleParameters.type)
+            {
+                case Rectangle.RectangleType.HardSolid:
+                    Draw.Rectangle(
+                        pos: tr.position + shapes.offsets.position,
+                        rot: shapes.offsets.rotation,
+                        size: shapes.rectangleParameters.size,
+                        pivot: shapes.rectangleParameters.pivot
+                    );
+                    break;
+                case Rectangle.RectangleType.RoundedSolid:
+                    Draw.Rectangle(
+                        pos: tr.position + shapes.offsets.position,
+                        rot: shapes.offsets.rotation,
+                        size: shapes.rectangleParameters.size,
+                        pivot: shapes.rectangleParameters.pivot
+                    );
+                    break;
+                case Rectangle.RectangleType.HardBorder:
+                    Draw.RectangleBorder(
+                        pos: tr.position + shapes.offsets.position,
+                        rot: shapes.offsets.rotation,
+                        size: shapes.rectangleParameters.size,
+                        pivot: shapes.rectangleParameters.pivot,
+                        thickness: shapes.generals.thickness
+                    );
+                    break;
+                case Rectangle.RectangleType.RoundedBorder:
+                    Draw.RectangleBorder(
+                        pos: tr.position + shapes.offsets.position,
+                        rot: shapes.offsets.rotation,
+                        size: shapes.rectangleParameters.size,
+                        pivot: shapes.rectangleParameters.pivot,
+                        thickness: shapes.generals.thickness
+                    );
+                    break;
+                default:
+                    break;
+            }
+
+            Draw.UseGradientFill = false;
+            Draw.GradientFill = GradientFill.defaultFill;
         }
 
         //public void Add(InstanceID id)

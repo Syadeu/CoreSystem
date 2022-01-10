@@ -43,6 +43,13 @@ namespace Syadeu.Presentation.Components
                 item.OnInitialize();
             }
         }
+        protected override void OnShutDown()
+        {
+            foreach (var item in m_Processors.Values)
+            {
+                item.Dispose();
+            }
+        }
 
         public void ProcessOnCreated(in InstanceID entity, Type componentType, UnsafeReference value)
         {

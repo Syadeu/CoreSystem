@@ -60,18 +60,8 @@ namespace Syadeu.Presentation.Grid
     }
     internal sealed class GridDetectorComponentProcessor : ComponentProcessor<GridDetectorComponent>
     {
-        protected override void OnInitialize()
-        {
-            $"{nameof(GridDetectorComponent)} processor init".ToLog();
-        }
-        protected override void OnCreated(in InstanceID entity, ref GridDetectorComponent component)
-        {
-            "GridDetectorComponent proces creat".ToLog();
-        }
         protected override void OnDestroy(in InstanceID entity, ref GridDetectorComponent component)
         {
-            "GridDetectorComponent proces destroy".ToLog();
-
             PresentationSystem<DefaultPresentationGroup, WorldGridSystem>
                 .System.GetModule<GridDetectorModule>()
                 .RemoveDetector(in entity, ref component);

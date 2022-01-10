@@ -127,13 +127,15 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnInitialize();
         }
-        protected override void OnDispose()
+        protected override void OnShutDown()
         {
             Destroy(m_GridOutlineRenderer.gameObject);
             Destroy(m_GridPathlineRenderer.gameObject);
 
-            //m_GridOutlineBuffer.Release();
-
+            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+        }
+        protected override void OnDispose()
+        {
             m_GridTempMoveables.Dispose();
             m_GridTempOutlines.Dispose();
             m_GridTempPathlines.Dispose();
@@ -157,7 +159,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
+
+            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
         }
+
         private void Bind(NavMeshSystem other)
         {
             m_NavMeshSystem = other;
@@ -166,6 +171,30 @@ namespace Syadeu.Presentation.TurnTable
         #endregion
 
         private bool m_DrawMesh = false;
+        private List<GridIndex> m_DrawIndices = new List<GridIndex>();
+
+        private void M_RenderSystem_OnRender(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
+        {
+            using (Shapes.Draw.DashedScope())
+            using (Shapes.Draw.Command(arg2))
+            {
+                Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+                    Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
+
+                for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                {
+                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + new float3(0, .1f, 0);
+
+                    Shapes.Draw.RectangleBorder(
+                        pos: pos,
+                        normal: math.up(),
+                        size: (float2)m_GridSystem.CellSize,
+                        pivot: Shapes.RectPivot.Center,
+                        thickness: .03f
+                    );
+                }
+            }
+        }
 
         protected override PresentationResult AfterPresentation()
         {
@@ -178,6 +207,8 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
+
+        #region Math
 
         public void GetMoveablePositions(in InstanceID entity,
             ref NativeList<GridIndex> gridPositions)
@@ -353,6 +384,8 @@ namespace Syadeu.Presentation.TurnTable
             return false;
         }
 
+        #endregion
+
         #region UI
 
         public void DrawUICell(Entity<IEntityData> entity)
@@ -409,6 +442,8 @@ namespace Syadeu.Presentation.TurnTable
                 if (!m_IsDrawingGrids) return;
 
                 //m_GridSystem.ClearUICell();
+                m_GridTempMoveables.Clear();
+                m_GridTempOutlines.Clear();
 
                 m_GridOutlineRenderer.positionCount = 0;
 

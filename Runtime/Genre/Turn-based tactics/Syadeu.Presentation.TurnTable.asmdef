@@ -15,7 +15,8 @@
         "DOTween.Modules",
         "DOTweenPro.Scripts",
         "Syadeu.Presentation.Dotween",
-        "ShapesRuntime"
+        "ShapesRuntime",
+        "Unity.RenderPipelines.HighDefinition.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

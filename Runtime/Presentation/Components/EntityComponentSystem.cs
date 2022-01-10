@@ -77,7 +77,19 @@ namespace Syadeu.Presentation.Components
 
         private ActionWrapper m_CompleteAllDisposedComponents;
 
+        /// <summary>
+        /// 해당 타입의 컴포넌트가 <see cref="InstanceID"/> 에 추가되었을 때 발생하는 이벤트입니다.
+        /// </summary>
+        /// <remarks>
+        /// 단일 컴포넌트에 대한 이벤트는 여기에 적합하지 않습니다. <seealso cref="ComponentProcessor{TComponent}"/> 를 참조하세요.
+        /// </remarks>
         public event Action<InstanceID, Type> OnComponentAdded;
+        /// <summary>
+        /// 해당 타입의 컴포넌트가 <see cref="InstanceID"/> 에서 제거되었을 때 발생하는 이벤트입니다.
+        /// </summary>
+        /// <remarks>
+        /// 단일 컴포넌트에 대한 이벤트는 여기에 적합하지 않습니다. <seealso cref="ComponentProcessor{TComponent}"/> 를 참조하세요.
+        /// </remarks>
         public event Action<InstanceID, Type> OnComponentRemove;
 
         public int BufferLength => m_ComponentArrayBuffer.Length;
