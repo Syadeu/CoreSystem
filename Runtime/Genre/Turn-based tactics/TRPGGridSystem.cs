@@ -22,6 +22,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
@@ -72,6 +73,7 @@ namespace Syadeu.Presentation.TurnTable
         private WorldGridSystem m_GridSystem;
         private RenderSystem m_RenderSystem;
         private NavMeshSystem m_NavMeshSystem;
+        private EventSystem m_EventSystem;
 
         #region Presentation Methods
 
@@ -126,6 +128,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -135,6 +138,8 @@ namespace Syadeu.Presentation.TurnTable
             Destroy(m_GridPathlineRenderer.gameObject);
 
             m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+
+            m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
         }
         protected override void OnDispose()
         {
@@ -146,6 +151,7 @@ namespace Syadeu.Presentation.TurnTable
             m_GridSystem = null;
             m_RenderSystem = null;
             m_NavMeshSystem = null;
+            m_EventSystem = null;
         }
 
         #region Binds
@@ -164,13 +170,35 @@ namespace Syadeu.Presentation.TurnTable
 
             m_RenderSystem.OnRender += M_RenderSystem_OnRender;
         }
-
         private void Bind(NavMeshSystem other)
         {
             m_NavMeshSystem = other;
         }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+
+            m_EventSystem.AddEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
+        }
 
         #endregion
+
+        #region Event Handlers
+
+        private void OnShortcutStateChangedEventHandler(OnShortcutStateChangedEvent ev)
+        {
+            switch (ev.ShortcutType)
+            {
+                default:
+                case UI.ShortcutType.None:
+                    break;
+                case UI.ShortcutType.Move:
+                    m_GridSystem.EnableCursorObserve(ev.Enabled);
+                    break;
+                case UI.ShortcutType.Attack:
+                    break;
+            }
+        }
 
         private bool m_DrawMesh = false;
         private List<GridIndex> m_DrawIndices = new List<GridIndex>();
@@ -205,6 +233,8 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
+        #endregion
+
         protected override PresentationResult AfterPresentation()
         {
             if (m_DrawMesh)
@@ -225,26 +255,44 @@ namespace Syadeu.Presentation.TurnTable
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
 
-            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            //FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            //m_TempIndices.Clear();
             // TODO : Temp code
-            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref list);
+            //m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref m_TempIndices);
 
             gridPositions.Clear();
-            for (int i = 0; i < list.Length; i++)
+            FixedList4096Bytes<GridIndex> foundPath = new FixedList4096Bytes<GridIndex>();
+            foreach (var item in m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint)))
             {
-                if (m_GridSystem.HasEntityAt(list[i]) && !gridsize.IsMyIndex(list[i]))
+                if (!gridsize.IsMyIndex(item) && m_GridSystem.HasEntityAt(item))
                 {
                     continue;
                 }
-                else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
-                    pathCount > turnPlayer.ActionPoint)
+                else if (!m_GridSystem.GetPath(gridsize.Indices[0], item, ref foundPath) ||
+                    foundPath.Length > turnPlayer.ActionPoint)
                 {
                     continue;
                 }
 
-                gridPositions.Add((list[i]));
-                //$"{list[i].Location} added".ToLog();
+                gridPositions.Add(item);
             }
+
+            //for (int i = 0; i < m_TempIndices.Length; i++)
+            //{
+            //    //$"{list[i].Location} in".ToLog();
+            //    if (!gridsize.IsMyIndex(m_TempIndices[i]) && m_GridSystem.HasEntityAt(m_TempIndices[i]))
+            //    {
+            //        continue;
+            //    }
+            //    else if (!m_GridSystem.GetPath(gridsize.Indices[0], m_TempIndices[i], ref foundPath) ||
+            //        foundPath.Length > turnPlayer.ActionPoint)
+            //    {
+            //        continue;
+            //    }
+
+            //    gridPositions.Add(m_TempIndices[i]);
+            //    //$"{list[i].Location} added".ToLog();
+            //}
         }
         public void GetMoveablePositions(in InstanceID entity,
             ref FixedList4096Bytes<GridIndex> gridPositions)

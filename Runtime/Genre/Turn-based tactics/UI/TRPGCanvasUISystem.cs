@@ -207,6 +207,8 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             m_TRPGInputSystem.SetIngame_Default();
+
+            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(m_CurrentShortcut, false));
             m_CurrentShortcut = ShortcutType.None;
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
@@ -249,8 +251,6 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                     m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
-                    //m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
-
                     break;
                 case ShortcutType.Attack:
                     if (!ctr.HasProvider<TRPGActorAttackProvider>())
@@ -279,12 +279,14 @@ namespace Syadeu.Presentation.TurnTable.UI
                         attackComponent.SetTarget(0);
                     }
 
-                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetEntity<IEntity>().transform);
+                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetTransform());
 
                     m_CurrentShortcut = ShortcutType.Attack;
 
                     break;
             }
+
+            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
         }
         private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
         {

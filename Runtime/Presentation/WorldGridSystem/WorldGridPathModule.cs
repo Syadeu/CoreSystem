@@ -305,6 +305,7 @@ namespace Syadeu.Presentation.Grid
                         current = path[current.parentArrayIdx];
                     }
 
+                    foundPath.Clear();
                     foundPath.Add(from);
                     for (int i = length - 1; i >= 0; i--)
                     {

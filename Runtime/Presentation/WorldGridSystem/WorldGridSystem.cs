@@ -621,6 +621,119 @@ namespace Syadeu.Presentation.Grid
             CloseDistance
         }
 
+        public struct RangeEnumerator : IEnumerable<GridIndex>
+        {
+            private WorldGrid m_Grid;
+            private GridIndex m_From;
+            private int3 m_Range;
+
+            internal RangeEnumerator(
+                in WorldGrid grid, 
+                in GridIndex from, 
+                in int3 range)
+            {
+                m_Grid = grid;
+                m_From = from;
+                m_Range = range;
+            }
+
+            public IEnumerator<GridIndex> GetEnumerator()
+            {
+                int maxCount = ((m_Range.x * 2) + 1) * ((m_Range.z * 2) + 1) * ((m_Range.y * 2) + 1);
+                if (maxCount > 255)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"You\'re trying to get range of grid that exceeding length 255. " +
+                        $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
+                }
+
+                int3
+                    location = m_From.Location,
+                    minRange, maxRange;
+                m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+
+                int
+                    minX = location.x - m_Range.x < 0 ? 0 : math.min(location.x - m_Range.x, maxRange.x),
+                    maxX = location.x + m_Range.x < 0 ? 0 : math.min(location.x + m_Range.x, maxRange.x),
+
+                    minY = location.y - m_Range.y < 0 ?
+                        math.max(location.y - m_Range.y, minRange.y) : math.min(location.y - m_Range.y, maxRange.y),
+                    maxY = location.y + m_Range.y < 0 ?
+                        math.max(location.y + m_Range.y, minRange.y) : math.min(location.y + m_Range.y, maxRange.y),
+
+                    minZ = location.z - m_Range.z < 0 ? 0 : math.min(location.z - m_Range.z, maxRange.z),
+                    maxZ = location.z + m_Range.z < 0 ? 0 : math.min(location.z + m_Range.z, maxRange.z);
+
+                int3
+                    start = new int3(minX, minY, minZ),
+                    end = new int3(maxX, maxY, maxZ);
+
+                int count = 0;
+                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+                {
+                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+                    {
+                        for (int z = start.z;
+                            z < end.z + 1 && count < maxCount;
+                            z++, count++)
+                        {
+                            yield return new GridIndex(m_Grid.m_CheckSum, new int3(x, y, z));
+                        }
+                    }
+                }
+
+                //unsafe
+                //{
+                //    int3* buffer = stackalloc int3[maxCount];
+                //    int count = 0;
+                //    for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+                //    {
+                //        for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+                //        {
+                //            for (int z = start.z;
+                //                z < end.z + 1 && count < maxCount;
+                //                z++, count++)
+                //            {
+                //                buffer[count] = new int3(x, y, z);
+                //            }
+                //        }
+                //    }
+
+                //    if (m_SortOption == SortOption.CloseDistance)
+                //    {
+                //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
+                //    }
+
+                //    for (int i = 0; i < count && i < 255; i++)
+                //    {
+                //        yield return new GridIndex(m_Grid.m_CheckSum, buffer[i]);
+                //    }
+                //}
+            }
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public RangeEnumerator GetRange(in InstanceID from,
+            in int3 range)
+        {
+            CompleteJobs();
+
+            if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
+            {
+                "err".ToLogError();
+                return default(RangeEnumerator);
+            }
+
+            // TODO : Temp code
+            return GetRange(new GridIndex(m_Grid.m_CheckSum, index), in range);
+        }
+        public RangeEnumerator GetRange(in GridIndex from,
+            in int3 range)
+        {
+            return new RangeEnumerator(in m_Grid, in from, in range);
+        }
+
+        [Obsolete]
         [SkipLocalsInit]
         public void GetRange(in GridIndex from,
             in int3 range,
@@ -633,7 +746,7 @@ namespace Syadeu.Presentation.Grid
                 return;
             }
 
-            int maxCount = (range.x + 1) * (range.z + 1) * (range.y + 1);
+            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
             if (maxCount > 255)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
@@ -694,6 +807,7 @@ namespace Syadeu.Presentation.Grid
                 }
             }
         }
+        [Obsolete]
         public void GetRange(in InstanceID from,
             in int3 range,
             ref FixedList4096Bytes<GridIndex> output,
@@ -710,6 +824,7 @@ namespace Syadeu.Presentation.Grid
             // TODO : Temp code
             GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
         }
+        [Obsolete]
         [SkipLocalsInit]
         public void GetRange(in GridIndex from,
             in int3 range,
@@ -722,7 +837,7 @@ namespace Syadeu.Presentation.Grid
                 return;
             }
 
-            int maxCount = (range.x + 1) * (range.z + 1) * (range.y + 1);
+            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
             if (maxCount > 255)
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
@@ -979,6 +1094,13 @@ namespace Syadeu.Presentation.Grid
                 m_EventSystem.PostEvent(OnGridCellPreseedEvent.GetEvent(m_CurrentOverlayIndex));
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="OnGridCellCursorOverrapEvent"/>, <seealso cref="OnGridCellPreseedEvent"/>
+        /// </remarks>
+        /// <param name="enable"></param>
         public void EnableCursorObserve(bool enable)
         {
             m_EnabledCursorObserve = enable;
