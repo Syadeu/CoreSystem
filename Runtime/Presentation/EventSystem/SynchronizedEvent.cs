@@ -41,6 +41,7 @@ namespace Syadeu.Presentation
         public override sealed string Name => TypeHelper.TypeOf<TEvent>.Name;
         public override sealed Type EventType => TypeHelper.TypeOf<TEvent>.Type;
 
+#line hidden
         internal static void AddEvent(Action<TEvent> ev)
         {
             int hash = ev.GetHashCode();
@@ -74,7 +75,8 @@ namespace Syadeu.Presentation
             temp.Reserve();
             s_EventActions.Remove(hash);
         }
-        
+#line default
+
         internal override sealed void InternalPost()
         {
             using (s_Marker.Auto())

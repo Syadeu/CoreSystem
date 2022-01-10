@@ -66,6 +66,8 @@ namespace Syadeu.Presentation.TurnTable
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
+        private static float3 s_DefaultYOffset = new float3(0, .25f, 0);
+
         private InputSystem m_InputSystem;
         private WorldGridSystem m_GridSystem;
         private RenderSystem m_RenderSystem;
@@ -175,23 +177,30 @@ namespace Syadeu.Presentation.TurnTable
 
         private void M_RenderSystem_OnRender(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
         {
-            using (Shapes.Draw.DashedScope())
             using (Shapes.Draw.Command(arg2))
             {
-                Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                    Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
-
-                for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                using (Shapes.Draw.DashedScope())
                 {
-                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + new float3(0, .1f, 0);
+                    Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+                       Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
 
-                    Shapes.Draw.RectangleBorder(
-                        pos: pos,
-                        normal: math.up(),
-                        size: (float2)m_GridSystem.CellSize,
-                        pivot: Shapes.RectPivot.Center,
-                        thickness: .03f
-                    );
+                    for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                    {
+                        var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + s_DefaultYOffset;
+
+                        Shapes.Draw.RectangleBorder(
+                            pos: pos,
+                            normal: math.up(),
+                            size: (float2)m_GridSystem.CellSize,
+                            pivot: Shapes.RectPivot.Center,
+                            thickness: .03f
+                        );
+                    }
+                }
+
+                if (m_ShapesOutlinePath.Count > 0)
+                {
+                    Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
                 }
             }
         }
@@ -388,6 +397,8 @@ namespace Syadeu.Presentation.TurnTable
 
         #region UI
 
+        private Shapes.PolylinePath m_ShapesOutlinePath = new Shapes.PolylinePath();
+
         public void DrawUICell(Entity<IEntityData> entity)
         {
             using (m_DrawUICellMarker.Auto())
@@ -407,15 +418,16 @@ namespace Syadeu.Presentation.TurnTable
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
                 CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
-                m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
-                m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
+                m_ShapesOutlinePath.ClearAllPoints();
+                for (int i = 0; i < m_GridTempOutlines.Length; i++)
+                {
+                    m_ShapesOutlinePath.AddPoint(m_GridTempOutlines[i]);
+                }
+
+                //m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
+                //m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
 
                 GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
-
-                //for (int i = 0; i < m_GridTempMoveables.Length; i++)
-                //{
-                //    PlaceUICell(in gridSize, m_GridTempMoveables[i]);
-                //}
 
 #if CORESYSTEM_HDRP
                 m_GridOutlineCamera = m_RenderSystem.GetProjectionCamera(
@@ -445,6 +457,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridTempMoveables.Clear();
                 m_GridTempOutlines.Clear();
 
+                m_ShapesOutlinePath.ClearAllPoints();
                 m_GridOutlineRenderer.positionCount = 0;
 
 #if CORESYSTEM_HDRP

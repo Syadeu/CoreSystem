@@ -191,6 +191,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 default:
                 case ShortcutType.None:
+                    break;
                 case ShortcutType.Move:
                     m_TRPGGridSystem.ClearUICell();
                     m_TRPGGridSystem.ClearUIPath();
@@ -236,6 +237,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 default:
                 case ShortcutType.None:
+                    break;
                 case ShortcutType.Move:
                     m_TRPGCameraMovement.SetNormal();
 

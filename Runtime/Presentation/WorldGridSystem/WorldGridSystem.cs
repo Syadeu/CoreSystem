@@ -23,6 +23,8 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Map;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -31,6 +33,7 @@ using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Grid
 {
@@ -53,8 +56,12 @@ namespace Syadeu.Presentation.Grid
 
         private UnsafeFixedQueue<InstanceID> m_NeedUpdateEntities;
 
+        private bool m_EnabledCursorObserve = false;
+
         private EntityComponentSystem m_ComponentSystem;
         private EventSystem m_EventSystem;
+        private InputSystem m_InputSystem;
+        private LevelDesignSystem m_LevelDesignSystem;
 
         internal WorldGrid Grid => m_Grid;
         public float CellSize => m_Grid.cellSize;
@@ -75,6 +82,9 @@ namespace Syadeu.Presentation.Grid
 
             RequestSystem<DefaultPresentationGroup, EntityComponentSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+
+            RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -97,6 +107,9 @@ namespace Syadeu.Presentation.Grid
 
             m_ComponentSystem = null;
             m_EventSystem = null;
+            m_InputSystem = null;
+
+            m_LevelDesignSystem = null;
         }
 
         #region Binds
@@ -113,6 +126,14 @@ namespace Syadeu.Presentation.Grid
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+        }
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
+        }
+        private void Bind(LevelDesignSystem other)
+        {
+            m_LevelDesignSystem = other;
         }
 
         private void M_ComponentSystem_OnComponentAdded(InstanceID arg1, Type arg2)
@@ -184,6 +205,8 @@ namespace Syadeu.Presentation.Grid
             }
             
             if (requireReindex) FullIndexingUpdate();
+
+            UpdateCursorObservation();
 
             return base.BeforePresentation();
         }
@@ -883,6 +906,8 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
+        #region Path
+
         public bool HasPath(
             in GridIndex from,
             in GridIndex to,
@@ -909,5 +934,75 @@ namespace Syadeu.Presentation.Grid
 
             return GetModule<WorldGridPathModule>().GetPath(new GridIndex(m_Grid.m_CheckSum, index), in to, ref foundPath, in maxIteration);
         }
+
+        #endregion
+
+        #region Cursor
+
+        private GridIndex m_CurrentOverlayIndex;
+//        public GridIndex CurrentOverlayIndex
+//        {
+//            get
+//            {
+//#if DEBUG_MODE
+//                if (!m_EnabledCursorObserve)
+//                {
+//                    CoreSystem.Logger.LogError(Channel.Presentation,
+//                        $"You\'re trying to get grid index at cursor but currently not observing cursor. You should enable observation with {nameof(EnableCursorObserve)} method.");
+//                }
+//#endif
+//                return m_CurrentOverlayIndex;
+//            }
+//        }
+
+        private void UpdateCursorObservation()
+        {
+            if (!m_EnabledCursorObserve) return;
+
+            if (!TryGetGridIndexAtCursor(out GridIndex index))
+            {
+                m_CurrentOverlayIndex = default(GridIndex);
+                return;
+            }
+
+            if (!m_CurrentOverlayIndex.Equals(index))
+            {
+                m_CurrentOverlayIndex = index;
+                //$"pointing {index}, {info.point}".ToLog();
+
+                m_EventSystem.PostEvent(OnGridCellCursorOverrapEvent.GetEvent(m_CurrentOverlayIndex));
+            }
+
+            if (m_InputSystem.IsCursorPressedInThisFrame)
+            {
+                //$"press {index}, {info.point}".ToLog();
+                m_EventSystem.PostEvent(OnGridCellPreseedEvent.GetEvent(m_CurrentOverlayIndex));
+            }
+        }
+        public void EnableCursorObserve(bool enable)
+        {
+            m_EnabledCursorObserve = enable;
+
+            m_CurrentOverlayIndex = default(GridIndex);
+        }
+        public bool TryGetGridIndexAtCursor(out GridIndex index)
+        {
+            Ray ray = m_InputSystem.CursorRay;
+
+            if (!m_LevelDesignSystem.Raycast(ray, out var info) || 
+                !m_Grid.Contains(info.point))
+            {
+                //$"retrn {info.point}".ToLog();
+                index = default(GridIndex);
+                return false;
+            }
+
+            ulong temp = m_Grid.PositionToIndex(info.point);
+            index = new GridIndex(m_Grid.m_CheckSum, temp);
+
+            return true;
+        }
+
+        #endregion
     }
 }

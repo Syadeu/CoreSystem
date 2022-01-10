@@ -129,40 +129,6 @@ namespace Syadeu.Presentation.Grid
 
         #endregion
 
-        private GridIndex m_CurrentOverlayIndex;
-        protected override void OnPresentation()
-        {
-            if (!m_DrawGrid) return;
-
-            Ray ray = m_InputSystem.CursorRay;
-
-            if (!m_LevelDesignSystem.Raycast(ray, out var info) || !System.Grid.Contains(info.point))
-            {
-                //$"retrn {info.point}".ToLog();
-                m_CurrentOverlayIndex = default(GridIndex);
-                return;
-            }
-
-            ulong temp = System.Grid.PositionToIndex(info.point);
-            GridIndex index = new GridIndex(System.Grid.m_CheckSum, temp);
-
-            if (!m_CurrentOverlayIndex.Equals(index))
-            {
-                m_CurrentOverlayIndex = index;
-                //$"pointing {index}, {info.point}".ToLog();
-
-                m_EventSystem.PostEvent(OnGridCellCursorOverrapEvent.GetEvent(m_CurrentOverlayIndex));
-            }
-
-            if (m_InputSystem.IsCursorPressedInThisFrame)
-            {
-                $"press {index}, {info.point}".ToLog();
-                m_EventSystem.PostEvent(OnGridCellPreseedEvent.GetEvent(m_CurrentOverlayIndex));
-            }
-
-            //"asd".ToLog();
-        }
-
         static void DrawGridGL(WorldGrid grid, float thickness)
         {
             const float yOffset = .15f;
