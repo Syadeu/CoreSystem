@@ -108,6 +108,7 @@ namespace Syadeu.Presentation.Render
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;
+        public event Action<ScriptableRenderContext, Camera> OnRenderShapes;
 
         private JobHandle m_RenderJobHandle;
 
@@ -190,6 +191,13 @@ namespace Syadeu.Presentation.Render
             m_RenderJobHandle.Complete();
 
             OnRender?.Invoke(ctx, cam);
+
+#if CORESYSTEM_SHAPES
+            using (Shapes.Draw.Command(cam))
+            {
+                OnRenderShapes?.Invoke(ctx, cam);
+            }
+#endif
         }
 
         protected override PresentationResult BeforePresentation()

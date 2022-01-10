@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Render
         {
             m_RenderSystem = other;
 
-            m_RenderSystem.OnRender += RenderPipelineManager_beginCameraRendering;
+            m_RenderSystem.OnRenderShapes += RenderPipelineManager_beginCameraRendering;
         }
         private void Bind(GameObjectProxySystem other)
         {
@@ -84,7 +84,7 @@ namespace Syadeu.Presentation.Render
 
         protected override void OnShutDown()
         {
-            m_RenderSystem.OnRender -= RenderPipelineManager_beginCameraRendering;
+            m_RenderSystem.OnRenderShapes -= RenderPipelineManager_beginCameraRendering;
         }
         protected override void OnDispose()
         {
@@ -100,8 +100,9 @@ namespace Syadeu.Presentation.Render
 
         private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext arg1, Camera arg2)
         {
+            Shapes.Draw.Push();
+
             using (s_RenderShapesMarker.Auto())
-            using (Draw.Command(arg2))
             { 
                 int count = m_BatchedShapeEntities.Count;
                 for (int i = 0; i < count; i++)
@@ -119,6 +120,8 @@ namespace Syadeu.Presentation.Render
 
                 m_RenderSystem.ScheduleAtRender<PrepareBatchShapesJob, ShapesComponent>(prepareJob);
             }
+
+            Shapes.Draw.Pop();
         }
 
         private static void DrawShapes(in Camera camera, in ShapesComponent shapes)

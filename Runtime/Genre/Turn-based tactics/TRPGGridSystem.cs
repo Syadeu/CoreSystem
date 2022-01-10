@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.TurnTable
             Destroy(m_GridOutlineRenderer.gameObject);
             Destroy(m_GridPathlineRenderer.gameObject);
 
-            m_RenderSystem.OnRender -= M_RenderSystem_OnRender;
+            m_RenderSystem.OnRenderShapes -= M_RenderSystem_OnRender;
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
         }
@@ -168,7 +168,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_RenderSystem = other;
 
-            m_RenderSystem.OnRender += M_RenderSystem_OnRender;
+            m_RenderSystem.OnRenderShapes += M_RenderSystem_OnRender;
         }
         private void Bind(NavMeshSystem other)
         {
@@ -205,32 +205,34 @@ namespace Syadeu.Presentation.TurnTable
 
         private void M_RenderSystem_OnRender(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
         {
-            using (Shapes.Draw.Command(arg2))
+            Shapes.Draw.Push();
+
+            using (Shapes.Draw.DashedScope())
             {
-                using (Shapes.Draw.DashedScope())
+                Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+                   Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
+
+                for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
-                    Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                       Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
+                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + s_DefaultYOffset;
 
-                    for (int i = 0; i < m_GridTempMoveables.Length; i++)
-                    {
-                        var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + s_DefaultYOffset;
-
-                        Shapes.Draw.RectangleBorder(
-                            pos: pos,
-                            normal: math.up(),
-                            size: (float2)m_GridSystem.CellSize,
-                            pivot: Shapes.RectPivot.Center,
-                            thickness: .03f
-                        );
-                    }
-                }
-
-                if (m_ShapesOutlinePath.Count > 0)
-                {
-                    Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+                    Shapes.Draw.RectangleBorder(
+                        pos: pos,
+                        normal: math.up(),
+                        size: (float2)m_GridSystem.CellSize,
+                        pivot: Shapes.RectPivot.Center,
+                        thickness: .03f
+                    );
                 }
             }
+
+            if (m_ShapesOutlinePath.Count > 0)
+            {
+                //Shapes.Draw.
+                Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+            }
+
+            Shapes.Draw.Pop();
         }
 
         #endregion
