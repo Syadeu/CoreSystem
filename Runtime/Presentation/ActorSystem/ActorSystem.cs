@@ -140,17 +140,8 @@ namespace Syadeu.Presentation.Actor
             {
                 if (m_CurrentEvent.Event.EventSequence.KeepWait)
                 {
-                    if (Time.time - m_CurrentEvent.EventSetTime > 10)
-                    {
-                        m_CurrentEvent.StartTime += m_CurrentEvent.Event.EventSequence.AfterDelay;
-
-                        "somethings wrong. exit event".ToLogError();
-                    }
-                    else
-                    {
-                        handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
-                        return;
-                    }
+                    handler.SetEvent(SystemEventResult.Wait, m_CurrentEvent.Event.EventType);
+                    return;
                 }
 
                 if (!m_CurrentEvent.TimerStarted)
@@ -226,7 +217,7 @@ namespace Syadeu.Presentation.Actor
         private class EventContainer
         {
             public IEventHandler Event { get; private set; }
-            public float EventSetTime { get; private set; }
+            //public float EventSetTime { get; private set; }
 
             public bool TimerStarted;
             public float StartTime;
@@ -239,7 +230,7 @@ namespace Syadeu.Presentation.Actor
             public void SetEvent(IEventHandler ev)
             {
                 Event = ev;
-                EventSetTime = Time.time;
+                //EventSetTime = Time.time;
             }
             public void Clear(CLRContainer<IEventHandler> pool, NativeHashSet<ActorEventHandler> scheduledEventIDs)
             {

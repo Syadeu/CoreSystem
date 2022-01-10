@@ -596,6 +596,7 @@ namespace Syadeu.Presentation.Map
                         agent.SetDestination(m_Positions[0]);
                         SetPreviousPosition(m_Positions[0]);
 
+                        //"1".ToLog();
                         yield return null;
                         continue;
                     }
@@ -617,30 +618,32 @@ namespace Syadeu.Presentation.Map
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
                     navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
+                    //"2".ToLog();
                     yield return null;
                 }
 
-                while (tr.hasProxy && agent.remainingDistance > .1f && !agent.isStopped)
-                {
-                    SetDirection(agent.desiredVelocity);
-                    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
+                //while (tr.hasProxy && agent.remainingDistance > .1f && agent.hasPath)
+                //{
+                //    SetDirection(agent.desiredVelocity);
+                //    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
 
-                    if (!rootMotion)
-                    {
-                        tr.position = agent.nextPosition;
-                        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
-                    }
-                    else
-                    {
-                        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
-                    }
+                //    if (!rootMotion)
+                //    {
+                //        tr.position = agent.nextPosition;
+                //        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
+                //    }
+                //    else
+                //    {
+                //        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
+                //    }
 
-                    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
-                        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
-                    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
+                //    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
+                //        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
+                //    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
-                    yield return null;
-                }
+                //    "3".ToLog();
+                //    yield return null;
+                //}
 
                 do
                 {
@@ -661,9 +664,10 @@ namespace Syadeu.Presentation.Map
                         entity, OnMoveStateChangedEvent.MoveState.OnMoving));
                     navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
 
+                    //"4".ToLog();
                     yield return null;
                 } while (navAgent.m_UpdateTRSWhile.Length > 0 &&
-                        navAgent.m_UpdateTRSWhile.Execute(m_Entity.ToEntity<IObject>(), out bool predicate) && predicate && !agent.isStopped);
+                        navAgent.m_UpdateTRSWhile.Execute(m_Entity.ToEntity<IObject>(), out bool predicate) && predicate);
 
                 SetDirection(0);
                 agent.ResetPath();
@@ -741,7 +745,6 @@ namespace Syadeu.Presentation.Map
             }
         }
         public float AfterDelay => m_AfterDelay;
-        public bool BurstCompile => false;
 
         public ActorMoveEvent(Entity<IEntityData> entity, float afterDelay, TPredicate predicate)
         {

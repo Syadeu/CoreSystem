@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.Events
         }
         internal bool IsExceedTimeout(float timeout)
         {
-            if (CoreSystem.time - m_EnteredTime < timeout) return true;
+            if (CoreSystem.time - m_EnteredTime > timeout) return true;
             return false;
         }
 
