@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEditor;
 
 using UnityEditor.IMGUI.Controls;
@@ -17,15 +18,30 @@ namespace SyadeuEditor
         string m_CurrentName = string.Empty;
         SearchField m_SearchField;
 
+        private bool m_Closed = false;
+
         IList<TA> m_List;
         Func<TA, T> m_Getter;
         Action<T> m_Setter;
         Func<TA, string> m_GetName;
         T m_NoneValue;
 
+        public bool Closed => m_Closed;
+
         void ForceClose()
         {
             m_ShouldClose = true;
+        }
+        public async Task WaitForClose()
+        {
+            while (!m_Closed)
+            {
+                await Task.Delay(100);
+            }
+        }
+        public override void OnClose()
+        {
+            m_Closed = true;
         }
 
         private SelectorPopup(Action<T> setter, Func<TA, T> getter, IList<TA> list, T noneValue, Func<TA, string> getName)

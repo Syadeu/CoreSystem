@@ -66,7 +66,7 @@ namespace Syadeu.Presentation.Map
         {
             if (m_BindScene)
             {
-                if (m_SceneIndex < 0 || SceneList.Instance.Scenes.Count <= m_SceneIndex) return false;
+                if (m_SceneIndex < 0 || SceneSettings.Instance.Scenes.Count <= m_SceneIndex) return false;
             }
             if (m_MapData == null || m_MapData.Length == 0) return false;
             return true;
@@ -74,8 +74,8 @@ namespace Syadeu.Presentation.Map
 
         public SceneReference GetTargetScene()
         {
-            if (m_SceneIndex < 0 || SceneList.Instance.Scenes.Count <= m_SceneIndex) return null;
-            return SceneList.Instance.Scenes[m_SceneIndex];
+            if (m_SceneIndex < 0 || SceneSettings.Instance.Scenes.Count <= m_SceneIndex) return null;
+            return SceneSettings.Instance.Scenes[m_SceneIndex];
         }
         public ICustomYieldAwaiter LoadAllAssets()
         {

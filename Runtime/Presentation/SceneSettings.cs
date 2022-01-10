@@ -22,7 +22,8 @@ using UnityEngine;
 
 namespace Syadeu.Mono
 {
-    public sealed class SceneList : StaticSettingEntity<SceneList>
+    [PreferBinarySerialization]
+    public sealed class SceneSettings : StaticSettingEntity<SceneSettings>
     {
         public SceneReference CustomLoadingScene;
 
@@ -32,11 +33,16 @@ namespace Syadeu.Mono
 
         public List<SceneReference> Scenes = new List<SceneReference>();
 
+        [SerializeField]
+        private PrefabReference<GameObject> m_CameraPrefab = PrefabReference<GameObject>.None;
+
+        public PrefabReference<GameObject> CameraPrefab => m_CameraPrefab;
+
         public SceneReference GetScene(string path)
         {
             if (CustomLoadingScene != null && CustomLoadingScene.ScenePath.Equals(path)) return CustomLoadingScene;
-            if (MasterScene != null && MasterScene.ScenePath.Equals(path)) return MasterScene;
-            if (StartScene != null && StartScene.ScenePath.Equals(path)) return StartScene;
+            else if (MasterScene != null && MasterScene.ScenePath.Equals(path)) return MasterScene;
+            else if (StartScene != null && StartScene.ScenePath.Equals(path)) return StartScene;
 
             for (int i = 0; i < Scenes.Count; i++)
             {

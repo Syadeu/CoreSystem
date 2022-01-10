@@ -73,7 +73,14 @@ namespace SyadeuEditor.Utilities
             });
             if (iter.Any())
             {
-                var ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type);
+                var ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type, TypeHelper.TypeOf<bool>.Type);
+
+                if (ctor != null)
+                {
+                    return (ObjectDrawerBase)ctor.Invoke(new object[] { parentObject, memberInfo, drawName });
+                }
+
+                ctor = TypeHelper.GetConstructorInfo(iter.First(), TypeHelper.TypeOf<object>.Type, TypeHelper.TypeOf<MemberInfo>.Type);
 
                 if (ctor != null)
                 {

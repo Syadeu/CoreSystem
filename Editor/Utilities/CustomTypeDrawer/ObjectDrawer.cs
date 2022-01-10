@@ -1,4 +1,5 @@
-﻿using Syadeu.Internal;
+﻿using Syadeu;
+using Syadeu.Internal;
 using System;
 using System.Collections;
 using System.Linq;
@@ -104,11 +105,35 @@ namespace SyadeuEditor.Utilities
             {
                 try
                 {
+                    T obj = m_Getter.Invoke();
+
                     if (m_Setter == null)
                     {
-                        Draw(m_Getter.Invoke());
+                        Draw(obj);
                     }
-                    else m_Setter.Invoke(Draw(m_Getter.Invoke()));
+                    else
+                    {
+                        T changed = Draw(obj);
+
+                        //if (obj is IEquatable<T> equal)
+                        //{
+                        //    if (!equal.Equals(changed))
+                            {
+                                m_Setter.Invoke(changed);
+                                GUI.changed = true;
+                                //"1 in".ToLog();
+                            }
+                        //}
+                        //else
+                        //{
+                        //    if (!obj.Equals(changed))
+                        //    {
+                        //        m_Setter.Invoke(changed);
+                        //        GUI.changed = true;
+                        //        "2 in".ToLog();
+                        //    }
+                        //}
+                    }
                 }
                 catch (Exception e)
                 {

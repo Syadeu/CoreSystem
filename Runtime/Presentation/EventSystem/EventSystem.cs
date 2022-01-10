@@ -273,6 +273,10 @@ namespace Syadeu.Presentation.Events
 
         private void ExecuteSystemTickets()
         {
+            const string
+                c_BlockingTooLongExceptionLog = 
+                    "Event({0}, from {1}) is blocking whole event sequence more than 30 seconds. Most likely, an exception has been raised. Exiting event.";
+
             if (m_CurrentTicket != null && 
                 (m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
             {
@@ -288,9 +292,16 @@ namespace Syadeu.Presentation.Events
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
-                    return;
+                    if (m_ScheduledEventHandler.IsExceedTimeout(30))
+                    {
+                        CoreSystem.Logger.LogError(Channel.Event,
+                            string.Format(c_BlockingTooLongExceptionLog, TypeHelper.ToString(m_ScheduledEventHandler.m_EventType), TypeHelper.ToString(m_ScheduledEventHandler.m_System.GetType())));
+                    }
+                    else return;
                 }
-                else m_CurrentTicket = null;
+
+                m_CurrentTicket = null;
+                m_ScheduledEventHandler.Reset();
             }
 
             int count = m_SystemTickets.Count;
@@ -311,8 +322,11 @@ namespace Syadeu.Presentation.Events
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
+                    m_ScheduledEventHandler.NotifyEnteringAwait(m_CurrentTicket);
                     break;
                 }
+
+                m_ScheduledEventHandler.Reset();
             }
         }
         public void TakeQueueTicket<TSystem>(TSystem scheduler) 

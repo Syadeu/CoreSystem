@@ -42,6 +42,7 @@ using System.Threading;
 
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
+using Unity.Mathematics;
 #endif
 
 namespace Syadeu.Presentation
@@ -70,11 +71,11 @@ namespace Syadeu.Presentation
 
         public Scene CurrentScene => m_CurrentScene;
         public PhysicsScene CurrentPhysicsScene => CurrentScene.GetPhysicsScene();
-        public SceneReference CurrentSceneRef => SceneList.Instance.GetScene(m_CurrentScene.path);
+        public SceneReference CurrentSceneRef => SceneSettings.Instance.GetScene(m_CurrentScene.path);
 
         public bool IsDebugScene => m_IsDebugScene;
         public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
-        public bool IsStartScene => CurrentSceneRef != null && CurrentSceneRef.Equals(SceneList.Instance.StartScene);
+        public bool IsStartScene => CurrentSceneRef != null && CurrentSceneRef.Equals(SceneSettings.Instance.StartScene);
 
         // OnSceneLoadCall -> OnLoadingEnter -> OnWaitLoading -> OnSceneChanged -> OnAfterLoading -> OnLoadingExit
 
@@ -175,7 +176,7 @@ namespace Syadeu.Presentation
             CreateConsoleCommands();
             if (m_DebugMode)
             {
-                if (SceneManager.GetActiveScene().path.Equals(SceneList.Instance.MasterScene))
+                if (SceneManager.GetActiveScene().path.Equals(SceneSettings.Instance.MasterScene))
                 {
                     SetupMasterScene();
                     SetupLoadingScene();
@@ -196,7 +197,7 @@ namespace Syadeu.Presentation
             #region Setups
             bool SetupMasterScene()
             {
-                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene))
+                if (string.IsNullOrEmpty(SceneSettings.Instance.MasterScene))
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
                         $"You\'re trying to start the game while MasterScene is not setted. " +
@@ -206,7 +207,7 @@ namespace Syadeu.Presentation
                 }
 
                 Scene temp = SceneManager.GetActiveScene();
-                string masterSceneName = Path.GetFileNameWithoutExtension(SceneList.Instance.MasterScene.ScenePath);
+                string masterSceneName = Path.GetFileNameWithoutExtension(SceneSettings.Instance.MasterScene.ScenePath);
                 if (temp.name.Equals(masterSceneName))
                 {
                     m_MasterScene = temp;
@@ -219,11 +220,21 @@ namespace Syadeu.Presentation
                     return false;
                 }
 
+#if DEBUG_MODE
+                if (SceneSettings.Instance.CameraPrefab.IsNone() || !SceneSettings.Instance.CameraPrefab.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Camera prefab is null. This is not allowed. " +
+                        $"You can set this at SetupWizard -> Scene tab.");
+                }
+#endif
+                SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
+
                 return true;
             }
             void SetupLoadingScene()
             {
-                if (string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath))
+                if (string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath))
                 {
                     m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
@@ -262,7 +273,7 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    m_LoadingScene = SceneManager.LoadScene(SceneList.Instance.CustomLoadingScene, new LoadSceneParameters
+                    m_LoadingScene = SceneManager.LoadScene(SceneSettings.Instance.CustomLoadingScene, new LoadSceneParameters
                     {
                         loadSceneMode = LoadSceneMode.Additive,
                         localPhysicsMode = LocalPhysicsMode.None
@@ -324,7 +335,7 @@ namespace Syadeu.Presentation
         {
             if (m_DebugMode)
             {
-                if (SceneManager.GetActiveScene().path.Equals(SceneList.Instance.MasterScene))
+                if (SceneManager.GetActiveScene().path.Equals(SceneSettings.Instance.MasterScene))
                 {
                     LoadStartScene(1, 2);
                 }
@@ -343,12 +354,21 @@ namespace Syadeu.Presentation
                 m_IsDebugScene = true;
                 Scene currentScene = SceneManager.GetActiveScene();
 
-                SceneReference sceneRef = SceneList.Instance.GetScene(currentScene.path);
+                SceneReference sceneRef = SceneSettings.Instance.GetScene(currentScene.path);
                 if (m_DebugMode && sceneRef != null)
                 {
                     m_CurrentScene = currentScene;
                     CoreSystem.WaitInvoke(1, () => StartSceneDependences(this, sceneRef));
                 }
+#if DEBUG_MODE
+                if (SceneSettings.Instance.CameraPrefab.IsNone() || !SceneSettings.Instance.CameraPrefab.IsValid())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Camera prefab is null. This is not allowed. " +
+                        $"You can set this at SetupWizard -> Scene tab.");
+                }
+#endif
+                SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 
                 OnSceneChanged?.Invoke();
 
@@ -364,9 +384,9 @@ namespace Syadeu.Presentation
 
             void GetSceneList(string cmd)
             {
-                for (int i = 0; i < SceneList.Instance.Scenes.Count; i++)
+                for (int i = 0; i < SceneSettings.Instance.Scenes.Count; i++)
                 {
-                    ConsoleWindow.Log($"{i}: {SceneList.Instance.Scenes[i].scenePath}");
+                    ConsoleWindow.Log($"{i}: {SceneSettings.Instance.Scenes[i].scenePath}");
                 }
             }
             void LoadStartSceneCmd(string cmd)
@@ -380,7 +400,7 @@ namespace Syadeu.Presentation
                     ConsoleWindow.Log($"Invalid argument: {cmd}", ResultFlag.Warning);
                     return;
                 }
-                if (sceneIdx >= SceneList.Instance.Scenes.Count)
+                if (sceneIdx >= SceneSettings.Instance.Scenes.Count)
                 {
                     ConsoleWindow.Log($"Invalid argument: {cmd}, exceeding scene index", ResultFlag.Warning);
                     return;
@@ -393,21 +413,21 @@ namespace Syadeu.Presentation
         #endregion
 
         /// <summary>
-        /// <see cref="SceneList.StartScene"/> 을 로드합니다.
+        /// <see cref="SceneSettings.StartScene"/> 을 로드합니다.
         /// </summary>
         /// <param name="postDelay"></param>
         public void LoadStartScene(float preDelay, float postDelay)
         {
-            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.StartScene, preDelay, postDelay));
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneSettings.Instance.StartScene, preDelay, postDelay));
         }
         /// <summary>
-        /// <see cref="SceneList.Scenes"/>에 있는 씬을 로드합니다.
+        /// <see cref="SceneSettings.Scenes"/>에 있는 씬을 로드합니다.
         /// </summary>
         /// <param name="index"></param>
         /// <param name="postDelay"></param>
         public void LoadScene(int index, float preDelay, float postDelay)
         {
-            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneList.Instance.Scenes[index], preDelay, postDelay));
+            m_LoadingEvent.Enqueue(() => InternalLoadScene(SceneSettings.Instance.Scenes[index], preDelay, postDelay));
         }
 
         /// <summary>
@@ -511,6 +531,9 @@ namespace Syadeu.Presentation
 
         private void InternalLoadScene(SceneReference scene, float preDelay, float postDelay, Action<AsyncOperation> onCompleted = null)
         {
+            const string
+                c_SceneChangeStartLog = "Scene change start from ({0}) to ({1})";
+
             //if (m_DebugMode) throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
             //    "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
             if (IsSceneLoading || m_AsyncOperation != null)
@@ -519,7 +542,8 @@ namespace Syadeu.Presentation
                 return;
             }
 
-            CoreSystem.Logger.Log(Channel.Scene, $"Scene change start from ({m_CurrentScene.name}) to ({Path.GetFileNameWithoutExtension(scene)})");
+            CoreSystem.Logger.Log(Channel.Scene, 
+                string.Format(c_SceneChangeStartLog, m_CurrentScene.name, Path.GetFileNameWithoutExtension(scene)));
 
             CompleteJob();
 
@@ -561,6 +585,28 @@ namespace Syadeu.Presentation
                 CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
 
                 m_CurrentScene = SceneManager.GetSceneByPath(scene);
+#if DEBUG_MODE && CORESYSTEM_HDRP
+                {
+                    GameObject[] roots = m_CurrentScene.GetRootGameObjects();
+                    Camera[] existingCameras;
+                    for (int i = 0; i < roots.Length; i++)
+                    {
+                        existingCameras = roots[i].GetComponentsInChildren<Camera>();
+                        if (existingCameras.Length > 0)
+                        {
+                            CoreSystem.Logger.LogError(Channel.Scene,
+                                $"Detecting camera(s) in this scene. " +
+                                $"HDRP doesn\'t allow multiple cameras.");
+#if UNITY_EDITOR
+                            foreach (var item in existingCameras)
+                            {
+                                UnityEditor.EditorGUIUtility.PingObject(item.gameObject);
+                            }
+#endif
+                        }
+                    }
+                }
+#endif
                 SceneManager.SetActiveScene(m_CurrentScene);
 
                 OnSceneChanged?.Invoke();

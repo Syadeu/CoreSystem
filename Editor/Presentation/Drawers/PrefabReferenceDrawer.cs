@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,8 +18,7 @@ namespace SyadeuEditor.Presentation
     {
         private readonly ConstructorInfo m_Constructor;
         private bool 
-            m_Open = false,
-            m_WasEdited = false;
+            m_Open = false/*, m_WasEdited = false*/;
 
         Editor m_Editor = null;
         bool
@@ -49,7 +49,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
         }
-        public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
         {
             m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
 
@@ -71,6 +71,8 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
+
+            DisableHeader = !drawName;
         }
         public PrefabReferenceDrawer(object parentObject, Type declaredType, Action<IPrefabReference> setter, Func<IPrefabReference> getter) : base(parentObject, declaredType, setter, getter)
         {
@@ -98,53 +100,53 @@ namespace SyadeuEditor.Presentation
 
         public override IPrefabReference Draw(IPrefabReference currentValue)
         {
-            using (new GUILayout.VerticalScope())
-            using (new GUILayout.HorizontalScope())
+            //using (new GUILayout.VerticalScope())
             {
-                DrawPrefabReference(DisableHeader ? string.Empty : Name,
-                (idx) =>
+                using (new GUILayout.HorizontalScope())
                 {
-                    IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
-
-                    IPrefabReference origin = Getter.Invoke();
-                    Setter.Invoke(prefab);
-
-                    m_WasEdited = !origin.Equals(Getter.Invoke());
-                }, currentValue);
-                if (m_WasEdited)
-                {
-                    if (!currentValue.IsValid() || currentValue.IsNone())
+                    DrawPrefabReference(DisableHeader ? string.Empty : Name,
+                    (idx) =>
                     {
-                        m_Open = false;
+                        IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
+
+                        IPrefabReference origin = Getter.Invoke();
+                        Setter.Invoke(prefab);
+
+                    //m_WasEdited = !origin.Equals(Getter.Invoke());
+                    }, currentValue);
+                    //if (m_WasEdited)
+                    {
+                        if (!currentValue.IsValid() || currentValue.IsNone())
+                        {
+                            m_Open = false;
+                        }
+
+                        //GUI.changed = true;
+                        //m_WasEdited = false;
                     }
 
-                    GUI.changed = true;
-                    m_WasEdited = false;
-                }
-
-                using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid() || currentValue.IsNone()))
-                using (var change = new EditorGUI.ChangeCheckScope())
-                {
-                    m_Open = GUILayout.Toggle(m_Open,
-                            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-                    if (change.changed)
+                    using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid() || currentValue.IsNone()))
+                    using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        if (m_Open)
+                        m_Open = GUILayout.Toggle(m_Open,
+                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                        if (change.changed)
                         {
-                            m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
-                        }
-                        else
-                        {
-                            m_Editor = null;
+                            if (m_Open)
+                            {
+                                m_Editor = Editor.CreateEditor(currentValue.GetEditorAsset());
+                            }
+                            else
+                            {
+                                m_Editor = null;
+                            }
                         }
                     }
                 }
-            }
 
-            if (m_Open)
-            {
-                using (new GUILayout.VerticalScope())
+                if (!m_Open) return currentValue;
+
                 using (new EditorUtilities.BoxBlock(Color.black))
                 {
                     using (new EditorGUI.DisabledGroupScope(true))
@@ -161,7 +163,7 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
-
+            
             return currentValue;
         }
 
@@ -225,6 +227,7 @@ namespace SyadeuEditor.Presentation
                         Event.current.button != 0) break;
 
                     Event.current.Use();
+                    GUI.changed = true;
 
                     Rect rect = GUILayoutUtility.GetLastRect();
                     rect.position = Event.current.mousePosition;
@@ -251,17 +254,23 @@ namespace SyadeuEditor.Presentation
                         list = PrefabList.Instance.ObjectSettings;
                     }
 
-                    PopupWindow.Show(rect, SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                    var popup = SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
                     {
                         for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
                         {
                             if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
                         }
                         return -1;
-                    }, -2));
+                    }, -2);
+
+                    PopupWindow.Show(rect, popup);
                     //GUIUtility.ExitGUI();
 
-                    
+                    //"asd".ToLog();
+                    //await popup.WaitForClose();
+                    //"out".ToLog();
+
+
                     GUIUtility.hotControl = 0;
                     break;
                 case EventType.MouseUp:

@@ -9,8 +9,8 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(SceneList))]
-    public sealed class SceneListEditor : EditorEntity<SceneList>
+    [CustomEditor(typeof(SceneSettings))]
+    public sealed class SceneListEditor : EditorEntity<SceneSettings>
     {
         SceneReference m_CurrentScene;
 

@@ -620,11 +620,15 @@ namespace SyadeuEditor
 
             private SerializedObject serializedObject;
 
-            private SerializedProperty 
+            private SerializedProperty
                 masterScene,
                 startScene,
                 loadingScene,
                 sceneList;
+
+            private FieldInfo m_CameraPrefabFieldInfo;
+
+            PrefabReferenceDrawer m_CameraPrefabDrawer;
 
             bool 
                 m_OpenMasterScene = false,
@@ -637,209 +641,237 @@ namespace SyadeuEditor
 
             public SceneMenu()
             {
-                serializedObject = new SerializedObject(SceneList.Instance);
+                serializedObject = new SerializedObject(SceneSettings.Instance);
 
-                masterScene = serializedObject.FindProperty(nameof(SceneList.Instance.MasterScene));
-                startScene = serializedObject.FindProperty(nameof(SceneList.Instance.StartScene));
-                loadingScene = serializedObject.FindProperty(nameof(SceneList.Instance.CustomLoadingScene));
-                sceneList = serializedObject.FindProperty(nameof(SceneList.Instance.Scenes));
+                masterScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.MasterScene));
+                startScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.StartScene));
+                loadingScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.CustomLoadingScene));
+                sceneList = serializedObject.FindProperty(nameof(SceneSettings.Instance.Scenes));
+
+                //m_CameraPrefabField = serializedObject.FindProperty("m_CameraPrefab");
+                m_CameraPrefabFieldInfo = TypeHelper.TypeOf<SceneSettings>.GetFieldInfo("m_CameraPrefab");
+                m_CameraPrefabDrawer = (PrefabReferenceDrawer)ObjectDrawerBase.ToDrawer(SceneSettings.Instance,
+                    m_CameraPrefabFieldInfo, false);
 
                 m_OpenMasterScene = 
-                    string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath) ||
-                    !SceneList.Instance.MasterScene.IsInBuild;
+                    string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath) ||
+                    !SceneSettings.Instance.MasterScene.IsInBuild;
                 m_OpenStartScene = 
-                    string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath) ||
-                    !SceneList.Instance.StartScene.IsInBuild;
+                    string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath) ||
+                    !SceneSettings.Instance.StartScene.IsInBuild;
 
                 m_OpenSceneList = 
                     sceneList.arraySize == 0 ||
-                    !SceneList.Instance.Scenes[0].IsInBuild;
+                    !SceneSettings.Instance.Scenes[0].IsInBuild;
             }
 
             public override void OnGUI()
             {
-                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
-
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath);
-                    
-                    if (m_OpenMasterScene)
-                    {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox("!! Master Scene Not Found !!", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.MasterScene.IsInBuild)
-                            {
-                                EditorGUILayout.HelpBox("Master scene must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Master Scene Found", MessageType.Info);
-                        }
-                        EditorGUILayout.PropertyField(masterScene);
+                    m_Scroll = scroll.scrollPosition;
 
-                        if (!sceneFound)
+                    #region Scenes Selector
+
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath);
+
+                        if (m_OpenMasterScene)
                         {
-                            if (GUILayout.Button("Initialize Master Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Master");
-                                SceneList.Instance.MasterScene = new SceneReference
+                                EditorGUILayout.HelpBox("!! Master Scene Not Found !!", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.MasterScene.IsInBuild)
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                CloseScene(scene);
-
-                                serializedObject.Update();
+                                    EditorGUILayout.HelpBox("Master scene must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Master Scene Found", MessageType.Info);
                             }
-                        }
-                    }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath);
-                    
-                    if (m_OpenStartScene)
-                    {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox("!! Start Scene Not Found !!", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.StartScene.IsInBuild)
-                            {
-                                EditorGUILayout.HelpBox("Start scene must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Start Scene Found", MessageType.Info);
-                        }
-                        EditorGUILayout.PropertyField(startScene);
+                            EditorGUILayout.PropertyField(masterScene);
 
-                        if (!sceneFound)
-                        {
-                            if (GUILayout.Button("Initialize Start Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Start");
-                                SceneList.Instance.StartScene = new SceneReference
+                                if (GUILayout.Button("Initialize Master Scene"))
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                CloseScene(scene);
+                                    Scene scene = CreateNewScene("Master");
+                                    SceneSettings.Instance.MasterScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    CloseScene(scene);
 
-                                serializedObject.Update();
+                                    serializedObject.Update();
+                                }
                             }
                         }
                     }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath);
-
-                    if (m_OpenCustomLoadingScene)
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
                     {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox(
-                                "Loading Scene Not Found.\nWill be replaced to default loading screen.", MessageType.Info);
-                        }
-                        else EditorGUILayout.HelpBox("Loading Scene Found", MessageType.Info);
-                        EditorGUILayout.PropertyField(loadingScene);
+                        m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath);
 
-                        if (!sceneFound)
+                        if (m_OpenStartScene)
                         {
-                            if (GUILayout.Button("Initialize Loading Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Loading");
-                                SceneList.Instance.CustomLoadingScene = new SceneReference
+                                EditorGUILayout.HelpBox("!! Start Scene Not Found !!", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.StartScene.IsInBuild)
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                EditorSceneManager.SetActiveScene(scene);
-
-                                GameObject cameraObj = new GameObject("Loading Camera");
-                                Camera cam = cameraObj.AddComponent<Camera>();
-
-                                GameObject canvasObj = new GameObject("Loading Canvas");
-                                Canvas canvas = canvasObj.AddComponent<Canvas>();
-                                CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
-                                canvasObj.AddComponent<GraphicRaycaster>();
-                                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                                canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-
-                                GameObject BlackScreenObj = new GameObject("BlackScreen");
-                                BlackScreenObj.transform.SetParent(canvasObj.transform);
-                                CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
-                                Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
-                                blackScreenImg.color = Color.black;
-                                blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
-                                blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
-
-                                GameObject loadingObj = new GameObject("Loading Script");
-                                CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
-
-                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
-                                    .SetValue(loadingScr, cam);
-                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
-                                    .SetValue(loadingScr, canvasGroup);
-
-                                EditorUtility.SetDirty(loadingScr);
-
-                                EditorSceneManager.SaveScene(scene);
-
-                                CloseScene(scene);
-
-                                serializedObject.Update();
+                                    EditorGUILayout.HelpBox("Start scene must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Start Scene Found", MessageType.Info);
                             }
-                        }
-                    }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
+                            EditorGUILayout.PropertyField(startScene);
 
-                    if (m_OpenSceneList)
-                    {
-                        if (sceneList.arraySize == 0)
-                        {
-                            EditorGUILayout.HelpBox(
-                                "There\'s no scenes in the list.\n" +
-                                "We need at least one scene for initialize systems", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.Scenes[0].IsInBuild)
+                            if (!sceneFound)
                             {
-                                EditorGUILayout.HelpBox("Scene index 0 must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Normal", MessageType.Info);
-                        }
+                                if (GUILayout.Button("Initialize Start Scene"))
+                                {
+                                    Scene scene = CreateNewScene("Start");
+                                    SceneSettings.Instance.StartScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    CloseScene(scene);
 
-                        EditorGUILayout.PropertyField(sceneList);
+                                    serializedObject.Update();
+                                }
+                            }
+                        }
+                    }
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath);
+
+                        if (m_OpenCustomLoadingScene)
+                        {
+                            if (!sceneFound)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "Loading Scene Not Found.\nWill be replaced to default loading screen.", MessageType.Info);
+                            }
+                            else EditorGUILayout.HelpBox("Loading Scene Found", MessageType.Info);
+                            EditorGUILayout.PropertyField(loadingScene);
+
+                            if (!sceneFound)
+                            {
+                                if (GUILayout.Button("Initialize Loading Scene"))
+                                {
+                                    Scene scene = CreateNewScene("Loading");
+                                    SceneSettings.Instance.CustomLoadingScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    EditorSceneManager.SetActiveScene(scene);
+
+                                    GameObject cameraObj = new GameObject("Loading Camera");
+                                    Camera cam = cameraObj.AddComponent<Camera>();
+
+                                    GameObject canvasObj = new GameObject("Loading Canvas");
+                                    Canvas canvas = canvasObj.AddComponent<Canvas>();
+                                    CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
+                                    canvasObj.AddComponent<GraphicRaycaster>();
+                                    canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                                    canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+                                    GameObject BlackScreenObj = new GameObject("BlackScreen");
+                                    BlackScreenObj.transform.SetParent(canvasObj.transform);
+                                    CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
+                                    Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
+                                    blackScreenImg.color = Color.black;
+                                    blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
+                                    blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
+
+                                    GameObject loadingObj = new GameObject("Loading Script");
+                                    CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
+
+                                    TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        .SetValue(loadingScr, cam);
+                                    TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        .SetValue(loadingScr, canvasGroup);
+
+                                    EditorUtility.SetDirty(loadingScr);
+
+                                    EditorSceneManager.SaveScene(scene);
+
+                                    CloseScene(scene);
+
+                                    serializedObject.Update();
+                                }
+                            }
+                        }
+                    }
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
+
+                        if (m_OpenSceneList)
+                        {
+                            if (sceneList.arraySize == 0)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "There\'s no scenes in the list.\n" +
+                                    "We need at least one scene for initialize systems", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.Scenes[0].IsInBuild)
+                                {
+                                    EditorGUILayout.HelpBox("Scene index 0 must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Normal", MessageType.Info);
+                            }
+
+                            EditorGUILayout.PropertyField(sceneList);
+                        }
+                    }
+
+                    #endregion
+
+                    using (var change = new EditorGUI.ChangeCheckScope())
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("Camera Prefab");
+                        m_CameraPrefabDrawer.OnGUI();
+
+                        if (change.changed)
+                        {
+                            //m_CameraPrefabFieldInfo.SetValue(SceneSettings.Instance,
+                            //    )
+
+                            EditorUtility.SetDirty(SceneSettings.Instance);
+                            //AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SceneSettings.Instance));
+                            //"asd".ToLog();
+                        }
                     }
                 }
 
-                EditorGUILayout.EndScrollView();
                 serializedObject.ApplyModifiedProperties();
             }
             public override bool Predicate()
             {
-                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath) ||
-                    string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath) ||
+                if (string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath) ||
+                    string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath) ||
                     sceneList.arraySize == 0) return false;
 
-                if (!SceneList.Instance.MasterScene.IsInBuild ||
-                    !SceneList.Instance.StartScene.IsInBuild ||
-                    !SceneList.Instance.Scenes[0].IsInBuild) return false;
+                if (!SceneSettings.Instance.MasterScene.IsInBuild ||
+                    !SceneSettings.Instance.StartScene.IsInBuild ||
+                    !SceneSettings.Instance.Scenes[0].IsInBuild) return false;
 
                 return true;
             }
