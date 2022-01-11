@@ -302,6 +302,20 @@ namespace Syadeu.Presentation.TurnTable
 
                     Shapes.Draw.Pop();
                 }
+
+                using (Shapes.Draw.DashedScope())
+                {
+                    Shapes.Draw.LineGeometry = Shapes.LineGeometry.Flat2D;
+                    Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+                        type: Shapes.DashType.Basic,
+                        snap: Shapes.DashSnapping.Tiling,
+                        count: 2,
+                        offset: m_PathlineDrawOffset
+                        );
+                    Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
+                        radius: .65f,
+                        thickness: .08f);
+                }
             }
 
             Shapes.Draw.Pop();

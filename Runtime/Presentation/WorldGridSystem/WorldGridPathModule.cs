@@ -339,7 +339,7 @@ namespace Syadeu.Presentation.Grid
                     foundPath.Add(from);
                     for (int i = length - 1; i >= 0; i--)
                     {
-                        if (i + 2 < length && i - 1 >= 0)
+                        if (i + 1 < length && i - 1 >= 0)
                         {
                             if (arr[i].IsSameAxis(arr[i + 1].index, arr[i - 1].index))
                             {

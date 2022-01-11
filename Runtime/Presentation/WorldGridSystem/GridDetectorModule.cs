@@ -167,20 +167,29 @@ namespace Syadeu.Presentation.Grid
 
                 int maxCount = detector.MaxDetectionIndicesCount;
 
-                FixedList4096Bytes<GridIndex> buffer = new FixedList4096Bytes<GridIndex>();
+                //FixedList4096Bytes<GridIndex> buffer = new FixedList4096Bytes<GridIndex>();
                 //int* buffer = stackalloc int[maxCount];
                 //System.GetRange(in buffer, in maxCount, gridSize.positions[0].index, detector.DetectedRange, detector.m_IgnoreLayers, out int count);
-                System.GetRange(entity.Idx, detector.DetectedRange, ref buffer);
+                //System.GetRange(entity.Idx, detector.DetectedRange, ref buffer);
                 //$"{buffer.Length} range : {entity.Name}, {detector.DetectedRange}".ToLog();
                 FixedList512Bytes<InstanceID> newDetected = new FixedList512Bytes<InstanceID>();
 
-                for (int i = 0; i < buffer.Length; i++)
+                // 임시로 같은 층에 있는 엔티티만 감시함
+                foreach (var item in System.GetRange(entity.Idx, new Unity.Mathematics.int3(detector.DetectedRange, 0, detector.DetectedRange)))
                 {
-                    m_GridObservers.Add(buffer[i], entity.Idx);
-                    detector.m_ObserveIndices.Add(buffer[i]);
+                    m_GridObservers.Add(item, entity.Idx);
+                    detector.m_ObserveIndices.Add(item);
 
-                    Detection(entity, ref detector, buffer[i], ref newDetected, postEvent);
+                    Detection(entity, ref detector, item, ref newDetected, postEvent);
                 }
+
+                //for (int i = 0; i < buffer.Length; i++)
+                //{
+                //    m_GridObservers.Add(buffer[i], entity.Idx);
+                //    detector.m_ObserveIndices.Add(buffer[i]);
+
+                //    Detection(entity, ref detector, buffer[i], ref newDetected, postEvent);
+                //}
 
                 // 이 곳은 이전에 발견했으나, 이제는 조건이 달라져 발견하지 못한 Entity 들을 처리합니다.
                 for (int i = 0; i < detector.m_Detected.Length; i++)
