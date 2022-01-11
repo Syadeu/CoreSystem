@@ -286,12 +286,17 @@ namespace Syadeu.Presentation.TurnTable
 
                     Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
                     Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
+                    Shapes.Draw.StencilComp = UnityEngine.Rendering.CompareFunction.Always;
+                    Shapes.Draw.StencilOpPass = UnityEngine.Rendering.StencilOp.Keep;
+                    Shapes.Draw.StencilRefID = 0;
+                    Shapes.Draw.StencilReadMask = 255;
+                    Shapes.Draw.StencilWriteMask = 255;
 
                     for (int i = 0; i + 1 < m_ShapesPathline.Count; i++)
                     {
                         Shapes.Draw.Line(
                             m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
-                            color: new Color(255, 150, 0, 251),
+                            color: new Color32(255, 150, 0, 251),
                             thickness: .1f);
                     }
 
