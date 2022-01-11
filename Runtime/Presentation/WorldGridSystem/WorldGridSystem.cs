@@ -667,7 +667,7 @@ namespace Syadeu.Presentation.Grid
                 int3
                     start = new int3(minX, minY, minZ),
                     end = new int3(maxX, maxY, maxZ);
-
+                $"{minRange} :: {maxRange}, {start} :: {end}".ToLog();
                 int count = 0;
                 for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
                 {

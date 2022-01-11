@@ -125,9 +125,9 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 0
                 );
             *max = new int3(
-                maxX,
+                maxX - 1,
                 maxY,
-                maxZ
+                maxZ - 1
                 );
         }
 

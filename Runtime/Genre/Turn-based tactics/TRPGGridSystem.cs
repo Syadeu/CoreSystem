@@ -270,8 +270,13 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     continue;
                 }
-                else if (!m_GridSystem.GetPath(gridsize.Indices[0], item, ref foundPath) ||
-                    foundPath.Length > turnPlayer.ActionPoint)
+                if (!m_GridSystem.GetPath(gridsize.Indices[0], item, ref foundPath))
+                {
+                    continue;
+                }
+                //else $"{foundPath.Length} :: {item.Location}".ToLog();
+
+                if (foundPath.Length > turnPlayer.ActionPoint)
                 {
                     continue;
                 }
