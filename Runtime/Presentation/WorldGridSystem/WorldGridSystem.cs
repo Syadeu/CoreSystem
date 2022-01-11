@@ -667,7 +667,7 @@ namespace Syadeu.Presentation.Grid
                 int3
                     start = new int3(minX, minY, minZ),
                     end = new int3(maxX, maxY, maxZ);
-                $"{minRange} :: {maxRange}, {start} :: {end}".ToLog();
+                
                 int count = 0;
                 for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
                 {
@@ -973,6 +973,14 @@ namespace Syadeu.Presentation.Grid
         }
         public bool TryGetDirection(in GridIndex index, in Direction direction, out GridIndex result)
         {
+            // TODO : 임시로 막음. 위아래
+            if ((direction & Direction.Up) == Direction.Up || 
+                (direction & Direction.Down) == Direction.Down)
+            {
+                result = default(GridIndex);
+                return false;
+            }
+
             int3 location = CalculateDirection(in index, in direction);
 
             if (!m_Grid.Contains(location))
@@ -1034,20 +1042,23 @@ namespace Syadeu.Presentation.Grid
             in GridIndex from,
             in GridIndex to,
             ref FixedList4096Bytes<GridIndex> foundPath,
+            out int tileCount,
             in int maxIteration = 32
             )
-            => GetModule<WorldGridPathModule>().GetPath(in from, in to, ref foundPath, in maxIteration);
+            => GetModule<WorldGridPathModule>().GetPath(in from, in to, ref foundPath, out tileCount, in maxIteration);
         // TODO : Temp code
         public bool GetPath(
             in InstanceID from,
             in GridIndex to,
             ref FixedList4096Bytes<GridIndex> foundPath,
+            out int tileCount,
             in int maxIteration = 32
             )
         {
+            tileCount = 0;
             if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter)) return false;
 
-            return GetModule<WorldGridPathModule>().GetPath(new GridIndex(m_Grid.m_CheckSum, index), in to, ref foundPath, in maxIteration);
+            return GetModule<WorldGridPathModule>().GetPath(new GridIndex(m_Grid.m_CheckSum, index), in to, ref foundPath, out tileCount, in maxIteration);
         }
 
         #endregion

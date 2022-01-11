@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.Render
         private Transform m_Transform;
         private DecalProjector m_Projector;
 
+        public Camera Camera => m_Camera;
         public RenderTexture RenderTexture
         {
             get => m_Camera.targetTexture;
@@ -51,6 +52,8 @@ namespace Syadeu.Presentation.Render
         public void Dispose()
         {
             m_Module.ReserveProjectionCamere(this, m_Camera);
+
+            m_Camera.RemoveAllCommandBuffers();
 
             m_Module = null;
             m_Camera = null;

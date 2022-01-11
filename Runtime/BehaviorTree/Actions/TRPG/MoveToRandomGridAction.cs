@@ -65,10 +65,10 @@ namespace Syadeu.Presentation.BehaviorTree
             }
 
             int rnd = Random.Range(0, range.Length);
-            FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
-            gridSystem.GetPath(Entity.Idx, range[rnd], ref tempPath);
+            //FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
+            //gridSystem.GetPath(Entity.Idx, range[rnd], ref tempPath);
 
-            trpgGridSystem.MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.Idx, 1));
+            trpgGridSystem.MoveToCell(Entity, range[rnd]);
 
             return TaskStatus.Success;
         }

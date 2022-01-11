@@ -320,6 +320,8 @@ namespace Syadeu.Presentation.Actions
             m_EventSystem.TakeQueueTicket(this);
         }
 
+        #region Inner Classes
+
         private enum ActionType
         {
             Instance,
@@ -354,5 +356,7 @@ namespace Syadeu.Presentation.Actions
             public InstanceID m_ActionInstanceID;
             public IEventSequence Sequence;
         }
+
+        #endregion
     }
 }

@@ -31,6 +31,9 @@ namespace Syadeu.Presentation.Grid
         private struct PathTile : IEmpty
         {
             public GridIndex parent, index;
+            /// <summary>
+            /// 부모를 기준으로 이 타일이 위치한 방향입니다.
+            /// </summary>
             public Direction direction;
             public uint parentArrayIdx, arrayIdx;
 
@@ -86,6 +89,27 @@ namespace Syadeu.Presentation.Grid
             public bool IsEmpty()
             {
                 return parent.IsEmpty() && index.IsEmpty();
+            }
+
+            public bool IsSameAxis(in GridIndex a, in GridIndex b)
+            {
+                int3
+                    location = index.Location,
+                    targetA = a.Location,
+                    targetB = b.Location;
+
+                if ((location.y == targetA.y && location.y == targetB.y))
+                {
+                    return
+                        (location.x == targetA.x && location.x == targetB.x) ||
+                        (location.z == targetA.z && location.z == targetB.z);
+                }
+                else
+                {
+                    return
+                        (location.x == targetA.x && location.x == targetB.x) &&
+                        (location.z == targetA.z && location.z == targetB.z);
+                }
             }
         }
         private struct ClosedBoolen6
@@ -220,6 +244,7 @@ namespace Syadeu.Presentation.Grid
             in GridIndex from,
             in GridIndex to,
             ref FixedList4096Bytes<GridIndex> foundPath,
+            out int tileCount,
             in int maxIteration = 32
             )
         {
@@ -285,22 +310,27 @@ namespace Syadeu.Presentation.Grid
                 // Path Found
                 if (path[count - 1].index.Equals(to))
                 {
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (UnsafeBufferUtility.Contains(four, 6, path[i].index))
-                        {
-                            path[i].parent = from;
-                            path[i].parentArrayIdx = 0;
-                        }
-                    }
+                    //for (int i = 0; i < count; i++)
+                    //{
+                    //    if (UnsafeBufferUtility.Contains(four, 6, path[i].index))
+                    //    {
+                    //        path[i].parent = from;
+                    //        path[i].parentArrayIdx = 0;
+                    //    }
+                    //}
 
-                    GridIndex* arr = stackalloc GridIndex[pathFound];
+                    PathTile* arr = stackalloc PathTile[pathFound];
 
                     int length = 0;
                     PathTile current = path[count - 1];
                     for (int i = 0; i < pathFound && !current.index.Equals(from); i++, length++)
                     {
-                        arr[i] = current.index;
+                        if (UnsafeBufferUtility.Contains(four, 6, current.index))
+                        {
+                            current.parent = from;
+                            current.parentArrayIdx = 0;
+                        }
+                        arr[i] = current;
 
                         current = path[current.parentArrayIdx];
                     }
@@ -309,13 +339,23 @@ namespace Syadeu.Presentation.Grid
                     foundPath.Add(from);
                     for (int i = length - 1; i >= 0; i--)
                     {
-                        foundPath.Add(arr[i]);
+                        if (i + 2 < length && i - 1 >= 0)
+                        {
+                            if (arr[i].IsSameAxis(arr[i + 1].index, arr[i - 1].index))
+                            {
+                                continue;
+                            }
+                        }
+
+                        foundPath.Add(arr[i].index);
                     }
 
+                    tileCount = length;
                     return true;
                 }
             }
 
+            tileCount = 0;
             return false;
         }
 

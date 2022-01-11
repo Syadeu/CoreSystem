@@ -193,9 +193,6 @@ namespace Syadeu.Presentation.TurnTable.UI
                 case ShortcutType.None:
                     break;
                 case ShortcutType.Move:
-                    m_TRPGGridSystem.ClearUICell();
-                    m_TRPGGridSystem.ClearUIPath();
-
                     m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
                     break;
@@ -243,7 +240,6 @@ namespace Syadeu.Presentation.TurnTable.UI
                 case ShortcutType.Move:
                     m_TRPGCameraMovement.SetNormal();
 
-                    m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
                     m_CurrentShortcut = ShortcutType.Move;
 
                     m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);

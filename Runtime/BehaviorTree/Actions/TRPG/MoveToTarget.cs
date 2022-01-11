@@ -80,32 +80,32 @@ namespace Syadeu.Presentation.BehaviorTree
             
             GridIndex targetPos = att.GetTargetAt(0).GetComponentReadOnly<GridComponent>().Indices[0];
 
-            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+            //WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
             GridComponent gridSize = Entity.GetComponentReadOnly<GridComponent>();
 
-            FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
-            gridSystem.GetPath(Entity.Idx, targetPos, ref tempPath);
+            //FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
+            //gridSystem.GetPath(Entity.Idx, targetPos, ref tempPath);
 
             ref TurnPlayerComponent turnPlayer = ref Entity.GetComponent<TurnPlayerComponent>();
-            FixedList4096Bytes<GridIndex> path;
-            if (tempPath[tempPath.Length - 1].Index == targetPos.Index)
-            {
-                path = new FixedList4096Bytes<GridIndex>();
-                for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
-                {
-                    path.Add(tempPath[i]);
-                }
-            }
-            else
-            {
-                path = tempPath;
-            }
+            //FixedList4096Bytes<GridIndex> path;
+            //if (tempPath[tempPath.Length - 1].Index == targetPos.Index)
+            //{
+            //    path = new FixedList4096Bytes<GridIndex>();
+            //    for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
+            //    {
+            //        path.Add(tempPath[i]);
+            //    }
+            //}
+            //else
+            //{
+            //    path = tempPath;
+            //}
 
             $"from {gridSize.Indices[0].Location} to {targetPos.Location}".ToLog();
-            $"1. path length {tempPath.Length} :: {path.Length}".ToLog();
+            //$"1. path length {tempPath.Length} :: {path.Length}".ToLog();
 
             m_ActorEventHandler = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, path, new ActorMoveEvent(Entity.Idx, 1));
+                .MoveToCell(Entity, targetPos);
 
             //TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
             //move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));

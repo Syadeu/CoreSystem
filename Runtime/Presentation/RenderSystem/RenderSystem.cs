@@ -110,6 +110,8 @@ namespace Syadeu.Presentation.Render
         public event Action<ScriptableRenderContext, Camera> OnRender;
         public event Action<ScriptableRenderContext, Camera> OnRenderShapes;
 
+        public event Action<ScriptableRenderContext, Camera[]> OnFrameRender;
+
         private JobHandle m_RenderJobHandle;
 
         private JobHandle m_FrustumJob;
@@ -137,6 +139,9 @@ namespace Syadeu.Presentation.Render
             RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
             RenderPipelineManager.beginCameraRendering += Instance_OnRender;
 
+            RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
+
             m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
             m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
 
@@ -144,12 +149,16 @@ namespace Syadeu.Presentation.Render
 
             return base.OnInitialize();
         }
-        protected override void OnDispose()
+
+        protected override void OnShutDown()
         {
             m_Camera.OnValueChange -= OnCameraChangedHandler;
-            //CoreSystem.Instance.OnRender -= Instance_OnRender;
-            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
 
+            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
+            RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+        }
+        protected override void OnDispose()
+        {
             m_CameraFrustum.Dispose();
         }
         private void OnCameraChangedHandler(Camera from, Camera to)
@@ -178,8 +187,25 @@ namespace Syadeu.Presentation.Render
             }
 #endif
         }
+
+        private void RenderPipelineManager_beginFrameRendering(ScriptableRenderContext arg1, Camera[] arg2)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+                return;
+            }
+            else if (UnityEditor.EditorApplication.isPaused) return;
+#endif
+            
+            OnFrameRender?.Invoke(arg1, arg2);
+        }
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
+            // 메인 카메라가 아니면 안됨.
+            if (cam != m_Camera.Value) return;
+
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
@@ -190,14 +216,16 @@ namespace Syadeu.Presentation.Render
 #endif
             m_RenderJobHandle.Complete();
 
-            OnRender?.Invoke(ctx, cam);
-
 #if CORESYSTEM_SHAPES
-            using (Shapes.Draw.Command(cam))
+            if (OnRenderShapes != null)
             {
-                OnRenderShapes?.Invoke(ctx, cam);
+                using (Shapes.Draw.Command(cam))
+                {
+                    OnRenderShapes.Invoke(ctx, cam);
+                }
             }
 #endif
+            OnRender?.Invoke(ctx, cam);
         }
 
         protected override PresentationResult BeforePresentation()

@@ -75,6 +75,8 @@ namespace Syadeu.Presentation.TurnTable
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
 
+        private TRPGTurnTableSystem m_TurnTableSystem;
+
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
@@ -130,6 +132,8 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
+            RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
+
             return base.OnInitialize();
         }
         protected override void OnShutDown()
@@ -137,9 +141,10 @@ namespace Syadeu.Presentation.TurnTable
             Destroy(m_GridOutlineRenderer.gameObject);
             Destroy(m_GridPathlineRenderer.gameObject);
 
-            m_RenderSystem.OnRenderShapes -= M_RenderSystem_OnRender;
+            m_RenderSystem.OnRenderShapes -= OnRenderShapesHandler;
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
+            m_EventSystem.RemoveEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
         }
         protected override void OnDispose()
         {
@@ -152,6 +157,8 @@ namespace Syadeu.Presentation.TurnTable
             m_RenderSystem = null;
             m_NavMeshSystem = null;
             m_EventSystem = null;
+
+            m_TurnTableSystem = null;
         }
 
         #region Binds
@@ -168,8 +175,9 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_RenderSystem = other;
 
-            m_RenderSystem.OnRenderShapes += M_RenderSystem_OnRender;
+            m_RenderSystem.OnRenderShapes += OnRenderShapesHandler;
         }
+
         private void Bind(NavMeshSystem other)
         {
             m_NavMeshSystem = other;
@@ -179,6 +187,12 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
+            m_EventSystem.AddEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
+        }
+
+        private void Bind(TRPGTurnTableSystem other)
+        {
+            m_TurnTableSystem = other;
         }
 
         #endregion
@@ -194,23 +208,39 @@ namespace Syadeu.Presentation.TurnTable
                     break;
                 case UI.ShortcutType.Move:
                     m_GridSystem.EnableCursorObserve(ev.Enabled);
+                    if (ev.Enabled)
+                    {
+                        DrawUICell(m_TurnTableSystem.CurrentTurn);
+                    }
+                    else
+                    {
+                        ClearUICell();
+                        ClearUIPath();
+                    }
+
                     break;
                 case UI.ShortcutType.Attack:
                     break;
             }
         }
+        private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverrapEvent ev)
+        {
+            var grid = m_TurnTableSystem.CurrentTurn.GetComponent<GridComponent>();
+            DrawUIPath(grid.Indices[0], ev.Index);
+        }
 
         private bool m_DrawMesh = false;
         private List<GridIndex> m_DrawIndices = new List<GridIndex>();
+        private float m_PathlineDrawOffset = 0;
 
-        private void M_RenderSystem_OnRender(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
+        private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
         {
             Shapes.Draw.Push();
 
             using (Shapes.Draw.DashedScope())
             {
                 Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                   Shapes.DashType.Angled, 1, .5f, Shapes.DashSnapping.EndToEnd);
+                   Shapes.DashType.Angled, 1, s_DefaultYOffset.y, Shapes.DashSnapping.EndToEnd);
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
@@ -230,6 +260,43 @@ namespace Syadeu.Presentation.TurnTable
             {
                 //Shapes.Draw.
                 Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+            }
+
+            if (m_ShapesPathline.Count > 0)
+            {
+                m_PathlineDrawOffset += Time.deltaTime;
+
+                using (Shapes.Draw.DashedScope())
+                {
+                    Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
+                    Shapes.Draw.DashStyle = Shapes.DashStyle.MeterDashes(
+                        type: Shapes.DashType.Basic, 
+                        size: .75f,
+                        spacing: .75f, 
+                        snap: Shapes.DashSnapping.Off,
+                        offset: m_PathlineDrawOffset);
+                    for (int i = 0; i + 1 < m_ShapesPathline.Count; i++)
+                    {
+                        Shapes.Draw.Line(
+                            m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point,
+                            thickness: .1f);
+                    }
+
+                    Shapes.Draw.Push();
+
+                    Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
+                    Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
+
+                    for (int i = 0; i + 1 < m_ShapesPathline.Count; i++)
+                    {
+                        Shapes.Draw.Line(
+                            m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
+                            color: new Color(255, 150, 0, 251),
+                            thickness: .1f);
+                    }
+
+                    Shapes.Draw.Pop();
+                }
             }
 
             Shapes.Draw.Pop();
@@ -257,11 +324,6 @@ namespace Syadeu.Presentation.TurnTable
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
 
-            //FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
-            //m_TempIndices.Clear();
-            // TODO : Temp code
-            //m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref m_TempIndices);
-
             gridPositions.Clear();
             FixedList4096Bytes<GridIndex> foundPath = new FixedList4096Bytes<GridIndex>();
             foreach (var item in m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint)))
@@ -270,36 +332,17 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     continue;
                 }
-                if (!m_GridSystem.GetPath(gridsize.Indices[0], item, ref foundPath))
+                else if (!m_GridSystem.GetPath(gridsize.Indices[0], item, ref foundPath, out int tileCount))
                 {
                     continue;
                 }
-                //else $"{foundPath.Length} :: {item.Location}".ToLog();
-
-                if (foundPath.Length > turnPlayer.ActionPoint)
+                else if (tileCount > turnPlayer.ActionPoint)
                 {
                     continue;
                 }
 
                 gridPositions.Add(item);
             }
-
-            //for (int i = 0; i < m_TempIndices.Length; i++)
-            //{
-            //    //$"{list[i].Location} in".ToLog();
-            //    if (!gridsize.IsMyIndex(m_TempIndices[i]) && m_GridSystem.HasEntityAt(m_TempIndices[i]))
-            //    {
-            //        continue;
-            //    }
-            //    else if (!m_GridSystem.GetPath(gridsize.Indices[0], m_TempIndices[i], ref foundPath) ||
-            //        foundPath.Length > turnPlayer.ActionPoint)
-            //    {
-            //        continue;
-            //    }
-
-            //    gridPositions.Add(m_TempIndices[i]);
-            //    //$"{list[i].Location} added".ToLog();
-            //}
         }
         public void GetMoveablePositions(in InstanceID entity,
             ref FixedList4096Bytes<GridIndex> gridPositions)
@@ -452,9 +495,11 @@ namespace Syadeu.Presentation.TurnTable
 
         #region UI
 
-        private Shapes.PolylinePath m_ShapesOutlinePath = new Shapes.PolylinePath();
+        private Shapes.PolylinePath 
+            m_ShapesOutlinePath = new Shapes.PolylinePath(),
+            m_ShapesPathline = new Shapes.PolylinePath();
 
-        public void DrawUICell(Entity<IEntityData> entity)
+        private void DrawUICell(Entity<IEntityData> entity)
         {
             using (m_DrawUICellMarker.Auto())
             {
@@ -489,10 +534,16 @@ namespace Syadeu.Presentation.TurnTable
                     CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
                     CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
                 m_GridOutlineCamera.SetPosition(m_GridSystem.IndexToPosition(gridSize.Indices[0]));
+
+                //var buffer = new UnityEngine.Rendering.CommandBuffer();
+                //buffer.
+
+                //m_GridOutlineCamera.Camera.AddCommandBuffer(UnityEngine.Rendering.CameraEvent.AfterDepthNormalsTexture, )
 #endif
                 m_IsDrawingGrids = true;
             }
         }
+
         //private void PlaceUICell(in GridComponent gridSize, in GridIndex position)
         //{
         //    using (m_PlaceUICellMarker.Auto())
@@ -502,7 +553,7 @@ namespace Syadeu.Presentation.TurnTable
         //        Entity<IEntity> entity = m_GridSystem.PlaceUICell(position);
         //    }
         //}
-        public void ClearUICell()
+        private void ClearUICell()
         {
             using (m_ClearUICellMarker.Auto())
             {
@@ -524,7 +575,7 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
-        public void DrawUIPath(in FixedList4096Bytes<GridIndex> path, float heightOffset = .5f)
+        private void DrawUIPath(in FixedList4096Bytes<GridIndex> path, float heightOffset = .5f)
         {
             if (m_IsDrawingPaths)
             {
@@ -543,11 +594,33 @@ namespace Syadeu.Presentation.TurnTable
 
             m_IsDrawingPaths = true;
         }
-        public void ClearUIPath()
+        private void DrawUIPath(in GridIndex from, in GridIndex to, float heightOffset = .25f)
+        {
+            if (m_IsDrawingPaths)
+            {
+                ClearUIPath();
+            }
+
+            m_ShapesPathline.ClearAllPoints();
+            float3 offset = new float3(0, heightOffset, 0);
+
+            FixedList4096Bytes<GridIndex> foundPath = new FixedList4096Bytes<GridIndex>();
+            if (!m_GridSystem.GetPath(in from, in to, ref foundPath, out _)) return;
+
+            for (int i = 0; i < foundPath.Length; i++)
+            {
+                m_ShapesPathline.AddPoint(m_GridSystem.IndexToPosition(foundPath[i]) + offset);
+            }
+
+            m_IsDrawingPaths = true;
+        }
+        private void ClearUIPath()
         {
             if (!m_IsDrawingPaths) return;
 
+            m_ShapesPathline.ClearAllPoints();
             m_GridPathlineRenderer.positionCount = 0;
+            m_PathlineDrawOffset = 0;
 
             m_IsDrawingPaths = false;
         }
@@ -602,7 +675,7 @@ namespace Syadeu.Presentation.TurnTable
 #endif
             TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             FixedList4096Bytes<GridIndex> path = new FixedList4096Bytes<GridIndex>();
-            if (!m_GridSystem.GetPath(entity.Idx, position, ref path))
+            if (!m_GridSystem.GetPath(entity.Idx, position, ref path, out int tileCount))
             {
                 "path error not found".ToLogError();
                 return ActorEventHandler.Empty;
@@ -612,7 +685,7 @@ namespace Syadeu.Presentation.TurnTable
                 path, new ActorMoveEvent(entity.Idx, 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
-            int requireAp = path.Length;
+            int requireAp = tileCount;
 
             turnPlayer.ActionPoint -= requireAp - 1;
 
