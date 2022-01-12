@@ -19,18 +19,16 @@
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Syadeu.Collections
 {
     [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
-    public struct BitArray32
+    public struct BitArray32 : IEquatable<BitArray32>
     {
-        private bool
-            a01, a02, a03, a04, b01, b02, b03, b04,
-            a05, a06, a07, a08, b05, b06, b07, b08,
-            a09, a10, a11, a12, b09, b10, b11, b12,
-            a13, a14, a15, a16, b13, b14, b15, b16;
+        private byte
+            x01, x02, y01, y02;
 
         public bool this[int index]
         {
@@ -38,151 +36,82 @@ namespace Syadeu.Collections
             {
                 return index switch
                 {
-                    0 => a01,
-                    1 => a02,
-                    2 => a03,
-                    3 => a04,
-                    4 => b01,
-                    5 => b02,
-                    6 => b03,
-                    7 => b04,
-                    8 => a05,
-                    9 => a06,
-                    10 => a07,
-                    11 => a08,
-                    12 => b05,
-                    13 => b06,
-                    14 => b07,
-                    15 => b08,
-                    16 => a09,
-                    17 => a10,
-                    18 => a11,
-                    19 => a12,
-                    20 => b09,
-                    21 => b10,
-                    22 => b11,
-                    23 => b12,
-                    24 => a13,
-                    25 => a14,
-                    26 => a15,
-                    27 => a16,
-                    28 => b13,
-                    29 => b14,
-                    30 => b15,
-                    31 => b16,
+                    0 => (x01 & 0b0000_0001) == 0b0000_0001,
+                    1 => (x01 & 0b0000_0010) == 0b0000_0010,
+                    2 => (x01 & 0b0000_0100) == 0b0000_0100,
+                    3 => (x01 & 0b0000_1000) == 0b0000_1000,
+
+                    4 => (x01 & 0b0001_0000) == 0b0001_0000,
+                    5 => (x01 & 0b0010_0000) == 0b0010_0000,
+                    6 => (x01 & 0b0100_0000) == 0b0100_0000,
+                    7 => (x01 & 0b1000_0000) == 0b1000_0000,
+
+                    8 => (x02 & 0b0000_0001) == 0b0000_0001,
+                    9 => (x02 & 0b0000_0010) == 0b0000_0010,
+                    10 => (x02 & 0b0000_0100) == 0b0000_0100,
+                    11 => (x02 & 0b0000_1000) == 0b0000_1000,
+
+                    12 => (x02 & 0b0001_0000) == 0b0001_0000,
+                    13 => (x02 & 0b0010_0000) == 0b0010_0000,
+                    14 => (x02 & 0b0100_0000) == 0b0100_0000,
+                    15 => (x02 & 0b1000_0000) == 0b1000_0000,
+
+                    16 => (y01 & 0b0000_0001) == 0b0000_0001,
+                    17 => (y01 & 0b0000_0010) == 0b0000_0010,
+                    18 => (y01 & 0b0000_0100) == 0b0000_0100,
+                    19 => (y01 & 0b0000_1000) == 0b0000_1000,
+
+                    20 => (y01 & 0b0001_0000) == 0b0001_0000,
+                    21 => (y01 & 0b0010_0000) == 0b0010_0000,
+                    22 => (y01 & 0b0100_0000) == 0b0100_0000,
+                    23 => (y01 & 0b1000_0000) == 0b1000_0000,
+
+                    24 => (y02 & 0b0000_0001) == 0b0000_0001,
+                    25 => (y02 & 0b0000_0010) == 0b0000_0010,
+                    26 => (y02 & 0b0000_0100) == 0b0000_0100,
+                    27 => (y02 & 0b0000_1000) == 0b0000_1000,
+
+                    28 => (y02 & 0b0001_0000) == 0b0001_0000,
+                    29 => (y02 & 0b0010_0000) == 0b0010_0000,
+                    30 => (y02 & 0b0100_0000) == 0b0100_0000,
+                    31 => (y02 & 0b1000_0000) == 0b1000_0000,
                     _ => throw new IndexOutOfRangeException(),
                 };
             }
             set
             {
-                switch (index)
+                byte temp = (byte)(1 << index % 8);
+                if (index < 8)
                 {
-                    case 0:
-                        a01 = value;
-                        break;
-                    case 1: 
-                        a02 = value;
-                        break;
-                    case 2: 
-                        a03 = value;
-                        break;
-                    case 3: 
-                        a04 = value;
-                        break;
-                    /*              */
-                    case 4: 
-                        b01 = value;
-                        break;
-                    case 5: 
-                        b02 = value;
-                        break;
-                    case 6: 
-                        b03 = value;
-                        break;
-                    case 7: 
-                        b04 = value;
-                        break;
-                    /*              */
-                    case 8:
-                        a05 = value;
-                        break;
-                    case 9:
-                        a06 = value;
-                        break;
-                    case 10:
-                        a07 = value;
-                        break;
-                    case 11:
-                        a08 = value;
-                        break;
-                    /*              */
-                    case 12:
-                        b05 = value;
-                        break;
-                    case 13:
-                        b06 = value;
-                        break;
-                    case 14:
-                        b07 = value;
-                        break;
-                    case 15:
-                        b08 = value;
-                        break;
-                    /*              */
-                    case 16:
-                        a09 = value;
-                        break;
-                    case 17:
-                        a10 = value;
-                        break;
-                    case 18:
-                        a11 = value;
-                        break;
-                    case 19:
-                        a12 = value;
-                        break;
-                    /*              */
-                    case 20:
-                        b09 = value;
-                        break;
-                    case 21:
-                        b10 = value;
-                        break;
-                    case 22:
-                        b11 = value;
-                        break;
-                    case 23:
-                        b12 = value;
-                        break;
-                    /*              */
-                    case 24:
-                        a13 = value;
-                        break;
-                    case 25:
-                        a14 = value;
-                        break;
-                    case 26:
-                        a15 = value;
-                        break;
-                    case 27:
-                        a16 = value;
-                        break;
-                    /*              */
-                    case 28:
-                        b13 = value;
-                        break;
-                    case 29:
-                        b14 = value;
-                        break;
-                    case 30:
-                        b15 = value;
-                        break;
-                    case 31:
-                        b16 = value;
-                        break;
-                    /*              */
-                    default:
-                        throw new IndexOutOfRangeException();
+                    bool isTrue = ((x01 & temp) == temp);
+                    if (isTrue != value)
+                    {
+                        x01 = (byte)(value ? x01 + temp : x01 - temp);
+                    }
+                }
+                else if (index < 16)
+                {
+                    bool isTrue = ((x02 & temp) == temp);
+                    if (isTrue != value)
+                    {
+                        x02 = (byte)(value ? x02 + temp : x02 - temp);
+                    }
+                }
+                else if (index < 24)
+                {
+                    bool isTrue = ((y01 & temp) == temp);
+                    if (isTrue != value)
+                    {
+                        y01 = (byte)(value ? y01 + temp : y01 - temp);
+                    }
+                }
+                else
+                {
+                    bool isTrue = ((y02 & temp) == temp);
+                    if (isTrue != value)
+                    {
+                        y02 = (byte)(value ? y02 + temp : y02 - temp);
+                    }
                 }
             }
         }
@@ -240,8 +169,23 @@ namespace Syadeu.Collections
         {
             return Convert.ToString(Value, 2);
         }
+        [NotBurstCompatible]
+        public override bool Equals(object obj)
+        {
+            if (!(obj is uint)) return false;
+            uint other = (uint)obj;
+            return (this == other);
+        }
+        public bool Equals(BitArray32 other)
+            => x01 == other.x01 && x02 == other.x02 && y01 == other.y01 && y02 == other.y02;
+        public override int GetHashCode() => Value.GetHashCode();
+
+        public static bool operator ==(BitArray32 x, BitArray32 y) => x.Equals(y);
+        public static bool operator !=(BitArray32 x, BitArray32 y) => !x.Equals(y);
 
         public static implicit operator BitArray32(uint other) => new BitArray32(other);
         public static implicit operator uint(BitArray32 other) => other.Value;
+
+        public static implicit operator BitArray64(BitArray32 other) => new BitArray64(other.Value);
     }
 }

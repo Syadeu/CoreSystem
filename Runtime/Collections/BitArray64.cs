@@ -24,7 +24,7 @@ namespace Syadeu.Collections
 {
     [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
-    public struct BitArray64
+    public struct BitArray64 : IEquatable<BitArray64>
     {
         private BitArray32 x, y;
 
@@ -87,6 +87,18 @@ namespace Syadeu.Collections
         {
             return y.ToString() + x.ToString();
         }
+        [NotBurstCompatible]
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ulong)) return false;
+            ulong other = (ulong)obj;
+            return Equals(other);
+        }
+        public bool Equals(BitArray64 other) => x.Equals(other.x) && y.Equals(other.y);
+        public override int GetHashCode() => Value.GetHashCode();
+
+        public static bool operator ==(BitArray64 x, BitArray64 y) => x.Equals(y);
+        public static bool operator !=(BitArray64 x, BitArray64 y) => !x.Equals(y);
 
         public static implicit operator BitArray64(ulong other) => new BitArray64(other);
         public static implicit operator ulong(BitArray64 other) => other.Value;
