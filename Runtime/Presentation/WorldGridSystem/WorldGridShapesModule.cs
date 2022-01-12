@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Grid
 {
     internal sealed class WorldGridShapesModule : PresentationSystemModule<WorldGridSystem>
     {
-
+#if CORESYSTEM_SHAPES
         private NativeHashMap<GridIndex, Entity<IEntity>> m_PlacedCellUIEntities;
 
         private bool m_DrawGrid;
@@ -242,5 +242,6 @@ namespace Syadeu.Presentation.Grid
 
             }
         }
+#endif
     }
 }

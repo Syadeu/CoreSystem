@@ -37,10 +37,12 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Grid
 {
-    public sealed class WorldGridSystem : PresentationSystemEntity<WorldGridSystem>
-        , INotifySystemModule<WorldGridShapesModule>,
+    public sealed class WorldGridSystem : PresentationSystemEntity<WorldGridSystem>,
         INotifySystemModule<WorldGridPathModule>,
         INotifySystemModule<GridDetectorModule>
+#if CORESYSTEM_SHAPES
+        , INotifySystemModule<WorldGridShapesModule>,
+#endif
     {
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
