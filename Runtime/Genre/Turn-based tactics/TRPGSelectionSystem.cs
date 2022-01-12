@@ -217,6 +217,8 @@ namespace Syadeu.Presentation.TurnTable
                         m_SelectedEntities[i].Entity.ToEntity<IEntityData>(), 
                         0,
                         new ActorPointMovePredicate()));
+
+                m_SelectedEntities[i].ResetModifiers();
             }
         }
 
@@ -224,26 +226,41 @@ namespace Syadeu.Presentation.TurnTable
         {
             Shapes.Draw.Push();
 
+            Shapes.Draw.ZOffsetFactor = -1;
             for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
                 ProxyTransform tr = m_SelectedEntities[i].Entity.transform;
-                DrawPathline(m_SelectedEntities[i].Entity, in tr);
+                DrawPathline(m_SelectedEntities[i], in tr);
             }
 
             Shapes.Draw.Pop();
         }
-        private void DrawPathline(in Entity<IEntity> entity, in ProxyTransform tr)
+        private void DrawPathline(Selection selection, in ProxyTransform tr)
         {
+            Entity<IEntity> entity = selection.Entity;
             if (!entity.HasComponent<NavAgentComponent>()) return;
 
             NavAgentComponent nav = entity.GetComponentReadOnly<NavAgentComponent>();
             if (!nav.IsMoving) return;
 
-            Shapes.Draw.Line(tr.position, nav.Destination);
+            float3 dir = math.normalize(nav.Destination - tr.position);
+
+            Shapes.Draw.Line(
+                tr.position, 
+                math.lerp(tr.position, nav.Destination - (dir * .25f), selection.FadeModifier));
             //for (int i = 1; i + 1 < nav.PathPoints.Length; i++)
             //{
             //    Shapes.Draw.Line(nav.PathPoints[i], nav.PathPoints[i + 1]);
             //}
+
+            Shapes.Draw.Arc(
+                nav.Destination, Vector3.up, 
+                radius: .25f, 
+                thickness: .03f,
+                angleRadStart: 0, 
+                angleRadEnd: math.lerp(0, math.PI * 2, selection.FadeModifier));
+
+            selection.FadeModifier = math.lerp(selection.FadeModifier, 1, CoreSystem.deltaTime * 8);
         }
 
         #endregion
@@ -354,18 +371,22 @@ namespace Syadeu.Presentation.TurnTable
         private sealed class Selection
         {
             public Entity<IEntity> Entity;
-            public float m_FadeModifier = 0;
+            public float FadeModifier = 0;
 
             public void Initialize(Entity<IEntity> entity)
             {
                 Entity = entity;
+            }
+            public void ResetModifiers()
+            {
+                FadeModifier = 0;
             }
 
             public static Selection Factory() => new Selection();
             public static void OnReserve(Selection other)
             {
                 other.Entity = Entity<IEntity>.Empty;
-                other.m_FadeModifier = 0;
+                other.FadeModifier = 0;
             }
         }
     }
