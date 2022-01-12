@@ -21,6 +21,8 @@ using UnityEditor.Build.Pipeline;
 using UnityEditor.Il2Cpp;
 using Unity.Burst;
 using UnityEngine;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis;
 
 namespace Syadeu.Presentation.CodeGen
 {
@@ -108,4 +110,16 @@ namespace Syadeu.Presentation.CodeGen
 
         }
     }
+
+    // https://docs.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/tutorials/how-to-write-csharp-analyzer-code-fix
+    //[DiagnosticAnalyzer("ko")]
+    //public sealed class testAnalyzer : DiagnosticAnalyzer
+    //{
+    //    public override System.Collections.Immutable.ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => throw new NotImplementedException();
+
+    //    public override void Initialize(AnalysisContext context)
+    //    {
+    //        //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+    //    }
+    //}
 }
