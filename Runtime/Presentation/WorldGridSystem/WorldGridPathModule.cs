@@ -334,9 +334,10 @@ namespace Syadeu.Presentation.Grid
 
                         current = path[current.parentArrayIdx];
                     }
+                    arr[length++] = path[0];
 
                     foundPath.Clear();
-                    foundPath.Add(from);
+                    //foundPath.Add(from);
                     for (int i = length - 1; i >= 0; i--)
                     {
                         if (i + 1 < length && i - 1 >= 0)

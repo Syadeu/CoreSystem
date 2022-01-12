@@ -508,20 +508,7 @@ namespace Syadeu.Presentation.Map
                 NavAgentComponent navAgent = m_Entity.GetComponentReadOnly<NavAgentComponent>();
                 Entity<IEntity> entity = m_Entity.ToEntity<IEntity>();
                 ProxyTransform tr = (ProxyTransform)entity.transform;
-                NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
-                if (!agent.isOnNavMesh)
-                {
-                    agent.enabled = false;
-                    agent.enabled = true;
-
-                    if (!agent.isOnNavMesh)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                        $"This entity({entity.RawName}) is not on NavMesh.");
-                        yield break;
-                    }
-                }
-
+                
                 var animator = m_Entity.GetAttribute<AnimatorAttribute>();
                 bool rootMotion = animator != null && animator.AnimatorComponent.RootMotion;
 
@@ -540,6 +527,19 @@ namespace Syadeu.Presentation.Map
                     m_Positions.Clear();
 
                     yield break;
+                }
+                NavMeshAgent agent = tr.proxy.GetComponent<NavMeshAgent>();
+                if (!agent.isOnNavMesh)
+                {
+                    agent.enabled = false;
+                    agent.enabled = true;
+
+                    if (!agent.isOnNavMesh)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                        $"This entity({entity.RawName}) is not on NavMesh.");
+                        yield break;
+                    }
                 }
 
                 eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(

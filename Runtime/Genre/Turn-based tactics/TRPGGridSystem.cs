@@ -624,10 +624,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_IsDrawingPaths)
             {
-                ClearUIPath();
+                m_ShapesPathline.ClearAllPoints();
+                m_GridPathlineRenderer.positionCount = 0;
             }
 
-            m_ShapesPathline.ClearAllPoints();
             float3 offset = new float3(0, heightOffset, 0);
 
             FixedList4096Bytes<GridIndex> foundPath = new FixedList4096Bytes<GridIndex>();

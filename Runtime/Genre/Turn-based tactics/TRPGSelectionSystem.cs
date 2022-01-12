@@ -230,10 +230,34 @@ namespace Syadeu.Presentation.TurnTable
             for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
                 ProxyTransform tr = m_SelectedEntities[i].Entity.transform;
+
+                DrawHeadCircle(m_SelectedEntities[i], in tr);
+
                 DrawPathline(m_SelectedEntities[i], in tr);
+
+                m_SelectedEntities[i].FadeModifier = math.lerp(m_SelectedEntities[i].FadeModifier, 1, CoreSystem.deltaTime * 8);
             }
 
             Shapes.Draw.Pop();
+        }
+        private void DrawHeadCircle(Selection selection, in ProxyTransform tr)
+        {
+            Entity<IEntity> entity = selection.Entity;
+
+            AABB aabb = tr.aabb;
+            float3 upperCenter = aabb.upperCenter + (aabb.extents.y * .5f);
+
+            using (Shapes.Draw.StyleScope)
+            {
+                Shapes.Draw.DiscGeometry = Shapes.DiscGeometry.Billboard;
+
+                Shapes.Draw.Arc(
+                    upperCenter,
+                    radius: .15f,
+                    thickness: .03f,
+                    angleRadStart: 0,
+                    angleRadEnd: math.PI * 2);
+            }
         }
         private void DrawPathline(Selection selection, in ProxyTransform tr)
         {
@@ -259,8 +283,6 @@ namespace Syadeu.Presentation.TurnTable
                 thickness: .03f,
                 angleRadStart: 0, 
                 angleRadEnd: math.lerp(0, math.PI * 2, selection.FadeModifier));
-
-            selection.FadeModifier = math.lerp(selection.FadeModifier, 1, CoreSystem.deltaTime * 8);
         }
 
         #endregion
