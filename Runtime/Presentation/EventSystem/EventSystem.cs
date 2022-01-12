@@ -275,7 +275,7 @@ namespace Syadeu.Presentation.Events
         {
             const string
                 c_BlockingTooLongExceptionLog = 
-                    "Event({0}, from {1}) is blocking whole event sequence more than 10 seconds. Most likely, an exception has been raised. Exiting event.";
+                    "Event({0}, from {1}) is blocking whole event sequence more than 10 seconds.";
 
             if (m_CurrentTicket != null && 
                 (m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
@@ -296,8 +296,11 @@ namespace Syadeu.Presentation.Events
                     {
                         CoreSystem.Logger.LogError(Channel.Event,
                             string.Format(c_BlockingTooLongExceptionLog, TypeHelper.ToString(m_ScheduledEventHandler.m_EventType), TypeHelper.ToString(m_ScheduledEventHandler.m_System.GetType())));
+
+                        m_ScheduledEventHandler.ResetTimer();
                     }
-                    else return;
+                    
+                    return;
                 }
 
                 m_CurrentTicket = null;

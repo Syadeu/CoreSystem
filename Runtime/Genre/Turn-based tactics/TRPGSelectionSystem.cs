@@ -17,12 +17,16 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -39,7 +43,8 @@ namespace Syadeu.Presentation.TurnTable
 
         public override bool IsStartable => m_RenderSystem.CameraComponent != null;
 
-        private NativeList<Entity<IEntity>> m_SelectedEntities;
+        private ObjectPool<Selection> m_SelectionPool;
+        private List<Selection> m_SelectedEntities;
 
         private UnityEngine.InputSystem.InputAction
             m_LeftMouseButtonAction,
@@ -58,6 +63,9 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override PresentationResult OnInitialize()
         {
+            m_SelectionPool = new ObjectPool<Selection>(Selection.Factory, null, Selection.OnReserve, null);
+            m_SelectedEntities = new List<Selection>();
+
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
@@ -66,13 +74,20 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
-            m_SelectedEntities = new NativeList<Entity<IEntity>>(4, AllocatorManager.Persistent);
-
             return base.OnInitialize();
+        }
+        protected override void OnShutDown()
+        {
+            m_RenderSystem.OnRenderShapes -= M_RenderSystem_OnRenderShapes;
+
+            for (int i = 0; i < m_SelectedEntities.Count; i++)
+            {
+                m_SelectionPool.Reserve(m_SelectedEntities[i]);
+            }
         }
         protected override void OnDispose()
         {
-            m_SelectedEntities.Dispose();
+            m_SelectionPool.Dispose();
 
             m_RenderSystem = null;
             m_InputSystem = null;
@@ -88,6 +103,8 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
+
+            m_RenderSystem.OnRenderShapes += M_RenderSystem_OnRenderShapes;
         }
         private void Bind(EntityRaycastSystem other)
         {
@@ -150,6 +167,8 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
+        #region EventHandlers
+
         private void M_LeftMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
             if (m_EntityRaycastSystem == null || m_RenderSystem == null) return;
@@ -172,7 +191,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!m_TurnTableSystem.Enabled)
             {
-                if (m_SelectedEntities.Length > 0)
+                if (m_SelectedEntities.Count > 0)
                 {
                     EntityMoveHandler();
                 }
@@ -185,45 +204,73 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void EntityMoveHandler()
         {
-            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
+            Ray ray = m_InputSystem.CursorRay;
 
             m_LevelDesignSystem.Raycast(ray, out var hit);
-            for (int i = 0; i < m_SelectedEntities.Length; i++)
+            for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
-                if (!m_SelectedEntities[i].HasComponent<TRPGActorMoveComponent>())
-                {
-                    "no move component".ToLog();
-                    continue;
-                }
-
                 //var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();
                 m_NavMeshSystem.MoveTo(
-                    m_SelectedEntities[i],
+                    m_SelectedEntities[i].Entity,
                     hit.point, 
                     new ActorMoveEvent<ActorPointMovePredicate>(
-                        m_SelectedEntities[i].ToEntity<IEntityData>(), 
+                        m_SelectedEntities[i].Entity.ToEntity<IEntityData>(), 
                         0,
                         new ActorPointMovePredicate()));
             }
         }
 
-        public void SelectEntity(Entity<IEntity> entity)
+        private void M_RenderSystem_OnRenderShapes(UnityEngine.Rendering.ScriptableRenderContext ctx, Camera cam)
+        {
+            Shapes.Draw.Push();
+
+            for (int i = 0; i < m_SelectedEntities.Count; i++)
+            {
+                ProxyTransform tr = m_SelectedEntities[i].Entity.transform;
+                DrawPathline(m_SelectedEntities[i].Entity, in tr);
+            }
+
+            Shapes.Draw.Pop();
+        }
+        private void DrawPathline(in Entity<IEntity> entity, in ProxyTransform tr)
+        {
+            if (!entity.HasComponent<NavAgentComponent>()) return;
+
+            NavAgentComponent nav = entity.GetComponentReadOnly<NavAgentComponent>();
+            if (!nav.IsMoving) return;
+
+            Shapes.Draw.Line(tr.position, nav.Destination);
+            //for (int i = 1; i + 1 < nav.PathPoints.Length; i++)
+            //{
+            //    Shapes.Draw.Line(nav.PathPoints[i], nav.PathPoints[i + 1]);
+            //}
+        }
+
+        #endregion
+
+        private void SelectEntity(Entity<IEntity> entity)
         {
             TRPGSelectionAttribute select = entity.GetAttribute<TRPGSelectionAttribute>();
             if (select == null) return;
 
             ClearSelectedEntities();
-            m_SelectedEntities.Add(entity);
+            TRPGSelectionComponent selectionComponent = entity.GetComponent<TRPGSelectionComponent>();
 
-            var tr = entity.transform;
-            AABB aabb = tr.aabb;
-            float3 pos = aabb.center;
-            pos.y -= aabb.extents.y;
-
-            for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
+            if (selectionComponent.m_Holdable)
             {
-                select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem, tr);
+                Selection selection = m_SelectionPool.Get();
+                selection.Initialize(entity);
+
+                m_SelectedEntities.Add(selection);
+
+                Proxy.ProxyTransform tr = entity.transform;
+                for (int i = 0; i < select.m_SelectedFloorUI.Length; i++)
+                {
+                    select.m_SelectedFloorUI[i].Fire(m_CoroutineSystem, tr);
+                }
             }
+
+            selectionComponent.m_OnSelect.Schedule(entity);
 
 #if CORESYSTEM_SHAPES
             if (select.m_Shapes.EnableShapes)
@@ -242,30 +289,30 @@ namespace Syadeu.Presentation.TurnTable
 #endif
             $"select entity {entity.RawName}".ToLog();
         }
-        public void DeselectEntity(Entity<IEntity> entity)
-        {
-            InternalRemoveSelection(entity);
-
-            m_SelectedEntities.RemoveFor(entity);
-        }
         public void ClearSelectedEntities()
         {
-            for (int i = 0; i < m_SelectedEntities.Length; i++)
+            for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
-                Entity<IEntity> entity = m_SelectedEntities[i];
+                Selection selection = m_SelectedEntities[i];
 
-                InternalRemoveSelection(entity);
+                InternalRemoveSelection(selection);
             }
 
             m_SelectedEntities.Clear();
         }
-        private void InternalRemoveSelection(Entity<IEntity> entity)
+        private void InternalRemoveSelection(Selection selection)
         {
+            var entity = selection.Entity;
+
             var select = entity.GetAttribute<TRPGSelectionAttribute>();
+            TRPGSelectionComponent selectionComponent = entity.GetComponent<TRPGSelectionComponent>();
+
             for (int j = 0; j < select.m_SelectedFloorUI.Length; j++)
             {
                 select.m_SelectedFloorUI[j].Stop();
             }
+
+            selectionComponent.m_OnDeselect.Schedule(entity);
 
 #if CORESYSTEM_SHAPES
             if (select.m_Shapes.EnableShapes)
@@ -277,11 +324,14 @@ namespace Syadeu.Presentation.TurnTable
                 ComponentType<ShapesComponent>.ECB.End(ref wr);
             }
 #endif
+
+            m_SelectionPool.Reserve(selection);
         }
 
+        [BurstCompatible]
         private struct ActorPointMovePredicate : IExecutable<Entity<ActorEntity>>
         {
-            [BurstDiscard]
+            [NotBurstCompatible]
             private bool IsTurnTableStarted()
             {
                 return PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System.Enabled;
@@ -298,6 +348,24 @@ namespace Syadeu.Presentation.TurnTable
             private static void AOTCodeGenerator()
             {
                 ActorSystem.AOTCodeGenerator<ActorMoveEvent<ActorPointMovePredicate>>();
+            }
+        }
+
+        private sealed class Selection
+        {
+            public Entity<IEntity> Entity;
+            public float m_FadeModifier = 0;
+
+            public void Initialize(Entity<IEntity> entity)
+            {
+                Entity = entity;
+            }
+
+            public static Selection Factory() => new Selection();
+            public static void OnReserve(Selection other)
+            {
+                other.Entity = Entity<IEntity>.Empty;
+                other.m_FadeModifier = 0;
             }
         }
     }

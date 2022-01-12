@@ -12,6 +12,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    [Obsolete]
     public struct TRPGActorMoveComponent : IActorProviderComponent
     {
         internal Entity<IEntityData> m_Parent;

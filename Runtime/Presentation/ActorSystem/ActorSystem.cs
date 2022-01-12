@@ -399,15 +399,15 @@ namespace Syadeu.Presentation.Actor
                 bool wasSequence = m_CurrentEvent.Event.EventSequence != null;
                 m_CurrentEvent.Clear(m_EventDataPool, m_ScheduledEventIDs);
 
-                index = FindScheduledEvent<TEvent>(ev);
-                if (index >= 0)
-                {
-                    //m_ScheduledEvents[index].Reserve();
-                    m_EventDataPool.Enqueue(m_ScheduledEvents[index]);
-                    m_ScheduledEvents.RemoveAt(index);
+                //index = FindScheduledEvent<TEvent>(ev);
+                //if (index >= 0)
+                //{
+                //    //m_ScheduledEvents[index].Reserve();
+                //    m_EventDataPool.Enqueue(m_ScheduledEvents[index]);
+                //    m_ScheduledEvents.RemoveAt(index);
+                //}
 
-                    "override schedule ev".ToLog();
-                }
+                "override schedule ev".ToLog();
 
                 IEventHandler handler = m_EventDataPool.Dequeue();
                 handler.Initialize(actor, ev);

@@ -44,6 +44,7 @@ namespace Syadeu.Presentation.Events
             if (CoreSystem.time - m_EnteredTime > timeout) return true;
             return false;
         }
+        internal void ResetTimer() => m_EnteredTime = CoreSystem.time;
 
         public void SetEvent<T>(SystemEventResult result)
         {

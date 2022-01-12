@@ -289,7 +289,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             DisableCurrentShortcut();
             m_CurrentShortcut = ShortcutType.None;
 
-            m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
+            //m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
             //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
             //move.movet
         }

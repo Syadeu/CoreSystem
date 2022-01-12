@@ -440,9 +440,6 @@ namespace Syadeu.Presentation.Map
 
                 ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
 
-                agent.m_Direction = 0;
-                agent.m_IsMoving = false;
-
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnMoveStateChangedEvent.GetEvent(m_Entity.ToEntity<IEntity>(),
                     OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
                 agent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
@@ -466,6 +463,15 @@ namespace Syadeu.Presentation.Map
             {
                 ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
                 agent.m_Direction = dir;
+            }
+            private void SetPathPoints(Vector3[] cornors)
+            {
+                ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+                agent.m_PathPoints.Clear();
+                for (int i = cornors.Length - 1; i >= 0; i--)
+                {
+                    agent.m_PathPoints.Add(cornors[i]);
+                }
             }
             private void UpdateNavAgentSpeed(Animator animator, NavMeshAgent agent)
             {
@@ -560,7 +566,6 @@ namespace Syadeu.Presentation.Map
                 agent.ResetPath();
                 agent.SetDestination(m_Positions[0]);
                 SetPreviousPosition(m_Positions[0]);
-                SetIsMoving(true);
 
                 float cacheStoppingDis = agent.stoppingDistance;
                 if (m_Positions.Length > 1)
@@ -581,6 +586,9 @@ namespace Syadeu.Presentation.Map
                     yield return null;
                 }
 
+                SetPathPoints(agent.path.corners);
+                SetIsMoving(true);
+
                 while (tr.hasProxy && m_Positions.Length > 0 && !agent.isStopped)
                 {
                     if (agent.remainingDistance < 1f)
@@ -595,6 +603,21 @@ namespace Syadeu.Presentation.Map
 
                         agent.SetDestination(m_Positions[0]);
                         SetPreviousPosition(m_Positions[0]);
+
+                        pendingStartTime = CoreSystem.time;
+                        while (agent.pathPending)
+                        {
+                            if (CoreSystem.time - pendingStartTime > 5)
+                            {
+                                "something is wrong".ToLogError();
+                                yield break;
+                            }
+
+                            yield return null;
+                        }
+
+                        SetPathPoints(agent.path.corners);
+                        SetIsMoving(true);
 
                         //"1".ToLog();
                         yield return null;
@@ -622,29 +645,6 @@ namespace Syadeu.Presentation.Map
                     yield return null;
                 }
 
-                //while (tr.hasProxy && agent.remainingDistance > .1f && agent.hasPath)
-                //{
-                //    SetDirection(agent.desiredVelocity);
-                //    //SetDirection(math.normalize((float3)agent.nextPosition - tr.position));
-
-                //    if (!rootMotion)
-                //    {
-                //        tr.position = agent.nextPosition;
-                //        tr.Synchronize(IProxyTransform.SynchronizeOption.Rotation);
-                //    }
-                //    else
-                //    {
-                //        tr.Synchronize(IProxyTransform.SynchronizeOption.TR);
-                //    }
-
-                //    eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
-                //        entity, OnMoveStateChangedEvent.MoveState.OnMoving));
-                //    navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
-
-                //    "3".ToLog();
-                //    yield return null;
-                //}
-
                 do
                 {
                     SetDirection(agent.desiredVelocity);
@@ -671,6 +671,7 @@ namespace Syadeu.Presentation.Map
 
                 SetDirection(0);
                 agent.ResetPath();
+                SetIsMoving(false);
             }
         }
 
@@ -728,6 +729,11 @@ namespace Syadeu.Presentation.Map
         }
         public bool Equals(ActorMoveEvent other) => m_Entity.Equals(other.m_Entity);
     }
+
+    /// <summary>
+    /// 이벤트를 수행할 시점에 <see cref="TPredicate.Predicate(in Entity{ActorEntity})"/> 가 <see langword="true"/> 를 반환할 경우에만 실행하는 이동 이벤트 명령입니다.
+    /// </summary>
+    /// <typeparam name="TPredicate"></typeparam>
     public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent<TPredicate>>
         where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
     {
@@ -785,7 +791,15 @@ namespace Syadeu.Presentation.Map
     {
         internal bool m_IsMoving;
         internal float3 m_Direction;
-        internal float3 m_PreviousTarget, m_Destination;
+        /// <summary>
+        /// 마지막 이동 지점
+        /// </summary>
+        internal float3 m_PreviousTarget;
+        /// <summary>
+        /// 현재 이동 지점
+        /// </summary>
+        internal float3 m_Destination;
+        internal FixedList4096Bytes<float3> m_PathPoints;
         internal CoroutineHandler m_MoveJob;
 
         internal FixedReferenceList64<TriggerAction> m_OnMoveActions;
@@ -794,5 +808,8 @@ namespace Syadeu.Presentation.Map
         public bool IsMoving => m_IsMoving;
         public float Speed => math.sqrt(math.mul(m_Direction, m_Direction));
         public float3 Direction => m_Direction;
+        public FixedList4096Bytes<float3> PathPoints => m_PathPoints;
+        public float3 PreviousTarget => m_PreviousTarget;
+        public float3 Destination => m_Destination;
     }
 }

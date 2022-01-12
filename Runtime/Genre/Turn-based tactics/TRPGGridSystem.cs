@@ -226,14 +226,30 @@ namespace Syadeu.Presentation.TurnTable
         private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverrapEvent ev)
         {
             var grid = m_TurnTableSystem.CurrentTurn.GetComponent<GridComponent>();
+
+            if (!m_GridTempMoveables.Contains(ev.Index))
+            {
+                ClearUIPath();
+                return;
+            }
+
             DrawUIPath(grid.Indices[0], ev.Index);
+        }
+        private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
+        {
+            if (!m_GridTempMoveables.Contains(ev.Index))
+            {
+                return;
+            }
+
+            MoveToCell(m_TurnTableSystem.CurrentTurn.Idx, ev.Index);
         }
 
         private bool m_DrawMesh = false;
         private List<GridIndex> m_DrawIndices = new List<GridIndex>();
         private float m_PathlineDrawOffset = 0;
 
-        private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
+        private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext ctx, Camera arg2)
         {
             Shapes.Draw.Push();
 
@@ -522,18 +538,11 @@ namespace Syadeu.Presentation.TurnTable
         {
             using (m_DrawUICellMarker.Auto())
             {
-                if (!entity.HasComponent<TRPGActorMoveComponent>())
-                {
-                    "error".ToLogError();
-                    return;
-                }
-
                 if (m_IsDrawingGrids)
                 {
                     ClearUICell();
                 }
 
-                TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
                 CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
@@ -553,12 +562,9 @@ namespace Syadeu.Presentation.TurnTable
                     CoreSystemSettings.Instance.m_TRPGGridLineMaterial,
                     CoreSystemSettings.Instance.m_TRPGGridProjectionTexture);
                 m_GridOutlineCamera.SetPosition(m_GridSystem.IndexToPosition(gridSize.Indices[0]));
-
-                //var buffer = new UnityEngine.Rendering.CommandBuffer();
-                //buffer.
-
-                //m_GridOutlineCamera.Camera.AddCommandBuffer(UnityEngine.Rendering.CameraEvent.AfterDepthNormalsTexture, )
 #endif
+                m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
+
                 m_IsDrawingGrids = true;
             }
         }
@@ -589,6 +595,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridOutlineCamera.Dispose();
                 m_GridOutlineCamera = null;
 #endif
+                m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
                 m_IsDrawingGrids = false;
             }
@@ -646,67 +653,22 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
-        public ActorEventHandler MoveToCell(IEntityDataID entity, in FixedList4096Bytes<GridIndex> path, in ActorMoveEvent ev)
+        public ActorEventHandler MoveToCell(InstanceID entity, GridIndex position)
         {
-#if DEBUG_MODE
-            if (!entity.HasComponent<TRPGActorMoveComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
-                    $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
-                return ActorEventHandler.Empty;
-            }
-            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
-            if (navAgent == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                return ActorEventHandler.Empty;
-            }
-#endif
-            ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx), path, ev);
-
-            ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
-            int requireAp = path.Length;
-
-            turnPlayer.ActionPoint -= requireAp;
-            $"{turnPlayer.ActionPoint} : {requireAp}".ToLog();
-
-            return handler;
-        }
-        public ActorEventHandler MoveToCell(IEntityDataID entity, GridIndex position)
-        {
-#if DEBUG_MODE
-            if (!entity.HasComponent<TRPGActorMoveComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(TRPGActorMoveComponent)}." +
-                    $"Maybe didn\'t added {nameof(TRPGActorMoveProvider)} in {nameof(ActorControllerAttribute)}?");
-                return ActorEventHandler.Empty;
-            }
-            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
-            if (navAgent == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({entity.Name}) doesn\'t have {nameof(NavAgentAttribute)} attribute.");
-                return ActorEventHandler.Empty;
-            }
-#endif
-            TRPGActorMoveComponent move = entity.GetComponent<TRPGActorMoveComponent>();
             FixedList4096Bytes<GridIndex> path = new FixedList4096Bytes<GridIndex>();
-            if (!m_GridSystem.GetPath(entity.Idx, position, ref path, out int tileCount))
+            if (!m_GridSystem.GetPath(entity, position, ref path, out int tileCount))
             {
                 "path error not found".ToLogError();
                 return ActorEventHandler.Empty;
             }
 
-            ActorEventHandler handler = m_NavMeshSystem.MoveTo(Entity<IEntity>.GetEntity(entity.Idx),
-                path, new ActorMoveEvent(entity.Idx, 1));
+            ActorEventHandler handler = m_NavMeshSystem.MoveTo(entity.GetEntity<IEntity>(),
+                path, new ActorMoveEvent(entity, 1));
 
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
             int requireAp = tileCount;
 
-            turnPlayer.ActionPoint -= requireAp - 1;
+            turnPlayer.ActionPoint -= requireAp;
 
             return handler;
         }

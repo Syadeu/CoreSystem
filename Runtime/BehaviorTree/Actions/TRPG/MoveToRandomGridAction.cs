@@ -68,7 +68,7 @@ namespace Syadeu.Presentation.BehaviorTree
             //FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
             //gridSystem.GetPath(Entity.Idx, range[rnd], ref tempPath);
 
-            trpgGridSystem.MoveToCell(Entity, range[rnd]);
+            trpgGridSystem.MoveToCell(Entity.Idx, range[rnd]);
 
             return TaskStatus.Success;
         }

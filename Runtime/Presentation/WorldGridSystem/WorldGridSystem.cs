@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.Grid
         INotifySystemModule<WorldGridPathModule>,
         INotifySystemModule<GridDetectorModule>
 #if CORESYSTEM_SHAPES
-        , INotifySystemModule<WorldGridShapesModule>,
+        , INotifySystemModule<WorldGridShapesModule>
 #endif
     {
         public override bool EnableBeforePresentation => true;
