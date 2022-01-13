@@ -263,10 +263,18 @@ namespace Syadeu.Presentation.TurnTable
                 m_SelectionSystem.CurrentSelection.HasComponent<GridComponent>())
             {
                 //GridComponent gridcom = m_SelectionSystem.CurrentSelection.GetComponentReadOnly<GridComponent>();
+                float3 selectionPos = m_SelectionSystem.CurrentSelection.transform.position;
                 NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
 
                 using (Shapes.Draw.GradientFillScope())
                 {
+                    Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(
+                        selectionPos, 25,
+                        colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
+                        colorOuter: Color.clear,
+                        space: Shapes.FillSpace.World
+                        );
+
                     for (int i = 0; i < observeIndices.Length; i++)
                     {
                         if (m_GridSystem.IsObserveIndexOfOnly(observeIndices[i], m_SelectionSystem.CurrentSelection.Idx))
@@ -275,13 +283,9 @@ namespace Syadeu.Presentation.TurnTable
                         }
 
                         float3 pos = m_GridSystem.IndexToPosition(observeIndices[i]);
-                        //Shapes.Draw.GradientFill = Shapes.GradientFill.Linear(
-                            
-                        //    );
-
                         Shapes.Draw.RectangleBorder(
                             pos: pos,
-                            normal: math.up(),
+                            normal: Vector3.up,
                             size: (float2)m_GridSystem.CellSize,
                             pivot: Shapes.RectPivot.Center,
                             thickness: .03f
@@ -301,7 +305,7 @@ namespace Syadeu.Presentation.TurnTable
 
                     Shapes.Draw.RectangleBorder(
                         pos: pos,
-                        normal: math.up(),
+                        normal: Vector3.up,
                         size: (float2)m_GridSystem.CellSize,
                         pivot: Shapes.RectPivot.Center,
                         thickness: .03f

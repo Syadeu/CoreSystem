@@ -510,8 +510,7 @@ namespace Syadeu.Presentation.Map
                 ProxyTransform tr = (ProxyTransform)entity.transform;
                 
                 var animator = m_Entity.GetAttribute<AnimatorAttribute>();
-                bool rootMotion = animator != null && animator.AnimatorComponent.RootMotion;
-
+                
                 SetDestination(m_Positions[m_Positions.Length - 1]);
 
                 if (!tr.hasProxy)
@@ -541,6 +540,7 @@ namespace Syadeu.Presentation.Map
                         yield break;
                     }
                 }
+                bool rootMotion = animator != null && animator.AnimatorComponent.RootMotion;
 
                 eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
