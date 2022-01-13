@@ -70,7 +70,7 @@ namespace CoreSystemAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Change to TypeHelper.TypeOf&lt;T&gt;.Type.
+        ///   Looks up a localized string similar to TypeHelper.TypeOf&lt;T&gt;.Type 으로 교체.
         /// </summary>
         internal static string TypeOfTitle {
             get {

@@ -122,6 +122,6 @@
     <comment>The title of the code fix.</comment>
   </data>
   <data name="TypeOfTitle" xml:space="preserve">
-    <value>Change to TypeHelper.TypeOf&lt;T&gt;.Type</value>
+    <value>TypeHelper.TypeOf&lt;T&gt;.Type 으로 교체</value>
   </data>
 </root>

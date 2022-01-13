@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace CoreSystemAnalyzer
 {
-    //[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TypeofPerformanceFixer)), Shared]
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TypeofPerformanceFixer)), Shared]
     public class TypeofPerformanceFixer : CodeFixProvider
     {
         public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create<string>(AnalyzerStrings.TypeOfAnalyzerStrings.DiagnosticId);
@@ -27,12 +28,14 @@ namespace CoreSystemAnalyzer
         public override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
             SyntaxNode root = await context.Document.GetSyntaxRootAsync(context.CancellationToken);
+            TypeOfExpressionSyntax targetNode = root.FindNode(context.Span)
+                .FirstAncestorOrSelf<TypeOfExpressionSyntax>();
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
+            //// TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
             Diagnostic diagnostic = context.Diagnostics.First();
             TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
 
-            // Find the type declaration identified by the diagnostic.
+            //// Find the type declaration identified by the diagnostic.
             TypeOfExpressionSyntax typeOfNode = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeOfExpressionSyntax>().First();
 
             // Register a code action that will invoke the fix.
@@ -41,26 +44,23 @@ namespace CoreSystemAnalyzer
                     title: CodeFixResources.TypeOfTitle,
                     createChangedDocument: c => ChangeSyntaxAsync(context.Document, typeOfNode, c),
                     equivalenceKey: nameof(CodeFixResources.TypeOfTitle)),
-                diagnostic);
+                context.Diagnostics[0]);
         }
 
         private static async Task<Document> ChangeSyntaxAsync(Document document,
             TypeOfExpressionSyntax localDeclaration,
             CancellationToken cancellationToken)
         {
-            SourceText original = localDeclaration.GetText();
             string newSyntax = $"TypeHelper.TypeOf<{localDeclaration.Type.ToString()}>.Type";
 
-            // Get the symbol representing the type to be renamed.
-            SemanticModel semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            ISymbol typeSymbol = semanticModel.GetDeclaredSymbol(localDeclaration, cancellationToken);
+            //SyntaxGenerator generator = SyntaxGenerator.GetGenerator(document);
+            var memberAccess
+                = SyntaxFactory.ParseExpression(newSyntax);
 
-            Solution originalSolution = document.Project.Solution;
-            OptionSet optionSet = originalSolution.Workspace.Options;
+            var oldRoot = await document.GetSyntaxRootAsync(cancellationToken);
+            var newRoot = oldRoot.ReplaceNode(localDeclaration, memberAccess);
 
-            Solution newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newSyntax, optionSet, cancellationToken).ConfigureAwait(false);
-
-            return newSolution.GetDocument(document.Id);
+            return document.WithSyntaxRoot(newRoot);
         }
     }
 }
