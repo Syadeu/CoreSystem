@@ -24,6 +24,8 @@ using Syadeu.Presentation.Events;
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid
 {
@@ -32,23 +34,26 @@ namespace Syadeu.Presentation.Grid
         /// <summary>
         /// Grid 를 감시하는 Observer 들의 그리드 인덱스들을 저장합니다.
         /// </summary>
-        private UnsafeMultiHashMap<GridIndex, InstanceID> m_GridObservers;
+        private NativeMultiHashMap<GridIndex, InstanceID> m_GridObservers;
+        //private NativeHashSet<GridIndex> m_ObservedIndices;
         // 1. targeted, 2. spotteds(observers)
-        private UnsafeMultiHashMap<InstanceID, InstanceID> m_TargetedEntities;
+        private NativeMultiHashMap<InstanceID, InstanceID> m_TargetedEntities;
 
         private Unity.Profiling.ProfilerMarker
             m_UpdateGridDetectionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateGridDetection"),
             m_UpdateDetectPositionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateDetectPosition");
 
         private EventSystem m_EventSystem;
-        //private EntitySystem m_EntitySystem;
+
+        public NativeMultiHashMap<GridIndex, InstanceID> GridObservers => m_GridObservers;
+        public NativeMultiHashMap<InstanceID, InstanceID> TargetedEntities => m_TargetedEntities;
 
         #region Presentation Methods
 
         protected override void OnInitialize()
         {
-            m_GridObservers = new UnsafeMultiHashMap<GridIndex, InstanceID>(1024, AllocatorManager.Persistent);
-            m_TargetedEntities = new UnsafeMultiHashMap<InstanceID, InstanceID>(1024, AllocatorManager.Persistent);
+            m_GridObservers = new NativeMultiHashMap<GridIndex, InstanceID>(1024, AllocatorManager.Persistent);
+            m_TargetedEntities = new NativeMultiHashMap<InstanceID, InstanceID>(1024, AllocatorManager.Persistent);
 
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
         }
@@ -73,18 +78,13 @@ namespace Syadeu.Presentation.Grid
 
             m_EventSystem.AddEvent<OnGridLocationChangedEvent>(OnGridLocationChangedEventHandler);
         }
-        //private void Bind(EntitySystem other)
-        //{
-        //    m_EntitySystem = other;
-        //    m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
-        //}
 
-        //private void M_EntitySystem_OnEntityDestroy(IObject obj)
-        //{
-        //    throw new NotImplementedException();
-        //}
         private void OnGridLocationChangedEventHandler(OnGridLocationChangedEvent ev)
         {
+            if (!ev.Entity.HasComponent<GridComponent>()) return;
+
+            System.CompleteGridJob();
+
             if (ev.Entity.HasComponent<GridDetectorComponent>())
             {
                 UpdateGridDetection(ev.Entity, ev.Entity.GetComponent<GridComponent>(), true);
@@ -110,17 +110,31 @@ namespace Syadeu.Presentation.Grid
         }
         public void RemoveDetector(in InstanceID entity, ref GridDetectorComponent detector)
         {
-            for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
+            ClearDetectorObserveIndices(ref m_GridObservers, entity, ref detector);
+        }
+        
+        public bool IsObserveIndexOf(in GridIndex index, in InstanceID entity)
+        {
+            if (m_GridObservers.TryGetFirstValue(index, out InstanceID temp, out var iter))
             {
-                RemoveValueAtHashMap(ref m_GridObservers, detector.m_ObserveIndices[i], entity);
-            }
-            //for (int i = 0; i < detector.m_TargetedBy.Length; i++)
-            //{
-            //    ref GridDetectorComponent observer = ref detector.m_TargetedBy[i].GetComponent<GridDetectorComponent>();
+                do
+                {
+                    if (temp.Equals(entity)) return true;
 
-            //    observer.m_Detected.Remove(entity);
-            //}
-            //m_TargetedEntities.Remove(entity);
+                } while (m_GridObservers.TryGetNextValue(out temp, ref iter));
+            }
+
+            return false;
+        }
+        public bool IsObserveIndexOfOnly(in GridIndex index, in InstanceID entity)
+        {
+            if (m_GridObservers.TryGetFirstValue(index, out InstanceID temp, out _) &&
+                m_GridObservers.CountValuesForKey(index) == 1)
+            {
+                if (temp.Equals(entity)) return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -136,11 +150,11 @@ namespace Syadeu.Presentation.Grid
         /// <param name="index"></param>
         /// <param name="observers"></param>
         /// <returns></returns>
-        public bool IsObserveIndex(in GridIndex index, out UnsafeMultiHashMap<GridIndex, InstanceID>.Enumerator observers)
+        public bool IsObserveIndex(in GridIndex index, out NativeMultiHashMap<GridIndex, InstanceID>.Enumerator observers)
         {
             if (!IsObserveIndex(in index))
             {
-                observers = default(UnsafeMultiHashMap<GridIndex, InstanceID>.Enumerator);
+                observers = default(NativeMultiHashMap<GridIndex, InstanceID>.Enumerator);
                 return false;
             }
 
@@ -167,11 +181,6 @@ namespace Syadeu.Presentation.Grid
 
                 int maxCount = detector.MaxDetectionIndicesCount;
 
-                //FixedList4096Bytes<GridIndex> buffer = new FixedList4096Bytes<GridIndex>();
-                //int* buffer = stackalloc int[maxCount];
-                //System.GetRange(in buffer, in maxCount, gridSize.positions[0].index, detector.DetectedRange, detector.m_IgnoreLayers, out int count);
-                //System.GetRange(entity.Idx, detector.DetectedRange, ref buffer);
-                //$"{buffer.Length} range : {entity.Name}, {detector.DetectedRange}".ToLog();
                 FixedList512Bytes<InstanceID> newDetected = new FixedList512Bytes<InstanceID>();
 
                 // 임시로 같은 층에 있는 엔티티만 감시함
@@ -182,14 +191,6 @@ namespace Syadeu.Presentation.Grid
 
                     Detection(entity, ref detector, item, ref newDetected, postEvent);
                 }
-
-                //for (int i = 0; i < buffer.Length; i++)
-                //{
-                //    m_GridObservers.Add(buffer[i], entity.Idx);
-                //    detector.m_ObserveIndices.Add(buffer[i]);
-
-                //    Detection(entity, ref detector, buffer[i], ref newDetected, postEvent);
-                //}
 
                 // 이 곳은 이전에 발견했으나, 이제는 조건이 달라져 발견하지 못한 Entity 들을 처리합니다.
                 for (int i = 0; i < detector.m_Detected.Length; i++)
@@ -292,7 +293,7 @@ namespace Syadeu.Presentation.Grid
         }
 
         /// <summary>
-        /// <see cref="GridSizeAttribute"/> 를 상속받는 모든 Entity 들을 Detector 에 의해 발견되었는 가를 연산합니다.
+        /// <see cref="GridComponent"/> 를 상속받는 모든 Entity 들을 Detector 에 의해 발견되었는 가를 연산합니다.
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="gridSize"></param>
@@ -425,7 +426,7 @@ namespace Syadeu.Presentation.Grid
 
         #region Static Functions
 
-        private static void RemoveTargetedEntity(ref UnsafeMultiHashMap<InstanceID, InstanceID> hashMap, in InstanceID targetID, in InstanceID detectorID)
+        private static void RemoveTargetedEntity(ref NativeMultiHashMap<InstanceID, InstanceID> hashMap, in InstanceID targetID, in InstanceID detectorID)
         {
             //if (hashMap.CountValuesForKey(targetID) == 1)
             //{
@@ -453,7 +454,7 @@ namespace Syadeu.Presentation.Grid
             }
             return false;
         }
-        private static void ClearDetectorObserveIndices(ref UnsafeMultiHashMap<GridIndex, InstanceID> hashMap, in InstanceID entityID, ref GridDetectorComponent detector)
+        private static void ClearDetectorObserveIndices(ref NativeMultiHashMap<GridIndex, InstanceID> hashMap, in InstanceID entityID, ref GridDetectorComponent detector)
         {
             for (int i = 0; i < detector.m_ObserveIndices.Length; i++)
             {
@@ -461,18 +462,18 @@ namespace Syadeu.Presentation.Grid
             }
             detector.m_ObserveIndices.Clear();
         }
-        private static void RemoveValueAtHashMap<T, TA>(ref UnsafeMultiHashMap<T, TA> hashMap, in T key, in TA value)
+        private static bool RemoveValueAtHashMap<T, TA>(ref NativeMultiHashMap<T, TA> hashMap, in T key, in TA value)
             where T : unmanaged, IEquatable<T>
             where TA : unmanaged, IEquatable<TA>
         {
             if (hashMap.CountValuesForKey(key) == 1)
             {
                 hashMap.Remove(key);
+                return true;
             }
-            else
-            {
-                hashMap.Remove(key, value);
-            }
+
+            hashMap.Remove(key, value);
+            return false;
         }
 
         #endregion

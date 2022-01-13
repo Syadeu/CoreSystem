@@ -390,7 +390,7 @@ namespace Syadeu.Presentation.Grid
 
         #region Jobs
 
-        internal void CompleteJobs()
+        internal void CompleteGridJob()
         {
             m_GridUpdateJob.Complete();
         }
@@ -424,6 +424,14 @@ namespace Syadeu.Presentation.Grid
                 ref m_Entities,
                 m_EventSystem
                 );
+            NativeMultiHashMap<GridIndex, InstanceID> observers = GetModule<GridDetectorModule>().GridObservers;
+            observers.Clear();
+            FullObserverUpdateJob observerUpdateJob = new FullObserverUpdateJob
+            {
+                grid = m_Grid,
+                entities = m_Entities,
+                observers = observers.AsParallelWriter()
+            };
 
             var handle =
                 ScheduleAt<UpdateGridComponentJob, GridComponent>(JobPosition.Before, componentJob);
@@ -433,6 +441,8 @@ namespace Syadeu.Presentation.Grid
                 ScheduleAt(JobPosition.Before, postChangedEventJob);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle2);
 
+            var handle3 = ScheduleAt<FullObserverUpdateJob, GridDetectorComponent>(JobPosition.Before, observerUpdateJob);
+            m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle3);
             //"schedule full re indexing".ToLog();
         }
 
@@ -537,6 +547,29 @@ namespace Syadeu.Presentation.Grid
                 }
             }
         }
+        private struct FullObserverUpdateJob : IJobParallelForEntities<GridDetectorComponent>
+        {
+            [ReadOnly]
+            public WorldGrid grid;
+            [ReadOnly]
+            public NativeMultiHashMap<InstanceID, ulong> entities;
+            [WriteOnly]
+            public NativeMultiHashMap<GridIndex, InstanceID>.ParallelWriter observers;
+
+            public void Execute(in InstanceID entity, ref GridDetectorComponent detector)
+            {
+                // TODO : temp
+                entities.TryGetFirstValue(entity, out ulong index, out var iter);
+
+                detector.m_ObserveIndices = new FixedList4096Bytes<GridIndex>();
+
+                foreach (var item in grid.GetRange(new GridIndex(grid, index), new int3(detector.DetectedRange, 0, detector.DetectedRange)))
+                {
+                    observers.Add(item, entity);
+                    detector.m_ObserveIndices.Add(item);
+                }
+            }
+        }
 
         #endregion
 
@@ -574,6 +607,12 @@ namespace Syadeu.Presentation.Grid
 
             iter = new EntityEnumerator(m_Indices.GetValuesForKey(index.Index));
             return true;
+        }
+        public NativeArray<GridIndex> GetObserverIndices(AllocatorManager.AllocatorHandle allocator)
+        {
+            CompleteGridJob();
+
+            return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
         }
 
         [BurstCompatible]
@@ -718,7 +757,7 @@ namespace Syadeu.Presentation.Grid
         public RangeEnumerator GetRange(in InstanceID from,
             in int3 range)
         {
-            CompleteJobs();
+            CompleteGridJob();
 
             if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
             {
@@ -815,7 +854,7 @@ namespace Syadeu.Presentation.Grid
             ref FixedList4096Bytes<GridIndex> output,
             SortOption sortOption = SortOption.None)
         {
-            CompleteJobs();
+            CompleteGridJob();
 
             if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
             {
@@ -1136,6 +1175,19 @@ namespace Syadeu.Presentation.Grid
             index = new GridIndex(m_Grid.m_CheckSum, temp);
 
             return true;
+        }
+
+        #endregion
+
+        #region Detector
+
+        public bool IsObserveIndexOf(in GridIndex index, in InstanceID entity)
+        {
+            return GetModule<GridDetectorModule>().IsObserveIndexOf(in index, in entity);
+        }
+        public bool IsObserveIndexOfOnly(in GridIndex index, in InstanceID entity)
+        {
+            return GetModule<GridDetectorModule>().IsObserveIndexOfOnly(in index, in entity);
         }
 
         #endregion

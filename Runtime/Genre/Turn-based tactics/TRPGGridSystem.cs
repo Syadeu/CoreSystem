@@ -67,8 +67,6 @@ namespace Syadeu.Presentation.TurnTable
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
-        private static float3 s_DefaultYOffset = new float3(0, .25f, 0);
-
         private InputSystem m_InputSystem;
         private WorldGridSystem m_GridSystem;
         private RenderSystem m_RenderSystem;
@@ -76,6 +74,7 @@ namespace Syadeu.Presentation.TurnTable
         private EventSystem m_EventSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
+        private TRPGSelectionSystem m_SelectionSystem;
 
         #region Presentation Methods
 
@@ -133,6 +132,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
 
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGSelectionSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -159,6 +159,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = null;
 
             m_TurnTableSystem = null;
+            m_SelectionSystem = null;
         }
 
         #region Binds
@@ -193,6 +194,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
+        }
+        private void Bind(TRPGSelectionSystem other)
+        {
+            m_SelectionSystem = other;
         }
 
         #endregion
@@ -252,15 +257,47 @@ namespace Syadeu.Presentation.TurnTable
         private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext ctx, Camera arg2)
         {
             Shapes.Draw.Push();
+            Shapes.Draw.ZOffsetFactor = -1;
+
+            if (!m_IsDrawingGrids && m_SelectionSystem.CurrentSelection.IsValid() &&
+                m_SelectionSystem.CurrentSelection.HasComponent<GridComponent>())
+            {
+                //GridComponent gridcom = m_SelectionSystem.CurrentSelection.GetComponentReadOnly<GridComponent>();
+                NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
+
+                using (Shapes.Draw.GradientFillScope())
+                {
+                    for (int i = 0; i < observeIndices.Length; i++)
+                    {
+                        if (m_GridSystem.IsObserveIndexOfOnly(observeIndices[i], m_SelectionSystem.CurrentSelection.Idx))
+                        {
+                            continue;
+                        }
+
+                        float3 pos = m_GridSystem.IndexToPosition(observeIndices[i]);
+                        //Shapes.Draw.GradientFill = Shapes.GradientFill.Linear(
+                            
+                        //    );
+
+                        Shapes.Draw.RectangleBorder(
+                            pos: pos,
+                            normal: math.up(),
+                            size: (float2)m_GridSystem.CellSize,
+                            pivot: Shapes.RectPivot.Center,
+                            thickness: .03f
+                        );
+                    }
+                }
+            }
 
             using (Shapes.Draw.DashedScope())
             {
                 Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                   Shapes.DashType.Angled, 1, s_DefaultYOffset.y, Shapes.DashSnapping.EndToEnd);
+                   Shapes.DashType.Angled, 1, .25f, Shapes.DashSnapping.EndToEnd);
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
-                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]) + s_DefaultYOffset;
+                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]);
 
                     Shapes.Draw.RectangleBorder(
                         pos: pos,
@@ -291,12 +328,23 @@ namespace Syadeu.Presentation.TurnTable
                         spacing: .75f, 
                         snap: Shapes.DashSnapping.Off,
                         offset: m_PathlineDrawOffset);
-                    for (int i = 0; i + 1 < m_ShapesPathline.Count; i++)
+                    for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
                     {
                         Shapes.Draw.Line(
                             m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point,
                             thickness: .1f);
                     }
+
+                    float3
+                        prevPos = m_ShapesPathline[m_ShapesPathline.Count - 2].point,
+                        lastPos = m_ShapesPathline[m_ShapesPathline.Count - 1].point,
+                        dir = math.normalize(lastPos - prevPos);
+                    lastPos -= dir * .65f;
+
+                    Shapes.Draw.Line(
+                        prevPos, lastPos,
+                        color: new Color32(255, 150, 0, 251),
+                        thickness: .1f);
 
                     Shapes.Draw.Push();
 
@@ -308,13 +356,18 @@ namespace Syadeu.Presentation.TurnTable
                     Shapes.Draw.StencilReadMask = 255;
                     Shapes.Draw.StencilWriteMask = 255;
 
-                    for (int i = 0; i + 1 < m_ShapesPathline.Count; i++)
+                    for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
                     {
                         Shapes.Draw.Line(
                             m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
                             color: new Color32(255, 150, 0, 251),
                             thickness: .1f);
                     }
+
+                    Shapes.Draw.Line(
+                        prevPos, lastPos,
+                        color: new Color32(255, 150, 0, 251),
+                        thickness: .1f);
 
                     Shapes.Draw.Pop();
                 }
@@ -409,16 +462,16 @@ namespace Syadeu.Presentation.TurnTable
         public void CalculateOutlineVertices(
             in InstanceID entity,
             NativeArray<GridIndex> moveables,
-            ref NativeList<Vector3> vertices, float heightOffset = .25f)
+            ref NativeList<Vector3> vertices)
         {
             var gridsize = entity.GetComponent<GridComponent>();
             float half = m_GridSystem.CellSize * .5f;
 
             float3
-                upleft = new float3(-half, heightOffset, half),
-                upright = new float3(half, heightOffset, half),
-                downleft = new float3(-half, heightOffset, -half),
-                downright = new float3(half, heightOffset, -half);
+                upleft = new float3(-half, 0, half),
+                upright = new float3(half, 0, half),
+                downleft = new float3(-half, 0, -half),
+                downright = new float3(half, 0, -half);
 
             vertices.Clear();
             float3 gridPos;
@@ -620,7 +673,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_IsDrawingPaths = true;
         }
-        private void DrawUIPath(in GridIndex from, in GridIndex to, float heightOffset = .25f)
+        private void DrawUIPath(in GridIndex from, in GridIndex to)
         {
             if (m_IsDrawingPaths)
             {
@@ -628,14 +681,12 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridPathlineRenderer.positionCount = 0;
             }
 
-            float3 offset = new float3(0, heightOffset, 0);
-
             FixedList4096Bytes<GridIndex> foundPath = new FixedList4096Bytes<GridIndex>();
             if (!m_GridSystem.GetPath(in from, in to, ref foundPath, out _)) return;
 
             for (int i = 0; i < foundPath.Length; i++)
             {
-                m_ShapesPathline.AddPoint(m_GridSystem.IndexToPosition(foundPath[i]) + offset);
+                m_ShapesPathline.AddPoint(m_GridSystem.IndexToPosition(foundPath[i]));
             }
 
             m_IsDrawingPaths = true;

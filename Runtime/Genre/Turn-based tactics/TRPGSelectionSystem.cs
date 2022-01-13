@@ -46,6 +46,8 @@ namespace Syadeu.Presentation.TurnTable
         private ObjectPool<Selection> m_SelectionPool;
         private List<Selection> m_SelectedEntities;
 
+        public Entity<IEntity> CurrentSelection => m_SelectedEntities.Count > 0 ? m_SelectedEntities[0].Entity : Entity<IEntity>.Empty;
+
         private UnityEngine.InputSystem.InputAction
             m_LeftMouseButtonAction,
             m_RightMouseButtonAction;

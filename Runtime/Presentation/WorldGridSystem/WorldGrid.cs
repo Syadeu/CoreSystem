@@ -19,6 +19,8 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 
@@ -27,7 +29,7 @@ namespace Syadeu.Presentation.Grid
     [BurstCompatible]
     internal unsafe struct WorldGrid
     {
-        internal readonly short m_CheckSum;
+        public readonly short m_CheckSum;
 
         private AABB m_AABB;
         private float m_CellSize;
@@ -171,6 +173,76 @@ namespace Syadeu.Presentation.Grid
         public bool Contains(in AABB aabb)
         {
             return m_AABB.Contains(aabb.min) && m_AABB.Contains(aabb.max);
+        }
+
+        public struct RangeEnumerator : IEnumerable<GridIndex>
+        {
+            private WorldGrid m_Grid;
+            private GridIndex m_From;
+            private int3 m_Range;
+
+            internal RangeEnumerator(
+                in WorldGrid grid,
+                in GridIndex from,
+                in int3 range)
+            {
+                m_Grid = grid;
+                m_From = from;
+                m_Range = range;
+            }
+
+            public IEnumerator<GridIndex> GetEnumerator()
+            {
+                int maxCount = ((m_Range.x * 2) + 1) * ((m_Range.z * 2) + 1) * ((m_Range.y * 2) + 1);
+                if (maxCount > 255)
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"You\'re trying to get range of grid that exceeding length 255. " +
+                        $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
+                }
+
+                int3
+                    location = m_From.Location,
+                    minRange, maxRange;
+                m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+
+                int
+                    minX = location.x - m_Range.x < 0 ? 0 : math.min(location.x - m_Range.x, maxRange.x),
+                    maxX = location.x + m_Range.x < 0 ? 0 : math.min(location.x + m_Range.x, maxRange.x),
+
+                    minY = location.y - m_Range.y < 0 ?
+                        math.max(location.y - m_Range.y, minRange.y) : math.min(location.y - m_Range.y, maxRange.y),
+                    maxY = location.y + m_Range.y < 0 ?
+                        math.max(location.y + m_Range.y, minRange.y) : math.min(location.y + m_Range.y, maxRange.y),
+
+                    minZ = location.z - m_Range.z < 0 ? 0 : math.min(location.z - m_Range.z, maxRange.z),
+                    maxZ = location.z + m_Range.z < 0 ? 0 : math.min(location.z + m_Range.z, maxRange.z);
+
+                int3
+                    start = new int3(minX, minY, minZ),
+                    end = new int3(maxX, maxY, maxZ);
+
+                int count = 0;
+                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+                {
+                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+                    {
+                        for (int z = start.z;
+                            z < end.z + 1 && count < maxCount;
+                            z++, count++)
+                        {
+                            yield return new GridIndex(m_Grid.m_CheckSum, new int3(x, y, z));
+                        }
+                    }
+                }
+            }
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public RangeEnumerator GetRange(in GridIndex from,
+            in int3 range)
+        {
+            return new RangeEnumerator(in this, in from, in range);
         }
     }
 }

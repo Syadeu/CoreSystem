@@ -174,7 +174,7 @@ namespace Syadeu.Presentation.Grid
         }
         void DrawOcc(Camera cam)
         {
-            System.CompleteJobs();
+            System.CompleteGridJob();
 
             float3 camForward = cam.transform.forward;
             var arr = System.m_Indices.GetKeyArray(AllocatorManager.Temp);
@@ -199,7 +199,7 @@ namespace Syadeu.Presentation.Grid
         }
         void DrawIndices(Camera cam)
         {
-            System.CompleteJobs();
+            System.CompleteGridJob();
 
             float3 camForward = cam.transform.forward;
             
