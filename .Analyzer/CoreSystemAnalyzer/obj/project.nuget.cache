@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "pS6SQDkPpPCjva9OdJ8fjiqdnGUYB6LZgWskzKYtcYymOiVY8519PnwwKersKMQ69ATnTb+M3hNlbttidnXEjw==",
+  "dgSpecHash": "sc00jnvBkJdI+cidII2lhN4SRg+34ZbjDuqgw2VlL5mfZeOdYjvpHGxM2ENFyv0fhQSsqIi1ydkurHSrKE/eHg==",
   "success": true,
-  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
+  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\oyksh\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.3\\microsoft.codeanalysis.analyzers.3.3.3.nupkg.sha512",
     "C:\\Users\\oyksh\\.nuget\\packages\\microsoft.codeanalysis.common\\4.0.1\\microsoft.codeanalysis.common.4.0.1.nupkg.sha512",

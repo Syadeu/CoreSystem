@@ -1,0 +1,17 @@
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\tools\install.ps1
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\tools\uninstall.ps1
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.Package.deps.json
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.Package.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.Package.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.CodeFixes.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.CodeFixes.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\bin\Release\netstandard2.0\CoreSystemAnalyzer.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.csproj.AssemblyReference.cache
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.GeneratedMSBuildEditorConfig.editorconfig
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.AssemblyInfoInputs.cache
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.AssemblyInfo.cs
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.csproj.CoreCompileInputs.cache
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.csproj.CopyComplete
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.Package\obj\Release\netstandard2.0\CoreSystemAnalyzer.Package.pdb

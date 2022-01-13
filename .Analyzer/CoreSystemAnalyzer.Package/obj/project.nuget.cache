@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "wfiuIpDgwj0L5Ueekp4l/z+v/IDu+JGl4xOajlsBPeKa0cqvX4UBBdziMwOddmebJu9f/q/afHOkubTGTvG9cg==",
+  "dgSpecHash": "1UU2SmJGpPvzg3u7JZ6GZhwkgdQBhGiY0MqUv1KpCMEiLNBiI+PLnVJyV7OFZLYXEJDB0z92Bbp+s9Z0oDZ2dg==",
   "success": true,
-  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Package\\CoreSystemAnalyzer.Package.csproj",
+  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Package\\CoreSystemAnalyzer.Package.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\oyksh\\.nuget\\packages\\humanizer.core\\2.2.0\\humanizer.core.2.2.0.nupkg.sha512",
     "C:\\Users\\oyksh\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\5.0.0\\microsoft.bcl.asyncinterfaces.5.0.0.nupkg.sha512",

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj": {}
+    "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj": {}
   },
   "projects": {
-    "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj": {
+    "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
+        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
         "projectName": "CoreSystemAnalyzer.CodeFixes",
-        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
+        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
         "packagesPath": "C:\\Users\\oyksh\\.nuget\\packages\\",
-        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\obj\\",
+        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "netstandard2.0": {
             "targetAlias": "netstandard2.0",
             "projectReferences": {
-              "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
-                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
+              "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
+                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
               }
             }
           }
@@ -73,14 +73,14 @@
         }
       }
     },
-    "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj": {
+    "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj",
+        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj",
         "projectName": "CoreSystemAnalyzer.Vsix",
-        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj",
+        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Vsix\\CoreSystemAnalyzer.Vsix.csproj",
         "packagesPath": "C:\\Users\\oyksh\\.nuget\\packages\\",
-        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Vsix\\obj\\",
+        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Vsix\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -101,11 +101,11 @@
           "net472": {
             "targetAlias": "net472",
             "projectReferences": {
-              "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj": {
-                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj"
+              "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj": {
+                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj"
               },
-              "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
-                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
+              "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
+                "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
               }
             }
           }
@@ -130,14 +130,14 @@
         }
       }
     },
-    "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
+    "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
+        "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
         "projectName": "*CoreSystemAnalyzer.csproj*",
-        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
+        "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj",
         "packagesPath": "C:\\Users\\oyksh\\.nuget\\packages\\",
-        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\obj\\",
+        "outputPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

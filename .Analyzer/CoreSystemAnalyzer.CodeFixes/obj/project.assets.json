@@ -3057,11 +3057,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
+      "projectUniqueName": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
       "projectName": "CoreSystemAnalyzer.CodeFixes",
-      "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
+      "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\CoreSystemAnalyzer.CodeFixes.csproj",
       "packagesPath": "C:\\Users\\oyksh\\.nuget\\packages\\",
-      "outputPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.CodeFixes\\obj\\",
+      "outputPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.CodeFixes\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -3082,8 +3082,8 @@
         "netstandard2.0": {
           "targetAlias": "netstandard2.0",
           "projectReferences": {
-            "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
-              "projectPath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
+            "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj": {
+              "projectPath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer\\CoreSystemAnalyzer.csproj"
             }
           }
         }

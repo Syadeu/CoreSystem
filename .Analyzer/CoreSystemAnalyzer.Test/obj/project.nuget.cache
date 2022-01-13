@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "f7xZq+Htlp3z7gdMtdoLo4Dc9BsosJeOEkxTRIqVk7pAhs1JTm5Q5WglwoKvRmn/3GiNBfAKtC4W5Xc5ZsE91A==",
+  "dgSpecHash": "2KfWLW+0OyEe7vpLkw7+Dtf5QEQPa4BPrFdUdv4I1Jc0d7Atb4JEjOO9F25pM5dNNEUcgYUTe30CrVWzKhFssg==",
   "success": true,
-  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\CoreSystem\\CoreSystemAnalyzer\\CoreSystemAnalyzer.Test\\CoreSystemAnalyzer.Test.csproj",
+  "projectFilePath": "D:\\AudioSystemProject\\AudioSystem\\Assets\\CoreSystem\\.Analyzer\\CoreSystemAnalyzer.Test\\CoreSystemAnalyzer.Test.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\oyksh\\.nuget\\packages\\diffplex\\1.4.4\\diffplex.1.4.4.nupkg.sha512",
     "C:\\Users\\oyksh\\.nuget\\packages\\humanizer.core\\2.2.0\\humanizer.core.2.2.0.nupkg.sha512",

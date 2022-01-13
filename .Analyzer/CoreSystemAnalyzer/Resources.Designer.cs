@@ -70,7 +70,7 @@ namespace CoreSystemAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to typeof(T) 는 매 호출시마다 새로 캐싱을 합니다.
+        ///   Looks up a localized string similar to typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다..
         /// </summary>
         internal static string TypeofDescription {
             get {
@@ -79,7 +79,7 @@ namespace CoreSystemAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please use TypeHelper.GetType&lt;T&gt;.Type instead as it caches the result of the typeof(T) operation.
+        ///   Looks up a localized string similar to typeof(T) 를 통해 미리 메모리에 캐싱한 TypeHelper.GetType&lt;T&gt;.Type 을 사용하세요..
         /// </summary>
         internal static string TypeofMessageFormat {
             get {

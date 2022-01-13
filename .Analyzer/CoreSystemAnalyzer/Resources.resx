@@ -121,10 +121,10 @@
     <value>typeof() 는 허용되지 않습니다</value>
   </data>
   <data name="TypeofDescription" xml:space="preserve">
-    <value>typeof(T) 는 매 호출시마다 새로 캐싱을 합니다</value>
+    <value>typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.</value>
   </data>
   <data name="TypeofMessageFormat" xml:space="preserve">
-    <value>Please use TypeHelper.GetType&lt;T&gt;.Type instead as it caches the result of the typeof(T) operation</value>
+    <value>typeof(T) 를 통해 미리 메모리에 캐싱한 TypeHelper.GetType&lt;T&gt;.Type 을 사용하세요.</value>
   </data>
   <data name="UnusedUsingAnalyzerTitle" xml:space="preserve">
     <value>사용되지 않은 using 선언</value>
