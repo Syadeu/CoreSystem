@@ -225,7 +225,7 @@ namespace Syadeu
                         }
                         if (memberType == null) continue;
 
-                        if (memberType == typeof(Vector3))
+                        if (memberType == TypeHelper.TypeOf<Vector3>.Type)
                         {
                             memberType = typeof(string);
                         }
