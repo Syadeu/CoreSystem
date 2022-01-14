@@ -793,18 +793,15 @@ namespace Syadeu.Presentation
 
         public override void OnInitialize()
         {
-            const string register = "Register";
-
             SetPlayerLoop();
 
-            Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null).ToArray();
+            Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<IPresentationRegister>.Type.IsAssignableFrom(t)).ToArray();
 
-            MethodInfo registerMethod = TypeHelper.TypeOf<IPresentationRegister>.Type.GetMethod(register);
             IPresentationRegister[] presentations = new IPresentationRegister[registers.Length];
             for (int i = 0; i < registers.Length; i++)
             {
                 presentations[i] = (IPresentationRegister)Activator.CreateInstance(registers[i]);
-                registerMethod.Invoke(presentations[i], null);
+                presentations[i].Register();
             }
 
             m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);

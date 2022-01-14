@@ -17,7 +17,7 @@ public class PresentationSystemTests
 {
     internal sealed class PresentationTestGroup : PresentationGroupEntity
     {
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 typeof(TestSystem),

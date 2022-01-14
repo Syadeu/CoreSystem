@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-
 namespace Syadeu.Presentation.Grid
 {
     public enum Alignment : int

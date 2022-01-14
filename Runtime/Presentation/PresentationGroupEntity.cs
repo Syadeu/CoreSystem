@@ -33,7 +33,8 @@ namespace Syadeu.Presentation
         public virtual Type DependenceGroup => null;
         public virtual SceneReference DependenceScene => null;
 
-        public abstract void Register();
+        void IPresentationRegister.Register() => Register();
+        protected abstract void Register();
 
         /// <summary>
         /// 해당 시스템을 등록합니다.
@@ -42,6 +43,6 @@ namespace Syadeu.Presentation
         /// <see cref="Register"/>에서만 실행되어야 됩니다.
         /// </remarks>
         /// <param name="systems"></param>
-        protected void RegisterSystem(params System.Type[] systems) => PresentationManager.RegisterSystem(GetType(), DependenceScene, systems);
+        protected void RegisterSystem(params Type[] systems) => PresentationManager.RegisterSystem(GetType(), DependenceScene, systems);
     }
 }

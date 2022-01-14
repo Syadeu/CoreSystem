@@ -27,8 +27,9 @@ namespace Syadeu.Presentation.TurnTable
 
         [Header("Grid")]
         [SerializeField]
-        public Color32
-            m_MovableTileColor, m_MovableOutlineColor,
+        public Color32 m_MovableTileColor;
+        [SerializeField]
+        public Color32 m_MovableOutlineColor,
             m_PathlineColor, m_PathlineOverlayColor, m_PathlineEndTipColor,
             m_DetectionTileColorStart, m_DetectionTileColorEnd = Color.clear;
     }

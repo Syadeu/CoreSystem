@@ -20,7 +20,7 @@ namespace Syadeu.Presentation
 {
     public sealed class DefaultPresentationGroup : PresentationGroupEntity
     {
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 TypeHelper.TypeOf<UtilitySystem>.Type,
@@ -54,7 +54,7 @@ namespace Syadeu.Presentation
     {
         public override Type DependenceGroup => TypeHelper.TypeOf<DefaultPresentationGroup>.Type;
 
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 TypeHelper.TypeOf<Map.LevelDesignSystem>.Type
