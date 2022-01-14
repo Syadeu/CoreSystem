@@ -256,6 +256,8 @@ namespace Syadeu.Presentation.TurnTable
 
         private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext ctx, Camera arg2)
         {
+            TRPGSettings settings = TRPGSettings.Instance;
+
             Shapes.Draw.Push();
             Shapes.Draw.ZOffsetFactor = -1;
 
@@ -270,8 +272,9 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(
                         selectionPos, 25,
-                        colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
-                        colorOuter: Color.clear,
+                        //colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
+                        colorInner: settings.m_DetectionTileColorStart,
+                        colorOuter: settings.m_DetectionTileColorEnd,
                         space: Shapes.FillSpace.World
                         );
 
@@ -292,12 +295,17 @@ namespace Syadeu.Presentation.TurnTable
                         );
                     }
                 }
+
+                //Shapes.Draw.Texture(,,)
             }
 
+            using (Shapes.Draw.ColorScope)
             using (Shapes.Draw.DashedScope())
             {
                 Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
                    Shapes.DashType.Angled, 1, .25f, Shapes.DashSnapping.EndToEnd);
+
+                Shapes.Draw.Color = settings.m_MovableTileColor;
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
@@ -313,18 +321,26 @@ namespace Syadeu.Presentation.TurnTable
                 }
             }
 
-            if (m_ShapesOutlinePath.Count > 0)
+            using (Shapes.Draw.ColorScope)
             {
-                //Shapes.Draw.
-                Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+                Shapes.Draw.Color = settings.m_MovableOutlineColor;
+
+                if (m_ShapesOutlinePath.Count > 0)
+                {
+                    //Shapes.Draw.
+                    Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+                }
             }
 
             if (m_ShapesPathline.Count > 0)
             {
                 m_PathlineDrawOffset += Time.deltaTime;
 
+                using (Shapes.Draw.ColorScope)
                 using (Shapes.Draw.DashedScope())
                 {
+                    Shapes.Draw.Color = settings.m_PathlineColor;
+
                     Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
                     Shapes.Draw.DashStyle = Shapes.DashStyle.MeterDashes(
                         type: Shapes.DashType.Basic, 
@@ -347,10 +363,11 @@ namespace Syadeu.Presentation.TurnTable
 
                     Shapes.Draw.Line(
                         prevPos, lastPos,
-                        color: new Color32(255, 150, 0, 251),
                         thickness: .1f);
 
                     Shapes.Draw.Push();
+
+                    Shapes.Draw.Color = settings.m_PathlineOverlayColor;
 
                     Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
                     Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
@@ -364,20 +381,21 @@ namespace Syadeu.Presentation.TurnTable
                     {
                         Shapes.Draw.Line(
                             m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
-                            color: new Color32(255, 150, 0, 251),
                             thickness: .1f);
                     }
 
                     Shapes.Draw.Line(
                         prevPos, lastPos,
-                        color: new Color32(255, 150, 0, 251),
                         thickness: .1f);
 
                     Shapes.Draw.Pop();
                 }
 
+                using (Shapes.Draw.ColorScope)
                 using (Shapes.Draw.DashedScope())
                 {
+                    Shapes.Draw.Color = settings.m_PathlineEndTipColor;
+
                     Shapes.Draw.LineGeometry = Shapes.LineGeometry.Flat2D;
                     Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
                         type: Shapes.DashType.Basic,

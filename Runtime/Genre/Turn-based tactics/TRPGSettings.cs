@@ -16,21 +16,20 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Collections;
+using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public sealed class TRPGIngameSystemGroup : PresentationGroupEntity
+    [PreferBinarySerialization]
+    public sealed class TRPGSettings : StaticSettingEntity<TRPGSettings>
     {
-        public override void Register()
-        {
-            RegisterSystem(
-                TypeHelper.TypeOf<TRPGPlayerSystem>.Type,
-                TypeHelper.TypeOf<TRPGTurnTableSystem>.Type,
-                TypeHelper.TypeOf<TRPGSelectionSystem>.Type,
-                TypeHelper.TypeOf<TRPGGridSystem>.Type,
-                TypeHelper.TypeOf<UI.TRPGCanvasUISystem>.Type
-                );
-        }
+        public override bool RuntimeModifiable => true;
+
+        [Header("Grid")]
+        [SerializeField]
+        public Color32
+            m_MovableTileColor, m_MovableOutlineColor,
+            m_PathlineColor, m_PathlineOverlayColor, m_PathlineEndTipColor,
+            m_DetectionTileColorStart, m_DetectionTileColorEnd = Color.clear;
     }
 }
