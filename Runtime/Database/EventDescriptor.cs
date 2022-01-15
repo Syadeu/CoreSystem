@@ -46,11 +46,16 @@ namespace Syadeu.Collections
             }
 
             m_Events[key] -= e;
-            var invocationList = m_Events[key].GetInvocationList();
-            if (invocationList == null || invocationList.Length == 0)
+            if (m_Events[key] == null)
             {
                 m_Events.TryRemove(key, out _);
             }
+
+            //var invocationList = m_Events[key].GetInvocationList();
+            //if (invocationList == null || invocationList.Length == 0)
+            //{
+            //    m_Events.TryRemove(key, out _);
+            //}
         }
 
         void IEventDescriptor.RemoveEvent(string key, Delegate e) => RemoveEvent(key, (Action<TEvent>)e);

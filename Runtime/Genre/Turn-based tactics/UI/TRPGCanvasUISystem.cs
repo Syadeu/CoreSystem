@@ -326,6 +326,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         public void RemoveShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
         {
+            if (m_TRPGInputSystem == null) return;
+
             m_TRPGInputSystem.UnbindShortcut(shortcut);
 
             m_Shortcuts[(int)shortcutType] = null;

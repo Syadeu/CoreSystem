@@ -30,15 +30,15 @@ namespace Syadeu.Presentation
     /// </remarks>
     /// <typeparam name="TSystem"></typeparam>
     public abstract class PresentationSystemModule<TSystem> : PresentationSystemModule
-        where TSystem : PresentationSystemEntity
+        where TSystem : IPresentationSystem
     {
         protected new TSystem System => (TSystem)m_System;
     }
     public abstract class PresentationSystemModule : IDisposable
     {
-        internal PresentationSystemEntity m_System;
+        internal IPresentationSystem m_System;
 
-        protected PresentationSystemEntity System => m_System;
+        protected IPresentationSystem System => m_System;
 
         internal void InternalOnInitialize() => OnInitialize();
         internal void InternalOnInitializeAsync() => OnInitializeAsync();

@@ -31,7 +31,8 @@ namespace Syadeu.Presentation.Internal
     /// <remarks>
     /// 직접 상속은 허용하지 않습니다. <see cref="PresentationSystemEntity{T}"/>로 상속받아서 사용하세요.
     /// </remarks>
-    public abstract partial class PresentationSystemEntity : IInitPresentation, 
+    public abstract partial class PresentationSystemEntity :
+        IPresentationSystem, IInitPresentation, 
         IBeforePresentation, IOnPresentation, IAfterPresentation, 
         ITransformPresentation, IAfterTransformPresentation,
         IDisposable

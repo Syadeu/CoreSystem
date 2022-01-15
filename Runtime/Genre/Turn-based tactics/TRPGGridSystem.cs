@@ -265,7 +265,7 @@ namespace Syadeu.Presentation.TurnTable
                 //GridComponent gridcom = m_SelectionSystem.CurrentSelection.GetComponentReadOnly<GridComponent>();
                 float3 selectionPos = m_SelectionSystem.CurrentSelection.transform.position;
                 NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
-
+                
                 using (Shapes.Draw.GradientFillScope())
                 {
                     Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(

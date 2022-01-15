@@ -12,32 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public readonly struct ScreenAspect
+    public sealed class UnityRendererModule : PresentationSystemModule<ICanvasSystem>
     {
-        public readonly int
-            WidthRatio, HeightRatio,
-            Width, Heigth;
+        private Stack<SpriteRenderer> m_ReservedSpriteRenderers;
 
-        public ScreenAspect(Resolution resolution)
+        protected override void OnInitialize()
         {
-            Width = resolution.width;
-            Heigth = resolution.height;
-
-            WidthRatio = resolution.width / 80;
-            HeightRatio = resolution.height / 80;
+            m_ReservedSpriteRenderers = new Stack<SpriteRenderer>();
+        }
+        protected override void OnShutDown()
+        {
+            foreach (var item in m_ReservedSpriteRenderers)
+            {
+                UnityEngine.Object.Destroy(item.gameObject);
+            }
+        }
+        protected override void OnDispose()
+        {
+            base.OnDispose();
         }
 
-        public bool Is16p9()
-        {
-            return WidthRatio == 16 && HeightRatio == 9;
-        }
-        public bool Is16p10()
-        {
-            return WidthRatio == 16 && HeightRatio == 10;
-        }
+
     }
 }

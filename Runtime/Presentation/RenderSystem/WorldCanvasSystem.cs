@@ -37,7 +37,9 @@ using UnityEngine.UI;
 namespace Syadeu.Presentation.Render
 {
     public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>,
-        INotifySystemModule<EntityOverlayUIModule>
+        ICanvasSystem,
+        INotifySystemModule<EntityOverlayUIModule>,
+        INotifySystemModule<UnityRendererModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -519,5 +521,11 @@ namespace Syadeu.Presentation.Render
         }
 
         #endregion
+    }
+
+    public interface ICanvasSystem : IPresentationSystem
+    {
+        Canvas Canvas { get; }
+        GraphicRaycaster CanvasRaycaster { get; }
     }
 }
