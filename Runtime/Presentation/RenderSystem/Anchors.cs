@@ -12,33 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using UnityEngine;
-using UnityEngine.UI;
+using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Render
 {
-    public readonly struct ScreenAspect
+    [BurstCompatible]
+    public struct Anchors
     {
-        public readonly int
-            WidthRatio, HeightRatio,
-            Width, Heigth;
+        public static Anchors MiddleCenter => new Anchors(.5f, .5f, .5f, .5f);
 
-        public ScreenAspect(Resolution resolution)
+        public float2 min;
+        public float2 max;
+
+        #region Constructors
+
+        public Anchors(float2 min, float2 max)
         {
-            Width = resolution.width;
-            Heigth = resolution.height;
-
-            WidthRatio = resolution.width / 80;
-            HeightRatio = resolution.height / 80;
+            this.min = min;
+            this.max = max;
+        }
+        public Anchors(float4 minMax)
+        {
+            this.min = minMax.xy;
+            this.max = minMax.zw;
+        }
+        public Anchors(float minX, float minY, float maxX, float maxY)
+        {
+            this.min = new float2(minX, minY);
+            this.max = new float2(maxX, maxY);
         }
 
-        public bool Is16p9()
-        {
-            return WidthRatio == 16 && HeightRatio == 9;
-        }
-        public bool Is16p10()
-        {
-            return WidthRatio == 16 && HeightRatio == 10;
-        }
+        #endregion
     }
 }

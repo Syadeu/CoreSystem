@@ -1192,11 +1192,9 @@ namespace Syadeu.Presentation.Proxy
             Scene m_RequestedScene;
             Action<RecycleableMonobehaviour> m_OnCompleted;
 
-#if DEBUG_MODE
             private static Unity.Profiling.ProfilerMarker
                 s_SetupMarker = new Unity.Profiling.ProfilerMarker("PrefabRequester: Setup"), 
                 s_CreateMarker = new Unity.Profiling.ProfilerMarker("PrefabRequester: Create Prefab");
-#endif
 
             public void Setup(GameObjectProxySystem proxySystem, 
                 PrefabReference prefabIdx, Vector3 pos, Quaternion rot,

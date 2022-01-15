@@ -146,8 +146,8 @@ namespace Syadeu.Collections
         }
         public void SetValue(int index, uint value, int length = 1)
         {
+#if DEBUG_MODE
             if (index < 0 || length + index > 32) throw new IndexOutOfRangeException();
-
             uint maxValue = 0;
             for (int i = 0; i < length; i++)
             {
@@ -157,7 +157,7 @@ namespace Syadeu.Collections
             {
                 throw new ArgumentOutOfRangeException();
             }
-
+#endif
             for (int i = index, j = 0; j < length; i++, j++)
             {
                 this[i] = (value & (1 << j)) == (1 << j);

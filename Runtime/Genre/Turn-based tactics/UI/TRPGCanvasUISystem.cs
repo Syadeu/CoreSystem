@@ -318,7 +318,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_Shortcuts[(int)shortcutType] = shortcut;
 
-            shortcut.Initialize(this, m_EventSystem);
+            //shortcut.Initialize(this, m_EventSystem);
 
             m_TRPGInputSystem.BindShortcut(shortcut);
 

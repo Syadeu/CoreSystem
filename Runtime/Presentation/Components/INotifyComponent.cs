@@ -27,10 +27,7 @@ namespace Syadeu.Presentation.Components
     /// 이 구현부로 선언된 컴포넌트(<typeparamref name="TComponent"/>)는 사용자에 의해 제거되서는 안됩니다.
     /// </remarks>
     /// <typeparam name="TComponent"></typeparam>
-    public interface INotifyComponent<TComponent> : INotifyComponent where TComponent : unmanaged, IEntityComponent
-    {
-    }
-    public interface INotifyComponent
+    public interface INotifyComponent<TComponent> where TComponent : unmanaged, IEntityComponent
     {
     }
 }

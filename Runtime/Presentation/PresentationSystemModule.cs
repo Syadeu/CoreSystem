@@ -91,11 +91,10 @@ namespace Syadeu.Presentation
         protected virtual void OnDispose() { }
 
         /// <summary>
-        /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다.
+        /// <inheritdoc cref="PresentationManager.RegisterRequest{TGroup, TSystem}(Action{TSystem}, string)"/>
         /// </summary>
         /// <remarks>
-        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.<br/>
-        /// 기본 시스템 그룹은 <seealso cref="DefaultPresentationGroup"/> 입니다.
+        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.
         /// </remarks>
         /// <typeparam name="TGroup"></typeparam>
         /// <typeparam name="TSystem"></typeparam>

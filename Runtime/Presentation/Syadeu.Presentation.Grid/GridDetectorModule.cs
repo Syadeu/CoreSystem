@@ -41,6 +41,10 @@ namespace Syadeu.Presentation.Grid
 
         private Unity.Profiling.ProfilerMarker
             m_UpdateGridDetectionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateGridDetection"),
+            m_ClearExistGridDetectionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.ClearExistGridDetection"),
+            m_UpdateExistGridDetectionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateExistGridDetection"),
+            m_UpdateRemoveGridDetectionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateRemoveGridDetection"),
+
             m_UpdateDetectPositionMarker = new Unity.Profiling.ProfilerMarker($"{nameof(GridDetectorModule)}.UpdateDetectPosition");
 
         private EventSystem m_EventSystem;
@@ -176,58 +180,68 @@ namespace Syadeu.Presentation.Grid
             using (m_UpdateGridDetectionMarker.Auto())
             {
                 ref GridDetectorComponent detector = ref entity.GetComponent<GridDetectorComponent>();
-                // 새로운 그리드 Observation 을 위해 이 Entity 의 기존 Observe 그리드 인덱스를 제거합니다.
-                ClearDetectorObserveIndices(ref m_GridObservers, entity.Idx, ref detector);
 
-                int maxCount = detector.MaxDetectionIndicesCount;
+                // 새로운 그리드 Observation 을 위해 이 Entity 의 기존 Observe 그리드 인덱스를 제거합니다.
+                using (m_ClearExistGridDetectionMarker.Auto())
+                {
+                    ClearDetectorObserveIndices(ref m_GridObservers, entity.Idx, ref detector);
+                }
+
+                //int maxCount = detector.MaxDetectionIndicesCount;
 
                 FixedList512Bytes<InstanceID> newDetected = new FixedList512Bytes<InstanceID>();
 
                 // 임시로 같은 층에 있는 엔티티만 감시함
-                foreach (var item in System.GetRange(entity.Idx, new Unity.Mathematics.int3(detector.DetectedRange, 0, detector.DetectedRange)))
+                using (m_UpdateExistGridDetectionMarker.Auto())
                 {
-                    m_GridObservers.Add(item, entity.Idx);
-                    detector.m_ObserveIndices.Add(item);
+                    foreach (var item in System.GetRange(entity.Idx, new int3(detector.DetectedRange, 0, detector.DetectedRange)))
+                    {
+                        m_GridObservers.Add(item, entity.Idx);
+                        detector.m_ObserveIndices.Add(item);
 
-                    Detection(entity, ref detector, item, ref newDetected, postEvent);
+                        Detection(entity, ref detector, item, ref newDetected, postEvent);
+                    }
                 }
-
-                // 이 곳은 이전에 발견했으나, 이제는 조건이 달라져 발견하지 못한 Entity 들을 처리합니다.
-                for (int i = 0; i < detector.m_Detected.Length; i++)
+                
+                using (m_UpdateRemoveGridDetectionMarker.Auto())
                 {
-                    if (newDetected.Contains(detector.m_Detected[i]))
+                    // 이 곳은 이전에 발견했으나, 이제는 조건이 달라져 발견하지 못한 Entity 들을 처리합니다.
+                    for (int i = 0; i < detector.m_Detected.Length; i++)
                     {
-                        //"already detect".ToLog();
-                        continue;
-                    }
-                    else if (detector.m_DetectRemoveCondition.Execute(entity.ToEntity<IObject>(), out bool predicate) && predicate)
-                    {
-                        continue;
-                    }
-
-                    InstanceID targetID = detector.m_Detected[i];
-                    Entity<IEntity> target = targetID.GetEntity<IEntity>();
-
-                    // 만약 이전 타겟이 GridDetectorAttribute 를 상속받고있으면 내가 발견을 이제 못하게 됬음을 알립니다.
-                    if (target.HasComponent<GridDetectorComponent>())
-                    {
-                        ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
-
-                        if (targetDetector.m_TargetedBy.Contains(entity.Idx))
+                        if (newDetected.Contains(detector.m_Detected[i]))
                         {
-                            targetDetector.m_TargetedBy.Remove(entity.Idx);
+                            //"already detect".ToLog();
+                            continue;
+                        }
+                        else if (detector.m_DetectRemoveCondition.Execute(entity.ToEntity<IObject>(), out bool predicate) && predicate)
+                        {
+                            continue;
+                        }
+
+                        InstanceID targetID = detector.m_Detected[i];
+                        Entity<IEntity> target = targetID.GetEntity<IEntity>();
+
+                        // 만약 이전 타겟이 GridDetectorAttribute 를 상속받고있으면 내가 발견을 이제 못하게 됬음을 알립니다.
+                        if (target.HasComponent<GridDetectorComponent>())
+                        {
+                            ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();
+
+                            if (targetDetector.m_TargetedBy.Contains(entity.Idx))
+                            {
+                                targetDetector.m_TargetedBy.Remove(entity.Idx);
+                            }
+                        }
+
+                        //"un detect".ToLog();
+                        RemoveTargetedEntity(ref m_TargetedEntities, in targetID, entity.Idx);
+
+                        if (postEvent)
+                        {
+                            m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, false));
                         }
                     }
-
-                    "un detect".ToLog();
-                    RemoveTargetedEntity(ref m_TargetedEntities, in targetID, entity.Idx);
-
-                    if (postEvent)
-                    {
-                        m_EventSystem.PostEvent(OnGridDetectEntityEvent.GetEvent(entity, target, false));
-                    }
                 }
-
+                
                 detector.m_Detected = newDetected;
             }
         }
@@ -277,7 +291,7 @@ namespace Syadeu.Presentation.Grid
                     detector.m_OnDetected[i].Execute(myDat, targetDat);
                 }
 
-                $"1. detect {entity.Name} spot {target.Name}".ToLog();
+                //$"1. detect {entity.Name} spot {target.Name}".ToLog();
                 if (target.HasComponent<GridDetectorComponent>())
                 {
                     ref var targetDetector = ref target.GetComponent<GridDetectorComponent>();

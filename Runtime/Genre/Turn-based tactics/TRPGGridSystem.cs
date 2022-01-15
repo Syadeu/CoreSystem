@@ -175,8 +175,6 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
-
-            m_RenderSystem.OnRenderShapes += OnRenderShapesHandler;
         }
 
         private void Bind(NavMeshSystem other)
@@ -414,6 +412,12 @@ namespace Syadeu.Presentation.TurnTable
 
         #endregion
 
+        protected override PresentationResult OnStartPresentation()
+        {
+            m_RenderSystem.OnRenderShapes += OnRenderShapesHandler;
+
+            return base.OnStartPresentation();
+        }
         protected override PresentationResult AfterPresentation()
         {
             if (m_DrawMesh)

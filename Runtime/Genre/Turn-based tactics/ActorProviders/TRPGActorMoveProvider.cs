@@ -7,6 +7,7 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("ActorProvider: TRPG Move Provider")]
+    [ComponentExport]
     public sealed class TRPGActorMoveProvider : ActorProviderBase<TRPGActorMoveComponent>
     {
         protected override void OnInitialize(ref TRPGActorMoveComponent component)

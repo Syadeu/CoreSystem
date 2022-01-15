@@ -12,33 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using UnityEngine;
-using UnityEngine.UI;
-
 namespace Syadeu.Presentation.Render
 {
-    public readonly struct ScreenAspect
+    public enum LayoutGroupType : int
     {
-        public readonly int
-            WidthRatio, HeightRatio,
-            Width, Heigth;
+        None,
 
-        public ScreenAspect(Resolution resolution)
-        {
-            Width = resolution.width;
-            Heigth = resolution.height;
-
-            WidthRatio = resolution.width / 80;
-            HeightRatio = resolution.height / 80;
-        }
-
-        public bool Is16p9()
-        {
-            return WidthRatio == 16 && HeightRatio == 9;
-        }
-        public bool Is16p10()
-        {
-            return WidthRatio == 16 && HeightRatio == 10;
-        }
+        Horizontal,
+        Vertical,
     }
 }

@@ -146,5 +146,20 @@ namespace Syadeu.Presentation
 
         public bool Equals(IObject other) => Hash.Equals(other.Hash);
         public bool Equals(ObjectBase other) => Hash.Equals(other.Hash);
+
+        #region Internal
+
+#if UNITY_EDITOR
+        internal string GetScriptPath()
+        {
+            return InternalScriptPath();
+        }
+        private static string InternalScriptPath([System.Runtime.CompilerServices.CallerFilePath] string filePath = "")
+        {
+            return filePath;
+        }
+#endif
+
+        #endregion
     }
 }

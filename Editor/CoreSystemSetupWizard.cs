@@ -75,6 +75,7 @@ namespace SyadeuEditor
             for (int i = 0; i < menuItemTypes.Length; i++)
             {
                 m_MenuItems[i] = (SetupWizardMenuItem)Activator.CreateInstance(menuItemTypes[i]);
+                m_MenuItems[i].OnInitialize();
             }
             Array.Sort(m_MenuItems);
 

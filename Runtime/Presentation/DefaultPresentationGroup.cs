@@ -38,6 +38,7 @@ namespace Syadeu.Presentation
                 TypeHelper.TypeOf<Data.DataContainerSystem>.Type,
                 TypeHelper.TypeOf<Input.InputSystem>.Type,
 
+                TypeHelper.TypeOf<Render.ScreenCanvasSystem>.Type,
                 TypeHelper.TypeOf<Render.WorldCanvasSystem>.Type,
                 TypeHelper.TypeOf<Map.MapSystem>.Type,
                 //TypeHelper.TypeOf<Map.GridSystem>.Type,

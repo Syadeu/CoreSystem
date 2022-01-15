@@ -68,6 +68,7 @@ namespace Syadeu.Collections
         }
         public void SetValue(int index, ulong value, int length = 1)
         {
+#if DEBUG_MODE
             if (index < 0 || length + index > 64) throw new IndexOutOfRangeException();
 
             if (IsExceedingRange(in length, in value, out ulong maxValue))
@@ -75,7 +76,7 @@ namespace Syadeu.Collections
                 UnityEngine.Debug.LogError($"{value} is exeeding >{maxValue}. length : {length}");
                 throw new ArgumentOutOfRangeException();
             }
-
+#endif
             for (int i = index, j = 0; j < length; i++, j++)
             {
                 this[i] = (value & ((ulong)1 << j)) == ((ulong)1 << j);

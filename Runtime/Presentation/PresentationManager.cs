@@ -1503,6 +1503,15 @@ namespace Syadeu.Presentation
             }
         }
 
+        /// <summary>
+        /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다. 기본 시스템 그룹은 <seealso cref="DefaultPresentationGroup"/> 입니다.
+        /// </summary>
+        /// <remarks>
+        /// OnInitialize 혹은 OnInitializeAsync 에서만 수행되어야합니다.
+        /// </remarks>
+        /// <typeparam name="TGroup"></typeparam>
+        /// <typeparam name="TSystem"></typeparam>
+        /// <param name="bind"></param>
         internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> bind
 #if DEBUG_MODE
             , string methodName

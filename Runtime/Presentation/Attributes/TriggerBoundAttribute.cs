@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -31,11 +32,15 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Attributes
 {
+    [Obsolete]
     [DisplayName("Attribute: Trigger Bound")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class TriggerBoundAttribute : AttributeBase
     {
         [JsonIgnore] internal ClusterID m_ClusterID = ClusterID.Empty;
+
+        [JsonProperty(Order = -1, PropertyName = "IsStatic")]
+        public bool m_IsStatic = false;
 
         [Header("Trigger Applies")]
         [Tooltip("만약 아무것도 없으면 타입 전부를 트리거합니다.")]
@@ -65,6 +70,7 @@ namespace Syadeu.Presentation.Attributes
         [JsonIgnore] public bool Enabled { get; set; } = true;
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Triggered => m_Triggered;
     }
+    [Obsolete]
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
     {
         private EntityRaycastSystem m_EntityRaycastSystem;
@@ -90,7 +96,6 @@ namespace Syadeu.Presentation.Attributes
         protected override void OnCreated(TriggerBoundAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.m_Triggered = new List<Entity<IEntity>>();
-
             m_EntityRaycastSystem.AddLayerEntity(attribute.m_Layer, entity.ToEntity<IEntity>());
         }
         protected override void OnDestroy(TriggerBoundAttribute attribute, Entity<IEntityData> entity)

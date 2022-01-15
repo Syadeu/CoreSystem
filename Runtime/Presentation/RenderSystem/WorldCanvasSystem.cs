@@ -44,7 +44,6 @@ namespace Syadeu.Presentation.Render
         public override bool EnableAfterPresentation => false;
 
         private Canvas m_Canvas;
-        //private Transform m_CanvasTransform;
         private GraphicRaycaster m_CanvasRaycaster;
 
         private UnsafeMultiHashMap<Entity<IEntity>, Entity<UIObjectEntity>> m_AttachedUIHashMap;
@@ -76,11 +75,7 @@ namespace Syadeu.Presentation.Render
         {
             get
             {
-                if (m_CanvasRaycaster == null)
-                {
-                    m_CanvasRaycaster = Canvas.gameObject.AddComponent<GraphicRaycaster>();
-                    m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
-                }
+                Canvas canvas = Canvas;
 
                 return m_CanvasRaycaster;
             }
@@ -117,6 +112,7 @@ namespace Syadeu.Presentation.Render
         {
             m_AttachedUIHashMap.Dispose();
 
+            m_SceneSystem = null;
             m_RenderSystem = null;
             m_CoroutineSystem = null;
         }

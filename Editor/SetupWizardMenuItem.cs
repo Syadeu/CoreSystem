@@ -15,8 +15,9 @@ namespace SyadeuEditor
         public abstract string Name { get; }
         public abstract int Order { get; }
 
+        public virtual void OnInitialize() { }
         public abstract void OnGUI();
-        public abstract bool Predicate();
+        public virtual bool Predicate() => true;
 
         int IComparable<SetupWizardMenuItem>.CompareTo(SetupWizardMenuItem other)
         {

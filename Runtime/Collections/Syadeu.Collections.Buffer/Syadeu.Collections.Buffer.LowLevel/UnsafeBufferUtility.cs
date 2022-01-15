@@ -42,12 +42,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
         /// <returns></returns>
         public static Hash Calculate<T>(this ref T t) where T : unmanaged
         {
-            Hash hash;
-            unsafe
-            {
-                byte* bytes = AsBytes(ref t, out int length);
-                hash = new Hash(FNV1a64.Calculate(bytes, length));
-            }
+            byte* bytes = AsBytes(ref t, out int length);
+            Hash hash = new Hash(FNV1a64.Calculate(bytes, length));
+
             return hash;
         }
 
@@ -82,6 +79,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
+        [BurstCompile]
         public static void Swap<T>(T* buffer, in int from, in int to)
             where T : unmanaged
         {
@@ -92,12 +90,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public static bool Contains<T>(T* buffer, in int length, in T value) where T : unmanaged, IEquatable<T>
         {
-            unsafe
+            for (int i = 0; i < length; i++)
             {
-                for (int i = 0; i < length; i++)
-                {
-                    if (buffer[i].Equals(value)) return true;
-                }
+                if (buffer[i].Equals(value)) return true;
             }
 
             return false;

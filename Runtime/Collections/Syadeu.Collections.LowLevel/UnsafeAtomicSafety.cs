@@ -47,5 +47,6 @@ namespace Syadeu.Collections.LowLevel
             m_Disposed = true;
         }
     }
+
 #endif
 }

@@ -34,8 +34,9 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
 {
+    [Obsolete("EntityColliderModule")]
     /// <summary>
-    /// TODO : 최적화 대상
+    /// TODO : 최적화 대상 <see cref="EntityColliderModule"/>
     /// </summary>
     internal sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
     {

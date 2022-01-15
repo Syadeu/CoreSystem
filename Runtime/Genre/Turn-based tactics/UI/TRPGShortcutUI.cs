@@ -7,10 +7,12 @@ using UnityEngine.InputSystem.Layouts;
 using UnityEngine.InputSystem.OnScreen;
 using UnityEngine.UI;
 
+using EventSystem = Syadeu.Presentation.Events.EventSystem;
+
 namespace Syadeu.Presentation.TurnTable.UI
 {
     [RequireComponent(typeof(Button))]
-    public sealed class TRPGShortcutUI : MonoBehaviour,
+    public sealed class TRPGShortcutUI : PresentationBehaviour,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField] private ShortcutType m_ShortcutType;
@@ -62,28 +64,45 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             m_ShortcutIndexText.text = $"{m_Index + 1}";
+
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
         }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+        }
+        private void Bind(TRPGCanvasUISystem other)
+        {
+            m_CanvasUISystem = other;
+
+            //m_CanvasUISystem.AuthoringShortcut(this, m_ShortcutType);
+        }
+
         private IEnumerator Start()
         {
-            yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
+            //yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
+            yield return new WaitUntil(() => m_CanvasUISystem != null);
 
-            PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
-                .System
-                .AuthoringShortcut(this, m_ShortcutType);
+            m_CanvasUISystem.AuthoringShortcut(this, m_ShortcutType);
+
+            //PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
+            //    .System
+            //    .AuthoringShortcut(this, m_ShortcutType);
         }
-        internal void Initialize(TRPGCanvasUISystem uiSystem, Events.EventSystem eventSystem)
-        {
-            m_CanvasUISystem = uiSystem;
-            m_EventSystem = eventSystem;
-        }
+        //internal void Initialize(TRPGCanvasUISystem uiSystem, Events.EventSystem eventSystem)
+        //{
+        //    m_CanvasUISystem = uiSystem;
+        //    m_EventSystem = eventSystem;
+        //}
         private void OnDestroy()
         {
             // TODO : Temp code
-            var system = PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
-                .System;
-            if (system == null) return;
+            //var system = PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
+            //    .System;
+            //if (system == null) return;
 
-            system.RemoveShortcut(this, m_ShortcutType);
+            m_CanvasUISystem.RemoveShortcut(this, m_ShortcutType);
 
             m_CanvasUISystem = null;
             m_EventSystem = null;

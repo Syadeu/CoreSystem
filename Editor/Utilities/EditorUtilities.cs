@@ -1,10 +1,10 @@
 ﻿
+using Syadeu.Collections;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 using UnityEditor;
 using UnityEditorInternal;
@@ -272,7 +272,7 @@ namespace SyadeuEditor
                 EditorGUILayout.LabelField("게임에 사용될 오브젝트를 선택해주세요");
                 return false;
             }
-            EditorGUILayout.ObjectField("타겟 오브젝트: ", obj, typeof(GameObject), true);
+            EditorGUILayout.ObjectField("타겟 오브젝트: ", obj, TypeHelper.TypeOf<GameObject>.Type, true);
 
             if (GUILayout.Button("Reset"))
             {
@@ -394,7 +394,7 @@ namespace SyadeuEditor
         {
             if (!System.IO.Directory.Exists($"Assets/Resources/Syadeu/{folder}")) return null;
 
-            return (T)AssetDatabase.LoadAssetAtPath($"Assets/Resources/Syadeu/{folder}/{name}.asset", typeof(T));
+            return (T)AssetDatabase.LoadAssetAtPath($"Assets/Resources/Syadeu/{folder}/{name}.asset", TypeHelper.TypeOf<T>.Type);
         }
         public static T SaveScriptable<T>(T data, string folder) where T : ScriptableObject
         {
@@ -474,7 +474,7 @@ namespace SyadeuEditor
             {
                 for (int i = 0; i < filePaths.Length; i++)
                 {
-                    UnityEngine.Object obj = UnityEditor.AssetDatabase.LoadAssetAtPath(filePaths[i], typeof(T));
+                    UnityEngine.Object obj = UnityEditor.AssetDatabase.LoadAssetAtPath(filePaths[i], TypeHelper.TypeOf<T>.Type);
                     if (obj is T asset)
                     {
                         countFound++;
