@@ -40,50 +40,51 @@ namespace Syadeu.Presentation
 
         public override sealed string Name => TypeHelper.TypeOf<TEvent>.Name;
         public override sealed Type EventType => TypeHelper.TypeOf<TEvent>.Type;
+        internal override Hash EventHash => Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
 
-#line hidden
-        internal static void AddEvent(Action<TEvent> ev)
-        {
-            int hash = ev.GetHashCode();
-            if (s_EventActions.ContainsKey(hash))
-            {
-                CoreSystem.Logger.LogError(Channel.Event,
-                    $"Already added event delegate. This is not allowed.");
-                return;
-            }
+        //#line hidden
+        //        internal static void AddEvent(Action<TEvent> ev)
+        //        {
+        //            int hash = ev.GetHashCode();
+        //            if (s_EventActions.ContainsKey(hash))
+        //            {
+        //                CoreSystem.Logger.LogError(Channel.Event,
+        //                    $"Already added event delegate. This is not allowed.");
+        //                return;
+        //            }
 
-            var temp = ActionWrapper<TEvent>.GetWrapper();
-            temp.SetProfiler($"{ev.Method.DeclaringType.Name}.{ev.Method.Name}");
-            temp.SetAction(ev);
-            s_EventActions.Add(hash, temp);
+        //            var temp = ActionWrapper<TEvent>.GetWrapper();
+        //            temp.SetProfiler($"{ev.Method.DeclaringType.Name}.{ev.Method.Name}");
+        //            temp.SetAction(ev);
+        //            s_EventActions.Add(hash, temp);
 
-            EventDescriptor<TEvent>.AddEvent(s_Key, temp.Invoke);
-        }
-        internal static void RemoveEvent(Action<TEvent> ev)
-        {
-            int hash = ev.GetHashCode();
-            if (!s_EventActions.TryGetValue(hash, out var temp))
-            {
-                CoreSystem.Logger.LogError(Channel.Event,
-                    $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
-                    $"doesn\'t have method({ev.Method.DeclaringType.Name}.{ev.Method.Name}) but you trying to remove.");
+        //            EventDescriptor<TEvent>.AddEvent(s_Key, temp.Invoke);
+        //        }
+        //        internal static void RemoveEvent(Action<TEvent> ev)
+        //        {
+        //            int hash = ev.GetHashCode();
+        //            if (!s_EventActions.TryGetValue(hash, out var temp))
+        //            {
+        //                CoreSystem.Logger.LogError(Channel.Event,
+        //                    $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
+        //                    $"doesn\'t have method({ev.Method.DeclaringType.Name}.{ev.Method.Name}) but you trying to remove.");
 
-                return;
-            }
+        //                return;
+        //            }
 
-            EventDescriptor<TEvent>.RemoveEvent(s_Key, temp.Invoke);
-            temp.Reserve();
-            s_EventActions.Remove(hash);
-        }
-#line default
+        //            EventDescriptor<TEvent>.RemoveEvent(s_Key, temp.Invoke);
+        //            temp.Reserve();
+        //            s_EventActions.Remove(hash);
+        //        }
+        //#line default
 
-        internal override sealed void InternalPost()
-        {
-            using (s_Marker.Auto())
-            {
-                EventDescriptor<TEvent>.Invoke(s_Key, (TEvent)this);
-            }
-        }
+        //internal override sealed void InternalPost()
+        //{
+        //    using (s_Marker.Auto())
+        //    {
+        //        EventDescriptor<TEvent>.Invoke(s_Key, (TEvent)this);
+        //    }
+        //}
         internal override sealed void InternalTerminate()
         {
             OnTerminate();

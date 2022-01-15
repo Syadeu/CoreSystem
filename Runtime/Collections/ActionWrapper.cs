@@ -20,10 +20,10 @@ using System;
 
 namespace Syadeu.Collections
 {
-    public sealed class ActionWrapper
+    public sealed class ActionWrapper : IActionWrapper
     {
         private static readonly CLRContainer<ActionWrapper> s_Container;
-        private Action m_Action;
+        public Action Action;
 
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
@@ -43,7 +43,7 @@ namespace Syadeu.Collections
         public static ActionWrapper GetWrapper() => s_Container.Dequeue();
         public void Reserve()
         {
-            m_Action = null;
+            Action = null;
             m_MarkerSet = false;
             s_Container.Enqueue(this);
         }
@@ -55,19 +55,26 @@ namespace Syadeu.Collections
         }
         public void SetAction(Action action)
         {
-            m_Action = action;
+            Action = action;
         }
         public void Invoke()
         {
             if (m_MarkerSet) m_Marker.Begin();
-            m_Action?.Invoke();
+            Action?.Invoke();
             if (m_MarkerSet) m_Marker.End();
         }
+
+        void IActionWrapper.Invoke(params object[] args) => Invoke();
     }
-    public sealed class ActionWrapper<T>
+    public interface IActionWrapper
+    {
+        void Reserve();
+        void Invoke(params object[] args);
+    }
+    public sealed class ActionWrapper<T> : IActionWrapper
     {
         private static readonly CLRContainer<ActionWrapper<T>> s_Container;
-        private Action<T> m_Action;
+        public Action<T> Action;
 
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
@@ -87,7 +94,7 @@ namespace Syadeu.Collections
         public static ActionWrapper<T> GetWrapper() => s_Container.Dequeue();
         public void Reserve()
         {
-            m_Action = null;
+            Action = null;
             m_MarkerSet = false;
             s_Container.Enqueue(this);
         }
@@ -99,14 +106,14 @@ namespace Syadeu.Collections
         }
         public void SetAction(Action<T> action)
         {
-            m_Action = action;
+            Action = action;
         }
         public void Invoke(T t)
         {
             if (m_MarkerSet) m_Marker.Begin();
             try
             {
-                m_Action?.Invoke(t);
+                Action?.Invoke(t);
             }
             catch (Exception ex)
             {
@@ -114,5 +121,7 @@ namespace Syadeu.Collections
             }
             if (m_MarkerSet) m_Marker.End();
         }
+
+        void IActionWrapper.Invoke(params object[] args) => Invoke((T)args[0]);
     }
 }

@@ -21,6 +21,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -35,6 +36,10 @@ namespace Syadeu.Presentation.Events
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
+
+        private ConcurrentDictionary<Hash, IEventDescriptor> m_Events = new ConcurrentDictionary<Hash, IEventDescriptor>();
+        private readonly ConcurrentDictionary<int, IActionWrapper>
+            m_EventActions = new ConcurrentDictionary<int, IActionWrapper>();
 
         private readonly Queue<SynchronizedEventBase> 
             m_UpdateEvents = new Queue<SynchronizedEventBase>(),
@@ -117,17 +122,21 @@ namespace Syadeu.Presentation.Events
             for (int i = 0; i < eventCount; i++)
             {
                 SynchronizedEventBase ev = m_TransformEvents.Dequeue();
-                if (!ev.IsValid()) continue;
+                if (!ev.IsValid() || !m_Events.ContainsKey(ev.EventHash)) continue;
                 try
                 {
-                    ev.InternalPost();
-                    ev.InternalTerminate();
+                    //ev.InternalPost();
+                    m_Events[ev.EventHash].Invoke(ev.EventHash, ev);
                 }
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
                         $"Invalid event({ev.Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
+                }
+                finally
+                {
+                    ev.InternalTerminate();
                 }
 
                 if (ev.DisplayLog)
@@ -155,17 +164,21 @@ namespace Syadeu.Presentation.Events
                 for (int i = 0; i < eventCount; i++)
                 {
                     SynchronizedEventBase ev = m_UpdateEvents.Dequeue();
-                    if (!ev.IsValid()) continue;
+                    if (!ev.IsValid() || !m_Events.ContainsKey(ev.EventHash)) continue;
                     try
                     {
-                        ev.InternalPost();
-                        ev.InternalTerminate();
+                        //ev.InternalPost();
+                        m_Events[ev.EventHash].Invoke(ev.EventHash, ev);
                     }
                     catch (Exception ex)
                     {
                         CoreSystem.Logger.LogError(Channel.Event,
-                            $"Invalid event({ev.Name}) has been posted");
+                            $"Invalid event({ev.Name}, {ev.EventHash}) has been posted");
                         UnityEngine.Debug.LogException(ex);
+                    }
+                    finally
+                    {
+                        ev.InternalTerminate();
                     }
 
                     if (ev.DisplayLog)
@@ -211,8 +224,9 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void AddEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-#if DEBUG_MODE
+            const string c_ProfilerFormat = "{0}.{1}";
             int hash = ev.GetHashCode();
+#if DEBUG_MODE
             if (m_AddedEvents.Contains(hash))
             {
                 CoreSystem.Logger.LogError(Channel.Event,
@@ -221,7 +235,22 @@ namespace Syadeu.Presentation.Events
             }
             m_AddedEvents.Add(hash);
 #endif
-            SynchronizedEvent<TEvent>.AddEvent(ev);
+            var temp = ActionWrapper<TEvent>.GetWrapper();
+            temp.SetProfiler(string.Format(c_ProfilerFormat, ev.Method.DeclaringType.Name, ev.Method.Name));
+            temp.SetAction(ev);
+            m_EventActions.TryAdd(hash, temp);
+
+            Hash eventHash = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
+            //Debug.Log($"{TypeHelper.TypeOf<TEvent>.Name}({eventHash}) add ev");
+            if (!m_Events.TryGetValue(eventHash, out IEventDescriptor eventDescriptor))
+            {
+                eventDescriptor = new EventDescriptor<TEvent>();
+                m_Events.TryAdd(eventHash, eventDescriptor);
+            }
+            Action<TEvent> action = temp.Invoke;
+            eventDescriptor.AddEvent(eventHash, action);
+
+            //SynchronizedEvent<TEvent>.AddEvent(ev);
         }
         /// <summary>
         /// 해당 델리게이트를 이벤트에서 제거합니다.
@@ -230,11 +259,28 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void RemoveEvent<TEvent>(Action<TEvent> ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-#if DEBUG_MODE
             int hash = ev.GetHashCode();
+#if DEBUG_MODE
             m_AddedEvents.Remove(hash);
 #endif
-            SynchronizedEvent<TEvent>.RemoveEvent(ev);
+            Hash eventHash = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
+            if (!m_Events.ContainsKey(eventHash) || !m_EventActions.ContainsKey(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Event,
+                    $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
+                    $"doesn\'t have method({ev.Method.DeclaringType.Name}.{ev.Method.Name}) but you trying to remove.");
+                return;
+            }
+
+            IEventDescriptor eventDescriptor = m_Events[eventHash];
+            ActionWrapper<TEvent> temp = (ActionWrapper<TEvent>)m_EventActions[hash];
+
+            Action<TEvent> action = temp.Invoke;
+            eventDescriptor.RemoveEvent(eventHash, action);
+
+            m_EventActions.TryRemove(hash, out _);
+            temp.Reserve();
+            //SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 
         /// <summary>
@@ -372,21 +418,25 @@ namespace Syadeu.Presentation.Events
 
             SynchronizedEventBase ev = m_ScheduledEvents.Dequeue();
             
-            if (ev.IsValid())
+            if (ev.IsValid() && m_Events.ContainsKey(ev.EventHash))
             {
                 CoreSystem.Logger.Log(Channel.Action,
                     string.Format(c_ExecuteEventMsg, ev.Name));
 
                 try
                 {
-                    ev.InternalPost();
-                    ev.InternalTerminate();
+                    //ev.InternalPost();
+                    m_Events[ev.EventHash].Invoke(ev.EventHash, ev);
                 }
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
                         $"Invalid event({ev.Name}) has been posted");
                     UnityEngine.Debug.LogException(ex);
+                }
+                finally
+                {
+                    ev.InternalTerminate();
                 }
 
                 CoreSystem.Logger.Log(Channel.Event,

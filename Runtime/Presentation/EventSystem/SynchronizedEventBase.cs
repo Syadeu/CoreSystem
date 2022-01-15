@@ -25,11 +25,12 @@ namespace Syadeu.Presentation
     {
         public abstract string Name { get; }
         public abstract Type EventType { get; }
+        internal abstract Hash EventHash { get; }
         public virtual bool DisplayLog => true;
 
         public virtual UpdateLoop Loop => UpdateLoop.Default;
 
-        internal abstract void InternalPost();
+        //internal abstract void InternalPost();
         internal abstract void InternalTerminate();
 
         public virtual bool IsValid() => true;
