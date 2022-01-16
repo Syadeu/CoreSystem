@@ -242,7 +242,7 @@ namespace SyadeuEditor.Presentation
 
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                 {
-                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.Hash}";
+                    m_Window.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{obj.Target.Hash}";
                 });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {

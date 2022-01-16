@@ -250,11 +250,11 @@ namespace SyadeuEditor.Presentation
                         menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                         {
                             //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
-                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{att.Hash}";
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{att.Hash}";
                         });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-                            EntityWindow.Instance.m_DataListWindow.Select(new FixedReference(att.Hash));
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().Select(new FixedReference(att.Hash));
                         });
                     }
                     else

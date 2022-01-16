@@ -51,13 +51,7 @@ namespace SyadeuEditor.Presentation
         private WindowType m_CurrentWindow = WindowType.Entity;
 
         public ToolbarWindow m_ToolbarWindow;
-
-        #region Entity Window
-
-        public EntityDataListWindow m_DataListWindow;
-        public EntityViewWindow m_ViewWindow;
-
-        #endregion
+        private EntityWindowMenuItem[] m_MenuItems;
 
         public DebuggerListWindow m_DebuggerListWindow;
         public DebuggerViewWindow m_DebuggerViewWindow;
@@ -77,21 +71,70 @@ namespace SyadeuEditor.Presentation
         private void OnFocus()
         {
             IsFocused = true;
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnFocus();
+            }
         }
         private void OnLostFocus()
         {
             IsFocused = false;
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnLostFocus();
+            }
+        }
+        private void Awake()
+        {
+            var menuItemTypes = TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<EntityWindowMenuItem>.Type.IsAssignableFrom(t));
+            m_MenuItems = new EntityWindowMenuItem[menuItemTypes.Count()];
+            {
+                int i = 0;
+                foreach (var item in menuItemTypes)
+                {
+                    m_MenuItems[i] = (EntityWindowMenuItem)Activator.CreateInstance(item);
+
+                    i++;
+                }
+                for (int j = 0; j < m_MenuItems.Length; j++)
+                {
+                    m_MenuItems[j].Initialize(this);
+                }
+            }
         }
         protected override void OnEnable()
         {
             IsOpened = true;
 
             m_ToolbarWindow = new ToolbarWindow(this);
-            m_DataListWindow = new EntityDataListWindow(this);
-            m_ViewWindow = new EntityViewWindow(this);
+            if (m_MenuItems == null)
+            {
+                var menuItemTypes = TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<EntityWindowMenuItem>.Type.IsAssignableFrom(t));
+                m_MenuItems = new EntityWindowMenuItem[menuItemTypes.Count()];
+                {
+                    int i = 0;
+                    foreach (var item in menuItemTypes)
+                    {
+                        m_MenuItems[i] = (EntityWindowMenuItem)Activator.CreateInstance(item);
+
+                        i++;
+                    }
+                    for (int j = 0; j < m_MenuItems.Length; j++)
+                    {
+                        m_MenuItems[j].Initialize(this);
+                    }
+                }
+            }
 
             m_DebuggerListWindow = new DebuggerListWindow(this);
             m_DebuggerViewWindow = new DebuggerViewWindow(this);
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnEnable();
+            }
 
             Reload();
 
@@ -101,7 +144,21 @@ namespace SyadeuEditor.Presentation
         {
             IsOpened = false;
 
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnDisable();
+            }
+
             base.OnDisable();
+        }
+        private void OnSelectionChange()
+        {
+            GameObject[] selections = Selection.gameObjects;
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnSelectionChanged(selections);
+            }
         }
         public override void SaveChanges()
         {
@@ -121,7 +178,22 @@ namespace SyadeuEditor.Presentation
             {
                 if (IsDirty) EntityDataList.Instance.LoadData();
             }
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                ((IDisposable)m_MenuItems[i]).Dispose();
+            }
+            m_MenuItems = null;
         }
+        public TMenuItem GetMenuItem<TMenuItem>() where TMenuItem : EntityWindowMenuItem
+        {
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                if (m_MenuItems[i] is TMenuItem menu) return menu;
+            }
+            return null;
+        }
+
         public void Reload()
         {
             if (!Application.isPlaying)
@@ -130,7 +202,7 @@ namespace SyadeuEditor.Presentation
             }
 
             ObjectBaseDrawer.Pool.Clear();
-            m_DataListWindow.Reload();
+            GetMenuItem<EntityDataWindow>().Reload();
             CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }
         public ObjectBase Add(Type objType)
@@ -143,7 +215,7 @@ namespace SyadeuEditor.Presentation
             ObjectBase ins = (ObjectBase)Activator.CreateInstance(objType);
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            m_DataListWindow.Add(ins);
+            GetMenuItem<EntityDataWindow>().Add(ins);
 
             IsDirty = true;
             return ins;
@@ -157,18 +229,19 @@ namespace SyadeuEditor.Presentation
 
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            m_DataListWindow.Add(ins);
+            GetMenuItem<EntityDataWindow>().Add(ins);
 
             IsDirty = true;
         }
 
         public void Remove(ObjectBase obj)
         {
-            if (m_DataListWindow.Selected != null && 
-                m_DataListWindow.Selected.Equals(obj)) m_DataListWindow.Selected = null;
+            EntityDataWindow dataWindow = GetMenuItem<EntityDataWindow>();
 
-            //ObjectBaseDrawers.Remove(obj);
-            m_DataListWindow.Remove(obj);
+            if (dataWindow.Selected != null &&
+                dataWindow.Selected.Equals(obj)) dataWindow.Selected = null;
+
+            dataWindow.Remove(obj);
 
             EntityDataList.Instance.m_Objects.Remove(obj.Hash);
 
@@ -219,8 +292,10 @@ namespace SyadeuEditor.Presentation
                     case WindowType.Entity:
                         if (!Application.isPlaying)
                         {
-                            m_DataListWindow.OnGUI(EntityListPos, 1);
-                            m_ViewWindow.OnGUI(ViewPos, 2);
+                            //m_DataListWindow.OnGUI(EntityListPos, 1);
+                            //m_ViewWindow.OnGUI(ViewPos, 2);
+                            m_MenuItems[0].OnListGUI(EntityListPos);
+                            m_MenuItems[0].OnViewGUI(ViewPos);
                         }
 
                         break;
@@ -233,11 +308,6 @@ namespace SyadeuEditor.Presentation
                         break;
                 }
             }
-            //BeginWindows();
-            
-            
-
-            //EndWindows();
 
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
@@ -324,7 +394,7 @@ namespace SyadeuEditor.Presentation
                     {
                         ObjectBase drawer = m_MainWindow.Add(t);
 
-                        m_MainWindow.m_DataListWindow.Select(drawer);
+                        m_MainWindow.GetMenuItem<EntityDataWindow>().Select(drawer);
                     },
                     (t) => t,
                     null,
@@ -421,141 +491,6 @@ namespace SyadeuEditor.Presentation
                 GUILayout.FlexibleSpace();
             }
         }
-
-        #region Entity Window
-
-        public sealed class EntityDataListWindow
-        {
-            EntityWindow m_MainWindow;
-
-            private EntityListTreeView EntityListTreeView;
-            private TreeViewState TreeViewState;
-            private ObjectBase m_Selected;
-
-            public string SearchString
-            {
-                get => EntityListTreeView.searchString;
-                set => EntityListTreeView.searchString = value;
-            }
-            public ObjectBase Selected
-            {
-                get => m_Selected;
-                set
-                {
-                    m_Selected = value;
-                    if (value != null)
-                    {
-                        SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
-                    }
-                    else SelectedDrawer = null;
-                }
-            }
-            public ObjectBaseDrawer SelectedDrawer { get; private set; }
-
-            public EntityDataListWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
-
-                TreeViewState = new TreeViewState();
-                EntityListTreeView = new EntityListTreeView(m_MainWindow, TreeViewState);
-                EntityListTreeView.OnSelect += EntityListTreeView_OnSelect;
-            }
-            private void EntityListTreeView_OnSelect(ObjectBase obj)
-            {
-                Selected = obj;
-            }
-
-            public void Select(IFixedReference reference)
-            {
-                EntityListTreeView.SetSelection(reference);
-            }
-            public void Select(ObjectBase entityObj)
-            {
-                EntityListTreeView.SetSelection(entityObj);
-            }
-            public void Add(ObjectBase drawer)
-            {
-                EntityListTreeView.AddItem(drawer);
-                EntityListTreeView.Reload();
-            }
-            public void Remove(ObjectBase drawer)
-            {
-                if (Selected != null && Selected.Equals(drawer))
-                {
-                    Selected = null;
-                }
-
-                EntityListTreeView.RemoveItem(drawer);
-                EntityListTreeView.Reload();
-            }
-            public void Reload()
-            {
-                EntityListTreeView.Reload();
-            }
-
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                EntityListTreeView.OnGUI(pos);
-            }
-        }
-        public sealed class EntityViewWindow
-        {
-            EntityWindow m_MainWindow;
-            Rect m_Position;
-            Vector2 m_Scroll;
-
-            public EntityViewWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
-            }
-
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                m_Position = pos;
-
-                Color origin = GUI.color;
-                GUI.color = ColorPalettes.PastelDreams.Yellow;
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
-                GUI.color = origin;
-            }
-            private void Draw(int unusedID)
-            {
-                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
-                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
-                {
-                    m_Scroll = scroll.scrollPosition;
-
-                    #region TestRect Controller
-
-                    //m_MainWindow.m_CopyrightRect = EditorGUILayout.RectField("copyright", m_MainWindow.m_CopyrightRect);
-                    //m_MainWindow.HeaderPos = EditorGUILayout.RectField("headerPos", m_MainWindow. HeaderPos);
-                    //m_MainWindow.HeaderLinePos = EditorGUILayout.RectField("HeaderLinePos", m_MainWindow.HeaderLinePos);
-                    //m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
-
-                    //m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
-                    //EditorGUILayout.Space();
-
-                    #endregion
-
-                    using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
-                    using (var change = new EditorGUI.ChangeCheckScope())
-                    {
-                        if (m_MainWindow.m_DataListWindow.Selected != null)
-                        {
-                            m_MainWindow.m_DataListWindow.SelectedDrawer.OnGUI();
-                        }
-                        else
-                        {
-                            EditorGUILayout.LabelField("select object");
-                        }
-
-                        if (change.changed) m_MainWindow.IsDirty = true;
-                    }
-                }
-            }
-        }
-
-        #endregion
 
         public sealed class ConverterListWindow
         {

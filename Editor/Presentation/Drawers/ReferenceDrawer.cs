@@ -167,11 +167,11 @@ namespace SyadeuEditor.Presentation
                         {
                             //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
 
-                            EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{current.Hash}";
                         });
                         menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-                            EntityWindow.Instance.m_DataListWindow.Select(current);
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().Select(current);
                         });
                     }
                     else
