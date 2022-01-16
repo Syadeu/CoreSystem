@@ -43,7 +43,8 @@ using UnityEngine.Rendering.Universal;
 namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
-    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
+    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>,
+        INotifySystemModule<VectorGraphicsModule>
 #if CORESYSTEM_SHAPES
         , INotifySystemModule<ShapesRenderModule>
 #endif

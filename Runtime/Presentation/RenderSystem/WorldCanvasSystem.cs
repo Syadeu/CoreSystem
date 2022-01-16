@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Render
     public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>,
         ICanvasSystem,
         INotifySystemModule<EntityOverlayUIModule>,
-        INotifySystemModule<UnityRendererModule>
+        INotifySystemModule<UnityRendererModule<SpriteRenderer>>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;

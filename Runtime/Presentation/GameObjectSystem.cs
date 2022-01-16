@@ -17,9 +17,11 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation
@@ -31,71 +33,119 @@ namespace Syadeu.Presentation
         public override bool EnableAfterPresentation => false;
 
         private readonly Stack<int> m_ReservedObjects = new Stack<int>();
-        internal readonly Dictionary<int, GameObject> m_GameObjects = new Dictionary<int, GameObject>();
+        internal readonly Dictionary<int, GameObjectHandler> m_GameObjects = new Dictionary<int, GameObjectHandler>();
 
         private SceneSystem m_SceneSystem;
+        private GameObjectProxySystem m_ProxySystem;
 
         protected override PresentationResult OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
 
             return base.OnInitialize();
         }
         protected override void OnDispose()
         {
             m_SceneSystem = null;
+            m_ProxySystem = null;
         }
 
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
         }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+        }
 
         public FixedGameObject GetGameObject()
         {
+            GameObjectHandler obj;
+            int index;
             if (m_ReservedObjects.Count > 0)
             {
-                return new FixedGameObject(m_ReservedObjects.Pop());
+                index = m_ReservedObjects.Pop();
+                obj = m_GameObjects[index];
+
+                obj.m_GameObject.SetActive(true);
+            }
+            else
+            {
+                GameObject temp = CreateGameObject(string.Empty, true);
+                index = temp.GetInstanceID();
+#if UNITY_EDITOR
+                temp.name = index.ToString();
+#endif
+                obj = new GameObjectHandler()
+                {
+                    m_GameObject = temp,
+                    m_AddedComponents = new List<Component>()
+                };
+                m_GameObjects.Add(index, obj);
             }
 
-            GameObject obj = CreateGameObject(string.Empty, true);
-            int idx = obj.GetInstanceID();
-#if UNITY_EDITOR
-            obj.name = idx.ToString();
-#endif
-            m_GameObjects.Add(idx, obj);
+            ProxyTransform tr = m_ProxySystem.CreateTransform(0, quaternion.identity, 1);
+            m_ProxySystem.ConnectTransform(in tr, obj.m_GameObject.transform);
+            obj.m_Transform = tr;
 
-            return new FixedGameObject(idx);
+            return new FixedGameObject(index, tr);
         }
         public void ReserveGameObject(FixedGameObject obj)
         {
+            GameObjectHandler handler = m_GameObjects[obj.m_Index];
+            m_ProxySystem.Destroy(handler.m_Transform);
+
+            for (int i = 0; i < handler.m_AddedComponents.Count; i++)
+            {
+                Destroy(handler.m_AddedComponents[i]);
+            }
+
+            handler.m_AddedComponents.Clear();
+
+            handler.m_GameObject.SetActive(false);
             m_ReservedObjects.Push(obj.m_Index);
+        }
+
+        internal sealed class GameObjectHandler
+        {
+            public GameObject m_GameObject;
+            public ProxyTransform m_Transform;
+
+            public List<Component> m_AddedComponents;
         }
     }
 
+    [BurstCompatible]
     public struct FixedGameObject : IDisposable
     {
         internal readonly int m_Index;
-
+        
+        [NotBurstCompatible]
         public GameObject Target
         {
             get
             {
 
-                return PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.m_GameObjects[m_Index];
+                return PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.m_GameObjects[m_Index].m_GameObject;
             }
         }
 
-        internal FixedGameObject(int index)
+        public readonly ProxyTransform transform;
+
+        internal FixedGameObject(int index, ProxyTransform transform)
         {
             m_Index = index;
+            this.transform = transform;
         }
 
+        [NotBurstCompatible]
         public void Dispose()
         {
             PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.ReserveGameObject(this);
         }
-
+        [NotBurstCompatible]
         public static FixedGameObject CreateInstance()
         {
             return PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.GetGameObject();

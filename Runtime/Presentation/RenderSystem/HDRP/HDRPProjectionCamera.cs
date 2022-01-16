@@ -61,5 +61,6 @@ namespace Syadeu.Presentation.Render
             m_Projector = null;
         }
     }
+
 #endif
 }

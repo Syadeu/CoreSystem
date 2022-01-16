@@ -84,6 +84,7 @@ namespace Syadeu.Presentation.Proxy
 #pragma warning restore IDE0090 // Use 'new(...)'
         public Queue<int>
             m_OverrideRequestProxies = new Queue<int>();
+        private readonly Dictionary<int, List<Transform>> m_ConnectedTransforms = new Dictionary<int, List<Transform>>();
 
         private static readonly Unity.Profiling.ProfilerMarker
             s_HandleOverrideProxyRequestsMarker = new Unity.Profiling.ProfilerMarker("Handle Override Proxy Requests"),
@@ -257,6 +258,16 @@ namespace Syadeu.Presentation.Proxy
                 proxy.transform.position = data->m_Translation;
                 proxy.transform.rotation = data->m_Rotation;
                 proxy.transform.localScale = data->m_Scale;
+            }
+
+            if (m_ConnectedTransforms.TryGetValue(transform.m_Index, out var connectedTrArr))
+            {
+                for (int i = 0; i < connectedTrArr.Count; i++)
+                {
+                    connectedTrArr[i].position = data->m_Translation;
+                    connectedTrArr[i].rotation = data->m_Rotation;
+                    connectedTrArr[i].localScale = data->m_Scale;
+                }
             }
         }
         unsafe private void UpdateProxyTransform(in ProxyTransformData* data)
@@ -603,6 +614,7 @@ namespace Syadeu.Presentation.Proxy
             }
 
             m_ProxyData.Remove(tr);
+            m_ConnectedTransforms.Remove(tr.m_Index);
         }
 
         #region Jobs
@@ -786,8 +798,29 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
+        /// <summary>
+        /// <see cref="Transform"/> 을 <see cref="ProxyTransform"/> 에 연결합니다.
+        /// </summary>
+        /// <remarks>
+        /// 연결된 <paramref name="target"/> 은 <paramref name="transform"/> 의 좌표로 고정됩니다.
+        /// </remarks>
+        /// <param name="transform"></param>
+        /// <param name="target"></param>
+        public void ConnectTransform(in ProxyTransform transform, in Transform target)
+        {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
+            if (!m_ConnectedTransforms.TryGetValue(transform.m_Index, out var list))
+            {
+                list = new List<Transform>();
+                m_ConnectedTransforms.Add(transform.m_Index, list);
+            }
+            list.Add(target);
+        }
         public ProxyTransform CreateTransform(in float3 pos, in quaternion rot, in float3 scale)
         {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
             ProxyTransform tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, true, 0, 1, false);
 
             unsafe

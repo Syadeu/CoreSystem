@@ -17,26 +17,71 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class UnityRendererModule : PresentationSystemModule<ICanvasSystem>
+    public sealed class UnityRendererModule<TRenderer> : PresentationSystemModule<ICanvasSystem>
+        where TRenderer : Renderer
     {
-        private Stack<SpriteRenderer> m_ReservedSpriteRenderers;
+        private Stack<FixedGameObject> m_ReservedRenderers;
+        private Dictionary<int, FixedGameObject> m_UsedRenderers;
+
+        private GameObjectSystem m_GameObjectSystem;
 
         protected override void OnInitialize()
         {
-            m_ReservedSpriteRenderers = new Stack<SpriteRenderer>();
+            m_ReservedRenderers = new Stack<FixedGameObject>();
+            m_UsedRenderers = new Dictionary<int, FixedGameObject>();
+
+            RequestSystem<DefaultPresentationGroup, GameObjectSystem>(Bind);
         }
         protected override void OnShutDown()
         {
-            foreach (var item in m_ReservedSpriteRenderers)
+            foreach (var item in m_ReservedRenderers)
             {
-                UnityEngine.Object.Destroy(item.gameObject);
+                m_GameObjectSystem.ReserveGameObject(item);
             }
         }
         protected override void OnDispose()
         {
-            base.OnDispose();
+            m_GameObjectSystem = null;
         }
 
+        private void Bind(GameObjectSystem other)
+        {
+            m_GameObjectSystem = other;
+        }
 
+        public TRenderer GetRenderer()
+        {
+            FixedGameObject obj;
+            TRenderer renderer;
+            if (m_ReservedRenderers.Count == 0)
+            {
+                obj = m_GameObjectSystem.GetGameObject();
+                renderer = obj.Target.AddComponent<TRenderer>();
+            }
+            else
+            {
+                obj = m_ReservedRenderers.Pop();
+                renderer = obj.Target.GetComponent<TRenderer>();
+            }
+            m_UsedRenderers.Add(obj.Target.GetInstanceID(), obj);
+
+            return renderer;
+        }
+        public void ReserveRenderer(TRenderer renderer)
+        {
+            GameObject obj = renderer.gameObject;
+            int idx = obj.GetInstanceID();
+
+            if (!m_UsedRenderers.ContainsKey(idx))
+            {
+                CoreSystem.Logger.LogError(Channel.Proxy, "");
+                return;
+            }
+
+            FixedGameObject temp = m_UsedRenderers[idx];
+            m_UsedRenderers.Remove(idx);
+
+            m_ReservedRenderers.Push(temp);
+        }
     }
 }

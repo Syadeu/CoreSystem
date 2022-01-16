@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Syadeu.Collections.Buffer.LowLevel;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using Unity.VectorGraphics;
@@ -19,6 +20,7 @@ using static Unity.VectorGraphics.VectorUtils;
 
 namespace Syadeu.Presentation.Render
 {
+    // https://docs.unity3d.com/Packages/com.unity.vectorgraphics@2.0/
     public sealed class VectorGraphicsModule : PresentationSystemModule<RenderSystem>
     {
         private Scene m_VectorScene;
@@ -36,11 +38,13 @@ namespace Syadeu.Presentation.Render
 
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
         }
+        protected override void OnShutDown()
+        {
+            m_SceneSystem.OnLoadingExit -= M_SceneSystem_OnSceneChanged;
+        }
         protected override void OnDispose()
         {
             m_SceneSystem = null;
-
-            m_SceneSystem.OnLoadingExit -= M_SceneSystem_OnSceneChanged;
         }
 
         private void Bind(SceneSystem other)
@@ -60,4 +64,14 @@ namespace Syadeu.Presentation.Render
             //});
         }
     }
+
+    //public struct SVGData
+    //{
+    //    private UnsafeAllocator<byte> m_RawData;
+    //    private float m_DPI;
+    //    private float m_PixelPerUnit;
+    //    private int m_WindowWidth;
+    //    private int m_WindowHeight;
+    //    private bool m_ClipViewport;
+    //}
 }
