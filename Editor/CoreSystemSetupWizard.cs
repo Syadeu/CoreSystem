@@ -147,6 +147,8 @@ namespace SyadeuEditor
             public override string Name => "General";
             public override int Order => -9999;
 
+            private Vector2 m_Scroll = Vector2.zero;
+
             #region Constraints
 
             const string
@@ -277,25 +279,30 @@ namespace SyadeuEditor
             }
             public override void OnGUI()
             {
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    DrawContraints();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawContraints();
+                    }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawTagManager();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawTagManager();
+                    }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawSettings();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawSettings();
+                    }
 
-                using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawUnityAudio();
+                    using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawUnityAudio();
+                    }
+
+                    m_Scroll = scroll.scrollPosition;
                 }
             }
             public override bool Predicate()

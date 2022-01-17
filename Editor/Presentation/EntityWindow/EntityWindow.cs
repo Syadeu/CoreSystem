@@ -74,7 +74,7 @@ namespace SyadeuEditor.Presentation
         {
             IsFocused = true;
 
-            for (int i = 0; i < m_MenuItems.Length; i++)
+            for (int i = 0; i < m_MenuItems?.Length; i++)
             {
                 m_MenuItems[i].OnFocus();
             }
