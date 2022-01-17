@@ -10,6 +10,7 @@ namespace SyadeuEditor.Presentation
     public sealed class EntityDataWindow : EntityWindowMenuItem
     {
         public override int Order => 0;
+        public override string Name => "Entity";
 
         public override void OnIntialize(EntityWindow window)
         {

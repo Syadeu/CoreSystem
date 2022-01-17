@@ -175,7 +175,7 @@ namespace SyadeuEditor.Presentation
             var list = FindRows(selectedIds);
             if (list.Count > 0 && list[0] is ObjectTreeViewItem objitem)
             {
-                m_Window.m_DebuggerViewWindow.Selected = objitem.m_ObjectBase;
+                m_Window.GetMenuItem<EntityDebugWindow>().Selected = objitem.m_ObjectBase;
             }
 
             base.SelectionChanged(selectedIds);

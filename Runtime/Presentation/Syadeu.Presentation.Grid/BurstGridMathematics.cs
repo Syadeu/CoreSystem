@@ -24,7 +24,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid.LowLevel
 {
-    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, OptimizeFor = OptimizeFor.Performance)]
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static unsafe class BurstGridMathematics
     {
         #region Indexing
