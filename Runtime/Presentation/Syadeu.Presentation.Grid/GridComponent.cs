@@ -38,12 +38,12 @@ namespace Syadeu.Presentation.Grid
             Block
         }
 
-        internal FixedList512Bytes<GridIndex> m_Indices;
+        internal FixedList4096Bytes<GridIndex> m_Indices;
         private int3 m_FixedSize;
         private Alignment m_SizeAlignment;
         private Obstacle m_ObstacleType;
 
-        public FixedList512Bytes<GridIndex> Indices => m_Indices;
+        public FixedList4096Bytes<GridIndex> Indices => m_Indices;
         public int3 FixedSize { get => m_FixedSize; set => m_FixedSize = value; }
         public Alignment SizeAlignment { get => m_SizeAlignment; set => m_SizeAlignment = value; }
         public Obstacle ObstacleType { get => m_ObstacleType; set => m_ObstacleType = value; }

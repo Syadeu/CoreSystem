@@ -575,7 +575,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 m_Instances[proxyIdx.x][proxyIdx.y].InternalOnInvisible();
 
-                RecycleableMonobehaviour proxy = RemoveProxy(tr);
+                RecycleableMonobehaviour proxy = RemoveProxy(data);
 
                 var intersection = frustum.IntersectsSphere(proxy.transform.position, proxy.transform.localScale.sqrMagnitude, 1);
 
@@ -1022,11 +1022,46 @@ namespace Syadeu.Presentation.Proxy
             }
         }
 
+        private Dictionary<int, InstancedModel[]> m_Models = new Dictionary<int, InstancedModel[]>();
+
         private unsafe void AddProxy(ProxyTransformData* data)
         {
             CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
 
             PrefabReference prefab = data->m_Prefab;
+
+            if (data->m_GpuInstanced)
+            {
+                if (m_Models.TryGetValue(data->m_Index, out var arr))
+                {
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        m_RenderSystem.GetModule<GPUInstancingModule>().RemoveModel(arr[i]);
+                    }
+
+                    m_Models.Remove(data->m_Index);
+                }
+
+                GameObject obj = (GameObject)prefab.LoadAsset();
+                var renderers = obj.GetComponentsInChildren<Renderer>();
+                InstancedModel[] models = new InstancedModel[renderers.Length];
+
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    MeshFilter meshFilter = renderers[i].GetComponent<MeshFilter>();
+
+                    InstancedModel model = m_RenderSystem.GetModule<GPUInstancingModule>()
+                        .AddModel(meshFilter.sharedMesh, renderers[i].sharedMaterials,
+                        //Matrix4x4.TRS(data->m_Translation, data->m_Rotation, data->m_Size)
+                        data->localToWorld
+                        );
+                    models[i] = model;
+                }
+
+                m_Models.Add(data->m_Index, models);
+
+                return;
+            }
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
@@ -1081,62 +1116,6 @@ namespace Syadeu.Presentation.Proxy
                     $"Prefab({prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
             }
         }
-        private void AddProxy(ProxyTransform proxyTransform)
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(GameObjectProxySystem.AddProxy), ThreadInfo.Unity);
-
-            PrefabReference prefab = proxyTransform.prefab;
-
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
-                    pool.Count == 0)
-            {
-                proxyTransform.SetProxy(-2);
-                InstantiatePrefab(prefab, (other) =>
-                {
-                    if (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued)
-                    {
-                        if (other.InitializeOnCall) other.Terminate();
-                        other.transform.position = INIT_POSITION;
-
-                        if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
-                        {
-                            pool = new Stack<RecycleableMonobehaviour>();
-                            m_TerminatedProxies.Add(prefab, pool);
-                        }
-                        pool.Push(other);
-                        return;
-                    }
-
-                    proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
-
-                    other.transform.position = proxyTransform.position;
-                    other.transform.rotation = proxyTransform.rotation;
-                    other.transform.localScale = proxyTransform.scale;
-
-                    OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
-                    CoreSystem.Logger.Log(Channel.Proxy, true,
-                        $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created");
-                });
-
-                CoreSystem.Logger.Log(Channel.Proxy, true,
-                        $"Prefab({prefab.GetObjectSetting().Name}) proxy created");
-            }
-            else
-            {
-                RecycleableMonobehaviour other = pool.Pop();
-                proxyTransform.SetProxy(new int2(prefab, other.m_Idx));
-
-                other.transform.position = proxyTransform.position;
-                other.transform.rotation = proxyTransform.rotation;
-                other.transform.localScale = proxyTransform.scale;
-
-                if (other.InitializeOnCall) other.Initialize();
-
-                OnDataObjectProxyCreated?.Invoke(proxyTransform, other);
-                CoreSystem.Logger.Log(Channel.Proxy, true,
-                    $"Prefab({proxyTransform.prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
-            }
-        }
         private unsafe RecycleableMonobehaviour RemoveProxy(ProxyTransformData* data)
         {
             if (data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull))
@@ -1145,6 +1124,20 @@ namespace Syadeu.Presentation.Proxy
             }
 
             PrefabReference prefab = data->m_Prefab;
+            if (data->m_GpuInstanced)
+            {
+                if (m_Models.TryGetValue(data->m_Index, out var arr))
+                {
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        m_RenderSystem.GetModule<GPUInstancingModule>().RemoveModel(arr[i]);
+                    }
+
+                    m_Models.Remove(data->m_Index);
+                }
+
+                return null;
+            }
 
             int2 proxyIndex = data->m_ProxyIndex;
             RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
@@ -1160,37 +1153,6 @@ namespace Syadeu.Presentation.Proxy
             OnDataObjectProxyRemoved?.Invoke(m_ProxyData.GetTransform(data->m_Index), proxy);
 
             data->m_ProxyIndex = (ProxyTransform.ProxyNull);
-
-            if (proxy.Activated) proxy.Terminate();
-
-            if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
-            {
-                pool = new Stack<RecycleableMonobehaviour>();
-                m_TerminatedProxies.Add(prefab, pool);
-            }
-            pool.Push(proxy);
-            CoreSystem.Logger.Log(Channel.Proxy, true,
-                    $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
-            return proxy;
-        }
-        unsafe private RecycleableMonobehaviour RemoveProxy(ProxyTransform proxyTransform)
-        {
-            PrefabReference prefab = proxyTransform.Ref.m_Prefab;
-
-            int2 proxyIndex = proxyTransform.Ref.m_ProxyIndex;
-            RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
-
-            if ((proxy.transform.position - (Vector3)proxyTransform.Pointer->m_Translation).sqrMagnitude > .1f)
-            {
-                proxyTransform.Pointer->m_Translation = proxy.transform.position;
-
-                CoreSystem.Logger.LogError(Channel.Proxy,
-                    "in-corrected translation found. Did you moved proxy transform directly?");
-            }
-
-            OnDataObjectProxyRemoved?.Invoke(proxyTransform, proxy);
-
-            proxyTransform.SetProxy(ProxyTransform.ProxyNull);
 
             if (proxy.Activated) proxy.Terminate();
 

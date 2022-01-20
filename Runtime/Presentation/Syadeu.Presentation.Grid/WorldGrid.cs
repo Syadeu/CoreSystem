@@ -126,14 +126,14 @@ namespace Syadeu.Presentation.Grid
             return position;
         }
 
-        public FixedList512Bytes<GridIndex> AABBToIndices(in AABB aabb)
+        public FixedList4096Bytes<GridIndex> AABBToIndices(in AABB aabb)
         {
             FixedList4096Bytes<ulong> temp;
             unsafe
             {
                 BurstGridMathematics.aabbToIndices(in m_AABB, in m_CellSize, aabb, &temp);
             }
-            FixedList512Bytes<GridIndex> list = new FixedList512Bytes<GridIndex>();
+            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
 
             for (int i = 0; i < temp.Length; i++)
             {

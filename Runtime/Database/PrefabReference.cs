@@ -62,6 +62,9 @@ namespace Syadeu.Collections
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
+
+        [Obsolete]
+        public UnityEngine.Object LoadAsset() => GetObjectSetting().LoadAsset();
         public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
         public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();

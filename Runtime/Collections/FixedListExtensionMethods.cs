@@ -54,6 +54,26 @@ namespace Syadeu.Collections
 
         #region Unity.Collections.FixedList
 
+        public static FixedList512Bytes<T> ToFixedList64<T>(this IEnumerable<T> t)
+            where T : unmanaged
+        {
+            FixedList64Bytes<T> temp = new FixedList64Bytes<T>();
+            foreach (var item in t)
+            {
+                temp.Add(item);
+            }
+            return temp;
+        }
+        public static FixedList512Bytes<T> ToFixedList128<T>(this IEnumerable<T> t)
+            where T : unmanaged
+        {
+            FixedList128Bytes<T> temp = new FixedList128Bytes<T>();
+            foreach (var item in t)
+            {
+                temp.Add(item);
+            }
+            return temp;
+        }
         public static FixedList512Bytes<T> ToFixedList512<T>(this IEnumerable<T> t)
             where T : unmanaged
         {
@@ -64,6 +84,7 @@ namespace Syadeu.Collections
             }
             return temp;
         }
+
         public static FixedList512Bytes<T> ToFixedList512<T>(this IEnumerator<T> t)
             where T : unmanaged
         {

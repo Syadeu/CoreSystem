@@ -55,6 +55,18 @@ namespace Syadeu.Mono
             }
 
             #region Resource Control
+
+            [Obsolete]
+            public UnityEngine.Object LoadAsset()
+            {
+                if (m_LoadedObject == null)
+                {
+                    var temp = m_RefPrefab.LoadAsset<UnityEngine.Object>();
+                    m_LoadedObject = temp.Result;
+                }
+
+                return m_LoadedObject;
+            }
             public AsyncOperationHandle LoadAssetAsync()
             {
                 if (m_LoadHandle.IsValid())
