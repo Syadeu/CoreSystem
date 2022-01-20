@@ -136,7 +136,6 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-
         protected override void AfterTransformPresentation()
         {
             Draw();
@@ -161,6 +160,28 @@ namespace Syadeu.Presentation.Render
             buffer.EndSample("Test");
 
             Graphics.ExecuteCommandBufferAsync(buffer, ComputeQueueType.Default);
+        }
+        public void AddModel(Mesh mesh, Material[] materials, Matrix4x4 matrix4X4)
+        {
+            for (int i = 0; i < materials.Length; i++)
+            {
+                BatchedMaterialMeshes batchedMaterial;
+                if (!m_MaterialIndices.TryGetValue(materials[i], out int index))
+                {
+                    index = m_Materials.Count;
+                    m_MaterialIndices.Add(materials[i], index);
+
+                    batchedMaterial = new BatchedMaterialMeshes(materials[i], "_Matrix");
+
+                    m_Materials.Add(batchedMaterial);
+                }
+                else
+                {
+                    batchedMaterial = m_Materials[index];
+                }
+
+                batchedMaterial.AddMesh(mesh, i, matrix4X4);
+            }
         }
         public void testren(Renderer renderer, Mesh mesh, Matrix4x4 matrix4X4)
         {
