@@ -4,7 +4,7 @@ namespace CoreSystemAnalyzer
 {
     public static class AnalyzerStrings
     {
-        public static class TypeOfAnalyzerStrings
+        public class TypeOfAnalyzerStrings : AnalyzerRuleProvider
         {
             public static readonly string DiagnosticId = CoreSystemAnalyzer.DiagnosticId.TypeofUsage.ToDiagnosticId();
             public static readonly LocalizableString
@@ -12,7 +12,7 @@ namespace CoreSystemAnalyzer
                 MessageFormat = AnalyzerHelper.GetString(nameof(Resources.TypeofMessageFormat)),
                 Description = AnalyzerHelper.GetString(nameof(Resources.TypeofDescription));
 
-            public static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+            public override DiagnosticDescriptor Rule => new DiagnosticDescriptor(
                 DiagnosticId, Title, MessageFormat, 
 
                 Categories.kPerformance, 
@@ -22,5 +22,9 @@ namespace CoreSystemAnalyzer
                 description: Description,
                 helpLinkUri: URIs.kConventionsAndStandardsUri);
         }
+    }
+    public abstract class AnalyzerRuleProvider
+    {
+        public abstract DiagnosticDescriptor Rule { get; }
     }
 }

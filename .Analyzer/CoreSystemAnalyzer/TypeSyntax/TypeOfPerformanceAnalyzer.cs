@@ -7,21 +7,9 @@ using System.Collections.Immutable;
 namespace CoreSystemAnalyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class TypeofPerformanceAnalyzer : DiagnosticAnalyzer
+    public class TypeOfPerformanceAnalyzer : Analyzer<AnalyzerStrings.TypeOfAnalyzerStrings>
     {
-        public static DiagnosticDescriptor Rule
-            => AnalyzerStrings.TypeOfAnalyzerStrings.Rule;
-
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics 
-            => ImmutableArray.Create(Rule);
-
-        public override void Initialize(AnalysisContext context)
-        {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-            context.EnableConcurrentExecution();
-
-            context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.TypeOfExpression);
-        }
+        protected override SyntaxKind SyntaxKind => SyntaxKind.TypeOfExpression;
 
         public static bool Condition(SyntaxNode node)
         {
@@ -37,17 +25,17 @@ namespace CoreSystemAnalyzer
             if (parentExpression != null) return false;
 
             //Special case: ignore value types that are handled differently
-            var isValue = TypeofHelper.IsValueType(typeOfNode.Type);
+            var isValue = TypeOfHelper.IsValueType(typeOfNode.Type);
             if (isValue) return false;
 
             return true;
         }
 
-        private void Analyze(SyntaxNodeAnalysisContext context)
+        protected override void Analyze(SyntaxNodeAnalysisContext context)
         {
             if (Condition(context.Node))
             {
-                AnalyzerHelper.RegisterDiagnostic<TypeOfExpressionSyntax>(context, Rule);
+                ReportDignostic<TypeOfExpressionSyntax>(context);
             }
         }
     }

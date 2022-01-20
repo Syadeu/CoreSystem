@@ -29,7 +29,7 @@ namespace CoreSystemAnalyzer
             => context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.SimpleMemberAccessExpression);
 
         public static bool Condition(SyntaxNode node)
-            => TypeofHelper.Condition(node, "FullName");
+            => TypeOfHelper.Condition(node, "FullName");
 
         private void Analyze(SyntaxNodeAnalysisContext context)
         {

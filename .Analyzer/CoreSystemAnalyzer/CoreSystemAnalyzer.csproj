@@ -21,6 +21,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Syadeu.Collections">
+      <HintPath>..\..\..\..\Library\ScriptAssemblies\Syadeu.Collections.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Resources.Designer.cs" DesignTime="True" AutoGen="True" DependentUpon="Resources.resx" />
     <EmbeddedResource Update="Resources.resx" Generator="ResXFileCodeGenerator" LastGenOutput="Resources.Designer.cs" />
   </ItemGroup>

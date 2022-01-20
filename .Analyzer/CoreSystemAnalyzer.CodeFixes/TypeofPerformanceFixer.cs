@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 
 namespace CoreSystemAnalyzer
 {
+    // https://stackoverflow.com/questions/68705176/c-sharp-roslyn-api-insert-instructions-methods-between-each-nodes-members
+
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TypeofPerformanceFixer)), Shared]
     public class TypeofPerformanceFixer : CodeFixProvider
     {
@@ -51,10 +53,14 @@ namespace CoreSystemAnalyzer
             TypeOfExpressionSyntax localDeclaration,
             CancellationToken cancellationToken)
         {
+            //NameSyntax newSyntax = SyntaxFactory.IdentifierName("TypeHelper");
+            //var temp = SyntaxFactory.GenericName(SyntaxFactory.Identifier("TypeOf"), synf localDeclaration.Type);
+
             string newSyntax = $"TypeHelper.TypeOf<{localDeclaration.Type.ToString()}>.Type";
 
+
             //SyntaxGenerator generator = SyntaxGenerator.GetGenerator(document);
-            var memberAccess
+            ExpressionSyntax memberAccess
                 = SyntaxFactory.ParseExpression(newSyntax);
 
             var oldRoot = await document.GetSyntaxRootAsync(cancellationToken);
