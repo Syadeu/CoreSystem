@@ -44,7 +44,8 @@ namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>,
-        INotifySystemModule<VectorGraphicsModule>
+        INotifySystemModule<VectorGraphicsModule>,
+        INotifySystemModule<GPUInstancingModule>
 #if CORESYSTEM_SHAPES
         , INotifySystemModule<ShapesRenderModule>
 #endif

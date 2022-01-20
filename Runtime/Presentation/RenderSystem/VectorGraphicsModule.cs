@@ -64,14 +64,4 @@ namespace Syadeu.Presentation.Render
             //});
         }
     }
-
-    //public struct SVGData
-    //{
-    //    private UnsafeAllocator<byte> m_RawData;
-    //    private float m_DPI;
-    //    private float m_PixelPerUnit;
-    //    private int m_WindowWidth;
-    //    private int m_WindowHeight;
-    //    private bool m_ClipViewport;
-    //}
 }
