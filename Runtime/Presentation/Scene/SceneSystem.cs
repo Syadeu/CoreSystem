@@ -480,7 +480,7 @@ namespace Syadeu.Presentation
         public void RegisterSceneAsset(SceneReference key, INotifyAsset asset)
         {
 #if DEBUG_MODE
-            if (string.IsNullOrEmpty(key.scenePath))
+            if (key == null || string.IsNullOrEmpty(key.scenePath))
             {
                 CoreSystem.Logger.LogError(Channel.Presentation,
                     $"Target scene is invalid. Cannot add scene asset(s) at {TypeHelper.ToString(asset.GetType())}");
