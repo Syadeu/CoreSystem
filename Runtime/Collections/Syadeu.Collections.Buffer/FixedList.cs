@@ -21,6 +21,10 @@ using System;
 
 namespace Syadeu.Collections.Buffer
 {
+    /// <summary>
+    /// 재배열을 최대한 피하고, 고정된 배열로 제네릭 리스트와 같이 사용할 수 있도록 합니다.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public sealed class FixedList<T>
         where T : IEquatable<T>
     {
@@ -36,7 +40,13 @@ namespace Syadeu.Collections.Buffer
                 m_Buffer[index] = value;
             }
         }
+        /// <summary>
+        /// 현재 배열에 실제 담긴 객체의 개수입니다.
+        /// </summary>
         public int Count => m_Count;
+        /// <summary>
+        /// 현재 배열의 최대 길이입니다.
+        /// </summary>
         public int Length => m_Buffer.Length;
 
         public FixedList()
@@ -64,6 +74,10 @@ namespace Syadeu.Collections.Buffer
             m_Buffer[m_Count] = element;
             m_Count++;
         }
+        /// <summary>
+        /// 해당 객체를 이 배열에서 제거하고, 재배열을 피하기 위해 해당 객체 뒤의 객체 배열을 앞으로 당깁니다.
+        /// </summary>
+        /// <param name="element"></param>
         public void RemoveSwapback(T element)
         {
             if (!m_Buffer.RemoveForSwapback(element))
@@ -73,7 +87,7 @@ namespace Syadeu.Collections.Buffer
 
             m_Count--;
         }
-        public void RemoveAt(int index)
+        public void RemoveAtSwapback(int index)
         {
 #if DEBUG_MODE
             if (index < 0)
