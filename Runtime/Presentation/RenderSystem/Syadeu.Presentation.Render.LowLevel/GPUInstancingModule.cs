@@ -31,7 +31,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Syadeu.Presentation.Render
+namespace Syadeu.Presentation.Render.LowLevel
 {
     // https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html
 

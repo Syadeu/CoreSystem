@@ -22,6 +22,7 @@ using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Render;
+using Syadeu.Presentation.Render.LowLevel;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
