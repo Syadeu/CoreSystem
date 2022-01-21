@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -96,6 +98,31 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int IndexOf<T>(this T[] array, T element)
+            where T : IEquatable<T>
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i].Equals(element)) return i;
+            }
+            return -1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RemoveForSwapback<T>(this T[] array, T element)
+            where T : IEquatable<T>
+        {
+            int index = array.IndexOf(element);
+            if (index < 0) return false;
+
+            for (int i = index + 1; i < array.Length; i++)
+            {
+                array[i - 1] = array[i];
+            }
+
+            return true;
         }
     }
 }

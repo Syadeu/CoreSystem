@@ -16,6 +16,9 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
+using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,49 +33,63 @@ namespace Syadeu.Presentation.Render
 
     public sealed class GPUInstancingModule : PresentationSystemModule<RenderSystem>
     {
-        private readonly Dictionary<Material, int> m_MaterialIndices = new Dictionary<Material, int>();
+        private readonly Dictionary<InstancedMaterial, int> m_MaterialIndices = new Dictionary<InstancedMaterial, int>();
         private readonly List<BatchedMaterialMeshes> m_Materials = new List<BatchedMaterialMeshes>();
 
         private sealed class BatchedMesh
         {
             private readonly Mesh m_Mesh;
             private readonly int m_SubMeshIndex;
-            private Matrix4x4[] m_Matrices;
+            private FixedList<Matrix4x4> m_Matrices;
 
             private MaterialPropertyBlock m_MaterialPropertyBlock;
+            //private int m_Count;
 
-            public int Count => m_Matrices.Length;
+            public int Count => m_Matrices.Count;
             public Mesh Mesh => m_Mesh;
             public int SubMeshIndex => m_SubMeshIndex;
             public MaterialPropertyBlock MaterialPropertyBlock => m_MaterialPropertyBlock;
-            public Matrix4x4[] Matrices => m_Matrices;
+            public Matrix4x4[] Matrices => m_Matrices.Buffer;
 
             public BatchedMesh(Mesh mesh, int submeshIndex)
             {
                 m_Mesh = mesh;
                 m_SubMeshIndex = submeshIndex;
-                m_Matrices = Array.Empty<Matrix4x4>();
+                m_Matrices = new FixedList<Matrix4x4>();
 
                 m_MaterialPropertyBlock = new MaterialPropertyBlock();
+                //m_Count = 0;
             }
             public void Add(Matrix4x4 matrix4X4)
             {
-                int index = m_Matrices.Length;
-                Array.Resize(ref m_Matrices, index + 1);
-                m_Matrices[index] = (matrix4X4);
+                //int index = m_Count;
+                //if (m_Matrices.Length <= index)
+                //{
+                //    Array.Resize(ref m_Matrices, index + 1);
+                //}
+
+                //m_Matrices[index] = (matrix4X4);
+                //m_Count++;
+                m_Matrices.Add(matrix4X4);
             }
             public void Remove(Matrix4x4 matrix4X4)
             {
-                var list = m_Matrices.ToList();
-                list.RemoveFor(matrix4X4);
-                m_Matrices = list.ToArray();
+                //m_Matrices.RemoveForSwapback(matrix4X4);
+
+                ////var list = m_Matrices.ToList();
+                ////list.RemoveFor(matrix4X4);
+                ////m_Matrices = list.ToArray();
+
+                //m_Count--;
+
+                m_Matrices.RemoveSwapback(matrix4X4);
             }
         }
         private sealed class BatchedMaterialMeshes
         {
             private readonly Material m_Material;
 
-            private readonly Dictionary<Mesh, int> m_MeshIndices;
+            private readonly Dictionary<InstancedMesh, int> m_MeshIndices;
             private readonly List<BatchedMesh> m_Meshes;
 
             public Material Material => m_Material;
@@ -92,20 +109,22 @@ namespace Syadeu.Presentation.Render
             public BatchedMaterialMeshes(Material material)
             {
                 m_Material = material;
-                m_MeshIndices = new Dictionary<Mesh, int>();
+                m_MeshIndices = new Dictionary<InstancedMesh, int>();
                 m_Meshes = new List<BatchedMesh>();
             }
 
-            public int AddMesh(Mesh mesh, int submeshIndex, Matrix4x4 matrix4X4)
+            public InstancedMesh AddMesh(Mesh mesh, int submeshIndex, Matrix4x4 matrix4X4)
             {
                 BatchedMesh batched;
-                if (!m_MeshIndices.TryGetValue(mesh, out int index))
+                InstancedMesh meshIndex = InstancedMesh.GetMesh(mesh);
+
+                if (!m_MeshIndices.TryGetValue(meshIndex, out int index))
                 {
                     index = m_Meshes.Count;
                     batched = new BatchedMesh(mesh, submeshIndex);
                     m_Meshes.Add(batched);
 
-                    m_MeshIndices.Add(mesh, index);
+                    m_MeshIndices.Add(meshIndex, index);
                 }
                 else
                 {
@@ -113,13 +132,14 @@ namespace Syadeu.Presentation.Render
                 }
 
                 batched.Add(matrix4X4);
-                return index;
+                return meshIndex;
             }
-            public void RemoveAt(int index, Matrix4x4 matrix4X4)
+            public void RemoveAt(InstancedMesh meshIndex, Matrix4x4 matrix4X4)
             {
+                int index = m_MeshIndices[meshIndex];
                 BatchedMesh batchedMesh = m_Meshes[index];
 
-                m_MeshIndices.Remove(batchedMesh.Mesh);
+                //m_MeshIndices.Remove(batchedMesh.Mesh);
                 batchedMesh.Remove(matrix4X4);
             }
 
@@ -162,6 +182,8 @@ namespace Syadeu.Presentation.Render
             }
         }
 
+        #region Presentation Methods
+
         protected override void OnInitialize()
         {
             if (!SystemInfo.supportsInstancing)
@@ -178,41 +200,35 @@ namespace Syadeu.Presentation.Render
         {
             System.OnRender -= System_OnRender;
         }
+        protected override void OnDispose()
+        {
+        }
 
         private void System_OnRender(ScriptableRenderContext arg1, Camera arg2)
         {
-            //CommandBuffer buffer = new CommandBuffer();
             for (int i = 0; i < m_Materials.Count; i++)
             {
-                //MaterialPropertyBlock block = new MaterialPropertyBlock();
-
-                //block.SetMatrixArray(Shader.PropertyToID("_Matrix"), m_Materials[i].m_Matrices);
-
-                //buffer.DrawMeshInstancedProcedural()
-                //m_Materials[i].Draw(buffer);
                 m_Materials[i].Draw();
-
-                //$"drawing mat {m_Materials[i]?.Material?.name}".ToLog();
             }
-
-            //arg2.AddCommandBuffer(CameraEvent.AfterGBuffer, buffer);
-            //Graphics.ExecuteCommandBuffer(buffer);
-            //Draw();
         }
+
+        #endregion
 
         public InstancedModel AddModel(Mesh mesh, Material[] materials, Matrix4x4 matrix4X4)
         {
-            FixedList128Bytes<int2> temp = new FixedList128Bytes<int2>();
+            Hash hash = Hash.NewHash();
+            FixedList128Bytes<InstancedModel.MeshData> temp = new FixedList128Bytes<InstancedModel.MeshData>();
+
             for (int i = 0; i < materials.Length; i++)
             {
                 materials[i].enableInstancing = true;
                 InstancedMaterial matIndex = InstancedMaterial.GetMaterial(materials[i]);
                 
                 BatchedMaterialMeshes batchedMaterial;
-                if (!m_MaterialIndices.TryGetValue(materials[i], out int index))
+                if (!m_MaterialIndices.TryGetValue(matIndex, out int index))
                 {
                     index = m_Materials.Count;
-                    m_MaterialIndices.Add(materials[i], index);
+                    m_MaterialIndices.Add(matIndex, index);
 
                     batchedMaterial = new BatchedMaterialMeshes(materials[i]);
 
@@ -223,20 +239,26 @@ namespace Syadeu.Presentation.Render
                     batchedMaterial = m_Materials[index];
                 }
 
-                int meshIndex = batchedMaterial.AddMesh(mesh, i, matrix4X4);
-                temp.Add(new int2(index, meshIndex));
+                InstancedMesh meshIndex = batchedMaterial.AddMesh(mesh, i, matrix4X4);
+                var meshData = new InstancedModel.MeshData
+                {
+                    material = matIndex,
+                    mesh = meshIndex
+                };
+                temp.Add(meshData);
             }
 
             "add".ToLog();
-            return new InstancedModel(temp, matrix4X4);
+            return new InstancedModel(hash, temp, matrix4X4);
         }
         public void RemoveModel(in InstancedModel model)
         {
             for (int i = 0; i < model.m_MaterialIndices.Length; i++)
             {
-                int2 index = model.m_MaterialIndices[i];
+                InstancedModel.MeshData index = model.m_MaterialIndices[i];
+                int matIndex = m_MaterialIndices[index.material];
 
-                m_Materials[index.x].RemoveAt(index.y, model.m_Matrix);
+                m_Materials[matIndex].RemoveAt(index.mesh, model.m_Matrix);
             }
 
             "remove".ToLog();
@@ -245,16 +267,26 @@ namespace Syadeu.Presentation.Render
 
     public struct InstancedModel
     {
-        internal FixedList128Bytes<int2> m_MaterialIndices;
+        public struct MeshData : IEquatable<MeshData>
+        {
+            public InstancedMaterial material;
+            public InstancedMesh mesh;
+
+            public bool Equals(MeshData other) => material.Equals(other.material) && mesh.Equals(other.mesh);
+        }
+
+        internal readonly Hash m_Hash;
+        internal FixedList128Bytes<MeshData> m_MaterialIndices;
         internal float4x4 m_Matrix;
 
-        internal InstancedModel(FixedList128Bytes<int2> indices, float4x4 matrix)
+        internal InstancedModel(Hash hash, FixedList128Bytes<MeshData> indices, float4x4 matrix)
         {
+            m_Hash = hash;
             m_MaterialIndices = indices;
             m_Matrix = matrix;
         }
     }
-    public struct InstancedMaterial
+    public struct InstancedMaterial : IEquatable<InstancedMaterial>
     {
         public static InstancedMaterial GetMaterial(Material material) => new InstancedMaterial(material);
 
@@ -266,5 +298,22 @@ namespace Syadeu.Presentation.Render
         {
             m_Index = material.GetInstanceID();
         }
+
+        public bool Equals(InstancedMaterial other) => m_Index == other.m_Index;
+    }
+    public struct InstancedMesh : IEquatable<InstancedMesh>
+    {
+        public static InstancedMesh GetMesh(Mesh mesh) => new InstancedMesh(mesh);
+
+        private int m_Index;
+
+        public int Index => m_Index;
+
+        private InstancedMesh(Mesh mesh)
+        {
+            m_Index = mesh.GetInstanceID();
+        }
+
+        public bool Equals(InstancedMesh other) => m_Index == other.m_Index;
     }
 }
