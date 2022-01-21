@@ -283,6 +283,8 @@ namespace Syadeu.Presentation.Render.LowLevel
             {
                 MaterialPropertyBlock mpb = m_MPBPool.Get();
                 m_Materials[i].Draw(m_AbsoluteMaterialIndices, m_AbsoluteMeshIndices, mpb);
+
+                m_MPBPool.Reserve(mpb);
             }
         }
 
