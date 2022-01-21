@@ -141,7 +141,7 @@ namespace Syadeu.Presentation.Render
         //        m_Matrices.RemoveSwapback(matrix4X4);
         //    }
         //}
-        private sealed class BatchedMaterialMeshes
+        private sealed class BatchedMaterialMeshes : IDisposable
         {
             private readonly InstancedMaterial m_Material;
 
@@ -198,6 +198,17 @@ namespace Syadeu.Presentation.Render
                     //$"{m_Meshes[i].Mesh.name} drawing at {m_Meshes[i].Matrices[0]}".ToLog();
                 }
             }
+
+            public void Dispose()
+            {
+                for (int i = 0; i < m_Meshes.Count; i++)
+                {
+                    m_Meshes[i].Dispose();
+                }
+
+                m_MeshIndices.Clear();
+                m_Meshes.Clear();
+            }
             //public void Draw(CommandBuffer buffer)
             //{
 
@@ -212,7 +223,7 @@ namespace Syadeu.Presentation.Render
             //            count:          m_Meshes[i].Count,
             //            properties:     m_Meshes[i].MaterialPropertyBlock);
             //    }
-                
+
             //}
         }
 
@@ -236,6 +247,15 @@ namespace Syadeu.Presentation.Render
         }
         protected override void OnDispose()
         {
+            for (int i = 0; i < m_Materials.Count; i++)
+            {
+                m_Materials[i].Dispose();
+            }
+            m_Materials.Clear();
+            m_MaterialIndices.Clear();
+
+            m_AbsoluteMaterialIndices.Clear();
+            m_AbsoluteMeshIndices.Clear();
         }
 
         private void System_OnRender(ScriptableRenderContext arg1, Camera arg2)
