@@ -43,6 +43,28 @@ namespace Syadeu.Presentation.Render.LowLevel
         public readonly Dictionary<InstancedMaterial, Material> m_AbsoluteMaterialIndices = new Dictionary<InstancedMaterial, Material>();
         public readonly Dictionary<InstancedMesh, Mesh> m_AbsoluteMeshIndices = new Dictionary<InstancedMesh, Mesh>();
 
+        #region Material Property Block
+
+        private ObjectPool<MaterialPropertyBlock> m_MPBPool =
+            new ObjectPool<MaterialPropertyBlock>(
+                MPBHelper.Factory,
+                null,
+                MPBHelper.OnReserve,
+                null);
+        private static class MPBHelper
+        {
+            public static MaterialPropertyBlock Factory()
+            {
+                return new MaterialPropertyBlock();
+            }
+            public static void OnReserve(MaterialPropertyBlock other)
+            {
+                other.Clear();
+            }
+        }
+
+        #endregion
+
         //        private struct DefaultProperties
         //#if CORESYSTEM_SRP
         //        {
@@ -60,22 +82,16 @@ namespace Syadeu.Presentation.Render.LowLevel
             private readonly InstancedMesh m_Mesh;
             private readonly int m_SubMeshIndex;
             private NativeList<ProxyTransform> m_Entities;
-            
-            private MaterialPropertyBlock m_MaterialPropertyBlock;
 
             public int Count => m_Entities.Length;
             public InstancedMesh MeshIndex => m_Mesh;
             public int SubMeshIndex => m_SubMeshIndex;
-            public MaterialPropertyBlock MaterialPropertyBlock => m_MaterialPropertyBlock;
-            //public Matrix4x4[] Matrices => m_Matrices.Buffer;
 
             public BatchedMeshEntity(InstancedMesh mesh, int submeshIndex)
             {
                 m_Mesh = mesh;
                 m_SubMeshIndex = submeshIndex;
                 m_Entities = new NativeList<ProxyTransform>(64, AllocatorManager.Persistent);
-                
-                m_MaterialPropertyBlock = new MaterialPropertyBlock();
             }
             public void Add(ProxyTransform entity)
             {
@@ -91,6 +107,10 @@ namespace Syadeu.Presentation.Render.LowLevel
                 {
                     buffer[i] = m_Entities[i].localToWorldMatrix;
                 }
+            }
+            public void ProcessMPB(MaterialPropertyBlock mpb)
+            {
+
             }
 
             public void Dispose()
@@ -173,13 +193,17 @@ namespace Syadeu.Presentation.Render.LowLevel
                 batchedMesh.Remove(matrix4X4);
             }
 
-            public void Draw(Dictionary<InstancedMaterial, Material> materialIndices, Dictionary<InstancedMesh, Mesh> meshIndices)
+            public void Draw(
+                Dictionary<InstancedMaterial, Material> materialIndices, 
+                Dictionary<InstancedMesh, Mesh> meshIndices,
+                MaterialPropertyBlock mpb)
             {
                 for (int i = 0; i < m_Meshes.Count; i++)
                 {
                     int count = m_Meshes[i].Count;
                     var mats = ArrayPool<Matrix4x4>.Shared.Rent(count);
                     m_Meshes[i].GetMatrices(mats);
+                    m_Meshes[i].ProcessMPB(mpb);
 
                     Graphics.DrawMeshInstanced(
                         mesh: meshIndices[m_Meshes[i].MeshIndex],
@@ -187,7 +211,7 @@ namespace Syadeu.Presentation.Render.LowLevel
                         material: materialIndices[m_Material],
                         matrices: mats,
                         count: count,
-                        properties: m_Meshes[i].MaterialPropertyBlock);
+                        properties: mpb);
 
                     ArrayPool<Matrix4x4>.Shared.Return(mats);
                     //$"{m_Meshes[i].Mesh.name} drawing at {m_Meshes[i].Matrices[0]}".ToLog();
@@ -257,7 +281,8 @@ namespace Syadeu.Presentation.Render.LowLevel
         {
             for (int i = 0; i < m_Materials.Count; i++)
             {
-                m_Materials[i].Draw(m_AbsoluteMaterialIndices, m_AbsoluteMeshIndices);
+                MaterialPropertyBlock mpb = m_MPBPool.Get();
+                m_Materials[i].Draw(m_AbsoluteMaterialIndices, m_AbsoluteMeshIndices, mpb);
             }
         }
 
