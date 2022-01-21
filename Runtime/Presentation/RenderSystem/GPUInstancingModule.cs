@@ -24,6 +24,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Buffer;
 using Syadeu.Presentation.Proxy;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -59,13 +60,10 @@ namespace Syadeu.Presentation.Render
             private readonly InstancedMesh m_Mesh;
             private readonly int m_SubMeshIndex;
             private NativeList<ProxyTransform> m_Entities;
-            private Matrix4x4[] m_Matrices;
-
+            
             private MaterialPropertyBlock m_MaterialPropertyBlock;
-            //private int m_Count;
 
             public int Count => m_Entities.Length;
-            //public Mesh Mesh => m_Mesh;
             public InstancedMesh MeshIndex => m_Mesh;
             public int SubMeshIndex => m_SubMeshIndex;
             public MaterialPropertyBlock MaterialPropertyBlock => m_MaterialPropertyBlock;
@@ -76,8 +74,7 @@ namespace Syadeu.Presentation.Render
                 m_Mesh = mesh;
                 m_SubMeshIndex = submeshIndex;
                 m_Entities = new NativeList<ProxyTransform>(64, AllocatorManager.Persistent);
-                m_Matrices = Array.Empty<Matrix4x4>();
-
+                
                 m_MaterialPropertyBlock = new MaterialPropertyBlock();
             }
             public void Add(ProxyTransform entity)
@@ -88,19 +85,12 @@ namespace Syadeu.Presentation.Render
             {
                 m_Entities.RemoveForSwapBack(entity);
             }
-            public Matrix4x4[] GetMatrices()
+            public void GetMatrices(Matrix4x4[] buffer)
             {
-                if (m_Matrices.Length != m_Entities.Length)
-                {
-                    Array.Resize(ref m_Matrices, m_Entities.Length);
-                }
-
                 for (int i = 0; i < m_Entities.Length; i++)
                 {
-                    m_Matrices[i] = m_Entities[i].localToWorldMatrix;
+                    buffer[i] = m_Entities[i].localToWorldMatrix;
                 }
-
-                return m_Matrices;
             }
 
             public void Dispose()
@@ -187,14 +177,19 @@ namespace Syadeu.Presentation.Render
             {
                 for (int i = 0; i < m_Meshes.Count; i++)
                 {
+                    int count = m_Meshes[i].Count;
+                    var mats = ArrayPool<Matrix4x4>.Shared.Rent(count);
+                    m_Meshes[i].GetMatrices(mats);
+
                     Graphics.DrawMeshInstanced(
                         mesh: meshIndices[m_Meshes[i].MeshIndex],
                         submeshIndex: m_Meshes[i].SubMeshIndex,
                         material: materialIndices[m_Material],
-                        matrices: m_Meshes[i].GetMatrices(),
-                        count: m_Meshes[i].Count,
+                        matrices: mats,
+                        count: count,
                         properties: m_Meshes[i].MaterialPropertyBlock);
 
+                    ArrayPool<Matrix4x4>.Shared.Return(mats);
                     //$"{m_Meshes[i].Mesh.name} drawing at {m_Meshes[i].Matrices[0]}".ToLog();
                 }
             }
@@ -227,7 +222,7 @@ namespace Syadeu.Presentation.Render
             //}
         }
 
-#region Presentation Methods
+        #region Presentation Methods
 
         protected override void OnInitialize()
         {
@@ -266,7 +261,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
-#endregion
+        #endregion
 
         public InstancedModel AddModel(ProxyTransform tr, Mesh mesh, Material[] materials /*Matrix4x4 matrix4X4*/)
         {
@@ -279,14 +274,14 @@ namespace Syadeu.Presentation.Render
             {
                 InstancedMaterial matIndex = InstancedMaterial.GetMaterial(materials[i]);
 
-#region Indexing
+                #region Indexing
 
                 if (!m_AbsoluteMaterialIndices.ContainsKey(matIndex))
                 {
                     m_AbsoluteMaterialIndices.Add(matIndex, materials[i]);
                 }
 
-#endregion
+                #endregion
 
                 materials[i].enableInstancing = true;
                 
