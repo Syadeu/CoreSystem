@@ -24,12 +24,14 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
