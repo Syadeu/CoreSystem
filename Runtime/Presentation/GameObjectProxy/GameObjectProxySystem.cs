@@ -952,9 +952,11 @@ namespace Syadeu.Presentation.Proxy
                     MeshFilter meshFilter = renderers[i].GetComponent<MeshFilter>();
 
                     InstancedModel model = m_RenderSystem.GetModule<GPUInstancingModule>()
-                        .AddModel(meshFilter.sharedMesh, renderers[i].sharedMaterials,
+                        .AddModel(
+                        m_ProxyData.GetTransform(data->m_Index),
+                        meshFilter.sharedMesh, renderers[i].sharedMaterials
                         //Matrix4x4.TRS(data->m_Translation, data->m_Rotation, data->m_Size)
-                        data->localToWorld
+                        
                         );
                     models[i] = model;
                 }

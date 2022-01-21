@@ -23,6 +23,10 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
 
+#if !CORESYSTEM_URP && !CORESYSTEM_HDRP
+#define CORESYSTEM_SRP
+#endif
+
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Mono;

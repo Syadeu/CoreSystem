@@ -111,7 +111,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return -1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveForSwapback<T>(this T[] array, T element)
+        public static bool RemoveForSwapBack<T>(this T[] array, T element)
             where T : IEquatable<T>
         {
             int index = array.IndexOf(element);
