@@ -354,8 +354,8 @@ namespace Syadeu.Presentation.Render.LowLevel
             if (addCollider)
             {
                 collider = m_GameObjectSystem.GetGameObject();
-                collider.Target.layer = layer;
-                var col = collider.Target.AddComponent<MeshCollider>();
+                collider.SetLayer(layer);
+                var col = collider.AddComponent<MeshCollider>();
                 col.sharedMesh = mesh;
 
                 $"1. {collider.transform.position} :: {tr.position}".ToLog();
@@ -381,11 +381,11 @@ namespace Syadeu.Presentation.Render.LowLevel
 
             if (!model.m_Collider.IsEmpty())
             {
-                model.m_Collider.transform.RemoveParent();
+                //model.m_Collider.transform.RemoveParent();
 
-                var col = model.m_Collider.Target.GetComponent<MeshCollider>();
-                col.sharedMesh = null;
-                UnityEngine.Object.Destroy(col);
+                //var col = model.m_Collider.Target.GetComponent<MeshCollider>();
+                //col.sharedMesh = null;
+                //UnityEngine.Object.Destroy(col);
 
                 m_GameObjectSystem.ReserveGameObject(model.m_Collider);
             }

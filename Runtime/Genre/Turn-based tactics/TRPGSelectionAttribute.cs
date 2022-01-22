@@ -47,11 +47,11 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 3, PropertyName = "OnDeselect")]
         internal Reference<TriggerAction>[] m_OnDeselect = Array.Empty<Reference<TriggerAction>>();
 
-#if CORESYSTEM_SHAPES
-        [Header("Shapes")]
-        [JsonProperty(Order = 100, PropertyName = "Shapes")]
-        internal ShapesPropertyBlock m_Shapes = new ShapesPropertyBlock();
-#endif
+//#if CORESYSTEM_SHAPES
+//        [Header("Shapes")]
+//        [JsonProperty(Order = 100, PropertyName = "Shapes")]
+//        internal ShapesPropertyBlock m_Shapes = new ShapesPropertyBlock();
+//#endif
     }
     internal sealed class TRPGSelectionProcessor : AttributeProcessor<TRPGSelectionAttribute>
     {

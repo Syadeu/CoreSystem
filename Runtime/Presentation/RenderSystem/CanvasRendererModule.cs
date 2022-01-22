@@ -57,14 +57,14 @@ namespace Syadeu.Presentation.Render
             if (m_ReservedRenderers.Count == 0)
             {
                 obj = m_GameObjectSystem.GetGameObject();
-                renderer = obj.Target.AddComponent<TRenderer>();
+                renderer = obj.AddComponent<TRenderer>();
             }
             else
             {
                 obj = m_ReservedRenderers.Pop();
-                renderer = obj.Target.GetComponent<TRenderer>();
+                renderer = obj.GetComponent<TRenderer>();
             }
-            m_UsedRenderers.Add(obj.Target.GetInstanceID(), obj);
+            m_UsedRenderers.Add(obj.GetInstanceID(), obj);
 
             return renderer;
         }

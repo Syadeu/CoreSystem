@@ -609,15 +609,57 @@ namespace Syadeu.Presentation.Grid
             iter = new EntityEnumerator(m_Indices.GetValuesForKey(index.Index));
             return true;
         }
+
+        public int GetObserverIndicesCount()
+        {
+            CompleteGridJob();
+
+            return GetModule<GridDetectorModule>().GridObservers.Count();
+        }
         public NativeArray<GridIndex> GetObserverIndices(AllocatorManager.AllocatorHandle allocator)
         {
             CompleteGridJob();
 
             return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
         }
+        public IndexEnumerator GetObserverIndices()
+        {
+            CompleteGridJob();
+
+            return new IndexEnumerator(GetModule<GridDetectorModule>().GridObservers.GetEnumerator());
+        }
 
         [BurstCompatible]
-        public struct EntityEnumerator : IEnumerator<InstanceID>
+        public struct IndexEnumerator : IEnumerator<GridIndex>, IEnumerable<GridIndex>
+        {
+            private NativeMultiHashMap<GridIndex, InstanceID>.KeyValueEnumerator m_Iterator;
+
+            public IndexEnumerator(NativeMultiHashMap<GridIndex, InstanceID>.KeyValueEnumerator iter)
+            {
+                m_Iterator = iter;
+            }
+
+            public GridIndex Current => m_Iterator.Current.Key;
+            object IEnumerator.Current => m_Iterator.Current.Key;
+
+            public IEnumerator<GridIndex> GetEnumerator() => this;
+            IEnumerator IEnumerable.GetEnumerator() => this;
+
+            public void Dispose()
+            {
+                m_Iterator.Dispose();
+            }
+            public bool MoveNext()
+            {
+                return m_Iterator.MoveNext();
+            }
+            public void Reset()
+            {
+                m_Iterator.Reset();
+            }
+        }
+        [BurstCompatible]
+        public struct EntityEnumerator : IEnumerator<InstanceID>, IEnumerable<InstanceID>
         {
             private NativeMultiHashMap<ulong, InstanceID>.Enumerator m_Iterator;
 
@@ -630,11 +672,13 @@ namespace Syadeu.Presentation.Grid
             [NotBurstCompatible]
             object IEnumerator.Current => m_Iterator.Current;
 
+            public IEnumerator<InstanceID> GetEnumerator() => this;
+            IEnumerator IEnumerable.GetEnumerator() => this;
+
             public void Dispose()
             {
                 m_Iterator.Dispose();
             }
-
             public bool MoveNext()
             {
                 return m_Iterator.MoveNext();

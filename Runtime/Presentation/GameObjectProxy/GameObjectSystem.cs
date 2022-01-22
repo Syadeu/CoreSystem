@@ -40,6 +40,8 @@ namespace Syadeu.Presentation.Proxy
 
         protected override PresentationResult OnInitialize()
         {
+            GameObjectSystemExtensions.s_System = this;
+
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
 
@@ -49,6 +51,8 @@ namespace Syadeu.Presentation.Proxy
         {
             m_SceneSystem = null;
             m_ProxySystem = null;
+
+            GameObjectSystemExtensions.s_System = null;
         }
 
         private void Bind(SceneSystem other)
@@ -92,7 +96,7 @@ namespace Syadeu.Presentation.Proxy
 
             return new FixedGameObject(index, tr);
         }
-        public void ReserveGameObject(FixedGameObject obj)
+        public void ReserveGameObject(in FixedGameObject obj)
         {
             GameObjectHandler handler = m_GameObjects[obj.m_Index];
             m_ProxySystem.Destroy(handler.m_Transform);
@@ -114,26 +118,76 @@ namespace Syadeu.Presentation.Proxy
             public ProxyTransform m_Transform;
 
             public List<Component> m_AddedComponents;
+
+            public Component AddComponent(Type t)
+            {
+                Component component = m_GameObject.AddComponent(t);
+                m_AddedComponents.Add(component);
+
+                return component;
+            }
+            public Component GetComponent(Type t)
+            {
+                return m_GameObject.GetComponent(t);
+            }
+        }
+    }
+    public static class GameObjectSystemExtensions
+    {
+        internal static GameObjectSystem s_System;
+
+        private static GameObjectSystem.GameObjectHandler GetHandler(in FixedGameObject t)
+        {
+            return s_System.m_GameObjects[t.m_Index];
+        }
+
+        public static GameObject GetTarget(this FixedGameObject t)
+        {
+            return GetHandler(t).m_GameObject;
+        }
+        public static int GetInstanceID(this FixedGameObject t)
+        {
+            return GetHandler(t).m_GameObject.GetInstanceID();
+        }
+        public static void SetLayer(this FixedGameObject t, int layer)
+        {
+            GetHandler(t).m_GameObject.layer = layer;
+        }
+        public static void Reserve(this FixedGameObject t)
+        {
+            s_System.ReserveGameObject(t);
+        }
+
+        public static TComponent AddComponent<TComponent>(this FixedGameObject t)
+            where TComponent : UnityEngine.Component
+        {
+            return (TComponent)GetHandler(t).AddComponent(TypeHelper.TypeOf<TComponent>.Type);
+        }
+        public static TComponent GetComponent<TComponent>(this FixedGameObject t)
+            where TComponent : UnityEngine.Component
+        {
+            return (TComponent)GetHandler(t).GetComponent(TypeHelper.TypeOf<TComponent>.Type);
+        }
+        public static TComponent GetOrAddComponent<TComponent>(this FixedGameObject t)
+            where TComponent : UnityEngine.Component
+        {
+            var handler = GetHandler(t);
+            Component component = handler.GetComponent(TypeHelper.TypeOf<TComponent>.Type);
+            if (component == null)
+            {
+                component = handler.AddComponent(TypeHelper.TypeOf<TComponent>.Type);
+            }
+
+            return (TComponent)component;
         }
     }
 
     [BurstCompatible]
-    public struct FixedGameObject : IDisposable, IEquatable<FixedGameObject>, IValidation, IEmpty
-
+    public struct FixedGameObject : IEquatable<FixedGameObject>, IValidation, IEmpty
     {
         public static FixedGameObject Null => new FixedGameObject(-1, ProxyTransform.Null);
 
         internal readonly int m_Index;
-        
-        [NotBurstCompatible]
-        public GameObject Target
-        {
-            get
-            {
-
-                return PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.m_GameObjects[m_Index].m_GameObject;
-            }
-        }
 
         public readonly ProxyTransform transform;
 
@@ -143,11 +197,6 @@ namespace Syadeu.Presentation.Proxy
             this.transform = transform;
         }
 
-        [NotBurstCompatible]
-        public void Dispose()
-        {
-            PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.ReserveGameObject(this);
-        }
         [NotBurstCompatible]
         public static FixedGameObject CreateInstance()
         {

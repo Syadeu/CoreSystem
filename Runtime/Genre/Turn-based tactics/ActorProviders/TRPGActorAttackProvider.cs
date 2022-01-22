@@ -21,11 +21,8 @@ namespace Syadeu.Presentation.TurnTable
     {
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
 
-        [JsonIgnore] private NativeList<GridIndex> m_TempGetRange;
-
         protected override void OnCreated()
         {
-            m_TempGetRange = new NativeList<GridIndex>(512, Allocator.Persistent);
         }
         protected override void OnInitialize(ref ActorAttackComponent component)
         {
@@ -41,12 +38,9 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnReserve(ref ActorAttackComponent component)
         {
             Parent.RemoveComponent<TRPGActorAttackComponent>();
-
-            m_TempGetRange.Clear();
         }
         protected override void OnDestroy()
         {
-            m_TempGetRange.Dispose();
         }
 
         public FixedList512Bytes<InstanceID> GetTargetsInRange()
@@ -70,14 +64,14 @@ namespace Syadeu.Presentation.TurnTable
             WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
 
             GridComponent gridSize = Parent.GetComponent<GridComponent>();
-            gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange, WorldGridSystem.SortOption.CloseDistance);
+            //gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange, WorldGridSystem.SortOption.CloseDistance);
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             
             FixedList512Bytes<InstanceID> list = new FixedList512Bytes<InstanceID>();
-            for (int i = 0; i < m_TempGetRange.Length; i++)
+            foreach (var index in gridSystem.GetRange(gridSize.Indices[0], new int3(range, 0, range)))
             {
-                if (gridSystem.TryGetEntitiesAt(m_TempGetRange[i], out var iter))
+                if (gridSystem.TryGetEntitiesAt(index, out var iter))
                 {
                     using (iter)
                     {
@@ -95,6 +89,27 @@ namespace Syadeu.Presentation.TurnTable
                     }
                 }
             }
+
+            //for (int i = 0; i < m_TempGetRange.Length; i++)
+            //{
+            //    if (gridSystem.TryGetEntitiesAt(m_TempGetRange[i], out var iter))
+            //    {
+            //        using (iter)
+            //        {
+            //            while (iter.MoveNext())
+            //            {
+            //                var item = iter.Current;
+
+            //                if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+            //                else if (!item.IsEnemy(Parent.Idx)) continue;
+            //                // TODO : 임시코드
+            //                else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+            //                list.Add(item);
+            //            }
+            //        }
+            //    }
+            //}
             
             //if (sort)
             //{

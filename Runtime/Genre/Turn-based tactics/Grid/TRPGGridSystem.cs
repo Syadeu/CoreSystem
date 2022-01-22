@@ -36,6 +36,9 @@ namespace Syadeu.Presentation.TurnTable
 {
     [SubSystem(typeof(DefaultPresentationGroup), typeof(WorldGridSystem))]
     public sealed class TRPGGridSystem : PresentationSystemEntity<TRPGGridSystem>
+#if CORESYSTEM_SHAPES
+        , INotifySystemModule<TRPGGridShapesModule>
+#endif
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
@@ -66,6 +69,10 @@ namespace Syadeu.Presentation.TurnTable
 
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
+
+        public NativeArray<GridIndex>.ReadOnly CurrentMoveableTiles => m_GridTempMoveables.AsArray().AsReadOnly();
+        public NativeArray<Vector3>.ReadOnly CurrentMoveableOutline => m_GridTempOutlines.AsArray().AsReadOnly();
+        public NativeArray<Vector3>.ReadOnly CurrentPathline => m_GridTempPathlines.AsArray().AsReadOnly();
 
         private InputSystem m_InputSystem;
         private WorldGridSystem m_GridSystem;
@@ -259,161 +266,161 @@ namespace Syadeu.Presentation.TurnTable
             Shapes.Draw.Push();
             Shapes.Draw.ZOffsetFactor = -1;
 
-            if (!m_IsDrawingGrids && m_SelectionSystem.CurrentSelection.IsValid() &&
-                m_SelectionSystem.CurrentSelection.HasComponent<GridComponent>())
-            {
-                //GridComponent gridcom = m_SelectionSystem.CurrentSelection.GetComponentReadOnly<GridComponent>();
-                float3 selectionPos = m_SelectionSystem.CurrentSelection.transform.position;
-                NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
+            //if (!m_IsDrawingGrids && m_SelectionSystem.CurrentSelection.IsValid() &&
+            //    m_SelectionSystem.CurrentSelection.HasComponent<GridComponent>())
+            //{
+            //    //GridComponent gridcom = m_SelectionSystem.CurrentSelection.GetComponentReadOnly<GridComponent>();
+            //    float3 selectionPos = m_SelectionSystem.CurrentSelection.transform.position;
+            //    NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
                 
-                using (Shapes.Draw.GradientFillScope())
-                {
-                    Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(
-                        selectionPos, 25,
-                        //colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
-                        colorInner: settings.m_DetectionTileColorStart,
-                        colorOuter: settings.m_DetectionTileColorEnd,
-                        space: Shapes.FillSpace.World
-                        );
+            //    using (Shapes.Draw.GradientFillScope())
+            //    {
+            //        Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(
+            //            selectionPos, 25,
+            //            //colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
+            //            colorInner: settings.m_DetectionTileColorStart,
+            //            colorOuter: settings.m_DetectionTileColorEnd,
+            //            space: Shapes.FillSpace.World
+            //            );
 
-                    for (int i = 0; i < observeIndices.Length; i++)
-                    {
-                        if (m_GridSystem.IsObserveIndexOfOnly(observeIndices[i], m_SelectionSystem.CurrentSelection.Idx))
-                        {
-                            continue;
-                        }
+            //        for (int i = 0; i < observeIndices.Length; i++)
+            //        {
+            //            if (m_GridSystem.IsObserveIndexOfOnly(observeIndices[i], m_SelectionSystem.CurrentSelection.Idx))
+            //            {
+            //                continue;
+            //            }
 
-                        float3 pos = m_GridSystem.IndexToPosition(observeIndices[i]);
-                        Shapes.Draw.RectangleBorder(
-                            pos: pos,
-                            normal: Vector3.up,
-                            size: (float2)m_GridSystem.CellSize,
-                            pivot: Shapes.RectPivot.Center,
-                            thickness: .03f
-                        );
-                    }
-                }
+            //            float3 pos = m_GridSystem.IndexToPosition(observeIndices[i]);
+            //            Shapes.Draw.RectangleBorder(
+            //                pos: pos,
+            //                normal: Vector3.up,
+            //                size: (float2)m_GridSystem.CellSize,
+            //                pivot: Shapes.RectPivot.Center,
+            //                thickness: .03f
+            //            );
+            //        }
+            //    }
 
-                //Shapes.Draw.Texture(,,)
-            }
+            //    //Shapes.Draw.Texture(,,)
+            //}
 
-            using (Shapes.Draw.ColorScope)
-            using (Shapes.Draw.DashedScope())
-            {
-                Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                   Shapes.DashType.Angled, 1, .25f, Shapes.DashSnapping.EndToEnd);
+            //using (Shapes.Draw.ColorScope)
+            //using (Shapes.Draw.DashedScope())
+            //{
+            //    Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+            //       Shapes.DashType.Angled, 1, .25f, Shapes.DashSnapping.EndToEnd);
 
-                Shapes.Draw.Color = settings.m_MovableTileColor;
+            //    Shapes.Draw.Color = settings.m_MovableTileColor;
 
-                for (int i = 0; i < m_GridTempMoveables.Length; i++)
-                {
-                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]);
+            //    for (int i = 0; i < m_GridTempMoveables.Length; i++)
+            //    {
+            //        var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]);
 
-                    Shapes.Draw.RectangleBorder(
-                        pos: pos,
-                        normal: Vector3.up,
-                        size: (float2)m_GridSystem.CellSize,
-                        pivot: Shapes.RectPivot.Center,
-                        thickness: .03f
-                    );
-                }
-            }
+            //        Shapes.Draw.RectangleBorder(
+            //            pos: pos,
+            //            normal: Vector3.up,
+            //            size: (float2)m_GridSystem.CellSize,
+            //            pivot: Shapes.RectPivot.Center,
+            //            thickness: .03f
+            //        );
+            //    }
+            //}
 
-            using (Shapes.Draw.ColorScope)
-            {
-                Shapes.Draw.Color = settings.m_MovableOutlineColor;
+            //using (Shapes.Draw.ColorScope)
+            //{
+            //    Shapes.Draw.Color = settings.m_MovableOutlineColor;
 
-                if (m_ShapesOutlinePath.Count > 0)
-                {
-                    //Shapes.Draw.
-                    Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
-                }
-            }
+            //    if (m_ShapesOutlinePath.Count > 0)
+            //    {
+            //        //Shapes.Draw.
+            //        Shapes.Draw.Polyline(m_ShapesOutlinePath, true, thickness: .03f);
+            //    }
+            //}
 
-            if (m_ShapesPathline.Count > 0)
-            {
-                m_PathlineDrawOffset += Time.deltaTime;
+            //if (m_ShapesPathline.Count > 1)
+            //{
+            //    m_PathlineDrawOffset += Time.deltaTime;
 
-                using (Shapes.Draw.ColorScope)
-                using (Shapes.Draw.DashedScope())
-                {
-                    Shapes.Draw.Color = settings.m_PathlineColor;
+            //    using (Shapes.Draw.ColorScope)
+            //    using (Shapes.Draw.DashedScope())
+            //    {
+            //        Shapes.Draw.Color = settings.m_PathlineColor;
 
-                    Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
-                    Shapes.Draw.DashStyle = Shapes.DashStyle.MeterDashes(
-                        type: Shapes.DashType.Basic, 
-                        size: .75f,
-                        spacing: .75f, 
-                        snap: Shapes.DashSnapping.Off,
-                        offset: m_PathlineDrawOffset);
-                    for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
-                    {
-                        Shapes.Draw.Line(
-                            m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point,
-                            thickness: .1f);
-                    }
+            //        Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
+            //        Shapes.Draw.DashStyle = Shapes.DashStyle.MeterDashes(
+            //            type: Shapes.DashType.Basic, 
+            //            size: .75f,
+            //            spacing: .75f, 
+            //            snap: Shapes.DashSnapping.Off,
+            //            offset: m_PathlineDrawOffset);
+            //        for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
+            //        {
+            //            Shapes.Draw.Line(
+            //                m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point,
+            //                thickness: .1f);
+            //        }
 
-                    float3
-                        prevPos = m_ShapesPathline[m_ShapesPathline.Count - 2].point,
-                        lastPos = m_ShapesPathline[m_ShapesPathline.Count - 1].point,
-                        dir = math.normalize(lastPos - prevPos);
-                    lastPos -= dir * .65f;
+            //        float3
+            //            prevPos = m_ShapesPathline[m_ShapesPathline.Count - 2].point,
+            //            lastPos = m_ShapesPathline[m_ShapesPathline.Count - 1].point,
+            //            dir = math.normalize(lastPos - prevPos);
+            //        lastPos -= dir * .65f;
 
-                    Shapes.Draw.Line(
-                        prevPos, lastPos,
-                        thickness: .1f);
+            //        Shapes.Draw.Line(
+            //            prevPos, lastPos,
+            //            thickness: .1f);
 
-                    Shapes.Draw.Push();
+            //        Shapes.Draw.Push();
 
-                    Shapes.Draw.Color = settings.m_PathlineOverlayColor;
+            //        Shapes.Draw.Color = settings.m_PathlineOverlayColor;
 
-                    Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
-                    Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
-                    Shapes.Draw.StencilComp = UnityEngine.Rendering.CompareFunction.Always;
-                    Shapes.Draw.StencilOpPass = UnityEngine.Rendering.StencilOp.Keep;
-                    Shapes.Draw.StencilRefID = 0;
-                    Shapes.Draw.StencilReadMask = 255;
-                    Shapes.Draw.StencilWriteMask = 255;
+            //        Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
+            //        Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
+            //        Shapes.Draw.StencilComp = UnityEngine.Rendering.CompareFunction.Always;
+            //        Shapes.Draw.StencilOpPass = UnityEngine.Rendering.StencilOp.Keep;
+            //        Shapes.Draw.StencilRefID = 0;
+            //        Shapes.Draw.StencilReadMask = 255;
+            //        Shapes.Draw.StencilWriteMask = 255;
 
-                    for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
-                    {
-                        Shapes.Draw.Line(
-                            m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
-                            thickness: .1f);
-                    }
+            //        for (int i = 0; i + 1 < m_ShapesPathline.Count - 1; i++)
+            //        {
+            //            Shapes.Draw.Line(
+            //                m_ShapesPathline[i].point, m_ShapesPathline[i + 1].point, 
+            //                thickness: .1f);
+            //        }
 
-                    Shapes.Draw.Line(
-                        prevPos, lastPos,
-                        thickness: .1f);
+            //        Shapes.Draw.Line(
+            //            prevPos, lastPos,
+            //            thickness: .1f);
 
-                    Shapes.Draw.Pop();
-                }
+            //        Shapes.Draw.Pop();
+            //    }
 
-                using (Shapes.Draw.ColorScope)
-                using (Shapes.Draw.DashedScope())
-                {
-                    Shapes.Draw.Color = settings.m_PathlineEndTipColor;
+            //    using (Shapes.Draw.ColorScope)
+            //    using (Shapes.Draw.DashedScope())
+            //    {
+            //        Shapes.Draw.Color = settings.m_PathlineEndTipColor;
 
-                    Shapes.Draw.LineGeometry = Shapes.LineGeometry.Flat2D;
-                    Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
-                        type: Shapes.DashType.Basic,
-                        snap: Shapes.DashSnapping.Tiling,
-                        count: 2,
-                        offset: m_PathlineDrawOffset
-                        );
-                    Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
-                        radius: .65f,
-                        thickness: .08f);
+            //        Shapes.Draw.LineGeometry = Shapes.LineGeometry.Flat2D;
+            //        Shapes.Draw.DashStyle = Shapes.DashStyle.FixedDashCount(
+            //            type: Shapes.DashType.Basic,
+            //            snap: Shapes.DashSnapping.Tiling,
+            //            count: 2,
+            //            offset: m_PathlineDrawOffset
+            //            );
+            //        Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
+            //            radius: .65f,
+            //            thickness: .08f);
 
-                    Shapes.Draw.Color = settings.m_PathlineOverlayColor;
-                    Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
-                    Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
+            //        Shapes.Draw.Color = settings.m_PathlineOverlayColor;
+            //        Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
+            //        Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
 
-                    Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
-                        radius: .65f,
-                        thickness: .08f);
-                }
-            }
+            //        Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
+            //            radius: .65f,
+            //            thickness: .08f);
+            //    }
+            //}
 
             Shapes.Draw.Pop();
         }
@@ -584,18 +591,6 @@ namespace Syadeu.Presentation.TurnTable
             {
                 vertices.Add(current.c0);
             } while (FindFloat3x2(temp, current.c1, out current));
-
-            //vertices.Add(current.c1);
-            //for (int i = temp.Count - 1; i >= 0; i--)
-            //{
-            //    vertices.Add(current.c0);
-            //    vertices.Add(current.c1);
-
-            //    if (!FindFloat3x2(temp, current.c1, out current))
-            //    {
-            //        break;
-            //    }
-            //}
         }
 
         private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
@@ -617,9 +612,9 @@ namespace Syadeu.Presentation.TurnTable
 
         #region UI
 
-        private Shapes.PolylinePath 
-            m_ShapesOutlinePath = new Shapes.PolylinePath(),
-            m_ShapesPathline = new Shapes.PolylinePath();
+        //private Shapes.PolylinePath
+        //    m_ShapesOutlinePath = new Shapes.PolylinePath();
+            //m_ShapesPathline = new Shapes.PolylinePath();
 
         private void DrawUICell(Entity<IEntityData> entity)
         {
@@ -633,11 +628,11 @@ namespace Syadeu.Presentation.TurnTable
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
                 CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
-                m_ShapesOutlinePath.ClearAllPoints();
-                for (int i = 0; i < m_GridTempOutlines.Length; i++)
-                {
-                    m_ShapesOutlinePath.AddPoint(m_GridTempOutlines[i]);
-                }
+                //m_ShapesOutlinePath.ClearAllPoints();
+                //for (int i = 0; i < m_GridTempOutlines.Length; i++)
+                //{
+                //    m_ShapesOutlinePath.AddPoint(m_GridTempOutlines[i]);
+                //}
 
                 //m_GridOutlineRenderer.positionCount = m_GridTempOutlines.Length;
                 //m_GridOutlineRenderer.SetPositions(m_GridTempOutlines);
@@ -675,7 +670,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridTempMoveables.Clear();
                 m_GridTempOutlines.Clear();
 
-                m_ShapesOutlinePath.ClearAllPoints();
+                //m_ShapesOutlinePath.ClearAllPoints();
                 m_GridOutlineRenderer.positionCount = 0;
 
 #if CORESYSTEM_HDRP
@@ -711,7 +706,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_IsDrawingPaths)
             {
-                m_ShapesPathline.ClearAllPoints();
+                m_GridTempPathlines.Clear();
                 m_GridPathlineRenderer.positionCount = 0;
             }
 
@@ -720,7 +715,7 @@ namespace Syadeu.Presentation.TurnTable
 
             for (int i = 0; i < foundPath.Length; i++)
             {
-                m_ShapesPathline.AddPoint(m_GridSystem.IndexToPosition(foundPath[i]));
+                m_GridTempPathlines.Add(m_GridSystem.IndexToPosition(foundPath[i]));
             }
 
             m_IsDrawingPaths = true;
@@ -729,7 +724,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!m_IsDrawingPaths) return;
 
-            m_ShapesPathline.ClearAllPoints();
+            m_GridTempPathlines.Clear();
             m_GridPathlineRenderer.positionCount = 0;
             m_PathlineDrawOffset = 0;
 

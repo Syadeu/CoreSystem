@@ -22,6 +22,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
@@ -57,6 +58,7 @@ namespace Syadeu.Presentation.TurnTable
         private EntityRaycastSystem m_EntityRaycastSystem;
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
+        private EventSystem m_EventSystem;
 
         // LevelDesignPresentationGroup
         private LevelDesignSystem m_LevelDesignSystem;
@@ -73,6 +75,8 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
 
@@ -96,6 +100,8 @@ namespace Syadeu.Presentation.TurnTable
             m_EntityRaycastSystem = null;
             m_CoroutineSystem = null;
             m_NavMeshSystem = null;
+            m_EventSystem = null;
+
             m_LevelDesignSystem = null;
             m_TurnTableSystem = null;
         }
@@ -156,6 +162,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_NavMeshSystem = other;
         }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+        }
 
         private void Bind(LevelDesignSystem other)
         {
@@ -183,9 +193,16 @@ namespace Syadeu.Presentation.TurnTable
                 $"hit: {info.hit}".ToLog();
 
                 SelectEntity(info.entity);
+
+                m_EventSystem.PostEvent(TRPGSelectionChangedEvent.GetEvent(info.entity));
             }
             else
             {
+                if (m_SelectedEntities.Count > 0)
+                {
+                    m_EventSystem.PostEvent(TRPGSelectionChangedEvent.GetEvent(Entity<IEntity>.Empty));
+                }
+
                 ClearSelectedEntities();
             }
         }
@@ -224,7 +241,7 @@ namespace Syadeu.Presentation.TurnTable
                         0,
                         new ActorPointMovePredicate()));
 
-                m_SelectedEntities[i].ResetModifiers();
+                m_SelectedEntities[i].PathlineFadeModifier = 0;
             }
         }
 
@@ -237,33 +254,51 @@ namespace Syadeu.Presentation.TurnTable
             {
                 ProxyTransform tr = m_SelectedEntities[i].Entity.transform;
 
-                DrawHeadCircle(m_SelectedEntities[i], in tr);
-
+                DrawSelectionCircle(m_SelectedEntities[i], in tr);
                 DrawPathline(m_SelectedEntities[i], in tr);
-
-                m_SelectedEntities[i].FadeModifier = math.lerp(m_SelectedEntities[i].FadeModifier, 1, CoreSystem.deltaTime * 8);
             }
 
             Shapes.Draw.Pop();
         }
-        private void DrawHeadCircle(Selection selection, in ProxyTransform tr)
+        private void DrawSelectionCircle(Selection selection, in ProxyTransform tr)
         {
-            Entity<IEntity> entity = selection.Entity;
-
             AABB aabb = tr.aabb;
-            float3 upperCenter = aabb.upperCenter + (aabb.extents.y * .5f);
+            float3 lowerCenter = aabb.lowerCenter;
+            float radius = math.max(aabb.extents.x, aabb.extents.z);
 
-            using (Shapes.Draw.StyleScope)
+            float3 upperCenter = aabb.upperCenter;
+            upperCenter.y += (aabb.extents.y * .5f) + .15f;
+
+            using (Shapes.Draw.ColorScope)
             {
-                Shapes.Draw.DiscGeometry = Shapes.DiscGeometry.Billboard;
+                Shapes.Draw.DiscGeometry = Shapes.DiscGeometry.Flat2D;
+                Shapes.Draw.Color = Color.Lerp(Color.clear, Color.white, selection.SelectionFadeModifier);
 
                 Shapes.Draw.Arc(
-                    upperCenter,
-                    radius: .15f,
+                    lowerCenter,
+                    normal: tr.up,
+                    radius: radius,
                     thickness: .03f,
                     angleRadStart: 0,
-                    angleRadEnd: math.PI * 2);
+                    angleRadEnd: math.lerp(0, math.PI * 2, selection.SelectionFadeModifier)
+                    );
+
+                using (Shapes.Draw.StyleScope)
+                {
+                    Shapes.Draw.DiscGeometry = Shapes.DiscGeometry.Billboard;
+                    
+                    Shapes.Draw.Arc(
+                        upperCenter,
+                        radius: .15f,
+                        thickness: .03f,
+                        angleRadStart: 0,
+                        angleRadEnd: math.PI * 2);
+                }
             }
+
+            
+
+            selection.SelectionFadeModifier = math.lerp(selection.SelectionFadeModifier, 1, CoreSystem.deltaTime * 4);
         }
         private void DrawPathline(Selection selection, in ProxyTransform tr)
         {
@@ -277,7 +312,7 @@ namespace Syadeu.Presentation.TurnTable
 
             Shapes.Draw.Line(
                 tr.position, 
-                math.lerp(tr.position, nav.Destination - (dir * .25f), selection.FadeModifier));
+                math.lerp(tr.position, nav.Destination - (dir * .25f), selection.PathlineFadeModifier));
             //for (int i = 1; i + 1 < nav.PathPoints.Length; i++)
             //{
             //    Shapes.Draw.Line(nav.PathPoints[i], nav.PathPoints[i + 1]);
@@ -288,7 +323,9 @@ namespace Syadeu.Presentation.TurnTable
                 radius: .25f, 
                 thickness: .03f,
                 angleRadStart: 0, 
-                angleRadEnd: math.lerp(0, math.PI * 2, selection.FadeModifier));
+                angleRadEnd: math.lerp(0, math.PI * 2, selection.PathlineFadeModifier));
+
+            selection.PathlineFadeModifier = math.lerp(selection.PathlineFadeModifier, 1, CoreSystem.deltaTime * 8);
         }
 
         #endregion
@@ -317,21 +354,21 @@ namespace Syadeu.Presentation.TurnTable
 
             selectionComponent.m_OnSelect.Schedule(entity);
 
-#if CORESYSTEM_SHAPES
-            if (select.m_Shapes.EnableShapes)
-            {
-                var shapes = new ShapesComponent();
+//#if CORESYSTEM_SHAPES
+//            if (select.m_Shapes.EnableShapes)
+//            {
+//                var shapes = new ShapesComponent();
                 
-                //entity.AddComponent<ShapesComponent>();
-                //ref ShapesComponent shapes = ref entity.GetComponent<ShapesComponent>();
+//                //entity.AddComponent<ShapesComponent>();
+//                //ref ShapesComponent shapes = ref entity.GetComponent<ShapesComponent>();
 
-                shapes.Apply(select.m_Shapes);
+//                shapes.Apply(select.m_Shapes);
 
-                var wr = ComponentType<ShapesComponent>.ECB.Begin();
-                ComponentType<ShapesComponent>.ECB.Add(ref wr, entity.Idx, ref shapes);
-                ComponentType<ShapesComponent>.ECB.End(ref wr);
-            }
-#endif
+//                var wr = ComponentType<ShapesComponent>.ECB.Begin();
+//                ComponentType<ShapesComponent>.ECB.Add(ref wr, entity.Idx, ref shapes);
+//                ComponentType<ShapesComponent>.ECB.End(ref wr);
+//            }
+//#endif
             $"select entity {entity.RawName}".ToLog();
         }
         public void ClearSelectedEntities()
@@ -359,16 +396,16 @@ namespace Syadeu.Presentation.TurnTable
 
             selectionComponent.m_OnDeselect.Schedule(entity);
 
-#if CORESYSTEM_SHAPES
-            if (select.m_Shapes.EnableShapes)
-            {
-                //entity.RemoveComponent<ShapesComponent>();
+//#if CORESYSTEM_SHAPES
+//            if (select.m_Shapes.EnableShapes)
+//            {
+//                //entity.RemoveComponent<ShapesComponent>();
 
-                var wr = ComponentType<ShapesComponent>.ECB.Begin();
-                ComponentType<ShapesComponent>.ECB.Remove(ref wr, entity.Idx);
-                ComponentType<ShapesComponent>.ECB.End(ref wr);
-            }
-#endif
+//                var wr = ComponentType<ShapesComponent>.ECB.Begin();
+//                ComponentType<ShapesComponent>.ECB.Remove(ref wr, entity.Idx);
+//                ComponentType<ShapesComponent>.ECB.End(ref wr);
+//            }
+//#endif
 
             m_SelectionPool.Reserve(selection);
         }
@@ -399,7 +436,9 @@ namespace Syadeu.Presentation.TurnTable
         private sealed class Selection
         {
             public Entity<IEntity> Entity;
-            public float FadeModifier = 0;
+            public float 
+                PathlineFadeModifier = 0,
+                SelectionFadeModifier = 0;
 
             public void Initialize(Entity<IEntity> entity)
             {
@@ -407,14 +446,16 @@ namespace Syadeu.Presentation.TurnTable
             }
             public void ResetModifiers()
             {
-                FadeModifier = 0;
+                PathlineFadeModifier = 0;
+                SelectionFadeModifier = 0;
             }
 
             public static Selection Factory() => new Selection();
             public static void OnReserve(Selection other)
             {
                 other.Entity = Entity<IEntity>.Empty;
-                other.FadeModifier = 0;
+                other.PathlineFadeModifier = 0;
+                other.SelectionFadeModifier = 0;
             }
         }
     }
