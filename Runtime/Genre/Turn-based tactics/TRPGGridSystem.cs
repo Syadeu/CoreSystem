@@ -404,6 +404,14 @@ namespace Syadeu.Presentation.TurnTable
                     Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
                         radius: .65f,
                         thickness: .08f);
+
+                    Shapes.Draw.Color = settings.m_PathlineOverlayColor;
+                    Shapes.Draw.BlendMode = Shapes.ShapesBlendMode.ColorDodge;
+                    Shapes.Draw.ZTest = UnityEngine.Rendering.CompareFunction.Greater;
+
+                    Shapes.Draw.Ring(m_ShapesPathline.LastPoint.point, Vector3.up,
+                        radius: .65f,
+                        thickness: .08f);
                 }
             }
 

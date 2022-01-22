@@ -105,6 +105,14 @@ namespace Syadeu.Presentation.Grid
 
             do
             {
+#if DEBUG_MODE
+                if (!observerID.HasComponent<GridDetectorComponent>())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"grid err");
+                    continue;
+                }
+#endif
                 ref GridDetectorComponent observer = ref observerID.GetComponent<GridDetectorComponent>();
 
                 observer.m_Detected.Remove(entity);

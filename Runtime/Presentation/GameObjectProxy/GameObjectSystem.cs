@@ -24,7 +24,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Syadeu.Presentation
+namespace Syadeu.Presentation.Proxy
 {
     public sealed class GameObjectSystem : PresentationSystemEntity<GameObjectSystem>
     {
@@ -118,8 +118,11 @@ namespace Syadeu.Presentation
     }
 
     [BurstCompatible]
-    public struct FixedGameObject : IDisposable
+    public struct FixedGameObject : IDisposable, IEquatable<FixedGameObject>, IValidation, IEmpty
+
     {
+        public static FixedGameObject Null => new FixedGameObject(-1, ProxyTransform.Null);
+
         internal readonly int m_Index;
         
         [NotBurstCompatible]
@@ -150,5 +153,13 @@ namespace Syadeu.Presentation
         {
             return PresentationSystem<DefaultPresentationGroup, GameObjectSystem>.System.GetGameObject();
         }
+
+        public bool IsValid() => !IsEmpty() && !transform.isDestroyed;
+        public bool Equals(FixedGameObject other)
+        {
+            return transform.Equals(other.transform) && m_Index.Equals(other.m_Index);
+        }
+
+        public bool IsEmpty() => m_Index == -1 && transform.Equals(ProxyTransform.Null);
     }
 }

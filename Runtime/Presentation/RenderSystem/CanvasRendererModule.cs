@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Syadeu.Presentation.Proxy;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class UnityRendererModule<TRenderer> : PresentationSystemModule<ICanvasSystem>
+    public sealed class CanvasRendererModule<TRenderer> : PresentationSystemModule<ICanvasSystem>
         where TRenderer : Renderer
     {
         private Stack<FixedGameObject> m_ReservedRenderers;

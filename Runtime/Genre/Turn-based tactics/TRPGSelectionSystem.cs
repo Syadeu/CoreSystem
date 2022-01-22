@@ -208,7 +208,11 @@ namespace Syadeu.Presentation.TurnTable
         {
             Ray ray = m_InputSystem.CursorRay;
 
-            m_LevelDesignSystem.Raycast(ray, out var hit);
+            if (!m_LevelDesignSystem.Raycast(ray, out var hit))
+            {
+                return;
+            }
+
             for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
                 //var move = m_SelectedEntities[i].GetComponent<TRPGActorMoveComponent>();

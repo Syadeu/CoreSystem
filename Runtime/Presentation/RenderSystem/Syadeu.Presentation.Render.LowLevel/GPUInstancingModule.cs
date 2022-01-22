@@ -45,8 +45,8 @@ namespace Syadeu.Presentation.Render.LowLevel
 
         #region Material Property Block
 
-        private ObjectPool<MaterialPropertyBlock> m_MPBPool =
-            new ObjectPool<MaterialPropertyBlock>(
+        private Collections.Buffer.ObjectPool<MaterialPropertyBlock> m_MPBPool =
+            new Collections.Buffer.ObjectPool<MaterialPropertyBlock>(
                 MPBHelper.Factory,
                 null,
                 MPBHelper.OnReserve,
@@ -64,6 +64,9 @@ namespace Syadeu.Presentation.Render.LowLevel
         }
 
         #endregion
+
+        private GameObjectProxySystem m_ProxySystem;
+        private GameObjectSystem m_GameObjectSystem;
 
         //        private struct DefaultProperties
         //#if CORESYSTEM_SRP
@@ -110,7 +113,6 @@ namespace Syadeu.Presentation.Render.LowLevel
             }
             public void ProcessMPB(MaterialPropertyBlock mpb)
             {
-
             }
 
             public void Dispose()
@@ -228,22 +230,6 @@ namespace Syadeu.Presentation.Render.LowLevel
                 m_MeshIndices.Clear();
                 m_Meshes.Clear();
             }
-            //public void Draw(CommandBuffer buffer)
-            //{
-
-            //    for (int i = 0; i < m_Meshes.Count; i++)
-            //    {
-            //        buffer.DrawMeshInstanced(
-            //            mesh:           m_Meshes[i].Mesh, 
-            //            submeshIndex:   m_Meshes[i].SubMeshIndex, 
-            //            material:       m_Material, 
-            //            shaderPass:     -1, 
-            //            matrices:       m_Meshes[i].Matrices,
-            //            count:          m_Meshes[i].Count,
-            //            properties:     m_Meshes[i].MaterialPropertyBlock);
-            //    }
-
-            //}
         }
 
         #region Presentation Methods
@@ -259,6 +245,9 @@ namespace Syadeu.Presentation.Render.LowLevel
             GraphicsSettings.useScriptableRenderPipelineBatching = true;
 
             System.OnRender += System_OnRender;
+
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectSystem>(Bind);
         }
         protected override void OnShutDown()
         {
@@ -275,6 +264,9 @@ namespace Syadeu.Presentation.Render.LowLevel
 
             m_AbsoluteMaterialIndices.Clear();
             m_AbsoluteMeshIndices.Clear();
+
+            m_ProxySystem = null;
+            m_GameObjectSystem = null;
         }
 
         private void System_OnRender(ScriptableRenderContext arg1, Camera arg2)
@@ -288,12 +280,34 @@ namespace Syadeu.Presentation.Render.LowLevel
             }
         }
 
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+        }
+        private void Bind(GameObjectSystem other)
+        {
+            m_GameObjectSystem = other;
+        }
+
         #endregion
 
-        public InstancedModel AddModel(ProxyTransform tr, Mesh mesh, Material[] materials /*Matrix4x4 matrix4X4*/)
+        public InstancedModel AddModel(
+            ProxyTransform tr, Mesh mesh, Material[] materials,
+            bool addCollider, int layer
+            )
         {
             Hash hash = Hash.NewHash();
             InstancedMesh meshIndex = InstancedMesh.GetMesh(mesh);
+            if (!m_AbsoluteMeshIndices.ContainsKey(meshIndex))
+            {
+                if (addCollider)
+                {
+                    // https://docs.unity3d.com/ScriptReference/Physics.BakeMesh.html
+                    Physics.BakeMesh(mesh.GetInstanceID(), false);
+                }
+                
+                m_AbsoluteMeshIndices.Add(meshIndex, mesh);
+            }
 
             FixedList128Bytes<InstancedModel.MeshData> temp = new FixedList128Bytes<InstancedModel.MeshData>();
 
@@ -336,13 +350,24 @@ namespace Syadeu.Presentation.Render.LowLevel
                 temp.Add(meshData);
             }
 
-            if (!m_AbsoluteMeshIndices.ContainsKey(meshIndex))
+            FixedGameObject collider = FixedGameObject.Null;
+            if (addCollider)
             {
-                m_AbsoluteMeshIndices.Add(meshIndex, mesh);
+                collider = m_GameObjectSystem.GetGameObject();
+                collider.Target.layer = layer;
+                var col = collider.Target.AddComponent<MeshCollider>();
+                col.sharedMesh = mesh;
+
+                $"1. {collider.transform.position} :: {tr.position}".ToLog();
+                collider.transform.SetParent(tr);
+                collider.transform.localPosition = 0;
+
+                m_ProxySystem.UpdateConnectedTransforms(collider.transform);
+
+                $"2. {collider.transform.position} :: {tr.position}".ToLog();
             }
 
-            "add".ToLog();
-            return new InstancedModel(hash, temp, tr);
+            return new InstancedModel(hash, temp, tr, collider);
         }
         public void RemoveModel(in InstancedModel model)
         {
@@ -352,6 +377,17 @@ namespace Syadeu.Presentation.Render.LowLevel
                 int matIndex = m_MaterialIndices[index.material];
 
                 m_Materials[matIndex].RemoveAt(index.mesh, model.m_Matrix);
+            }
+
+            if (!model.m_Collider.IsEmpty())
+            {
+                model.m_Collider.transform.RemoveParent();
+
+                var col = model.m_Collider.Target.GetComponent<MeshCollider>();
+                col.sharedMesh = null;
+                UnityEngine.Object.Destroy(col);
+
+                m_GameObjectSystem.ReserveGameObject(model.m_Collider);
             }
 
             "remove".ToLog();
@@ -371,12 +407,23 @@ namespace Syadeu.Presentation.Render.LowLevel
         internal readonly Hash m_Hash;
         internal readonly FixedList128Bytes<MeshData> m_MaterialIndices;
         internal ProxyTransform m_Matrix;
+        internal FixedGameObject m_Collider;
 
         internal InstancedModel(Hash hash, FixedList128Bytes<MeshData> indices, ProxyTransform matrix)
         {
             m_Hash = hash;
             m_MaterialIndices = indices;
             m_Matrix = matrix;
+            m_Collider = FixedGameObject.Null;
+        }
+        internal InstancedModel(
+            Hash hash, FixedList128Bytes<MeshData> indices, ProxyTransform matrix,
+            FixedGameObject collider)
+        {
+            m_Hash = hash;
+            m_MaterialIndices = indices;
+            m_Matrix = matrix;
+            m_Collider = collider;
         }
 
         public bool Equals(InstancedModel other) => m_Hash.Equals(other.m_Hash);

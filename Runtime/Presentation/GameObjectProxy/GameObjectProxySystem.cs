@@ -212,19 +212,21 @@ namespace Syadeu.Presentation.Proxy
 
         unsafe private void OnTransformChanged(OnTransformChangedEvent ev)
         {
-            if (!(ev.transform is ProxyTransform transform)) return;
-
-            ProxyTransformData* data = m_ProxyData.List[transform.m_Index];
+            ProxyTransformData* data = m_ProxyData.List[ev.transform.m_Index];
 
             if (!data->m_IsOccupied ||
-                transform.m_Generation != data->m_Generation)
+                data->m_Generation != data->m_Generation)
             {
                 CoreSystem.Logger.LogError(Channel.Proxy,
                     $"Validation error. Target transform is not valid.");
                 return;
             }
 
-            if (!data->m_IsOccupied || data->m_DestroyQueued) return;
+            if (!data->m_IsOccupied || data->m_DestroyQueued)
+            {
+                $"no update rtn {ev.transform.m_Index}".ToLog();
+                return;
+            }
 
             //UpdateProxyTransform(in data);
 
@@ -232,7 +234,7 @@ namespace Syadeu.Presentation.Proxy
 
             if (!data->clusterID.Equals(ClusterID.Requested))
             {
-                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(transform, transform.Pointer->clusterID, data->m_Translation));
+                m_ClusterUpdates.Enqueue(new ClusterUpdateRequest(ev.transform, data->clusterID, data->m_Translation));
             }
 
             if (!data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) &&
@@ -256,20 +258,19 @@ namespace Syadeu.Presentation.Proxy
                 }
 
                 IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
-                proxy.transform.position = data->m_Translation;
-                proxy.transform.rotation = data->m_Rotation;
-                proxy.transform.localScale = data->m_Scale;
-            }
+                //if (data->m_ParentIndex >= 0)
+                //{
 
-            if (m_ConnectedTransforms.TryGetValue(transform.m_Index, out var connectedTrArr))
-            {
-                for (int i = 0; i < connectedTrArr.Count; i++)
+                //}
+                //else
                 {
-                    connectedTrArr[i].position = data->m_Translation;
-                    connectedTrArr[i].rotation = data->m_Rotation;
-                    connectedTrArr[i].localScale = data->m_Scale;
+                    proxy.transform.position = data->m_Translation;
+                    proxy.transform.rotation = data->m_Rotation;
+                    proxy.transform.localScale = data->m_Scale;
                 }
             }
+
+            UpdateConnectedTransforms(ev.transform);
         }
         unsafe private void UpdateProxyTransform(in ProxyTransformData* data)
         {
@@ -367,8 +368,7 @@ namespace Syadeu.Presentation.Proxy
                     }
                     else if (
                         data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
-                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued) ||
-                        data->m_ProxyIndex.Equals(-3))
+                        data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                     {
                         CoreSystem.Logger.LogError(Channel.Proxy,
                             $"Does not have any proxy");
@@ -787,9 +787,21 @@ namespace Syadeu.Presentation.Proxy
                 }
                 else
                 {
-                    if (!data.m_ProxyIndex.Equals(-3))
+                    if (m_Frustum.IntersectsBox(data.GetAABB(), 10))
                     {
-                        m_Request.Enqueue(data.m_Index);
+                        if (!data.m_IsVisible)
+                        {
+                            m_Request.Enqueue(data.m_Index);
+                            m_Visible.Enqueue(data.m_Index);
+                        }
+                    }
+                    else
+                    {
+                        if (data.m_IsVisible)
+                        {
+                            m_Remove.Enqueue(data.m_Index);
+                            m_Invisible.Enqueue(data.m_Index);
+                        }
                     }
                 }
 
@@ -830,9 +842,39 @@ namespace Syadeu.Presentation.Proxy
             {
                 list = new List<Transform>();
                 m_ConnectedTransforms.Add(transform.m_Index, list);
+
+                $"add c {transform.m_Index}".ToLog();
             }
             list.Add(target);
+
+            target.position = transform.position;
+            target.rotation = transform.rotation;
+            target.localScale = transform.localScale;
         }
+        public void DisconnectTransform(in ProxyTransform transform, in Transform target)
+        {
+            CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
+
+            if (!m_ConnectedTransforms.TryGetValue(transform.m_Index, out var list))
+            {
+                return;
+            }
+            list.Remove(target);
+        }
+        public void UpdateConnectedTransforms(in ProxyTransform transform)
+        {
+            if (m_ConnectedTransforms.TryGetValue(transform.m_Index, out var connectedTrArr))
+            {
+                for (int i = 0; i < connectedTrArr.Count; i++)
+                {
+                    connectedTrArr[i].position = transform.position;
+                    connectedTrArr[i].rotation = transform.rotation;
+                    connectedTrArr[i].localScale = transform.localScale;
+                }
+                $"in".ToLog();
+            }
+        }
+
         public ProxyTransform CreateTransform(in float3 pos, in quaternion rot, in float3 scale)
         {
             CoreSystem.Logger.ThreadBlock(ThreadInfo.Unity);
@@ -951,13 +993,19 @@ namespace Syadeu.Presentation.Proxy
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     MeshFilter meshFilter = renderers[i].GetComponent<MeshFilter>();
+                    Collider col = renderers[i].GetComponent<Collider>();
+                    bool addCollider = col != null;
+                    int layer = 0;
+                    if (addCollider)
+                    {
+                        layer = col.gameObject.layer;
+                    }
 
                     InstancedModel model = m_RenderSystem.GetModule<GPUInstancingModule>()
                         .AddModel(
                         m_ProxyData.GetTransform(data->m_Index),
                         meshFilter.sharedMesh, renderers[i].sharedMaterials
-                        //Matrix4x4.TRS(data->m_Translation, data->m_Rotation, data->m_Size)
-                        
+                        , addCollider, layer
                         );
                     models[i] = model;
                 }

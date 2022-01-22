@@ -426,6 +426,7 @@ namespace Syadeu.Presentation.Grid
                 );
             NativeMultiHashMap<GridIndex, InstanceID> observers = GetModule<GridDetectorModule>().GridObservers;
             observers.Clear();
+            GetModule<GridDetectorModule>().TargetedEntities.Clear();
             FullObserverUpdateJob observerUpdateJob = new FullObserverUpdateJob
             {
                 grid = m_Grid,

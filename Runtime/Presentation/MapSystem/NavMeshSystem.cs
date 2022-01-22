@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
 using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
@@ -50,6 +51,9 @@ namespace Syadeu.Presentation.Map
         private readonly List<NavMeshBuildSource> m_Sources = new List<NavMeshBuildSource>();
         private bool m_RequireReload = false;
 
+        private ObjectPool<NavMeshQueryHandler> m_QueryPool;
+        private NavMeshQueryHandler m_DefaultQuery;
+
         private EventSystem m_EventSystem;
         private CoroutineSystem m_CoroutineSystem;
         private WorldGridSystem m_GridSystem;
@@ -64,15 +68,25 @@ namespace Syadeu.Presentation.Map
             RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
 
-            //PoolContainer<NavMeshQueryContainer>.Initialize(NavMeshQueryFactory, 16);
+            m_QueryPool = new ObjectPool<NavMeshQueryHandler>(
+                NavMeshQueryHandler.Factory,
+                null,
+                NavMeshQueryHandler.OnReserve,
+                NavMeshQueryHandler.OnRelease
+                );
+            m_DefaultQuery = m_QueryPool.Get();
 
             return base.OnInitialize();
         }
+        protected override void OnShutDown()
+        {
+            m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+        }
         protected override void OnDispose()
         {
-            //PoolContainer<NavMeshQueryContainer>.Dispose();
-
-            m_EventSystem.RemoveEvent<OnTransformChangedEvent>(OnTransformChangedEventHandler);
+            m_QueryPool.Reserve(m_DefaultQuery);
+            m_DefaultQuery = null;
+            m_QueryPool.Dispose();
 
             m_EventSystem = null;
             m_CoroutineSystem = null;
@@ -80,11 +94,23 @@ namespace Syadeu.Presentation.Map
             m_ActorSystem = null;
         }
 
-        private sealed class NavMeshQueryContainer : IDisposable
+        private sealed class NavMeshQueryHandler : IDisposable
         {
-            public NavMeshQuery m_Query;
+            public static NavMeshQueryHandler Factory() => new NavMeshQueryHandler();
+            public static void OnReserve(NavMeshQueryHandler other)
+            {
 
-            public NavMeshQueryContainer()
+            }
+            public static void OnRelease(NavMeshQueryHandler other)
+            {
+                other.Dispose();
+            }
+
+            private NavMeshQuery m_Query;
+
+            public NavMeshQuery Query => m_Query;
+
+            private NavMeshQueryHandler()
             {
                 m_Query = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.Persistent, 256);
             }
@@ -92,16 +118,8 @@ namespace Syadeu.Presentation.Map
             {
                 m_Query.Dispose();
             }
-
-            public void asd()
-            {
-                //m_Query.
-            }
         }
-        private NavMeshQueryContainer NavMeshQueryFactory()
-        {
-            return new NavMeshQueryContainer();
-        }
+        
 
         #region Binds
 
@@ -314,6 +332,11 @@ namespace Syadeu.Presentation.Map
             m_Sources.Clear();
             m_Terrains.Remove(terrainData);
             m_RequireReload = true;
+        }
+
+        public bool Raycast(Ray ray, out NavMeshHit hit, float distance = float.MaxValue, int areaMask = 0)
+        {
+            return NavMesh.Raycast(ray.origin, ray.direction * distance, out hit, areaMask);
         }
 
         public ActorEventHandler FixCurrentGridPosition(Entity<IEntity> entity)

@@ -62,7 +62,7 @@ namespace Syadeu.Presentation
         public static T GetObject<T>(this IFixedReference<T> t)
             where T : class, IObject
         {
-            if (t.IsEmpty())
+            if (t == null || t.IsEmpty())
             {
                 return null;
             }
@@ -82,6 +82,20 @@ namespace Syadeu.Presentation
             else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value))
             {
                 return value;
+            }
+            return null;
+        }
+        public static T GetObject<T>(this IFixedReference t)
+            where T : class, IObject
+        {
+            if (t == null || t.IsEmpty())
+            {
+                return null;
+            }
+            else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value) &&
+                value is T target)
+            {
+                return target;
             }
             return null;
         }

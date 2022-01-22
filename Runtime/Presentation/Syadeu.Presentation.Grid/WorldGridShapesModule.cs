@@ -202,7 +202,7 @@ namespace Syadeu.Presentation.Grid
             System.CompleteGridJob();
 
             float3 camForward = cam.transform.forward;
-            
+            GridDetectorModule detectorModule = System.GetModule<GridDetectorModule>();
             System.Grid.GetMinMaxLocation(out int3 min, out int3 max);
             for (int x = min.x; x < max.x; x++)
             {
@@ -212,8 +212,19 @@ namespace Syadeu.Presentation.Grid
                     var pos = System.Grid.LocationToPosition(loc);
 
                     float3 target = pos + new float3(0, .15f, 0);
+                    GridIndex index = new GridIndex(System.Grid, System.Grid.LocationToIndex(loc));
 
-                    Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}\n{pos.x},{pos.y},{pos.z}", 3.5f, Color.red);
+                    if (detectorModule.GridObservers.ContainsKey(index))
+                    {
+                        detectorModule.GridObservers.TryGetFirstValue(index, out var ob, out _);
+
+                        //Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}::{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
+                        Shapes.Draw.Text(target, camForward, $"{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
+                    }
+                    else
+                    {
+                        Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}", 3.5f, Color.white);
+                    }
                 }
             }
         }
