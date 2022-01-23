@@ -849,6 +849,7 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
+
         public struct VisibleEnumerator : IEnumerable<ProxyTransform>
         {
             private NativeProxyData m_ProxyData;
@@ -890,8 +891,6 @@ namespace Syadeu.Presentation.Proxy
             {
                 list = new List<Transform>();
                 m_ConnectedTransforms.Add(transform.m_Index, list);
-
-                $"add c {transform.m_Index}".ToLog();
             }
             list.Add(target);
 

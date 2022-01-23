@@ -26,6 +26,7 @@ using Syadeu.Presentation.Proxy;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -42,6 +43,9 @@ namespace Syadeu.Presentation.Render.LowLevel
 
         public readonly Dictionary<InstancedMaterial, Material> m_AbsoluteMaterialIndices = new Dictionary<InstancedMaterial, Material>();
         public readonly Dictionary<InstancedMesh, Mesh> m_AbsoluteMeshIndices = new Dictionary<InstancedMesh, Mesh>();
+
+        private IMaterialProcessor[] m_GlobalMaterialProcessors = Array.Empty<IMaterialProcessor>();
+        private readonly Dictionary<InstancedMaterial, List<IMaterialProcessor>> m_MaterialProcessors = new Dictionary<InstancedMaterial, List<IMaterialProcessor>>();
 
         #region Material Property Block
 
@@ -67,18 +71,6 @@ namespace Syadeu.Presentation.Render.LowLevel
 
         private GameObjectProxySystem m_ProxySystem;
         private GameObjectSystem m_GameObjectSystem;
-
-        //        private struct DefaultProperties
-        //#if CORESYSTEM_SRP
-        //        {
-        //            public half4 _Color;
-        //            public float4 _Albedo;
-        //            public half 
-        //                _Cutoff, _Glossiness, _GlossMapScale, _SmoothnessTextureChannel,
-        //                _Metallic;
-
-        //        }
-        //#endif
 
         private sealed class BatchedMeshEntity : IDisposable
         {
@@ -111,48 +103,12 @@ namespace Syadeu.Presentation.Render.LowLevel
                     buffer[i] = m_Entities[i].localToWorldMatrix;
                 }
             }
-            public void ProcessMPB(MaterialPropertyBlock mpb)
-            {
-            }
 
             public void Dispose()
             {
                 m_Entities.Dispose();
             }
         }
-        //private sealed class BatchedMeshRaw
-        //{
-        //    private readonly InstancedMesh m_Mesh;
-        //    private readonly int m_SubMeshIndex;
-        //    private readonly FixedList<Matrix4x4> m_Matrices;
-
-        //    private MaterialPropertyBlock m_MaterialPropertyBlock;
-        //    //private int m_Count;
-
-        //    public int Count => m_Matrices.Count;
-        //    //public Mesh Mesh => m_Mesh;
-        //    public InstancedMesh MeshIndex => m_Mesh;
-        //    public int SubMeshIndex => m_SubMeshIndex;
-        //    public MaterialPropertyBlock MaterialPropertyBlock => m_MaterialPropertyBlock;
-        //    public Matrix4x4[] Matrices => m_Matrices.Buffer;
-
-        //    public BatchedMeshRaw(InstancedMesh mesh, int submeshIndex)
-        //    {
-        //        m_Mesh = mesh;
-        //        m_SubMeshIndex = submeshIndex;
-        //        m_Matrices = new FixedList<Matrix4x4>();
-
-        //        m_MaterialPropertyBlock = new MaterialPropertyBlock();
-        //    }
-        //    public void Add(Matrix4x4 matrix4X4)
-        //    {
-        //        m_Matrices.Add(matrix4X4);
-        //    }
-        //    public void Remove(Matrix4x4 matrix4X4)
-        //    {
-        //        m_Matrices.RemoveSwapback(matrix4X4);
-        //    }
-        //}
         private sealed class BatchedMaterialMeshes : IDisposable
         {
             private readonly InstancedMaterial m_Material;
@@ -198,22 +154,38 @@ namespace Syadeu.Presentation.Render.LowLevel
             public void Draw(
                 Dictionary<InstancedMaterial, Material> materialIndices, 
                 Dictionary<InstancedMesh, Mesh> meshIndices,
+
+                IMaterialProcessor[] globalProcessors,
+                Dictionary<InstancedMaterial, List<IMaterialProcessor>> materialProcessors,
+
                 MaterialPropertyBlock mpb)
             {
+                Material material = materialIndices[m_Material];
+                for (int i = 0; i < globalProcessors.Length; i++)
+                {
+                    globalProcessors[i].OnProcess(mpb);
+                }
+                if (materialProcessors.TryGetValue(m_Material, out var list))
+                {
+                    ProcessMPB(mpb, list);
+                }
+
                 for (int i = 0; i < m_Meshes.Count; i++)
                 {
                     int count = m_Meshes[i].Count;
                     var mats = ArrayPool<Matrix4x4>.Shared.Rent(count);
+                    Mesh mesh = meshIndices[m_Meshes[i].MeshIndex];
                     m_Meshes[i].GetMatrices(mats);
-                    m_Meshes[i].ProcessMPB(mpb);
-
+                    
                     Graphics.DrawMeshInstanced(
-                        mesh: meshIndices[m_Meshes[i].MeshIndex],
+                        mesh: mesh,
                         submeshIndex: m_Meshes[i].SubMeshIndex,
-                        material: materialIndices[m_Material],
+                        material: material,
                         matrices: mats,
                         count: count,
-                        properties: mpb);
+                        properties: mpb,
+                        castShadows: ShadowCastingMode.On,
+                        receiveShadows: true);
 
                     ArrayPool<Matrix4x4>.Shared.Return(mats);
                     //$"{m_Meshes[i].Mesh.name} drawing at {m_Meshes[i].Matrices[0]}".ToLog();
@@ -229,6 +201,14 @@ namespace Syadeu.Presentation.Render.LowLevel
 
                 m_MeshIndices.Clear();
                 m_Meshes.Clear();
+            }
+
+            private static void ProcessMPB(MaterialPropertyBlock mpb, List<IMaterialProcessor> processors)
+            {
+                for (int i = 0; i < processors.Count; i++)
+                {
+                    processors[i].OnProcess(mpb);
+                }
             }
         }
 
@@ -246,6 +226,20 @@ namespace Syadeu.Presentation.Render.LowLevel
 
             System.OnRender += System_OnRender;
 
+            Type[] globalProcessorTypes = TypeHelper.GetTypes(t => !t.IsAbstract && TypeHelper.TypeOf<GlobalMaterialProcessor>.Type.IsAssignableFrom(t));
+            m_GlobalMaterialProcessors = globalProcessorTypes.Select(t => (IMaterialProcessor)Activator.CreateInstance(t)).ToArray();
+            for (int i = 0; i < m_GlobalMaterialProcessors.Length; i++)
+            {
+                m_GlobalMaterialProcessors[i].OnInitialize();
+            }
+
+            Type[] processorTypes = TypeHelper.GetTypes(t => !t.IsAbstract && TypeHelper.TypeOf<MaterialProcessor>.Type.IsAssignableFrom(t));
+            for (int i = 0; i < processorTypes.Length; i++)
+            {
+                IMaterialProcessor processor = (IMaterialProcessor)Activator.CreateInstance(processorTypes[i]);
+                AddMaterialProcessor(processor);
+            }
+
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GameObjectSystem>(Bind);
         }
@@ -255,15 +249,26 @@ namespace Syadeu.Presentation.Render.LowLevel
         }
         protected override void OnDispose()
         {
+            foreach (var item in m_MaterialProcessors)
+            {
+                for (int i = 0; i < item.Value.Count; i++)
+                {
+                    ((IDisposable)item.Value[i]).Dispose();
+                }
+            }
+
             for (int i = 0; i < m_Materials.Count; i++)
             {
                 m_Materials[i].Dispose();
             }
+
             m_Materials.Clear();
             m_MaterialIndices.Clear();
 
             m_AbsoluteMaterialIndices.Clear();
             m_AbsoluteMeshIndices.Clear();
+
+            m_MaterialProcessors.Clear();
 
             m_ProxySystem = null;
             m_GameObjectSystem = null;
@@ -274,7 +279,14 @@ namespace Syadeu.Presentation.Render.LowLevel
             for (int i = 0; i < m_Materials.Count; i++)
             {
                 MaterialPropertyBlock mpb = m_MPBPool.Get();
-                m_Materials[i].Draw(m_AbsoluteMaterialIndices, m_AbsoluteMeshIndices, mpb);
+                m_Materials[i].Draw(
+                    m_AbsoluteMaterialIndices, 
+                    m_AbsoluteMeshIndices,
+
+                    m_GlobalMaterialProcessors,
+                    m_MaterialProcessors,
+
+                    mpb);
 
                 m_MPBPool.Reserve(mpb);
             }
@@ -371,13 +383,10 @@ namespace Syadeu.Presentation.Render.LowLevel
                     //col = meshCollider;
                 }
 
-                $"1. {collider.transform.position} :: {tr.position}".ToLog();
                 collider.transform.SetParent(tr);
                 collider.transform.localPosition = 0;
 
                 m_ProxySystem.UpdateConnectedTransforms(collider.transform);
-
-                $"2. {collider.transform.position} :: {tr.position}".ToLog();
             }
 
             return new InstancedModel(hash, temp, tr, collider);
@@ -394,81 +403,20 @@ namespace Syadeu.Presentation.Render.LowLevel
 
             if (!model.m_Collider.IsEmpty())
             {
-                //model.m_Collider.transform.RemoveParent();
-
-                //var col = model.m_Collider.Target.GetComponent<MeshCollider>();
-                //col.sharedMesh = null;
-                //UnityEngine.Object.Destroy(col);
-
                 m_GameObjectSystem.ReserveGameObject(model.m_Collider);
             }
-
-            "remove".ToLog();
         }
-    }
 
-    public struct InstancedModel : IEquatable<InstancedModel>
-    {
-        public struct MeshData : IEquatable<MeshData>
+        public void AddMaterialProcessor(IMaterialProcessor processor)
         {
-            public InstancedMaterial material;
-            public InstancedMesh mesh;
+            if (!m_MaterialProcessors.TryGetValue(processor.Material, out var list))
+            {
+                list = new List<IMaterialProcessor>();
+                m_MaterialProcessors.Add(processor.Material, list);
+            }
 
-            public bool Equals(MeshData other) => material.Equals(other.material) && mesh.Equals(other.mesh);
+            list.Add(processor);
+            processor.OnInitialize();
         }
-
-        internal readonly Hash m_Hash;
-        internal readonly FixedList128Bytes<MeshData> m_MaterialIndices;
-        internal ProxyTransform m_Matrix;
-        internal FixedGameObject m_Collider;
-
-        internal InstancedModel(Hash hash, FixedList128Bytes<MeshData> indices, ProxyTransform matrix)
-        {
-            m_Hash = hash;
-            m_MaterialIndices = indices;
-            m_Matrix = matrix;
-            m_Collider = FixedGameObject.Null;
-        }
-        internal InstancedModel(
-            Hash hash, FixedList128Bytes<MeshData> indices, ProxyTransform matrix,
-            FixedGameObject collider)
-        {
-            m_Hash = hash;
-            m_MaterialIndices = indices;
-            m_Matrix = matrix;
-            m_Collider = collider;
-        }
-
-        public bool Equals(InstancedModel other) => m_Hash.Equals(other.m_Hash);
-    }
-    public struct InstancedMaterial : IEquatable<InstancedMaterial>
-    {
-        public static InstancedMaterial GetMaterial(Material material) => new InstancedMaterial(material);
-
-        private readonly int m_Index;
-
-        public int Index => m_Index;
-
-        private InstancedMaterial(Material material)
-        {
-            m_Index = material.GetInstanceID();
-        }
-
-        public bool Equals(InstancedMaterial other) => m_Index == other.m_Index;
-    }
-    public struct InstancedMesh : IEquatable<InstancedMesh>
-    {
-        public static InstancedMesh GetMesh(Mesh mesh) => new InstancedMesh(mesh);
-
-        private int m_Index;
-
-        public int Index => m_Index;
-
-        private InstancedMesh(Mesh mesh)
-        {
-            m_Index = mesh.GetInstanceID();
-        }
-
-        public bool Equals(InstancedMesh other) => m_Index == other.m_Index;
     }
 }

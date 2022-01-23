@@ -32,6 +32,9 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    // https://forum.unity.com/threads/raycast-without-colliders.14378/
+    // https://forum.unity.com/threads/a-solution-for-accurate-raycasting-without-mesh-colliders.134554/
+
     public sealed class EntityRaycastSystem : PresentationSystemEntity<EntityRaycastSystem>
     {
         public override bool EnableBeforePresentation => false;
