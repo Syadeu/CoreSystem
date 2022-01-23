@@ -82,6 +82,8 @@ namespace Syadeu.Presentation.Proxy
                 m_SortedCluster;
 
         private NativeReference<int> m_ProxyClusterCounter;
+
+        private NativeList<int> m_VisibleTransforms;
 #pragma warning restore IDE0090 // Use 'new(...)'
         public Queue<int>
             m_OverrideRequestProxies = new Queue<int>();
@@ -100,6 +102,14 @@ namespace Syadeu.Presentation.Proxy
             s_HandleJobsMarker = new Unity.Profiling.ProfilerMarker("Handle Jobs"),
             s_HandleScheduleClusterUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Cluster Update"),
             s_HandleScheduleProxyUpdateMarker = new Unity.Profiling.ProfilerMarker("Handle Schedule Proxy Update");
+
+        private NativeSlice<int> VisibleTransformIndices
+        {
+            get
+            {
+                return m_VisibleTransforms.AsArray().Slice(0, m_VisibleTransforms.Length);
+            }
+        }
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -124,6 +134,8 @@ namespace Syadeu.Presentation.Proxy
 
             m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(1024, Allocator.Persistent);
             m_ProxyClusterCounter = new NativeReference<int>(0, AllocatorManager.Persistent);
+
+            m_VisibleTransforms = new NativeList<int>(512, AllocatorManager.Persistent);
 
             return base.OnInitialize();
         }
@@ -162,6 +174,8 @@ namespace Syadeu.Presentation.Proxy
 
             m_SortedCluster.Dispose();
             m_ProxyClusterCounter.Dispose();
+
+            m_VisibleTransforms.Dispose();
         }
 
         #region Binds
@@ -391,15 +405,19 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_VisibleList.Dequeue()];
-                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    ref ProxyTransformData data = ref m_ProxyData.ElementAt(tr.m_Index);
 
-                    tr.isVisible = true;
+                    if (!data.m_IsOccupied || data.m_DestroyQueued) continue;
+
+                    data.m_IsVisible = true;
                     OnDataObjectVisible?.Invoke(tr);
 
-                    int2 proxyIdx = tr.Pointer->m_ProxyIndex;
-                    if (!proxyIdx.Equals(-1) &&
-                        !proxyIdx.Equals(-2) &&
-                        !proxyIdx.Equals(-3))
+                    m_VisibleTransforms.Add(data.m_Index);
+
+                    int2 proxyIdx = data.m_ProxyIndex;
+                    if (!proxyIdx.Equals(ProxyTransform.ProxyNull) &&
+                        !proxyIdx.Equals(ProxyTransform.ProxyQueued) &&
+                        !proxyIdx.Equals(ProxyTransform.ProxyGPUInstanced))
                     {
                         m_Instances[proxyIdx.x][proxyIdx.y].InternalOnVisible();
                     }
@@ -414,15 +432,19 @@ namespace Syadeu.Presentation.Proxy
                     //if (i != 0 && i % c_ChunkSize == 0) break;
 
                     ProxyTransform tr = m_ProxyData[m_InvisibleList.Dequeue()];
-                    if (!tr.Ref.m_IsOccupied || tr.Ref.m_DestroyQueued) continue;
+                    ref ProxyTransformData data = ref m_ProxyData.ElementAt(tr.m_Index);
 
-                    tr.isVisible = false;
+                    if (!data.m_IsOccupied || data.m_DestroyQueued) continue;
+
+                    data.m_IsVisible = false;
                     OnDataObjectInvisible?.Invoke(tr);
 
-                    int2 proxyIdx = tr.Pointer->m_ProxyIndex;
+                    m_VisibleTransforms.RemoveForSwapBack(data.m_Index);
+
+                    int2 proxyIdx = data.m_ProxyIndex;
                     if (!proxyIdx.Equals(ProxyTransform.ProxyNull) &&
                         !proxyIdx.Equals(ProxyTransform.ProxyQueued) &&
-                        !proxyIdx.Equals(-3))
+                        !proxyIdx.Equals(ProxyTransform.ProxyGPUInstanced))
                     {
                         m_Instances[proxyIdx.x][proxyIdx.y].InternalOnInvisible();
                     }
@@ -572,6 +594,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 data->m_IsVisible = false;
                 OnDataObjectInvisible?.Invoke(tr);
+                m_VisibleTransforms.RemoveForSwapBack(data->m_Index);
             }
 
             int2 proxyIdx = data->m_ProxyIndex;
@@ -826,6 +849,31 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
+        public struct VisibleEnumerator : IEnumerable<ProxyTransform>
+        {
+            private NativeProxyData m_ProxyData;
+            private NativeSlice<int> m_VisibleTrIndices;
+
+            internal VisibleEnumerator(NativeProxyData proxyData, NativeSlice<int> trIndices)
+            {
+                m_ProxyData = proxyData;
+                m_VisibleTrIndices = trIndices;
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+            public IEnumerator<ProxyTransform> GetEnumerator()
+            {
+                for (int i = 0; i < m_VisibleTrIndices.Length; i++)
+                {
+                    yield return m_ProxyData.GetTransform(m_VisibleTrIndices[i]);
+                }
+            }
+        }
+        public VisibleEnumerator GetVisibleTransforms()
+        {
+            return new VisibleEnumerator(m_ProxyData, VisibleTransformIndices);
+        }
+
         /// <summary>
         /// <see cref="Transform"/> 을 <see cref="ProxyTransform"/> 에 연결합니다.
         /// </summary>
@@ -893,10 +941,13 @@ namespace Syadeu.Presentation.Proxy
 
             return tr;
         }
-        public unsafe void SetParent(in ProxyTransform parent, in ProxyTransform child)
+        public void SetParent(in ProxyTransform parent, in ProxyTransform child)
         {
-            m_ProxyData.List[parent.m_Index]->m_ChildIndices.Add(child.m_Index);
-            m_ProxyData.List[child.m_Index]->m_ParentIndex = parent.m_Index;
+            unsafe
+            {
+                m_ProxyData.List[parent.m_Index]->m_ChildIndices.Add(child.m_Index);
+                m_ProxyData.List[child.m_Index]->m_ParentIndex = parent.m_Index;
+            }
         }
         public ProxyTransform CreateNewPrefab(in PrefabReference<GameObject> prefab, 
             in float3 pos, in quaternion rot, in float3 scale, in bool enableCull, 
@@ -994,9 +1045,9 @@ namespace Syadeu.Presentation.Proxy
                 {
                     MeshFilter meshFilter = renderers[i].GetComponent<MeshFilter>();
                     Collider col = renderers[i].GetComponent<Collider>();
-                    bool addCollider = col != null;
+                    //bool addCollider = col != null;
                     int layer = 0;
-                    if (addCollider)
+                    if (col != null)
                     {
                         layer = col.gameObject.layer;
                     }
@@ -1005,13 +1056,13 @@ namespace Syadeu.Presentation.Proxy
                         .AddModel(
                         m_ProxyData.GetTransform(data->m_Index),
                         meshFilter.sharedMesh, renderers[i].sharedMaterials
-                        , addCollider, layer
+                        , col, layer
                         );
                     models[i] = model;
                 }
 
                 m_Models.Add(data->m_Index, models);
-                data->m_ProxyIndex = -3;
+                data->m_ProxyIndex = ProxyTransform.ProxyGPUInstanced;
 
                 return;
             }

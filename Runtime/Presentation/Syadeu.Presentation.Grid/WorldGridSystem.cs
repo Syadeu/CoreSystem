@@ -622,21 +622,29 @@ namespace Syadeu.Presentation.Grid
 
             return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
         }
-        public IndexEnumerator GetObserverIndices()
+        public IndexEnumerator<AlwaysTrue<GridIndex>> GetObserverIndices()
         {
             CompleteGridJob();
 
-            return new IndexEnumerator(GetModule<GridDetectorModule>().GridObservers.GetEnumerator());
+            return new IndexEnumerator<AlwaysTrue<GridIndex>>
+                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
+                new AlwaysTrue<GridIndex>()
+                );
         }
 
         [BurstCompatible]
-        public struct IndexEnumerator : IEnumerator<GridIndex>, IEnumerable<GridIndex>
+        public struct IndexEnumerator<TPredicate> : IEnumerator<GridIndex>, IEnumerable<GridIndex>
+            where TPredicate : struct, IExecutable<GridIndex>
         {
             private NativeMultiHashMap<GridIndex, InstanceID>.KeyValueEnumerator m_Iterator;
+            private TPredicate m_Predicate;
 
-            public IndexEnumerator(NativeMultiHashMap<GridIndex, InstanceID>.KeyValueEnumerator iter)
+            public IndexEnumerator(
+                NativeMultiHashMap<GridIndex, InstanceID>.KeyValueEnumerator iter,
+                TPredicate predicate)
             {
                 m_Iterator = iter;
+                m_Predicate = predicate;
             }
 
             public GridIndex Current => m_Iterator.Current.Key;
@@ -651,7 +659,11 @@ namespace Syadeu.Presentation.Grid
             }
             public bool MoveNext()
             {
-                return m_Iterator.MoveNext();
+                while (m_Iterator.MoveNext())
+                {
+                    if (m_Predicate.Predicate(Current)) return true;
+                }
+                return false;
             }
             public void Reset()
             {

@@ -272,9 +272,9 @@ namespace Syadeu.Presentation.Proxy
             UnsafeUtility.MemClear(m_UnsafeList->m_TransformBuffer, m_UnsafeList->m_Length * s_TransformSize);
         }
 
-        public ProxyTransformData ElementAt(int i)
+        public ref ProxyTransformData ElementAt(int i)
         {
-            return *List[i];
+            return ref *List[i];
         }
 
         [Obsolete, MethodImpl(MethodImplOptions.AggressiveInlining)]

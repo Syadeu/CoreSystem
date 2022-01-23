@@ -185,8 +185,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (m_EntityRaycastSystem == null || m_RenderSystem == null) return;
 
-            Ray ray = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_InputSystem.MousePosition, 0));
-            m_EntityRaycastSystem.Raycast(in ray, out RaycastInfo info);
+            m_EntityRaycastSystem.Raycast(m_InputSystem.CursorRay, out RaycastInfo info);
 
             if (info.hit)
             {

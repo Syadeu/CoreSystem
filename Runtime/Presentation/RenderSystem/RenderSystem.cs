@@ -561,6 +561,40 @@ namespace Syadeu.Presentation.Render
             return m_Camera.Value.ScreenPointToRay(screenPoint);
         }
 
+        //public Rect AABBToScreenRect(AABB aabb)
+        //{
+        //    float3
+        //        min = aabb.min,
+        //        max = aabb.max;
+
+        //    // Get mesh origin and farthest extent (this works best with simple convex meshes)
+        //    float3 origin = WorldToScreenPoint(new float3(min.x, max.y, 0f));
+        //    float3 extent = WorldToScreenPoint(new float3(max.x, min.y, 0f));
+
+        //    // Create rect in screen space and return - does not account for camera perspective
+        //    // Upper left
+        //    var rect = new Rect(origin.x, Screen.height - origin.y , extent.x - origin.x, origin.y - extent.y);
+
+        //    rect.x -= rect.width * .5f;
+        //    rect.y += rect.height * .5f;
+
+        //    return rect;
+        //}
+        //public float2 AABBToScreenWorldSize(AABB aabb)
+        //{
+        //    float3
+        //        min = aabb.min,
+        //        max = aabb.max;
+
+        //    float3 minS = WorldToScreenPoint(min);
+        //    float3 maxS = WorldToScreenPoint(max);
+
+        //    minS = ScreenToWorldPoint(minS);
+        //    maxS = ScreenToWorldPoint(maxS);
+
+        //    return new float2(math.abs(maxS.x - minS.x), math.abs(maxS.y - minS.y));
+        //}
+
         public void SetResolution()
         {
             //Screen.SetResolution(100,100, FullScreenMode.ExclusiveFullScreen, )

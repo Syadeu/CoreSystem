@@ -16,12 +16,16 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Presentation.Proxy;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Syadeu.Presentation.Render
 {
     public sealed class ScreenCanvasSystem : PresentationSystemEntity<ScreenCanvasSystem>
+        //INotifySystemModule<CanvasRendererModule<>>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -32,6 +36,7 @@ namespace Syadeu.Presentation.Render
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
+        private GameObjectProxySystem m_ProxySystem;
 
         public Canvas Canvas
         {
@@ -67,6 +72,7 @@ namespace Syadeu.Presentation.Render
         {
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -76,11 +82,15 @@ namespace Syadeu.Presentation.Render
             {
                 Destroy(m_Canvas.gameObject);
             }
+
+            //m_RenderSystem.OnRenderShapes -= M_RenderSystem_OnRenderShapes;
+            //CoreSystem.OnGUIUpdate -= Instance_OnGUIEvent;
         }
         protected override void OnDispose()
         {
             m_SceneSystem = null;
             m_RenderSystem = null;
+            m_ProxySystem = null;
         }
 
         #region Binds
@@ -93,8 +103,71 @@ namespace Syadeu.Presentation.Render
         {
             m_RenderSystem = other;
         }
+        private void Bind(GameObjectProxySystem other)
+        {
+            m_ProxySystem = other;
+        }
 
         #endregion
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            //m_RenderSystem.OnRenderShapes += M_RenderSystem_OnRenderShapes;
+            //CoreSystem.OnGUIUpdate += Instance_OnGUIEvent;
+
+            return base.OnStartPresentation();
+        }
+
+        //private void Instance_OnGUIEvent()
+        //{
+        //    foreach (var transform in m_ProxySystem.GetVisibleTransforms())
+        //    {
+        //        AABB aabb = transform.aabb;
+
+        //        Rect rect = m_RenderSystem.AABBToScreenRect(aabb);
+        //        //float3 pos = m_RenderSystem.ScreenToWorldPoint(aabb.);
+
+        //        //Shapes.Draw.Rectangle(
+        //        //    pos: aabb.center,
+        //        //    normal: -m_RenderSystem.Camera.transform.forward,
+        //        //    width: size.x,
+        //        //    height: size.y
+        //        //    );
+
+        //        GUI.Box(rect, "");
+        //        //arg2.
+        //    }
+        //}
+
+        //private void M_RenderSystem_OnRenderShapes(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
+        //{
+        //    //Shapes.Draw.Push();
+
+        //    //using (Shapes.Draw.StyleScope)
+        //    {
+        //        //Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
+
+        //        foreach (var transform in m_ProxySystem.GetVisibleTransforms())
+        //        {
+        //            AABB aabb = transform.aabb;
+
+        //            Rect rect = m_RenderSystem.AABBToScreenRect(aabb);
+        //            //float3 pos = m_RenderSystem.ScreenToWorldPoint(aabb.);
+
+        //            //Shapes.Draw.Rectangle(
+        //            //    pos: aabb.center,
+        //            //    normal: -m_RenderSystem.Camera.transform.forward,
+        //            //    width: size.x,
+        //            //    height: size.y
+        //            //    );
+
+        //            GUI.Box(rect, "");
+        //            //arg2.
+        //        }
+        //    }
+
+        //    //Shapes.Draw.Pop();
+        //}
 
         #endregion
 

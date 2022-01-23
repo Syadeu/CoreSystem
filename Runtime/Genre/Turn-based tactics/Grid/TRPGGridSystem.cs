@@ -447,7 +447,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #region Math
 
-        public void GetMoveablePositions(in InstanceID entity,
+        private void GetMoveablePositions(in InstanceID entity,
             ref NativeList<GridIndex> gridPositions)
         {
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
@@ -500,7 +500,7 @@ namespace Syadeu.Presentation.TurnTable
                 //$"{list[i].Location} added".ToLog();
             }
         }
-        public void CalculateOutlineVertices(
+        private void CalculateOutlineVertices(
             in InstanceID entity,
             NativeArray<GridIndex> moveables,
             ref NativeList<Vector3> vertices)

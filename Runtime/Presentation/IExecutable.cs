@@ -18,4 +18,8 @@ namespace Syadeu.Presentation
     {
         bool Predicate(in T t);
     }
+    public struct AlwaysTrue<T> : IExecutable<T>
+    {
+        public bool Predicate(in T t) => true;
+    }
 }

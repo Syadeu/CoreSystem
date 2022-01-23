@@ -22,6 +22,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Render;
+using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace Syadeu.Presentation.TurnTable
     public sealed class TRPGGridShapesModule : PresentationSystemModule<TRPGGridSystem>
     {
 #if CORESYSTEM_SHAPES
-        //private Shapes.PolylinePath m_OutlinePath = new Shapes.PolylinePath();
+        private Shapes.PolylinePath m_WarningOutlinePath = new Shapes.PolylinePath();
 
         private float m_PathlineDrawOffset = 0;
 
@@ -110,12 +111,12 @@ namespace Syadeu.Presentation.TurnTable
 
         private void TRPGSelectionChangedEventHandler(TRPGSelectionChangedEvent ev)
         {
-            m_DrawWarningTiles = !ev.Entity.IsEmpty();
+            m_DrawWarningTiles = !ev.Entity.IsEmpty() && ev.Entity.HasComponent<GridComponent>();
+
+            m_WarningOutlinePath.ClearAllPoints();
         }
 
         #endregion
-
-        
 
         private void OnRenderShapesHandler(UnityEngine.Rendering.ScriptableRenderContext arg1, Camera arg2)
         {
@@ -138,10 +139,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private void DrawWarningTiles(TRPGSettings settings)
         {
-            if (System.IsDrawingUIGrid || 
-                !m_DrawWarningTiles ||
-                !m_SelectionSystem.CurrentSelection.HasComponent<GridComponent>()
-                )
+            if (System.IsDrawingUIGrid)
             {
                 return;
             }

@@ -293,14 +293,14 @@ namespace Syadeu.Presentation.Render.LowLevel
 
         public InstancedModel AddModel(
             ProxyTransform tr, Mesh mesh, Material[] materials,
-            bool addCollider, int layer
+            Collider targetColider, int layer
             )
         {
             Hash hash = Hash.NewHash();
             InstancedMesh meshIndex = InstancedMesh.GetMesh(mesh);
             if (!m_AbsoluteMeshIndices.ContainsKey(meshIndex))
             {
-                if (addCollider)
+                if (targetColider != null)
                 {
                     // https://docs.unity3d.com/ScriptReference/Physics.BakeMesh.html
                     Physics.BakeMesh(mesh.GetInstanceID(), false);
@@ -351,12 +351,25 @@ namespace Syadeu.Presentation.Render.LowLevel
             }
 
             FixedGameObject collider = FixedGameObject.Null;
-            if (addCollider)
+            if (targetColider != null)
             {
                 collider = m_GameObjectSystem.GetGameObject();
                 collider.SetLayer(layer);
-                var col = collider.AddComponent<MeshCollider>();
-                col.sharedMesh = mesh;
+                //Collider col;
+                if (targetColider is BoxCollider boxCol)
+                {
+                    var boxCollider = collider.AddComponent<BoxCollider>();
+                    boxCollider.sharedMaterial = boxCol.sharedMaterial;
+                    boxCollider.center = boxCol.center;
+                    boxCollider.size = boxCol.size;
+                }
+                else
+                {
+                    var meshCollider = collider.AddComponent<MeshCollider>();
+                    meshCollider.sharedMesh = mesh;
+
+                    //col = meshCollider;
+                }
 
                 $"1. {collider.transform.position} :: {tr.position}".ToLog();
                 collider.transform.SetParent(tr);

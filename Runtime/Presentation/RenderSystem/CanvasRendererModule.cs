@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class CanvasRendererModule<TRenderer> : PresentationSystemModule<ICanvasSystem>
+    public class CanvasRendererModule<TRenderer> : PresentationSystemModule<ICanvasSystem>
         where TRenderer : Renderer
     {
         private Stack<FixedGameObject> m_ReservedRenderers;

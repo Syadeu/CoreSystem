@@ -37,8 +37,9 @@ namespace Syadeu.Presentation.Proxy
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(-1);
 
-        internal static readonly int2 ProxyNull = new int2(-1, -1);
-        internal static readonly int2 ProxyQueued = new int2(-2, -2);
+        internal static int2 ProxyNull => new int2(-1, -1);
+        internal static int2 ProxyQueued => new int2(-2, -2);
+        internal static int2 ProxyGPUInstanced => 3;
         #endregion
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
