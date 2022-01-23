@@ -23,11 +23,11 @@ namespace SyadeuEditor
         {
             Scene scene = SceneManager.GetActiveScene();
 
-            for (int i = 0; i < Asset.Scenes.Count; i++)
+            for (int i = 0; i < Target.Scenes.Count; i++)
             {
-                if (Asset.Scenes[i].ScenePath.Equals(scene.path))
+                if (Target.Scenes[i].ScenePath.Equals(scene.path))
                 {
-                    m_CurrentScene = Asset.Scenes[i];
+                    m_CurrentScene = Target.Scenes[i];
                     break;
                 }
             }

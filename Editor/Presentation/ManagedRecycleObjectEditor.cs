@@ -37,27 +37,27 @@ namespace SyadeuEditor.Presentation
 
             EditorUtilities.Line();
 
-            if (!Asset.entity.IsValid())
+            if (!Target.entity.IsValid())
             {
                 EditorUtilities.StringRich("Invalid Entity", 13, true);
                 return;
             }
 
-            var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Asset.entity.Target);
+            var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Target.entity.Target);
             drawer.OnGUI();
         }
 
         private void OnSceneGUI()
         {
             if (!Application.isPlaying) return;
-            else if (!Asset.entity.IsValid()) return;
+            else if (!Target.entity.IsValid()) return;
 
-            Vector2 guiPos = HandleUtility.WorldToGUIPoint(Asset.transform.position);
+            Vector2 guiPos = HandleUtility.WorldToGUIPoint(Target.transform.position);
             Handles.BeginGUI();
 
             Rect rect = new Rect(guiPos, new Vector2(180, 60));
 
-            using (new GUI.GroupScope(rect, Asset.entity.Name, EditorStyleUtilities.Box))
+            using (new GUI.GroupScope(rect, Target.entity.Name, EditorStyleUtilities.Box))
             {
                 EditorGUILayout.LabelField("test");
             }
