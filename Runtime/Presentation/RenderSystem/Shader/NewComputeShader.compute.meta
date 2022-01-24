@@ -1,5 +1,7 @@
 fileFormatVersion: 2
 guid: ccada1c2a13957b48a0a9006a4250459
+labels:
+- ComputeShader
 ComputeShaderImporter:
   externalObjects: {}
   currentAPIMask: 4
