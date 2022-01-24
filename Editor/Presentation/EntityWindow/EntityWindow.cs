@@ -250,7 +250,7 @@ namespace SyadeuEditor.Presentation
             IsDirty = true;
         }
 
-        private const string c_CopyrightText = "Copyright 2021 Syadeu. All rights reserved.";
+        private const string c_CopyrightText = "Copyright 2022 Syadeu. All rights reserved.";
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
 
         Rect HeaderPos = new Rect(20, 33, 0, 0);
