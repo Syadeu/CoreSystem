@@ -128,9 +128,13 @@ namespace SyadeuEditor.Presentation
                     using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid() || currentValue.IsNone()))
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        m_Open = GUILayout.Toggle(m_Open,
-                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                        m_Open = EditorUtilities.BoxToggleButton(
+                            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString, 
+                            m_Open,
+                            ColorPalettes.PastelDreams.TiffanyBlue,
+                            ColorPalettes.PastelDreams.HotPink,
+                            GUILayout.Width(20)
+                            );
                         if (change.changed)
                         {
                             if (m_Open)
@@ -184,6 +188,76 @@ namespace SyadeuEditor.Presentation
             {
                 displayName = new GUIContent("INVALID");
             }
+
+            bool clicked;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                //GUILayout.Space(EditorGUI.indentLevel * 15);
+
+                if (!string.IsNullOrEmpty(name))
+                {
+                    GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
+                }
+                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                {
+                    GenericMenu menu = new GenericMenu();
+
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    menu.AddItem(new GUIContent("Select"), false, () =>
+                    {
+                        Selection.activeObject = current.GetEditorAsset();
+                        EditorGUIUtility.PingObject(Selection.activeObject);
+                    });
+                    menu.AddDisabledItem(new GUIContent("Edit"));
+
+                    menu.ShowAsContext();
+                });
+            }
+
+            if (clicked)
+            {
+                Rect rect = GUILayoutUtility.GetLastRect();
+                rect.position = Event.current.mousePosition;
+
+                Type type = current.GetType();
+                List<PrefabList.ObjectSetting> list;
+
+                if (type.GenericTypeArguments.Length > 0)
+                {
+                    list = PrefabList.Instance.ObjectSettings
+                        .Where((other) =>
+                        {
+                            if (other.GetEditorAsset() == null) return false;
+
+                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                            {
+                                return true;
+                            }
+                            return false;
+                        }).ToList();
+                }
+                else
+                {
+                    list = PrefabList.Instance.ObjectSettings;
+                }
+
+                var popup = SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
+                {
+                    for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                    {
+                        if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                    }
+                    return -1;
+                }, -2);
+
+                PopupWindow.Show(rect, popup);
+            }
+
+            return;
+
+            #region Old
 
             Rect fieldRect;
             int selectorID;
@@ -283,6 +357,8 @@ namespace SyadeuEditor.Presentation
                 default:
                     break;
             }
+
+            #endregion
         }
     }
 }

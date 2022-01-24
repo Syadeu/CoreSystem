@@ -84,7 +84,7 @@ namespace SyadeuEditor.Presentation
 
         public override void OnViewGUI(Rect pos)
         {
-            using (new GUI.GroupScope(pos))
+            using (new GUILayout.AreaScope(pos))
             {
                 Draw(pos);
             }

@@ -128,6 +128,23 @@ namespace Syadeu.Presentation.Entities
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
+        public bool hasTransform
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+
+                    return false;
+                }
+#endif
+                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+                return transformStatic.HasTransform(Idx);
+            }
+        }
         /// <inheritdoc cref="EntityBase.transform"/>
         public ProxyTransform transform
         {

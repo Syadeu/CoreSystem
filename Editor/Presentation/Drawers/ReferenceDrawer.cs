@@ -56,13 +56,21 @@ namespace SyadeuEditor.Presentation
                         m_WasEdited = false;
                     }
 
-                    m_Open = GUILayout.Toggle(m_Open,
-                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                    m_Open = EditorUtilities.BoxToggleButton(
+                        m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
+                        m_Open,
+                        ColorPalettes.PastelDreams.TiffanyBlue,
+                        ColorPalettes.PastelDreams.HotPink,
+                        GUILayout.Width(20)
+                        );
+
+                    //m_Open = GUILayout.Toggle(m_Open,
+                    //            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                    //            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
                     using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
                     {
-                        if (GUILayout.Button("C", GUILayout.Width(20)))
+                        if (EditorUtilities.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
                         {
                             ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
 
@@ -129,6 +137,62 @@ namespace SyadeuEditor.Presentation
                 if (objBase == null) displayName = new GUIContent("None");
                 else displayName = new GUIContent(objBase.Name);
             }
+
+            bool clicked;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (!string.IsNullOrEmpty(name))
+                {
+                    GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
+                }
+                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                {
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (current.IsValid())
+                    {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{current.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().Select(current);
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+
+                    menu.AddSeparator(string.Empty);
+                    if (targetType != null && !targetType.IsAbstract)
+                    {
+                        menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
+                        {
+                            var obj = EntityWindow.Instance.Add(targetType);
+                            setter.Invoke(obj.Hash);
+                        });
+                    }
+                    else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
+
+                    menu.ShowAsContext();
+                });
+            }
+
+            if (clicked)
+            {
+                DrawSelectionWindow(setter, targetType);
+            }
+
+            return;
+
+            #region Old
 
             Rect fieldRect;
             int selectorID;
@@ -230,6 +294,8 @@ namespace SyadeuEditor.Presentation
                 default:
                     break;
             }
+
+            #endregion
         }
         static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
         {

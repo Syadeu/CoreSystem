@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections.Threading;
@@ -101,35 +105,52 @@ namespace Syadeu.Presentation.Data
         public bool HasValue(Hash key) => m_DataContainer.ContainsKey(key);
         public bool HasValue(string key) => HasValue(ToDataHash(key));
 
-        public void Enqueue(Hash key, object value) => m_DataContainer.TryAdd(key, value);
+        public void Enqueue(Hash key, object value)
+        {
+            m_DataContainer.TryAdd(key, value);
+        }
         public void Enqueue(string key, object value) => Enqueue(ToDataHash(key), value);
 
         public object Dequeue(Hash key)
         {
-            m_DataContainer.TryRemove(key, out var value);
-            if (value == null)
+#if DEBUG_MODE
+            if (!m_DataContainer.ContainsKey(key))
             {
-                throw new System.Exception("key not found");
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"{key} is not in the {TypeHelper.TypeOf<DataContainerSystem>.Name}.");
+
+                return null;
             }
-            return value;
+#endif
+            return m_DataContainer[key];
         }
         public object Dequeue(string key) => Dequeue(ToDataHash(key));
         public T Dequeue<T>(Hash key)
         {
             object value = Dequeue(key);
-            if (!value.GetType().Equals(TypeHelper.TypeOf<T>.Type))
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(value.GetType()))
             {
-                throw new System.Exception($"Type mismatch. Value is {value.GetType().Name} but requested as {TypeHelper.TypeOf<T>.Name}");
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.Name}");
+
+                return default(T);
             }
+#endif
             return (T)value;
         }
         public T Dequeue<T>(string key)
         {
             object value = Dequeue(key);
-            if (!value.GetType().Equals(TypeHelper.TypeOf<T>.Type))
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(value.GetType()))
             {
-                throw new System.Exception($"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.ToString()}");
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.Name}");
+
+                return default(T);
             }
+#endif
             return (T)value;
         }
     }

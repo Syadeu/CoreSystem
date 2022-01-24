@@ -85,10 +85,17 @@ namespace SyadeuEditor
         public static string String(string text) => String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black);
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
-        public static string String(string text, int size)
-            => $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
+        public static string String(string text, int size, bool color = true)
+        {
+            if (color)
+            {
+                return $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
+            }
+
+            return $"<size={size}>{text}</size>";
+        }
         public static string String(string text, StringColor color, int size)
-            => String(String(text, color), size);
+            => String(String(text, color), size, false);
         public static void StringHeader(string text, StringColor color, bool center)
         {
             EditorGUILayout.LabelField(String(text, color, 20), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
@@ -314,7 +321,115 @@ namespace SyadeuEditor
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
 
-        
+        public static bool BoxButton(string name, Color color, params GUILayoutOption[] options)
+            => BoxButton(name, color, null, options);
+        public static bool BoxButton(string name, Color color, Action contextClick, params GUILayoutOption[] options)
+        {
+            GUIContent enableCullName = new GUIContent(name);
+            Rect enableCullRect = GUILayoutUtility.GetRect(
+                enableCullName,
+                EditorStyles.toolbarButton, /*GUILayout.ExpandWidth(true), */options);
+            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+
+            bool clicked = false;
+            switch (Event.current.GetTypeForControl(enableCullID))
+            {
+                case EventType.Repaint:
+                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                    Color origin = GUI.color;
+                    GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    EditorStyles.toolbarButton.Draw(enableCullRect,
+                        isHover, isActive: true, on: true, false);
+                    GUI.color = origin;
+
+                    var temp = new GUIStyle(EditorStyles.label);
+                    temp.alignment = TextAnchor.MiddleCenter;
+                    temp.Draw(enableCullRect, enableCullName, enableCullID);
+                    break;
+                case EventType.ContextClick:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    contextClick?.Invoke();
+                    Event.current.Use();
+
+                    break;
+                case EventType.MouseDown:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = enableCullID;
+                        clicked = true;
+                        GUI.changed = true;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (GUIUtility.hotControl == enableCullID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return clicked;
+        }
+        public static bool BoxToggleButton(string name, bool value, Color enableColor, Color disableColor, params GUILayoutOption[] options)
+        {
+            GUIContent enableCullName = new GUIContent(name);
+            Rect enableCullRect = GUILayoutUtility.GetRect(
+                enableCullName,
+                EditorStyles.toolbarButton, /*GUILayout.ExpandWidth(true), */options);
+            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+
+            switch (Event.current.GetTypeForControl(enableCullID))
+            {
+                case EventType.Repaint:
+                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                    Color origin = GUI.color;
+                    GUI.color = value ? enableColor : disableColor;
+                    GUI.color = Color.Lerp(GUI.color, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    EditorStyles.toolbarButton.Draw(enableCullRect,
+                        isHover, isActive: true, on: true, false);
+                    GUI.color = origin;
+
+                    var temp = new GUIStyle(EditorStyles.label);
+                    temp.alignment = TextAnchor.MiddleCenter;
+                    temp.Draw(enableCullRect, enableCullName, enableCullID);
+                    break;
+                case EventType.MouseDown:
+                    if (!GUI.enabled) break;
+
+                    if (!enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = enableCullID;
+                        value = !value;
+                        GUI.changed = true;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == enableCullID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return value;
+        }
 
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
@@ -325,7 +440,7 @@ namespace SyadeuEditor
             }
             else
             {
-                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
+                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey, size), true, EditorStyleUtilities.HeaderStyle);
             }
         }
 

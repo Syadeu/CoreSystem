@@ -182,7 +182,7 @@ namespace SyadeuEditor.Presentation
                 ProxyTransform proxy = entityBase.GetTransform();
                 using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
-                    EntityDrawer.DrawPrefab(entityBase, true);
+                    EntityDrawer.DrawModel(entityBase, true);
 
                     if (proxy.hasProxy)
                     {

@@ -371,8 +371,7 @@ namespace SyadeuEditor.Utilities
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     m_Open = EditorUtilities.Foldout(m_Open,
-                    string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
-                    , 13);
+                    string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType).Replace("<", "< "), 13));
 
                     GUILayout.FlexibleSpace();
                     GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
