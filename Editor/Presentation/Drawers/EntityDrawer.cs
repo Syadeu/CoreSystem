@@ -10,6 +10,7 @@ using UnityEngine;
 using Syadeu.Collections;
 using Unity.Mathematics;
 using SyadeuEditor.Utilities;
+using Syadeu.Mono;
 
 namespace SyadeuEditor.Presentation
 {
@@ -17,7 +18,7 @@ namespace SyadeuEditor.Presentation
     {
         public EntityDataBase Target => (EntityDataBase)m_TargetObject;
 
-        GUIContent m_EnableCullName, m_DisableCullName;
+        //GUIContent m_EnableCullName, m_DisableCullName;
         PrefabReferenceDrawer prefabReferenceDrawer = null;
         AttributeListDrawer attributeListDrawer;
 
@@ -59,8 +60,8 @@ namespace SyadeuEditor.Presentation
 
         public EntityDrawer(ObjectBase objectBase) : base(objectBase)
         {
-            m_EnableCullName = new GUIContent("Enable Cull");
-            m_DisableCullName = new GUIContent("Disable Cull");
+            //m_EnableCullName = new GUIContent("Enable Cull");
+            //m_DisableCullName = new GUIContent("Disable Cull");
 
             if (objectBase is EntityBase entityBase)
             {
@@ -87,6 +88,21 @@ namespace SyadeuEditor.Presentation
 
             attributeListDrawer = new AttributeListDrawer(objectBase,
                 TypeHelper.TypeOf<EntityDataBase>.Type.GetField("m_AttributeList", BindingFlags.NonPublic | BindingFlags.Instance));
+        }
+        static bool CheckRendererAssets(Renderer[] renderers)
+        {
+            foreach (var renderer in renderers)
+            {
+                for (int i = 0; i < renderer.materials.Length; i++)
+                {
+                    var setting = PrefabList.Instance.GetSettingWithObject(renderer.materials[i]);
+                    if (setting != null)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
         public static void DrawModel(EntityBase entity, bool disabled = false)
         {
@@ -124,16 +140,18 @@ namespace SyadeuEditor.Presentation
                     {
                         GameObject target = ((GameObject)entity.Prefab.GetEditorAsset());
                         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-
-                        AABB aabb = renderers[0].bounds;
-                        baseDrawer.m_RenderHierachies = new RenderHierarchy[renderers.Length];
-                        for (int i = 1; i < renderers.Length; i++)
+                        if (renderers.Length > 0)
                         {
-                            aabb.Encapsulate(renderers[i].bounds);
-                            baseDrawer.m_RenderHierachies[i] = new RenderHierarchy(renderers[i]);
+                            AABB aabb = renderers[0].bounds;
+                            baseDrawer.m_RenderHierachies = new RenderHierarchy[renderers.Length];
+                            for (int i = 1; i < renderers.Length; i++)
+                            {
+                                aabb.Encapsulate(renderers[i].bounds);
+                                baseDrawer.m_RenderHierachies[i] = new RenderHierarchy(renderers[i]);
+                            }
+                            entity.Center = aabb.center - ((float3)target.transform.position);
+                            entity.Size = aabb.size;
                         }
-                        entity.Center = aabb.center - ((float3)target.transform.position);
-                        entity.Size = aabb.size;
                     }
                 }
             }
@@ -174,6 +192,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
+            
             static void DrawRenderHierachies(RenderHierarchy[] renderHierarchies)
             {
 

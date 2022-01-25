@@ -202,7 +202,31 @@ namespace Syadeu.Mono
         }
 
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
+        private Dictionary<UnityEngine.Object, int> m_PrefabHashMap;
 
         public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
+
+        public override void OnInitialize()
+        {
+            ReInitialize();
+        }
+        public void ReInitialize()
+        {
+            m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
+            for (int i = 0; i < m_ObjectSettings.Count; i++)
+            {
+                m_PrefabHashMap.Add(m_ObjectSettings[i].m_Prefab, i);
+            }
+        }
+
+        public ObjectSetting GetSettingWithObject(UnityEngine.Object obj)
+        {
+            if (!m_PrefabHashMap.TryGetValue(obj, out int index))
+            {
+                return null;
+            }
+
+            return m_ObjectSettings[index];
+        }
     }
 }

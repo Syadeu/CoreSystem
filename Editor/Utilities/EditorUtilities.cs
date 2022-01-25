@@ -321,6 +321,19 @@ namespace SyadeuEditor
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
 
+        private static GUIStyle s_BoxButtonStyle = null;
+        public static GUIStyle BoxButtonStyle
+        {
+            get
+            {
+                if (s_BoxButtonStyle == null)
+                {
+                    s_BoxButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
+                }
+                return s_BoxButtonStyle;
+            }
+        }
+
         public static bool BoxButton(string name, Color color, params GUILayoutOption[] options)
             => BoxButton(name, color, null, options);
         public static bool BoxButton(string name, Color color, Action contextClick, params GUILayoutOption[] options)
@@ -385,7 +398,7 @@ namespace SyadeuEditor
             GUIContent enableCullName = new GUIContent(name);
             Rect enableCullRect = GUILayoutUtility.GetRect(
                 enableCullName,
-                EditorStyles.toolbarButton, /*GUILayout.ExpandWidth(true), */options);
+                BoxButtonStyle, /*GUILayout.ExpandWidth(true), */options);
             int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
 
             switch (Event.current.GetTypeForControl(enableCullID))
@@ -393,12 +406,12 @@ namespace SyadeuEditor
                 case EventType.Repaint:
                     bool isHover = enableCullRect.Contains(Event.current.mousePosition);
 
-                    Color origin = GUI.color;
-                    GUI.color = value ? enableColor : disableColor;
-                    GUI.color = Color.Lerp(GUI.color, Color.white, isHover && GUI.enabled ? .7f : 0);
-                    EditorStyles.toolbarButton.Draw(enableCullRect,
+                    Color origin = GUI.backgroundColor;
+                    GUI.backgroundColor = value ? enableColor : disableColor;
+                    GUI.backgroundColor = Color.Lerp(GUI.backgroundColor, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    BoxButtonStyle.Draw(enableCullRect,
                         isHover, isActive: true, on: true, false);
-                    GUI.color = origin;
+                    GUI.backgroundColor = origin;
 
                     var temp = new GUIStyle(EditorStyles.label);
                     temp.alignment = TextAnchor.MiddleCenter;
