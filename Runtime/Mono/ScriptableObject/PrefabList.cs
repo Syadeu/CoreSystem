@@ -215,7 +215,7 @@ namespace Syadeu.Mono
             m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
             for (int i = 0; i < m_ObjectSettings.Count; i++)
             {
-                m_PrefabHashMap.Add(m_ObjectSettings[i].m_Prefab, i);
+                m_PrefabHashMap.Add(m_ObjectSettings[i].LoadAsset(), i);
             }
         }
 

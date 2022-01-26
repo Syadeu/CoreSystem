@@ -192,7 +192,6 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            
             static void DrawRenderHierachies(RenderHierarchy[] renderHierarchies)
             {
 
