@@ -23,6 +23,7 @@ using Unity.Burst;
 using UnityEngine;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation.CodeGen
 {
@@ -50,6 +51,15 @@ namespace Syadeu.Presentation.CodeGen
         private void CompilationPipeline_assemblyCompilationFinished(string outputAssemblyPath, CompilerMessage[] arg2)
         {
             //throw new NotImplementedException();
+
+            var iter = TypeHelper
+                .GetTypesIter(t => t.GetCustomAttribute<GuidMarkerAttribute>() != null);
+            //foreach (var type in iter)
+            //{
+            //    type.Module.
+            //}
+
+            CompilationPipeline.RequestScriptCompilation();
         }
 
         static void BuildAssembly(bool wait)

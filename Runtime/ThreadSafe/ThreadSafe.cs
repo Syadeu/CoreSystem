@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.ThreadSafe
 {
+    [System.Obsolete("Deprecated", true)]
     public static class ThreadSafe
     {
         [StructLayout(LayoutKind.Explicit)]

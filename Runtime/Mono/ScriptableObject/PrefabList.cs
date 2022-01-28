@@ -31,7 +31,7 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
-    [PreferBinarySerialization]
+    [PreferBinarySerialization][GuidMarker] 
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Syadeu.ThreadSafe
 {
+    [System.Obsolete("Deprecated", true)]
     public struct Vector2 : IEqualityComparer<Vector2>, IEqualityComparer
     {
         public static Vector2 Zero = new Vector2(0, 0);

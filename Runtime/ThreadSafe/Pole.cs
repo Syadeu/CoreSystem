@@ -2,6 +2,7 @@
 
 namespace Syadeu.ThreadSafe
 {
+    [System.Obsolete("Deprecated", true)]
     [Serializable]
     public struct Pole
     {
