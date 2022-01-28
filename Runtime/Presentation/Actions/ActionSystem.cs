@@ -21,6 +21,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -37,6 +38,8 @@ namespace Syadeu.Presentation.Actions
         private readonly List<Payload> m_ScheduledActions = new List<Payload>();
         private readonly ActionContainer m_CurrentAction = new ActionContainer();
 
+        private readonly Dictionary<Guid, IConstAction> m_ConstActions = new Dictionary<Guid, IConstAction>();
+
         private EventSystem m_EventSystem;
         private EntitySystem m_EntitySystem;
 
@@ -46,6 +49,28 @@ namespace Syadeu.Presentation.Actions
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
             return base.OnInitialize();
+        }
+        protected override PresentationResult OnInitializeAsync()
+        {
+            var constActionTypes = TypeHelper.GetTypesIter(t => !t.IsInterface && !t.IsAbstract &&
+                TypeHelper.TypeOf<IConstAction>.Type.IsAssignableFrom(t));
+            foreach (var item in constActionTypes)
+            {
+                var ctor = TypeHelper.GetConstructorInfo(item);
+                IConstAction constAction;
+                if (ctor != null)
+                {
+                    constAction = (IConstAction)ctor.Invoke(null);
+                }
+                else
+                {
+                    constAction = (IConstAction)Activator.CreateInstance(item);
+                }
+
+                m_ConstActions.Add(item.GUID, constAction);
+            }
+
+            return base.OnInitializeAsync();
         }
 
         #region Binds
@@ -318,6 +343,43 @@ namespace Syadeu.Presentation.Actions
 
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
+        }
+
+        public IConstAction GetConstAction(Type type)
+        {
+#if DEBUG_MODE
+            if (type == null)
+            {
+                "??".ToLogError();
+                return null;
+            }
+            else if (!m_ConstActions.ContainsKey(type.GUID))
+            {
+                "?? not found".ToLogError();
+                return null;
+            }
+#endif
+            return m_ConstActions[type.GUID];
+        }
+        public TValue InvokeConstAction<TValue>(Type type)
+        {
+            IConstAction constAction = GetConstAction(type);
+#if DEBUG_MODE
+            if (constAction == null)
+            {
+                "??".ToLogError();
+                return default(TValue);
+            }
+#endif
+            object value = constAction.Execute();
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<TValue>.Type.IsAssignableFrom(value.GetType()))
+            {
+                $"type mismatch. expected {value.GetType()} but {TypeHelper.TypeOf<TValue>.ToString()}".ToLogError();
+                return default(TValue);
+            }
+#endif
+            return (TValue)value;
         }
 
         #region Inner Classes

@@ -258,7 +258,7 @@ namespace SyadeuEditor.Presentation
         
         #region Dragging
 
-        const string k_GenericDragID = "GenericDragColumnDragging";
+        public const string k_GenericDragID = "GenericDragColumnDragging";
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {

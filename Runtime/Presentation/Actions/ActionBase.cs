@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
@@ -24,8 +28,6 @@ namespace Syadeu.Presentation.Actions
         [Header("Debug")]
         [JsonProperty(Order = 9999, PropertyName = "DebugText")]
         protected string p_DebugText = string.Empty;
-
-        [JsonIgnore] public IFixedReference m_Reference;
 
         public override sealed object Clone()
         {

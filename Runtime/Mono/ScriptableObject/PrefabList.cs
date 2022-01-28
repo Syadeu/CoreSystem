@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -215,7 +219,10 @@ namespace Syadeu.Mono
             m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
             for (int i = 0; i < m_ObjectSettings.Count; i++)
             {
-                m_PrefabHashMap.Add(m_ObjectSettings[i].LoadAsset(), i);
+                var obj = m_ObjectSettings[i].LoadAsset();
+                if (obj == null) continue;
+
+                m_PrefabHashMap.Add(obj, i);
             }
         }
 

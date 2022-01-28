@@ -171,6 +171,9 @@ namespace Syadeu
         /// 유니티 프레임에 맞춰 반복적으로 실행될 함수를 넣을 수 있습니다.
         /// </summary>
         public static event UnityWork OnUnityUpdate;
+
+        public static event Action OnGUIUpdate;
+
         #endregion
 
         #region Jobs
@@ -560,6 +563,11 @@ namespace Syadeu
         {
             OnRender?.Invoke();
         }
+        private void OnGUI()
+        {
+            OnGUIUpdate?.Invoke();
+        }
+
         #endregion
 
         #region Worker Thread
@@ -894,8 +902,8 @@ namespace Syadeu
                 }
                 else
                 {
-                    if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
-                        string.Format(c_WarningTick, tickCounter));
+                    //if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
+                    //    string.Format(c_WarningTick, tickCounter));
                     
                     tickCounter = 0;
                 }
