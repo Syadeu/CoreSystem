@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 
 namespace Syadeu.Collections
 {
+    [System.Obsolete("Use ObjectPool")]
     public sealed class CLRContainer<T>
     {
         private readonly ConcurrentStack<T> m_Stack;

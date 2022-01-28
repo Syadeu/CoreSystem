@@ -16,13 +16,14 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Buffer;
 using System;
 
 namespace Syadeu.Collections
 {
     public sealed class ActionWrapper : IActionWrapper
     {
-        private static readonly CLRContainer<ActionWrapper> s_Container;
+        private static readonly ObjectPool<ActionWrapper> s_Container;
         public Action Action;
 
         private bool m_MarkerSet = false;
@@ -30,22 +31,25 @@ namespace Syadeu.Collections
 
         static ActionWrapper()
         {
-            s_Container = new CLRContainer<ActionWrapper>(Factory);
+            s_Container = new ObjectPool<ActionWrapper>(Factory, null, null, null);
         }
         private static ActionWrapper Factory()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             return new ActionWrapper();
+#pragma warning restore CS0618 // Type or member is obsolete
         }
         /// <summary>
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
+        [Obsolete("Use ActionWrapper.GetWrapper")]
         public ActionWrapper() { }
-        public static ActionWrapper GetWrapper() => s_Container.Dequeue();
+        public static ActionWrapper GetWrapper() => s_Container.Get();
         public void Reserve()
         {
             Action = null;
             m_MarkerSet = false;
-            s_Container.Enqueue(this);
+            s_Container.Reserve(this);
         }
 
         public void SetProfiler(string name)
@@ -73,7 +77,7 @@ namespace Syadeu.Collections
     }
     public sealed class ActionWrapper<T> : IActionWrapper
     {
-        private static readonly CLRContainer<ActionWrapper<T>> s_Container;
+        private static readonly ObjectPool<ActionWrapper<T>> s_Container;
         public Action<T> Action;
 
         private bool m_MarkerSet = false;
@@ -81,7 +85,7 @@ namespace Syadeu.Collections
 
         static ActionWrapper()
         {
-            s_Container = new CLRContainer<ActionWrapper<T>>(Factory);
+            s_Container = new ObjectPool<ActionWrapper<T>>(Factory, null, null, null);
         }
         private static ActionWrapper<T> Factory()
         {
@@ -91,12 +95,12 @@ namespace Syadeu.Collections
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
         public ActionWrapper() { }
-        public static ActionWrapper<T> GetWrapper() => s_Container.Dequeue();
+        public static ActionWrapper<T> GetWrapper() => s_Container.Get();
         public void Reserve()
         {
             Action = null;
             m_MarkerSet = false;
-            s_Container.Enqueue(this);
+            s_Container.Reserve(this);
         }
 
         public void SetProfiler(string name)
