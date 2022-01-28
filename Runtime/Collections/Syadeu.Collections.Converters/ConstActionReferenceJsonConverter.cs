@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine.Scripting;
 
@@ -30,14 +31,15 @@ namespace Syadeu.Collections.Converters
 
         public ConstActionReferenceJsonConverter() : base()
         {
-            m_ConstructorParam = new Type[] { TypeHelper.TypeOf<Guid>.Type };
+            m_ConstructorParam = new Type[] { TypeHelper.TypeOf<Guid>.Type, TypeHelper.TypeOf<IEnumerable<object>>.Type };
         }
 
         public override IConstActionReference ReadJson(JsonReader reader, Type objectType, IConstActionReference existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            JToken jo = JToken.Load(reader);
-            string temp = jo.ToString();
+            JObject jo = JObject.Load(reader);
 
+            Guid guid = jo["Guid"].ToObject<Guid>();
+            
             ConstructorInfo constructor = objectType.GetConstructor(
                 BindingFlags.Public | BindingFlags.Instance,
                 null,
@@ -46,17 +48,43 @@ namespace Syadeu.Collections.Converters
                 null
                 );
 
-            if (Guid.TryParse(temp, out Guid guid))
+
+            if (!guid.Equals(Guid.Empty))
             {
-                return (IConstActionReference)constructor.Invoke(new object[] { guid });
+                ConstActionUtilities.TryGetWithGuid(guid, out var targetConstAction);
+
+                JArray argsArr = (JArray)jo["Arguments"];
+                object[] args = new object[argsArr.Count];
+                for (int i = 0; i < argsArr.Count; i++)
+                {
+                    args[i] = argsArr[i].ToObject(targetConstAction.ArgumentFields[i].FieldType);
+                }
+
+                return (IConstActionReference)constructor.Invoke(new object[] { guid, args });
             }
 
-            return (IConstActionReference)constructor.Invoke(new object[] { Guid.Empty });
+            return (IConstActionReference)constructor.Invoke(new object[] { Guid.Empty, null });
         }
 
         public override void WriteJson(JsonWriter writer, IConstActionReference value, JsonSerializer serializer)
         {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("Guid");
             writer.WriteValue(value.Guid);
+
+            writer.WritePropertyName("Arguments");
+            writer.WriteStartArray();
+            if (!value.IsEmpty())
+            {
+                for (int i = 0; i < value.Arguments.Length; i++)
+                {
+                    serializer.Serialize(writer, value.Arguments[i]);
+                }
+            }
+            writer.WriteEndArray();
+
+            writer.WriteEndObject();
         }
     }
 }

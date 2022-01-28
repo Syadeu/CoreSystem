@@ -12,25 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Newtonsoft.Json;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Syadeu.Collections
 {
-    public struct ConstActionReference<TValue> : IConstActionReference
+    public sealed class ConstActionReference<TValue> : IConstActionReference
     {
+        [JsonProperty(Order = 0, PropertyName = "Guid")]
         private Guid m_Guid;
+        [JsonProperty(Order = 1, PropertyName = "Arguments")]
+        private object[] m_Arguments;
 
         public Guid Guid => m_Guid;
+        public object[] Arguments => m_Arguments;
 
-        public ConstActionReference(Guid guid)
+        public ConstActionReference()
+        {
+            m_Guid = Guid.Empty;
+            m_Arguments = Array.Empty<object>();
+        }
+        public ConstActionReference(Guid guid, IEnumerable<object> args)
         {
             m_Guid = guid;
+            if (args == null || !args.Any())
+            {
+                m_Arguments = Array.Empty<object>();
+            }
+            else m_Arguments = args.ToArray();
         }
 
         public bool IsEmpty() => m_Guid.Equals(Guid.Empty);
-    }
-    public interface IConstActionReference : IEmpty
-    {
-        public Guid Guid { get; }
+        public void SetArguments(params object[] args) => m_Arguments = args;
     }
 }

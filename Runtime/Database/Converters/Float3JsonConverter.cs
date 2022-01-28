@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Collections.Converters
@@ -42,6 +43,27 @@ namespace Syadeu.Collections.Converters
         }
     }
     [Preserve]
+    internal sealed class Vector3JsonConverter : JsonConverter<Vector3>
+    {
+        public override bool CanRead => true;
+        public override bool CanWrite => true;
+
+        public override Vector3 ReadJson(JsonReader reader, Type objectType, Vector3 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            JArray jo = (JArray)JToken.Load(reader);
+            return new float3(jo[0].Value<float>(), jo[1].Value<float>(), jo[2].Value<float>());
+        }
+
+        public override void WriteJson(JsonWriter writer, Vector3 value, JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+            writer.WriteValue(value.x);
+            writer.WriteValue(value.y);
+            writer.WriteValue(value.z);
+            writer.WriteEndArray();
+        }
+    }
+    [Preserve]
     internal sealed class Float2JsonConverter : JsonConverter<float2>
     {
         public override bool CanRead => true;
@@ -54,6 +76,26 @@ namespace Syadeu.Collections.Converters
         }
 
         public override void WriteJson(JsonWriter writer, float2 value, JsonSerializer serializer)
+        {
+            writer.WriteStartArray();
+            writer.WriteValue(value.x);
+            writer.WriteValue(value.y);
+            writer.WriteEndArray();
+        }
+    }
+    [Preserve]
+    internal sealed class Vector2JsonConverter : JsonConverter<Vector2>
+    {
+        public override bool CanRead => true;
+        public override bool CanWrite => true;
+
+        public override Vector2 ReadJson(JsonReader reader, Type objectType, Vector2 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            JArray jo = (JArray)JToken.Load(reader);
+            return new float2(jo[0].Value<float>(), jo[1].Value<float>());
+        }
+
+        public override void WriteJson(JsonWriter writer, Vector2 value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             writer.WriteValue(value.x);

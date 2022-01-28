@@ -85,6 +85,9 @@ namespace Syadeu.Collections
                         new Float3JsonConverter(),
                         new QuaternionJsonConvereter(),
 
+                        new Vector3JsonConverter(),
+                        new Vector2JsonConverter(),
+
                         new ColorJsonConverter(),
                         new GuidJsonConverter()
                     }

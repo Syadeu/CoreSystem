@@ -35,6 +35,11 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 1, PropertyName = "FriendlyName")]
         public string m_FriendlyName = "None";
 
+        [JsonProperty]
+        public ConstActionReference<int> m_TestInt;
+        [JsonProperty]
+        public ConstActionReference<float> m_TestFloat;
+
         protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE

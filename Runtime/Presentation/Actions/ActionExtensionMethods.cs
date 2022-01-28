@@ -25,6 +25,8 @@ namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
+        internal static ActionSystem s_ActionSystem;
+
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
         const string c_ErrorTriggerActionCompletedWithFailed = "Execution ({0}) at {1} completed with failed.";
@@ -400,6 +402,20 @@ namespace Syadeu.Presentation.Actions
             {
                 system.ScheduleTriggerAction<T>(actions[i], entity);
             }
+        }
+
+        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return default(TValue);
+            }
+
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            info.SetArguments(constAction, action.Arguments);
+
+            return (TValue)constAction.Execute();
         }
     }
 }

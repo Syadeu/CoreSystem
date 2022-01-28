@@ -19,7 +19,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Reflection;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -221,6 +222,36 @@ namespace SyadeuEditor
             GUI.backgroundColor = old;
         }
         #endregion
+
+        public static object AutoField(FieldInfo fieldInfo, string label, object value, params GUILayoutOption[] options)
+        {
+            if (fieldInfo.FieldType == TypeHelper.TypeOf<int>.Type)
+            {
+                return EditorGUILayout.IntField(label, Convert.ToInt32(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<float>.Type)
+            {
+                return EditorGUILayout.FloatField(label, Convert.ToSingle(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<bool>.Type)
+            {
+                return EditorGUILayout.ToggleLeft(label, Convert.ToBoolean(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<string>.Type)
+            {
+                return EditorGUILayout.TextField(label, Convert.ToString(value), options);
+            }
+            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
+            //{
+            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
+            //}
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<Vector3>.Type)
+            {
+                return EditorGUILayout.Vector3Field(label, (Vector3)(value), options);
+            }
+
+            throw new NotImplementedException();
+        }
 
         public sealed class BoxBlock : IDisposable
         {
