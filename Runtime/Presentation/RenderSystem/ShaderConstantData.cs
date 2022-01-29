@@ -66,8 +66,8 @@ namespace Syadeu.Presentation.Render
             public bool Equals(int other) => m_ID.Equals(other);
         }
 
-        [JsonProperty(Order = -3, PropertyName = "ShaderName")]
-        public string m_ShaderName = string.Empty;
+        [JsonProperty(Order = -3, PropertyName = "Shader")]
+        public ShaderReference m_Shader = ShaderReference.Empty;
         [JsonProperty(Order = -2, PropertyName = "SharedData")]
         public Reference<ShaderConstantData>[] m_SharedData = Array.Empty<Reference<ShaderConstantData>>();
         [JsonProperty(Order = -1, PropertyName = "Keywords")]

@@ -44,12 +44,12 @@ namespace SyadeuEditor.Presentation
                 }
                 else
                 {
-                    targetName = "None 1";
+                    targetName = "None";
                 }
             }
             else
             {
-                targetName = "None 2";
+                targetName = "None";
             }
 
             bool clicked;

@@ -28,7 +28,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Set PositionToShader")]
-    public sealed class SetPositionToShaderAction : ShaderTriggerActionBase
+    public sealed class SetPositionToShaderTriggerAction : ShaderTriggerActionBase
     {
         [JsonProperty]
         public ConstActionReference<int> m_TestInt;

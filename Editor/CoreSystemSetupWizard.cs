@@ -1059,8 +1059,8 @@ namespace SyadeuEditor
                 {
                     m_FoundComputeShaders = Array.Empty<ComputeShader>();
                 }
-                Array.Sort(Settings.m_ComputeShaders);
-                Array.Sort(m_FoundComputeShaders);
+                //Array.Sort(Settings.m_ComputeShaders);
+                //Array.Sort(m_FoundComputeShaders);
 
                 try
                 {
@@ -1074,8 +1074,8 @@ namespace SyadeuEditor
                 {
                     m_FoundShaders = Array.Empty<Shader>();
                 }
-                Array.Sort(Settings.m_Shaders);
-                Array.Sort(m_FoundShaders);
+                //Array.Sort(Settings.m_Shaders);
+                //Array.Sort(m_FoundShaders);
             }
             public override bool Predicate()
             {
