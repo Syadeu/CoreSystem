@@ -374,6 +374,8 @@ namespace Syadeu.Presentation.Actions
     {
         private readonly Dictionary<Guid, IConstAction> m_ConstActions = new Dictionary<Guid, IConstAction>();
 
+        #region Presentation Methods
+
         protected override void OnInitializeAsync()
         {
             foreach (var item in ConstActionUtilities.Types)
@@ -389,9 +391,28 @@ namespace Syadeu.Presentation.Actions
                     constAction = (IConstAction)Activator.CreateInstance(item);
                 }
 
+                constAction.Initialize();
                 m_ConstActions.Add(item.GUID, constAction);
             }
         }
+        protected override void OnShutDown()
+        {
+            foreach (var item in m_ConstActions.Values)
+            {
+                item.OnShutdown();
+            }
+        }
+        protected override void OnDispose()
+        {
+            foreach (var item in m_ConstActions.Values)
+            {
+                item.Dispose();
+            }
+
+            m_ConstActions.Clear();
+        }
+
+        #endregion
 
         public IConstAction GetConstAction(Type type)
         {

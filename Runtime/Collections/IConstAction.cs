@@ -16,12 +16,16 @@ using System;
 
 namespace Syadeu.Collections
 {
-    public interface IConstAction
+    public interface IConstAction : IDisposable
     {
         Type ReturnType { get; }
-        object Execute();
 
         ConstActionUtilities.Info GetInfo();
         void SetArguments(params object[] args);
+
+        void Initialize();
+        object Execute();
+
+        void OnShutdown();
     }
 }

@@ -28,13 +28,8 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actions
 {
     [DisplayName("TriggerAction: Set PositionToShader")]
-    public sealed class SetPositionToShaderAction : TriggerAction
+    public sealed class SetPositionToShaderAction : ShaderTriggerActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "ShaderData")]
-        public Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
-        [JsonProperty(Order = 1, PropertyName = "FriendlyName")]
-        public string m_FriendlyName = "None";
-
         [JsonProperty]
         public ConstActionReference<int> m_TestInt;
         [JsonProperty]
@@ -51,9 +46,9 @@ namespace Syadeu.Presentation.Actions
 #endif
             float3 pos = entity.transform.position;
 
-            for (int i = 0; i < m_ShaderData.Length; i++)
+            for (int i = 0; i < ShaderData.Length; i++)
             {
-                Process(m_ShaderData[i].GetObject(), m_FriendlyName, pos);
+                Process(ShaderData[i].GetObject(), FriendlyName, pos);
             }
         }
 
@@ -70,5 +65,17 @@ namespace Syadeu.Presentation.Actions
 
             ShaderConstantData.ApplyToGlobal(keyword, new float4(pos.x, pos.y, pos.z, 0));
         }
+    }
+    public abstract class ShaderTriggerActionBase : TriggerAction
+    {
+        [JsonProperty(Order = -10, PropertyName = "ShaderData")]
+        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
+        [JsonProperty(Order = -9, PropertyName = "FriendlyName")]
+        private string m_FriendlyName = "None";
+
+        [JsonIgnore]
+        protected Reference<ShaderConstantData>[] ShaderData => m_ShaderData;
+        [JsonIgnore]
+        protected string FriendlyName => m_FriendlyName;
     }
 }

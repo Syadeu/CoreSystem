@@ -16,12 +16,10 @@
 #define DEBUG_MODE
 #endif
 
-using Newtonsoft.Json;
 using Syadeu.Collections;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -48,28 +46,44 @@ namespace Syadeu.Presentation.Actions
         {
             ConstActionUtilities.HashMap[GetType()].SetArguments(this, args);
         }
+
+        void IConstAction.Initialize() => OnInitialize();
         object IConstAction.Execute() => Execute();
+        void IConstAction.OnShutdown() => OnShutdown();
+        void IDisposable.Dispose() => OnDispose();
 
+        protected virtual void OnInitialize() { }
         protected abstract TValue Execute();
-    }
-    
 
-    [Guid("0C11829E-730C-4082-B6E5-2ED487607F2E")]
-    public sealed class TestConstAction : ConstAction<int>
-    {
-        [JsonProperty]
-        private int m_TestInt = 0;
-        [JsonProperty]
-        private float m_TestFloat = 0;
-        [JsonProperty]
-        private string m_TestString;
-        [JsonProperty]
-        private Vector3 testfloat3;
+        protected virtual void OnShutdown() { }
+        protected virtual void OnDispose() { }
 
-        protected override int Execute()
+        #region Utils
+
+        /// <summary>
+        /// <inheritdoc cref="PresentationManager.RegisterRequest{TGroup, TSystem}(Action{TSystem}, string)"/>
+        /// </summary>
+        /// <remarks>
+        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.
+        /// </remarks>
+        /// <typeparam name="TGroup"></typeparam>
+        /// <typeparam name="TSystem"></typeparam>
+        /// <param name="setter"></param>
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter
+#if DEBUG_MODE
+            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
+#endif
+            )
+            where TGroup : PresentationGroupEntity
+            where TSystem : Internal.PresentationSystemEntity
         {
-            "test const action".ToLog();
-            return 1;
+            PresentationManager.RegisterRequest<TGroup, TSystem>(setter
+#if DEBUG_MODE
+                , methodName
+#endif
+                );
         }
+
+        #endregion
     }
 }
