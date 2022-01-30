@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Render
         {
             get
             {
-                if (m_Index < 0 ||
+                if (IsEmpty() ||
                     RenderSettings.Instance.m_Shaders.Length <= m_Index)
                 {
                     return null;
@@ -42,6 +42,7 @@ namespace Syadeu.Presentation.Render
             }
         }
 
+        [JsonConstructor]
         public ShaderReference(int index)
         {
             m_Index = index;

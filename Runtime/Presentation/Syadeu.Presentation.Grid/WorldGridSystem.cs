@@ -23,6 +23,7 @@ using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Grid.LowLevel;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using System;
@@ -175,11 +176,14 @@ namespace Syadeu.Presentation.Grid
             while (m_NeedUpdateEntities.TryDequeue(out InstanceID entity))
             {
                 Remove(entity);
-                requireReindex |= !Add(entity, out bool locationChanged);
+                ref GridComponent component = ref entity.GetComponent<GridComponent>();
+                FixedList4096Bytes<GridIndex> prev = component.Indices;
+                requireReindex |= !Add(entity, ref component, out bool locationChanged);
 
                 if (locationChanged)
                 {
-                    m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+                    m_EventSystem.PostEvent(
+                        OnGridLocationChangedEvent.GetEvent(entity, prev, component.Indices, false));
                 }
             }
 
@@ -197,11 +201,14 @@ namespace Syadeu.Presentation.Grid
                 for (int i = 0; i < addCount; i++)
                 {
                     InstanceID entity = m_WaitForAdd.Dequeue();
-                    requireReindex |= !Add(entity, out bool locationChanged);
+                    ref GridComponent component = ref entity.GetComponent<GridComponent>();
+                    requireReindex |= !Add(entity, ref component, out bool locationChanged);
 
                     if (locationChanged)
                     {
-                        m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+                        m_EventSystem.PostEvent(
+                            OnGridLocationChangedEvent.GetEvent(
+                                entity, new FixedList4096Bytes<GridIndex>(), component.Indices, false));
                     }
                 }
             }
@@ -243,7 +250,7 @@ namespace Syadeu.Presentation.Grid
             
             m_Grid.aabb = temp;
         }
-        private bool Add(in InstanceID entity, out bool locationChanged)
+        private bool Add(in InstanceID entity, ref GridComponent component, out bool locationChanged)
         {
             AABB aabb = entity.GetTransformWithoutCheck().aabb;
             locationChanged = false;
@@ -255,7 +262,7 @@ namespace Syadeu.Presentation.Grid
                 return false;
             }
 
-            ref GridComponent component = ref entity.GetComponent<GridComponent>();
+            //ref GridComponent component = ref entity.GetComponent<GridComponent>();
             if (component.FixedSize.Equals(0))
             {
                 var indices = m_Grid.AABBToIndices(aabb);
@@ -363,6 +370,7 @@ namespace Syadeu.Presentation.Grid
             m_Entities.Remove(entity);
         }
 
+        [BurstCompatible]
         private struct CloseDistanceComparer : IComparer<int3>
         {
             private int3 from;
@@ -544,7 +552,10 @@ namespace Syadeu.Presentation.Grid
 
                 for (int i = 0; i < array.Length; i++)
                 {
-                    eventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(array[i]));
+                    var component = array[i].GetComponentReadOnly<GridComponent>();
+                    eventSystem.PostEvent(
+                        OnGridLocationChangedEvent.GetEvent(
+                            array[i], new FixedList4096Bytes<GridIndex>(), component.Indices, true));
                 }
             }
         }
@@ -587,11 +598,14 @@ namespace Syadeu.Presentation.Grid
             m_GridUpdateJob.Complete();
 
             Remove(entity);
-            Add(entity, out bool changed);
+            ref GridComponent component = ref entity.GetComponent<GridComponent>();
+            FixedList4096Bytes<GridIndex> prev = component.Indices;
+            Add(entity, ref component, out bool changed);
 
             if (changed)
             {
-                m_EventSystem.PostEvent(OnGridLocationChangedEvent.GetEvent(entity));
+                m_EventSystem.PostEvent(
+                    OnGridLocationChangedEvent.GetEvent(entity, prev, component.Indices, false));
             }
         }
         public bool HasEntityAt(in GridIndex index)
@@ -1059,6 +1073,22 @@ namespace Syadeu.Presentation.Grid
         //    }
         //}
 
+        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
+        public void GetOutcoastLocations(in NativeArray<int3> locations, ref NativeList<int3> result)
+        {
+            BurstGridMathematics.getOutcoastLocations(in locations, ref result);
+        }
+        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
+        public void GetOutcoastVertices(in NativeArray<int3> locations, ref NativeList<float3> result)
+        {
+            BurstGridMathematics.getOutcoastLocationVertices(
+                m_Grid.aabb,
+                CellSize,
+                in locations,
+                ref result
+                );
+        }
+
         #endregion
 
         #region Index
@@ -1090,39 +1120,20 @@ namespace Syadeu.Presentation.Grid
             result = new GridIndex(m_Grid.m_CheckSum, location);
             return true;
         }
-        private static int3 CalculateDirection(in GridIndex index, in Direction direction)
+        private static unsafe int3 CalculateDirection(in GridIndex index, in Direction direction)
         {
-            int3 location = index.Location;
-            if ((direction & Direction.Up) == Direction.Up)
-            {
-                location.y += 1;
-            }
-            if ((direction & Direction.Down) == Direction.Down)
-            {
-                location.y -= 1;
-            }
-            if ((direction & Direction.Left) == Direction.Left)
-            {
-                location.x -= 1;
-            }
-            if ((direction & Direction.Right) == Direction.Right)
-            {
-                location.x += 1;
-            }
-            if ((direction & Direction.Forward) == Direction.Forward)
-            {
-                location.z += 1;
-            }
-            if ((direction & Direction.Backward) == Direction.Backward)
-            {
-                location.z -= 1;
-            }
+            int3 location;
+            BurstGridMathematics.getDirection(index.Location, in direction, &location);
             return location;
         }
 
         public float3 IndexToPosition(in GridIndex index)
         {
             return m_Grid.IndexToPosition(index.Index);
+        }
+        public float3 LocationToPosition(in int3 location)
+        {
+            return m_Grid.LocationToPosition(in location);
         }
 
         #endregion

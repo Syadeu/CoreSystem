@@ -100,6 +100,56 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return false;
         }
 
+        [BurstCompile]
+        public static int IndexOf<T>(UnsafeReference<T> array, int length, T item)
+            where T : unmanaged
+        {
+            if (item is IEquatable<T> equatable)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    if (equatable.Equals(array[i])) return i;
+                }
+                return -1;
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                if (BinaryComparer(ref array[i], ref item))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        [BurstCompile]
+        public static bool RemoveForSwapBack<T>(UnsafeReference<T> array, int length, T element)
+           where T : unmanaged
+        {
+            int index = IndexOf(array, length, element);
+            if (index < 0) return false;
+
+            for (int i = index + 1; i < length; i++)
+            {
+                array[i - 1] = array[i];
+            }
+
+            return true;
+        }
+        [BurstCompile]
+        public static bool RemoveAtSwapBack<T>(UnsafeReference<T> array, int length, int index)
+           where T : unmanaged
+        {
+            if (index < 0) return false;
+
+            for (int i = index + 1; i < length; i++)
+            {
+                array[i - 1] = array[i];
+            }
+
+            return true;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int IndexOf<T>(this T[] array, T element)
             where T : IEquatable<T>

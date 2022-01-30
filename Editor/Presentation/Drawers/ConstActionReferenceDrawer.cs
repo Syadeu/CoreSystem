@@ -34,7 +34,7 @@ namespace SyadeuEditor.Presentation
 
             string targetName;
             Type currentActionType = null;
-            if (!currentValue.IsEmpty())
+            if (currentValue != null && !currentValue.IsEmpty())
             {
                 var iter = ConstActionUtilities.Types.Where(t => t.GUID.Equals(currentValue.Guid));
                 if (iter.Any())
@@ -131,8 +131,16 @@ namespace SyadeuEditor.Presentation
             Rect rect = GUILayoutUtility.GetRect(150, 300);
             rect.position = Event.current.mousePosition;
 
-            var sort = ConstActionUtilities.Types
-                .Where(t => t.BaseType.GenericTypeArguments[0].Equals(targetType)).ToArray();
+            Type[] sort;
+            if (targetType != null)
+            {
+                sort = ConstActionUtilities.Types
+                    .Where(t => t.BaseType.GenericTypeArguments[0].Equals(targetType)).ToArray();
+            }
+            else
+            {
+                sort = ConstActionUtilities.Types;
+            }
 
             PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(
                 list: sort,

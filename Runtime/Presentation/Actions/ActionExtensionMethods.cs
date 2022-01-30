@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
-            return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteTriggerAction(other, entity);
+            return s_ActionSystem.ExecuteTriggerAction(other, entity);
         }
         public static bool Execute<T>(this Reference<T> other, Entity<IObject> entity, out bool predicate)
             where T : TriggerPredicateAction
@@ -232,7 +232,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity);
             }
@@ -260,7 +260,7 @@ namespace Syadeu.Presentation.Actions
                 isFalse = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity, out bool result);
                 isFalse |= !result;
@@ -281,7 +281,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute();
             }
@@ -299,7 +299,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(target);
             }
@@ -317,7 +317,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(t, ta);
             }

@@ -189,7 +189,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
-                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]);
+                    var pos = m_GridSystem.LocationToPosition(m_GridTempMoveables[i]);
 
                     Shapes.Draw.RectangleBorder(
                         pos: pos,
@@ -319,5 +319,39 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 #endif
+    }
+
+    public sealed class TRPGGridObjectModule : PresentationSystemModule<TRPGGridSystem>
+    {
+        private EventSystem m_EventSystem;
+
+        #region Presentation Methods
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+        }
+        protected override void OnShutDown()
+        {
+            m_EventSystem.RemoveEvent<OnGridLocationChangedEvent>(OnGridLocationChangedEventHandler);
+        }
+        protected override void OnDispose()
+        {
+            m_EventSystem = null;
+        }
+
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+
+            m_EventSystem.AddEvent<OnGridLocationChangedEvent>(OnGridLocationChangedEventHandler);
+        }
+
+        #endregion
+
+        private void OnGridLocationChangedEventHandler(OnGridLocationChangedEvent ev)
+        {
+
+        }
     }
 }

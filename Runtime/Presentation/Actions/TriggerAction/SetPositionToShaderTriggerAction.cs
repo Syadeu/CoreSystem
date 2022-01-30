@@ -30,6 +30,9 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Set PositionToShader")]
     public sealed class SetPositionToShaderTriggerAction : ShaderTriggerActionBase
     {
+        [JsonProperty(Order = 0, PropertyName = "FriendlyName")]
+        private string m_FriendlyName = "None";
+
         [JsonProperty]
         public ConstActionReference<int> m_TestInt;
         [JsonProperty]
@@ -48,7 +51,7 @@ namespace Syadeu.Presentation.Actions
 
             for (int i = 0; i < ShaderData.Length; i++)
             {
-                Process(ShaderData[i].GetObject(), FriendlyName, pos);
+                Process(ShaderData[i].GetObject(), m_FriendlyName, pos);
             }
         }
 
@@ -66,16 +69,34 @@ namespace Syadeu.Presentation.Actions
             ShaderConstantData.ApplyToGlobal(keyword, new float4(pos.x, pos.y, pos.z, 0));
         }
     }
+    public sealed class SetShaderValueInstanceAction : InstanceAction
+    {
+        public sealed class ConstActionProperty
+        {
+            [JsonProperty(Order = 0, PropertyName = "FriendlyName")]
+            public string m_FriendlyName = "None";
+            [JsonProperty(Order = 1, PropertyName = "ConstAction")]
+            public ConstActionReference m_ConstAction;
+        }
+
+        [JsonProperty(Order = 0, PropertyName = "ShaderData")]
+        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
+
+        [JsonProperty(Order = 1, PropertyName = "ConstActionProperties")]
+        private ConstActionProperty[] m_ConstActionProperties = Array.Empty<ConstActionProperty>();
+
+        protected override void OnExecute()
+        {
+            throw new NotImplementedException();
+        }
+    }
     public abstract class ShaderTriggerActionBase : TriggerAction
     {
         [JsonProperty(Order = -10, PropertyName = "ShaderData")]
         private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
-        [JsonProperty(Order = -9, PropertyName = "FriendlyName")]
-        private string m_FriendlyName = "None";
+        
 
         [JsonIgnore]
         protected Reference<ShaderConstantData>[] ShaderData => m_ShaderData;
-        [JsonIgnore]
-        protected string FriendlyName => m_FriendlyName;
     }
 }

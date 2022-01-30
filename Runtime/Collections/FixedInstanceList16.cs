@@ -16,7 +16,7 @@ using Unity.Collections;
 
 namespace Syadeu.Collections
 {
-    public struct FixedInstanceList16<T>
+    public struct FixedInstanceList16<T> : IFixedList
         where T : class, IObject
     {
         private FixedList128Bytes<InstanceID> m_Hashes;

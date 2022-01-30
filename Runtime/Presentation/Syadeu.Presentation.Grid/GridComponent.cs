@@ -31,11 +31,14 @@ namespace Syadeu.Presentation.Grid
     /// </remarks>
     public struct GridComponent : IEntityComponent
     {
-        public enum Obstacle
+        public enum Obstacle : short
         {
-            None,
+            None        =   0,
 
-            Block
+            Block       =   0b00001,
+            Actor       =   0b00010,
+            
+            Static      =   0b10000,
         }
 
         internal FixedList4096Bytes<GridIndex> m_Indices;

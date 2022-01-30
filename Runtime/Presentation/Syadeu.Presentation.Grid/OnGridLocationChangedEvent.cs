@@ -17,18 +17,29 @@
 #endif
 
 using Syadeu.Collections;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.Grid
 {
     public sealed class OnGridLocationChangedEvent : SynchronizedEvent<OnGridLocationChangedEvent>
     {
         public InstanceID Entity { get; private set; }
+        public FixedList4096Bytes<GridIndex> Previous { get; private set; }
+        public FixedList4096Bytes<GridIndex> Current { get; private set; }
+        public bool IsReIndexing { get; private set; }
 
-        public static OnGridLocationChangedEvent GetEvent(InstanceID entity)
+        public static OnGridLocationChangedEvent GetEvent(
+            InstanceID entity,
+            FixedList4096Bytes<GridIndex> prev,
+            FixedList4096Bytes<GridIndex> cur,
+            bool reIndex)
         {
             var temp = Dequeue();
 
             temp.Entity = entity;
+            temp.Previous = prev;
+            temp.Current = cur;
+            temp.IsReIndexing = reIndex;
 
             return temp;
         }

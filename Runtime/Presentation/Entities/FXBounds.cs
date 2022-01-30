@@ -72,7 +72,7 @@ namespace Syadeu.Presentation.Entities
 
         public bool IsValid()
         {
-            return ((IValidation)m_FXEntity).IsValid();
+            return m_FXEntity.IsValid();
         }
 
         public void Fire(CoroutineSystem coroutineSystem, ITransform parent)

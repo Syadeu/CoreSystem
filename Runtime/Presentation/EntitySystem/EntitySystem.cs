@@ -534,6 +534,15 @@ namespace Syadeu.Presentation
             where T : class, IObject
         {
             T baseObj = obj.GetObject();
+#if DEBUG_MODE
+            if (baseObj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot create an invalid entity.");
+
+                return Entity<T>.Empty;
+            }
+#endif
             if (baseObj is EntityBase entityBase)
             {
                 return InternalCreateEntity(in entityBase, 0, quaternion.identity, 1).ToEntity<T>();

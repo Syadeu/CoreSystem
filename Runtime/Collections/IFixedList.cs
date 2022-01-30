@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-
 namespace Syadeu.Collections
 {
-    public interface IFixedReference : IEmpty, IEquatable<IFixedReference>
+    public interface IFixedList
     {
-        Hash Hash { get; }
+        int Length { get; }
     }
-    public interface IFixedReference<T> : IFixedReference
-        where T : class, IObject
-    { }
+    public interface IFixedList<T> : IFixedList
+    {
+        T First { get; }
+        T Last { get; }
+
+        T this[int index] { get; }
+    }
 }

@@ -17,9 +17,12 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using Unity.Burst;
+using Unity.Burst.CompilerServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Grid.LowLevel
@@ -215,24 +218,26 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 maxY = Convert.ToInt32(math.round(_max.y)),
                 maxZ = math.abs(Convert.ToInt32((_size.z + half) / cellSize));
 
-            containLocation(in minY, in maxY, in maxX, in maxZ, in location, output);
+            containLocation(in minY, in maxY, 0, in maxX, 0, in maxZ, in location, output);
         }
         [BurstCompile]
         public static void containLocation(
             [NoAlias] in int minY,
             [NoAlias] in int maxY,
+            [NoAlias] in int minX,
             [NoAlias] in int maxX,
+            [NoAlias] in int minZ,
             [NoAlias] in int maxZ,
             in int3 location, bool* output)
         {
             *output
-                = location.x >= 0 && location.x <= maxX &&
+                = location.x >= minX && location.x <= maxX &&
                 location.y >= minY && location.y <= maxY &&
-                location.z >= 0 && location.z <= maxZ;
+                location.z >= minZ && location.z <= maxZ;
         }
 
         [BurstCompile]
-        public static void distanceBetweenLocation(in AABB aabb, in float cellSize, in int3 a, in int3 b, float* output)
+        public static void distanceBetweenLocation(in float cellSize, in int3 a, in int3 b, float* output)
         {
             int3 d = b - a;
             float
@@ -244,14 +249,210 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             *output = math.sqrt(p);
         }
-        public static void distanceBetweenindex(in AABB aabb, in float cellSize, in ulong a, in int b, float* output)
+        public static void distanceBetweenindex(in float cellSize, in ulong a, in int b, float* output)
         {
             // TODO : 인덱스만으로 거리계산이 안될까?
             int3 x, y;
             indexToLocation(in a, &x);
             indexToLocation(in a, &y);
 
-            distanceBetweenLocation(in aabb, in cellSize, in x, in y, output);
+            distanceBetweenLocation(in cellSize, in x, in y, output);
+        }
+
+        [BurstCompile]
+        public static void getDirection(in int3 location, in Direction direction, int3* output)
+        {
+            int3 result = location;
+            if ((direction & Direction.Up) == Direction.Up)
+            {
+                result.y += 1;
+            }
+            if ((direction & Direction.Down) == Direction.Down)
+            {
+                result.y -= 1;
+            }
+            if ((direction & Direction.Left) == Direction.Left)
+            {
+                result.x -= 1;
+            }
+            if ((direction & Direction.Right) == Direction.Right)
+            {
+                result.x += 1;
+            }
+            if ((direction & Direction.Forward) == Direction.Forward)
+            {
+                result.z += 1;
+            }
+            if ((direction & Direction.Backward) == Direction.Backward)
+            {
+                result.z -= 1;
+            }
+
+            *output = result;
+        }
+        [BurstCompile]
+        public static void getMaxOutcoastLocationLength(in NativeArray<int3> locations, int* output)
+        {
+            int3 min, max;
+            minMaxLocation(in locations, &min, &max);
+            if (min.Equals(max))
+            {
+                *output = 0;
+                return;
+            }
+
+            int
+                relZ = max.z - min.z,
+                relY = math.abs(max.y) - math.abs(min.y);
+
+            *output = (relZ * 2) * relY;
+        }
+        /// <summary>
+        /// <paramref name="locations"/> 의 테두리만 반환합니다.
+        /// </summary>
+        /// <param name="locations"></param>
+        /// <param name="output"></param>
+        [BurstCompile]
+        public static void getOutcoastLocations(in NativeArray<int3> locations, ref NativeList<int3> output)
+        {
+            int3 min, max;
+            minMaxLocation(in locations, &min, &max);
+            output.Clear();
+
+            for (int y = min.y; y <= max.y; y++)
+            {
+                for (int z = min.z; z <= max.z; z++)
+                {
+                    int3
+                        laneMin = new int3(int.MaxValue, y, z),
+                        laneMax = new int3(int.MinValue, y, z);
+                    bool has = false;
+
+                    for (int x = min.x; x <= max.x; x++)
+                    {
+                        int3 temp = new int3(x, y, z);
+                        bool contain = locations.Contains(temp);
+                        has |= contain;
+
+                        if (!contain) continue;
+
+                        laneMin = math.min(laneMin, temp);
+                        laneMax = math.max(laneMax, temp);
+                    }
+
+                    if (!has) continue;
+
+                    output.Add(laneMin);
+                    output.Add(laneMax);
+                }
+            }
+        }
+        /// <summary>
+        /// <paramref name="locations"/> 의 바깥 꼭지점을 연결하여 반환합니다.
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <param name="cellSize"></param>
+        /// <param name="locations"></param>
+        /// <param name="output"></param>
+        [SkipLocalsInit, BurstCompile]
+        public static void getOutcoastLocationVertices(
+            in AABB grid, in float cellSize,
+            in NativeArray<int3> locations, ref NativeList<float3> output)
+        {
+            float3x2* tempBuffer = stackalloc float3x2[locations.Length * 4];
+            UnsafeFixedListWrapper<float3x2> list 
+                = new UnsafeFixedListWrapper<float3x2>(tempBuffer, locations.Length * 4);
+            float cellHalf = cellSize * .5f;
+
+            float3
+                upleft = new float3(-cellHalf, 0, cellHalf),
+                upright = new float3(cellHalf, 0, cellHalf),
+                downleft = new float3(-cellHalf, 0, -cellHalf),
+                downright = new float3(cellHalf, 0, -cellHalf);
+
+            int3 directional;
+            float3 gridPos;
+            bool contains;
+            for (int i = 0; i < locations.Length; i++)
+            {
+                locationToPosition(in grid, in cellSize, locations[i], &gridPos);
+
+                getDirection(locations[i], Direction.Right, &directional);
+                containLocation(in grid, in cellSize, in directional, &contains);
+                if (!contains || locations.Contains(directional))
+                {
+                    list.Add(new float3x2(
+                        gridPos + upright,
+                        gridPos + downright
+                        ));
+                }
+
+                // Down
+                getDirection(locations[i], Direction.Forward, &directional);
+                containLocation(in grid, in cellSize, in directional, &contains);
+                if (!contains || locations.Contains(directional))
+                {
+                    list.Add(new float3x2(
+                        gridPos + downright,
+                        gridPos + downleft
+                        ));
+                }
+
+                getDirection(locations[i], Direction.Left, &directional);
+                containLocation(in grid, in cellSize, in directional, &contains);
+                if (!contains || locations.Contains(directional))
+                {
+                    list.Add(new float3x2(
+                        gridPos + downleft,
+                        gridPos + upleft
+                        ));
+                }
+
+                getDirection(locations[i], Direction.Backward, &directional);
+                containLocation(in grid, in cellSize, in directional, &contains);
+                if (!contains || locations.Contains(directional))
+                {
+                    list.Add(new float3x2(
+                        gridPos + upleft,
+                        gridPos + upright
+                        ));
+                }
+            }
+
+            float3x2 current = list.Last;
+            list.RemoveAtSwapback(list.Count - 1);
+
+            do
+            {
+                output.Add(current.c0);
+            } while (FindFloat3x2(ref list, in current.c1, out current));
+        }
+        [BurstCompile]
+        private static bool FindFloat3x2(ref UnsafeFixedListWrapper<float3x2> list, in float3 next, out float3x2 found)
+        {
+            found = 0;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
+                {
+                    found = list[i];
+                    list.RemoveAtSwapback(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [BurstCompile]
+        public static void minMaxLocation(in NativeArray<int3> locations, int3* min, int3* max)
+        {
+            int length = locations.Length;
+            for (int i = 0; i < length; i++)
+            {
+                int3 target = locations[i];
+                *min = math.min(*min, target);
+                *max = math.max(*max, target);
+            }
         }
     }
 }

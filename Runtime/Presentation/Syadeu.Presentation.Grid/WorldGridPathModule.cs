@@ -422,13 +422,10 @@ namespace Syadeu.Presentation.Grid
                 if (System.TryGetEntitiesAt(in target, out var iter))
                 {
                     bool isBlock = false;
-                    using (iter)
+                    foreach (var item in iter)
                     {
-                        while (iter.MoveNext())
-                        {
-                            GridComponent gridComponent = iter.Current.GetComponent<GridComponent>();
-                            isBlock |= gridComponent.ObstacleType == GridComponent.Obstacle.Block;
-                        }
+                        GridComponent gridComponent = item.GetComponent<GridComponent>();
+                        isBlock |= (gridComponent.ObstacleType & GridComponent.Obstacle.Block) == GridComponent.Obstacle.Block;
                     }
 
                     tile.closed[i] = isBlock;

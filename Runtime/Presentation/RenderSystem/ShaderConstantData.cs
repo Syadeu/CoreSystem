@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Render
             [JsonIgnore]
             private int m_ID;
 
-            public void Initialize()
+            public void Initialize(Shader shader)
             {
 #if DEBUG_MODE
                 if (string.IsNullOrEmpty(m_Keyword))
@@ -57,6 +57,11 @@ namespace Syadeu.Presentation.Render
                     return;
                 }
 #endif
+                //if (shader != null)
+                //{
+                //    m_ID = shader.GetPropertyNameId(shader.FindPropertyIndex(m_Keyword));
+                //}
+                //else 
                 m_ID = Shader.PropertyToID(m_Keyword);
             }
             public int GetPropertyID() => m_ID;
@@ -75,9 +80,10 @@ namespace Syadeu.Presentation.Render
 
         protected override void OnCreated()
         {
+            Shader shader = m_Shader.Shader;
             for (int i = 0; i < m_Keywords.Length; i++)
             {
-                m_Keywords[i].Initialize();
+                m_Keywords[i].Initialize(shader);
             }
         }
         public Keyword GetKeywordWithPropertyName(in string propertyName)

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -166,10 +167,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
     public struct UnsafeAllocator<T> : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator<T>>
         where T : unmanaged
     {
-        internal UnsafeAllocator m_Allocator;
+        internal UnsafeAllocator m_Buffer;
 
-        public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Allocator.Ptr;
-        public bool IsCreated => m_Allocator.IsCreated;
+        public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Buffer.Ptr;
+        public bool IsCreated => m_Buffer.IsCreated;
 
         public ref T this[int index]
         {
@@ -184,12 +185,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return ref Ptr[index];
             }
         }
-        public long Size => m_Allocator.Size;
-        public int Length => Convert.ToInt32(m_Allocator.Size / UnsafeUtility.SizeOf<T>());
+        public long Size => m_Buffer.Size;
+        public int Length => Convert.ToInt32(m_Buffer.Size / UnsafeUtility.SizeOf<T>());
 
         public UnsafeAllocator(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
         {
-            m_Allocator = new UnsafeAllocator(
+            m_Buffer = new UnsafeAllocator(
                 UnsafeUtility.SizeOf<T>() * length,
                 UnsafeUtility.AlignOf<T>(),
                 allocator,
@@ -198,11 +199,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         public UnsafeAllocator(UnsafeReference<T> ptr, int length, Allocator allocator)
         {
-            m_Allocator = new UnsafeAllocator(ptr, UnsafeUtility.SizeOf<T>() * length, allocator);
+            m_Buffer = new UnsafeAllocator(ptr, UnsafeUtility.SizeOf<T>() * length, allocator);
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
-        public void Clear() => m_Allocator.Clear();
+        public void Clear() => m_Buffer.Clear();
 
         public UnsafeReference<T> ElementAt(in int index)
         {
@@ -217,17 +218,40 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Dispose()
         {
-            m_Allocator.Dispose();
+            m_Buffer.Dispose();
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
-            JobHandle result = m_Allocator.Dispose(inputDeps);
+            JobHandle result = m_Buffer.Dispose(inputDeps);
 
-            m_Allocator = default(UnsafeAllocator);
+            m_Buffer = default(UnsafeAllocator);
             return result;
         }
 
-        public bool Equals(UnsafeAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
+        public int IndexOf(T item) => UnsafeBufferUtility.IndexOf(Ptr, Length, item);
+        public bool Contains(T item)
+        {
+            int length = Length;
+            bool result = false;
+
+            if (item is IEquatable<T> equatable)
+            {
+                for (int i = 0; i < length && !result; i++)
+                {
+                    result |= equatable.Equals(this[i]);
+                }
+                return result;
+            }
+
+            for (int i = 0; i < length && !result; i++)
+            {
+                result |= UnsafeBufferUtility.BinaryComparer(ref this[i], ref item);
+            }
+            return result;
+        }
+        public bool RemoveForSwapBack(T element) => UnsafeBufferUtility.RemoveForSwapBack(Ptr, Length, element);
+
+        public bool Equals(UnsafeAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
 
         [BurstCompatible, NativeContainerIsReadOnly]
         public readonly struct ReadOnly
@@ -258,15 +282,30 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
-        public static implicit operator UnsafeAllocator(UnsafeAllocator<T> t) => t.m_Allocator;
+        public static implicit operator UnsafeAllocator(UnsafeAllocator<T> t) => t.m_Buffer;
         public static explicit operator UnsafeAllocator<T>(UnsafeAllocator t)
         {
             return new UnsafeAllocator<T>
             {
-                m_Allocator = t
+                m_Buffer = t
             };
         }
+
+        public static implicit operator NativeArray<T>(UnsafeAllocator<T> t)
+        {
+            NativeArray<T> array;
+            unsafe
+            {
+                array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
+                    t.Ptr,
+                    t.Length,
+                    t.m_Buffer.m_Allocator
+                    );
+            }
+            return array;
+        }
     }
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static class UnsafeAllocatorExtensions
     {
         public static void Resize(this ref UnsafeAllocator t, long size, int alignment, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
@@ -297,7 +336,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             if (length < 0) throw new Exception();
 
-            t.m_Allocator.Resize(
+            t.m_Buffer.Resize(
                 UnsafeUtility.SizeOf<T>() * length,
                 UnsafeUtility.AlignOf<T>(),
                 options

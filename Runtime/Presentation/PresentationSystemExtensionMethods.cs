@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
             }
             return list;
         }
-
+        
         public static FixedReference<T> As<T>(this IFixedReference reference)
             where T : class, IObject
         {
@@ -59,6 +59,36 @@ namespace Syadeu.Presentation
             return new Reference<T>(reference.Hash);
         }
 
+        public static bool IsValid(this IFixedReference t)
+        {
+            if (t == null ||
+                t.IsEmpty())
+            {
+                return false;
+            }
+            else if (!EntityDataList.Instance.m_Objects.ContainsKey(t.Hash))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public static bool IsValid<T>(this IFixedReference<T> t)
+            where T : class, IObject
+        {
+            if (t == null ||
+                t.IsEmpty())
+            {
+                return false;
+            }
+            else if (!EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out var value) ||
+                !(value is T))
+            {
+                return false;
+            }
+
+            return true;
+        }
         public static T GetObject<T>(this IFixedReference<T> t)
             where T : class, IObject
         {

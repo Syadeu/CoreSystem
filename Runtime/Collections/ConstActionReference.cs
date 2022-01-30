@@ -48,4 +48,32 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Guid.Equals(Guid.Empty);
         public void SetArguments(params object[] args) => m_Arguments = args;
     }
+    public sealed class ConstActionReference : IConstActionReference
+    {
+        [JsonProperty(Order = 0, PropertyName = "Guid")]
+        private Guid m_Guid;
+        [JsonProperty(Order = 1, PropertyName = "Arguments")]
+        private object[] m_Arguments;
+
+        public Guid Guid => m_Guid;
+        public object[] Arguments => m_Arguments;
+
+        public ConstActionReference()
+        {
+            m_Guid = Guid.Empty;
+            m_Arguments = Array.Empty<object>();
+        }
+        public ConstActionReference(Guid guid, IEnumerable<object> args)
+        {
+            m_Guid = guid;
+            if (args == null || !args.Any())
+            {
+                m_Arguments = Array.Empty<object>();
+            }
+            else m_Arguments = args.ToArray();
+        }
+
+        public bool IsEmpty() => m_Guid.Equals(Guid.Empty);
+        public void SetArguments(params object[] args) => m_Arguments = args;
+    }
 }
