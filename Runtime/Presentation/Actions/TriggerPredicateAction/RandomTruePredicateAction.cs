@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.Actions
         [Tooltip("확률은 0 ~ 100 까지입니다.")]
         private float m_Persentage = 50;
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             if (m_Persentage <= 100) return true;
             else if (m_Persentage <= 0) return false;

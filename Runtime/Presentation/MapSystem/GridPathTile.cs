@@ -23,6 +23,7 @@ namespace Syadeu.Presentation.Map
     /// For Pathfinding only
     /// </summary>
     [BurstCompatible]
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal struct GridPathTile : IEquatable<GridPathTile>
     {
         public static readonly GridPathTile Empty = new GridPathTile(-1, -1, -1, -1);

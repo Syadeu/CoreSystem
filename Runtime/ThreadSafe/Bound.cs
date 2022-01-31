@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Syadeu.ThreadSafe
 {
+    [System.Obsolete("Deprecated", true)]
     /// <summary>
     /// 스레드 세이프용 로테이팅 바운드입니다
     /// </summary>

@@ -26,12 +26,6 @@ namespace Syadeu.Presentation.Entities
     [DisplayName("Entity: FX Entity")]
     public sealed class FXEntity : EntityBase
     {
-        public enum PlayType
-        {
-            Sequence,
-            Random
-        }
-
         [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
         private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
 
@@ -114,26 +108,20 @@ namespace Syadeu.Presentation.Entities
         [Preserve]
         static void AOTCodeGeneration()
         {
-            AotHelper.EnsureType<Instance<FXEntity>>();
-            AotHelper.EnsureList<Instance<FXEntity>>();
-            AotHelper.EnsureType<InstanceArray<FXEntity>>();
-
             AotHelper.EnsureType<Reference<FXEntity>>();
             AotHelper.EnsureList<Reference<FXEntity>>();
             AotHelper.EnsureType<Entity<FXEntity>>();
             AotHelper.EnsureList<Entity<FXEntity>>();
-            AotHelper.EnsureType<EntityData<FXEntity>>();
-            AotHelper.EnsureList<EntityData<FXEntity>>();
             AotHelper.EnsureType<FXEntity>();
             AotHelper.EnsureList<FXEntity>();
         }
     }
-    internal sealed class FXEntityProcessor : EntityDataProcessor<FXEntity>,
+    internal sealed class FXEntityProcessor : EntityProcessor<FXEntity>,
         IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         protected override void OnCreated(FXEntity entity)
         {
-            ((ProxyTransform)entity.transform).enableCull = false;
+            entity.GetTransform().enableCull = false;
         }
         //protected override void OnDestroy(FXEntity entity)
         //{

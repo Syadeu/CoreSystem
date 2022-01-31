@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = 6, PropertyName = "LocalScale")]
         private float3 m_LocalScale = 1;
 
-        [JsonIgnore] private Instance<FXEntity> m_Instance = Instance<FXEntity>.Empty;
+        [JsonIgnore] private Entity<FXEntity> m_Instance = Entity<FXEntity>.Empty;
 
         [JsonIgnore] public Reference<FXEntity> FXEntity => m_FXEntity;
         [JsonIgnore] public TriggerOptions TriggerOption => m_TriggerOption;
@@ -72,18 +72,18 @@ namespace Syadeu.Presentation.Entities
 
         public bool IsValid()
         {
-            return ((IValidation)m_FXEntity).IsValid();
+            return m_FXEntity.IsValid();
         }
 
         public void Fire(CoroutineSystem coroutineSystem, ITransform parent)
         {
             if (parent is ProxyTransform proxy)
             {
-                m_Instance = m_FXEntity.CreateInstance();
-                FXEntity fx = m_Instance.GetObject();
+                m_Instance = m_FXEntity.CreateEntity();
+                FXEntity fx = m_Instance.Target;
                 //fx.SetPlayOptions(m_PlayOption);
 
-                coroutineSystem.PostCoroutineJob(new FireCoroutine
+                coroutineSystem.StartCoroutine(new FireCoroutine
                 {
                     m_FXEntity = m_Instance,
                     m_PlayOption = fx.PlayOptions,
@@ -105,12 +105,12 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_Instance.GetObject().Stop();
+            m_Instance.Target.Stop();
         }
 
         private struct FireCoroutine : ICoroutineJob
         {
-            public Instance<FXEntity> m_FXEntity;
+            public Entity<FXEntity> m_FXEntity;
             public PlayOptions m_PlayOption;
             public TRS TRS;
 
@@ -131,10 +131,10 @@ namespace Syadeu.Presentation.Entities
                 }
 
                 //Instance<FXEntity> instance = m_FXEntity.CreateInstance();
-                FXEntity fx = m_FXEntity.GetObject();
+                FXEntity fx = m_FXEntity.Target;
                 //fx.SetPlayOptions(m_PlayOption);
 
-                ITransform tr = fx.transform;
+                ITransform tr = fx.GetTransform();
 
                 TRS trs = TRS.Project(new TRS(Parent));
                 tr.position = trs.m_Position;
@@ -143,7 +143,7 @@ namespace Syadeu.Presentation.Entities
 
                 fx.Play();
 
-                $"{m_FXEntity.GetObject().Name} fired".ToLog();
+                $"{m_FXEntity.Target.Name} fired".ToLog();
 
                 while (fx.IsPlaying && !fx.Stopped)
                 {

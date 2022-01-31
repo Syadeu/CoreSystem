@@ -17,6 +17,7 @@ using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
+using System;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
@@ -32,6 +33,7 @@ namespace Syadeu.Presentation.Entities
     /// 이 클래스를 상속받음으로서 새로운 오브젝트를 선언할 수 있습니다.<br/>
     /// 선언된 클래스는 <seealso cref="EntityDataList"/>에 자동으로 타입이 등록되어 추가할 수 있게 됩니다.
     /// </remarks>
+    [InternalLowLevelEntity]
     public abstract class EntityBase : EntityDataBase, IEntity
     {
         /// <summary>
@@ -53,27 +55,27 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.
         /// </summary>
-        [JsonIgnore] public ITransform transform { get; internal set; }
+        [JsonIgnore, Obsolete("", true)] public ITransform transform { get; internal set; }
 
         public override bool IsValid()
         {
-            if (Reserved || transform == null) return false;
-            else if (!CoreSystem.BlockCreateInstance)
-            {
-                if (transform is ProxyTransform proxyTransform &&
-                (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
-                {
-                    return false;
-                }
-            }
+            if (Reserved/* || transform == null*/) return false;
+            //else if (!CoreSystem.BlockCreateInstance)
+            //{
+            //    if (transform is ProxyTransform proxyTransform &&
+            //    (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
+            //    {
+            //        return false;
+            //    }
+            //}
 
             return true;
         }
-        internal override void InternalReserve()
+        internal override void InternalOnReserve()
         {
-            base.InternalReserve();
+            base.InternalOnReserve();
 
-            transform = null;
+            //transform = null;
         }
 
         [Preserve]
@@ -84,9 +86,6 @@ namespace Syadeu.Presentation.Entities
 
             AotHelper.EnsureType<Entity<EntityBase>>();
             AotHelper.EnsureList<Entity<EntityBase>>();
-
-            AotHelper.EnsureType<EntityData<EntityBase>>();
-            AotHelper.EnsureList<EntityData<EntityBase>>();
 
             AotHelper.EnsureList<EntityBase>();
         }

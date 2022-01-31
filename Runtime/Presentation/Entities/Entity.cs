@@ -21,65 +21,36 @@ using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
-    [Serializable, StructLayout(LayoutKind.Sequential)]
+    [BurstCompatible, StructLayout(LayoutKind.Sequential)]
     /// <summary><inheritdoc cref="IEntity"/></summary>
     /// <remarks>
-    /// 사용자가 <see cref="EntityBase"/>를 좀 더 안전하게 접근할 수 있도록 랩핑하는 struct 입니다.<br/>
+    /// 사용자가 <see cref="ObjectBase"/>를 좀 더 안전하게 접근할 수 있도록 랩핑하는 struct 입니다.<br/>
     /// 이 struct 는 이미 생성된 엔티티만 담습니다. Raw 데이터 접근은 허용하지 않습니다.<br/>
-    /// <br/>
-    /// <seealso cref="IEntity"/>, <seealso cref="EntityBase"/>를 상속받는 타입이라면 얼마든지 해당 타입으로 형변환이 가능합니다.<br/>
-    /// <see cref="EntityDataBase"/>는 <seealso cref="EntityData{T}"/>를 참조하세요.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public struct Entity<T> : IEntityDataID, IValidation, IEquatable<Entity<T>>, IEquatable<InstanceID> where T : class, IEntity
+    public struct Entity<T> : IEntityDataID, IValidation, IEquatable<Entity<T>>, IEquatable<InstanceID> 
+        where T : class, IObject
     {
         private const string c_Invalid = "Invalid";
 
-        public static Entity<T> Empty => new Entity<T>(InstanceID.Empty, null);
+        public static Entity<T> Empty => new Entity<T>(InstanceID.Empty, 0, null);
 
-        //public static Entity<T> GetEntity(in InstanceID id) => GetEntity(id.Hash);
-        public static Entity<T> GetEntity(in InstanceID idx)
-        {
-            #region Validation
-#if DEBUG_MODE
-            if (idx.Equals(Hash.Empty))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
-                return Empty;
-            }
-#endif
-            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase target = system.m_ObjectEntities[idx];
-            if (!(target is T))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-                return Empty;
-            }
-            #endregion
-
-            return new Entity<T>(idx, target.Name);
-        }
-        //internal static Entity<T> GetEntityWithoutCheck(in InstanceID id) => GetEntityWithoutCheck(id.Hash);
-        internal static Entity<T> GetEntityWithoutCheck(in InstanceID idx)
-        {
-            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-            
-            ObjectBase target = system.GetEntityByID(idx);
-            return new Entity<T>(idx, target.Name);
-        }
+        public static Entity<T> GetEntity(in InstanceID idx) => EntityDataHelper.GetEntity<T>(idx);
+        public static Entity<T> GetEntityWithoutCheck(in InstanceID idx) => new Entity<T>(idx, idx.GetHashCode());
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly InstanceID m_Idx;
+        private readonly int m_HashCode;
         private FixedString128Bytes m_Name;
 
-        IEntityData IEntityDataID.Target => Target;
+        [NotBurstCompatible]
+        IObject IEntityDataID.Target => Target;
+        [NotBurstCompatible]
         public T Target
         {
             get
@@ -119,6 +90,7 @@ namespace Syadeu.Presentation.Entities
                 return t;
             }
         }
+        [NotBurstCompatible]
         public bool HasTarget
         {
             get
@@ -134,16 +106,29 @@ namespace Syadeu.Presentation.Entities
 
         public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IObject.Name"/>
-        public string Name => m_Idx.IsEmpty() ? c_Invalid : m_Name.ConvertToString();
+        [NotBurstCompatible]
+        public string Name => m_Idx.IsEmpty() || m_Name.IsEmpty ? c_Invalid : m_Name.ConvertToString();
         /// <inheritdoc cref="IObject.Hash"/>
-        public Hash Hash => Target.Hash;
+        public Hash Hash
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (Target == null)
+                {
+                    return Hash.Empty;
+                }
+#endif
+                return Target.Hash;
+            }
+        }
         /// <inheritdoc cref="IObject.Idx"/>
         public InstanceID Idx => m_Idx;
+        [NotBurstCompatible]
         public Type Type => m_Idx.IsEmpty() ? null : Target.GetType();
 
 #pragma warning disable IDE1006 // Naming Styles
-        /// <inheritdoc cref="EntityBase.transform"/>
-        public ITransform transform
+        public bool hasTransform
         {
             get
             {
@@ -152,10 +137,39 @@ namespace Syadeu.Presentation.Entities
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
                         "An empty entity reference trying to access transform.");
-                    return null;
+
+                    return false;
                 }
 #endif
-                return Target.transform;
+                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+                return transformStatic.HasTransform(Idx);
+            }
+        }
+        /// <inheritdoc cref="EntityBase.transform"/>
+        public ProxyTransform transform
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+
+                    return ProxyTransform.Null;
+                }
+#endif
+                ref EntityTransformStatic transformStatic = ref EntityTransformStatic.Value.Data;
+                if (transformStatic.HasTransform(Idx))
+                {
+                    return transformStatic.GetTransform(Idx);
+                }
+#if DEBUG_MODE
+                CoreSystem.Logger.Log(Channel.Entity,
+                    $"This entity({RawName}) doesn\'t have any transform. " +
+                    $"If you want to access transform, create it before access.");
+#endif
+                return ProxyTransform.Null;
             }
         }
         public bool hasProxy
@@ -176,36 +190,55 @@ namespace Syadeu.Presentation.Entities
                     return false;
                 }
 #endif
-                if (transform is IUnityTransform) return true;
-                else
-                {
-                    IProxyTransform tr = (IProxyTransform)transform;
-                    return tr.hasProxy && !tr.hasProxyQueued;
-                }
+                ProxyTransform tr = transform;
+                return tr.hasProxy && !tr.hasProxyQueued;
             }
         }
-        public UnityEngine.Object proxy
+        [NotBurstCompatible]
+        public RecycleableMonobehaviour proxy
         {
             get
             {
-                if (transform is IUnityTransform unity) return unity.provider;
+#if DEBUG_MODE
+                if (IsEmpty() || Target == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access proxy.");
 
-                IProxyTransform tr = (IProxyTransform)transform;
-                return (UnityEngine.Object)tr.proxy;
+                    return null;
+                }
+#endif
+                return transform.proxy;
             }
         }
 
 #pragma warning restore IDE1006 // Naming Styles
 
-        private Entity(InstanceID idx, string name)
+        [NotBurstCompatible]
+        internal Entity(InstanceID id, int hashCode, string name)
         {
-            m_Idx = idx;
-
+            m_Idx = id;
             if (string.IsNullOrEmpty(name))
             {
                 m_Name = default(FixedString128Bytes);
             }
             else m_Name = name;
+
+            m_HashCode = hashCode;
+        }
+        internal Entity(InstanceID id, int hashCode, FixedString128Bytes name)
+        {
+            m_Idx = id;
+            m_Name = name;
+
+            m_HashCode = hashCode;
+        }
+        private Entity(InstanceID id, int hashCode)
+        {
+            m_Idx = id;
+            m_Name = default(FixedString128Bytes);
+
+            m_HashCode = hashCode;
         }
 
         public bool IsEmpty() => Equals(Empty);
@@ -230,23 +263,11 @@ namespace Syadeu.Presentation.Entities
                 return 0;
             }
 #endif
-            EntitySystem system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            if (!system.m_ObjectEntities.TryGetValue(m_Idx, out ObjectBase value))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Destroyed entity.");
-                return 0;
-            }
-
-            return value.GetHashCode();
+            return m_HashCode;
         }
 
         public static implicit operator T(Entity<T> a) => a.Target;
-        //public static implicit operator Entity<IEntity>(Entity<T> a) => GetEntity(a.m_Idx);
-        //public static implicit operator Entity<T>(Entity<IEntity> a) => GetEntity(a.m_Idx);
         public static implicit operator Entity<T>(InstanceID a) => GetEntity(a);
-        //public static implicit operator Entity<T>(EntityData<T> a) => GetEntity(a.Idx);
         public static implicit operator Entity<T>(T a)
         {
             if (a == null)
@@ -255,10 +276,10 @@ namespace Syadeu.Presentation.Entities
             }
             return GetEntity(a.Idx);
         }
-        public static implicit operator Entity<T>(Instance<T> a)
+
+        public static implicit operator Entity<IObject>(Entity<T> a)
         {
-            if (a.IsEmpty() || !a.IsValid()) return Empty;
-            return GetEntityWithoutCheck(a.Idx);
+            return new Entity<IObject>(a.Idx, a.m_HashCode, a.m_Name);
         }
     }
 }

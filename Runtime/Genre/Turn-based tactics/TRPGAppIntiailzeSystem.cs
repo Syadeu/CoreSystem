@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.TurnTable
 
             return base.OnStartPresentation();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_SceneSystem.OnSceneChanged -= CheckCurrentSceneAndExecute;
 

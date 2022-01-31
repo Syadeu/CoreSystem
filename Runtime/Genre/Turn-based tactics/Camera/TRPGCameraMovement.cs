@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.TurnTable
         private Animator m_CameraAnimator;
 
         private Transform m_DefaultTarget = null;
-        private ITransform m_TargetTransform = null;
+        private ProxyTransform m_TargetTransform = ProxyTransform.Null;
         private float3 m_TargetPosition = float3.zero;
         private float3 m_TargetOrientation = new float3(45, 45, 0);
 
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.TurnTable
             }
             set
             {
-                if (!m_InputSystem.System.EnableInput) return;
+                if (!PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.System.EnableInput) return;
 
                 if (RenderSystem == null)
                 {
@@ -106,12 +106,12 @@ namespace Syadeu.Presentation.TurnTable
         {
             get
             {
-                if (m_TargetTransform == null) return m_TargetPosition;
+                if (m_TargetTransform.isDestroyed || m_TargetTransform.isDestroyQueued) return m_TargetPosition;
                 return m_TargetTransform.position;
             }
             set
             {
-                m_TargetTransform = null;
+                m_TargetTransform = ProxyTransform.Null;
 
                 m_TargetPosition = value;
             }
@@ -130,8 +130,6 @@ namespace Syadeu.Presentation.TurnTable
 
         private Transform OrientationTarget => CameraComponent.CurrentCamera.VirtualCameraGameObject.transform;
 
-        private PresentationSystemID<Input.InputSystem> m_InputSystem;
-
         protected override void OnInitialize(Camera camera, CinemachineBrain brain, CinemachineStateDrivenCamera stateDrivenCamera, CinemachineTargetGroup targetGroup)
         {
             m_TargetGroup = targetGroup;
@@ -149,7 +147,6 @@ namespace Syadeu.Presentation.TurnTable
             m_DefaultTarget.position = m_TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
             m_TargetGroup.AddMember(m_DefaultTarget, 1, 1);
-            m_InputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.SystemID;
 
             for (int i = 0; i < m_AimTarget.Length; i++)
             {
@@ -182,7 +179,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
             
-            var inputSystem = m_InputSystem.System;
+            var inputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.System;
             while (m_TargetGroup != null)
             {
                 if (!inputSystem.EnableInput)
@@ -219,11 +216,11 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
-        public void SetTarget(Transform tr)
-        {
-            m_TargetTransform = new CustomTransform(tr);
-        }
-        public void SetTarget(ITransform tr)
+        //public void SetTarget(Transform tr)
+        //{
+        //    m_TargetTransform = new CustomTransform(tr);
+        //}
+        public void SetTarget(ProxyTransform tr)
         {
             m_TargetTransform = tr;
         }
@@ -245,7 +242,7 @@ namespace Syadeu.Presentation.TurnTable
                 }
             };
         }
-        public void SetAim(ITransform from, ITransform target)
+        public void SetAim(ProxyTransform from, ProxyTransform target)
         {
             State = TRPGCameraState.Aim;
             m_CameraAnimator.Play(m_AimViewHash);
@@ -275,10 +272,10 @@ namespace Syadeu.Presentation.TurnTable
 
         private class UpdateTransform : IValidation
         {
-            public ITransform Origin;
+            public ProxyTransform Origin;
             public Transform Proxy;
 
-            public bool IsValid() => Origin != null && Proxy != null;
+            public bool IsValid() => !Origin.isDestroyed && Proxy != null;
             public void Update()
             {
                 Proxy.position = Origin.position;

@@ -23,40 +23,79 @@ namespace Syadeu.Presentation
 {
     internal sealed class EntityHierarchyModule : PresentationSystemModule<EntitySystem>
     {
-        private NativeMultiHashMap<InstanceID, InstanceID> m_Hierarchy;
+        private NativeMultiHashMap<InstanceID, InstanceID> m_ChildHierarchyHashMap;
+        private NativeHashMap<InstanceID, InstanceID> m_ParentHashMap;
 
         protected override void OnInitialize()
         {
-            m_Hierarchy = new NativeMultiHashMap<InstanceID, InstanceID>(1024, AllocatorManager.Persistent);
+            m_ChildHierarchyHashMap = new NativeMultiHashMap<InstanceID, InstanceID>(1024, AllocatorManager.Persistent);
+            m_ParentHashMap = new NativeHashMap<InstanceID, InstanceID>(1024, AllocatorManager.Persistent);
+
+            System.OnEntityDestroy += System_OnEntityDestroy;
+        }
+        protected override void OnShutDown()
+        {
+            System.OnEntityDestroy -= System_OnEntityDestroy;
         }
         protected override void OnDispose()
         {
-            m_Hierarchy.Dispose();
+            m_ChildHierarchyHashMap.Dispose();
+            m_ParentHashMap.Dispose();
         }
+
+        #region EventHandlers
+
+        private void System_OnEntityDestroy(IObject obj)
+        {
+            if (m_ChildHierarchyHashMap.TryGetFirstValue(obj.Idx, out InstanceID child, out var iter))
+            {
+                FixedInstanceList64 list = new FixedInstanceList64();
+                do
+                {
+                    System.InternalDestroyEntity(in child);
+                    list.Add(child);
+                } while (m_ChildHierarchyHashMap.TryGetNextValue(out child, ref iter));
+
+                for (int i = 0; i < list.Length; i++)
+                {
+                    RemoveChild(obj.Idx, list[i]);
+                }
+            }
+
+            if (HasParent(obj.Idx))
+            {
+                RemoveChild(GetParent(obj.Idx), obj.Idx);
+            }
+        }
+
+        #endregion
 
         public void AddChild(in InstanceID parent, in InstanceID child)
         {
-            m_Hierarchy.Add(parent, child);
+            m_ChildHierarchyHashMap.Add(parent, child);
+            m_ParentHashMap.Add(child, parent);
         }
         public void RemoveChild(in InstanceID parent, in InstanceID child)
         {
-            if (!m_Hierarchy.ContainsKey(parent))
+            if (!m_ChildHierarchyHashMap.ContainsKey(parent))
             {
                 return;
             }
 
-            if (m_Hierarchy.CountValuesForKey(parent) == 1)
+            m_ParentHashMap.Remove(child);
+
+            if (m_ChildHierarchyHashMap.CountValuesForKey(parent) == 1)
             {
-                m_Hierarchy.Remove(parent);
+                m_ChildHierarchyHashMap.Remove(parent);
                 return;
             }
 
-            m_Hierarchy.Remove(parent, child);
+            m_ChildHierarchyHashMap.Remove(parent, child);
         }
 
         public int GetChildCount(in InstanceID parent)
         {
-            if (!m_Hierarchy.ContainsKey(parent))
+            if (!m_ChildHierarchyHashMap.ContainsKey(parent))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Entity({parent.GetObject().Name}) doesn\'t have any childs.");
@@ -64,7 +103,17 @@ namespace Syadeu.Presentation
                 return 0;
             }
 
-            return m_Hierarchy.CountValuesForKey(parent);
+            return m_ChildHierarchyHashMap.CountValuesForKey(parent);
+        }
+        public bool HasParent(in InstanceID child)
+        {
+            return m_ParentHashMap.ContainsKey(child);
+        }
+        public InstanceID GetParent(in InstanceID child)
+        {
+            if (!m_ParentHashMap.TryGetValue(child, out InstanceID parent)) return InstanceID.Empty;
+
+            return parent;
         }
         public InstanceID GetChild(in InstanceID parent, in int index)
         {
@@ -77,7 +126,7 @@ namespace Syadeu.Presentation
                 return InstanceID.Empty;
             }
 
-            NativeMultiHashMap<InstanceID, InstanceID>.Enumerator temp = m_Hierarchy.GetValuesForKey(parent);
+            NativeMultiHashMap<InstanceID, InstanceID>.Enumerator temp = m_ChildHierarchyHashMap.GetValuesForKey(parent);
             temp.MoveNext();
             for (int i = 0; i < index; i++)
             {

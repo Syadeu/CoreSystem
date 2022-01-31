@@ -2303,6 +2303,7 @@ namespace Syadeu.Collections
             return new SQLiteTable(tableName, newColumns);
         }
 
+        [System.Obsolete("Deprecated", true)]
         public void UsedOnlyForAOTCodeGeneration()
         {
             DeleteRows<int>(null, null);

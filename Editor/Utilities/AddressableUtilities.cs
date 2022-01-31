@@ -30,18 +30,19 @@ namespace SyadeuEditor.Utilities
             }
             else displayName = "None";
 
-            EditorGUILayout.BeginHorizontal();
-            if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
-
-            if (GUILayout.Button(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true)))
+            using (new EditorGUILayout.HorizontalScope())
             {
-                Rect rect = GUILayoutUtility.GetLastRect();
-                rect.position = Event.current.mousePosition;
+                if (!string.IsNullOrEmpty(name)) EditorGUILayout.LabelField(name);
 
-                PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
+                if (GUILayout.Button(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true)))
+                {
+                    Rect rect = GUILayoutUtility.GetLastRect();
+                    rect.position = Event.current.mousePosition;
+
+                    PopupWindow.Show(rect, AssetReferencePopup.GetWindow(setter, refAsset?.AssetGUID, displayName));
+                    GUIUtility.ExitGUI();
+                }
             }
-
-            EditorGUILayout.EndHorizontal();
         }
     }
 }

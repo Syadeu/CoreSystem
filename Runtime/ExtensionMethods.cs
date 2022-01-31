@@ -225,7 +225,7 @@ namespace Syadeu
                         }
                         if (memberType == null) continue;
 
-                        if (memberType == typeof(Vector3))
+                        if (memberType == TypeHelper.TypeOf<Vector3>.Type)
                         {
                             memberType = typeof(string);
                         }
@@ -271,7 +271,7 @@ namespace Syadeu
         //}
         public static T FindFor<T>(this IReadOnlyList<T> list, Func<T, bool> predictate) where T : class
         {
-            for (int i = 0; i < list.Count; i++)
+            for (int i = 0; i < list?.Count; i++)
             {
                 if (predictate.Invoke(list[i])) return list[i];
             }
@@ -333,9 +333,15 @@ namespace Syadeu
         }
         private static IEnumerator FloatLerp(Func<float> getter, Action<float> setter, float target, float time)
         {
+            float startTime = CoreSystem.time;
+            
+
             while (getter.Invoke() != target)
             {
-                setter.Invoke(Mathf.Lerp(getter.Invoke(), target, time));
+                float current = CoreSystem.time - startTime;
+                float dest = math.lerp(getter.Invoke(), target, current / time);
+
+                setter.Invoke(dest);
 
                 if (getter.Invoke() < target)
                 {

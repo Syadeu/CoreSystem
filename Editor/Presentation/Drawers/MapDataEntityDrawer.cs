@@ -126,17 +126,21 @@ namespace SyadeuEditor.Presentation
                     if (m_OpenInvalidIndex[i])
                     {
                         EditorGUI.indentLevel++;
-                        EditorGUI.BeginChangeCheck();
-                        ArrayDrawer[idx].OnGUI();
-                        if (EditorGUI.EndChangeCheck())
+                        using (var change = new EditorGUI.ChangeCheckScope())
                         {
-                            if (!IsInvalidObject(Entity.m_Objects[idx]))
+                            ArrayDrawer[idx].OnGUI();
+
+                            if (change.changed)
                             {
-                                m_InvalidIndices.RemoveAt(i);
-                                m_OpenInvalidIndex.RemoveAt(i);
-                                i--;
+                                if (!IsInvalidObject(Entity.m_Objects[idx]))
+                                {
+                                    m_InvalidIndices.RemoveAt(i);
+                                    m_OpenInvalidIndex.RemoveAt(i);
+                                    i--;
+                                }
                             }
                         }
+                        
                         EditorGUI.indentLevel--;
                     }
 

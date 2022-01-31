@@ -47,7 +47,7 @@ namespace Syadeu.Presentation
         }
         public static Reference GetReference(string name) => new Reference(EntityDataList.Instance.GetObject(name));
         public bool IsEmpty() => Equals(Empty);
-        public bool IsValid() => !m_Hash.Equals(Hash.Empty);
+        //public bool IsValid() => !m_Hash.Equals(Hash.Empty);
 
         public bool Equals(IFixedReference other) => m_Hash.Equals(other.Hash);
         public bool Equals(Reference other) => m_Hash.Equals(other.m_Hash);
@@ -91,7 +91,7 @@ namespace Syadeu.Presentation
         public static Reference<T> GetReference(string name) => new Reference<T>(EntityDataList.Instance.GetObject(name));
 
         public bool IsEmpty() => Equals(Empty);
-        public bool IsValid() => !m_Hash.Equals(Hash.Empty) && EntityDataList.Instance.m_Objects.ContainsKey(m_Hash);
+        //public bool IsValid() => !m_Hash.Equals(Hash.Empty) && EntityDataList.Instance.m_Objects.ContainsKey(m_Hash);
 
         public bool Equals(IFixedReference other) => m_Hash.Equals(other.Hash);
         public bool Equals(Reference<T> other) => m_Hash.Equals(other.m_Hash);

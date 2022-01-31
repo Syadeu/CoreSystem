@@ -14,7 +14,7 @@
 
 namespace Syadeu.Presentation.Components
 {
-    internal struct EntityComponentConstrains
+    internal unsafe struct EntityComponentConstrains
     {
         public PresentationSystemID<EntityComponentSystem> SystemID;
     }

@@ -16,36 +16,40 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Buffer;
 using System;
 
 namespace Syadeu.Collections
 {
-    public sealed class ActionWrapper
+    public sealed class ActionWrapper : IActionWrapper
     {
-        private static readonly CLRContainer<ActionWrapper> s_Container;
-        private Action m_Action;
+        private static readonly ObjectPool<ActionWrapper> s_Container;
+        public Action Action;
 
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
 
         static ActionWrapper()
         {
-            s_Container = new CLRContainer<ActionWrapper>(Factory);
+            s_Container = new ObjectPool<ActionWrapper>(Factory, null, null, null);
         }
         private static ActionWrapper Factory()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             return new ActionWrapper();
+#pragma warning restore CS0618 // Type or member is obsolete
         }
         /// <summary>
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
+        [Obsolete("Use ActionWrapper.GetWrapper")]
         public ActionWrapper() { }
-        public static ActionWrapper GetWrapper() => s_Container.Dequeue();
+        public static ActionWrapper GetWrapper() => s_Container.Get();
         public void Reserve()
         {
-            m_Action = null;
+            Action = null;
             m_MarkerSet = false;
-            s_Container.Enqueue(this);
+            s_Container.Reserve(this);
         }
 
         public void SetProfiler(string name)
@@ -55,26 +59,33 @@ namespace Syadeu.Collections
         }
         public void SetAction(Action action)
         {
-            m_Action = action;
+            Action = action;
         }
         public void Invoke()
         {
             if (m_MarkerSet) m_Marker.Begin();
-            m_Action?.Invoke();
+            Action?.Invoke();
             if (m_MarkerSet) m_Marker.End();
         }
+
+        void IActionWrapper.Invoke(params object[] args) => Invoke();
     }
-    public sealed class ActionWrapper<T>
+    public interface IActionWrapper
     {
-        private static readonly CLRContainer<ActionWrapper<T>> s_Container;
-        private Action<T> m_Action;
+        void Reserve();
+        void Invoke(params object[] args);
+    }
+    public sealed class ActionWrapper<T> : IActionWrapper
+    {
+        private static readonly ObjectPool<ActionWrapper<T>> s_Container;
+        public Action<T> Action;
 
         private bool m_MarkerSet = false;
         private Unity.Profiling.ProfilerMarker m_Marker;
 
         static ActionWrapper()
         {
-            s_Container = new CLRContainer<ActionWrapper<T>>(Factory);
+            s_Container = new ObjectPool<ActionWrapper<T>>(Factory, null, null, null);
         }
         private static ActionWrapper<T> Factory()
         {
@@ -84,12 +95,12 @@ namespace Syadeu.Collections
         /// <see cref="GetWrapper"/> 를 사용하세요.
         /// </summary>
         public ActionWrapper() { }
-        public static ActionWrapper<T> GetWrapper() => s_Container.Dequeue();
+        public static ActionWrapper<T> GetWrapper() => s_Container.Get();
         public void Reserve()
         {
-            m_Action = null;
+            Action = null;
             m_MarkerSet = false;
-            s_Container.Enqueue(this);
+            s_Container.Reserve(this);
         }
 
         public void SetProfiler(string name)
@@ -99,14 +110,14 @@ namespace Syadeu.Collections
         }
         public void SetAction(Action<T> action)
         {
-            m_Action = action;
+            Action = action;
         }
         public void Invoke(T t)
         {
             if (m_MarkerSet) m_Marker.Begin();
             try
             {
-                m_Action?.Invoke(t);
+                Action?.Invoke(t);
             }
             catch (Exception ex)
             {
@@ -114,5 +125,7 @@ namespace Syadeu.Collections
             }
             if (m_MarkerSet) m_Marker.End();
         }
+
+        void IActionWrapper.Invoke(params object[] args) => Invoke((T)args[0]);
     }
 }

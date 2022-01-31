@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.Components
 {
     public static class EntityComponentExtensionMethods
     {
+#line hidden
         /// <summary>
         /// <typeparamref name="TComponent"/> 를 이 엔티티에 추가합니다.
         /// </summary>
@@ -47,7 +48,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -60,10 +61,6 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#if DEBUG_MODE
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t);
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
-#endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t);
         }
         /// <summary>
@@ -85,7 +82,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return false;
             }
 #endif
@@ -165,7 +162,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -195,7 +192,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -229,7 +226,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -265,7 +262,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return;
             }
 #endif
@@ -276,9 +273,6 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t);
         }
         /// <summary>
@@ -308,7 +302,7 @@ namespace Syadeu.Presentation.Components
             else if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return;
             }
 #endif
@@ -319,15 +313,12 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t, componentType);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t, componentType);
         }
 
         #region IEntityDataID Components
 
-        /// <inheritdoc cref="AddComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="AddComponent{TComponent}(in InstanceID)"/>
         public static void AddComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -335,7 +326,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -348,13 +339,9 @@ namespace Syadeu.Presentation.Components
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
 
-#if DEBUG_MODE
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(t.Idx);
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_AddComponent<TComponent>(entity);
-#endif
             EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="HasComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
         public static bool HasComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -362,7 +349,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return false;
             }
 #endif
@@ -375,7 +362,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="HasComponent(in EntityID, Type)"/>
+        /// <inheritdoc cref="HasComponent(in InstanceID, Type)"/>
         public static bool HasComponent(this IEntityDataID t, Type componentType)
         {
 #if DEBUG_MODE
@@ -402,7 +389,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.HasComponent(t.Idx, componentType);
         }
-        /// <inheritdoc cref="GetComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponent{TComponent}(in InstanceID)"/>
         public static ref TComponent GetComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -410,7 +397,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity(t:{TypeHelper.ToString(t.GetType())}, {t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -425,7 +412,7 @@ namespace Syadeu.Presentation.Components
 
             return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in InstanceID)"/>
         public static TComponent GetComponentReadOnly<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -433,7 +420,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -448,7 +435,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="GetComponentPointer{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="GetComponentPointer{TComponent}(in InstanceID)"/>
         unsafe public static TComponent* GetComponentPointer<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -456,7 +443,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
@@ -471,7 +458,7 @@ namespace Syadeu.Presentation.Components
 
             return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="RemoveComponent{TComponent}(in EntityID)"/>
+        /// <inheritdoc cref="RemoveComponent{TComponent}(in InstanceID)"/>
         public static void RemoveComponent<TComponent>(this IEntityDataID t)
             where TComponent : unmanaged, IEntityComponent
         {
@@ -479,7 +466,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return;
             }
 #endif
@@ -490,12 +477,9 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent<TComponent>(t.Idx);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
         }
-        /// <inheritdoc cref="RemoveComponent(in EntityID, Type)"/>
+        /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
         public static void RemoveComponent(this IEntityDataID t, Type componentType)
         {
 #if DEBUG_MODE
@@ -509,7 +493,7 @@ namespace Syadeu.Presentation.Components
             if (!t.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"You\'re trying to access to an invalid entity. This is not allowed.");
+                    $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return;
             }
 #endif
@@ -520,12 +504,133 @@ namespace Syadeu.Presentation.Components
                 return;
             }
 
-#if DEBUG_MODE
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Debug_RemoveComponent(t.Idx, componentType);
-#endif
             EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
         }
 
         #endregion
+
+        /// <inheritdoc cref="AddComponent{TComponent}(in InstanceID)"/>
+        public static void AddComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            EntityComponentSystem.Constants.SystemID.System.AddComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="HasComponent{TComponent}(in InstanceID)"/>
+        public static bool HasComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="HasComponent(in InstanceID, Type)"/>
+        public static bool HasComponent(this IObject t, Type componentType)
+        {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return false;
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return false;
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.HasComponent(t.Idx, componentType);
+        }
+        /// <inheritdoc cref="GetComponent{TComponent}(in InstanceID)"/>
+        public static ref TComponent GetComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return ref EntityComponentSystem.Constants.SystemID.System.GetComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="GetComponentReadOnly{TComponent}(in InstanceID)"/>
+        public static TComponent GetComponentReadOnly<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentReadOnly<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="GetComponentPointer{TComponent}(in InstanceID)"/>
+        unsafe public static TComponent* GetComponentPointer<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+
+                throw new InvalidOperationException($"Component buffer error. See Error Log.");
+            }
+
+            return EntityComponentSystem.Constants.SystemID.System.GetComponentPointer<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="RemoveComponent{TComponent}(in InstanceID)"/>
+        public static void RemoveComponent<TComponent>(this IObject t)
+            where TComponent : unmanaged, IEntityComponent
+        {
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
+            }
+
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent<TComponent>(t.Idx);
+        }
+        /// <inheritdoc cref="RemoveComponent(in InstanceID, Type)"/>
+        public static void RemoveComponent(this IObject t, Type componentType)
+        {
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
+                return;
+            }
+#endif
+            if (EntityComponentSystem.Constants.SystemID.IsNull())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Cannot retrived {nameof(EntityComponentSystem)}.");
+                return;
+            }
+
+            EntityComponentSystem.Constants.SystemID.System.RemoveComponent(t.Idx, componentType);
+        }
+#line default
     }
 }

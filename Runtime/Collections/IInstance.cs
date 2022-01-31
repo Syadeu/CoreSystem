@@ -17,10 +17,12 @@ using System;
 
 namespace Syadeu.Collections
 {
+    [Obsolete("Use IEntityDataID", true)]
     public interface IInstance : IEmpty, IEquatable<IInstance>
     {
         InstanceID Idx { get; }
     }
+    [Obsolete("Use IEntityDataID", true)]
     public interface IInstance<T> : IInstance
         where T : class, IObject
     {

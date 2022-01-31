@@ -43,10 +43,8 @@ namespace Syadeu.Presentation.Actor
         [Preserve]
         static void AOTCodeGeneration()
         {
-            AotHelper.EnsureType<Instance<ActorFaction>>();
-            AotHelper.EnsureType<InstanceArray<ActorFaction>>();
-            AotHelper.EnsureList<Instance<ActorFaction>>();
-
+            AotHelper.EnsureType<Entity<ActorFaction>>();
+            AotHelper.EnsureList<Entity<ActorFaction>>();
             AotHelper.EnsureType<Reference<ActorFaction>>();
             AotHelper.EnsureList<Reference<ActorFaction>>();
             AotHelper.EnsureType<ActorFaction>();

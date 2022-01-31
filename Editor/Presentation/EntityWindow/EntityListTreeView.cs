@@ -242,7 +242,7 @@ namespace SyadeuEditor.Presentation
 
                 menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                 {
-                    m_Window.m_DataListWindow.SearchString = $"ref:{obj.Target.Hash}";
+                    m_Window.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{obj.Target.Hash}";
                 });
                 menu.AddItem(new GUIContent("Remove"), false, () =>
                 {
@@ -258,7 +258,7 @@ namespace SyadeuEditor.Presentation
         
         #region Dragging
 
-        const string k_GenericDragID = "GenericDragColumnDragging";
+        public const string k_GenericDragID = "GenericDragColumnDragging";
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {

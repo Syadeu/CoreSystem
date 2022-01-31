@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.TurnTable
     [DisplayName("TriggerAction: TRPG Next turn")]
     public sealed class TRPGNextTurnAction : TriggerAction
     {
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             PresentationSystem<DefaultPresentationGroup, EventSystem>
                 .System

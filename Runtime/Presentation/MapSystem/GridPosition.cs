@@ -17,6 +17,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public struct GridPosition : IGridPosition, IEquatable<GridPosition>
     {
         public static readonly GridPosition Empty = new GridPosition(-1, -1);

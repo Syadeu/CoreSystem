@@ -32,6 +32,9 @@ using UnityEngine;
 
 namespace Syadeu.Presentation
 {
+    // https://forum.unity.com/threads/raycast-without-colliders.14378/
+    // https://forum.unity.com/threads/a-solution-for-accurate-raycasting-without-mesh-colliders.134554/
+
     public sealed class EntityRaycastSystem : PresentationSystemEntity<EntityRaycastSystem>
     {
         public override bool EnableBeforePresentation => false;
@@ -66,7 +69,7 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             m_LayerMap.Dispose();
 
@@ -106,10 +109,23 @@ namespace Syadeu.Presentation
         /// <param name="info"></param>
         /// <param name="maxDistance"></param>
         /// <returns></returns>
-        public bool Raycast(in Ray ray, out RaycastInfo info, in float maxDistance = -1)
+        public bool Raycast(in Ray ray, out RaycastInfo info, in float maxDistance = float.MaxValue)
         {
             info = RaycastInfo.Empty;
 
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+            {
+                var monoObj = hit.collider.GetComponent<RecycleableMonobehaviour>();
+                if (monoObj != null)
+                {
+                    info = new RaycastInfo(monoObj.entity, true, hit.distance, hit.point);
+
+                    return true;
+                }
+            }
+            return false;
+
+            // TODO : Temp code
             for (int i = 0; i < m_BoundSystem.BoundCluster.Length; i++)
             {
                 if (!m_BoundSystem.BoundCluster[i].IsCreated) continue;

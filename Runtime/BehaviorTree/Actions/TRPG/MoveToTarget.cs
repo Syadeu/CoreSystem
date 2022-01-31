@@ -10,8 +10,10 @@ using Syadeu.Presentation.Components;
 namespace Syadeu.Presentation.BehaviorTree
 {
     using Syadeu.Presentation.Actor;
+    using Syadeu.Presentation.Grid;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
+    using Unity.Collections;
 
     [TaskCategory("Entity/Actor/TRPG")]
     [TaskDescription(
@@ -62,10 +64,10 @@ namespace Syadeu.Presentation.BehaviorTree
                     $"{Entity.RawName} doesn\'t have any {nameof(TurnPlayerComponent)}.");
                 return TaskStatus.Failure;
             }
-            else if (!Entity.HasComponent<GridSizeComponent>())
+            else if (!Entity.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{Entity.RawName} doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"{Entity.RawName} doesn\'t have any {nameof(GridComponent)}.");
                 return TaskStatus.Failure;
             }
 #endif
@@ -76,33 +78,34 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
             
-            GridPosition targetPos = att.GetTargetAt(0).GetComponentReadOnly<GridSizeComponent>().positions[0];
+            GridIndex targetPos = att.GetTargetAt(0).GetComponentReadOnly<GridComponent>().Indices[0];
 
-            GridSizeComponent gridSize = Entity.GetComponentReadOnly<GridSizeComponent>();
+            //WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+            GridComponent gridSize = Entity.GetComponentReadOnly<GridComponent>();
 
-            GridPath64 tempPath = new GridPath64();
-            gridSize.GetPath64(targetPos.index, ref tempPath, avoidEntity: true);
+            //FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
+            //gridSystem.GetPath(Entity.Idx, targetPos, ref tempPath);
 
             ref TurnPlayerComponent turnPlayer = ref Entity.GetComponent<TurnPlayerComponent>();
-            GridPath64 path;
-            if (tempPath[tempPath.Length - 1].index == targetPos.index)
-            {
-                path = new GridPath64();
-                for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
-                {
-                    path.Add(tempPath[i]);
-                }
-            }
-            else
-            {
-                path = tempPath;
-            }
+            //FixedList4096Bytes<GridIndex> path;
+            //if (tempPath[tempPath.Length - 1].Index == targetPos.Index)
+            //{
+            //    path = new FixedList4096Bytes<GridIndex>();
+            //    for (int i = 0; i < turnPlayer.ActionPoint && i < tempPath.Length - 1; i++)
+            //    {
+            //        path.Add(tempPath[i]);
+            //    }
+            //}
+            //else
+            //{
+            //    path = tempPath;
+            //}
 
-            $"from {gridSize.positions[0].location} to {targetPos.location}".ToLog();
-            $"1. path length {tempPath.Length} :: {path.Length}".ToLog();
+            $"from {gridSize.Indices[0].Location} to {targetPos.Location}".ToLog();
+            //$"1. path length {tempPath.Length} :: {path.Length}".ToLog();
 
             m_ActorEventHandler = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+                .MoveToCell(Entity.Idx, targetPos);
 
             //TRPGActorMoveComponent move = Entity.GetComponentReadOnly<TRPGActorMoveComponent>();
             //move.MoveTo(in path, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));

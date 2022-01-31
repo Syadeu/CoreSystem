@@ -23,7 +23,12 @@ namespace Syadeu.Collections
         {
             get
             {
-                if (s_Instance == null) s_Instance = new T();
+                if (s_Instance == null)
+                {
+                    s_Instance = new T();
+                    (s_Instance as CLRSingleTone<T>).OnInitialize();
+                }
+
                 return s_Instance;
             }
         }
@@ -31,6 +36,8 @@ namespace Syadeu.Collections
         {
             Dispose();
         }
+
+        protected virtual void OnInitialize() { }
 
         public virtual void Dispose() { }
     }

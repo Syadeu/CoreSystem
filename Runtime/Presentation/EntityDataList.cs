@@ -29,8 +29,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    [PreferBinarySerialization] [CustomStaticSetting("Syadeu")]
-    public sealed class EntityDataList : StaticSettingEntity<EntityDataList>
+    public sealed class EntityDataList : CLRSingleTone<EntityDataList>
     {
         const string jsonPostfix = "*.json";
         const string json = ".json";
@@ -44,7 +43,7 @@ namespace Syadeu.Collections
 
         public static bool IsLoaded => Instance.m_IsLoaded;
 
-        public override void OnInitialize()
+        protected override void OnInitialize()
         {
             LoadData();
         }

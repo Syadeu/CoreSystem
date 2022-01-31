@@ -16,11 +16,15 @@
 #define DEBUG_MODE
 #endif
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Converters;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -28,6 +32,7 @@ using Unity.Jobs;
 namespace Syadeu.Presentation.Actions
 {
     public sealed class ActionSystem : PresentationSystemEntity<ActionSystem>,
+        INotifySystemModule<ConstActionModule>,
         ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
@@ -42,6 +47,8 @@ namespace Syadeu.Presentation.Actions
 
         protected override PresentationResult OnInitialize()
         {
+            ActionExtensionMethods.s_ActionSystem = this;
+
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
 
@@ -86,7 +93,7 @@ namespace Syadeu.Presentation.Actions
 
                 handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
+                m_EntitySystem.DestroyEntity(m_CurrentAction.Payload.m_ActionInstanceID);
                 m_CurrentAction.Clear();
 
                 return;
@@ -103,7 +110,7 @@ namespace Syadeu.Presentation.Actions
                     //$"wait exit {m_CurrentAction.Payload.action.GetObject().Name} : left {m_ScheduledActions.Count}".ToLog();
                     handler.SetEvent(SystemEventResult.Success, temp.Sequence.GetType());
 
-                    m_EntitySystem.DestroyObject(m_CurrentAction.Payload.m_ActionInstanceID);
+                    m_EntitySystem.DestroyEntity(m_CurrentAction.Payload.m_ActionInstanceID);
                     m_CurrentAction.Clear();
 
                     return;
@@ -116,7 +123,7 @@ namespace Syadeu.Presentation.Actions
             switch (temp.actionType)
             {
                 case ActionType.Instance:
-                    InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
+                    InstanceAction action = (InstanceAction)m_EntitySystem.CreateEntity(temp.action).Target;
 
                     if (action is IEventSequence sequence)
                     {
@@ -133,7 +140,7 @@ namespace Syadeu.Presentation.Actions
                         {
                             handler.SetEvent(SystemEventResult.Success, sequence.GetType());
 
-                            m_EntitySystem.DestroyObject(action);
+                            m_EntitySystem.DestroyEntity(action);
                             m_CurrentAction.Clear();
                             return;
                         }
@@ -149,7 +156,7 @@ namespace Syadeu.Presentation.Actions
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
 
-                    m_EntitySystem.DestroyObject(action);
+                    m_EntitySystem.DestroyEntity(action);
                     m_CurrentAction.Clear();
                     return;
                 case ActionType.Trigger:
@@ -162,7 +169,7 @@ namespace Syadeu.Presentation.Actions
                         return;
                     }
 #endif
-                    Instance<ActionBase> ins = m_EntitySystem.CreateInstance(temp.action);
+                    Entity<ActionBase> ins = m_EntitySystem.CreateEntity(temp.action);
 #if DEBUG_MODE
                     if (ins.IsEmpty() || !ins.IsValid())
                     {
@@ -173,7 +180,7 @@ namespace Syadeu.Presentation.Actions
                     }
 #endif
 
-                    TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp.action).GetObject();
+                    TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateEntity(temp.action).Target;
 
                     if (triggerAction is IEventSequence triggerActionSequence)
                     {
@@ -190,7 +197,7 @@ namespace Syadeu.Presentation.Actions
                         {
                             handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.Sequence.GetType());
 
-                            m_EntitySystem.DestroyObject(triggerAction);
+                            m_EntitySystem.DestroyEntity(triggerAction);
                             m_CurrentAction.Clear();
                             return;
                         }
@@ -206,7 +213,7 @@ namespace Syadeu.Presentation.Actions
 
                     handler.SetEvent(SystemEventResult.Success, m_CurrentAction.Payload.action.GetObject().GetType());
 
-                    m_EntitySystem.DestroyObject(triggerAction);
+                    m_EntitySystem.DestroyEntity(triggerAction);
                     m_CurrentAction.Clear();
                     return;
             }
@@ -245,10 +252,10 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            InstanceAction action = (InstanceAction)m_EntitySystem.CreateInstance(temp).GetObject();
+            InstanceAction action = (InstanceAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = action.InternalExecute();
-            m_EntitySystem.DestroyObject(action);
+            m_EntitySystem.DestroyEntity(action);
             //action.InternalTerminate();
 
             return result;
@@ -277,7 +284,7 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
-        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, EntityData<IEntityData> entity)
+        public bool ExecuteTriggerAction<T>(IFixedReference<T> temp, Entity<IObject> entity)
             where T : TriggerAction
         {
             if (temp.GetObject() is IEventSequence)
@@ -299,10 +306,10 @@ namespace Syadeu.Presentation.Actions
                 return true;
             }
 
-            TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateInstance(temp).GetObject();
+            TriggerAction triggerAction = (TriggerAction)m_EntitySystem.CreateEntity(temp).Target;
 
             bool result = triggerAction.InternalExecute(entity);
-            m_EntitySystem.DestroyObject(triggerAction);
+            m_EntitySystem.DestroyEntity(triggerAction);
 
             return result;
         }
@@ -319,6 +326,11 @@ namespace Syadeu.Presentation.Actions
             m_ScheduledActions.Add(payload);
             m_EventSystem.TakeQueueTicket(this);
         }
+
+        public IConstAction GetConstAction(Type type) => GetModule<ConstActionModule>().GetConstAction(type);
+        //public TValue InvokeConstAction<TValue>(Type type) => GetModule<ConstActionModule>().Execute<TValue>(type);
+
+        #region Inner Classes
 
         private enum ActionType
         {
@@ -353,6 +365,91 @@ namespace Syadeu.Presentation.Actions
             public bool played;
             public InstanceID m_ActionInstanceID;
             public IEventSequence Sequence;
+        }
+
+        #endregion
+    }
+
+    public sealed class ConstActionModule : PresentationSystemModule<ActionSystem>
+    {
+        private readonly Dictionary<Guid, IConstAction> m_ConstActions = new Dictionary<Guid, IConstAction>();
+
+        #region Presentation Methods
+
+        protected override void OnInitializeAsync()
+        {
+            foreach (var item in ConstActionUtilities.Types)
+            {
+                var ctor = TypeHelper.GetConstructorInfo(item);
+                IConstAction constAction;
+                if (ctor != null)
+                {
+                    constAction = (IConstAction)ctor.Invoke(null);
+                }
+                else
+                {
+                    constAction = (IConstAction)Activator.CreateInstance(item);
+                }
+
+                constAction.Initialize();
+                m_ConstActions.Add(item.GUID, constAction);
+            }
+        }
+        protected override void OnShutDown()
+        {
+            foreach (var item in m_ConstActions.Values)
+            {
+                item.OnShutdown();
+            }
+        }
+        protected override void OnDispose()
+        {
+            foreach (var item in m_ConstActions.Values)
+            {
+                item.Dispose();
+            }
+
+            m_ConstActions.Clear();
+        }
+
+        #endregion
+
+        public IConstAction GetConstAction(Type type)
+        {
+#if DEBUG_MODE
+            if (type == null)
+            {
+                "??".ToLogError();
+                return null;
+            }
+            else if (!m_ConstActions.ContainsKey(type.GUID))
+            {
+                "?? not found".ToLogError();
+                return null;
+            }
+#endif
+            return m_ConstActions[type.GUID];
+        }
+        public TValue Execute<TValue>(Type type, params object[] args)
+        {
+            IConstAction constAction = GetConstAction(type);
+#if DEBUG_MODE
+            if (constAction == null)
+            {
+                "??".ToLogError();
+                return default(TValue);
+            }
+#endif
+            constAction.SetArguments(args);
+            object value = constAction.Execute();
+#if DEBUG_MODE
+            if (!TypeHelper.TypeOf<TValue>.Type.IsAssignableFrom(value.GetType()))
+            {
+                $"type mismatch. expected {value.GetType()} but {TypeHelper.TypeOf<TValue>.ToString()}".ToLogError();
+                return default(TValue);
+            }
+#endif
+            return (TValue)value;
         }
     }
 }

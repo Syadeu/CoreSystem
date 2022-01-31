@@ -17,14 +17,12 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Presentation.Events;
 
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGIngameSystemGroup : PresentationGroupEntity
     {
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 TypeHelper.TypeOf<TRPGPlayerSystem>.Type,

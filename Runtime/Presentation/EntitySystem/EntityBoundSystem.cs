@@ -34,8 +34,9 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation
 {
+    [Obsolete("EntityColliderModule")]
     /// <summary>
-    /// TODO : 최적화 대상
+    /// TODO : 최적화 대상 <see cref="EntityColliderModule"/>
     /// </summary>
     internal sealed class EntityBoundSystem : PresentationSystemEntity<EntityBoundSystem>
     {
@@ -69,11 +70,13 @@ namespace Syadeu.Presentation
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnShutDown()
         {
             m_EntitySystem.OnEntityCreated -= M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy -= M_EntitySystem_OnEntityDestroy;
-
+        }
+        protected override void OnDispose()
+        {
             m_TriggerBoundArray = Array.Empty<Entity<IEntity>>();
             m_TriggerBoundCluster.Dispose();
 
@@ -103,23 +106,24 @@ namespace Syadeu.Presentation
             m_EntitySystem.OnEntityCreated += M_EntitySystem_OnEntityCreated;
             m_EntitySystem.OnEntityDestroy += M_EntitySystem_OnEntityDestroy;
         }
-        private void M_EntitySystem_OnEntityCreated(IEntityData obj)
+        private void M_EntitySystem_OnEntityCreated(IObject obj)
         {
             if (!(obj is EntityBase entity)) return;
-            TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = FindOrIncrementTriggerBoundArrayIndex();
-            ClusterID id = m_TriggerBoundCluster.Add(entity.transform.position, arrayIndex);
+            ClusterID id = m_TriggerBoundCluster.Add(entity.GetTransform().position, arrayIndex);
 
             Entity<IEntity> target = Entity<IEntity>.GetEntityWithoutCheck(obj.Idx);
             m_TriggerBoundArray[arrayIndex] = target;
 
             att.m_ClusterID = id;
         }
-        private void M_EntitySystem_OnEntityDestroy(IEntityData obj)
+        private void M_EntitySystem_OnEntityDestroy(IObject obj)
         {
-            TriggerBoundAttribute att = obj.GetAttribute<TriggerBoundAttribute>();
+            if (!(obj is EntityBase entity)) return;
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
             if (att == null) return;
 
             int arrayIndex = m_TriggerBoundCluster.Remove(att.m_ClusterID);
@@ -184,7 +188,7 @@ namespace Syadeu.Presentation
 
         private struct TriggerBoundJob : IJobParallelForEntities<TriggerBoundComponent>
         {
-            public void Execute(in InstanceID entity, in TriggerBoundComponent component)
+            public void Execute(in InstanceID entity, ref TriggerBoundComponent component)
             {
                 throw new NotImplementedException();
             }

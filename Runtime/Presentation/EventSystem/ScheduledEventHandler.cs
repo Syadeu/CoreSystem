@@ -20,8 +20,31 @@ namespace Syadeu.Presentation.Events
 {
     public sealed class ScheduledEventHandler
     {
+        internal ISystemEventScheduler m_System;
+        private float m_EnteredTime;
+
         internal SystemEventResult m_Result;
         internal Type m_EventType;
+
+        internal void NotifyEnteringAwait(ISystemEventScheduler system)
+        {
+            m_System = system;
+            m_EnteredTime = CoreSystem.time;
+        }
+        internal void Reset()
+        {
+            m_System = null;
+            m_EnteredTime = -1;
+
+            m_Result = SystemEventResult.Success;
+            m_EventType = null;
+        }
+        internal bool IsExceedTimeout(float timeout)
+        {
+            if (CoreSystem.time - m_EnteredTime > timeout) return true;
+            return false;
+        }
+        internal void ResetTimer() => m_EnteredTime = CoreSystem.time;
 
         public void SetEvent<T>(SystemEventResult result)
         {

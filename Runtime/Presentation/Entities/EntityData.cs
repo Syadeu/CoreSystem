@@ -20,6 +20,7 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -28,6 +29,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Entities
 {
+    [Obsolete("Use Entity<T>", true)]
     [Serializable, StructLayout(LayoutKind.Sequential)]
     /// <summary><inheritdoc cref="IEntityData"/></summary>
     /// <remarks>
@@ -43,17 +45,17 @@ namespace Syadeu.Presentation.Entities
     {
         private const string c_Invalid = "Invalid";
 
-        public static readonly EntityData<T> Empty = new EntityData<T>(InstanceID.Empty, 0, null);
+        public static readonly EntityData<T> Empty = new EntityData<T>(InstanceID.Empty, 0, c_Invalid);
 
-        public static EntityData<T> GetEntity(InstanceID id) => EntityDataHelper.GetEntity<T>(id);
-        public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => EntityDataHelper.GetEntityWithoutCheck<T>(in id);
+        //public static EntityData<T> GetEntity(InstanceID id) => EntityDataHelper.GetEntity<T>(id);
+        //public static EntityData<T> GetEntityWithoutCheck(InstanceID id) => EntityDataHelper.GetEntityWithoutCheck<T>(in id);
 
         /// <inheritdoc cref="IEntityData.Idx"/>
         private readonly InstanceID m_Idx;
         private readonly int m_HashCode;
         private FixedString128Bytes m_Name;
 
-        IEntityData IEntityDataID.Target => Target;
+        IObject IEntityDataID.Target => Target;
         public T Target
         {
             get
@@ -62,7 +64,7 @@ namespace Syadeu.Presentation.Entities
                 if (IsEmpty())
                 {
                     CoreSystem.Logger.LogError(Channel.Entity,
-                        "An empty entity reference trying to access transform.");
+                        "An empty entity reference trying to access.");
                     return null;
                 }
 #endif
@@ -108,10 +110,46 @@ namespace Syadeu.Presentation.Entities
         /// <inheritdoc cref="IEntityData.Name"/>
         public string Name => m_Idx.IsEmpty() ? c_Invalid : Target.Name;
         /// <inheritdoc cref="IEntityData.Hash"/>
-        public Hash Hash => Target.Hash;
+        public Hash Hash
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (Target == null)
+                {
+                    return Hash.Empty;
+                }
+#endif
+                return Target.Hash;
+            }
+        }
         /// <inheritdoc cref="IEntityData.Idx"/>
         public InstanceID Idx => m_Idx;
         public Type Type => m_Idx.IsEmpty() ? null : Target?.GetType();
+
+        public ProxyTransform transform
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (IsEmpty() || Target == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Entity,
+                        "An empty entity reference trying to access transform.");
+
+                    return ProxyTransform.Null;
+                }
+#endif
+                EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                EntityTransformModule transformModule = entitySystem.GetModule<EntityTransformModule>();
+                if (transformModule.HasTransform(Idx))
+                {
+                    return transformModule.GetTransform(Idx);
+                }
+
+                return ProxyTransform.Null;
+            }
+        }
 
         internal EntityData(InstanceID id, int hashCode, string name)
         {
@@ -162,14 +200,14 @@ namespace Syadeu.Presentation.Entities
         }
 
         public static implicit operator T(EntityData<T> a) => a.Target;
-        public static implicit operator EntityData<T>(InstanceID a) => GetEntity(a);
-        public static implicit operator EntityData<T>(T a)
-        {
-            if (a == null)
-            {
-                return Empty;
-            }
-            return GetEntity(a.Idx);
-        }
+        //public static implicit operator EntityData<T>(InstanceID a) => GetEntity(a);
+        //public static implicit operator EntityData<T>(T a)
+        //{
+        //    if (a == null)
+        //    {
+        //        return Empty;
+        //    }
+        //    return GetEntity(a.Idx);
+        //}
     }
 }

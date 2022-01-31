@@ -12,31 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Proxy;
-using Syadeu.Presentation.Render;
-using System;
+using Unity.Burst;
 
 namespace Syadeu.Presentation.Actor
 {
-    internal interface IActorProvider
+    public interface IActorProvider : IObject
     {
-        void Bind(EntityData<IEntityData> parent, ActorSystem actorSystem,
-            EventSystem eventSystem, EntitySystem entitySystem, CoroutineSystem coroutineSystem,
-            WorldCanvasSystem worldCanvasSystem);
+        [JsonIgnore]
+        object Component { get; }
 
-        void ReceivedEvent<TEvent>(TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent;
-#else
-            where TEvent : unmanaged, IActorEvent;
-#endif
-        void OnCreated(Entity<ActorEntity> entity);
-        void OnDestroy(Entity<ActorEntity> entity);
+        void Bind(Entity<IEntityData> parent);
 
-        void OnProxyCreated(RecycleableMonobehaviour monoObj);
-        void OnProxyRemoved(RecycleableMonobehaviour monoObj);
+        //        void ReceivedEvent<TEvent>(TEvent ev)
+        //#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+        //            where TEvent : struct, IActorEvent;
+        //#else
+        //            where TEvent : unmanaged, IActorEvent;
+        //#endif
+        void ReceivedEvent(IActorEvent ev);
+        void OnCreated();
+
+        void OnProxyCreated();
+        void OnProxyRemoved();
     }
+    public interface IActorProvider<TComponent> : IActorProvider
+        where TComponent : unmanaged, IActorProviderComponent
+    {
+        [JsonIgnore]
+        new TComponent Component { get; }
+
+        void OnProxyCreated(ref TComponent component, ITransform transform);
+        void OnProxyRemoved(ref TComponent component, ITransform transform);
+    }
+
+    public interface IActorProviderComponent : IEntityComponent { }
 }

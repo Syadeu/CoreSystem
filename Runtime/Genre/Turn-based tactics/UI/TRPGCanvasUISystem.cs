@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System;
@@ -62,7 +63,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             for (int i = 0; i < m_Shortcuts.Length; i++)
             {
@@ -76,7 +77,6 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.RemoveEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
@@ -141,7 +141,6 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
-            m_EventSystem.AddEvent<TRPGGridCellUIPressedEvent>(TRPGGridCellUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
@@ -159,16 +158,16 @@ namespace Syadeu.Presentation.TurnTable.UI
             var players = m_TurnTableSystem.Players;
             for (int i = 0; i < players.Count; i++)
             {
-                EntityData<IEntityData> entity = players[i];
+                Entity<IEntityData> entity = players[i];
 
                 if (!entity.HasComponent<ActorControllerComponent>()) continue;
 
                 ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
                 if (!ctr.HasProvider<ActorOverlayUIProvider>()) continue;
 
-                Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+                Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+                IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
                 for (int j = 0; j < list.Count; j++)
                 {
                     ActorOverlayUIEntry obj = list[j].GetObject();
@@ -176,11 +175,11 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                     if (ev.Enabled)
                     {
-                        m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[j]);
+                        m_WorldCanvasSystem.RegisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[j]);
                     }
                     else
                     {
-                        m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[j]);
+                        m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[j]);
                     }
                 }
             }
@@ -192,9 +191,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 default:
                 case ShortcutType.None:
+                    break;
                 case ShortcutType.Move:
-                    m_TRPGGridSystem.ClearUICell();
-                    m_TRPGGridSystem.ClearUIPath();
+                    m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
                     break;
                 case ShortcutType.Attack:
@@ -205,11 +204,12 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             m_TRPGInputSystem.SetIngame_Default();
+
+            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(m_CurrentShortcut, false));
             m_CurrentShortcut = ShortcutType.None;
         }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
-            "asd".ToLog();
             if (ev.Shortcut == m_CurrentShortcut)
             {
                 //"same return".ToLog();
@@ -224,9 +224,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
 
             ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
-            if (ctr.IsBusy())
+            if (ctr.IsBusy(out TypeInfo lastExecutedEv))
             {
-                "busy out".ToLog();
+                $"busy out :: {lastExecutedEv.Type.Name}".ToLog();
                 return;
             }
 
@@ -236,14 +236,16 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 default:
                 case ShortcutType.None:
+                    break;
                 case ShortcutType.Move:
                     m_TRPGCameraMovement.SetNormal();
 
-                    m_TRPGGridSystem.DrawUICell(m_TurnTableSystem.CurrentTurn);
                     m_CurrentShortcut = ShortcutType.Move;
 
                     m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
                     m_TRPGInputSystem.SetIngame_Default();
+
+                    m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
 
                     break;
                 case ShortcutType.Attack:
@@ -255,9 +257,9 @@ namespace Syadeu.Presentation.TurnTable.UI
                         return;
                     }
 
-                    Instance<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
-                    var targets = attProvider.GetObject().GetTargetsInRange();
-                    var tr = m_TurnTableSystem.CurrentTurn.As<IEntityData, IEntity>().transform;
+                    Entity<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
+                    var targets = attProvider.Target.GetTargetsInRange();
+                    var tr = m_TurnTableSystem.CurrentTurn.ToEntity<IEntity>().transform;
 
                     $"{targets.Length} found".ToLog();
                     if (targets.Length == 0) break;
@@ -273,19 +275,21 @@ namespace Syadeu.Presentation.TurnTable.UI
                         attackComponent.SetTarget(0);
                     }
 
-                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetEntity<IEntity>().transform);
+                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetTransform());
 
                     m_CurrentShortcut = ShortcutType.Attack;
 
                     break;
             }
+
+            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
         }
-        private void TRPGGridCellUIPressedEventHandler(TRPGGridCellUIPressedEvent ev)
+        private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
         {
             DisableCurrentShortcut();
             m_CurrentShortcut = ShortcutType.None;
 
-            m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Position);
+            //m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
             //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
             //move.movet
         }
@@ -300,7 +304,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         private void TRPGFireUIPressedEventHandler(TRPGFireUIPressedEvent ev)
         {
             m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>()
-                .GetProvider<TRPGActorAttackProvider>().GetObject().Attack();
+                .GetProvider<TRPGActorAttackProvider>().Target.Attack();
 
             // TODO : temp code
             //m_EventSystem.PostEvent(TRPGEndTurnUIPressedEvent.GetEvent());
@@ -314,7 +318,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_Shortcuts[(int)shortcutType] = shortcut;
 
-            shortcut.Initialize(this, m_EventSystem);
+            //shortcut.Initialize(this, m_EventSystem);
 
             m_TRPGInputSystem.BindShortcut(shortcut);
 
@@ -322,6 +326,8 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         public void RemoveShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
         {
+            if (m_TRPGInputSystem == null) return;
+
             m_TRPGInputSystem.UnbindShortcut(shortcut);
 
             m_Shortcuts[(int)shortcutType] = null;
@@ -379,16 +385,16 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         #region ActorOverlayUI Provider
 
-        private void CheckStartTurnActorOverlayUI(EntityData<IEntityData> entity)
+        private void CheckStartTurnActorOverlayUI(Entity<IEntityData> entity)
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
             ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
-            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+            Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();
@@ -396,20 +402,20 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 if (obj.m_OnStartTurnPredicate.Execute(entity, out bool result) && result)
                 {
-                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                    m_WorldCanvasSystem.RegisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[i]);
                 }
             }
         }
-        private void CheckEndTurnActorOverlayUI(EntityData<IEntityData> entity)
+        private void CheckEndTurnActorOverlayUI(Entity<IEntityData> entity)
         {
             if (!entity.HasComponent<ActorControllerComponent>()) return;
 
             ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
             if (!ctr.HasProvider<ActorOverlayUIProvider>()) return;
 
-            Instance<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
+            Entity<ActorOverlayUIProvider> overlay = ctr.GetProvider<ActorOverlayUIProvider>();
 
-            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.GetObject().UIEntries;
+            IReadOnlyList<Reference<ActorOverlayUIEntry>> list = overlay.Target.UIEntries;
             for (int i = 0; i < list.Count; i++)
             {
                 ActorOverlayUIEntry obj = list[i].GetObject();
@@ -417,7 +423,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 if (obj.m_OnEndTurnPredicate.Execute(entity, out bool result) && result)
                 {
-                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.As<IEntityData, ActorEntity>(), list[i]);
+                    m_WorldCanvasSystem.UnregisterActorOverlayUI(entity.ToEntity<ActorEntity>(), list[i]);
                 }
             }
         }

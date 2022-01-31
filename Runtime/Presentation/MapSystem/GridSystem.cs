@@ -38,6 +38,7 @@ using UnityEngine.Rendering;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public sealed class GridSystem : PresentationSystemEntity<GridSystem>,
         INotifySystemModule<GridDetectionModule>,
         INotifySystemModule<ObstacleLayerModule>
@@ -165,7 +166,7 @@ namespace Syadeu.Presentation.Map
 
                 using (m_UpdateObserver.Auto())
                 {
-                    if (entity.HasComponent<GridDetectorComponent>())
+                    if (entity.HasComponent<old_GridDetectorComponent>())
                     {
                         detectionModule.UpdateGridDetection(entity, in component, postEvent);
                     }
@@ -244,7 +245,7 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             //ClearUICell();
 
@@ -272,7 +273,7 @@ namespace Syadeu.Presentation.Map
                     {
                         if (!m_WaitForRegister.TryDequeue(out var att)) continue;
 
-                        Entity<IEntity> entity = att.Parent.As<IEntityData, IEntity>();
+                        Entity<IEntity> entity = att.Parent.ToEntity<IEntity>();
                         if (att.m_FixedToCenter)
                         {
                             ITransform tr = entity.transform;
@@ -460,7 +461,7 @@ namespace Syadeu.Presentation.Map
         }
         public void UnregisterGridSize(GridSizeAttribute gridSize)
         {
-            RemoveGridEntity(gridSize.Parent.As<IEntityData, IEntity>());
+            RemoveGridEntity(gridSize.Parent.ToEntity<IEntity>());
         }
 
         #endregion
@@ -762,6 +763,11 @@ namespace Syadeu.Presentation.Map
         public int PositionToIndex(float3 position)
         {
             return GridMap.GetIndex(position);
+        }
+
+        public float3 GridPositionToPosition(in GridPosition position)
+        {
+            return IndexToPosition(position.index);
         }
 
         public GridPosition GetGridPosition(float3 position)

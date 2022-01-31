@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Actions
         }
 
         internal TAction Action { get; set; }
-        public EntityData<IEntityData> Entity { get; internal set; }
+        public Entity<IEntityData> Entity { get; internal set; }
         public State CurrentState { get; internal set; } = 0;
 
         protected abstract void OnTerminate();
@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actions
         {
             OnTerminate();
 
-            Entity = EntityData<IEntityData>.Empty;
+            Entity = Entity<IEntityData>.Empty;
             CurrentState = 0;
         }
     }

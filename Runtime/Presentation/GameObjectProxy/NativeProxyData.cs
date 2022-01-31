@@ -65,11 +65,11 @@ namespace Syadeu.Presentation.Proxy
                 UnsafeUtility.Free(m_Buffer.ToPointer(), m_Allocator);
             }
 
-            public ProxyTransformData ElementAt(int index)
+            public ref ProxyTransformData ElementAt(int index)
             {
                 if (index < 0 || index >= m_Length) throw new ArgumentOutOfRangeException(nameof(index) + $" of {m_Length} at {index}");
 
-                return m_TransformBuffer[index];
+                return ref m_TransformBuffer[index];
             }
         }
 
@@ -235,7 +235,7 @@ namespace Syadeu.Presentation.Proxy
         }
         public void Remove(ProxyTransform transform)
         {
-            const string c_DestroyMsg = "ProxyTransform({0}) has been destroyed.";
+            //const string c_DestroyMsg = "ProxyTransform({0}) has been destroyed.";
 
 #if UNITY_EDITOR
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
@@ -264,17 +264,17 @@ namespace Syadeu.Presentation.Proxy
             p->m_ParentIndex = -1;
             p->m_ChildIndices.Clear();
 
-            CoreSystem.Logger.Log(Channel.Proxy,
-                string.Format(c_DestroyMsg, p->m_Prefab.GetObjectSetting().m_Name));
+            //CoreSystem.Logger.Log(Channel.Proxy,
+            //    string.Format(c_DestroyMsg, p->m_Prefab.GetObjectSetting().m_Name));
         }
         public void Clear()
         {
             UnsafeUtility.MemClear(m_UnsafeList->m_TransformBuffer, m_UnsafeList->m_Length * s_TransformSize);
         }
 
-        public ProxyTransformData ElementAt(int i)
+        public ref ProxyTransformData ElementAt(int i)
         {
-            return *List[i];
+            return ref *List[i];
         }
 
         [Obsolete, MethodImpl(MethodImplOptions.AggressiveInlining)]

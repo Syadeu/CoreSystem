@@ -25,6 +25,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+//using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -64,7 +65,7 @@ namespace Syadeu.Presentation
             private readonly List<ITransformPresentation> m_TransformPresentations = new List<ITransformPresentation>();
             private readonly List<IAfterTransformPresentation> m_AfterTransformPresentations = new List<IAfterTransformPresentation>();
 
-            public readonly ConcurrentQueue<Action> m_RequestSystemDelegates = new ConcurrentQueue<Action>();
+            public readonly ConcurrentQueue<Action> m_RequestSystemBindDelegates = new ConcurrentQueue<Action>();
             private readonly List<Hash> m_GroupDependences = new List<Hash>();
 
             //public CoreRoutine MainPresentation;
@@ -246,10 +247,14 @@ namespace Syadeu.Presentation
             {
                 m_IsStarted = false;
 
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnShutdown", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     m_Systems[i].InternalOnShutdown();
                 }
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnDispose", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     m_Systems[i].Dispose();
@@ -356,6 +361,9 @@ namespace Syadeu.Presentation
 
             public void Initialize()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnInitialize", TypeHelper.ToString(m_Name));
+
                 using (m_InitializeMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)
@@ -387,6 +395,9 @@ namespace Syadeu.Presentation
             }
             public void InitializeAsync()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnInitializeAsync");
+
                 using (m_InitializeAsyncMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)
@@ -418,6 +429,9 @@ namespace Syadeu.Presentation
             }
             public void OnStartPresentation()
             {
+                CoreSystem.Logger.Log(Channel.Presentation,
+                    $"{TypeHelper.ToString(m_Name)} group invoke OnStartPresentation", TypeHelper.ToString(m_Name));
+
                 using (m_StartPreMarker.Auto())
                 {
                     for (int i = 0; i < m_Initializers.Count; i++)
@@ -700,8 +714,15 @@ namespace Syadeu.Presentation
 
                 for (int i = 0; i < m_TransformPresentations.Count; i++)
                 {
-                    PresentationResult result = m_TransformPresentations[i].TransformPresentation();
-                    LogMessage(result);
+                    try
+                    {
+                        PresentationResult result = m_TransformPresentations[i].TransformPresentation();
+                        LogMessage(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                    }
                 }
 
                 TransformPresentationModules();
@@ -720,8 +741,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
-                                ex);
+                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
                         }
                     }
                 }
@@ -756,8 +776,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
-                                ex);
+                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
                         }
                     }
                 }
@@ -774,18 +793,15 @@ namespace Syadeu.Presentation
 
         public override void OnInitialize()
         {
-            const string register = "Register";
-
             SetPlayerLoop();
 
-            Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && t.GetInterfaces().FindFor(ta => ta.Equals(TypeHelper.TypeOf<IPresentationRegister>.Type)) != null).ToArray();
+            Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<IPresentationRegister>.Type.IsAssignableFrom(t)).ToArray();
 
-            MethodInfo registerMethod = TypeHelper.TypeOf<IPresentationRegister>.Type.GetMethod(register);
             IPresentationRegister[] presentations = new IPresentationRegister[registers.Length];
             for (int i = 0; i < registers.Length; i++)
             {
                 presentations[i] = (IPresentationRegister)Activator.CreateInstance(registers[i]);
-                registerMethod.Invoke(presentations[i], null);
+                presentations[i].Register();
             }
 
             m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);
@@ -833,10 +849,19 @@ namespace Syadeu.Presentation
         }
         private IEnumerator ThreadStart()
         {
+            const string c_ThreadName = "core.pre";
+
+            //ProcessThread.
+
             m_PresentationThread = new Thread(PresentationAsyncUpdate)
             {
-                IsBackground = true
+                Name = c_ThreadName,
+                IsBackground = true,
+                CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture,
+                CurrentUICulture = global::System.Globalization.CultureInfo.InvariantCulture
             };
+            //m_PresentationThread.SetApartmentState(ApartmentState.STA);
+
             m_PresentationThread.Start(this);
 
             yield break;
@@ -1139,7 +1164,6 @@ namespace Syadeu.Presentation
             UnityEngine.Profiling.Profiler.BeginThreadProfiling("Syadeu", "CoreSystem.Presentation");
 #endif
             PresentationManager mgr = (PresentationManager)obj;
-            Thread.CurrentThread.CurrentCulture = global::System.Globalization.CultureInfo.InvariantCulture;
 
             CoreSystem.SimulateWatcher.WaitOne();
 
@@ -1369,7 +1393,10 @@ namespace Syadeu.Presentation
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
                 return new NullCustomYieldAwaiter();
             }
-            $"start call {group.m_Name.Name}".ToLog();
+
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"start call {group.m_Name.Name}");
+
             for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
             {
                 Type t = group.m_RegisteredSystemTypes[i];
@@ -1433,7 +1460,10 @@ namespace Syadeu.Presentation
             CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
 
             List<Hash> connectedGroups = group.GetGroupDependences();
-            $"{group.m_Name.Name} has connected group {connectedGroups.Count}".ToLog();
+
+            CoreSystem.Logger.Log(Channel.Presentation,
+                $"{group.m_Name.Name} has connected group {connectedGroups.Count}");
+
             for (int i = 0; i < connectedGroups.Count; i++)
             {
                 StartPresentation(connectedGroups[i]);
@@ -1473,7 +1503,16 @@ namespace Syadeu.Presentation
             }
         }
 
-        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> setter
+        /// <summary>
+        /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다. 기본 시스템 그룹은 <seealso cref="DefaultPresentationGroup"/> 입니다.
+        /// </summary>
+        /// <remarks>
+        /// OnInitialize 혹은 OnInitializeAsync 에서만 수행되어야합니다.
+        /// </remarks>
+        /// <typeparam name="TGroup"></typeparam>
+        /// <typeparam name="TSystem"></typeparam>
+        /// <param name="bind"></param>
+        internal static void RegisterRequest<TGroup, TSystem>(Action<TSystem> bind
 #if DEBUG_MODE
             , string methodName
 #endif
@@ -1501,7 +1540,7 @@ namespace Syadeu.Presentation
 
             if (!group.m_MainthreadSignal)
             {
-                group.m_RequestSystemDelegates.Enqueue(() =>
+                group.m_RequestSystemBindDelegates.Enqueue(() =>
                 {
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
                     {
@@ -1514,7 +1553,7 @@ namespace Syadeu.Presentation
 
                     CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
-                    setter.Invoke(target);
+                    bind.Invoke(target);
                 });
                 return;
             }
@@ -1523,7 +1562,7 @@ namespace Syadeu.Presentation
             {
                 try
                 {
-                    setter.Invoke(system);
+                    bind.Invoke(system);
                 }
                 catch (Exception ex)
                 {
@@ -1685,11 +1724,11 @@ namespace Syadeu.Presentation
             group.InitializeAsync();
 
             yield return new WaitUntil(() => group.m_MainthreadSignal);
-            int requestSystemCount = group.m_RequestSystemDelegates.Count;
+            int requestSystemCount = group.m_RequestSystemBindDelegates.Count;
             for (int i = 0; i < requestSystemCount; i++)
             {
                 //$"asd : {i} = {requestSystemCount}".ToLog();
-                if (!group.m_RequestSystemDelegates.TryDequeue(out Action action)) continue;
+                if (!group.m_RequestSystemBindDelegates.TryDequeue(out Action action)) continue;
                 try
                 {
                     action?.Invoke();

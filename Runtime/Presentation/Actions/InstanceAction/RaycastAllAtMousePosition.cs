@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.Actions
 
             for (int i = 0; i < m_RaycastInfos.Count; i++)
             {
-                m_OnHit.Execute(m_RaycastInfos[i].entity.As<IEntity, IEntityData>());
+                m_OnHit.Execute(m_RaycastInfos[i].entity.ToEntity<IEntityData>());
             }
         }
     }

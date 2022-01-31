@@ -21,11 +21,21 @@ using UnityEditor.Build.Pipeline;
 using UnityEditor.Il2Cpp;
 using Unity.Burst;
 using UnityEngine;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation.CodeGen
 {
+    // https://forum.unity.com/threads/how-does-unity-do-codegen-and-why-cant-i-do-it-myself.853867/
+    // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/Scripting/ScriptCompilation/UnityCodeGenHelpers.cs#L36
+
+    // https://docs.unity3d.com/ScriptReference/SessionState.html
+    // https://www.gamedeveloper.com/programming/code-generation-in-unity
     internal class PresentationConstantHashGenerator
     {
+        public int callbackOrder => 0;
+
         //[MenuItem("AssemblyBuilder Example/Build Assembly Async")]
         public static void BuildAssemblyAsync()
         {
@@ -34,7 +44,22 @@ namespace Syadeu.Presentation.CodeGen
 
         private void test()
         {
-            
+            CompilationPipeline.assemblyCompilationFinished += CompilationPipeline_assemblyCompilationFinished;
+        }
+
+        // https://docs.unity3d.com/ScriptReference/Compilation.CompilationPipeline-assemblyCompilationFinished.html
+        private void CompilationPipeline_assemblyCompilationFinished(string outputAssemblyPath, CompilerMessage[] arg2)
+        {
+            //throw new NotImplementedException();
+
+            var iter = TypeHelper
+                .GetTypesIter(t => t.GetCustomAttribute<GuidMarkerAttribute>() != null);
+            //foreach (var type in iter)
+            //{
+            //    type.Module.
+            //}
+
+            CompilationPipeline.RequestScriptCompilation();
         }
 
         static void BuildAssembly(bool wait)

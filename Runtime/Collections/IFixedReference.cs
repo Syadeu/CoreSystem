@@ -16,7 +16,7 @@ using System;
 
 namespace Syadeu.Collections
 {
-    public interface IFixedReference : IValidation, IEmpty, IEquatable<IFixedReference>
+    public interface IFixedReference : IEmpty, IEquatable<IFixedReference>
     {
         Hash Hash { get; }
     }

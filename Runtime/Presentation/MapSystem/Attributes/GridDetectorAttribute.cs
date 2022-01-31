@@ -28,9 +28,10 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     [DisplayName("Attribute: Entity Detector On Grid")]
     public sealed class GridDetectorAttribute : GridAttributeBase,
-        INotifyComponent<GridDetectorComponent>
+        INotifyComponent<old_GridDetectorComponent>
     {
         [Tooltip("최대로 탐색할 Grid Range 값")]
         [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] 
@@ -58,63 +59,64 @@ namespace Syadeu.Presentation.Map
         [JsonIgnore] internal EventSystem m_EventSystem = null;
         [JsonIgnore] internal GridSizeAttribute m_GridSize = null;
     }
-    internal sealed class GridDetectorProcessor : AttributeProcessor<GridDetectorAttribute>
-    {
-        private GridSystem m_GridSystem;
+    //[System.Obsolete("Use WorldGridSystem Instead", true)]
+    //internal sealed class GridDetectorProcessor : AttributeProcessor<GridDetectorAttribute>
+    //{
+    //    private GridSystem m_GridSystem;
 
-        protected override void OnInitialize()
-        {
-            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
-        }
-        protected override void OnDispose()
-        {
-            m_GridSystem = null;
-        }
-        private void Bind(GridSystem other)
-        {
-            m_GridSystem = other;
-        }
+    //    protected override void OnInitialize()
+    //    {
+    //        RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+    //    }
+    //    protected override void OnDispose()
+    //    {
+    //        m_GridSystem = null;
+    //    }
+    //    private void Bind(GridSystem other)
+    //    {
+    //        m_GridSystem = other;
+    //    }
 
-        protected override void OnCreated(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
-        {
-            attribute.m_EventSystem = EventSystem;
-            attribute.m_GridSize = entity.GetAttribute<GridSizeAttribute>();
-            if (attribute.m_GridSize == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"This Entity({entity.Name}) doesn\'t have GridSizeAttribute. Cannot initialize GridDetectorAttribute");
-                return;
-            }
+    //    protected override void OnCreated(GridDetectorAttribute attribute, Entity<IEntityData> entity)
+    //    {
+    //        attribute.m_EventSystem = EventSystem;
+    //        attribute.m_GridSize = entity.GetAttribute<GridSizeAttribute>();
+    //        if (attribute.m_GridSize == null)
+    //        {
+    //            CoreSystem.Logger.LogError(Channel.Entity,
+    //                $"This Entity({entity.Name}) doesn\'t have GridSizeAttribute. Cannot initialize GridDetectorAttribute");
+    //            return;
+    //        }
 
-            entity.AddComponent<GridDetectorComponent>();
-            ref var com = ref entity.GetComponent<GridDetectorComponent>();
-            com = new GridDetectorComponent()
-            {
-                m_MyShortID = entity.Idx.GetShortID(),
-                m_MaxDetectionRange = attribute.m_MaxDetectionRange,
-                m_ObserveIndices = new FixedList4096Bytes<int>(),
-                m_IgnoreLayers = m_GridSystem.GetLayer(attribute.m_IgnoreLayers),
+    //        entity.AddComponent<GridDetectorComponent>();
+    //        ref var com = ref entity.GetComponent<GridDetectorComponent>();
+    //        com = new GridDetectorComponent()
+    //        {
+    //            m_MyShortID = entity.Idx.GetShortID(),
+    //            m_MaxDetectionRange = attribute.m_MaxDetectionRange,
+    //            m_ObserveIndices = new FixedList4096Bytes<int>(),
+    //            m_IgnoreLayers = m_GridSystem.GetLayer(attribute.m_IgnoreLayers),
 
-                m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList64(),
-                m_TriggerOnlyInverse = attribute.m_Inverse,
+    //            m_TriggerOnly = attribute.m_TriggerOnly.ToFixedList64(),
+    //            m_TriggerOnlyInverse = attribute.m_Inverse,
 
-                m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
-                m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
-                m_DetectRemoveCondition = attribute.m_DetectRemoveCondition.ToFixedList64(),
+    //            m_OnDetectedPredicate = attribute.m_OnDetectedPredicate.ToFixedList64(),
+    //            m_OnDetected = new FixedLogicTriggerAction8(attribute.m_OnDetected),
+    //            m_DetectRemoveCondition = attribute.m_DetectRemoveCondition.ToFixedList64(),
 
-                m_Detected = new FixedList512Bytes<EntityShortID>(),
-                m_TargetedBy = new FixedList512Bytes<EntityShortID>()
-            };
+    //            m_Detected = new FixedList512Bytes<EntityShortID>(),
+    //            m_TargetedBy = new FixedList512Bytes<EntityShortID>()
+    //        };
 
-            //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
-        }
-        protected override void OnDestroy(GridDetectorAttribute attribute, EntityData<IEntityData> entity)
-        {
-            if (attribute.m_GridSize != null)
-            {
-                //EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
-            }
-            attribute.m_EventSystem = null;
-        }
-    }
+    //        //EventSystem.AddEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
+    //    }
+    //    protected override void OnDestroy(GridDetectorAttribute attribute, Entity<IEntityData> entity)
+    //    {
+    //        if (attribute.m_GridSize != null)
+    //        {
+    //            //EventSystem.RemoveEvent<OnGridPositionChangedEvent>(attribute.OnGridPositionChangedEventHandler);
+    //        }
+    //        attribute.m_EventSystem = null;
+    //    }
+    //}
 }

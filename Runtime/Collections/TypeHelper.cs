@@ -214,5 +214,13 @@ namespace Syadeu.Collections
             }
             return output;
         }
+
+        public static object GetDefaultValue(Type type)
+        {
+            if (type.IsValueType) return Activator.CreateInstance(type);
+            else if (type.Equals(TypeOf<string>.Type)) return string.Empty;
+
+            return null;
+        }
     }
 }

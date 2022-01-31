@@ -61,12 +61,12 @@ namespace Syadeu.Presentation.Attributes
             m_NavMeshSystem = other;
         }
 
-        protected override void OnCreated(NavObstacleAttribute attribute, EntityData<IEntityData> e)
+        protected override void OnCreated(NavObstacleAttribute attribute, Entity<IEntityData> e)
         {
-            Entity<IEntity> entity = e.As<IEntityData, IEntity>();
+            Entity<IEntity> entity = e.ToEntity<IEntity>();
             m_NavMeshSystem.AddObstacle(attribute, entity.transform, attribute.m_AreaMask);
         }
-        protected override void OnDestroy(NavObstacleAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(NavObstacleAttribute attribute, Entity<IEntityData> entity)
         {
             m_NavMeshSystem.RemoveObstacle(attribute);
         }

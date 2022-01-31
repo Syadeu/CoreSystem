@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>CoreSystemAnalyzer</id>
+    <version>1.0.0</version>
+    <authors>Syadeu</authors>
+    <developmentDependency>true</developmentDependency>
+    <licenseUrl>http://license_url_here_or_delete_this_line/</licenseUrl>
+    <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+    <iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>
+    <description>CoreSystemAnalyzer</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <copyright>Copyright</copyright>
+    <tags>CoreSystemAnalyzer, analyzers</tags>
+    <repository url="http://REPOSITORY_URL_HERE_OR_DELETE_THIS_LINE" />
+  </metadata>
+  <files>
+    <file src="D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer.Package\bin\Debug\netstandard2.0\CoreSystemAnalyzer.dll" target="analyzers\dotnet\cs\CoreSystemAnalyzer.dll" />
+    <file src="D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer.Package\bin\Debug\netstandard2.0\CoreSystemAnalyzer.CodeFixes.dll" target="analyzers\dotnet\cs\CoreSystemAnalyzer.CodeFixes.dll" />
+    <file src="D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer.Package\tools\install.ps1" target="tools\install.ps1" />
+    <file src="D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer.Package\tools\uninstall.ps1" target="tools\uninstall.ps1" />
+  </files>
+</package>

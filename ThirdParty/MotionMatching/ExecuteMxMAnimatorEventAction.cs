@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.MotionMatching
         [JsonProperty(Order = 0, PropertyName = "EventID")]
         private Reference<MxMEventDefinitionData> m_EventData = Reference<MxMEventDefinitionData>.Empty;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();

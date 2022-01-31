@@ -23,14 +23,14 @@ namespace SyadeuEditor.Presentation
             if (GUILayout.Button("+"))
             {
                 FieldInfo field = GetField("m_AdditionalInputActions");
-                InputSystemSettings.CustomInputAction[] ori = (InputSystemSettings.CustomInputAction[])field.GetValue(Asset);
+                InputSystemSettings.CustomInputAction[] ori = (InputSystemSettings.CustomInputAction[])field.GetValue(Target);
 
                 InputSystemSettings.CustomInputAction[] temp = new InputSystemSettings.CustomInputAction[ori.Length + 1];
                 Array.Copy(ori, temp, ori.Length);
 
                 temp[temp.Length - 1] = new InputSystemSettings.CustomInputAction();
 
-                field.SetValue(Asset, temp);
+                field.SetValue(Target, temp);
                 serializedObject.Update();
             }
             if (GUILayout.Button("-"))

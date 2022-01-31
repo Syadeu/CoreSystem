@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
@@ -35,7 +36,8 @@ namespace Syadeu.Presentation
     /// C#에서는 클래스가 소멸해도 해당 인스턴스의 <see langword="static"/> 필드, 프로퍼티 값은 메모리에서 방출되지 않습니다.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
-    public abstract class PresentationSystemEntity<T> : PresentationSystemEntity, IEquatable<PresentationSystemEntity<T>>
+    public abstract class PresentationSystemEntity<T> : PresentationSystemEntity,
+        IEquatable<PresentationSystemEntity<T>>
         where T : PresentationSystemEntity
     {
         private readonly List<UnityEngine.GameObject> m_CreatedGameObjects = new List<UnityEngine.GameObject>();
@@ -66,7 +68,7 @@ namespace Syadeu.Presentation
             }
             m_CreatedGameObjects.Clear();
         }
-        public override void OnDispose() { }
+        protected override void OnDispose() { }
 
         /// <summary>
         /// <see cref="OnInitialize"/> 혹은 <see cref="OnInitializeAsync"/> 에서만 수행되야됩니다.
@@ -108,6 +110,19 @@ namespace Syadeu.Presentation
                 , methodName
 #endif
                 );
+        }
+
+        [System.Diagnostics.Conditional("DEBUG_MODE")]
+        protected void DisposedCheck()
+        {
+            const string
+                c_ErrorMsg = "You are trying to access an disposed system({0}). This is not allowed.";
+
+            if (Disposed)
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    string.Format(c_ErrorMsg, TypeHelper.TypeOf<T>.ToString()));
+            }
         }
 
         protected CoreRoutine StartCoroutine(IEnumerator cor) => CoreSystem.StartUnityUpdate(this, cor);

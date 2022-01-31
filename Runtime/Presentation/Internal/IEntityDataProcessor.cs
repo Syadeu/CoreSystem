@@ -14,9 +14,11 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
+using System;
 
 namespace Syadeu.Presentation.Internal
 {
+    [Obsolete("Deprecated", true)]
     internal interface IEntityDataProcessor : IProcessor
     {
         void OnCreated(IEntityData entity);

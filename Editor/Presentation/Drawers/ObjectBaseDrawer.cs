@@ -150,6 +150,10 @@ namespace SyadeuEditor.Presentation
             }
             catch (Exception ex)
             {
+                if (ExitGUIUtility.ShouldRethrowException(ex))
+                {
+                    throw;
+                }
                 EditorGUILayout.LabelField($"Error at {drawer.Name} {ex.Message}");
                 Debug.LogException(ex);
             }

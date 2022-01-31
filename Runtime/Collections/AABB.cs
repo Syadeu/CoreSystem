@@ -24,12 +24,12 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
+    [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
     [JsonConverter(typeof(AABBJsonConverter))]
     public struct AABB : IEquatable<AABB>
     {
-        public static readonly AABB Zero = new AABB(float3.zero, float3.zero);
+        public static AABB Zero => new AABB(float3.zero, float3.zero);
 
         internal float3 m_Center;
         internal float3 m_Extents;
@@ -47,12 +47,36 @@ namespace Syadeu.Collections
 
 #pragma warning disable IDE1006 // Naming Styles
         [JsonIgnore] public float3 center { get => m_Center; set { m_Center = value; } }
+        [JsonIgnore] public float3 lowerCenter
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterLeft
+        {
+            get => new float3(m_Center.x - m_Extents.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterRight
+        {
+            get => new float3(m_Center.x + m_Extents.x, m_Center.y - m_Extents.y, m_Center.z);
+        }
+        [JsonIgnore] public float3 lowerCenterUp
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z + m_Extents.z);
+        }
+        [JsonIgnore] public float3 lowerCenterDown
+        {
+            get => new float3(m_Center.x, m_Center.y - m_Extents.y, m_Center.z - m_Extents.z);
+        }
+        [JsonIgnore] public float3 upperCenter
+        {
+            get => new float3(m_Center.x, m_Center.y + m_Extents.y, m_Center.z);
+        }
         [JsonIgnore] public float3 size { get => m_Extents * 2; set { m_Extents = value * 0.5F; } }
         [JsonIgnore] public float3 extents { get => m_Extents; set { m_Extents = value; } }
         [JsonIgnore] public float3 min { get => center - extents; set { SetMinMax(value, max); } }
         [JsonIgnore] public float3 max { get => center + extents; set { SetMinMax(min, value); } }
 
-        //[JsonIgnore] public float3[] vertices => GetVertices(in this);
+        [JsonIgnore] public Vertices vertices => GetVertices(in this);
 #pragma warning restore IDE1006 // Naming Styles
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -230,22 +254,22 @@ namespace Syadeu.Collections
             temp[7] = new float3(min.x, min.y, max.z);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float3[] GetVertices(in AABB aabb)
+        private static Vertices GetVertices(in AABB aabb)
         {
             float3 min = aabb.min;
             float3 max = aabb.max;
 
-            return new float3[]
+            return new Vertices
             {
-                min,
-                new float3(min.x, max.y, min.z),
-                new float3(max.x, max.y, min.z),
-                new float3(max.x, min.y, min.z),
+                a0 = min,
+                a1 = new float3(min.x, max.y, min.z),
+                a2 = new float3(max.x, max.y, min.z),
+                a3 = new float3(max.x, min.y, min.z),
 
-                new float3(max.x, min.y, max.z),
-                max,
-                new float3(min.x, max.y, max.z),
-                new float3(min.x, min.y, max.z),
+                b0 = new float3(max.x, min.y, max.z),
+                b1 = max,
+                b2 = new float3(min.x, max.y, max.z),
+                b3 = new float3(min.x, min.y, max.z),
             };
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -367,8 +391,41 @@ namespace Syadeu.Collections
         {
             return m_Center.Equals(other.m_Center) && m_Extents.Equals(other.m_Extents);
         }
+        public bool IsZero() => Equals(Zero);
 
         public static implicit operator AABB(Bounds a) => new AABB(a.center, a.size);
         public static implicit operator Bounds(AABB a) => new Bounds(a.center, a.size);
+
+        [BurstCompatible]
+        public struct Vertices : IFixedList<float3>
+        {
+            public float3
+                a0, a1, a2, a3,
+                b0, b1, b2, b3;
+
+            public float3 this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => a0,
+                        1 => a1,
+                        2 => a2,
+                        3 => a3,
+                        4 => b0,
+                        5 => b1,
+                        6 => b2,
+                        7 => b3,
+                        _ => throw new IndexOutOfRangeException(),
+                    };
+                }
+            }
+
+            public float3 First => a0;
+            public float3 Last => b3;
+
+            public int Length => 8;
+        }
     }
 }

@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Actions
     /// </remarks>
     public abstract class TriggerAction : ActionBase
     {
-        internal bool InternalExecute(EntityData<IEntityData> entity)
+        internal bool InternalExecute(Entity<IObject> entity)
         {
             if (Idx.Equals(InstanceID.Empty))
             {
@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Actions
             bool result = true;
             try
             {
-                OnExecute(entity.ToEntityData<IEntityData>());
+                OnExecute(entity.ToEntity<IObject>());
             }
             catch (System.Exception ex)
             {
@@ -96,6 +96,6 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        protected abstract void OnExecute(EntityData<IEntityData> entity);
+        protected abstract void OnExecute(Entity<IObject> entity);
     }
 }

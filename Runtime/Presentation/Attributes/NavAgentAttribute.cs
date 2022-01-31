@@ -59,9 +59,8 @@ namespace Syadeu.Presentation.Attributes
     internal sealed class NavAgentProcessor : AttributeProcessor<NavAgentAttribute>, 
         IAttributeOnProxy
     {
-        protected override void OnCreated(NavAgentAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(NavAgentAttribute attribute, Entity<IEntityData> entity)
         {
-            entity.AddComponent<NavAgentComponent>();
             ref var com = ref entity.GetComponent<NavAgentComponent>();
             com.m_OnMoveActions = attribute.m_OnMoveActions.ToFixedList64();
             com.m_UpdateTRSWhile = attribute.m_UpdateTRSWhile.ToFixedList64();

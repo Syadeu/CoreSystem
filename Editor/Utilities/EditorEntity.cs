@@ -1,5 +1,8 @@
 ﻿using Syadeu.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -12,6 +15,8 @@ namespace SyadeuEditor
     public abstract class EditorEntity : Editor
     {
         private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
+        const char editorPreferencesArraySeparator = ';';
+
         private static Material s_Material;
         public static Material DefaultMaterial
         {
@@ -19,6 +24,20 @@ namespace SyadeuEditor
             {
                 if (s_Material == null) s_Material = AssetDatabase.GetBuiltinExtraResource<Material>(DEFAULT_MATERIAL);
                 return s_Material;
+            }
+        }
+
+        /// <summary>
+        /// Whether the target is currently selected or not
+        /// </summary>
+        public bool TargetIsActive
+        {
+            get
+            {
+                if (target is MonoBehaviour)
+                    return (target != null && ((MonoBehaviour)target).transform == Selection.activeTransform) ? true : false;
+                else
+                    return true;
             }
         }
 
@@ -272,15 +291,84 @@ namespace SyadeuEditor
         }
 
         #endregion
+
+        public static void SetEditorPrefs<T>(string key, T value)
+        {
+            Type tt = TypeHelper.TypeOf<T>.Type;
+            if (tt.IsEnum)
+            {
+                EditorPrefs.SetInt(key, Convert.ToInt32(Enum.Parse(TypeHelper.TypeOf<T>.Type, value.ToString()) as Enum));
+            }
+            else if (tt.IsArray)
+            {
+                var list = (IList)value;
+                string[] array = new string[list.Count];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = list[i].ToString();
+                    if (array[i].Contains(editorPreferencesArraySeparator))
+                        throw new ArgumentException(String.Format("value should not have any element containing a {0} character", editorPreferencesArraySeparator));
+                }
+                SetEditorPrefs(key, String.Join(editorPreferencesArraySeparator.ToString(), array));
+            }
+            else if (TypeHelper.TypeOf<int>.Type.IsAssignableFrom(tt))
+                EditorPrefs.SetInt(key, (value as int?).Value);
+            else if (tt == typeof(string))
+                EditorPrefs.SetString(key, (value as string));
+            else if (tt == typeof(float))
+                EditorPrefs.SetFloat(key, (value as float?).Value);
+            else if (tt == typeof(bool))
+                EditorPrefs.SetBool(key, (value as bool?).Value);
+            //else if (tt == typeof(Color))
+            //    EditorPrefs.SetString(key, (value as Color?).Value.ToHtml());
+            else
+                throw new Exception();
+        }
+        public static T GetEditorPrefs<T>(string key, T defaultValue)
+        {
+            if (EditorPrefs.HasKey(key))
+            {
+                Type tt = TypeHelper.TypeOf<T>.Type;
+                try
+                {
+                    if (tt.IsEnum || TypeHelper.TypeOf<int>.Type.IsAssignableFrom(tt))
+                    {
+                        return (T)(object)EditorPrefs.GetInt(key, (int)(object)defaultValue);
+                    }
+                    else if (tt.IsArray)
+                    {
+                        throw new System.NotImplementedException();
+                    }
+                    else if (tt == TypeHelper.TypeOf<string>.Type)
+                        return (T)(object)EditorPrefs.GetString(key, defaultValue.ToString());
+                    else if (tt == TypeHelper.TypeOf<float>.Type)
+                        return (T)(object)EditorPrefs.GetFloat(key, (float)(object)defaultValue);
+                    else if (tt == TypeHelper.TypeOf<bool>.Type)
+                        return (T)(object)EditorPrefs.GetBool(key, (bool)(object)defaultValue);
+                    //else if (tt == TypeHelper.TypeOf<Color>.Type)
+                    //    return (T)(object)EditorPrefs.GetString(key, ((Color)(object)defaultValue).ToHtml()).ColorFromHtml();
+                    else
+                        throw new Exception();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
+        }
     }
 
     public abstract class EditorEntity<T> : EditorEntity where T : UnityEngine.Object
     {
-        private Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
-        private Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
-        private Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
+        private static Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
+        private static Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
+        private static Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
 
-        protected T Asset => (T)target;
+        protected T Target => (T)target;
+
+        #region Reflections
 
         protected FieldInfo GetField(string name)
         {
@@ -291,8 +379,8 @@ namespace SyadeuEditor
             m_CachedFieldInfos.Add(hash, value);
             return value;
         }
-        protected TA GetFieldValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Asset);
-        protected void SetFieldValue(string fieldName, object value) => GetField(fieldName).SetValue(Asset, value);
+        protected TA GetFieldValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Target);
+        protected void SetFieldValue(string fieldName, object value) => GetField(fieldName).SetValue(Target, value);
 
         protected PropertyInfo GetProperty(string name)
         {
@@ -303,8 +391,8 @@ namespace SyadeuEditor
             m_CachedPropertyInfos.Add(hash, value);
             return value;
         }
-        protected TA GetPropertyValue<TA>(string propertyName) => (TA)GetProperty(propertyName).GetGetMethod().Invoke(Asset, null);
-        protected void SetPropertyValue(string propertyName, object value) => GetProperty(propertyName).GetSetMethod().Invoke(Asset, new object[] { value });
+        protected TA GetPropertyValue<TA>(string propertyName) => (TA)GetProperty(propertyName).GetGetMethod().Invoke(Target, null);
+        protected void SetPropertyValue(string propertyName, object value) => GetProperty(propertyName).GetSetMethod().Invoke(Target, new object[] { value });
 
         protected MethodInfo GetMethod(string name)
         {
@@ -315,6 +403,8 @@ namespace SyadeuEditor
             m_CachedMethodInfos.Add(hash, value);
             return value;
         }
-        protected object InvokeMethod(string methodName, params object[] args) => GetMethod(methodName).Invoke(Asset, args);
+        protected object InvokeMethod(string methodName, params object[] args) => GetMethod(methodName).Invoke(Target, args);
+
+        #endregion
     }
 }

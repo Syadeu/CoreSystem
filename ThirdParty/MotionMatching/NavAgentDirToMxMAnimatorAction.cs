@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.MotionMatching
     [DisplayName("TriggerAction: Match MxMAnimator to NavAgent")]
     public sealed class NavAgentDirToMxMAnimatorAction : TriggerAction
     {
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE
             if (!entity.HasComponent<NavAgentComponent>())
@@ -39,6 +39,8 @@ namespace Syadeu.Presentation.MotionMatching
 
             var trajectory = animator.AnimatorComponent.GetComponent<MxM.MxMTrajectoryGenerator>();
             trajectory.InputVector = navAgent.Direction;
+
+            //$"{navAgent.Direction}".ToLog();
         }
     }
 }

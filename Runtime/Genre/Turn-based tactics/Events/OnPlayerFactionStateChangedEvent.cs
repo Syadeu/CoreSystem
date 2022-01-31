@@ -6,11 +6,11 @@ namespace Syadeu.Presentation.TurnTable
 {
     public sealed class OnPlayerFactionStateChangedEvent : SynchronizedEvent<OnPlayerFactionStateChangedEvent>
     {
-        public EntityData<IEntityData> Entity { get; private set; }
+        public Entity<IEntityData> Entity { get; private set; }
         public ActorStateAttribute.StateInfo From { get; private set; }
         public ActorStateAttribute.StateInfo To { get; private set; }
 
-        public static OnPlayerFactionStateChangedEvent GetEvent(EntityData<IEntityData> entity,
+        public static OnPlayerFactionStateChangedEvent GetEvent(Entity<IEntityData> entity,
             ActorStateAttribute.StateInfo from, ActorStateAttribute.StateInfo to)
         {
             var ev = Dequeue();
@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnTerminate()
         {
-            Entity = EntityData<IEntityData>.Empty;
+            Entity = Entity<IEntityData>.Empty;
             From = ActorStateAttribute.StateInfo.None;
             To = ActorStateAttribute.StateInfo.None;
         }

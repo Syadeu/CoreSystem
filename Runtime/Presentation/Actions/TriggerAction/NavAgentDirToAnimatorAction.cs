@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Actions
             m_Vertical = Animator.StringToHash(m_VerticalKey);
             m_Speed = Animator.StringToHash(m_SpeedKey);
         }
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             //NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (!entity.HasComponent<NavAgentComponent>())

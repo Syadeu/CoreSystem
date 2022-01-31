@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Add DataContainer")]
     [Description("" +
         "이 Entity 를 해당 키 값으로 등록합니다. " +
-        "Type 은 EntityData<IEntityData> 로 등록됩니다.")]
+        "Type 은 Entity<IObject> 로 등록됩니다.")]
     public sealed class AddDataContainer : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Key")]
@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Actions
         {
             m_DataContainer = null;
         }
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (m_KeyHash.IsEmpty())
             {

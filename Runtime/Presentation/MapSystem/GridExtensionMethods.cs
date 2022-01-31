@@ -20,6 +20,7 @@ using Syadeu.Collections;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public static class GridExtensionMethods
     {
         public static GridLayerChain Combine(this in GridLayer x, in GridLayer y)

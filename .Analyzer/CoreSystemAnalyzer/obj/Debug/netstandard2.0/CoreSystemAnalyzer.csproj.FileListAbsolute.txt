@@ -1,0 +1,12 @@
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\bin\Debug\netstandard2.0\CoreSystemAnalyzer.deps.json
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\bin\Debug\netstandard2.0\CoreSystemAnalyzer.dll
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\bin\Debug\netstandard2.0\CoreSystemAnalyzer.pdb
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.csproj.AssemblyReference.cache
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.Resources.resources
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.csproj.GenerateResource.cache
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.GeneratedMSBuildEditorConfig.editorconfig
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.AssemblyInfoInputs.cache
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.AssemblyInfo.cs
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.csproj.CoreCompileInputs.cache
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.dll
+D:\AudioSystemProject\AudioSystem\CoreSystem\CoreSystemAnalyzer\CoreSystemAnalyzer\obj\Debug\netstandard2.0\CoreSystemAnalyzer.pdb

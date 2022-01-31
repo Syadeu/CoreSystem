@@ -31,63 +31,33 @@ namespace Syadeu.Presentation
     /// <summary>
     /// 직접 상속은 허용하지 않습니다.
     /// </summary>
-    [RequireDerived]
-    public abstract class ProcessorBase
+    [RequireDerived, Preserve]
+    public abstract class ProcessorBase : IProcessor
     {
-        internal EntitySystem m_EntitySystem;
+        internal EntityProcessorModule.SystemReferences m_SystemReferences;
 
-        protected EntitySystem EntitySystem => m_EntitySystem;
-        protected EventSystem EventSystem
+        protected EntitySystem EntitySystem => m_SystemReferences.EntitySystem;
+        protected EventSystem EventSystem => m_SystemReferences.EventSystem;
+        protected DataContainerSystem DataContainerSystem => m_SystemReferences.DataContainerSystem;
+        internal GameObjectProxySystem ProxySystem => m_SystemReferences.GameObjectProxySystem;
+
+        public abstract Type Target { get; }
+
+        ~ProcessorBase()
         {
-            get
-            {
-                if (m_EntitySystem.m_EventSystem == null)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                        $"{nameof(EventSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
-                }
-
-                return m_EntitySystem.m_EventSystem;
-            }
+            CoreSystem.Logger.Log(Channel.GC, $"Disposing processor({TypeHelper.ToString(Target)})");
+            ((IDisposable)this).Dispose();
         }
-        protected DataContainerSystem DataContainerSystem
-        {
-            get
-            {
-                if (m_EntitySystem.m_DataContainerSystem == null)
-                {
-                    throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
-                        $"{nameof(DataContainerSystem)} is not initialized yet. Did you called from OnInitializeAsync?");
-                }
 
-                return m_EntitySystem.m_DataContainerSystem;
-            }
-        }
-        internal GameObjectProxySystem ProxySystem => EntitySystem.m_ProxySystem;
-
-        [Obsolete]
-        protected void RequestSystem<TSystem>(Action<TSystem> setter
-#if DEBUG_MODE
-            , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
-#endif
-            )
-            where TSystem : PresentationSystemEntity
-        {
-            PresentationManager.RegisterRequest<DefaultPresentationGroup, TSystem>(setter
-#if DEBUG_MODE
-                , methodName
-#endif
-                );
-        }
         /// <summary>
         /// <see cref="DefaultPresentationGroup"/> 은 즉시 등록되지만 나머지 그룹에 한하여,
         /// <typeparamref name="TGroup"/> 이 시작될 때 등록됩니다.
         /// </summary>
         /// <typeparam name="TGroup">요청할 <typeparamref name="TSystem"/> 이 위치한 그룹입니다.</typeparam>
         /// <typeparam name="TSystem">요청할 시스템입니다.</typeparam>
-        /// <param name="setter"></param>
+        /// <param name="bind"></param>
         /// <param name="methodName"></param>
-        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> setter
+        protected void RequestSystem<TGroup, TSystem>(Action<TSystem> bind
 #if DEBUG_MODE
             , [System.Runtime.CompilerServices.CallerFilePath] string methodName = ""
 #endif
@@ -95,17 +65,17 @@ namespace Syadeu.Presentation
             where TGroup : PresentationGroupEntity
             where TSystem : PresentationSystemEntity
         {
-            PresentationManager.RegisterRequest<TGroup, TSystem>(setter
+            PresentationManager.RegisterRequest<TGroup, TSystem>(bind
 #if DEBUG_MODE
                 , methodName
 #endif
                 );
         }
 
-        protected EntityData<IEntityData> CreateObject(IFixedReference obj)
+        protected Entity<IEntityData> CreateObject(IFixedReference obj)
         {
             CoreSystem.Logger.NotNull(obj, "Target object cannot be null");
-            return EntitySystem.CreateObject(obj.Hash);
+            return EntitySystem.CreateEntity(new Reference<IEntityData>(obj.Hash));
         }
 
         protected Entity<T> CreateEntity<T>(Reference<T> entity, float3 position, quaternion rotation) where T : EntityBase
@@ -119,5 +89,22 @@ namespace Syadeu.Presentation
 
             return target.ToEntity<T>();
         }
+
+        void IProcessor.OnInitialize() => OnInitialize();
+        void IProcessor.OnInitializeAsync() => OnInitializeAsync();
+
+        internal abstract void InternalOnCreated(IObject obj);
+        internal abstract void InternalOnDestroy(IObject obj);
+
+        void IDisposable.Dispose()
+        {
+            OnDispose();
+
+            m_SystemReferences = null;
+        }
+
+        protected virtual void OnInitialize() { }
+        protected virtual void OnInitializeAsync() { }
+        protected virtual void OnDispose() { }
     }
 }

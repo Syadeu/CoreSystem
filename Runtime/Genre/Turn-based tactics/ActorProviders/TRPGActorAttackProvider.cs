@@ -4,6 +4,7 @@ using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
@@ -16,87 +17,107 @@ using UnityEngine;
 namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("ActorProvider: TRPG Attack Provider")]
-    public sealed class TRPGActorAttackProvider : ActorAttackProvider,
-        INotifyComponent<TRPGActorAttackComponent>
+    public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
         [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
 
-        [JsonIgnore] private NativeList<int> m_TempGetRange;
-
         protected override void OnCreated()
         {
-            m_TempGetRange = new NativeList<int>(512, Allocator.Persistent);
         }
-        protected override void OnCreated(Entity<ActorEntity> entity)
+        protected override void OnInitialize(ref ActorAttackComponent component)
         {
-            base.OnCreated(entity);
+            Parent.AddComponent<TRPGActorAttackComponent>();
 
-            entity.AddComponent<TRPGActorAttackComponent>();
-            ref var com = ref entity.GetComponent<TRPGActorAttackComponent>();
+            ref var com = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
             com = (new TRPGActorAttackComponent()
             {
                 m_SearchRange = m_SearchRange
             });
         }
-        protected override void OnReserve()
+        protected override void OnReserve(ref ActorAttackComponent component)
         {
-            base.OnReserve();
-
-            m_TempGetRange.Clear();
+            Parent.RemoveComponent<TRPGActorAttackComponent>();
         }
         protected override void OnDestroy()
         {
-            m_TempGetRange.Dispose();
         }
 
         public FixedList512Bytes<InstanceID> GetTargetsInRange()
         {
             int
-                weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.GetObject().Range),
+                weaponRange = Mathf.RoundToInt(Parent.GetComponent<ActorWeaponComponent>().SelectedWeapon.Target.Range),
                 searchRange = Parent.GetComponent<TRPGActorAttackComponent>().m_SearchRange;
 
             return GetTargetsWithin(math.max(weaponRange, searchRange));
         }
         public FixedList512Bytes<InstanceID> GetTargetsWithin(in int range, bool sort = true)
         {
-            if (!Parent.HasComponent<GridSizeComponent>())
+            if (!Parent.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"Entity({Parent.Name}) doesn\'t have any {nameof(GridComponent)}.");
 
                 return new FixedList512Bytes<InstanceID>();
             }
 
-            GridSizeComponent gridSize = Parent.GetComponent<GridSizeComponent>();
-            gridSize.GetRange(ref m_TempGetRange, in range);
+            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+
+            GridComponent gridSize = Parent.GetComponent<GridComponent>();
+            //gridSystem.GetRange(gridSize.Indices[0], range, ref m_TempGetRange, WorldGridSystem.SortOption.CloseDistance);
 
             ref TRPGActorAttackComponent att = ref Parent.GetComponent<TRPGActorAttackComponent>();
             
             FixedList512Bytes<InstanceID> list = new FixedList512Bytes<InstanceID>();
-            for (int i = 0; i < m_TempGetRange.Length; i++)
+            foreach (var index in gridSystem.GetRange(gridSize.Indices[0], new int3(range, 0, range)))
             {
-                if (PresentationSystem<DefaultPresentationGroup, GridSystem>.System.GetEntitiesAt(m_TempGetRange[i], out var iter))
+                if (gridSystem.TryGetEntitiesAt(index, out var iter))
                 {
-                    foreach (var item in iter)
+                    using (iter)
                     {
-                        if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
-                        else if (!item.IsEnemy(Parent.Idx)) continue;
-                        // TODO : 임시코드
-                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+                        while (iter.MoveNext())
+                        {
+                            var item = iter.Current;
 
-                        list.Add(item);
+                            if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+                            else if (!item.IsEnemy(Parent.Idx)) continue;
+                            // TODO : 임시코드
+                            else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+                            list.Add(item);
+                        }
                     }
                 }
             }
+
+            //for (int i = 0; i < m_TempGetRange.Length; i++)
+            //{
+            //    if (gridSystem.TryGetEntitiesAt(m_TempGetRange[i], out var iter))
+            //    {
+            //        using (iter)
+            //        {
+            //            while (iter.MoveNext())
+            //            {
+            //                var item = iter.Current;
+
+            //                if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+            //                else if (!item.IsEnemy(Parent.Idx)) continue;
+            //                // TODO : 임시코드
+            //                else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+            //                list.Add(item);
+            //            }
+            //        }
+            //    }
+            //}
             
-            if (sort)
-            {
-                IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSize.IndexToPosition(gridSize.positions[0].index)));
+            //if (sort)
+            //{
+            //    IOrderedEnumerable<InstanceID> sorted = list.ToArray().OrderBy(Order, new Comparer(gridSystem.IndexToPosition(gridSize.Indices[0])));
                 
-                att.InitializeTargets(sorted.ToFixedList512());
-            }
-            else
+            //    att.InitializeTargets(sorted.ToFixedList512());
+            //}
+            //else
             {
                 att.InitializeTargets(list);
             }
@@ -135,12 +156,12 @@ namespace Syadeu.Presentation.TurnTable
             ref TRPGActorAttackComponent attackComponent = ref Parent.GetComponent<TRPGActorAttackComponent>();
 
             ActorAttackEvent ev = new ActorAttackEvent(attackComponent.GetTarget().GetEntity<IEntity>());
-            ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+            ev.ScheduleEvent(Parent.ToEntity<ActorEntity>());
         }
         public void Attack(Entity<ActorEntity> target)
         {
             ActorAttackEvent ev = new ActorAttackEvent(target);
-            ev.ScheduleEvent(Parent.As<IEntityData, ActorEntity>());
+            ev.ScheduleEvent(Parent.ToEntity<ActorEntity>());
         }
         public void Attack(int index)
         {

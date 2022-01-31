@@ -29,7 +29,7 @@ namespace Syadeu.Collections
         }
 
         public bool IsEmpty() => m_Hash.Equals(Hash.Empty);
-        public bool IsValid() => !IsEmpty();
+        //public bool IsValid() => !IsEmpty();
 
         public bool Equals(IFixedReference other) => m_Hash.Equals(other.Hash);
         public bool Equals(FixedReference other) => m_Hash.Equals(other.m_Hash);
@@ -46,7 +46,7 @@ namespace Syadeu.Collections
         }
 
         public bool IsEmpty() => m_Hash.Equals(Hash.Empty);
-        public bool IsValid() => !IsEmpty();
+        //public bool IsValid() => !IsEmpty();
 
         public bool Equals(IFixedReference other) => m_Hash.Equals(other.Hash);
         public bool Equals(FixedReference<T> other) => m_Hash.Equals(other.m_Hash);

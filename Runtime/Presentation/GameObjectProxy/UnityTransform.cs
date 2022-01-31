@@ -23,6 +23,7 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Proxy
 {
+    [Obsolete("", true)]
     /// <summary>
     /// <see cref="EntitySystem.Convert(GameObject)"/>를 통해 컨버트된 <see cref="Entity{T}"/>의 트랜스폼입니다.
     /// </summary>
@@ -49,7 +50,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.position = value;
-                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public quaternion rotation
@@ -64,7 +65,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.rotation = value;
-                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 eulerAngles
@@ -79,7 +80,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.eulerAngles = value;
-                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
         public float3 scale
@@ -94,7 +95,7 @@ namespace Syadeu.Presentation.Proxy
                 if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
                 provider.localScale = value;
-                PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
+                //PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnTransformChangedEvent.GetEvent(this));
             }
         }
 
@@ -162,7 +163,7 @@ namespace Syadeu.Presentation.Proxy
         {
             if (provider == null) throw new CoreSystemException(CoreSystemExceptionFlag.Proxy, "Cannot access this transform because it is destroyed.");
 
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyObject(entity.Idx);
+            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyEntity(entity.Idx);
         }
         public bool Equals(ITransform other)
         {

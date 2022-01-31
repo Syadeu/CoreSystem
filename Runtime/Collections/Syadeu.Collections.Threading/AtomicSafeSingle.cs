@@ -13,26 +13,18 @@
 // limitations under the License.
 
 using System;
-using System.Threading;
 
 namespace Syadeu.Collections.Threading
 {
     public struct AtomicSafeSingle : IEquatable<AtomicSafeSingle>
     {
-        private float m_Value;
+        private volatile float m_Value;
 
         public float Value
         {
-            get
-            {
-                return m_Value;
-            }
-            set
-            {
-                Interlocked.Exchange(ref m_Value, value);
-            }
+            get => m_Value;
+            set => m_Value = value;
         }
-
         public AtomicSafeSingle(float value)
         {
             m_Value = value;

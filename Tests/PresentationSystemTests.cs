@@ -4,8 +4,10 @@ using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Grid;
 using System;
 using System.Collections;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
@@ -15,7 +17,7 @@ public class PresentationSystemTests
 {
     internal sealed class PresentationTestGroup : PresentationGroupEntity
     {
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 typeof(TestSystem),
@@ -144,10 +146,10 @@ public class PresentationSystemTests
         yield return PresentationSystem<DefaultPresentationGroup, EntitySystem>.GetAwaiter();
 
         TypeInfo
-            a0 = ComponentType<TestComponent_1>.TypeInfo,
-            a1 = ComponentType<TestComponent_2>.TypeInfo,
-            a2 = ComponentType<TestComponent_3>.TypeInfo,
-            a3 = ComponentType<TestComponent_4>.TypeInfo;
+            a0 = TypeStatic<TestComponent_1>.TypeInfo,
+            a1 = TypeStatic<TestComponent_2>.TypeInfo,
+            a2 = TypeStatic<TestComponent_3>.TypeInfo,
+            a3 = TypeStatic<TestComponent_4>.TypeInfo;
 
         ComponentTypeQuery
             query1 = ComponentTypeQuery.Combine(a0, a1),
@@ -194,5 +196,96 @@ public class PresentationSystemTests
         //Debug.Log($"{query3.GetHashCode()} == {query4.GetHashCode()} ? {query3.GetHashCode() == query4.GetHashCode()}");
         //Debug.Log($"{query5.GetHashCode()} == {query6.GetHashCode()} ? {query5.GetHashCode() == query6.GetHashCode()}");
         //Debug.Log($"{query7.GetHashCode()} == {query1.GetHashCode()} ? {query7.GetHashCode() == query1.GetHashCode()}");
+    }
+
+    [Test]
+    public void CommonTypeInfo()
+    {
+        Log<TypeInfo>();
+
+        void Log<T>() where T : struct
+        {
+            Debug.Log($"{TypeHelper.TypeOf<T>.Type.FullName} = {UnsafeUtility.SizeOf<T>()} : {UnsafeUtility.AlignOf<T>()}");
+        }
+    }
+
+    [Test]
+    public void CheckSumTest()
+    {
+        byte
+            a = 0x84,
+            b = 0xF2,
+            c = 0x10,
+            d = 0x55
+
+            ;
+        CheckSum checkSum = CheckSum.CalculateBytes(new byte[] { a, b, c, d });
+        //$"{checkSum} : {Convert.ToString(checkSum, toBase: 2)}".ToLog();
+
+        Assert.AreEqual(0x25, checkSum);
+
+        bool check2 = checkSum.Validate(new byte[] { a, b, c, d });
+        Assert.IsTrue(check2); 
+        //Assert.AreEqual(check2, 0);
+    }
+
+    [Test]
+    public void BitArray32Test()
+    {
+        BitArray32 bits = 1483; // 10111001011
+        Debug.Log(bits);
+
+        bits.SetValue(0, 0xF, 4);
+        Debug.Log(bits);        // 10111001111 : 1487
+        Assert.AreEqual(1487, bits.Value);
+
+        try
+        {
+            bits.SetValue(0, 0xF, 3);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+
+        bits.SetValue(0, 0, 4);
+        Debug.Log(bits);        // 10111000000 : 1472
+        Assert.AreEqual(1472, bits.Value);
+    }
+    [Test]
+    public void BitArray64Test()
+    {
+        BitArray64 bits = 14532445787463;
+        // 11010011011110011001010001001101010101000111
+        // 
+        Debug.Log(bits);
+        // 10011001010001001101010101000111:110100110111
+
+        bits.SetValue(0, 0xF, 4);
+        Debug.Log(bits);
+        // 11010011011110011001010001001101010101001111 : 14532445787471
+        // 10011001010001001101010101000111110100110111
+
+        Assert.AreEqual(14532445787471, bits.Value);
+
+        try
+        {
+            bits.SetValue(0, 0xF, 3);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+
+        bits.SetValue(0, 0, 4);
+        Debug.Log(bits);
+        // 11010011011110011001010001001101010101000000 : 14532445787456
+        Assert.AreEqual(14532445787456, bits.Value);
     }
 }

@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Syadeu.Mono;
 using System;
-using System.Runtime.InteropServices;
+using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Collections
 {
     [Serializable]
-    public readonly struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
+    public struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
     {
         public static readonly PrefabReference Invalid = new PrefabReference(-1);
         public static readonly PrefabReference None = new PrefabReference(-2);
 
-        private readonly long m_Idx;
+        [UnityEngine.SerializeField] private long m_Idx;
 
         public long Index => m_Idx;
         public UnityEngine.Object Asset
@@ -59,13 +62,24 @@ namespace Syadeu.Collections
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
+
+        [Obsolete]
+        public UnityEngine.Object LoadAsset() => GetObjectSetting().LoadAsset();
         public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
         public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
-        public bool IsNone() => Equals(None);
+        public bool IsNone() => Equals(None) || Equals(Invalid);
+        [NotBurstCompatible]
         public bool IsValid() => !Equals(Invalid) && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        [NotBurstCompatible]
+        public override string ToString()
+        {
+            if (IsNone() || !IsValid()) return "Prefab(Invalid)";
+
+            return $"Prefab({m_Idx}: {(Asset == null ? "NotLoaded" : Asset.name)})";
+        }
 
         public static PrefabReference Find(string name)
         {
@@ -92,13 +106,13 @@ namespace Syadeu.Collections
         public static implicit operator PrefabList.ObjectSetting(PrefabReference a) => a.GetObjectSetting();
     }
     [Serializable]
-    public readonly struct PrefabReference<T> : IPrefabReference<T>, IEquatable<PrefabReference<T>>
+    public struct PrefabReference<T> : IPrefabReference<T>, IEquatable<PrefabReference<T>>
         where T : UnityEngine.Object
     {
         public static readonly PrefabReference<T> Invalid = new PrefabReference<T>(-1);
         public static readonly PrefabReference<T> None = new PrefabReference<T>(-2);
 
-        private readonly long m_Idx;
+        [UnityEngine.SerializeField] private long m_Idx;
 
         public long Index => m_Idx;
 
@@ -144,6 +158,9 @@ namespace Syadeu.Collections
             if (!IsValid() || Equals(None)) return null;
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
+
+        [Obsolete]
+        public T LoadAsset() => (T)GetObjectSetting().LoadAsset();
         AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
         AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>();
         public AsyncOperationHandle<T> LoadAssetAsync()
@@ -162,11 +179,28 @@ namespace Syadeu.Collections
         public AsyncOperationHandle LoadAssetUntypedAsync() => GetObjectSetting().LoadAssetAsync();
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
 
-        public AsyncOperationHandle<UnityEngine.GameObject> InstantiateAysnc(in float3 pos, in quaternion rot, in UnityEngine.Transform parent) => GetObjectSetting().InstantiateAsync(in pos, in rot, in parent);
+        public AsyncOperationHandle<UnityEngine.GameObject> InstantiateAysnc(in float3 pos, in quaternion rot, in UnityEngine.Transform parent)
+        {
+            PrefabList.ObjectSetting objSetting = GetObjectSetting();
+#if DEBUG_MODE
+            if (objSetting == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Core,
+                    $"Cannot instantiate object(Prefab Index: {m_Idx}).");
+            }
+#endif
+            return objSetting.InstantiateAsync(in pos, in rot, in parent);
+        }
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
         public bool IsNone() => Equals(None);
         public bool IsValid() => !Equals(Invalid) && 0 <= m_Idx && m_Idx < PrefabList.Instance.ObjectSettings.Count;
+        public override string ToString()
+        {
+            if (IsNone() || !IsValid()) return "Prefab(Invalid)";
+
+            return $"Prefab({m_Idx}: {Asset.name})";
+        }
 
         public static PrefabReference<T> Find(string name)
         {

@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.Actions
             if (m_If.Length == 0 && m_IfTarget.Length == 0) return false;
             return true;
         }
-        public bool Predicate(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Predicate(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable()) return true;
 
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Actions
 
             return false;
         }
-        public bool Execute(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Execute(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable())
             {
@@ -82,7 +82,7 @@ namespace Syadeu.Presentation.Actions
 
             return false;
         }
-        public bool Schedule(EntityData<IEntityData> entity, EntityData<IEntityData> target)
+        public bool Schedule(Entity<IObject> entity, Entity<IObject> target)
         {
             if (!IsExecutable())
             {

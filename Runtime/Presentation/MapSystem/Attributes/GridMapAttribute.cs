@@ -29,6 +29,7 @@ namespace Syadeu.Presentation.Map
 {
     [DisplayName("Attribute: Grid map")]
     [Description("엔티티가 생성되면 자동으로 입력한 크기의 그리드를 생성합니다.")]
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public sealed class GridMapAttribute : SceneDataAttributeBase
     {
         [Serializable]
@@ -523,27 +524,28 @@ namespace Syadeu.Presentation.Map
 #endregion
     }
     [Preserve]
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal sealed class GridMapProcessor : AttributeProcessor<GridMapAttribute>
     {
-        private GridSystem m_GridSystem;
+        //private GridSystem m_GridSystem;
 
         protected override void OnInitialize()
         {
-            RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
+            //RequestSystem<DefaultPresentationGroup, GridSystem>(Bind);
         }
-        private void Bind(GridSystem other)
-        {
-            m_GridSystem = other;
-        }
+        //private void Bind(GridSystem other)
+        //{
+        //    //m_GridSystem = other;
+        //}
 
-        protected override void OnCreated(GridMapAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnCreated(GridMapAttribute attribute, Entity<IEntityData> entity)
         {
             attribute.CreateGrid();
-            m_GridSystem.RegisterGrid(attribute);
+            //m_GridSystem.RegisterGrid(attribute);
         }
-        protected override void OnDestroy(GridMapAttribute attribute, EntityData<IEntityData> entity)
+        protected override void OnDestroy(GridMapAttribute attribute, Entity<IEntityData> entity)
         {
-            m_GridSystem.UnregisterGrid(attribute);
+            //m_GridSystem.UnregisterGrid(attribute);
             attribute.DestroyGrid();
         }
     }

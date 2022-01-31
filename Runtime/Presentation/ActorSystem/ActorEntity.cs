@@ -38,27 +38,21 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 2, PropertyName = "OnDestroy")]
         internal Reference<TriggerAction>[] m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
 
-        [JsonIgnore] public EntityData<IEntityData> Parent => EntityData<IEntityData>.GetEntityWithoutCheck(Idx);
+        [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
 
         [Preserve]
         static void AOTCodeGeneration()
         {
-            AotHelper.EnsureType<Instance<ActorEntity>>();
-            AotHelper.EnsureType<InstanceArray<ActorEntity>>();
-            AotHelper.EnsureList<Instance<ActorEntity>>();
-
             AotHelper.EnsureType<Reference<ActorEntity>>();
             AotHelper.EnsureList<Reference<ActorEntity>>();
             AotHelper.EnsureType<Entity<ActorEntity>>();
             AotHelper.EnsureList<Entity<ActorEntity>>();
-            AotHelper.EnsureType<EntityData<ActorEntity>>();
-            AotHelper.EnsureList<EntityData<ActorEntity>>();
             AotHelper.EnsureType<ActorEntity>();
             AotHelper.EnsureList<ActorEntity>();
         }
     }
-    internal sealed class ActorProccesor : EntityDataProcessor<ActorEntity>
+    internal sealed class ActorProccesor : EntityProcessor<ActorEntity>
     {
         protected override void OnCreated(ActorEntity actor)
         {
@@ -89,7 +83,7 @@ namespace Syadeu.Presentation.Actor
                     $"Actor({actor.Name}) doesn\'t have any faction. This is not allowed.");
             }
 
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
+            Entity<IObject> entity = Entity<IObject>.GetEntityWithoutCheck(actor.Idx);
 
             entity.AddComponent<ActorFactionComponent>();
             ref var com = ref entity.GetComponent<ActorFactionComponent>();
@@ -105,7 +99,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy(ActorEntity actor)
         {
-            EntityData<IEntityData> entity = EntityData<IEntityData>.GetEntityWithoutCheck(actor.Idx);
+            Entity<IObject> entity = Entity<IObject>.GetEntityWithoutCheck(actor.Idx);
 
             actor.m_OnDestroy.Execute(entity);
         }

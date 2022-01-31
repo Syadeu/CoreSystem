@@ -48,12 +48,14 @@ namespace SyadeuEditor.Presentation
                 target.Action = (long)temp;
             }
 
-            EditorGUI.BeginChangeCheck();
-            Drawer.OnGUI();
-            if (EditorGUI.EndChangeCheck())
+            using (var change = new EditorGUI.ChangeCheckScope())
             {
-                ulong temp = m_Reflector.Action.Hash;
-                target.Action = (long)temp;
+                Drawer.OnGUI();
+                if (change.changed)
+                {
+                    ulong temp = m_Reflector.Action.Hash;
+                    target.Action = (long)temp;
+                }
             }
         }
     }

@@ -23,6 +23,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     internal sealed class ObstacleLayerModule : PresentationSystemModule<GridSystem>
     {
         private NativeHashMap<GridLayer, UnsafeHashSet<int>> m_Layers;
@@ -74,7 +75,7 @@ namespace Syadeu.Presentation.Map
                 return GridLayer.Empty;
             }
 
-            int hash = unchecked(index * 397 ^ m_Grid.m_HashCode);
+            int hash = unchecked(index * 397 ^ m_Grid.GetHashCode());
             bool inverse = m_Grid.m_Layers[index].m_Inverse;
 
             return new GridLayer(hash, inverse);

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
     public interface IActorWeaponEquipEvent : IActorEvent
     {
         ActorWeaponEquipOptions EquipOptions { get; }
-        Instance<ActorWeaponData> Weapon { get; }
+        Entity<ActorWeaponData> Weapon { get; }
     }
 }

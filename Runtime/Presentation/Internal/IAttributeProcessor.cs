@@ -16,9 +16,11 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
+using System;
 
 namespace Syadeu.Presentation.Internal
 {
+    [Obsolete("Deprecated", true)]
     internal interface IAttributeProcessor : IProcessor
     {
         void OnCreated(IAttribute attribute, EntityData<IEntityData> entity);

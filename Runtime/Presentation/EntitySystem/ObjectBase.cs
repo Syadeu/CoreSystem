@@ -32,8 +32,6 @@ namespace Syadeu.Presentation
     {
         const string c_NameBase = "New {0}";
 
-        [JsonIgnore] internal int m_HashCode;
-
         /// <summary>
         /// 이 오브젝트의 이름입니다.
         /// </summary>
@@ -103,7 +101,7 @@ namespace Syadeu.Presentation
         /// <summary>
         /// Pool 로 돌아갈 때 실행됩니다.
         /// </summary>
-        internal virtual void InternalReserve()
+        internal virtual void InternalOnReserve()
         {
             OnReserve();
             m_Reserved = true;
@@ -142,10 +140,26 @@ namespace Syadeu.Presentation
         }
         public override sealed int GetHashCode()
         {
-            return m_HashCode;
+            ulong hash = Idx.Hash;
+            return unchecked((int)hash);
         }
 
         public bool Equals(IObject other) => Hash.Equals(other.Hash);
         public bool Equals(ObjectBase other) => Hash.Equals(other.Hash);
+
+        #region Internal
+
+#if UNITY_EDITOR
+        internal string GetScriptPath()
+        {
+            return InternalScriptPath();
+        }
+        private static string InternalScriptPath([System.Runtime.CompilerServices.CallerFilePath] string filePath = "")
+        {
+            return filePath;
+        }
+#endif
+
+        #endregion
     }
 }

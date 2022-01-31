@@ -29,11 +29,11 @@ namespace Syadeu.Presentation.Map
             {
                 //MapDataEntity mapData = m_CreatedMapData[i].Object;
                 //mapData.DestroyChildOnDestroy = DestroyChildOnDestroy;
-                m_CreatedMapData[i].Destroy();
+                m_CreatedMapData[i].GetEntity().Destroy();
             }
             for (int i = 0; i < m_CreatedTerrains.Length; i++)
             {
-                m_CreatedTerrains[i].Destroy();
+                m_CreatedTerrains[i].GetEntity().Destroy();
             }
         }
     }

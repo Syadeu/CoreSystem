@@ -30,6 +30,7 @@ namespace Syadeu.Presentation
 
         public void ExecuteDisposeAll()
         {
+            EntityProcessorModule processorModule = System.GetModule<EntityProcessorModule>();
             foreach (var item in m_ReservedObjects)
             {
                 int count = item.Value.Count;
@@ -37,21 +38,19 @@ namespace Syadeu.Presentation
                 {
                     ObjectBase targetObject = (ObjectBase)item.Value.Pop();
 
-                    targetObject.InternalOnDestroy();
-                    ((IDisposable)targetObject).Dispose();
+                    processorModule.ProcessDisposal(targetObject);
+                    //targetObject.InternalOnDestroy();
+                    //((IDisposable)targetObject).Dispose();
                 }
             }
         }
 
         public void InsertReservedObject(IObject obj)
         {
-            ObjectBase temp = (ObjectBase)obj;
-            temp.InternalReserve();
-
-            if (obj is ConvertedEntity)
-            {
-                return;
-            }
+            //if (obj is ConvertedEntity)
+            //{
+            //    return;
+            //}
 
             if (!m_ReservedObjects.TryGetValue(obj.Hash, out var list))
             {
@@ -68,14 +67,12 @@ namespace Syadeu.Presentation
             if (TryGetObject(original.Hash, out IObject obj))
             {
                 ObjectBase temp = (ObjectBase)obj;
-                temp.m_HashCode = System.CreateHashCode();
                 temp.InternalInitialize();
 
                 return temp;
             }
 
             var clone = (ObjectBase)original.Clone();
-            clone.m_HashCode = System.CreateHashCode();
 
             return clone;
         }

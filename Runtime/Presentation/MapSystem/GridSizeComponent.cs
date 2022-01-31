@@ -23,6 +23,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public struct GridSizeComponent : IEntityComponent, IDisposable
     {
         //internal EntityData<IEntityData> m_Parent;

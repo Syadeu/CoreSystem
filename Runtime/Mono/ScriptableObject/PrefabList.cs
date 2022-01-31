@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -27,7 +31,7 @@ using UnityEditor;
 
 namespace Syadeu.Mono
 {
-    [PreferBinarySerialization]
+    [PreferBinarySerialization][GuidMarker] 
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]
@@ -41,11 +45,10 @@ namespace Syadeu.Mono
             [NonSerialized] public GameObject m_Prefab = null;
 
             [NonSerialized] private int m_InstantateCount = 0;
-            [NonSerialized] private AsyncOperationHandle m_LoadHandle = default;
-            [NonSerialized] private UnityEngine.Object m_LoadedObject = null;
+            //[NonSerialized] private UnityEngine.Object m_LoadedObject = null;
 
             public string Name => m_Name;
-            public UnityEngine.Object LoadedObject => m_LoadedObject;
+            public UnityEngine.Object LoadedObject => m_RefPrefab.Asset;
 
             public ObjectSetting(string name, AssetReference refPrefab, bool isWorldUI)
             {
@@ -55,13 +58,25 @@ namespace Syadeu.Mono
             }
 
             #region Resource Control
+
+            [Obsolete]
+            public UnityEngine.Object LoadAsset()
+            {
+                if (m_RefPrefab.Asset == null)
+                {
+                    var temp = m_RefPrefab.LoadAsset<UnityEngine.Object>();
+                    //m_LoadedObject = temp.Result;
+                }
+
+                return m_RefPrefab.Asset;
+            }
             public AsyncOperationHandle LoadAssetAsync()
             {
-                if (m_LoadHandle.IsValid())
+                if (m_RefPrefab.OperationHandle.IsValid())
                 {
-                    return m_LoadHandle;
+                    return m_RefPrefab.OperationHandle;
                 }
-                if (m_LoadedObject != null)
+                if (m_RefPrefab.Asset != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} already loaded. This is not allowed.");
 
@@ -74,25 +89,24 @@ namespace Syadeu.Mono
                 }
 
                 var handle = m_RefPrefab.LoadAssetAsync<UnityEngine.Object>();
-                handle.Completed += Handle_Completed;
+                //handle.Completed += Handle_Completed;
 
-                m_LoadHandle = handle;
                 return handle;
             }
-            private void Handle_Completed(AsyncOperationHandle<UnityEngine.Object> obj)
-            {
-                m_LoadedObject = obj.Result;
-            }
+            //private void Handle_Completed(AsyncOperationHandle<UnityEngine.Object> obj)
+            //{
+            //    m_LoadedObject = obj.Result;
+            //}
             public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object
             {
-                if (m_LoadHandle.IsValid())
-                {
-                    return m_LoadHandle.Convert<T>();
-                }
-                else if (m_LoadedObject != null)
+                if (m_RefPrefab.Asset != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, "already loaded");
                     return default(AsyncOperationHandle<T>);
+                }
+                else if (m_RefPrefab.OperationHandle.IsValid())
+                {
+                    return m_RefPrefab.OperationHandle.Convert<T>();
                 }
                 else if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
@@ -125,20 +139,17 @@ namespace Syadeu.Mono
                     throw;
                 }
 
-                handle.Completed += this.AsynHandleOnCompleted;
+                //handle.Completed += this.AsynHandleOnCompleted;
 
-                m_LoadHandle = handle;
                 return handle;
             }
-            private void AsynHandleOnCompleted<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
-            {
-                m_LoadedObject = obj.Result;
+            //private void AsynHandleOnCompleted<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
+            //{
+            //    m_LoadedObject = obj.Result;
 
-                m_LoadHandle = default;
-
-                CoreSystem.Logger.Log(Channel.Data,
-                    $"Loaded asset {m_Name}");
-            }
+            //    CoreSystem.Logger.Log(Channel.Data,
+            //        $"Loaded asset {m_Name}");
+            //}
 
             public void UnloadAsset()
             {
@@ -153,7 +164,7 @@ namespace Syadeu.Mono
                         $"{m_Name} is not fully released but trying to unload.");
                 }
 
-                m_LoadedObject = null;
+                //m_LoadedObject = null;
                 m_RefPrefab.ReleaseAsset();
 
                 CoreSystem.Logger.Log(Channel.Data,
@@ -181,7 +192,7 @@ namespace Syadeu.Mono
 
                 if (m_InstantateCount == 0)
                 {
-                    m_LoadedObject = null;
+                    //m_LoadedObject = null;
                     UnloadAsset();
                 }
             }
@@ -190,7 +201,34 @@ namespace Syadeu.Mono
         }
 
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
+        private Dictionary<UnityEngine.Object, int> m_PrefabHashMap;
 
         public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
+
+        public override void OnInitialize()
+        {
+            ReInitialize();
+        }
+        public void ReInitialize()
+        {
+            m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
+            for (int i = 0; i < m_ObjectSettings.Count; i++)
+            {
+                var obj = m_ObjectSettings[i].LoadAsset();
+                if (obj == null) continue;
+
+                m_PrefabHashMap.Add(obj, i);
+            }
+        }
+
+        public ObjectSetting GetSettingWithObject(UnityEngine.Object obj)
+        {
+            if (!m_PrefabHashMap.TryGetValue(obj, out int index))
+            {
+                return null;
+            }
+
+            return m_ObjectSettings[index];
+        }
     }
 }

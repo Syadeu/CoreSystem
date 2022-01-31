@@ -30,15 +30,15 @@ namespace Syadeu.Presentation
     /// </remarks>
     /// <typeparam name="TSystem"></typeparam>
     public abstract class PresentationSystemModule<TSystem> : PresentationSystemModule
-        where TSystem : PresentationSystemEntity
+        where TSystem : IPresentationSystem
     {
         protected new TSystem System => (TSystem)m_System;
     }
     public abstract class PresentationSystemModule : IDisposable
     {
-        internal PresentationSystemEntity m_System;
+        internal IPresentationSystem m_System;
 
-        protected PresentationSystemEntity System => m_System;
+        protected IPresentationSystem System => m_System;
 
         internal void InternalOnInitialize() => OnInitialize();
         internal void InternalOnInitializeAsync() => OnInitializeAsync();
@@ -52,6 +52,8 @@ namespace Syadeu.Presentation
 
         internal void InternalTransformPresentation() => TransformPresentation();
         internal void InternalAfterTransformPresentation() => AfterTransformPresentation();
+
+        internal void InternalOnShutDown() => OnShutDown();
 
         internal PresentationSystemModule()
         {
@@ -85,14 +87,14 @@ namespace Syadeu.Presentation
         protected virtual void TransformPresentation() { }
         protected virtual void AfterTransformPresentation() { }
 
+        protected virtual void OnShutDown() { }
         protected virtual void OnDispose() { }
 
         /// <summary>
-        /// 시스템을 요청합니다. <typeparamref name="TGroup"/> 은 요청할 <typeparamref name="TSystem"/>이 속한 그룹입니다.
+        /// <inheritdoc cref="PresentationManager.RegisterRequest{TGroup, TSystem}(Action{TSystem}, string)"/>
         /// </summary>
         /// <remarks>
-        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.<br/>
-        /// 기본 시스템 그룹은 <seealso cref="DefaultPresentationGroup"/> 입니다.
+        /// <seealso cref="OnInitialize"/> 혹은 <seealso cref="OnInitializeAsync"/> 에서만 수행되어야합니다.
         /// </remarks>
         /// <typeparam name="TGroup"></typeparam>
         /// <typeparam name="TSystem"></typeparam>

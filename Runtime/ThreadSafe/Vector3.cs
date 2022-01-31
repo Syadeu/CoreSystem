@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.ThreadSafe
 {
+    [System.Obsolete("Deprecated", true)]
     [Serializable]
     public struct Vector3 : IEqualityComparer<Vector3>, IEqualityComparer, IEquatable<Vector3>
     {

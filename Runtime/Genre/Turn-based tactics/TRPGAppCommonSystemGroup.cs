@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.TurnTable
     {
         public override Type DependenceGroup => TypeHelper.TypeOf<DefaultPresentationGroup>.Type;
 
-        public override void Register()
+        protected override void Register()
         {
             RegisterSystem(
                 TypeHelper.TypeOf<TRPGAppIntiailzeSystem>.Type,

@@ -10,13 +10,13 @@ using Syadeu.Internal;
 namespace Syadeu.Presentation.MotionMatching
 {
     [DisplayName("PredicateAction: QueryUserTags MxMAnimator")]
-    [ReflectionDescription("현재 해당 유저 태그가 있는 애니메이션을 재생 중이면 True 를 반환합니다.")]
+    [Description("현재 해당 유저 태그가 있는 애니메이션을 재생 중이면 True 를 반환합니다.")]
     public sealed class QueryUserTagsMxMAnimatorAction : TriggerPredicateAction
     {
         [JsonProperty(Order = 0, PropertyName = "Tags")]
         private MxM.EUserTags m_Tags = MxM.EUserTags.None;
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             var anim = animator.AnimatorComponent.GetComponent<MxM.MxMAnimator>();

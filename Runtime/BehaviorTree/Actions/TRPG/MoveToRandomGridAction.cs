@@ -11,14 +11,13 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Presentation.Grid;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class MoveToRandomGridAction : ActionBase
     {
-        [SerializeField] private int m_DesireRange = 1;
-
         public override TaskStatus OnUpdate()
         {
 #if DEBUG_MODE
@@ -40,29 +39,23 @@ namespace Syadeu.Presentation.BehaviorTree
                     $"{Entity.RawName} doesn\'t have any {nameof(TurnPlayerComponent)}.");
                 return TaskStatus.Failure;
             }
-            else if (!Entity.HasComponent<GridSizeComponent>())
+            else if (!Entity.HasComponent<GridComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"{Entity.RawName} doesn\'t have any {nameof(GridSizeComponent)}.");
+                    $"{Entity.RawName} doesn\'t have any {nameof(GridComponent)}.");
                 return TaskStatus.Failure;
             }
 #endif
-            GridSizeComponent gridSize = Entity.GetComponent<GridSizeComponent>();
+            WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
+            TRPGGridSystem trpgGridSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System;
+            GridComponent gridSize = Entity.GetComponent<GridComponent>();
 
-            FixedList4096Bytes<int> range = new FixedList4096Bytes<int>();
-            gridSize.GetRange(ref range, in m_DesireRange);
+            FixedList4096Bytes<GridIndex> range = new FixedList4096Bytes<GridIndex>();
+            trpgGridSystem.GetMoveablePositions(Entity.Idx, ref range);
 
-            var grid = PresentationSystem<DefaultPresentationGroup, GridSystem>.System;
-            for (int i = 0; i < gridSize.positions.Length; i++)
+            for (int i = 0; i < gridSize.Indices.Length; i++)
             {
-                range.Remove(gridSize.positions[i].index);
-            }
-            for (int i = range.Length - 1; i >= 0; i--)
-            {
-                if (grid.HasEntityAt(range[i]))
-                {
-                    range.RemoveAt(i);
-                }
+                range.Remove(gridSize.Indices[i]);
             }
             if (range.Length == 0)
             {
@@ -72,11 +65,10 @@ namespace Syadeu.Presentation.BehaviorTree
             }
 
             int rnd = Random.Range(0, range.Length);
-            GridPath64 tempPath = new GridPath64();
-            gridSize.GetPath64(range[rnd], ref tempPath, avoidEntity: true);
+            //FixedList4096Bytes<GridIndex> tempPath = new FixedList4096Bytes<GridIndex>();
+            //gridSystem.GetPath(Entity.Idx, range[rnd], ref tempPath);
 
-            PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System
-                .MoveToCell(Entity, tempPath, new ActorMoveEvent(Entity.As<IEntity, IEntityData>(), 1));
+            trpgGridSystem.MoveToCell(Entity.Idx, range[rnd]);
 
             return TaskStatus.Success;
         }

@@ -70,14 +70,14 @@ namespace Syadeu.Presentation.BehaviorTree
             {
                 default:
                 case AttackOptions.Closest:
-                    attProvider.GetObject().Attack(att.GetTargetAt(0).GetEntity<ActorEntity>());
+                    attProvider.Target.Attack(att.GetTargetAt(0).GetEntity<ActorEntity>());
                     break;
                 case AttackOptions.Distant:
-                    attProvider.GetObject().Attack(att.GetTargetAt(att.TargetCount - 1).GetEntity<ActorEntity>());
+                    attProvider.Target.Attack(att.GetTargetAt(att.TargetCount - 1).GetEntity<ActorEntity>());
                     break;
                 case AttackOptions.Middle:
                     int index = att.TargetCount / 2;
-                    attProvider.GetObject().Attack(att.GetTargetAt(index).GetEntity<ActorEntity>());
+                    attProvider.Target.Attack(att.GetTargetAt(index).GetEntity<ActorEntity>());
                     break;
             }
 

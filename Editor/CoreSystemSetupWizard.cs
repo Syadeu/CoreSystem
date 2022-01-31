@@ -8,6 +8,7 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Render;
 using SyadeuEditor.Presentation;
 using SyadeuEditor.Utilities;
 using System;
@@ -46,15 +47,6 @@ namespace SyadeuEditor
                 CoreSystemMenuItems.CoreSystemSetupWizard();
             }
         }
-        public enum ToolbarNames
-        {
-            General,
-            Scene,
-            Prefab,
-            Test2,
-            Test3,
-            Test4,
-        }
 
         private Texture2D m_EnableTexture;
         private Texture2D m_DisableTexture;
@@ -62,9 +54,7 @@ namespace SyadeuEditor
         GUIStyle titleStyle;
         GUIStyle iconStyle;
 
-        private GeneralMenu m_GeneralMenu;
-        private SceneMenu m_SceneMenu;
-        private PrefabMenu m_PrefabMenu;
+        private SetupWizardMenuItem[] m_MenuItems;
         private Rect m_CopyrightRect = new Rect(175, 475, 245, 20);
 
         private void OnEnable()
@@ -81,18 +71,24 @@ namespace SyadeuEditor
             iconStyle = new GUIStyle();
             iconStyle.alignment = TextAnchor.MiddleCenter;
 
-            m_GeneralMenu = new GeneralMenu();
-            m_SceneMenu = new SceneMenu();
-            m_PrefabMenu = new PrefabMenu();
-            AddSetup(ToolbarNames.General, m_GeneralMenu.Predicate);
-            AddSetup(ToolbarNames.Scene, m_SceneMenu.Predicate);
-            AddSetup(ToolbarNames.Prefab, m_PrefabMenu.Predicate);
+            Type[] menuItemTypes = TypeHelper.GetTypes(t => !t.IsAbstract && TypeHelper.TypeOf<SetupWizardMenuItem>.Type.IsAssignableFrom(t));
+            m_MenuItems = new SetupWizardMenuItem[menuItemTypes.Length];
+            for (int i = 0; i < menuItemTypes.Length; i++)
+            {
+                m_MenuItems[i] = (SetupWizardMenuItem)Activator.CreateInstance(menuItemTypes[i]);
+                m_MenuItems[i].OnInitialize();
+            }
+            Array.Sort(m_MenuItems);
+
+            m_SelectedToolbar = m_MenuItems[0];
 
             CoreSystemSettings.Instance.m_HideSetupWizard = true;
             EditorUtility.SetDirty(CoreSystemSettings.Instance);
         }
         private void OnGUI()
         {
+            const string c_Copyrights = "Copyright 2021 Syadeu. All rights reserved.";
+
             GUILayout.Space(20);
             EditorUtilities.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
@@ -105,35 +101,17 @@ namespace SyadeuEditor
 
             using (new EditorUtilities.BoxBlock(Color.black))
             {
-                switch ((ToolbarNames)m_SelectedToolbar)
-                {
-                    case ToolbarNames.General:
-                        m_GeneralMenu.OnGUI();
-                        break;
-                    case ToolbarNames.Scene:
-                        m_SceneMenu.OnGUI();
-                        break;
-                    case ToolbarNames.Prefab:
-                        m_PrefabMenu.OnGUI();
-                        break;
-                    default:
-                        break;
-                }
+                m_SelectedToolbar.OnGUI();
             }
 
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String("Copyright 2021 Syadeu. All rights reserved.", 11), EditorStyleUtilities.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String(c_Copyrights, 11), EditorStyleUtilities.CenterStyle);
         }
 
-        public ToolbarNames SelectedToolbar => (ToolbarNames)m_SelectedToolbar;
-        private void AddSetup(ToolbarNames toolbar, Func<bool> predictate)
-        {
-            m_IsSetupDone.Add(toolbar, predictate);
-        }
+        public SetupWizardMenuItem SelectedToolbar => m_SelectedToolbar;
 
-        private int m_SelectedToolbar = 0;
+        private SetupWizardMenuItem m_SelectedToolbar;
         #region Toolbar
 
-        private readonly Dictionary<ToolbarNames, Func<bool>> m_IsSetupDone = new Dictionary<ToolbarNames, Func<bool>>();
         private void DrawToolbar()
         {
             const float spacing = 50;
@@ -141,16 +119,9 @@ namespace SyadeuEditor
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
             GUILayout.Space(spacing);
 
-            string[] toolbarNames = Enum.GetNames(typeof(ToolbarNames));
-            for (int i = 0; i < toolbarNames.Length; i++)
+            for (int i = 0; i < m_MenuItems.Length; i++)
             {
-                bool done;
-                if (m_IsSetupDone.ContainsKey((ToolbarNames)i))
-                {
-                    done = m_IsSetupDone[(ToolbarNames)i].Invoke();
-                }
-                else done = true;
-                DrawToolbarButton(i, toolbarNames[i], done);
+                DrawToolbarButton(i, m_MenuItems[i].Name, m_MenuItems[i].Predicate());
             }
 
             GUILayout.Space(spacing);
@@ -163,7 +134,7 @@ namespace SyadeuEditor
                 EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
                 if (GUILayout.Button(name, titleStyle))
                 {
-                    m_SelectedToolbar = i;
+                    m_SelectedToolbar = m_MenuItems[i];
                 }
                 GUILayout.Label(enable ? m_EnableTexture : m_DisableTexture, iconStyle);
                 EditorGUILayout.EndHorizontal();
@@ -172,8 +143,13 @@ namespace SyadeuEditor
         #endregion
 
         #region General Menu
-        private sealed class GeneralMenu
+        private sealed class GeneralMenu : SetupWizardMenuItem
         {
+            public override string Name => "General";
+            public override int Order => -9999;
+
+            private Vector2 m_Scroll = Vector2.zero;
+
             #region Constraints
 
             const string
@@ -302,30 +278,35 @@ namespace SyadeuEditor
                 
                 #endregion
             }
-            public void OnGUI()
+            public override void OnGUI()
             {
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    DrawContraints();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawContraints();
+                    }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawTagManager();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawTagManager();
+                    }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawSettings();
-                }
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawSettings();
+                    }
 
-                using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    DrawUnityAudio();
+                    using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        DrawUnityAudio();
+                    }
+
+                    m_Scroll = scroll.scrollPosition;
                 }
             }
-            public bool Predicate()
+            public override bool Predicate()
             {
                 if (!TagManagerPredicate()) return false;
                 return true;
@@ -641,15 +622,22 @@ namespace SyadeuEditor
         #endregion
 
         #region Scene Menu
-        private sealed class SceneMenu
+        private sealed class SceneMenu : SetupWizardMenuItem
         {
+            public override string Name => "Scene";
+            public override int Order => -9998;
+
             private SerializedObject serializedObject;
 
-            private SerializedProperty 
+            private SerializedProperty
                 masterScene,
                 startScene,
                 loadingScene,
                 sceneList;
+
+            private FieldInfo m_CameraPrefabFieldInfo;
+
+            PrefabReferenceDrawer m_CameraPrefabDrawer;
 
             bool 
                 m_OpenMasterScene = false,
@@ -662,209 +650,237 @@ namespace SyadeuEditor
 
             public SceneMenu()
             {
-                serializedObject = new SerializedObject(SceneList.Instance);
+                serializedObject = new SerializedObject(SceneSettings.Instance);
 
-                masterScene = serializedObject.FindProperty(nameof(SceneList.Instance.MasterScene));
-                startScene = serializedObject.FindProperty(nameof(SceneList.Instance.StartScene));
-                loadingScene = serializedObject.FindProperty(nameof(SceneList.Instance.CustomLoadingScene));
-                sceneList = serializedObject.FindProperty(nameof(SceneList.Instance.Scenes));
+                masterScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.MasterScene));
+                startScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.StartScene));
+                loadingScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.CustomLoadingScene));
+                sceneList = serializedObject.FindProperty(nameof(SceneSettings.Instance.Scenes));
+
+                //m_CameraPrefabField = serializedObject.FindProperty("m_CameraPrefab");
+                m_CameraPrefabFieldInfo = TypeHelper.TypeOf<SceneSettings>.GetFieldInfo("m_CameraPrefab");
+                m_CameraPrefabDrawer = (PrefabReferenceDrawer)ObjectDrawerBase.ToDrawer(SceneSettings.Instance,
+                    m_CameraPrefabFieldInfo, false);
 
                 m_OpenMasterScene = 
-                    string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath) ||
-                    !SceneList.Instance.MasterScene.IsInBuild;
+                    string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath) ||
+                    !SceneSettings.Instance.MasterScene.IsInBuild;
                 m_OpenStartScene = 
-                    string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath) ||
-                    !SceneList.Instance.StartScene.IsInBuild;
+                    string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath) ||
+                    !SceneSettings.Instance.StartScene.IsInBuild;
 
                 m_OpenSceneList = 
                     sceneList.arraySize == 0 ||
-                    !SceneList.Instance.Scenes[0].IsInBuild;
+                    !SceneSettings.Instance.Scenes[0].IsInBuild;
             }
 
-            public void OnGUI()
+            public override void OnGUI()
             {
-                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
-
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath);
-                    
-                    if (m_OpenMasterScene)
-                    {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox("!! Master Scene Not Found !!", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.MasterScene.IsInBuild)
-                            {
-                                EditorGUILayout.HelpBox("Master scene must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Master Scene Found", MessageType.Info);
-                        }
-                        EditorGUILayout.PropertyField(masterScene);
+                    m_Scroll = scroll.scrollPosition;
 
-                        if (!sceneFound)
+                    #region Scenes Selector
+
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath);
+
+                        if (m_OpenMasterScene)
                         {
-                            if (GUILayout.Button("Initialize Master Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Master");
-                                SceneList.Instance.MasterScene = new SceneReference
+                                EditorGUILayout.HelpBox("!! Master Scene Not Found !!", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.MasterScene.IsInBuild)
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                CloseScene(scene);
-
-                                serializedObject.Update();
+                                    EditorGUILayout.HelpBox("Master scene must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Master Scene Found", MessageType.Info);
                             }
-                        }
-                    }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath);
-                    
-                    if (m_OpenStartScene)
-                    {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox("!! Start Scene Not Found !!", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.StartScene.IsInBuild)
-                            {
-                                EditorGUILayout.HelpBox("Start scene must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Start Scene Found", MessageType.Info);
-                        }
-                        EditorGUILayout.PropertyField(startScene);
+                            EditorGUILayout.PropertyField(masterScene);
 
-                        if (!sceneFound)
-                        {
-                            if (GUILayout.Button("Initialize Start Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Start");
-                                SceneList.Instance.StartScene = new SceneReference
+                                if (GUILayout.Button("Initialize Master Scene"))
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                CloseScene(scene);
+                                    Scene scene = CreateNewScene("Master");
+                                    SceneSettings.Instance.MasterScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    CloseScene(scene);
 
-                                serializedObject.Update();
+                                    serializedObject.Update();
+                                }
                             }
                         }
                     }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
-                    bool sceneFound = !string.IsNullOrEmpty(SceneList.Instance.CustomLoadingScene.ScenePath);
-
-                    if (m_OpenCustomLoadingScene)
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
                     {
-                        if (!sceneFound)
-                        {
-                            EditorGUILayout.HelpBox(
-                                "Loading Scene Not Found.\nWill be replaced to default loading screen.", MessageType.Info);
-                        }
-                        else EditorGUILayout.HelpBox("Loading Scene Found", MessageType.Info);
-                        EditorGUILayout.PropertyField(loadingScene);
+                        m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath);
 
-                        if (!sceneFound)
+                        if (m_OpenStartScene)
                         {
-                            if (GUILayout.Button("Initialize Loading Scene"))
+                            if (!sceneFound)
                             {
-                                Scene scene = CreateNewScene("Loading");
-                                SceneList.Instance.CustomLoadingScene = new SceneReference
+                                EditorGUILayout.HelpBox("!! Start Scene Not Found !!", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.StartScene.IsInBuild)
                                 {
-                                    ScenePath = scene.path
-                                };
-                                EditorUtilities.SetDirty(SceneList.Instance);
-                                EditorSceneManager.SetActiveScene(scene);
-
-                                GameObject cameraObj = new GameObject("Loading Camera");
-                                Camera cam = cameraObj.AddComponent<Camera>();
-
-                                GameObject canvasObj = new GameObject("Loading Canvas");
-                                Canvas canvas = canvasObj.AddComponent<Canvas>();
-                                CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
-                                canvasObj.AddComponent<GraphicRaycaster>();
-                                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                                canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-
-                                GameObject BlackScreenObj = new GameObject("BlackScreen");
-                                BlackScreenObj.transform.SetParent(canvasObj.transform);
-                                CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
-                                Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
-                                blackScreenImg.color = Color.black;
-                                blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
-                                blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
-
-                                GameObject loadingObj = new GameObject("Loading Script");
-                                CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
-
-                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
-                                    .SetValue(loadingScr, cam);
-                                TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
-                                    .SetValue(loadingScr, canvasGroup);
-
-                                EditorUtility.SetDirty(loadingScr);
-
-                                EditorSceneManager.SaveScene(scene);
-
-                                CloseScene(scene);
-
-                                serializedObject.Update();
+                                    EditorGUILayout.HelpBox("Start scene must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Start Scene Found", MessageType.Info);
                             }
-                        }
-                    }
-                }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
+                            EditorGUILayout.PropertyField(startScene);
 
-                    if (m_OpenSceneList)
-                    {
-                        if (sceneList.arraySize == 0)
-                        {
-                            EditorGUILayout.HelpBox(
-                                "There\'s no scenes in the list.\n" +
-                                "We need at least one scene for initialize systems", MessageType.Error);
-                        }
-                        else
-                        {
-                            if (!SceneList.Instance.Scenes[0].IsInBuild)
+                            if (!sceneFound)
                             {
-                                EditorGUILayout.HelpBox("Scene index 0 must included in the build", MessageType.Error);
-                            }
-                            else EditorGUILayout.HelpBox("Normal", MessageType.Info);
-                        }
+                                if (GUILayout.Button("Initialize Start Scene"))
+                                {
+                                    Scene scene = CreateNewScene("Start");
+                                    SceneSettings.Instance.StartScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    CloseScene(scene);
 
-                        EditorGUILayout.PropertyField(sceneList);
+                                    serializedObject.Update();
+                                }
+                            }
+                        }
+                    }
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
+                        bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath);
+
+                        if (m_OpenCustomLoadingScene)
+                        {
+                            if (!sceneFound)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "Loading Scene Not Found.\nWill be replaced to default loading screen.", MessageType.Info);
+                            }
+                            else EditorGUILayout.HelpBox("Loading Scene Found", MessageType.Info);
+                            EditorGUILayout.PropertyField(loadingScene);
+
+                            if (!sceneFound)
+                            {
+                                if (GUILayout.Button("Initialize Loading Scene"))
+                                {
+                                    Scene scene = CreateNewScene("Loading");
+                                    SceneSettings.Instance.CustomLoadingScene = new SceneReference
+                                    {
+                                        ScenePath = scene.path
+                                    };
+                                    EditorUtilities.SetDirty(SceneSettings.Instance);
+                                    EditorSceneManager.SetActiveScene(scene);
+
+                                    GameObject cameraObj = new GameObject("Loading Camera");
+                                    Camera cam = cameraObj.AddComponent<Camera>();
+
+                                    GameObject canvasObj = new GameObject("Loading Canvas");
+                                    Canvas canvas = canvasObj.AddComponent<Canvas>();
+                                    CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
+                                    canvasObj.AddComponent<GraphicRaycaster>();
+                                    canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                                    canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+                                    GameObject BlackScreenObj = new GameObject("BlackScreen");
+                                    BlackScreenObj.transform.SetParent(canvasObj.transform);
+                                    CanvasGroup canvasGroup = BlackScreenObj.AddComponent<CanvasGroup>();
+                                    Image blackScreenImg = BlackScreenObj.AddComponent<Image>();
+                                    blackScreenImg.color = Color.black;
+                                    blackScreenImg.rectTransform.sizeDelta = new Vector2(800, 600);
+                                    blackScreenImg.rectTransform.anchoredPosition = Vector2.zero;
+
+                                    GameObject loadingObj = new GameObject("Loading Script");
+                                    CustomLoadingScene loadingScr = loadingObj.AddComponent<CustomLoadingScene>();
+
+                                    TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_Camera", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        .SetValue(loadingScr, cam);
+                                    TypeHelper.TypeOf<CustomLoadingScene>.Type.GetField("m_FadeGroup", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        .SetValue(loadingScr, canvasGroup);
+
+                                    EditorUtility.SetDirty(loadingScr);
+
+                                    EditorSceneManager.SaveScene(scene);
+
+                                    CloseScene(scene);
+
+                                    serializedObject.Update();
+                                }
+                            }
+                        }
+                    }
+                    EditorUtilities.Line();
+                    using (new EditorUtilities.BoxBlock(Color.black))
+                    {
+                        m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
+
+                        if (m_OpenSceneList)
+                        {
+                            if (sceneList.arraySize == 0)
+                            {
+                                EditorGUILayout.HelpBox(
+                                    "There\'s no scenes in the list.\n" +
+                                    "We need at least one scene for initialize systems", MessageType.Error);
+                            }
+                            else
+                            {
+                                if (!SceneSettings.Instance.Scenes[0].IsInBuild)
+                                {
+                                    EditorGUILayout.HelpBox("Scene index 0 must included in the build", MessageType.Error);
+                                }
+                                else EditorGUILayout.HelpBox("Normal", MessageType.Info);
+                            }
+
+                            EditorGUILayout.PropertyField(sceneList);
+                        }
+                    }
+
+                    #endregion
+
+                    using (var change = new EditorGUI.ChangeCheckScope())
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("Camera Prefab");
+                        m_CameraPrefabDrawer.OnGUI();
+
+                        if (change.changed)
+                        {
+                            //m_CameraPrefabFieldInfo.SetValue(SceneSettings.Instance,
+                            //    )
+
+                            EditorUtility.SetDirty(SceneSettings.Instance);
+                            //AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(SceneSettings.Instance));
+                            //"asd".ToLog();
+                        }
                     }
                 }
 
-                EditorGUILayout.EndScrollView();
                 serializedObject.ApplyModifiedProperties();
             }
-            public bool Predicate()
+            public override bool Predicate()
             {
-                if (string.IsNullOrEmpty(SceneList.Instance.MasterScene.ScenePath) ||
-                    string.IsNullOrEmpty(SceneList.Instance.StartScene.ScenePath) ||
+                if (string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath) ||
+                    string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath) ||
                     sceneList.arraySize == 0) return false;
 
-                if (!SceneList.Instance.MasterScene.IsInBuild ||
-                    !SceneList.Instance.StartScene.IsInBuild ||
-                    !SceneList.Instance.Scenes[0].IsInBuild) return false;
+                if (!SceneSettings.Instance.MasterScene.IsInBuild ||
+                    !SceneSettings.Instance.StartScene.IsInBuild ||
+                    !SceneSettings.Instance.Scenes[0].IsInBuild) return false;
 
                 return true;
             }
@@ -883,8 +899,11 @@ namespace SyadeuEditor
 
         #region Prefab Menu
 
-        private sealed class PrefabMenu
+        private sealed class PrefabMenu : SetupWizardMenuItem
         {
+            public override string Name => "Prefab";
+            public override int Order => -9997;
+
             SerializedObject serializedObject;
             SerializedProperty
                 m_ObjectSettings;
@@ -941,12 +960,12 @@ namespace SyadeuEditor
                 }
             }
 
-            public bool Predicate()
+            public override bool Predicate()
             {
                 if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
                 return true;
             }
-            public void OnGUI()
+            public override void OnGUI()
             {
                 if (GUILayout.Button("Rebase"))
                 {
@@ -1011,5 +1030,103 @@ namespace SyadeuEditor
         }
 
         #endregion
+
+        private sealed class GraphicsSetupMenuItem : SetupWizardMenuItem
+        {
+            public override string Name => "Graphics";
+            public override int Order => -9996;
+
+            Syadeu.Presentation.Render.RenderSettings Settings => Syadeu.Presentation.Render.RenderSettings.Instance;
+
+            const string
+                c_ComputeShaderLabel = "ComputeShader",
+                c_ShaderLabel = "Shader";
+
+            private ComputeShader[] m_FoundComputeShaders;
+            private Shader[] m_FoundShaders;
+
+            public override void OnInitialize()
+            {
+                try
+                {
+                    m_FoundComputeShaders = AssetDatabase
+                        .FindAssets($"l: {c_ComputeShaderLabel} t:computeshader")
+                        .Select(AssetDatabase.GUIDToAssetPath)
+                        .Select(AssetDatabase.LoadAssetAtPath<ComputeShader>)
+                        .ToArray();
+                }
+                catch (Exception)
+                {
+                    m_FoundComputeShaders = Array.Empty<ComputeShader>();
+                }
+                //Array.Sort(Settings.m_ComputeShaders);
+                //Array.Sort(m_FoundComputeShaders);
+
+                try
+                {
+                    m_FoundShaders = AssetDatabase
+                        .FindAssets($"l: {c_ShaderLabel} t:shader")
+                        .Select(AssetDatabase.GUIDToAssetPath)
+                        .Select(AssetDatabase.LoadAssetAtPath<Shader>)
+                        .ToArray();
+                }
+                catch (Exception)
+                {
+                    m_FoundShaders = Array.Empty<Shader>();
+                }
+                //Array.Sort(Settings.m_Shaders);
+                //Array.Sort(m_FoundShaders);
+            }
+            public override bool Predicate()
+            {
+                #region Compute Shaders
+
+                if (m_FoundComputeShaders.Length != Settings.m_ComputeShaders.Length)
+                {
+                    return false;
+                }
+                for (int i = 0; i < m_FoundComputeShaders.Length; i++)
+                {
+                    if (m_FoundComputeShaders[i] != Settings.m_ComputeShaders[i]) return false;
+                }
+
+                #endregion
+
+                #region Shaders
+
+                if (m_FoundShaders.Length != Settings.m_Shaders.Length)
+                {
+                    return false;
+                }
+                for (int i = 0; i < m_FoundShaders.Length; i++)
+                {
+                    if (m_FoundShaders[i] != Settings.m_Shaders[i]) return false;
+                }
+
+                #endregion
+
+                return true;
+            }
+            public override void OnGUI()
+            {
+                if (!Predicate())
+                {
+                    EditorGUILayout.LabelField("Error.");
+
+                    if (GUILayout.Button("Fix"))
+                    {
+                        Settings.m_ComputeShaders = m_FoundComputeShaders;
+                        Settings.m_Shaders = m_FoundShaders;
+
+                        EditorUtility.SetDirty(Settings);
+                    }
+                }
+
+                using (new EditorUtilities.BoxBlock(Color.black))
+                {
+                    EditorUtilities.StringRich("Nominal", true);
+                }
+            }
+        }
     }
 }

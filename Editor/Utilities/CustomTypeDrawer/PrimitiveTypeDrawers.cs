@@ -367,49 +367,53 @@ namespace SyadeuEditor.Utilities
             using (new EditorUtilities.BoxBlock(color3))
             {
                 #region Header
-                EditorGUILayout.BeginHorizontal();
-                m_Open = EditorUtilities.Foldout(m_Open, 
-                    string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
-                    , 13);
-
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
-
-                EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
-                if (GUILayout.Button("+", GUILayout.Width(20)))
+                
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    object newValue = Activator.CreateInstance(m_ElementType);
-                    if (list.IsFixedSize)
+                    m_Open = EditorUtilities.Foldout(m_Open,
+                    string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType).Replace("<", "< "), 13));
+
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
+
+                    using (new EditorGUI.DisabledGroupScope(m_ElementType.IsAbstract))
                     {
-                        Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
-                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-                        list = newArr;
-                        list[list.Count - 1] = newValue;
+                        if (GUILayout.Button("+", GUILayout.Width(20)))
+                        {
+                            object newValue = Activator.CreateInstance(m_ElementType);
+                            if (list.IsFixedSize)
+                            {
+                                Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
+                                if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                                list = newArr;
+                                list[list.Count - 1] = newValue;
+                            }
+                            else
+                            {
+                                list.Add(newValue);
+                            }
+                            m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
+                            m_ElementOpen.Add(false);
+                        }
                     }
-                    else
+
+                    if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
                     {
-                        list.Add(newValue);
+                        if (list.IsFixedSize)
+                        {
+                            Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
+                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                            list = newArr;
+                        }
+                        else
+                        {
+                            list.RemoveAt(list.Count - 1);
+                        }
+                        m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
+                        m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
                     }
-                    m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
-                    m_ElementOpen.Add(false);
                 }
-                EditorGUI.EndDisabledGroup();
-                if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-                {
-                    if (list.IsFixedSize)
-                    {
-                        Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
-                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-                        list = newArr;
-                    }
-                    else
-                    {
-                        list.RemoveAt(list.Count - 1);
-                    }
-                    m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
-                    m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
-                }
-                EditorGUILayout.EndHorizontal();
+                
                 #endregion
 
                 if (m_Open && m_ElementDrawers.Count > 0)
@@ -444,16 +448,16 @@ namespace SyadeuEditor.Utilities
                             EditorGUI.indentLevel++;
                             using (new EditorUtilities.BoxBlock(Color.black))
                             {
-                                EditorGUILayout.BeginHorizontal();
-
-                                m_ElementDrawers[i].OnGUI();
-
-                                if (GUILayout.Button("-", GUILayout.Width(20)))
+                                using (new EditorGUILayout.HorizontalScope())
                                 {
-                                    list = RemoveAt(list, i);
-                                    i--;
+                                    m_ElementDrawers[i].OnGUI();
+
+                                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                                    {
+                                        list = RemoveAt(list, i);
+                                        i--;
+                                    }
                                 }
-                                EditorGUILayout.EndHorizontal();
 
                                 if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
                             }
@@ -506,53 +510,56 @@ namespace SyadeuEditor.Utilities
         {
             IList list = Getter.Invoke();
 
-            EditorGUILayout.BeginHorizontal();
-            m_Open = EditorUtilities.Foldout(m_Open,
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                m_Open = EditorUtilities.Foldout(m_Open,
                 string.Format(c_NameFormat, Name, TypeHelper.ToString(m_ElementType))
                 , 13);
 
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(EditorUtilities.String($"{list.Count}: ", 10), EditorStyleUtilities.HeaderStyle);
 
-            EditorGUI.BeginDisabledGroup(m_ElementType.IsAbstract);
-            if (GUILayout.Button("+", GUILayout.Width(20)))
-            {
-                object newValue = Activator.CreateInstance(m_ElementType);
-                if (list.IsFixedSize)
+                using (new EditorGUI.DisabledGroupScope(m_ElementType.IsAbstract))
                 {
-                    Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
-                    list = newArr;
-                    list[list.Count - 1] = newValue;
-                }
-                else
-                {
-                    list.Add(newValue);
-                }
-                m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
-                m_ElementOpen.Add(false);
+                    if (GUILayout.Button("+", GUILayout.Width(20)))
+                    {
+                        object newValue = Activator.CreateInstance(m_ElementType);
+                        if (list.IsFixedSize)
+                        {
+                            Array newArr = Array.CreateInstance(m_ElementType, list.Count + 1);
+                            if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, list.Count);
+                            list = newArr;
+                            list[list.Count - 1] = newValue;
+                        }
+                        else
+                        {
+                            list.Add(newValue);
+                        }
+                        m_ElementDrawers.Add(GetElementDrawer(list, list.Count - 1));
+                        m_ElementOpen.Add(false);
 
-                Setter.Invoke(list);
+                        Setter.Invoke(list);
+                    }
+                }
+
+                if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    if (list.IsFixedSize)
+                    {
+                        Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
+                        if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
+                        list = newArr;
+                    }
+                    else
+                    {
+                        list.RemoveAt(list.Count - 1);
+                    }
+                    m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
+                    m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
+
+                    Setter.Invoke(list);
+                }
             }
-            EditorGUI.EndDisabledGroup();
-            if (list.Count > 0 && GUILayout.Button("-", GUILayout.Width(20)))
-            {
-                if (list.IsFixedSize)
-                {
-                    Array newArr = Array.CreateInstance(m_ElementType, list.Count - 1);
-                    if (list != null && list.Count > 0) Array.Copy((Array)list, newArr, newArr.Length);
-                    list = newArr;
-                }
-                else
-                {
-                    list.RemoveAt(list.Count - 1);
-                }
-                m_ElementOpen.RemoveAt(m_ElementOpen.Count - 1);
-                m_ElementDrawers.RemoveAt(m_ElementDrawers.Count - 1);
-
-                Setter.Invoke(list);
-            }
-            EditorGUILayout.EndHorizontal();
         }
         public void DrawElementAt(int i)
         {
@@ -581,18 +588,18 @@ namespace SyadeuEditor.Utilities
             EditorGUI.indentLevel++;
             using (new EditorUtilities.BoxBlock(Color.black))
             {
-                EditorGUILayout.BeginHorizontal();
-
-                m_ElementDrawers[i].OnGUI();
-
-                if (GUILayout.Button("-", GUILayout.Width(20)))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    list = RemoveAt(list, i);
-                    i--;
+                    m_ElementDrawers[i].OnGUI();
 
-                    Setter.Invoke(list);
+                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                    {
+                        list = RemoveAt(list, i);
+                        i--;
+
+                        Setter.Invoke(list);
+                    }
                 }
-                EditorGUILayout.EndHorizontal();
 
                 if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
             }

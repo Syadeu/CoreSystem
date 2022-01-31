@@ -19,6 +19,7 @@ using Unity.Collections;
 
 namespace Syadeu.Presentation.Events
 {
+    [System.Obsolete("Use OnGridLocationChangedEvent Instead", true)]
     public sealed class OnGridPositionChangedEvent : SynchronizedEvent<OnGridPositionChangedEvent>
     {
         public Entity<IEntity> Entity { get; private set; }

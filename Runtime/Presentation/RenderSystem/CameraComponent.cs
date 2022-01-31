@@ -78,6 +78,7 @@ namespace Syadeu.Presentation.Render
         private IEnumerator Start()
         {
             yield return PresentationSystem<DefaultPresentationGroup, RenderSystem>.GetAwaiter();
+            yield return new WaitUntil(WaitForLive);
 
             if (m_SetMainCameraOnInitialize) SetMainCamera();
 
@@ -87,6 +88,17 @@ namespace Syadeu.Presentation.Render
                 m_CameraComponents[i].RenderSystem = renderSystem;
                 m_CameraComponents[i].InternalOnRenderStart();
             }
+        }
+        private bool WaitForLive()
+        {
+            for (int i = 0; i < m_StateCamera.ChildCameras.Length; i++)
+            {
+                if (m_StateCamera.IsLiveChild(m_StateCamera.ChildCameras[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         private void LateUpdate()
         {

@@ -171,6 +171,9 @@ namespace Syadeu
         /// 유니티 프레임에 맞춰 반복적으로 실행될 함수를 넣을 수 있습니다.
         /// </summary>
         public static event UnityWork OnUnityUpdate;
+
+        public static event Action OnGUIUpdate;
+
         #endregion
 
         #region Jobs
@@ -560,6 +563,11 @@ namespace Syadeu
         {
             OnRender?.Invoke();
         }
+        private void OnGUI()
+        {
+            OnGUIUpdate?.Invoke();
+        }
+
         #endregion
 
         #region Worker Thread
@@ -894,8 +902,8 @@ namespace Syadeu
                 }
                 else
                 {
-                    if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
-                        string.Format(c_WarningTick, tickCounter));
+                    //if (tickCounter > 20) CoreSystem.Logger.LogWarning(Channel.Core, 
+                    //    string.Format(c_WarningTick, tickCounter));
                     
                     tickCounter = 0;
                 }
@@ -1960,9 +1968,9 @@ namespace Syadeu
         public struct Logger
         {
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void ThreadBlock(string name, ThreadInfo thread) => LogManager.ThreadBlock(name, thread);
+            public static void ThreadBlock(string name, ThreadInfo thread, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.ThreadBlock(name, thread, scriptName);
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "") => LogManager.ThreadBlock(methodName, thread);
+            public static void ThreadBlock(ThreadInfo thread, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "", [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.ThreadBlock(methodName, thread, scriptName);
 
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
@@ -1973,7 +1981,8 @@ namespace Syadeu
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+            //public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
+            public static void Log(Channel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Normal, msg, false, scriptName);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
@@ -1993,7 +2002,7 @@ namespace Syadeu
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogError(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Error, msg,false);
+            public static void LogError(Channel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Error, msg, false, scriptName);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif

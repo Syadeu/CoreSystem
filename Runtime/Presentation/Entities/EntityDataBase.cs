@@ -33,6 +33,7 @@ namespace Syadeu.Presentation.Entities
     /// 해당 값을 복사하여 인스턴스를 만들기 위해 <see cref="ObjectBase.Copy"/>을 override 하여 해당 값을 복사하여야합니다.
     /// <br/>
     /// </remarks>
+    [InternalLowLevelEntity]
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
         ///// <summary><inheritdoc cref="isCreated"/></summary>
@@ -242,13 +243,13 @@ namespace Syadeu.Presentation.Entities
 
             return entity;
         }
-        internal override void InternalReserve()
+        internal override void InternalOnReserve()
         {
-            base.InternalReserve();
+            base.InternalOnReserve();
 
             for (int i = 0; i < m_Attributes.Length; i++)
             {
-                m_Attributes[i].InternalReserve();
+                m_Attributes[i].InternalOnReserve();
             }
         }
         internal override void InternalInitialize()
@@ -267,8 +268,6 @@ namespace Syadeu.Presentation.Entities
         {
             AotHelper.EnsureType<Reference<EntityDataBase>>();
             AotHelper.EnsureList<Reference<EntityDataBase>>();
-            AotHelper.EnsureType<EntityData<EntityDataBase>>();
-            AotHelper.EnsureList<EntityData<EntityDataBase>>();
             AotHelper.EnsureList<EntityDataBase>();
         }
     }

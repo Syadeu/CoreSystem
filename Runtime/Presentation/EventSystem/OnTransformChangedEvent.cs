@@ -29,25 +29,31 @@ namespace Syadeu.Presentation.Events
     public sealed class OnTransformChangedEvent : SynchronizedEvent<OnTransformChangedEvent>
     {
         public override UpdateLoop Loop => UpdateLoop.Transform;
+        public override bool DisplayLog => false;
 
 #pragma warning disable IDE1006 // Naming Styles
         public Entity<IEntity> entity { get; private set; }
-        public ITransform transform { get; private set; }
+        public ProxyTransform transform { get; private set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-        public static OnTransformChangedEvent GetEvent(ITransform tr)
+        public static OnTransformChangedEvent GetEvent(ProxyTransform tr)
         {
             var temp = Dequeue();
 
             if (tr is ProxyTransform proxyTr)
             {
-                InstanceID entityIdx = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_EntityGameObjects[proxyTr.m_Hash];
-                temp.entity = Entity<IEntity>.GetEntity(entityIdx);
+                EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+                ObjectBase entity = entitySystem.GetEntityByTransform(proxyTr);
+                if (entity == null)
+                {
+                    temp.entity = Entity<IEntity>.Empty;
+                }
+                else temp.entity = Entity<IEntity>.GetEntityWithoutCheck(entity.Idx);
             }
-            else if (tr is UnityTransform unityTr)
-            {
-                temp.entity = unityTr.entity;
-            }
+            //else if (tr is UnityTransform unityTr)
+            //{
+            //    temp.entity = unityTr.entity;
+            //}
             else throw new NotImplementedException();
 
             temp.transform = tr;

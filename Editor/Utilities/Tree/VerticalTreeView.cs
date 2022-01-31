@@ -73,20 +73,22 @@ namespace SyadeuEditor.Tree
                 DrawToolbar();
                 DrawSearchField();
 
-                EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
-                if (m_DrawAddButton && GUILayout.Button("+", EditorStyleUtilities.MiniButton))
+                using (new EditorGUILayout.HorizontalScope(GUILayout.ExpandWidth(true)))
                 {
-                    m_Data = OnAddButton?.Invoke();
-                    SetupElements(m_Data, m_DataSetup);
-                    if (Asset != null) EditorUtility.SetDirty(Asset);
+                    if (m_DrawAddButton && GUILayout.Button("+", EditorStyleUtilities.MiniButton))
+                    {
+                        m_Data = OnAddButton?.Invoke();
+                        SetupElements(m_Data, m_DataSetup);
+                        if (Asset != null) EditorUtility.SetDirty(Asset);
+                    }
+                    if (m_DrawRemoveButton && GUILayout.Button("-", EditorStyleUtilities.MiniButton))
+                    {
+                        m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
+                        SetupElements(m_Data, m_DataSetup);
+                        if (Asset != null) EditorUtility.SetDirty(Asset);
+                    }
                 }
-                if (m_DrawRemoveButton && GUILayout.Button("-", EditorStyleUtilities.MiniButton))
-                {
-                    m_Data = OnRemoveButton?.Invoke(m_Elements[m_Data.Count - 1]);
-                    SetupElements(m_Data, m_DataSetup);
-                    if (Asset != null) EditorUtility.SetDirty(Asset);
-                }
-                EditorGUILayout.EndHorizontal();
+                
                 EditorUtilities.Line();
 
                 Color color1 = Color.black, color2 = Color.gray;
@@ -174,36 +176,35 @@ namespace SyadeuEditor.Tree
             const string box = "Box";
             const string notFound = "Not Found";
 
-            EditorGUILayout.BeginVertical(box);
-
-            BeforeDraw();
-            DrawToolbar();
-            DrawSearchField();
-
-            if (GUILayout.Button("+"))
+            using (new EditorGUILayout.VerticalScope(box))
             {
-                m_Data = OnAddButton?.Invoke();
-                SetupElements(m_Data, m_DataSetup);
-                EditorUtility.SetDirty(Asset);
+                BeforeDraw();
+                DrawToolbar();
+                DrawSearchField();
+
+                if (GUILayout.Button("+"))
+                {
+                    m_Data = OnAddButton?.Invoke();
+                    SetupElements(m_Data, m_DataSetup);
+                    EditorUtility.SetDirty(Asset);
+                }
+
+                m_CurrentDrawChilds = 0;
+                BeforeDrawChilds();
+                for (int i = 0; i < m_Elements.Count; i++)
+                {
+                    if (m_Elements[i].HideElementInTree) continue;
+
+                    DrawChild(m_Elements[i]);
+                    if (m_Elements.Count <= i) continue;
+
+                    m_CurrentDrawChilds += 1;
+
+                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.SectorLine();
+                }
+                if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
+                AfterDraw();
             }
-
-            m_CurrentDrawChilds = 0;
-            BeforeDrawChilds();
-            for (int i = 0; i < m_Elements.Count; i++)
-            {
-                if (m_Elements[i].HideElementInTree) continue;
-
-                DrawChild(m_Elements[i]);
-                if (m_Elements.Count <= i) continue;
-
-                m_CurrentDrawChilds += 1;
-
-                if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.SectorLine();
-            }
-            if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
-            AfterDraw();
-
-            EditorGUILayout.EndVertical();
         }
 
         internal override void RemoveButtonClicked(VerticalTreeElement e)

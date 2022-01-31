@@ -48,28 +48,24 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        private WindowType m_CurrentWindow = WindowType.Entity;
+        //private WindowType m_CurrentWindow = WindowType.Entity;
 
         public ToolbarWindow m_ToolbarWindow;
+        private EntityWindowMenuItem[] m_MenuItems;
+        private int m_CurrentWindowIndex = 0;
 
-        #region Entity Window
-
-        public EntityDataListWindow m_DataListWindow;
-        public EntityViewWindow m_ViewWindow;
-
-        #endregion
-
-        public DebuggerListWindow m_DebuggerListWindow;
-        public DebuggerViewWindow m_DebuggerViewWindow;
+        //public DebuggerListWindow m_DebuggerListWindow;
+        //public DebuggerViewWindow m_DebuggerViewWindow;
 
         public static bool IsOpened { get; private set; }
         public static bool IsDataLoaded => EntityDataList.IsLoaded;
-        public WindowType CurrentWindow
+        public EntityWindowMenuItem CurrentWindow
         {
-            get => m_CurrentWindow;
+            get => m_MenuItems[m_CurrentWindowIndex];
             set
             {
-                m_CurrentWindow = value;
+                m_CurrentWindowIndex = Array.IndexOf(m_MenuItems, value);
+                //m_CurrentWindow = value;
             }
         }
         public bool IsFocused { get; private set; } = false;
@@ -77,21 +73,70 @@ namespace SyadeuEditor.Presentation
         private void OnFocus()
         {
             IsFocused = true;
+
+            for (int i = 0; i < m_MenuItems?.Length; i++)
+            {
+                m_MenuItems[i].OnFocus();
+            }
         }
         private void OnLostFocus()
         {
             IsFocused = false;
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnLostFocus();
+            }
+        }
+        private void Awake()
+        {
+            var menuItemTypes = TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<EntityWindowMenuItem>.Type.IsAssignableFrom(t));
+            m_MenuItems = new EntityWindowMenuItem[menuItemTypes.Count()];
+            {
+                int i = 0;
+                foreach (var item in menuItemTypes)
+                {
+                    m_MenuItems[i] = (EntityWindowMenuItem)Activator.CreateInstance(item);
+
+                    i++;
+                }
+                for (int j = 0; j < m_MenuItems.Length; j++)
+                {
+                    m_MenuItems[j].Initialize(this);
+                }
+            }
         }
         protected override void OnEnable()
         {
             IsOpened = true;
 
             m_ToolbarWindow = new ToolbarWindow(this);
-            m_DataListWindow = new EntityDataListWindow(this);
-            m_ViewWindow = new EntityViewWindow(this);
+            if (m_MenuItems == null)
+            {
+                var menuItemTypes = TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<EntityWindowMenuItem>.Type.IsAssignableFrom(t));
+                m_MenuItems = new EntityWindowMenuItem[menuItemTypes.Count()];
+                {
+                    int i = 0;
+                    foreach (var item in menuItemTypes)
+                    {
+                        m_MenuItems[i] = (EntityWindowMenuItem)Activator.CreateInstance(item);
 
-            m_DebuggerListWindow = new DebuggerListWindow(this);
-            m_DebuggerViewWindow = new DebuggerViewWindow(this);
+                        i++;
+                    }
+                    for (int j = 0; j < m_MenuItems.Length; j++)
+                    {
+                        m_MenuItems[j].Initialize(this);
+                    }
+                }
+            }
+
+            //m_DebuggerListWindow = new DebuggerListWindow(this);
+            //m_DebuggerViewWindow = new DebuggerViewWindow(this);
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnEnable();
+            }
 
             Reload();
 
@@ -101,7 +146,21 @@ namespace SyadeuEditor.Presentation
         {
             IsOpened = false;
 
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnDisable();
+            }
+
             base.OnDisable();
+        }
+        private void OnSelectionChange()
+        {
+            GameObject[] selections = Selection.gameObjects;
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                m_MenuItems[i].OnSelectionChanged(selections);
+            }
         }
         public override void SaveChanges()
         {
@@ -121,7 +180,22 @@ namespace SyadeuEditor.Presentation
             {
                 if (IsDirty) EntityDataList.Instance.LoadData();
             }
+
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                ((IDisposable)m_MenuItems[i]).Dispose();
+            }
+            m_MenuItems = null;
         }
+        public TMenuItem GetMenuItem<TMenuItem>() where TMenuItem : EntityWindowMenuItem
+        {
+            for (int i = 0; i < m_MenuItems.Length; i++)
+            {
+                if (m_MenuItems[i] is TMenuItem menu) return menu;
+            }
+            return null;
+        }
+
         public void Reload()
         {
             if (!Application.isPlaying)
@@ -130,7 +204,7 @@ namespace SyadeuEditor.Presentation
             }
 
             ObjectBaseDrawer.Pool.Clear();
-            m_DataListWindow.Reload();
+            GetMenuItem<EntityDataWindow>().Reload();
             CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
         }
         public ObjectBase Add(Type objType)
@@ -143,7 +217,7 @@ namespace SyadeuEditor.Presentation
             ObjectBase ins = (ObjectBase)Activator.CreateInstance(objType);
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            m_DataListWindow.Add(ins);
+            GetMenuItem<EntityDataWindow>().Add(ins);
 
             IsDirty = true;
             return ins;
@@ -157,25 +231,26 @@ namespace SyadeuEditor.Presentation
 
             EntityDataList.Instance.m_Objects.Add(ins.Hash, ins);
 
-            m_DataListWindow.Add(ins);
+            GetMenuItem<EntityDataWindow>().Add(ins);
 
             IsDirty = true;
         }
 
         public void Remove(ObjectBase obj)
         {
-            if (m_DataListWindow.Selected != null && 
-                m_DataListWindow.Selected.Equals(obj)) m_DataListWindow.Selected = null;
+            EntityDataWindow dataWindow = GetMenuItem<EntityDataWindow>();
 
-            //ObjectBaseDrawers.Remove(obj);
-            m_DataListWindow.Remove(obj);
+            if (dataWindow.Selected != null &&
+                dataWindow.Selected.Equals(obj)) dataWindow.Selected = null;
+
+            dataWindow.Remove(obj);
 
             EntityDataList.Instance.m_Objects.Remove(obj.Hash);
 
             IsDirty = true;
         }
 
-        private const string c_CopyrightText = "Copyright 2021 Syadeu. All rights reserved.";
+        private const string c_CopyrightText = "Copyright 2022 Syadeu. All rights reserved.";
         private Rect m_CopyrightRect = new Rect(350, 485, 245, 20);
 
         Rect HeaderPos = new Rect(20, 33, 0, 0);
@@ -190,7 +265,7 @@ namespace SyadeuEditor.Presentation
 
             m_ToolbarWindow.OnGUI();
 
-            string headerString = EditorUtilities.String($"{m_CurrentWindow} Window", 20);
+            string headerString = EditorUtilities.String($"{CurrentWindow.Name} Window", 20);
             if (IsDirty)
             {
                 headerString += EditorUtilities.String(": Modified", 10);
@@ -202,37 +277,43 @@ namespace SyadeuEditor.Presentation
             HeaderLinePos.width = Screen.width;
             EditorUtilities.Line(HeaderLinePos);
 
-            if (Application.isPlaying && m_CurrentWindow != WindowType.Debugger)
+            if (Application.isPlaying && !(CurrentWindow is EntityDebugWindow))
             {
-                m_CurrentWindow = WindowType.Debugger;
+                CurrentWindow = GetMenuItem<EntityDebugWindow>();
+                //m_CurrentWindow = WindowType.Debugger;
             }
 
             EntityListPos.height = Screen.height - 95;
             ViewPos.width = Screen.width - EntityListPos.width - 5;
             ViewPos.height = EntityListPos.height;
-            BeginWindows();
 
-            switch (m_CurrentWindow)
+            using (new WindowHelper(BeginWindows, EndWindows))
             {
-                default:
-                case WindowType.Entity:
-                    if (!Application.isPlaying)
-                    {
-                        m_DataListWindow.OnGUI(EntityListPos, 1);
-                        m_ViewWindow.OnGUI(ViewPos, 2);
-                    }
-                    
-                    break;
-                case WindowType.Converter:
+                m_MenuItems[m_CurrentWindowIndex].OnListGUI(EntityListPos);
+                m_MenuItems[m_CurrentWindowIndex].OnViewGUI(ViewPos);
 
-                    break;
-                case WindowType.Debugger:
-                    m_DebuggerListWindow.OnGUI(EntityListPos, 1);
-                    m_DebuggerViewWindow.OnGUI(ViewPos, 2);
-                    break;
+                //switch (m_CurrentWindow)
+                //{
+                //    default:
+                //    case WindowType.Entity:
+                //        if (!Application.isPlaying)
+                //        {
+                //            //m_DataListWindow.OnGUI(EntityListPos, 1);
+                //            //m_ViewWindow.OnGUI(ViewPos, 2);
+                //            m_MenuItems[0].OnListGUI(EntityListPos);
+                //            m_MenuItems[0].OnViewGUI(ViewPos);
+                //        }
+
+                //        break;
+                //    case WindowType.Converter:
+
+                //        break;
+                //    case WindowType.Debugger:
+                //        m_DebuggerListWindow.OnGUI(EntityListPos, 1);
+                //        m_DebuggerViewWindow.OnGUI(ViewPos, 2);
+                //        break;
+                //}
             }
-
-            EndWindows();
 
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
@@ -245,7 +326,7 @@ namespace SyadeuEditor.Presentation
         {
             if (!Event.current.isKey || Application.isPlaying) return;
 
-            if (m_CurrentWindow == WindowType.Entity && Event.current.control)
+            if (CurrentWindow is EntityDataWindow && Event.current.control)
             {
                 if (Event.current.keyCode == KeyCode.S)
                 {
@@ -258,6 +339,25 @@ namespace SyadeuEditor.Presentation
             }
         }
         
+        private sealed class WindowHelper : IDisposable
+        {
+            public Action StartWindow, EndWindow;
+
+            public WindowHelper(Action start, Action end)
+            {
+                StartWindow = start;
+                EndWindow = end;
+
+                StartWindow.Invoke();
+            }
+            public void Dispose()
+            {
+                EndWindow.Invoke();
+
+                StartWindow = null;
+                EndWindow = null;
+            }
+        }
         public enum WindowType
         {
             Entity,
@@ -300,7 +400,7 @@ namespace SyadeuEditor.Presentation
                     {
                         ObjectBase drawer = m_MainWindow.Add(t);
 
-                        m_MainWindow.m_DataListWindow.Select(drawer);
+                        m_MainWindow.GetMenuItem<EntityDataWindow>().Select(drawer);
                     },
                     (t) => t,
                     null,
@@ -340,7 +440,7 @@ namespace SyadeuEditor.Presentation
                     lastRect.position = Event.current.mousePosition;
 
                     var fileMenu = new GenericMenu();
-                    if (!Application.isPlaying && m_MainWindow.CurrentWindow == WindowType.Entity)
+                    if (!Application.isPlaying && m_MainWindow.CurrentWindow is EntityDataWindow)
                     {
                         fileMenu.AddItem(new GUIContent("Save Ctrl+S"), false, SaveMenu);
                         fileMenu.AddItem(new GUIContent("Load Ctrl+R"), false, LoadMenu);
@@ -351,7 +451,7 @@ namespace SyadeuEditor.Presentation
                         fileMenu.AddDisabledItem(new GUIContent("Load Ctrl+R"), false);
                     }
                     fileMenu.AddSeparator(string.Empty);
-                    if (!Application.isPlaying && m_MainWindow.CurrentWindow == WindowType.Entity)
+                    if (!Application.isPlaying && m_MainWindow.CurrentWindow is EntityDataWindow)
                     {
                         fileMenu.AddItem(new GUIContent("Add/Entity"), false, AddDataMenu<EntityDataBase>);
                         fileMenu.AddItem(new GUIContent("Add/Attribute"), false, AddDataMenu<AttributeBase>);
@@ -376,20 +476,31 @@ namespace SyadeuEditor.Presentation
 
                     m_WindowMenu = new GenericMenu();
 
-                    if (!Application.isPlaying)
+                    for (int i = 0; i < m_MainWindow.m_MenuItems.Length; i++)
                     {
-                        m_WindowMenu.AddItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity, () => m_MainWindow.m_CurrentWindow = WindowType.Entity);
-
-                        m_WindowMenu.AddItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter, () => m_MainWindow.m_CurrentWindow = WindowType.Converter);
-                    }
-                    else
-                    {
-                        m_WindowMenu.AddDisabledItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity);
-
-                        m_WindowMenu.AddDisabledItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter);
+                        int index = i;
+                        m_WindowMenu.AddItem(new GUIContent(m_MainWindow.m_MenuItems[index].Name),
+                            m_MainWindow.m_CurrentWindowIndex == index,
+                            () => m_MainWindow.CurrentWindow = m_MainWindow.m_MenuItems[index]
+                            );
                     }
 
-                    m_WindowMenu.AddItem(new GUIContent("Debugger"), m_MainWindow.m_CurrentWindow == WindowType.Debugger, () => m_MainWindow.m_CurrentWindow = WindowType.Debugger);
+                    //if (!Application.isPlaying)
+                    //{
+                    //    m_WindowMenu.AddItem(new GUIContent("Entity"), 
+                    //        m_MainWindow.CurrentWindow is EntityDataWindow, 
+                    //        () => m_MainWindow.m_CurrentWindow = WindowType.Entity);
+
+                    //    m_WindowMenu.AddItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter, () => m_MainWindow.m_CurrentWindow = WindowType.Converter);
+                    //}
+                    //else
+                    //{
+                    //    m_WindowMenu.AddDisabledItem(new GUIContent("Entity"), m_MainWindow.m_CurrentWindow == WindowType.Entity);
+
+                    //    m_WindowMenu.AddDisabledItem(new GUIContent("Converter"), m_MainWindow.m_CurrentWindow == WindowType.Converter);
+                    //}
+
+                    //m_WindowMenu.AddItem(new GUIContent("Debugger"), m_MainWindow.m_CurrentWindow == WindowType.Debugger, () => m_MainWindow.m_CurrentWindow = WindowType.Debugger);
 
                     m_WindowMenu.ShowAsContext();
                     GUIUtility.ExitGUI();
@@ -397,141 +508,6 @@ namespace SyadeuEditor.Presentation
                 GUILayout.FlexibleSpace();
             }
         }
-
-        #region Entity Window
-
-        public sealed class EntityDataListWindow
-        {
-            EntityWindow m_MainWindow;
-
-            private EntityListTreeView EntityListTreeView;
-            private TreeViewState TreeViewState;
-            private ObjectBase m_Selected;
-
-            public string SearchString
-            {
-                get => EntityListTreeView.searchString;
-                set => EntityListTreeView.searchString = value;
-            }
-            public ObjectBase Selected
-            {
-                get => m_Selected;
-                set
-                {
-                    m_Selected = value;
-                    if (value != null)
-                    {
-                        SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
-                    }
-                    else SelectedDrawer = null;
-                }
-            }
-            public ObjectBaseDrawer SelectedDrawer { get; private set; }
-
-            public EntityDataListWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
-
-                TreeViewState = new TreeViewState();
-                EntityListTreeView = new EntityListTreeView(m_MainWindow, TreeViewState);
-                EntityListTreeView.OnSelect += EntityListTreeView_OnSelect;
-            }
-            private void EntityListTreeView_OnSelect(ObjectBase obj)
-            {
-                Selected = obj;
-            }
-
-            public void Select(IFixedReference reference)
-            {
-                EntityListTreeView.SetSelection(reference);
-            }
-            public void Select(ObjectBase entityObj)
-            {
-                EntityListTreeView.SetSelection(entityObj);
-            }
-            public void Add(ObjectBase drawer)
-            {
-                EntityListTreeView.AddItem(drawer);
-                EntityListTreeView.Reload();
-            }
-            public void Remove(ObjectBase drawer)
-            {
-                if (Selected != null && Selected.Equals(drawer))
-                {
-                    Selected = null;
-                }
-
-                EntityListTreeView.RemoveItem(drawer);
-                EntityListTreeView.Reload();
-            }
-            public void Reload()
-            {
-                EntityListTreeView.Reload();
-            }
-
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                EntityListTreeView.OnGUI(pos);
-            }
-        }
-        public sealed class EntityViewWindow
-        {
-            EntityWindow m_MainWindow;
-            Rect m_Position;
-            Vector2 m_Scroll;
-
-            public EntityViewWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
-            }
-
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                m_Position = pos;
-
-                Color origin = GUI.color;
-                GUI.color = ColorPalettes.PastelDreams.Yellow;
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
-                GUI.color = origin;
-            }
-            private void Draw(int unusedID)
-            {
-                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
-                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
-                {
-                    m_Scroll = scroll.scrollPosition;
-
-                    #region TestRect Controller
-
-                    //m_MainWindow.m_CopyrightRect = EditorGUILayout.RectField("copyright", m_MainWindow.m_CopyrightRect);
-                    //m_MainWindow.HeaderPos = EditorGUILayout.RectField("headerPos", m_MainWindow. HeaderPos);
-                    //m_MainWindow.HeaderLinePos = EditorGUILayout.RectField("HeaderLinePos", m_MainWindow.HeaderLinePos);
-                    //m_MainWindow.EntityListPos = EditorGUILayout.RectField("entitylistPos", m_MainWindow. EntityListPos);
-
-                    //m_MainWindow.ViewPos = EditorGUILayout.RectField("ViewPos", m_MainWindow.ViewPos);
-                    //EditorGUILayout.Space();
-
-                    #endregion
-
-                    using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(m_Position.width - 15)))
-                    using (var change = new EditorGUI.ChangeCheckScope())
-                    {
-                        if (m_MainWindow.m_DataListWindow.Selected != null)
-                        {
-                            m_MainWindow.m_DataListWindow.SelectedDrawer.OnGUI();
-                        }
-                        else
-                        {
-                            EditorGUILayout.LabelField("select object");
-                        }
-
-                        if (change.changed) m_MainWindow.IsDirty = true;
-                    }
-                }
-            }
-        }
-
-        #endregion
 
         public sealed class ConverterListWindow
         {
@@ -548,230 +524,230 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        #region Debugger
+        //#region Debugger
 
-        public sealed class DebuggerListWindow
-        {
-            EntityWindow m_MainWindow;
+        //public sealed class DebuggerListWindow
+        //{
+        //    EntityWindow m_MainWindow;
 
-            private DebuggerListTreeView ListTreeView;
-            private TreeViewState TreeViewState;
+        //    private DebuggerListTreeView ListTreeView;
+        //    private TreeViewState TreeViewState;
 
-            public DebuggerListWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
+        //    public DebuggerListWindow(EntityWindow window)
+        //    {
+        //        m_MainWindow = window;
 
-                TreeViewState = new TreeViewState();
-                ListTreeView = new DebuggerListTreeView(m_MainWindow, TreeViewState);
-            }
+        //        TreeViewState = new TreeViewState();
+        //        ListTreeView = new DebuggerListTreeView(m_MainWindow, TreeViewState);
+        //    }
 
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                ListTreeView.OnGUI(pos);
-            }
+        //    public void OnGUI(Rect pos, int unusedID)
+        //    {
+        //        ListTreeView.OnGUI(pos);
+        //    }
 
-            public void Select(IInstance instance)
-            {
-                ListTreeView.Select(instance);
-            }
-        }
-        public sealed class DebuggerViewWindow
-        {
-            EntityWindow m_MainWindow;
-            Rect m_Position;
-            Vector2 m_Scroll;
+        //    public void Select(IEntityDataID instance)
+        //    {
+        //        ListTreeView.Select(instance);
+        //    }
+        //}
+        //public sealed class DebuggerViewWindow
+        //{
+        //    EntityWindow m_MainWindow;
+        //    Rect m_Position;
+        //    Vector2 m_Scroll;
 
-            private Instance<ObjectBase> m_Selected;
-            private string m_SelectedName = string.Empty;
-            private ObjectDrawerBase[] m_SelectedMembers = null;
+        //    private Entity<ObjectBase> m_Selected;
+        //    private string m_SelectedName = string.Empty;
+        //    private ObjectDrawerBase[] m_SelectedMembers = null;
 
-            public Instance<ObjectBase> Selected
-            {
-                get => m_Selected;
-                set
-                {
-                    if (value.IsEmpty() || !value.IsValid())
-                    {
-                        $"1: {value.IsEmpty()} :: {value.IsValid()}".ToLog();
-                        m_Selected = Instance<ObjectBase>.Empty;
-                        m_SelectedName = string.Empty;
-                        m_SelectedMembers = null;
-                        return;
-                    }
+        //    public Entity<ObjectBase> Selected
+        //    {
+        //        get => m_Selected;
+        //        set
+        //        {
+        //            if (value.IsEmpty() || !value.IsValid())
+        //            {
+        //                $"1: {value.IsEmpty()} :: {value.IsValid()}".ToLog();
+        //                m_Selected = Entity<ObjectBase>.Empty;
+        //                m_SelectedName = string.Empty;
+        //                m_SelectedMembers = null;
+        //                return;
+        //            }
 
-                    var entity = value.GetObject();
-                    m_SelectedName = entity.Name + EditorUtilities.String($": {entity.GetType().Name}", 11);
+        //            var entity = value.Target;
+        //            m_SelectedName = entity.Name + EditorUtilities.String($": {entity.GetType().Name}", 11);
 
-                    MemberInfo[] temp = entity.GetType()
-                        .GetMembers(
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Where((other) =>
-                        {
-                            if (other.MemberType != MemberTypes.Field && 
-                                other.MemberType != MemberTypes.Property) return false;
+        //            MemberInfo[] temp = entity.GetType()
+        //                .GetMembers(
+        //                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        //                .Where((other) =>
+        //                {
+        //                    if (other.MemberType != MemberTypes.Field && 
+        //                        other.MemberType != MemberTypes.Property) return false;
 
-                            if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
-                            {
-                                return false;
-                            }
+        //                    if (other.GetCustomAttribute<ObsoleteAttribute>() != null)
+        //                    {
+        //                        return false;
+        //                    }
 
-                            Type declaredType = ReflectionHelper.GetDeclaredType(other);
+        //                    Type declaredType = ReflectionHelper.GetDeclaredType(other);
 
-                            if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType) ||
-                                TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(declaredType))
-                            {
-                                return false;
-                            }
+        //                    if (TypeHelper.TypeOf<Delegate>.Type.IsAssignableFrom(declaredType) ||
+        //                        TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(declaredType))
+        //                    {
+        //                        return false;
+        //                    }
 
-                            if (ReflectionHelper.IsBackingField(other)) return false;
+        //                    if (ReflectionHelper.IsBackingField(other)) return false;
 
-                            return true;
-                        })
-                        .ToArray();
-                    m_SelectedMembers = new ObjectDrawerBase[temp.Length];
-                    for (int i = 0; i < temp.Length; i++)
-                    {
-                        m_SelectedMembers[i] = ObjectDrawerBase.ToDrawer(entity, temp[i], true);
-                    }
+        //                    return true;
+        //                })
+        //                .ToArray();
+        //            m_SelectedMembers = new ObjectDrawerBase[temp.Length];
+        //            for (int i = 0; i < temp.Length; i++)
+        //            {
+        //                m_SelectedMembers[i] = ObjectDrawerBase.ToDrawer(entity, temp[i], true);
+        //            }
 
-                    m_Selected = value;
-                }
-            }
+        //            m_Selected = value;
+        //        }
+        //    }
 
-            public DebuggerViewWindow(EntityWindow window)
-            {
-                m_MainWindow = window;
-            }
-            public void OnGUI(Rect pos, int unusedID)
-            {
-                m_Position = pos;
+        //    public DebuggerViewWindow(EntityWindow window)
+        //    {
+        //        m_MainWindow = window;
+        //    }
+        //    public void OnGUI(Rect pos, int unusedID)
+        //    {
+        //        m_Position = pos;
 
-                Color origin = GUI.color;
-                GUI.color = ColorPalettes.PastelDreams.Yellow;
-                GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
-                GUI.color = origin;
-            }
-            private void Draw(int unusedID)
-            {
-                using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
-                    GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
-                using (new EditorUtilities.BoxBlock(Color.black))
-                {
-                    if (!Application.isPlaying)
-                    {
-                        EditorUtilities.StringRich("Debugger only works in runtime", true);
-                        return;
-                    }
+        //        Color origin = GUI.color;
+        //        GUI.color = ColorPalettes.PastelDreams.Yellow;
+        //        GUILayout.Window(unusedID, m_Position, Draw, string.Empty, EditorStyleUtilities.Box);
+        //        GUI.color = origin;
+        //    }
+        //    private void Draw(int unusedID)
+        //    {
+        //        using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
+        //            GUILayout.MaxWidth(m_Position.width), GUILayout.MaxHeight(m_Position.height)))
+        //        using (new EditorUtilities.BoxBlock(Color.black))
+        //        {
+        //            if (!Application.isPlaying)
+        //            {
+        //                EditorUtilities.StringRich("Debugger only works in runtime", true);
+        //                return;
+        //            }
 
-                    if (m_Selected.IsEmpty())
-                    {
-                        EditorUtilities.StringRich("Select Data", true);
-                        return;
-                    }
+        //            if (m_Selected.IsEmpty())
+        //            {
+        //                EditorUtilities.StringRich("Select Data", true);
+        //                return;
+        //            }
 
-                    if (!m_Selected.IsValid())
-                    {
-                        EditorUtilities.StringRich("This data has been destroyed", true);
-                        return;
-                    }
+        //            if (!m_Selected.IsValid())
+        //            {
+        //                EditorUtilities.StringRich("This data has been destroyed", true);
+        //                return;
+        //            }
 
-                    ObjectBase obj = m_Selected.GetObject();
+        //            ObjectBase obj = m_Selected.Target;
 
-                    EditorUtilities.StringRich(m_SelectedName, 20);
-                    EditorGUILayout.Space(3);
-                    EditorUtilities.Line();
+        //            EditorUtilities.StringRich(m_SelectedName, 20);
+        //            EditorGUILayout.Space(3);
+        //            EditorUtilities.Line();
 
-                    DrawDefaultInfomation(obj);
+        //            DrawDefaultInfomation(obj);
 
-                    if (obj is EntityDataBase entityDataBase)
-                    {
-                        DrawEntity(entityDataBase);
-                    }
+        //            if (obj is EntityDataBase entityDataBase)
+        //            {
+        //                DrawEntity(entityDataBase);
+        //            }
 
-                    EditorUtilities.Line();
+        //            EditorUtilities.Line();
 
-                    for (int i = 0; i < m_SelectedMembers.Length; i++)
-                    {
-                        if (m_SelectedMembers[i] is AttributeListDrawer ||
-                            m_SelectedMembers[i].Name.Equals("Name") ||
-                            m_SelectedMembers[i].Name.Equals("Hash") ||
-                            m_SelectedMembers[i].Name.Equals("Idx") ||
-                            m_SelectedMembers[i].Name.Equals("EnableCull") ||
-                            m_SelectedMembers[i].Name.Equals("Prefab") ||
-                            m_SelectedMembers[i].Name.Equals("Center") ||
-                            m_SelectedMembers[i].Name.Equals("Size") ||
-                            m_SelectedMembers[i].Name.Equals("transform"))
-                        {
-                            continue;
-                        }
-                        else if (m_SelectedMembers[i] is ArrayDrawer array)
-                        {
-                            if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(array.ElementType)) continue;
-                        }
+        //            for (int i = 0; i < m_SelectedMembers.Length; i++)
+        //            {
+        //                if (m_SelectedMembers[i] is AttributeListDrawer ||
+        //                    m_SelectedMembers[i].Name.Equals("Name") ||
+        //                    m_SelectedMembers[i].Name.Equals("Hash") ||
+        //                    m_SelectedMembers[i].Name.Equals("Idx") ||
+        //                    m_SelectedMembers[i].Name.Equals("EnableCull") ||
+        //                    m_SelectedMembers[i].Name.Equals("Prefab") ||
+        //                    m_SelectedMembers[i].Name.Equals("Center") ||
+        //                    m_SelectedMembers[i].Name.Equals("Size") ||
+        //                    m_SelectedMembers[i].Name.Equals("transform"))
+        //                {
+        //                    continue;
+        //                }
+        //                else if (m_SelectedMembers[i] is ArrayDrawer array)
+        //                {
+        //                    if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(array.ElementType)) continue;
+        //                }
 
-                        m_SelectedMembers[i].OnGUI();
-                    }
+        //                m_SelectedMembers[i].OnGUI();
+        //            }
 
-                    m_Scroll = scroll.scrollPosition;
-                }
-            }
-            private void DrawDefaultInfomation(ObjectBase obj)
-            {
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.TextField("Name: ", obj.Name);
-                EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
-                EditorGUILayout.TextField("Idx: ", obj.Idx.ToString());
-                EditorGUI.EndDisabledGroup();
-            }
-            private void DrawEntity(EntityDataBase entity)
-            {
-                if (entity is EntityBase entityBase)
-                {
-                    using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
-                    {
-                        EntityDrawer.DrawPrefab(entityBase, true);
+        //            m_Scroll = scroll.scrollPosition;
+        //        }
+        //    }
+        //    private void DrawDefaultInfomation(ObjectBase obj)
+        //    {
+        //        using (new EditorGUI.DisabledGroupScope(true))
+        //        {
+        //            EditorGUILayout.TextField("Name: ", obj.Name);
+        //            EditorGUILayout.TextField("Hash: ", obj.Hash.ToString());
+        //            EditorGUILayout.TextField("Idx: ", obj.Idx.ToString());
+        //        }
+        //    }
+        //    private void DrawEntity(EntityDataBase entity)
+        //    {
+        //        if (entity is EntityBase entityBase)
+        //        {
+        //            ProxyTransform proxy = entityBase.GetTransform();
+        //            using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
+        //            {
+        //                EntityDrawer.DrawPrefab(entityBase, true);
 
-                        if (entityBase.transform is ProxyTransform proxy &&
-                            proxy.hasProxy)
-                        {
-                            EditorGUILayout.ObjectField((UnityEngine.Object)proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
-                        }
-                        else if (entityBase.transform is UnityTransform unityTr)
-                        {
-                            EditorGUILayout.ObjectField(unityTr.provider, TypeHelper.TypeOf<Transform>.Type, true);
-                        }
+        //                if (proxy.hasProxy)
+        //                {
+        //                    EditorGUILayout.ObjectField((UnityEngine.Object)proxy.proxy, TypeHelper.TypeOf<RecycleableMonobehaviour>.Type, true);
+        //                }
 
-                        entityBase.Center
-                            = EditorGUILayout.Vector3Field("Center", entityBase.Center);
-                        entityBase.Size
-                            = EditorGUILayout.Vector3Field("Size", entityBase.Size);
-                    }
-                    EditorUtilities.Line();
-                    using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
-                    {
-                        EditorUtilities.StringRich("Transform", 15);
-                        EditorGUI.indentLevel++;
+        //                entityBase.Center
+        //                    = EditorGUILayout.Vector3Field("Center", entityBase.Center);
+        //                entityBase.Size
+        //                    = EditorGUILayout.Vector3Field("Size", entityBase.Size);
+        //            }
+        //            EditorUtilities.Line();
+        //            using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
+        //            {
+        //                EditorUtilities.StringRich("Transform", 15);
+        //                EditorGUI.indentLevel++;
 
-                        entityBase.transform.position =
-                EditorGUILayout.Vector3Field("Position", entityBase.transform.position);
+        //                proxy.position =
+        //                    EditorGUILayout.Vector3Field("Position", proxy.position);
 
-                        Vector3 eulerAngles = entityBase.transform.eulerAngles;
-                        EditorGUI.BeginChangeCheck();
-                        eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            entityBase.transform.eulerAngles = eulerAngles;
-                        }
+        //                Vector3 eulerAngles = proxy.eulerAngles;
 
-                        entityBase.transform.scale
-                            = EditorGUILayout.Vector3Field("Scale", entityBase.transform.scale);
+        //                using (var change = new EditorGUI.ChangeCheckScope())
+        //                {
+        //                    eulerAngles = EditorGUILayout.Vector3Field("Rotation", eulerAngles);
+        //                    if (change.changed)
+        //                    {
+        //                        proxy.eulerAngles = eulerAngles;
+        //                    }
+        //                }
 
-                        EditorGUI.indentLevel--;
-                    }
-                }
-            }
-        }
+        //                proxy.scale
+        //                    = EditorGUILayout.Vector3Field("Scale", proxy.scale);
 
-        #endregion
+        //                EditorGUI.indentLevel--;
+        //            }
+        //        }
+        //    }
+        //}
+
+        //#endregion
     }
 }

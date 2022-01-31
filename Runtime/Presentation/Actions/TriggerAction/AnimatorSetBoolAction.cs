@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.Actions
     {
         [JsonProperty(Order = 0, PropertyName = "Value")] private bool m_Value;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             if (!IsExecutable(entity, out AnimatorAttribute animator))
             {

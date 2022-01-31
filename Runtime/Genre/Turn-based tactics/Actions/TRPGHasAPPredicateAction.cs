@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 0, PropertyName = "DesireActionPoint")]
         private int m_DesireActionPoint = 0;
 
-        protected override bool OnExecute(EntityData<IEntityData> entity)
+        protected override bool OnExecute(Entity<IObject> entity)
         {
             if (!entity.HasComponent<TurnPlayerComponent>())
             {

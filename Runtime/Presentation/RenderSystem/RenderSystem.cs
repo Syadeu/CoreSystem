@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #undef UNITY_ADDRESSABLES
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
 #if UNITY_ADDRESSABLES
 using UnityEngine.AddressableAssets;
@@ -20,13 +23,19 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
 
+#if !CORESYSTEM_URP && !CORESYSTEM_HDRP
+#define CORESYSTEM_SRP
+#endif
+
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -40,7 +49,12 @@ using UnityEngine.Rendering.Universal;
 namespace Syadeu.Presentation.Render
 {
     [RequireGlobalConfig("Graphics")]
-    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>
+    public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>,
+        INotifySystemModule<VectorGraphicsModule>,
+        INotifySystemModule<LowLevel.GPUInstancingModule>
+#if CORESYSTEM_SHAPES
+        , INotifySystemModule<ShapesRenderModule>
+#endif
 #if CORESYSTEM_HDRP
         , INotifySystemModule<HDRPRenderProjectionModule>
 #endif
@@ -102,6 +116,11 @@ namespace Syadeu.Presentation.Render
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;
+        public event Action<ScriptableRenderContext, Camera> OnRenderShapes;
+
+        public event Action<ScriptableRenderContext, Camera[]> OnFrameRender;
+
+        private JobHandle m_RenderJobHandle;
 
         private JobHandle m_FrustumJob;
 		private CameraFrustum m_CameraFrustum;
@@ -128,6 +147,9 @@ namespace Syadeu.Presentation.Render
             RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
             RenderPipelineManager.beginCameraRendering += Instance_OnRender;
 
+            RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
+
             m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
             m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
 
@@ -135,12 +157,16 @@ namespace Syadeu.Presentation.Render
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+
+        protected override void OnShutDown()
         {
             m_Camera.OnValueChange -= OnCameraChangedHandler;
-            //CoreSystem.Instance.OnRender -= Instance_OnRender;
-            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
 
+            RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
+            RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+        }
+        protected override void OnDispose()
+        {
             m_CameraFrustum.Dispose();
         }
         private void OnCameraChangedHandler(Camera from, Camera to)
@@ -169,14 +195,45 @@ namespace Syadeu.Presentation.Render
             }
 #endif
         }
+
+        private void RenderPipelineManager_beginFrameRendering(ScriptableRenderContext arg1, Camera[] arg2)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+                return;
+            }
+            else if (UnityEditor.EditorApplication.isPaused) return;
+#endif
+            
+            OnFrameRender?.Invoke(arg1, arg2);
+        }
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
-#if CORESYSTEM_SHAPES
-            using (Shapes.Draw.Command(cam))
-#endif
+            // 메인 카메라가 아니면 안됨.
+            if (cam != m_Camera.Value) return;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
             {
-                OnRender?.Invoke(ctx, cam);
+                RenderPipelineManager.beginCameraRendering -= Instance_OnRender;
+                return;
             }
+            else if (UnityEditor.EditorApplication.isPaused) return;
+#endif
+            m_RenderJobHandle.Complete();
+
+#if CORESYSTEM_SHAPES
+            if (OnRenderShapes != null)
+            {
+                using (Shapes.Draw.Command(cam))
+                {
+                    OnRenderShapes.Invoke(ctx, cam);
+                }
+            }
+#endif
+            OnRender?.Invoke(ctx, cam);
         }
 
         protected override PresentationResult BeforePresentation()
@@ -273,13 +330,31 @@ namespace Syadeu.Presentation.Render
         }
 #endif
 
-        //private float4x4 GetCameraWorldMatrix()
-        //{
-        //    float4x4 projection = m_LastCameraData.projectionMatrix;
-        //    float4x4 tr = new float4x4(new float3x3(m_LastCameraData.orientation), m_LastCameraData.position);
+        public JobHandle ScheduleAtRender<TJob>(TJob job)
+            where TJob : struct, IJob
+        {
+            JobHandle handle = Schedule<TJob>(job);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
 
-        //    return math.inverse(math.mul(projection, math.fastinverse(tr)));
-        //}
+            return handle;
+        }
+        public JobHandle ScheduleAtRender<TJob>(TJob job, int arrayLength, int innerloopBatchCount = 64)
+            where TJob : struct, IJobParallelFor
+        {
+            JobHandle handle = Schedule<TJob>(job, arrayLength, innerloopBatchCount);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
+
+            return handle;
+        }
+        public JobHandle ScheduleAtRender<TJob, TComponent>(TJob job, int innerloopBatchCount = 64)
+            where TJob : struct, IJobParallelForEntities<TComponent>
+            where TComponent : unmanaged, IEntityComponent
+        {
+            JobHandle handle = Schedule<TJob, TComponent>(job, innerloopBatchCount);
+            m_RenderJobHandle = JobHandle.CombineDependencies(m_RenderJobHandle, handle);
+
+            return handle;
+        }
 
 #if CORESYSTEM_HDRP
         public HDRPProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
@@ -481,8 +556,44 @@ namespace Syadeu.Presentation.Render
         //}
         public Ray ScreenPointToRay(float3 screenPoint)
         {
+            if (m_Camera.Value == null) return default(Ray);
+
             return m_Camera.Value.ScreenPointToRay(screenPoint);
         }
+
+        //public Rect AABBToScreenRect(AABB aabb)
+        //{
+        //    float3
+        //        min = aabb.min,
+        //        max = aabb.max;
+
+        //    // Get mesh origin and farthest extent (this works best with simple convex meshes)
+        //    float3 origin = WorldToScreenPoint(new float3(min.x, max.y, 0f));
+        //    float3 extent = WorldToScreenPoint(new float3(max.x, min.y, 0f));
+
+        //    // Create rect in screen space and return - does not account for camera perspective
+        //    // Upper left
+        //    var rect = new Rect(origin.x, Screen.height - origin.y , extent.x - origin.x, origin.y - extent.y);
+
+        //    rect.x -= rect.width * .5f;
+        //    rect.y += rect.height * .5f;
+
+        //    return rect;
+        //}
+        //public float2 AABBToScreenWorldSize(AABB aabb)
+        //{
+        //    float3
+        //        min = aabb.min,
+        //        max = aabb.max;
+
+        //    float3 minS = WorldToScreenPoint(min);
+        //    float3 maxS = WorldToScreenPoint(max);
+
+        //    minS = ScreenToWorldPoint(minS);
+        //    maxS = ScreenToWorldPoint(maxS);
+
+        //    return new float2(math.abs(maxS.x - minS.x), math.abs(maxS.y - minS.y));
+        //}
 
         public void SetResolution()
         {

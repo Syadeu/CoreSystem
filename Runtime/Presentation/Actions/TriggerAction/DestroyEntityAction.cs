@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Destroy Entity")]
     public sealed class DestroyEntityAction : TriggerAction
     {
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             entity.Destroy();
         }

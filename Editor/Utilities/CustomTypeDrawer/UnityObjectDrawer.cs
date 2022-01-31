@@ -27,19 +27,21 @@ namespace SyadeuEditor.Utilities
                 {
                     currentValue = EditorGUILayout.ObjectField(Name, currentValue, DeclaredType, true);
 
-                    EditorGUI.BeginChangeCheck();
-                    m_Open = GUILayout.Toggle(m_Open,
+                    using (var change = new EditorGUI.ChangeCheckScope())
+                    {
+                        m_Open = GUILayout.Toggle(m_Open,
                                 m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
                                 , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        if (m_Open)
+                        if (change.changed)
                         {
-                            if (currentValue != null) m_Editor = Editor.CreateEditor(currentValue);
-                        }
-                        else
-                        {
-                            m_Editor = null;
+                            if (m_Open)
+                            {
+                                if (currentValue != null) m_Editor = Editor.CreateEditor(currentValue);
+                            }
+                            else
+                            {
+                                m_Editor = null;
+                            }
                         }
                     }
                 }

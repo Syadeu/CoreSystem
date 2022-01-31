@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.Actions
         public bool KeepWait => false;
         public float AfterDelay => 0;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             Application.Quit();
         }

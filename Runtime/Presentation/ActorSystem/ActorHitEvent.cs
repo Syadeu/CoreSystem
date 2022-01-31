@@ -22,8 +22,6 @@ namespace Syadeu.Presentation.Actor
         private Entity<ActorEntity> m_AttackFrom;
         private float m_Damage;
 
-        bool IActorEvent.BurstCompile => true;
-
         public Entity<ActorEntity> AttackFrom => m_AttackFrom;
         public float Damage => m_Damage;
 

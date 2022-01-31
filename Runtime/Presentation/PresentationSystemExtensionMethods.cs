@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
             }
             return list;
         }
-
+        
         public static FixedReference<T> As<T>(this IFixedReference reference)
             where T : class, IObject
         {
@@ -59,22 +59,40 @@ namespace Syadeu.Presentation
             return new Reference<T>(reference.Hash);
         }
 
-        public static Instance<TA> Cast<T, TA>(this Instance<T> t)
-            where T : class, IObject
-            where TA : class, IObject
+        public static bool IsValid(this IFixedReference t)
         {
-            return new Instance<TA>(t.Idx);
-        }
-        public static Reference<T> AsOriginal<T>(this Instance<T> t)
-            where T : class, IObject
-        {
-            return new Reference<T>(t.GetObject().Hash);
-        }
+            if (t == null ||
+                t.IsEmpty())
+            {
+                return false;
+            }
+            else if (!EntityDataList.Instance.m_Objects.ContainsKey(t.Hash))
+            {
+                return false;
+            }
 
+            return true;
+        }
+        public static bool IsValid<T>(this IFixedReference<T> t)
+            where T : class, IObject
+        {
+            if (t == null ||
+                t.IsEmpty())
+            {
+                return false;
+            }
+            else if (!EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out var value) ||
+                !(value is T))
+            {
+                return false;
+            }
+
+            return true;
+        }
         public static T GetObject<T>(this IFixedReference<T> t)
             where T : class, IObject
         {
-            if (t.IsEmpty())
+            if (t == null || t.IsEmpty())
             {
                 return null;
             }
@@ -97,28 +115,19 @@ namespace Syadeu.Presentation
             }
             return null;
         }
-        public static Instance<T> CreateInstance<T>(this IFixedReference<T> target)
+        public static T GetObject<T>(this IFixedReference t)
             where T : class, IObject
         {
-            if (target.IsEmpty())
+            if (t == null || t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, "You cannot create instance of null reference.");
-                return Instance<T>.Empty;
+                return null;
             }
-
-            Type t = target.GetObject().GetType();
-            if (TypeHelper.TypeOf<EntityBase>.Type.IsAssignableFrom(t))
+            else if (EntityDataList.Instance.m_Objects.TryGetValue(t.Hash, out ObjectBase value) &&
+                value is T target)
             {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateEntity(target.Hash, float3.zero);
-                return new Instance<T>(temp.Idx);
+                return target;
             }
-            else if (TypeHelper.TypeOf<EntityDataBase>.Type.IsAssignableFrom(t))
-            {
-                var temp = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateObject(target.Hash);
-                return new Instance<T>(temp.Idx);
-            }
-
-            return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.CreateInstance<T>(target.GetObject());
+            return null;
         }
     }
 }

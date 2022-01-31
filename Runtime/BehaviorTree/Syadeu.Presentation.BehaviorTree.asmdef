@@ -18,8 +18,8 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "BehaviorDesigner.Runtime.dll",
-        "DOTween.dll",
         "DemiLib.dll",
+        "DOTween.dll",
         "DOTweenPro.dll",
         "Newtonsoft.Json.dll"
     ],

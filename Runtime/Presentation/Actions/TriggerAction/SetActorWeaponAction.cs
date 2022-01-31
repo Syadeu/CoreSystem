@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 1, PropertyName = "Aiming")]
         private bool m_Aiming;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             ref ActorWeaponComponent weapon = ref entity.GetComponent<ActorWeaponComponent>();
             weapon.Holster = m_Holster;

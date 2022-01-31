@@ -30,7 +30,6 @@ namespace Syadeu.Presentation.Actor
         private State m_LifeTime;
 
         public ActorEventID EventID => m_EventID;
-        bool IActorEvent.BurstCompile => true;
         public State LifeTime => m_LifeTime;
 
         public ActorLifetimeChangedEvent(State lifetime)

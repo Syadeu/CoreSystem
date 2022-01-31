@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Actions
         [JsonProperty(Order = 1, PropertyName = "UpdateType")] private UpdateType m_UpdateType;
         [JsonProperty(Order = 2, PropertyName = "Speed")] private float m_Speed = 5;
 
-        protected override void OnExecute(EntityData<IEntityData> e)
+        protected override void OnExecute(Entity<IObject> e)
         {
             if (!(e.Target is EntityBase entity))
             {
@@ -49,10 +49,10 @@ namespace Syadeu.Presentation.Actions
             switch (m_UpdateType)
             {
                 case UpdateType.Lerp:
-                    CoreSystem.StartUnityUpdate(this, Lerp(entity.transform, m_Target, m_Speed));
+                    CoreSystem.StartUnityUpdate(this, Lerp(entity.GetTransform(), m_Target, m_Speed));
                     break;
                 default:
-                    entity.transform.position = m_Target;
+                    entity.GetTransform().position = m_Target;
                     break;
             }
         }

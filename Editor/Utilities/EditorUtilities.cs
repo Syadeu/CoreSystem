@@ -1,11 +1,26 @@
-﻿
+﻿// Copyright 2021 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Syadeu;
+using Syadeu.Collections;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-
+using System.Reflection;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -85,10 +100,17 @@ namespace SyadeuEditor
         public static string String(string text) => String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black);
         public static string String(string text, StringColor color)
             => $"<color={color}>{text}</color>";
-        public static string String(string text, int size)
-            => $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
+        public static string String(string text, int size, bool color = true)
+        {
+            if (color)
+            {
+                return $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
+            }
+
+            return $"<size={size}>{text}</size>";
+        }
         public static string String(string text, StringColor color, int size)
-            => String(String(text, color), size);
+            => String(String(text, color), size, false);
         public static void StringHeader(string text, StringColor color, bool center)
         {
             EditorGUILayout.LabelField(String(text, color, 20), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
@@ -201,6 +223,36 @@ namespace SyadeuEditor
         }
         #endregion
 
+        public static object AutoField(FieldInfo fieldInfo, string label, object value, params GUILayoutOption[] options)
+        {
+            if (fieldInfo.FieldType == TypeHelper.TypeOf<int>.Type)
+            {
+                return EditorGUILayout.IntField(label, Convert.ToInt32(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<float>.Type)
+            {
+                return EditorGUILayout.FloatField(label, Convert.ToSingle(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<bool>.Type)
+            {
+                return EditorGUILayout.ToggleLeft(label, Convert.ToBoolean(value), options);
+            }
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<string>.Type)
+            {
+                return EditorGUILayout.TextField(label, Convert.ToString(value), options);
+            }
+            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
+            //{
+            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
+            //}
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<Vector3>.Type)
+            {
+                return EditorGUILayout.Vector3Field(label, (Vector3)(value), options);
+            }
+
+            throw new NotImplementedException();
+        }
+
         public sealed class BoxBlock : IDisposable
         {
             Color m_PrevColor;
@@ -272,7 +324,7 @@ namespace SyadeuEditor
                 EditorGUILayout.LabelField("게임에 사용될 오브젝트를 선택해주세요");
                 return false;
             }
-            EditorGUILayout.ObjectField("타겟 오브젝트: ", obj, typeof(GameObject), true);
+            EditorGUILayout.ObjectField("타겟 오브젝트: ", obj, TypeHelper.TypeOf<GameObject>.Type, true);
 
             if (GUILayout.Button("Reset"))
             {
@@ -314,7 +366,134 @@ namespace SyadeuEditor
         //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
         //}
 
-        
+        private static GUIStyle s_BoxButtonStyle = null;
+        public static GUIStyle BoxButtonStyle
+        {
+            get
+            {
+                if (s_BoxButtonStyle == null)
+                {
+                    s_BoxButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
+                }
+                return s_BoxButtonStyle;
+            }
+        }
+
+        public static bool BoxButton(string name, Color color, params GUILayoutOption[] options)
+            => BoxButton(name, color, null, options);
+        public static bool BoxButton(string name, Color color, Action contextClick, params GUILayoutOption[] options)
+        {
+            GUIContent enableCullName = new GUIContent(name);
+            Rect enableCullRect = GUILayoutUtility.GetRect(
+                enableCullName,
+                EditorStyles.toolbarButton, /*GUILayout.ExpandWidth(true), */options);
+            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+
+            bool clicked = false;
+            switch (Event.current.GetTypeForControl(enableCullID))
+            {
+                case EventType.Repaint:
+                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                    Color origin = GUI.color;
+                    GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    EditorStyles.toolbarButton.Draw(enableCullRect,
+                        isHover, isActive: true, on: true, false);
+                    GUI.color = origin;
+
+                    var temp = new GUIStyle(EditorStyles.label);
+                    temp.alignment = TextAnchor.MiddleCenter;
+                    temp.Draw(enableCullRect, enableCullName, enableCullID);
+                    break;
+                case EventType.ContextClick:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    contextClick?.Invoke();
+                    Event.current.Use();
+
+                    break;
+                case EventType.MouseDown:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = enableCullID;
+                        clicked = true;
+                        GUI.changed = true;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    var drag = DragAndDrop.GetGenericData("GenericDragColumnDragging");
+                    if (drag != null)
+                    {
+                        $"in {drag.GetType().Name}".ToLog();
+                    }
+
+                    if (GUIUtility.hotControl == enableCullID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return clicked;
+        }
+        public static bool BoxToggleButton(string name, bool value, Color enableColor, Color disableColor, params GUILayoutOption[] options)
+        {
+            GUIContent enableCullName = new GUIContent(name);
+            Rect enableCullRect = GUILayoutUtility.GetRect(
+                enableCullName,
+                BoxButtonStyle, /*GUILayout.ExpandWidth(true), */options);
+            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
+
+            switch (Event.current.GetTypeForControl(enableCullID))
+            {
+                case EventType.Repaint:
+                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
+
+                    Color origin = GUI.backgroundColor;
+                    GUI.backgroundColor = value ? enableColor : disableColor;
+                    GUI.backgroundColor = Color.Lerp(GUI.backgroundColor, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    BoxButtonStyle.Draw(enableCullRect,
+                        isHover, isActive: true, on: true, false);
+                    GUI.backgroundColor = origin;
+
+                    var temp = new GUIStyle(EditorStyles.label);
+                    temp.alignment = TextAnchor.MiddleCenter;
+                    temp.Draw(enableCullRect, enableCullName, enableCullID);
+                    break;
+                case EventType.MouseDown:
+                    if (!GUI.enabled) break;
+
+                    if (!enableCullRect.Contains(Event.current.mousePosition)) break;
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = enableCullID;
+                        value = !value;
+                        GUI.changed = true;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == enableCullID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return value;
+        }
 
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
@@ -325,7 +504,7 @@ namespace SyadeuEditor
             }
             else
             {
-                return EditorGUILayout.Foldout(foldout, String($"<size={size}>{firstKey} {name}</size>", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
+                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey, size), true, EditorStyleUtilities.HeaderStyle);
             }
         }
 
@@ -394,7 +573,7 @@ namespace SyadeuEditor
         {
             if (!System.IO.Directory.Exists($"Assets/Resources/Syadeu/{folder}")) return null;
 
-            return (T)AssetDatabase.LoadAssetAtPath($"Assets/Resources/Syadeu/{folder}/{name}.asset", typeof(T));
+            return (T)AssetDatabase.LoadAssetAtPath($"Assets/Resources/Syadeu/{folder}/{name}.asset", TypeHelper.TypeOf<T>.Type);
         }
         public static T SaveScriptable<T>(T data, string folder) where T : ScriptableObject
         {
@@ -474,7 +653,7 @@ namespace SyadeuEditor
             {
                 for (int i = 0; i < filePaths.Length; i++)
                 {
-                    UnityEngine.Object obj = UnityEditor.AssetDatabase.LoadAssetAtPath(filePaths[i], typeof(T));
+                    UnityEngine.Object obj = UnityEditor.AssetDatabase.LoadAssetAtPath(filePaths[i], TypeHelper.TypeOf<T>.Type);
                     if (obj is T asset)
                     {
                         countFound++;

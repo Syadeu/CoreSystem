@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
@@ -25,16 +29,17 @@ namespace Syadeu.Presentation.Actions
     {
         [JsonProperty(Order = 0, PropertyName = "Enable")] private bool m_Enable;
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
             var att = entity.GetAttribute<TriggerBoundAttribute>();
+#if DEBUG_MODE
             if (att == null)
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This entity({entity.Name}) has not any {nameof(TriggerBoundAttribute)}.");
                 return;
             }
-
+#endif
             att.Enabled = m_Enable;
         }
     }

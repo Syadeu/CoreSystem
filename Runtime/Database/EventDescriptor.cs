@@ -18,45 +18,73 @@ using System.Collections.Generic;
 
 namespace Syadeu.Collections
 {
-    public class EventDescriptor<T> : CLRSingleTone<EventDescriptor<T>>
+    public class EventDescriptor<TEvent> : IEventDescriptor, IDisposable
     {
-        private readonly ConcurrentDictionary<Hash, Action<T>> m_Events = new ConcurrentDictionary<Hash, Action<T>>();
+        private readonly ConcurrentDictionary<Hash, Action<TEvent>> m_Events = new ConcurrentDictionary<Hash, Action<TEvent>>();
 
-        public static void AddEvent(string key, Action<T> e)
-            => AddEvent(Hash.NewHash(key), e);
-        public static void AddEvent(Hash key, Action<T> e)
+        public void AddEvent(string key, Action<TEvent> e) => AddEvent(Hash.NewHash(key), e);
+        public void AddEvent(Hash key, Action<TEvent> e)
         {
-            if (!Instance.m_Events.TryGetValue(key, out Action<T> value))
+            if (!m_Events.TryGetValue(key, out Action<TEvent> value))
             {
-                Instance.m_Events.TryAdd(key, e);
+                m_Events.TryAdd(key, e);
                 return;
             }
 
-            Instance.m_Events[key] += e;
+            m_Events[key] += e;
         }
 
-        public static void RemoveEvent(string key, Action<T> e)
-            => RemoveEvent(Hash.NewHash(key), e);
-        public static void RemoveEvent(Hash key, Action<T> e)
+        void IEventDescriptor.AddEvent(string key, Delegate e) => AddEvent(key, (Action<TEvent>)e);
+        void IEventDescriptor.AddEvent(Hash key, Delegate e) => AddEvent(key, (Action<TEvent>)e);
+
+        public void RemoveEvent(string key, Action<TEvent> e) => RemoveEvent(Hash.NewHash(key), e);
+        public void RemoveEvent(Hash key, Action<TEvent> e)
         {
-            if (!Instance.m_Events.TryGetValue(key, out Action<T> value))
+            if (!m_Events.ContainsKey(key))
             {
                 return;
             }
 
-            Instance.m_Events[key] -= e;
+            m_Events[key] -= e;
+            if (m_Events[key] == null)
+            {
+                m_Events.TryRemove(key, out _);
+            }
+
+            //var invocationList = m_Events[key].GetInvocationList();
+            //if (invocationList == null || invocationList.Length == 0)
+            //{
+            //    m_Events.TryRemove(key, out _);
+            //}
         }
 
-        public static void Invoke(string key, T t) => Invoke(Hash.NewHash(key), t);
-        public static void Invoke(Hash key, T t)
+        void IEventDescriptor.RemoveEvent(string key, Delegate e) => RemoveEvent(key, (Action<TEvent>)e);
+        void IEventDescriptor.RemoveEvent(Hash key, Delegate e) => RemoveEvent(key, (Action<TEvent>)e);
+
+        void IEventDescriptor.Invoke(string key, object ev) => Invoke(Hash.NewHash(key), (TEvent)ev);
+        void IEventDescriptor.Invoke(Hash key, object ev) => Invoke(key, (TEvent)ev);
+
+        public void Invoke(string key, TEvent t) => Invoke(Hash.NewHash(key), t);
+        public void Invoke(Hash key, TEvent t)
         {
-            if (!Instance.m_Events.TryGetValue(key, out var value)) return;
+            if (!m_Events.TryGetValue(key, out var value)) return;
             value?.Invoke(t);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             m_Events.Clear();
         }
-    } 
+    }
+    public interface IEventDescriptor : IDisposable
+    {
+        void AddEvent(string key, Delegate e);
+        void AddEvent(Hash key, Delegate e);
+
+        void RemoveEvent(string key, Delegate e);
+        void RemoveEvent(Hash key, Delegate e);
+
+        void Invoke(string key, object ev);
+        void Invoke(Hash key, object ev);
+    }
 }

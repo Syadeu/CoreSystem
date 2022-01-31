@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Syadeu.Collections.Proxy;
+using System;
 using Unity.Mathematics;
 
 namespace Syadeu.Collections
@@ -29,6 +30,7 @@ namespace Syadeu.Collections
     /// </remarks>
     public interface IEntity : IEntityData
     {
+        [Obsolete("", true)]
         ITransform transform { get; }
 
         /// <summary>

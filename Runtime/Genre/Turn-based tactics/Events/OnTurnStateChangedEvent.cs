@@ -11,11 +11,11 @@ namespace Syadeu.Presentation.TurnTable
             Start   =   0b010,
             End     =   0b100,
         }
-        public EntityData<IEntityData> Entity { get; private set; }
+        public Entity<IEntityData> Entity { get; private set; }
         public TurnState State { get; private set; }
 
         public override bool IsValid() => Entity.IsValid();
-        public static OnTurnStateChangedEvent GetEvent(EntityData<IEntityData> entity, TurnState state)
+        public static OnTurnStateChangedEvent GetEvent(Entity<IEntityData> entity, TurnState state)
         {
             var temp = Dequeue();
 
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnTerminate()
         {
-            Entity = EntityData<IEntityData>.Empty;
+            Entity = Entity<IEntityData>.Empty;
         }
     }
 }

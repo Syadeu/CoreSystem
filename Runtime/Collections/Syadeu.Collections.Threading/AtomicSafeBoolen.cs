@@ -19,22 +19,16 @@ namespace Syadeu.Collections.Threading
 {
     public struct AtomicSafeBoolen : IEquatable<AtomicSafeBoolen>
     {
-        private int m_Value;
+        private volatile bool m_Value;
 
         public bool Value
         {
-            get
-            {
-                return m_Value == 0 ? false : true;
-            }
-            set
-            {
-                Interlocked.Exchange(ref m_Value, value ? 1 : 0);
-            }
+            get => m_Value;
+            set => m_Value = value;
         }
         public AtomicSafeBoolen(bool value)
         {
-            m_Value = value ? 1 : 0;
+            m_Value = value;
         }
 
         public bool Equals(AtomicSafeBoolen other) => m_Value.Equals(other.m_Value);

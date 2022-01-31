@@ -25,18 +25,19 @@ namespace Syadeu.Presentation.Actions
 {
     public static class ActionExtensionMethods
     {
-        //const string c_ErrorIsTerminatedAction = "This action({0}) has been terminated.";
+        internal static ActionSystem s_ActionSystem;
+
         const string c_WarningInvalidEntityAction = "This action({0}) has been executed with invalid entity.";
         const string c_ErrorCompletedWithFailed = "Execution ({0}) completed with failed.";
         const string c_ErrorTriggerActionCompletedWithFailed = "Execution ({0}) at {1} completed with failed.";
 
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity)
+        public static bool Execute<T>(this Reference<T> other, Entity<IObject> entity)
             where T : TriggerAction
         {
             FixedReference<T> t = other;
             return Execute(t, entity);
         }
-        public static bool Execute<T>(this IFixedReference<T> other, EntityData<IEntityData> entity) 
+        public static bool Execute<T>(this IFixedReference<T> other, Entity<IObject> entity) 
             where T : TriggerAction
         {
             if (!entity.IsValid())
@@ -45,15 +46,15 @@ namespace Syadeu.Presentation.Actions
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
-            return PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ExecuteTriggerAction(other, entity);
+            return s_ActionSystem.ExecuteTriggerAction(other, entity);
         }
-        public static bool Execute<T>(this Reference<T> other, EntityData<IEntityData> entity, out bool predicate)
+        public static bool Execute<T>(this Reference<T> other, Entity<IObject> entity, out bool predicate)
             where T : TriggerPredicateAction
         {
             FixedReference<T> t = other;
             return Execute(t, entity, out predicate);
         }
-        public static bool Execute<T>(this IFixedReference<T> other, EntityData<IEntityData> entity, out bool predicate) 
+        public static bool Execute<T>(this IFixedReference<T> other, Entity<IObject> entity, out bool predicate) 
             where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
@@ -64,8 +65,8 @@ namespace Syadeu.Presentation.Actions
                 return false;
             }
 
-            Instance<T> ins = other.CreateInstance();
-            T action = ins.GetObject();
+            Entity<T> ins = other.CreateEntity();
+            T action = ins.Target;
             bool result = action.InternalExecute(entity, out predicate);
             ins.Destroy();
 
@@ -87,8 +88,8 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T>(this IFixedReference<ParamAction<T>> other, T t)
         {
-            Instance<ParamAction<T>> ins = other.CreateInstance();
-            ParamAction<T> action = ins.GetObject();
+            Entity<ParamAction<T>> ins = other.CreateEntity();
+            ParamAction<T> action = ins.Target;
             bool result = action.InternalExecute(t);
             ins.Destroy();
 
@@ -101,15 +102,15 @@ namespace Syadeu.Presentation.Actions
         }
         public static bool Execute<T, TA>(this IFixedReference<ParamAction<T, TA>> other, T t, TA ta)
         {
-            Instance<ParamAction<T, TA>> ins = other.CreateInstance();
-            ParamAction<T, TA> action = ins.GetObject();
+            Entity<ParamAction<T, TA>> ins = other.CreateEntity();
+            ParamAction<T, TA> action = ins.Target;
             bool result = action.InternalExecute(t, ta);
             ins.Destroy();
 
             return result;
         }
 
-        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity) where T : TriggerAction
+        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity) where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -134,7 +135,7 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -219,7 +220,7 @@ namespace Syadeu.Presentation.Actions
             return !isFailed;
         }
 
-        public static bool Execute<T>(this IFixedReferenceList<T> actions, EntityData<IEntityData> entity) where T : TriggerAction
+        public static bool Execute<T>(this IFixedReferenceList<T> actions, Entity<IObject> entity) where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -231,7 +232,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity);
             }
@@ -244,7 +245,7 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this IFixedReferenceList<T> actions, EntityData<IEntityData> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this IFixedReferenceList<T> actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -259,7 +260,7 @@ namespace Syadeu.Presentation.Actions
                 isFalse = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(entity, out bool result);
                 isFalse |= !result;
@@ -280,7 +281,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute();
             }
@@ -298,7 +299,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(target);
             }
@@ -316,7 +317,7 @@ namespace Syadeu.Presentation.Actions
             bool isFailed = false;
             for (int i = 0; i < actions.Length; i++)
             {
-                if (actions[i].IsEmpty()) continue;
+                if (actions[i].IsEmpty() || !actions[i].IsValid()) continue;
 
                 isFailed |= !actions[i].Execute(t, ta);
             }
@@ -343,7 +344,7 @@ namespace Syadeu.Presentation.Actions
         {
             PresentationSystem<DefaultPresentationGroup, ActionSystem>.System.ScheduleInstanceAction(action);
         }
-        public static void Schedule<T>(this Reference<T> action, EntityData<IEntityData> entity)
+        public static void Schedule<T>(this Reference<T> action, Entity<IEntityData> entity)
             where T : TriggerAction
         {
             if (!entity.IsValid())
@@ -391,7 +392,7 @@ namespace Syadeu.Presentation.Actions
             }
         }
         //[Obsolete("Use FixedReferenceList64")]
-        public static void Schedule<T>(this Reference<T>[] actions, EntityData<IEntityData> entity)
+        public static void Schedule<T>(this Reference<T>[] actions, Entity<IObject> entity)
             where T : TriggerAction
         {
             if (actions == null || actions.Length == 0) return;
@@ -401,6 +402,20 @@ namespace Syadeu.Presentation.Actions
             {
                 system.ScheduleTriggerAction<T>(actions[i], entity);
             }
+        }
+
+        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return default(TValue);
+            }
+
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            info.SetArguments(constAction, action.Arguments);
+
+            return (TValue)constAction.Execute();
         }
     }
 }

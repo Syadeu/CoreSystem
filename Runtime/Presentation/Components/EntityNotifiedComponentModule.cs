@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
 using System.Collections.Generic;
@@ -54,31 +55,23 @@ namespace Syadeu.Presentation.Components
             m_EntitySystem = other;
         }
 
-        public void TryRemoveComponent(IObject rawObject, InstanceID entityID, Action<InstanceID, Type> onRemove)
+        public void TryAddComponent(IObject rawObject, Action<InstanceID, Type> onAdd)
         {
-            //Entity<IEntity> entity = entityID.GetEntity<IEntity>();
-            //ObjectBase rawObject = m_EntitySystem.m_ObjectEntities[entityID];
             Hash rawID = rawObject.Hash;
+            InstanceID instanceID = (rawObject is AttributeBase att) ? att.ParentEntity.Idx : rawObject.Idx;
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;
             else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
             {
                 do
                 {
-                    onRemove?.Invoke(entityID, typeInfo.Type);
-                    System.RemoveComponent(entityID, typeInfo);
+                    System.AddComponent(instanceID, typeInfo);
+                    onAdd?.Invoke(instanceID, typeInfo.Type);
 
                 } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
                 return;
             }
-
-            //if (!entity.IsValid())
-            //{
-            //    CoreSystem.Logger.LogError(Channel.Component,
-            //        $"Entity({entity.Hash}) is disclosed.");
-            //    return;
-            //}
 
             var iter = Select(rawObject.GetType());
             if (!iter.Any())
@@ -90,43 +83,44 @@ namespace Syadeu.Presentation.Components
             var select = iter.Select(i => i.GenericTypeArguments[0]);
             foreach (var componentType in select)
             {
-                onRemove?.Invoke(entityID, componentType);
-                System.RemoveComponent(entityID, componentType);
+                System.AddComponent(instanceID, componentType);
+                onAdd?.Invoke(instanceID, componentType);
 
-                m_NotifiedObjects.Add(rawID, ComponentType.GetValue(componentType).Data);
+                m_NotifiedObjects.Add(rawID, TypeStatic.GetValue(componentType).Data);
             }
         }
-        public void TryRemoveComponent(IObject obj, Action<InstanceID, Type> onRemove)
+        public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
         {
-            if (!(obj is INotifyComponent notify)) return;
+            Hash rawID = rawObject.Hash;
+            InstanceID instanceID = (rawObject is AttributeBase att) ? att.ParentEntity.Idx : rawObject.Idx;
 
-            if (m_ZeroNotifiedObjects.Contains(obj.Hash)) return;
-            else if (m_NotifiedObjects.TryGetFirstValue(obj.Hash, out TypeInfo typeInfo, out var parsedIter))
+            if (m_ZeroNotifiedObjects.Contains(rawID)) return;
+            else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
             {
                 do
                 {
-                    onRemove?.Invoke(obj.Idx, typeInfo.Type);
-                    System.RemoveComponent(obj.Idx, typeInfo);
+                    onRemove?.Invoke(instanceID, typeInfo.Type);
+                    System.RemoveComponent(instanceID, typeInfo);
 
                 } while (m_NotifiedObjects.TryGetNextValue(out typeInfo, ref parsedIter));
 
                 return;
             }
 
-            var iter = Select(obj.GetType());
+            var iter = Select(rawObject.GetType());
             if (!iter.Any())
             {
-                m_ZeroNotifiedObjects.Add(obj.Hash);
+                m_ZeroNotifiedObjects.Add(rawID);
                 return;
             }
 
             var select = iter.Select(i => i.GenericTypeArguments[0]);
             foreach (var componentType in select)
             {
-                onRemove?.Invoke(obj.Idx, componentType);
-                System.RemoveComponent(obj.Idx, componentType);
+                onRemove?.Invoke(instanceID, componentType);
+                System.RemoveComponent(instanceID, componentType);
 
-                m_NotifiedObjects.Add(obj.Hash, ComponentType.GetValue(componentType).Data);
+                m_NotifiedObjects.Add(rawID, TypeStatic.GetValue(componentType).Data);
             }
         }
 

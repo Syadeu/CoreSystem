@@ -23,7 +23,7 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class TriggerPredicateAction : ActionBase
     {
-        internal bool InternalExecute(EntityData<IEntityData> entity, out bool predicate)
+        internal bool InternalExecute(Entity<IObject> entity, out bool predicate)
         {
             predicate = false;
             if (!string.IsNullOrEmpty(p_DebugText))
@@ -52,6 +52,6 @@ namespace Syadeu.Presentation.Actions
 
             return result;
         }
-        protected abstract bool OnExecute(EntityData<IEntityData> entity);
+        protected abstract bool OnExecute(Entity<IObject> entity);
     }
 }

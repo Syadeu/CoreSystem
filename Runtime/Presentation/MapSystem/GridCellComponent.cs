@@ -17,6 +17,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.Map
 {
+    [System.Obsolete("Use WorldGridSystem Instead", true)]
     public struct GridCellComponent : IEntityComponent
     {
         public GridPosition m_GridPosition;

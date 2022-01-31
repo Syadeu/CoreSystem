@@ -17,12 +17,14 @@
 #endif
 
 using System;
+using Unity.Collections;
 
 namespace Syadeu.Collections
 {
+    [BurstCompatible]
     public readonly struct InstanceID : IValidation, IEquatable<InstanceID>, IEquatable<Hash>
     {
-        public static readonly InstanceID Empty = new InstanceID(Hash.Empty);
+        public static InstanceID Empty => new InstanceID(Hash.Empty);
 
         private readonly Hash m_Hash;
 
@@ -39,6 +41,7 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Hash.IsEmpty();
         public bool IsValid() => !m_Hash.IsEmpty();
 
+        [NotBurstCompatible]
         public override string ToString()
         {
             return m_Hash.ToString();

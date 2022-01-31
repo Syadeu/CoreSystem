@@ -1,6 +1,18 @@
-﻿using Syadeu;
+﻿// Copyright 2021 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using Syadeu.Collections;
-using Syadeu.Internal;
 using Syadeu.Presentation;
 using SyadeuEditor.Utilities;
 using System;
@@ -56,13 +68,21 @@ namespace SyadeuEditor.Presentation
                         m_WasEdited = false;
                     }
 
-                    m_Open = GUILayout.Toggle(m_Open,
-                                m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                                , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+                    m_Open = EditorUtilities.BoxToggleButton(
+                        m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
+                        m_Open,
+                        ColorPalettes.PastelDreams.TiffanyBlue,
+                        ColorPalettes.PastelDreams.HotPink,
+                        GUILayout.Width(20)
+                        );
+
+                    //m_Open = GUILayout.Toggle(m_Open,
+                    //            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+                    //            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
                     using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
                     {
-                        if (GUILayout.Button("C", GUILayout.Width(20)))
+                        if (EditorUtilities.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
                         {
                             ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
 
@@ -130,6 +150,64 @@ namespace SyadeuEditor.Presentation
                 else displayName = new GUIContent(objBase.Name);
             }
 
+            bool clicked;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (!string.IsNullOrEmpty(name))
+                {
+                    GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
+                }
+                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                {
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (current.IsValid())
+                    {
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
+                        {
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
+
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{current.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
+                        {
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().Select(current);
+                        });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
+                    }
+
+                    menu.AddSeparator(string.Empty);
+                    if (targetType != null && !targetType.IsAbstract)
+                    {
+                        menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
+                        {
+                            var obj = EntityWindow.Instance.Add(targetType);
+                            setter.Invoke(obj.Hash);
+                        });
+                    }
+                    else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
+
+                    menu.ShowAsContext();
+                });
+            }
+
+            if (clicked)
+            {
+                DrawSelectionWindow(setter, targetType);
+            }
+
+            return;
+
+            #region Old
+
+            Rect fieldRect;
+            int selectorID;
             using (new GUILayout.HorizontalScope())
             {
                 GUILayout.Space(EditorGUI.indentLevel * 15);
@@ -139,141 +217,140 @@ namespace SyadeuEditor.Presentation
                     GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
                 }
 
-                Rect fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField, GUILayout.ExpandWidth(true));
-
-                int selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
-
-                switch (Event.current.GetTypeForControl(selectorID))
-                {
-                    case EventType.Repaint:
-                        bool isHover = fieldRect.Contains(Event.current.mousePosition);
-
-                        EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName,
-                            isHover, isActive: true, on: true, false);
-
-                        break;
-                    case EventType.ContextClick:
-                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
-
-                        GenericMenu menu = new GenericMenu();
-                        menu.AddDisabledItem(displayName);
-                        menu.AddSeparator(string.Empty);
-
-                        if (current.IsValid())
-                        {
-                            menu.AddItem(new GUIContent("Find Referencers"), false, () =>
-                            {
-                                //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
-
-                                EntityWindow.Instance.m_DataListWindow.SearchString = $"ref:{current.Hash}";
-                            });
-                            menu.AddItem(new GUIContent("To Reference"), false, () =>
-                            {
-                                EntityWindow.Instance.m_DataListWindow.Select(current);
-                            });
-                        }
-                        else
-                        {
-                            menu.AddDisabledItem(new GUIContent("Find Referencers"));
-                            menu.AddDisabledItem(new GUIContent("To Reference"));
-                        }
-
-                        menu.AddSeparator(string.Empty);
-                        if (targetType != null && !targetType.IsAbstract)
-                        {
-                            menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
-                            {
-                                var obj = EntityWindow.Instance.Add(targetType);
-                                setter.Invoke(obj.Hash);
-                            });
-                        }
-                        else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
-
-                        menu.ShowAsContext();
-
-                        Event.current.Use();
-                        break;
-                    case EventType.MouseDown:
-                        if (!fieldRect.Contains(Event.current.mousePosition)) break;
-
-                        if (Event.current.button == 0)
-                        {
-                            GUIUtility.hotControl = selectorID;
-                            DrawSelectionWindow(setter, targetType);
-                            
-                            GUI.changed = true;
-                            Event.current.Use();
-                        }
-
-                        break;
-                    case EventType.MouseUp:
-                        if (GUIUtility.hotControl == selectorID)
-                        {
-                            GUIUtility.hotControl = 0;
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyles.textField/*, GUILayout.ExpandWidth(true)*/);
+                selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
             }
 
-            static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
+            bool isHover = fieldRect.Contains(Event.current.mousePosition);
+
+            switch (Event.current.GetTypeForControl(selectorID))
             {
-                try
-                {
-                    GUIUtility.ExitGUI();
-                }
-                catch (ExitGUIException)
-                {
-                }
+                case EventType.Repaint:
+                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName,
+                        isHover, isActive: true, on: true, false);
 
-                Rect rect = GUILayoutUtility.GetRect(150, 300);
-                rect.position = Event.current.mousePosition;
+                    break;
+                case EventType.ContextClick:
+                    if (!isHover) break;
 
-                if (targetType == null)
-                {
-                    try
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddDisabledItem(displayName);
+                    menu.AddSeparator(string.Empty);
+
+                    if (current.IsValid())
                     {
-                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: EntityDataList.Instance.m_Objects.Values.ToArray(),
-                        setter: setter,
-                        getter: (att) =>
+                        menu.AddItem(new GUIContent("Find Referencers"), false, () =>
                         {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
-                        ));
-                    }
-                    catch (ExitGUIException)
-                    {
-                    }
-                }
-                else
-                {
-                    ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
-                        .Where((other) => other.GetType().Equals(targetType) ||
-                                targetType.IsAssignableFrom(other.GetType()))
-                        .ToArray();
+                            //if (!EntityWindow.IsOpened) CoreSystemMenuItems.EntityDataListMenu();
 
-                    try
-                    {
-                        PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: actionBases,
-                        setter: setter,
-                        getter: (att) =>
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().SearchString = $"ref:{current.Hash}";
+                        });
+                        menu.AddItem(new GUIContent("To Reference"), false, () =>
                         {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
-                        ));
+                            EntityWindow.Instance.GetMenuItem<EntityDataWindow>().Select(current);
+                        });
                     }
-                    catch (ExitGUIException)
+                    else
                     {
+                        menu.AddDisabledItem(new GUIContent("Find Referencers"));
+                        menu.AddDisabledItem(new GUIContent("To Reference"));
                     }
-                }
+
+                    menu.AddSeparator(string.Empty);
+                    if (targetType != null && !targetType.IsAbstract)
+                    {
+                        menu.AddItem(new GUIContent($"Create New {TypeHelper.ToString(targetType)}"), false, () =>
+                        {
+                            var obj = EntityWindow.Instance.Add(targetType);
+                            setter.Invoke(obj.Hash);
+                        });
+                    }
+                    else menu.AddDisabledItem(new GUIContent($"Create New {displayName.text}"));
+
+                    menu.ShowAsContext();
+
+                    Event.current.Use();
+                    break;
+                case EventType.MouseDown:
+                    if (!isHover)
+                    {
+                        break;
+                    }
+
+                    if (Event.current.button == 0)
+                    {
+                        GUIUtility.hotControl = selectorID;
+                        DrawSelectionWindow(setter, targetType);
+
+                        GUI.changed = true;
+                        Event.current.Use();
+                    }
+
+                    break;
+                case EventType.MouseUp:
+                    //if (!fieldRect.Contains(Event.current.mousePosition)) break;
+
+                    //if (Event.current.button == 0)
+                    //{
+                    //    GUIUtility.hotControl = selectorID;
+                    //    DrawSelectionWindow(setter, targetType);
+
+                    //    GUI.changed = true;
+                    //    Event.current.Use();
+                    //}
+                    if (GUIUtility.hotControl == selectorID)
+                    {
+                        GUIUtility.hotControl = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
+
+            #endregion
+        }
+        static void DrawSelectionWindow(Action<Hash> setter, Type targetType)
+        {
+            Rect rect = GUILayoutUtility.GetRect(150, 300);
+            rect.position = Event.current.mousePosition;
+
+            if (targetType == null)
+            {
+                //GUIUtility.ExitGUI();
+
+                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    list: EntityDataList.Instance.m_Objects.Values.ToArray(),
+                    setter: setter,
+                    getter: (att) =>
+                    {
+                        return att.Hash;
+                    },
+                    noneValue: Hash.Empty,
+                    (other) => other.Name
+                    ));
+            }
+            else
+            {
+                ObjectBase[] actionBases = EntityDataList.Instance.GetData<ObjectBase>()
+                    .Where((other) => other.GetType().Equals(targetType) ||
+                            targetType.IsAssignableFrom(other.GetType()))
+                    .ToArray();
+
+                //GUIUtility.ExitGUI();
+
+                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
+                    list: actionBases,
+                    setter: setter,
+                    getter: (att) =>
+                    {
+                        return att.Hash;
+                    },
+                    noneValue: Hash.Empty,
+                    (other) => other.Name
+                    ));
+            }
+
+            if (Event.current.type == EventType.Repaint) rect = GUILayoutUtility.GetLastRect();
         }
     }
 }

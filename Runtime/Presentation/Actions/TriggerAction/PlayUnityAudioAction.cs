@@ -64,7 +64,7 @@ namespace Syadeu.Presentation.Actions
             m_CoroutineSystem = null;
         }
 
-        protected override void OnExecute(EntityData<IEntityData> entity)
+        protected override void OnExecute(Entity<IObject> entity)
         {
 #if DEBUG_MODE
             if (!(entity.Target is IEntity))
@@ -79,14 +79,14 @@ namespace Syadeu.Presentation.Actions
             {
                 m_GameObject = FixedGameObject.CreateInstance(),
                 m_AudioClip = m_AudioClip,
-                m_Transform = (ProxyTransform)entity.As<IEntityData, IEntity>().transform,
+                m_Transform = (ProxyTransform)entity.transform,
                 m_PlayOptions = m_PlayOptions,
                 m_Loop = (m_PlayOptions & PlayOptions.UpdatePosition) == PlayOptions.UpdatePosition ? UpdateLoop.AfterTransform : UpdateLoop.Default,
 
                 m_Volume = m_Volume
             };
 
-            m_CoroutineSystem.PostCoroutineJob(job);
+            m_CoroutineSystem.StartCoroutine(job);
         }
 
         private struct PlayJob : ICoroutineJob
@@ -103,15 +103,15 @@ namespace Syadeu.Presentation.Actions
 
             public void Dispose()
             {
-                m_GameObject.Dispose();
+                m_GameObject.Reserve();
             }
             public IEnumerator Execute()
             {
                 if (m_AudioClip.IsNone()) yield break;
 
-                GameObject obj = m_GameObject.Target;
-                AudioSource audioSource = obj.AddComponent<AudioSource>();
-                obj.transform.position = m_Transform.position;
+                //GameObject obj = m_GameObject.Target;
+                AudioSource audioSource = m_GameObject.AddComponent<AudioSource>();
+                m_GameObject.transform.position = m_Transform.position;
                 
                 if (m_AudioClip.Asset == null)
                 {
@@ -127,7 +127,7 @@ namespace Syadeu.Presentation.Actions
 
                 if ((m_PlayOptions & PlayOptions.UpdatePosition) == PlayOptions.UpdatePosition)
                 {
-                    Transform tr = obj.transform;
+                    var tr = m_GameObject.transform;
                     while (audioSource.isPlaying)
                     {
                         tr.position = m_Transform.position;
@@ -143,7 +143,7 @@ namespace Syadeu.Presentation.Actions
                     awaiter.Dispose();
                 }
 
-                UnityEngine.Object.Destroy(m_GameObject.Target.GetComponent<AudioSource>());
+                //UnityEngine.Object.Destroy(m_GameObject.GetComponent<AudioSource>());
             }
         }
         private sealed class AudioAwaiter : ICustomYieldAwaiter, IDisposable

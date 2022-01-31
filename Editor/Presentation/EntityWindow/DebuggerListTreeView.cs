@@ -175,13 +175,13 @@ namespace SyadeuEditor.Presentation
             var list = FindRows(selectedIds);
             if (list.Count > 0 && list[0] is ObjectTreeViewItem objitem)
             {
-                m_Window.m_DebuggerViewWindow.Selected = objitem.m_ObjectBase;
+                m_Window.GetMenuItem<EntityDebugWindow>().Selected = objitem.m_ObjectBase;
             }
 
             base.SelectionChanged(selectedIds);
         }
 
-        public void Select(IInstance instance)
+        public void Select(IEntityDataID instance)
         {
             var iter = GetRows().Where((other) => other is ObjectTreeViewItem item && item.m_ObjectBase.Idx.Equals(instance.Idx));
 
@@ -201,11 +201,11 @@ namespace SyadeuEditor.Presentation
 
         private class ObjectTreeViewItem : TreeViewItem
         {
-            public Instance<ObjectBase> m_ObjectBase;
+            public Entity<ObjectBase> m_ObjectBase;
 
             public ObjectTreeViewItem(int id, int depth, string displayName, ObjectBase obj) : base(id, depth, displayName)
             {
-                m_ObjectBase = new Instance<ObjectBase>(obj);
+                m_ObjectBase = Entity<ObjectBase>.GetEntityWithoutCheck(obj.Idx);
             }
         }
     }

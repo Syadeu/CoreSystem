@@ -37,14 +37,15 @@ namespace Syadeu.Presentation.Proxy
         #region Statics
         public static readonly ProxyTransform Null = new ProxyTransform(-1);
 
-        internal static readonly int2 ProxyNull = new int2(-1, -1);
-        internal static readonly int2 ProxyQueued = new int2(-2, -2);
+        internal static int2 ProxyNull => new int2(-1, -1);
+        internal static int2 ProxyQueued => new int2(-2, -2);
+        internal static int2 ProxyGPUInstanced => 3;
         #endregion
 
         [NativeDisableUnsafePtrRestriction] unsafe internal readonly NativeProxyData.UnsafeList* m_Pointer;
         internal readonly int m_Index;
         internal readonly int m_Generation;
-        internal readonly Hash m_Hash;
+        internal readonly ProxyTransformID m_Hash;
 
         unsafe internal ProxyTransform(NativeProxyData.UnsafeList* p, int index, int generation, Hash hash)
         {
@@ -153,9 +154,9 @@ namespace Syadeu.Presentation.Proxy
 
                 if (Ref.m_EnableCull == value) return;
 
-                if (!value && !hasProxy && !hasProxyQueued)
+                if (!value && !prefab.IsNone() && !hasProxy && !hasProxyQueued)
                 {
-                    Ref.m_ProxyIndex = ProxyQueued;
+                    //Ref.m_ProxyIndex = ProxyQueued;
                     PresentationSystem<DefaultPresentationGroup, GameObjectProxySystem>.System.m_OverrideRequestProxies.Enqueue(m_Index);
                 }
 
@@ -344,15 +345,26 @@ namespace Syadeu.Presentation.Proxy
 
                 if (Ref.m_ParentIndex < 0)
                 {
-                    return Ref.rotation;
+                    quaternion rot = Ref.rotation;
+                    if (rot.value.Equals(float4.zero))
+                    {
+                        rot = Quaternion.identity;
+                    }
+
+                    return rot;
                 }
                 else
                 {
                     unsafe
                     {
                         var parentData = m_Pointer->m_TransformBuffer[Ref.m_ParentIndex];
-                        
-                        quaternion result = math.mul(Ref.m_Rotation, parentData.m_Rotation);
+
+                        quaternion rot = Ref.rotation;
+                        if (rot.value.Equals(float4.zero))
+                        {
+                            rot = Quaternion.identity;
+                        }
+                        quaternion result = math.mul(rot, parentData.m_Rotation);
 
                         return result;
                     }
@@ -672,5 +684,20 @@ namespace Syadeu.Presentation.Proxy
         }
 
         public override int GetHashCode() => m_Index * 397 ^ m_Generation;
+    }
+
+    public struct ProxyTransformID : IEquatable<ProxyTransformID>
+    {
+        public readonly Hash Hash;
+
+        private ProxyTransformID(Hash hash)
+        {
+            Hash = hash;
+        }
+
+        public bool Equals(ProxyTransformID other) => Hash.Equals(other.Hash);
+
+        public static implicit operator Hash(ProxyTransformID t) => t.Hash;
+        public static implicit operator ProxyTransformID(Hash t) => new ProxyTransformID(t);
     }
 }

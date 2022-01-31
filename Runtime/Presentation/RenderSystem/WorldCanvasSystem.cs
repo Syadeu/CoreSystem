@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 #if CORESYSTEM_DOTWEEN
 using DG.Tweening;
 #endif
@@ -32,14 +36,16 @@ using UnityEngine.UI;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>
+    public sealed class WorldCanvasSystem : PresentationSystemEntity<WorldCanvasSystem>,
+        ICanvasSystem,
+        INotifySystemModule<EntityOverlayUIModule>,
+        INotifySystemModule<CanvasRendererModule<SpriteRenderer>>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
         private Canvas m_Canvas;
-        //private Transform m_CanvasTransform;
         private GraphicRaycaster m_CanvasRaycaster;
 
         private UnsafeMultiHashMap<Entity<IEntity>, Entity<UIObjectEntity>> m_AttachedUIHashMap;
@@ -71,11 +77,7 @@ namespace Syadeu.Presentation.Render
         {
             get
             {
-                if (m_CanvasRaycaster == null)
-                {
-                    m_CanvasRaycaster = Canvas.gameObject.AddComponent<GraphicRaycaster>();
-                    m_CanvasRaycaster.blockingMask = LayerMask.GetMask("UI");
-                }
+                Canvas canvas = Canvas;
 
                 return m_CanvasRaycaster;
             }
@@ -93,7 +95,7 @@ namespace Syadeu.Presentation.Render
 
             return base.OnInitialize();
         }
-        public override void OnDispose()
+        protected override void OnShutDown()
         {
             foreach (var item in m_AttachedUIHashMap)
             {
@@ -103,13 +105,16 @@ namespace Syadeu.Presentation.Render
                 }
             }
 
-            m_AttachedUIHashMap.Dispose();
-
             if (m_Canvas != null)
             {
                 Destroy(m_Canvas.gameObject);
             }
+        }
+        protected override void OnDispose()
+        {
+            m_AttachedUIHashMap.Dispose();
 
+            m_SceneSystem = null;
             m_RenderSystem = null;
             m_CoroutineSystem = null;
         }
@@ -213,7 +218,7 @@ namespace Syadeu.Presentation.Render
         }
         public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, float alpha)
         {
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -229,7 +234,7 @@ namespace Syadeu.Presentation.Render
         }
         public void SetAlphaActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry, float alpha)
         {
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -291,13 +296,13 @@ namespace Syadeu.Presentation.Render
 #endif
 
             ActorOverlayUpdateJob updateJob = new ActorOverlayUpdateJob(entity, uiEntry);
-            m_AttachedUIHashMap.Add(entity.Cast<ActorEntity, IEntity>(), updateJob.UIInstance);
+            m_AttachedUIHashMap.Add(entity.ToEntity<IEntity>(), updateJob.UIInstance);
 
             m_AllActorOverlayUI.Add(updateJob.UIInstance);
 
             if (setting.m_UpdateType != Actor.UpdateType.Manual)
             {
-                m_CoroutineSystem.PostCoroutineJob(updateJob);
+                m_CoroutineSystem.StartCoroutine(updateJob);
             }
         }
         public void UnregisterActorOverlayUI(Entity<ActorEntity> entity, Reference<ActorOverlayUIEntry> uiEntry)
@@ -311,7 +316,7 @@ namespace Syadeu.Presentation.Render
             }
             ui.m_OpenedUI.Remove(uiEntry);
 
-            Entity<IEntity> targetEntity = entity.Cast<ActorEntity, IEntity>();
+            Entity<IEntity> targetEntity = entity.ToEntity<IEntity>();
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
@@ -346,14 +351,9 @@ namespace Syadeu.Presentation.Render
             m_AllActorOverlayUI.Remove(uiEntity);
         }
 
-        public void PostActorOverlayUIEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
-#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
-            where TEvent : struct, IActorEvent
-#else
-            where TEvent : unmanaged, IActorEvent
-#endif
+        public void PostActorOverlayUIEvent(Entity<ActorEntity> entity, IActorEvent ev)
         {
-            if (m_AttachedUIHashMap.TryGetFirstValue(entity.Cast<ActorEntity, IEntity>(), 
+            if (m_AttachedUIHashMap.TryGetFirstValue(entity.ToEntity<IEntity>(), 
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
                 do
@@ -369,7 +369,7 @@ namespace Syadeu.Presentation.Render
             private Entity<ActorEntity> m_Entity;
             private Reference<ActorOverlayUIEntry> m_UI;
 
-            private Instance<ActorOverlayUIEntry> m_UISettingInstance;
+            private Entity<ActorOverlayUIEntry> m_UISettingInstance;
             private Entity<UIObjectEntity> m_InstanceObject;
 
             private bool m_UseBone;
@@ -383,7 +383,7 @@ namespace Syadeu.Presentation.Render
                 m_Entity = entity;
                 m_UI = ui;
 
-                m_UISettingInstance = ui.CreateInstance();
+                m_UISettingInstance = ui.CreateEntity();
                 ActorOverlayUIEntry setting = m_UI.GetObject();
 
                 m_UseBone = setting.m_PositionOffset.m_UseBone;
@@ -396,7 +396,7 @@ namespace Syadeu.Presentation.Render
                     m_UseBone = false;
                 }
 
-                m_InstanceObject = setting.m_Prefab.CreateInstance();
+                m_InstanceObject = setting.m_Prefab.CreateEntity();
                 SetPosition(in setting);
                 m_InstanceObject.GetAttribute<ActorOverlayUIAttributeBase>().UICreated(entity);
             }
@@ -428,7 +428,8 @@ namespace Syadeu.Presentation.Render
 
                 if ((setting.m_UpdateType & Actor.UpdateType.Instant) == Actor.UpdateType.Instant)
                 {
-                    m_InstanceObject.transform.position = targetPosition + setting.m_PositionOffset.m_Offset;
+                    var tr = m_InstanceObject.transform;
+                    tr.position = targetPosition + setting.m_PositionOffset.m_Offset;
                 }
                 else if ((setting.m_UpdateType & Actor.UpdateType.Lerp) == Actor.UpdateType.Lerp)
                 {
@@ -445,18 +446,23 @@ namespace Syadeu.Presentation.Render
                     entityTr = m_Entity.transform,
                     uiTr = m_InstanceObject.transform;
 
-                ActorOverlayUIEntry setting = m_UISettingInstance.GetObject();
+                ActorOverlayUIEntry setting = m_UISettingInstance.Target;
                 RenderSystem renderSystem = PresentationSystem<DefaultPresentationGroup, RenderSystem>.System;
                 Transform camTr;
 
                 WaitUntil waitUntil = new WaitUntil(() => renderSystem.Camera != null);
 
-                while (m_InstanceObject.IsValid())
+                while (true)
                 {
                     if (renderSystem.Camera == null)
                     {
                         yield return waitUntil;
                     }
+                    if (!m_Entity.IsValid())
+                    {
+                        break;
+                    }
+
                     camTr = renderSystem.Camera.transform;
 
                     SetPosition(in setting);
@@ -515,5 +521,11 @@ namespace Syadeu.Presentation.Render
         }
 
         #endregion
+    }
+
+    public interface ICanvasSystem : IPresentationSystem
+    {
+        Canvas Canvas { get; }
+        GraphicRaycaster CanvasRaycaster { get; }
     }
 }

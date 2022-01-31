@@ -31,7 +31,7 @@ namespace Syadeu.Presentation.Actions
         {
             m_KeyHash = Animator.StringToHash(m_TriggerKey);
         }
-        protected bool IsExecutable(EntityData<IEntityData> entity, out AnimatorAttribute attribute)
+        protected bool IsExecutable(Entity<IObject> entity, out AnimatorAttribute attribute)
         {
             attribute = entity.GetAttribute<AnimatorAttribute>();
             if (attribute == null)

@@ -39,7 +39,7 @@ namespace Syadeu.Presentation
         #region Converts
 
         public static Entity<T> ToEntity<T>(this IEntityDataID t)
-            where T : class, IEntity
+            where T : class, IObject
         {
 #if DEBUG_MODE
             if (!(t.Target is T))
@@ -52,85 +52,49 @@ namespace Syadeu.Presentation
 #endif
             return Entity<T>.GetEntity(t.Idx);
         }
-        public static EntityData<T> ToEntityData<T>(this IEntityDataID t)
-            where T : class, IEntityData
-        {
-            return EntityData<T>.GetEntity(t.Idx);
-        }
 
-        [Obsolete("Use ToEntity")]
-        public static Entity<TA> As<T, TA>(this EntityData<T> t)
-            where T : class, IEntityData
-            where TA : class, IEntity
+        public static bool TryAsReference<T>(this T t, out Entity<T> entity)
+            where T : class, IObject
         {
-            return Entity<TA>.GetEntity(t.Idx);
-        }
-        [Obsolete("Use ToEntityData")]
-        public static EntityData<TA> As<T, TA>(this Entity<T> t)
-            where T : class, IEntity
-            where TA : class, IEntityData
-        {
-            return EntityData<TA>.GetEntity(t.Idx);
-        }
+            entity = Entity<T>.Empty;
 
-        public static Entity<TA> Cast<T, TA>(this Entity<T> t)
-            where T : class, IEntity
-            where TA : class, IEntity
-        {
-            return Entity<TA>.GetEntity(t.Idx);
-        }
-        public static EntityData<TA> Cast<T, TA>(this EntityData<T> t)
-            where T : class, IEntityData
-            where TA : class, IEntityData
-        {
-            return EntityData<TA>.GetEntity(t.Idx);
-        }
+            if (t is IValidation validation && !validation.IsValid()) return false;
 
-        public static bool TryAsReference<T>(this T t, out EntityData<T> entity)
-            where T : class, IEntityData
-        {
-            entity = EntityData<T>.Empty;
-
-            if (!t.IsValid()) return false;
-
-            entity = EntityData<T>.GetEntityWithoutCheck(t.Idx);
+            entity = Entity<T>.GetEntityWithoutCheck(t.Idx);
             return true;
         }
-        public static EntityData<T> AsReference<T>(this T t)
-            where T : class, IEntityData
+        public static Entity<T> AsReference<T>(this T t)
+            where T : class, IObject
         {
-            return EntityData<T>.GetEntity(t.Idx);
-        }
-        public static EntityData<TA> AsReference<T, TA>(this T t)
-            where T : class, IEntityData
-            where TA : class, IEntityData
-        {
-            return EntityData<TA>.GetEntity(t.Idx);
+            return Entity<T>.GetEntity(t.Idx);
         }
 
-        public static EntityData<T> As<T>(this Instance<T> t)
-            where T : class, IEntityData
+        public static Reference<T> AsOriginal<T>(this T t)
+            where T : class, IObject
         {
-            return EntityData<T>.GetEntity(t.Idx);
+            return new Reference<T>(t.Hash);
         }
-        public static Instance<T> AsInstance<T>(this Entity<T> entity)
-            where T : class, IEntity
+        public static Reference<T> AsOriginal<T>(this Entity<T> t)
+            where T : class, IObject
         {
-            return new Instance<T>(entity.Idx);
-        }
-        public static Instance<T> AsInstance<T>(this EntityData<T> entity)
-            where T : class, IEntityData
-        {
-            return new Instance<T>(entity.Idx);
+            return new Reference<T>(t.Hash);
         }
 
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other)
+            where T : class, IObject
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<IObject> ins = system.CreateEntity(other);
+            return ins.ToEntity<T>();
+        }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, in float3 pos)
-            where T : class, IEntity
+            where T : class, IObject
         {
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             Entity<IEntity> ins = system.CreateEntity(other, in pos);
-            return ins.Cast<IEntity, T>();
+            return ins.ToEntity<T>();
         }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
             where T : class, IEntity
@@ -138,26 +102,23 @@ namespace Syadeu.Presentation
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
             Entity<IEntity> ins = system.CreateEntity(other, in pos, in rot, in localScale);
-            return ins.Cast<IEntity, T>();
+            return ins.ToEntity<T>();
         }
-        public static EntityData<T> CreateEntityData<T>(this Reference<T> other)
-            where T : class, IEntityData
+        public static Entity<T> CreateEntity<T>(this Reference<T> other)
+            where T : class, IObject
         {
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-            EntityData<IEntityData> ins = system.CreateObject(other);
-            return ins.Cast<IEntityData, T>();
+            Entity<T> ins = system.CreateEntity(other);
+            return ins;
         }
 
-        public static bool IsEntity(this in InstanceID id)
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-            if (obj is IEntity) return true;
-
-            return false;
-        }
+        /// <summary>
+        /// 이 엔티티의 부모가 <typeparamref name="T"/>를 부모로 삼는지 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static bool IsEntity<T>(this in InstanceID id) where T : IEntityData
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
@@ -167,68 +128,31 @@ namespace Syadeu.Presentation
 
             return false;
         }
+        public static bool IsEntity(this in InstanceID id, Type type)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            if (type.IsAssignableFrom(obj.GetType())) return true;
+
+            return false;
+        }
+        public static bool IsDestroyed(this in InstanceID id)
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            return entitySystem.IsDestroyed(in id) || entitySystem.IsMarkedAsDestroyed(in id);
+        }
+
+        public static Entity<IObject> GetEntity(this InstanceID id) => GetEntity<IObject>(id);
         public static Entity<T> GetEntity<T>(this InstanceID id)
-            where T : class, IEntity
+            where T : class, IObject
         {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({id.Hash}) is invalid id.");
-                return Entity<T>.Empty;
-            }
-            else if (!(obj is IEntity))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(InstanceID)}.");
-                return Entity<T>.Empty;
-            }
-#endif
-            return Entity<T>.GetEntityWithoutCheck(id);
+            return Entity<T>.GetEntity(id);
         }
-
-        public static EntityData<IEntityData> GetEntityData(this in InstanceID id)
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({id.Hash}) not found.");
-
-                return EntityData<IEntityData>.Empty;
-            }
-#endif
-            return EntityData<IEntityData>.GetEntityWithoutCheck(id);
-        }
-        public static EntityData<T> GetEntityData<T>(this InstanceID id)
-            where T : class, IEntityData
-        {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
-#if DEBUG_MODE
-            if (obj == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({id.Hash}) is invalid id.");
-
-                return EntityData<T>.Empty;
-            }
-            else if (!(obj is IEntityData))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Instance({obj.Name}) is not entity but you trying to get with {nameof(InstanceID)}.");
-                return EntityData<T>.Empty;
-            }
-#endif
-            return EntityData<T>.GetEntityWithoutCheck(id);
-        }
+        public static Entity<T> GetEntityWithoutCheck<T>(this in InstanceID idx)
+            where T : class, IObject
+            => Entity<T>.GetEntityWithoutCheck(in idx);
 
         public static ObjectBase GetObject(this InstanceID id)
         {
@@ -263,7 +187,11 @@ namespace Syadeu.Presentation
                 return false;
             }
 #endif
-            return t.Target.HasAttribute(attributeHash);
+            if (t.Target is EntityDataBase entityDataBase)
+            {
+                return entityDataBase.HasAttribute(attributeHash);
+            }
+            return false;
         }
         public static bool HasAttribute(this IEntityDataID t, Type type)
         {
@@ -275,7 +203,11 @@ namespace Syadeu.Presentation
                 return false;
             }
 #endif
-            return t.Target.HasAttribute(type);
+            if (t.Target is EntityDataBase entityDataBase)
+            {
+                return entityDataBase.HasAttribute(type);
+            }
+            return false;
         }
         public static bool HasAttribute<TAttribute>(this IEntityDataID t) where TAttribute : AttributeBase
         {
@@ -287,7 +219,11 @@ namespace Syadeu.Presentation
                 return false;
             }
 #endif
-            return t.Target.HasAttribute<TAttribute>();
+            if (t.Target is EntityDataBase entityDataBase)
+            {
+                return entityDataBase.HasAttribute<TAttribute>();
+            }
+            return false;
         }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public static IAttribute GetAttribute(this IEntityDataID t, Type type)
@@ -300,7 +236,11 @@ namespace Syadeu.Presentation
                 return null;
             }
 #endif
-            return t.Target.GetAttribute(type);
+            if (t.Target is IEntityData entityDataBase)
+            {
+                return entityDataBase.GetAttribute(type);
+            }
+            return null;
         }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public static IAttribute[] GetAttributes(this IEntityDataID t, Type type)
@@ -313,7 +253,11 @@ namespace Syadeu.Presentation
                 return null;
             }
 #endif
-            return t.Target.GetAttributes(type);
+            if (t.Target is IEntityData entityDataBase)
+            {
+                return entityDataBase.GetAttributes(type);
+            }
+            return Array.Empty<IAttribute>();
         }
         /// <inheritdoc cref="IEntityData.GetAttribute(Type)"/>
         public static TAttribute GetAttribute<TAttribute>(this IEntityDataID t) where TAttribute : AttributeBase
@@ -325,11 +269,15 @@ namespace Syadeu.Presentation
 
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.\n" +
-                    $"d:{entitySystem.IsDestroyed(t.Idx)}, dq:{entitySystem.IsMarkedAsDestroyed(t.Idx)}, resv:{((ObjectBase)t.Target).Reserved}, tr:{((t.Target is EntityBase entity) ? $"{entity.transform != null}" : "notr")}");
+                    $"d:{entitySystem.IsDestroyed(t.Idx)}, dq:{entitySystem.IsMarkedAsDestroyed(t.Idx)}, resv:{((ObjectBase)t.Target).Reserved}, tr:{((t.Target is EntityBase entity) ? $"{entity.HasTransform()}" : "notr")}");
                 return null;
             }
 #endif
-            return t.Target.GetAttribute<TAttribute>();
+            if (t.Target is IEntityData entityDataBase)
+            {
+                return entityDataBase.GetAttribute<TAttribute>();
+            }
+            return null;
         }
         /// <inheritdoc cref="IEntityData.GetAttributes(Type)"/>
         public static TAttribute[] GetAttributes<TAttribute>(this IEntityDataID t) where TAttribute : AttributeBase
@@ -342,7 +290,11 @@ namespace Syadeu.Presentation
                 return null;
             }
 #endif
-            return t.Target.GetAttributes<TAttribute>();
+            if (t.Target is IEntityData entityDataBase)
+            {
+                return entityDataBase.GetAttributes<TAttribute>();
+            }
+            return Array.Empty<TAttribute>();
         }
 
         #endregion
@@ -361,99 +313,12 @@ namespace Syadeu.Presentation
         }
 
         #endregion
-
-        #region IInstance
-
-        public static IObject GetObject(this IInstance other)
-        {
-            if (other.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived null instance.");
-                return null;
-            }
-
-            if (!PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_ObjectEntities.TryGetValue(other.Idx, out ObjectBase obj))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Target({other.Idx}) is not exist.");
-                return null;
-            }
-
-            return obj;
-        }
-        public static T GetObject<T>(this IInstance<T> other)
-            where T : class, IObject
-        {
-            if (other.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                        "Cannot retrived null instance.");
-                return null;
-            }
-
-            if (!PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.m_ObjectEntities.TryGetValue(other.Idx, out ObjectBase obj))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Target({other.Idx}) is not exist.");
-                return null;
-            }
-            if (!(obj is T t))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target is not a {TypeHelper.TypeOf<T>.Name}.");
-                return null;
-            }
-
-            return t;
-        }
-        public static bool IsValid(this IInstance other)
-        {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            if (other.IsEmpty()) return false;
-            else if (!system.m_ObjectEntities.ContainsKey(other.Idx)) return false;
-
-            return true;
-        }
-        public static bool IsValid<T>(this IInstance<T> other)
-            where T : class, IObject
-        {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            if (other.IsEmpty()) return false;
-            else if (!system.m_ObjectEntities.ContainsKey(other.Idx)) return false;
-            else if (!(system.m_ObjectEntities[other.Idx] is T))
-            {
-                return false;
-            }
-            else if (system.IsDestroyed(other.Idx) ||
-                    system.IsMarkedAsDestroyed(other.Idx))
-            {
-                return false;
-            }
-
-            return true;
-        }
-        public static void Destroy(this IInstance other)
-        {
-            if (other.IsEmpty())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    "Cannot destroy an empty instance");
-                return;
-            }
-
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.DestroyObject(other);
-        }
-
-        #endregion
     }
 
     public static class EntityDataHelper
     {
-        public static EntityData<T> GetEntity<T>(in InstanceID idx)
-            where T : class, IEntityData
+        public static Entity<T> GetEntity<T>(in InstanceID idx)
+            where T : class, IObject
         {
             #region Validation
 #if DEBUG_MODE
@@ -461,7 +326,7 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
-                return EntityData<T>.Empty;
+                return Entity<T>.Empty;
             }
 #endif
             PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
@@ -471,38 +336,24 @@ namespace Syadeu.Presentation
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"Cannot found entity({idx})");
-                return EntityData<T>.Empty;
+                return Entity<T>.Empty;
             }
             else if (!(target is T))
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                 $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
-                return EntityData<T>.Empty;
+                return Entity<T>.Empty;
             }
 
             #endregion
 
-            int hash = target.GetHashCode();
+            int hash = idx.GetHashCode();
             if (hash == 0)
             {
                 "internal error hash 0".ToLogError();
             }
 
-            return new EntityData<T>(idx, target.GetHashCode(), target.Name);
-        }
-        public static EntityData<T> GetEntityWithoutCheck<T>(in InstanceID idx)
-            where T : class, IEntityData
-        {
-            ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
-#if DEBUG_MODE
-            if (target == null)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Target Not Found.");
-                return EntityData<T>.Empty;
-            }
-#endif
-            return new EntityData<T>(idx, target.GetHashCode(), target.Name);
+            return new Entity<T>(idx, idx.GetHashCode(), target.Name);
         }
     }
 }

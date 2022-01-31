@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             //m_HPNameHash = ActorStatAttribute.ToValueHash(m_HPStatName);
         }
-        protected override void OnEventReceived<TEvent>(TEvent ev)
+        protected override void OnEventReceived(IActorEvent ev)
         {
             if (ev is ActorHitEvent hitEvent)
             {
@@ -57,13 +57,13 @@ namespace Syadeu.Presentation.TurnTable
         private void ActorHitEventHandler(ActorHitEvent ev)
         {
             if (m_CurrentProxy == null) return;
-
-            ActorStatAttribute stat = ParentActor.GetAttribute<ActorStatAttribute>();
-            if (stat == null)
+            else if (!ParentActor.HasComponent<ActorStatComponent>())
             {
                 "no stat".ToLogError();
                 return;
             }
+
+            ActorStatComponent stat = ParentActor.GetComponent<ActorStatComponent>();
 
             int hp = (int)stat.HP;
 
@@ -121,7 +121,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             int
-                fullHp = (int)stat.FullHP,
+                fullHp = (int)stat.HP,
                 hp = (int)stat.HP;
 
             att.m_CurrentProxy.SetHPFullText(fullHp);
