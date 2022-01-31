@@ -33,6 +33,8 @@ namespace Syadeu.Presentation.TurnTable
     {
 #if CORESYSTEM_SHAPES
         private Shapes.PolylinePath m_WarningOutlinePath = new Shapes.PolylinePath();
+        private NativeList<int3> m_WarningOutlineLocations;
+        private NativeList<float3> m_WarningOutlineVertices;
 
         private float m_PathlineDrawOffset = 0;
 
@@ -49,6 +51,9 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnInitialize()
         {
+            m_WarningOutlineLocations = new NativeList<int3>(512, AllocatorManager.Persistent);
+            m_WarningOutlineVertices = new NativeList<float3>(512, AllocatorManager.Persistent);
+
             RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
@@ -64,6 +69,9 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnDispose()
         {
+            m_WarningOutlineLocations.Dispose();
+            m_WarningOutlineVertices.Dispose();
+
             m_GridSystem = null;
             m_RenderSystem = null;
             m_EventSystem = null;
@@ -114,6 +122,18 @@ namespace Syadeu.Presentation.TurnTable
             m_DrawWarningTiles = !ev.Entity.IsEmpty() && ev.Entity.HasComponent<GridComponent>();
 
             m_WarningOutlinePath.ClearAllPoints();
+            m_WarningOutlineLocations.Clear();
+
+            foreach (var index in m_GridSystem.GetObserverIndices())
+            {
+                if (m_GridSystem.IsObserveIndexOfOnly(index, ev.Entity.Idx))
+                {
+                    continue;
+                }
+
+                m_WarningOutlineLocations.Add(index.Location);
+            }
+            m_GridSystem.GetOutcoastVertices(m_WarningOutlineLocations, ref m_WarningOutlineVertices);
         }
 
         #endregion
@@ -132,6 +152,7 @@ namespace Syadeu.Presentation.TurnTable
             
             DrawMoveableTiles(settings);
             DrawMoveableOutline(settings);
+            DrawMoveableOutlineWall(settings);
             DrawPathline(settings);
 
             Shapes.Draw.Pop();
@@ -143,36 +164,76 @@ namespace Syadeu.Presentation.TurnTable
             {
                 return;
             }
+            else if (!m_SelectionSystem.CurrentSelection.hasTransform)
+            {
+                m_DrawWarningTiles = false;
+                return;
+            }
 
             float3 selectionPos = m_SelectionSystem.CurrentSelection.transform.position;
-            //NativeArray<GridIndex> observeIndices = m_GridSystem.GetObserverIndices(AllocatorManager.Temp);
 
+            using (Shapes.Draw.Scope)
             using (Shapes.Draw.GradientFillScope())
             {
+                // Not supported line...
                 Shapes.Draw.GradientFill = Shapes.GradientFill.Radial(
                     selectionPos, 25,
-                    //colorInner: new Color32(0xFF, 0x79, 0x79, 0xFF),
                     colorInner: settings.m_DetectionTileColorStart,
                     colorOuter: settings.m_DetectionTileColorEnd,
                     space: Shapes.FillSpace.World
                     );
+                Shapes.Draw.LineGeometry = Shapes.LineGeometry.Billboard;
+                Shapes.Draw.Color = settings.m_DetectionTileColorStart;
 
-                foreach (var index in m_GridSystem.GetObserverIndices())
+                float cellHalf = m_GridSystem.CellSize * .5f;
+                float3 a, b,
+                    dir,
+                    center,
+                    normal;
+
+                for (int i = 0; i + 1 < m_WarningOutlineVertices.Length; i++)
                 {
-                    if (m_GridSystem.IsObserveIndexOfOnly(index, m_SelectionSystem.CurrentSelection.Idx))
-                    {
-                        continue;
-                    }
-
-                    float3 pos = m_GridSystem.IndexToPosition(index);
-                    Shapes.Draw.RectangleBorder(
-                        pos: pos,
-                        normal: Vector3.up,
-                        size: (float2)m_GridSystem.CellSize,
-                        pivot: Shapes.RectPivot.Center,
+                    a = m_WarningOutlineVertices[i];
+                    b = m_WarningOutlineVertices[i + 1];
+                    
+                    Shapes.Draw.Line(
+                        start: a,
+                        end: b,
                         thickness: .03f
-                    );
+                        );
+
+                    dir = b - a;
+                    //if (dir.Equals(float3.zero)) continue;
+
+                    center = a + (dir * .5f);
+                    center.y += cellHalf;
+                    normal = math.cross(dir, math.up());
+                    Shapes.Draw.Rectangle(
+                        pos: center,
+                        normal: normal,
+                        size: (float2)m_GridSystem.CellSize,
+                        pivot: Shapes.RectPivot.Center
+                        );
                 }
+
+                a = m_WarningOutlineVertices[m_WarningOutlineVertices.Length - 1];
+                b = m_WarningOutlineVertices[0];
+                dir = b - a;
+                center = a + (dir * .5f);
+                center.y += cellHalf;
+                normal = math.cross(dir, math.up());
+
+                Shapes.Draw.Line(
+                    start: a,
+                    end: b,
+                    thickness: .03f
+                    );
+                Shapes.Draw.Rectangle(
+                    pos: center,
+                    normal: normal,
+                    size: (float2)m_GridSystem.CellSize,
+                    pivot: Shapes.RectPivot.Center
+                    );
             }
         }
         private void DrawMoveableTiles(TRPGSettings settings)
@@ -206,12 +267,6 @@ namespace Syadeu.Presentation.TurnTable
             var m_ShapesOutlinePath = System.CurrentMoveableOutline;
             if (m_ShapesOutlinePath.Length < 1) return;
 
-            //m_OutlinePath.ClearAllPoints();
-            //for (int i = 0; i < m_ShapesOutlinePath.Length; i++)
-            //{
-            //    m_OutlinePath.AddPoint(m_ShapesOutlinePath[i]);
-            //}
-
             using (Shapes.Draw.ColorScope)
             {
                 Shapes.Draw.Color = settings.m_MovableOutlineColor;
@@ -225,6 +280,58 @@ namespace Syadeu.Presentation.TurnTable
                         end: m_ShapesOutlinePath[i + 1],
                         thickness: .03f);
                 }
+            }
+        }
+        private void DrawMoveableOutlineWall(TRPGSettings settings)
+        {
+            var m_ShapesOutlinePath = System.CurrentMoveableOutline;
+            if (m_ShapesOutlinePath.Length < 1) return;
+
+            float cellHalf = m_GridSystem.CellSize * .5f;
+            using (Shapes.Draw.GradientFillScope())
+            {
+                Shapes.Draw.GradientFill = Shapes.GradientFill.Linear(
+                    start: settings.m_OutlineWallColorStartPos,
+                    end: settings.m_OutlineWallColorEndPos,
+                    colorStart: settings.m_MovableOutlineColor,
+                    colorEnd: Color.clear,
+                    space: Shapes.FillSpace.Local
+                    );
+
+                float3 a, b,
+                    dir,
+                    center,
+                    normal;
+                for (int i = 0; i + 1 < m_ShapesOutlinePath.Length; i++)
+                {
+                    a = m_ShapesOutlinePath[i];
+                    b = m_ShapesOutlinePath[i + 1];
+                    dir = b - a;
+                    center = a + (dir * .5f);
+                    center.y += cellHalf;
+                    normal = math.cross(dir, math.up());
+
+                    Shapes.Draw.Rectangle(
+                        pos: center,
+                        normal: normal,
+                        size: (float2)m_GridSystem.CellSize,
+                        pivot: Shapes.RectPivot.Center
+                        );
+                }
+
+                a = m_ShapesOutlinePath[m_ShapesOutlinePath.Length - 1];
+                b = m_ShapesOutlinePath[0];
+                dir = b - a;
+                center = a + (dir * .5f);
+                center.y += cellHalf;
+                normal = math.cross(dir, math.up());
+
+                Shapes.Draw.Rectangle(
+                    pos: center,
+                    normal: normal,
+                    size: (float2)m_GridSystem.CellSize,
+                    pivot: Shapes.RectPivot.Center
+                    );
             }
         }
         private void DrawPathline(TRPGSettings settings)

@@ -645,6 +645,16 @@ namespace Syadeu.Presentation.Grid
                 new AlwaysTrue<GridIndex>()
                 );
         }
+        public IndexEnumerator<TPredicate> GetObserverIndices<TPredicate>(TPredicate predicate)
+            where TPredicate : struct, IExecutable<GridIndex>
+        {
+            CompleteGridJob();
+
+            return new IndexEnumerator<TPredicate>
+                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
+                predicate
+                );
+        }
 
         [BurstCompatible]
         public struct IndexEnumerator<TPredicate> : IEnumerator<GridIndex>, IEnumerable<GridIndex>

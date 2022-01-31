@@ -67,6 +67,7 @@ namespace Syadeu.Presentation.Components
         private AtomicSafeReference<Hash> m_CheckSum;
 
         public bool IsCreated => m_IsCreated;
+        public bool IsWriting => m_CheckSum.Value != 0;
 
         internal EntityComponentBuffer(int bufferCount)
         {

@@ -423,20 +423,20 @@ namespace Syadeu.Presentation.TurnTable
         //    //} while (FindFloat3x2(temp, current.c1, out current));
         //}
 
-        private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
-        {
-            found = 0;
-            for (int i = list.Count - 1; i >= 0; i--)
-            {
-                if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
-                {
-                    found = list[i];
-                    list.RemoveAt(i);
-                    return true;
-                }
-            }
-            return false;
-        }
+        //private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
+        //{
+        //    found = 0;
+        //    for (int i = list.Count - 1; i >= 0; i--)
+        //    {
+        //        if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
+        //        {
+        //            found = list[i];
+        //            list.RemoveAt(i);
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+        //}
 
         #endregion
 
@@ -452,8 +452,10 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
-                m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
-                m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines);
+                //m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
+                //m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines);
+                m_GridSystem.GetOutcoastVertices(m_GridTempMoveables, ref m_GridTempOutlines);
+                $"out loc count : {m_GridTempMoveables.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
                 //CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
 
                 GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();

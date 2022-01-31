@@ -273,8 +273,14 @@ namespace Syadeu.Presentation.Components
             for (int i = 0; i < requestedEcbCount; i++)
             {
                 int componentIdx = m_RequestedECBComponentIndices.Dequeue();
+                ref ComponentBuffer buffer = ref UnsafeUtility.ArrayElementAsRef<ComponentBuffer>(componentBuffer, componentIdx);
+                if (buffer.m_ECB.Value.IsWriting)
+                {
+                    m_RequestedECBComponentIndices.Enqueue(componentIdx);
+                    continue;
+                }
 
-                HandleECB(ref UnsafeUtility.ArrayElementAsRef<ComponentBuffer>(componentBuffer, componentIdx));
+                HandleECB(ref buffer);
             }
 
             return base.AfterTransformPresentation();

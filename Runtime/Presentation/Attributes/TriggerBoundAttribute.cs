@@ -32,7 +32,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Attributes
 {
-    [Obsolete]
+    //[Obsolete]
     [DisplayName("Attribute: Trigger Bound")]
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class TriggerBoundAttribute : AttributeBase

@@ -32,5 +32,10 @@ namespace Syadeu.Presentation.TurnTable
         public Color32 m_MovableOutlineColor,
             m_PathlineColor, m_PathlineOverlayColor, m_PathlineEndTipColor,
             m_DetectionTileColorStart, m_DetectionTileColorEnd = Color.clear;
+
+        [SerializeField]
+        public Vector3 
+            m_OutlineWallColorStartPos = new Vector3(0, -2.3f, 0), 
+            m_OutlineWallColorEndPos;
     }
 }

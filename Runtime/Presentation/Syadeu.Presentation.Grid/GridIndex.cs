@@ -104,8 +104,14 @@ namespace Syadeu.Presentation.Grid
     }
     public struct GridBlock
     {
-        public GridIndex GridIndex;
+        public int3 GridIndex;
+
+        // 0 Left
+        // 1 Right
+        // 2 Down (Forward)
+        // 3 Up (Backward)
         public bool4 HasBlocks;
+        public float3x2 Vertices0, Vertices1, Vertices2, Vertices3;
     }
 
     public struct GridIndex4 : IFixedList<GridIndex>

@@ -323,30 +323,117 @@ namespace Syadeu.Presentation.Grid.LowLevel
             {
                 for (int z = min.z; z <= max.z; z++)
                 {
-                    int3
-                        laneMin = new int3(int.MaxValue, y, z),
-                        laneMax = new int3(int.MinValue, y, z);
+                    //int3
+                    //    laneMin = new int3(int.MaxValue, y, z),
+                    //    laneMax = new int3(int.MinValue, y, z);
                     bool has = false;
 
                     for (int x = min.x; x <= max.x; x++)
                     {
                         int3 temp = new int3(x, y, z);
                         bool contain = locations.Contains(temp);
-                        has |= contain;
+                        if (!has)
+                        {
+                            if (contain)
+                            {
+                                output.Add(temp);
+                                has = true;
+                            }
+                        }
+                        else
+                        {
+                            if (!contain)
+                            {
+                                if (!output[output.Length - 1].x.Equals(temp.x - 1))
+                                {
 
-                        if (!contain) continue;
+                                }
+                                break;
+                            }
+                        }
+                        //has |= contain;
 
-                        laneMin = math.min(laneMin, temp);
-                        laneMax = math.max(laneMax, temp);
+                        //if (!contain) continue;
+
+                        //laneMin = math.min(laneMin, temp);
+                        //laneMax = math.max(laneMax, temp);
                     }
 
-                    if (!has) continue;
+                    //if (!has) continue;
 
-                    output.Add(laneMin);
-                    output.Add(laneMax);
+                    //output.Add(laneMin);
+                    //output.Add(laneMax);
                 }
             }
         }
+
+        //[SkipLocalsInit, BurstCompile]
+        //public static void getOutcoastLocationBlocks(
+        //    in AABB grid, in float cellSize,
+        //    in NativeArray<int3> locations, ref NativeList<GridBlock> output)
+        //{
+        //    output.Clear();
+        //    float cellHalf = cellSize * .5f;
+
+        //    float3
+        //        upleft = new float3(-cellHalf, 0, cellHalf),
+        //        upright = new float3(cellHalf, 0, cellHalf),
+        //        downleft = new float3(-cellHalf, 0, -cellHalf),
+        //        downright = new float3(cellHalf, 0, -cellHalf);
+
+        //    GridBlock* tempBuffer = stackalloc GridBlock[locations.Length];
+        //    UnsafeFixedListWrapper<GridBlock> list
+        //        = new UnsafeFixedListWrapper<GridBlock>(tempBuffer, locations.Length);
+
+        //    int3 directional;
+        //    float3 gridPos;
+        //    bool contains;
+        //    for (int i = 0; i < locations.Length; i++)
+        //    {
+        //        locationToPosition(in grid, in cellSize, locations[i], &gridPos);
+        //        GridBlock block = new GridBlock
+        //        {
+        //            GridIndex = locations[i]
+        //        };
+        //        bool add = false;
+
+        //        getDirection(locations[i], Direction.Left, &directional);
+        //        containLocation(in grid, in cellSize, in directional, &contains);
+        //        block.HasBlocks[0] = !contains || !locations.Contains(directional);
+        //        block.Vertices0[0] = gridPos + upright;
+        //        block.Vertices0[1] = gridPos + downright;
+        //        add |= block.HasBlocks[0];
+
+        //        getDirection(locations[i], Direction.Right, &directional);
+        //        containLocation(in grid, in cellSize, in directional, &contains);
+        //        block.HasBlocks[1] = !contains || !locations.Contains(directional);
+        //        block.Vertices1[0] = gridPos + downright;
+        //        block.Vertices1[1] = gridPos + downleft;
+        //        add |= block.HasBlocks[1];
+
+        //        // Down
+        //        getDirection(locations[i], Direction.Forward, &directional);
+        //        containLocation(in grid, in cellSize, in directional, &contains);
+        //        block.HasBlocks[2] = !contains || !locations.Contains(directional);
+        //        block.Vertices2[0] = gridPos + downleft;
+        //        block.Vertices2[1] = gridPos + upleft;
+        //        add |= block.HasBlocks[2];
+
+        //        getDirection(locations[i], Direction.Backward, &directional);
+        //        containLocation(in grid, in cellSize, in directional, &contains);
+        //        block.HasBlocks[3] = !contains || !locations.Contains(directional);
+        //        block.Vertices3[0] = gridPos + upleft;
+        //        block.Vertices3[1] = gridPos + upright;
+        //        add |= block.HasBlocks[3];
+
+        //        if (add) list.Add(block);
+        //    }
+        //}
+        //public static void getConnectBlockVertices()
+        //{
+
+        //}
+
         /// <summary>
         /// <paramref name="locations"/> 의 바깥 꼭지점을 연결하여 반환합니다.
         /// </summary>
@@ -359,9 +446,8 @@ namespace Syadeu.Presentation.Grid.LowLevel
             in AABB grid, in float cellSize,
             in NativeArray<int3> locations, ref NativeList<float3> output)
         {
-            float3x2* tempBuffer = stackalloc float3x2[locations.Length * 4];
-            UnsafeFixedListWrapper<float3x2> list 
-                = new UnsafeFixedListWrapper<float3x2>(tempBuffer, locations.Length * 4);
+            output.Clear();
+
             float cellHalf = cellSize * .5f;
 
             float3
@@ -369,6 +455,10 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 upright = new float3(cellHalf, 0, cellHalf),
                 downleft = new float3(-cellHalf, 0, -cellHalf),
                 downright = new float3(cellHalf, 0, -cellHalf);
+
+            float3x2* tempBuffer = stackalloc float3x2[locations.Length * 4];
+            UnsafeFixedListWrapper<float3x2> list
+                = new UnsafeFixedListWrapper<float3x2>(tempBuffer, locations.Length * 4);
 
             int3 directional;
             float3 gridPos;
@@ -379,7 +469,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
                 getDirection(locations[i], Direction.Right, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || locations.Contains(directional))
+                if (!contains || !locations.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upright,
@@ -390,7 +480,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 // Down
                 getDirection(locations[i], Direction.Forward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || locations.Contains(directional))
+                if (!contains || !locations.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downright,
@@ -400,7 +490,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
                 getDirection(locations[i], Direction.Left, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || locations.Contains(directional))
+                if (!contains || !locations.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downleft,
@@ -410,7 +500,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
                 getDirection(locations[i], Direction.Backward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || locations.Contains(directional))
+                if (!contains || !locations.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upleft,
@@ -421,16 +511,22 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             float3x2 current = list.Last;
             list.RemoveAtSwapback(list.Count - 1);
+            output.Add(current.c0);
+            float3 next = current.c1;
 
-            do
+            while (FindFloat3x2(ref list, in next, out current))
             {
-                output.Add(current.c0);
-            } while (FindFloat3x2(ref list, in current.c1, out current));
+                if (!output[output.Length - 1].Equals(current.c0))
+                {
+                    output.Add(current.c0);
+                }
+
+                next = current.c1;
+            }
         }
         [BurstCompile]
         private static bool FindFloat3x2(ref UnsafeFixedListWrapper<float3x2> list, in float3 next, out float3x2 found)
         {
-            found = 0;
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
@@ -440,6 +536,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                     return true;
                 }
             }
+            found = 0;
             return false;
         }
 
