@@ -14,6 +14,7 @@
 
 namespace Syadeu.Collections
 {
+    [System.Flags]
     public enum Direction : int
     {
         NONE = 0,

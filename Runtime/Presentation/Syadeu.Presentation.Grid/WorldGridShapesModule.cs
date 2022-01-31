@@ -115,12 +115,12 @@ namespace Syadeu.Presentation.Grid
         {
             if (!m_DrawGrid) return;
 
-            //using (Shapes.Draw.Command(arg2))
-            //{
-            //    //DrawGridGL(System.Grid, .05f);
-            //    //DrawOcc(arg2);
-            //    DrawIndices(arg2);
-            //}
+            using (Shapes.Draw.Command(arg2))
+            {
+                //DrawGridGL(System.Grid, .05f);
+                //DrawOcc(arg2);
+                DrawIndices(arg2);
+            }
         }
         private void M_SceneSystem_OnSceneLoadCall()
         {
@@ -214,16 +214,16 @@ namespace Syadeu.Presentation.Grid
                     float3 target = pos + new float3(0, .15f, 0);
                     GridIndex index = new GridIndex(System.Grid, System.Grid.LocationToIndex(loc));
 
-                    if (detectorModule.GridObservers.ContainsKey(index))
-                    {
-                        detectorModule.GridObservers.TryGetFirstValue(index, out var ob, out _);
+                    //if (detectorModule.GridObservers.ContainsKey(index))
+                    //{
+                    //    detectorModule.GridObservers.TryGetFirstValue(index, out var ob, out _);
 
-                        //Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}::{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
-                        Shapes.Draw.Text(target, camForward, $"{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
-                    }
-                    else
+                    //    //Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}::{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
+                    //    Shapes.Draw.Text(target, camForward, $"{ob.GetEntity().Name}({detectorModule.GridObservers.CountValuesForKey(index)})", 3.5f, Color.red);
+                    //}
+                    //else
                     {
-                        Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}", 3.5f, Color.white);
+                        Shapes.Draw.Text(target, camForward, $"{loc.x},{loc.y},{loc.z}", 3.5f, Color.black);
                     }
                 }
             }

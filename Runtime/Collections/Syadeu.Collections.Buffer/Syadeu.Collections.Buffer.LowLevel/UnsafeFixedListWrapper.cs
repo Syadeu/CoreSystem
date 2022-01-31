@@ -17,6 +17,7 @@
 #endif
 
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 
 namespace Syadeu.Collections.Buffer.LowLevel
@@ -98,6 +99,25 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             m_Count -= 1;
+        }
+
+        public void Sort<TComparer>(TComparer comparer)
+            where TComparer : IComparer<T>
+        {
+            unsafe
+            {
+                UnsafeBufferUtility.Sort(m_Buffer, m_Count, comparer);
+            }
+        }
+        public int BinarySearch<TComparer>(T value, TComparer comparer)
+            where TComparer : IComparer<T>
+        {
+            int index;
+            unsafe
+            {
+                index = NativeSortExtension.BinarySearch<T, TComparer>(m_Buffer, m_Count, value, comparer);
+            }
+            return index;
         }
     }
 }

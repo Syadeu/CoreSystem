@@ -612,15 +612,48 @@ namespace Syadeu.Presentation.Grid
         {
             return m_Indices.ContainsKey(index.Index);
         }
-        public bool TryGetEntitiesAt(in GridIndex index, out EntityEnumerator iter)
+        public bool TryGetEntityAt(in GridIndex index, out InstanceID entity)
         {
-            if (!m_Indices.ContainsKey(index.Index))
+            if (!m_Indices.TryGetFirstValue(index.Index, out entity, out _))
             {
-                iter = default(EntityEnumerator);
+                entity = InstanceID.Empty;
                 return false;
             }
 
-            iter = new EntityEnumerator(m_Indices.GetValuesForKey(index.Index));
+            return true;
+        }
+        public bool TryGetEntitiesAt(in GridIndex index, out EntitiesAtIndexEnumerator iter)
+        {
+            if (!HasEntityAt(index))
+            {
+                iter = default(EntitiesAtIndexEnumerator);
+                return false;
+            }
+
+            iter = new EntitiesAtIndexEnumerator(m_Indices, index.Index);
+            return true;
+        }
+        public IndicesOfEntityEnumerator GetIndiceOfEntity(in InstanceID entity)
+        {
+            return new IndicesOfEntityEnumerator(
+                m_Grid,
+                m_Entities,
+                entity
+                );
+        }
+        public bool TryGetIndiceOfEntity(in InstanceID entity, ref NativeList<int3> output)
+        {
+            output.Clear();
+            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            {
+                return false;
+            }
+
+            do
+            {
+                output.Add(m_Grid.IndexToLocation(index));
+            } while (m_Entities.TryGetNextValue(out index, ref iter));
+
             return true;
         }
 
@@ -694,35 +727,64 @@ namespace Syadeu.Presentation.Grid
                 m_Iterator.Reset();
             }
         }
-        [BurstCompatible]
-        public struct EntityEnumerator : IEnumerator<InstanceID>, IEnumerable<InstanceID>
+        public struct IndicesOfEntityEnumerator : IEnumerable<GridIndex>
         {
-            private NativeMultiHashMap<ulong, InstanceID>.Enumerator m_Iterator;
+            private WorldGrid m_Grid;
+            private NativeMultiHashMap<InstanceID, ulong> m_HashMap;
+            private InstanceID m_Target;
 
-            public EntityEnumerator(NativeMultiHashMap<ulong, InstanceID>.Enumerator iter)
+            internal IndicesOfEntityEnumerator(
+                WorldGrid grid,
+                NativeMultiHashMap<InstanceID, ulong> hashMap,
+                InstanceID target)
             {
-                m_Iterator = iter;
+                m_Grid = grid;
+                m_HashMap = hashMap;
+                m_Target = target;
             }
 
-            public InstanceID Current => m_Iterator.Current;
+            public IEnumerator<GridIndex> GetEnumerator()
+            {
+                if (!m_HashMap.TryGetFirstValue(m_Target, out ulong index, out var iter))
+                {
+                    yield break;
+                }
+
+                do
+                {
+                    yield return new GridIndex(m_Grid, index);
+                } while (m_HashMap.TryGetNextValue(out index, ref iter));
+            }
             [NotBurstCompatible]
-            object IEnumerator.Current => m_Iterator.Current;
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+        [BurstCompatible]
+        public struct EntitiesAtIndexEnumerator : IEnumerable<InstanceID>
+        {
+            private NativeMultiHashMap<ulong, InstanceID> m_Iterator;
+            private ulong m_Index;
 
-            public IEnumerator<InstanceID> GetEnumerator() => this;
-            IEnumerator IEnumerable.GetEnumerator() => this;
+            public EntitiesAtIndexEnumerator(NativeMultiHashMap<ulong, InstanceID> hashMap, ulong index)
+            {
+                m_Iterator = hashMap;
+                m_Index = index;
+            }
 
-            public void Dispose()
+            public IEnumerator<InstanceID> GetEnumerator()
             {
-                m_Iterator.Dispose();
+                if (!m_Iterator.TryGetFirstValue(m_Index, out InstanceID entity, out var iter))
+                {
+                    yield break;
+                }
+
+                do
+                {
+                    yield return entity;
+                } while (m_Iterator.TryGetNextValue(out entity, ref iter));
             }
-            public bool MoveNext()
-            {
-                return m_Iterator.MoveNext();
-            }
-            public void Reset()
-            {
-                m_Iterator.Reset();
-            }
+
+            [NotBurstCompatible]
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         public bool ValidateIndex(in GridIndex index)
@@ -761,14 +823,6 @@ namespace Syadeu.Presentation.Grid
 
             public IEnumerator<GridIndex> GetEnumerator()
             {
-                int maxCount = ((m_Range.x * 2) + 1) * ((m_Range.z * 2) + 1) * ((m_Range.y * 2) + 1);
-                if (maxCount > 255)
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"You\'re trying to get range of grid that exceeding length 255. " +
-                        $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-                }
-
                 int3
                     location = m_From.Location,
                     minRange, maxRange;
@@ -791,46 +845,21 @@ namespace Syadeu.Presentation.Grid
                     end = new int3(maxX, maxY, maxZ);
                 
                 int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+                for (int y = start.y; y < end.y + 1; y++)
                 {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+                    for (int x = start.x; x < end.x + 1; x++)
                     {
                         for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
+                            z < end.z;
                             z++, count++)
                         {
-                            yield return new GridIndex(m_Grid.m_CheckSum, new int3(x, y, z));
+                            int3 target = new int3(x, y, z);
+                            if (!m_Grid.Contains(in target)) continue;
+
+                            yield return new GridIndex(m_Grid.m_CheckSum, target);
                         }
                     }
                 }
-
-                //unsafe
-                //{
-                //    int3* buffer = stackalloc int3[maxCount];
-                //    int count = 0;
-                //    for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                //    {
-                //        for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                //        {
-                //            for (int z = start.z;
-                //                z < end.z + 1 && count < maxCount;
-                //                z++, count++)
-                //            {
-                //                buffer[count] = new int3(x, y, z);
-                //            }
-                //        }
-                //    }
-
-                //    if (m_SortOption == SortOption.CloseDistance)
-                //    {
-                //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                //    }
-
-                //    for (int i = 0; i < count && i < 255; i++)
-                //    {
-                //        yield return new GridIndex(m_Grid.m_CheckSum, buffer[i]);
-                //    }
-                //}
             }
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
@@ -1086,16 +1115,20 @@ namespace Syadeu.Presentation.Grid
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
         public void GetOutcoastLocations(in NativeArray<int3> locations, ref NativeList<int3> result)
         {
-            BurstGridMathematics.getOutcoastLocations(in locations, ref result);
+            BurstGridMathematics.getOutcoastLocations(m_Grid.aabb, CellSize, in locations, ref result);
         }
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
-        public void GetOutcoastVertices(in NativeArray<int3> locations, ref NativeList<float3> result)
+        public void GetOutcoastVertices(
+            in NativeArray<int3> locations, 
+            ref NativeList<float3> result,
+            NativeArray<int3> indicesMap = default)
         {
             BurstGridMathematics.getOutcoastLocationVertices(
                 m_Grid.aabb,
                 CellSize,
                 in locations,
-                ref result
+                ref result,
+                indicesMap
                 );
         }
 
@@ -1108,6 +1141,20 @@ namespace Syadeu.Presentation.Grid
             int3 location = CalculateDirection(in index, in direction);
 
             return m_Grid.Contains(location);
+        }
+        public GridIndex GetDirection(in GridIndex index, in Direction direction)
+        {
+            int3 location = CalculateDirection(in index, in direction);
+            return new GridIndex(m_Grid.m_CheckSum, location);
+        }
+        public GridIndex GetDirection(in int3 location, in Direction direction)
+        {
+            int3 output;
+            unsafe
+            {
+                BurstGridMathematics.getDirection(location, in direction, &output);
+            }
+            return new GridIndex(m_Grid.m_CheckSum, output);
         }
         public bool TryGetDirection(in GridIndex index, in Direction direction, out GridIndex result)
         {
@@ -1144,6 +1191,15 @@ namespace Syadeu.Presentation.Grid
         public float3 LocationToPosition(in int3 location)
         {
             return m_Grid.LocationToPosition(in location);
+        }
+        public GridIndex LocationToIndex(in int3 location)
+        {
+            return new GridIndex(m_Grid, m_Grid.LocationToIndex(location));
+        }
+        public GridIndex PositionToIndex(in float3 position)
+        {
+            ulong index = m_Grid.PositionToIndex(in position);
+            return new GridIndex(m_Grid, index);
         }
 
         #endregion

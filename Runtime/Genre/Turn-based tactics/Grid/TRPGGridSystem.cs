@@ -26,6 +26,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -49,7 +50,11 @@ namespace Syadeu.Presentation.TurnTable
         //    m_GridOutlineRenderer, m_GridPathlineRenderer;
 
         private NativeList<int3> 
-            m_GridTempMoveables, m_GridTempOutcoasts;
+            m_GridTempLocationHolder01,
+            m_GridTempLocationHolder02,
+            m_GridTempCoverables,
+            m_GridTempMoveables, 
+            m_GridTempOutcoasts;
         private NativeList<float3> 
             m_GridTempOutlines, m_GridTempPathlines;
 
@@ -130,6 +135,9 @@ namespace Syadeu.Presentation.TurnTable
 //                m_GridPathlineRenderer.positionCount = 0;
 //            }
 
+            m_GridTempLocationHolder01 = new NativeList<int3>(512, AllocatorManager.Persistent);
+            m_GridTempLocationHolder02 = new NativeList<int3>(512, AllocatorManager.Persistent);
+            m_GridTempCoverables = new NativeList<int3>(512, Allocator.Persistent);
             m_GridTempMoveables = new NativeList<int3>(512, Allocator.Persistent);
             m_GridTempOutcoasts = new NativeList<int3>(512, Allocator.Persistent);
             m_GridTempOutlines = new NativeList<float3>(512, Allocator.Persistent);
@@ -156,6 +164,9 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnDispose()
         {
+            m_GridTempLocationHolder01.Dispose();
+            m_GridTempLocationHolder02.Dispose();
+            m_GridTempCoverables.Dispose();
             m_GridTempMoveables.Dispose();
             m_GridTempOutcoasts.Dispose();
             m_GridTempOutlines.Dispose();
@@ -328,115 +339,38 @@ namespace Syadeu.Presentation.TurnTable
                 //$"{list[i].Location} added".ToLog();
             }
         }
-        //private void CalculateOutlineVertices(
-        //    in InstanceID entity,
-        //    NativeArray<int3> moveables,
-        //    ref NativeList<float3> vertices)
-        //{
-        //    var gridsize = entity.GetComponent<GridComponent>();
-        //    m_GridSystem.GetOutcoastLocations(in moveables, ref m_GridTempOutcoasts);
-        //    m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref vertices);
-        //    //float half = m_GridSystem.CellSize * .5f;
+        public Direction GetCoverableDirection(in GridIndex index)
+        {
+            WorldGridSystem.EntitiesAtIndexEnumerator iter = default;
+            Direction result = Direction.NONE;
 
-        //    //float3
-        //    //    upleft = new float3(-half, 0, half),
-        //    //    upright = new float3(half, 0, half),
-        //    //    downleft = new float3(-half, 0, -half),
-        //    //    downright = new float3(half, 0, -half);
+            for (int a = 2; a < 6; a++)
+            {
+                if (!m_GridSystem.TryGetDirection(index, (Direction)(1 << a), out var tempIndex))
+                {
+                    continue;
+                }
+                else if (!m_GridSystem.TryGetEntitiesAt(tempIndex, out iter))
+                {
+                    continue;
+                }
 
-        //    //vertices.Clear();
-        //    //float3 gridPos;
+                foreach (var entity in iter)
+                {
+                    GridComponent grid = entity.GetComponentReadOnly<GridComponent>();
+                    if ((grid.ObstacleType & GridComponent.Obstacle.Block) 
+                            != GridComponent.Obstacle.Block)
+                    {
+                        continue;
+                    }
 
-        //    //if (moveables.Length == 0)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(gridsize.Indices[0]);
+                    result |= (Direction)(1 << a);
+                    break;
+                }
+            }
 
-        //    //    vertices.Add(gridPos + upright);
-        //    //    vertices.Add(gridPos + downright);
-        //    //    vertices.Add(gridPos + downleft);
-        //    //    vertices.Add(gridPos + upleft);
-
-        //    //    return;
-        //    //}
-        //    //else if (moveables.Length == 1)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(moveables[0]);
-
-        //    //    vertices.Add(gridPos + upright);
-        //    //    vertices.Add(gridPos + downright);
-        //    //    vertices.Add(gridPos + downleft);
-        //    //    vertices.Add(gridPos + upleft);
-
-        //    //    return;
-        //    //}
-
-        //    //List<float3x2> temp = new List<float3x2>();
-        //    //for (int i = 0; i < moveables.Length; i++)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(moveables[i]);
-        //    //    //$"{gridPos}".ToLog();
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var right) ||
-        //    //        !moveables.Contains(right))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + upright,
-        //    //            gridPos + downright
-        //    //            ));
-        //    //    }
-
-        //    //    // Down
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Forward, out var down) ||
-        //    //        !moveables.Contains(down))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + downright,
-        //    //            gridPos + downleft
-        //    //            ));
-        //    //    }
-
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Left, out var left) ||
-        //    //        !moveables.Contains(left))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + downleft,
-        //    //            gridPos + upleft
-        //    //            ));
-        //    //    }
-
-        //    //    // Up
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Backward, out var up) ||
-        //    //        !moveables.Contains(up))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + upleft,
-        //    //            gridPos + upright
-        //    //            ));
-        //    //    }
-        //    //}
-
-        //    //float3x2 current = temp[temp.Count - 1];
-        //    //temp.RemoveAt(temp.Count - 1);
-
-        //    //do
-        //    //{
-        //    //    vertices.Add(current.c0);
-        //    //} while (FindFloat3x2(temp, current.c1, out current));
-        //}
-
-        //private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
-        //{
-        //    found = 0;
-        //    for (int i = list.Count - 1; i >= 0; i--)
-        //    {
-        //        if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
-        //        {
-        //            found = list[i];
-        //            list.RemoveAt(i);
-        //            return true;
-        //        }
-        //    }
-        //    return false;
-        //}
+            return result;
+        }
 
         #endregion
 
@@ -452,11 +386,25 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
-                //m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
-                //m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines);
-                m_GridSystem.GetOutcoastVertices(m_GridTempMoveables, ref m_GridTempOutlines);
-                $"out loc count : {m_GridTempMoveables.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
-                //CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
+                m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
+                m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines, m_GridTempMoveables);
+                //m_GridSystem.GetOutcoastVertices(m_GridTempMoveables, ref m_GridTempOutlines);
+                //for (int i = 0; i < m_GridTempOutcoasts.Length; i++)
+                //{
+                //    $"out loc:: {m_GridTempOutcoasts[i]}".ToLog();
+                //}
+                $"out loc count : {m_GridTempOutcoasts.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
+
+                for (int i = 0; i < m_GridTempOutcoasts.Length; i++)
+                {
+                    Direction direction = GetCoverableDirection(m_GridSystem.LocationToIndex(m_GridTempOutcoasts[i]));
+                    if (direction == 0)
+                    {
+                        continue;
+                    }
+
+                    $"{TypeHelper.Enum<Direction>.ToString(direction)} at {m_GridTempOutcoasts[i]}".ToLog();
+                }
 
                 GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
 

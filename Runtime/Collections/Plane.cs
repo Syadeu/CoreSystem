@@ -43,14 +43,14 @@ namespace Syadeu.Collections
         // Creates a plane.
         public Plane(float3 inNormal, float3 inPoint)
         {
-            m_Normal = Vector3.Normalize(inNormal);
-            m_Distance = -Vector3.Dot(m_Normal, inPoint);
+            m_Normal = math.normalize(inNormal);
+            m_Distance = -math.dot(m_Normal, inPoint);
         }
 
         // Creates a plane.
         public Plane(float3 inNormal, float d)
         {
-            m_Normal = Vector3.Normalize(inNormal);
+            m_Normal = math.normalize(inNormal);
             m_Distance = d;
         }
 
@@ -85,7 +85,7 @@ namespace Syadeu.Collections
         public void Translate(float3 translation) { m_Distance += math.dot(m_Normal, translation); }
 
         // Creates a plane that's translated into a given direction
-        public static Plane Translate(Plane plane, Vector3 translation) { return new Plane(plane.m_Normal, plane.m_Distance += math.dot(plane.m_Normal, translation)); }
+        public static Plane Translate(Plane plane, float3 translation) { return new Plane(plane.m_Normal, plane.m_Distance += math.dot(plane.m_Normal, translation)); }
 
         // Calculates the closest point on the plane.
         public float3 ClosestPointOnPlane(float3 point)
