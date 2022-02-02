@@ -40,6 +40,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
         internal UnsafeReference<Buffer> m_Buffer;
         internal readonly Allocator m_Allocator;
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        internal AtomicSafetyHandle m_SafetyHandle;
+#endif
+
         public UnsafeReference Ptr => m_Buffer.Value.Ptr;
         public long Size => m_Buffer.Value.Size;
         public bool IsCreated => m_Buffer.IsCreated;
@@ -66,6 +70,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 }
             }
             m_Allocator = allocator;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.CreateSafety(m_Buffer, allocator, out m_SafetyHandle);
+#endif
         }
         public UnsafeAllocator(UnsafeReference ptr, long size, Allocator allocator)
         {
@@ -84,6 +92,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 };
             }
             m_Allocator = allocator;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.CreateSafety(m_Buffer, allocator, out m_SafetyHandle);
+#endif
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
@@ -115,6 +126,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeUtility.Free(m_Buffer.Value.Ptr, m_Allocator);
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
             }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.RemoveSafety(m_Buffer, ref m_SafetyHandle);
+#endif
             m_Buffer = default(UnsafeReference<Buffer>);
         }
         public JobHandle Dispose(JobHandle inputDeps)
@@ -126,6 +140,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
             };
             JobHandle result = disposeJob.Schedule(inputDeps);
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.RemoveSafety(m_Buffer, ref m_SafetyHandle);
+#endif
             m_Buffer = default(UnsafeReference<Buffer>);
             return result;
         }

@@ -77,6 +77,7 @@ namespace Syadeu.Collections
         [JsonIgnore] public float3 max { get => center + extents; set { SetMinMax(min, value); } }
 
         [JsonIgnore] public Vertices vertices => GetVertices(in this);
+        [JsonIgnore] public Planes planes => GetPlanes(in this);
 #pragma warning restore IDE1006 // Naming Styles
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -272,6 +273,32 @@ namespace Syadeu.Collections
                 b3 = new float3(min.x, min.y, max.z),
             };
         }
+        /// <summary>
+        /// <see cref="Direction"/>
+        /// </summary>
+        /// <param name="aabb"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Planes GetPlanes(in AABB aabb)
+        {
+            Vertices vertices = aabb.vertices;
+
+            return new Planes
+            {
+                // Up
+                a0 = new Plane(vertices.a1, vertices.b2, vertices.a2),
+                // Down
+                a1 = new Plane(vertices.b3, vertices.a0, vertices.b0),
+                // Left
+                a2 = new Plane(vertices.b3, vertices.b2, vertices.a0),
+                // Right
+                a3 = new Plane(vertices.a3, vertices.a2, vertices.b0),
+                // Forward
+                a4 = new Plane(vertices.b0, vertices.b1, vertices.b3),
+                // Backward
+                a5 = new Plane(vertices.a0, vertices.a1, vertices.a3),
+            };
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float3x4[] GetSquares(in AABB aabb)
         {
@@ -396,6 +423,32 @@ namespace Syadeu.Collections
         public static implicit operator AABB(Bounds a) => new AABB(a.center, a.size);
         public static implicit operator Bounds(AABB a) => new Bounds(a.center, a.size);
 
+        public struct Planes : IFixedList<Plane>
+        {
+            public Plane
+                a0, a1, a2, a3, a4, a5;
+            public Plane this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => a0,
+                        1 => a1,
+                        2 => a2,
+                        3 => a3,
+                        4 => a4,
+                        5 => a5,
+                        _ => throw new IndexOutOfRangeException(),
+                    };
+                }
+            }
+
+            public Plane First => a0;
+            public Plane Last => a5;
+
+            public int Length => 6;
+        }
         [BurstCompatible]
         public struct Vertices : IFixedList<float3>
         {

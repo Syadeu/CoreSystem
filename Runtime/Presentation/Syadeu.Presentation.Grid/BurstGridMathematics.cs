@@ -339,10 +339,9 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 if (!contains[0] || !contains[1] || !contains[2] || !contains[3])
                 {
                     output.Add(locations[i]);
-                    continue;
+                    //continue;
                 }
-
-                if (locations.BinarySearch(dir.c0, comparer) < 0 || 
+                else if (locations.BinarySearch(dir.c0, comparer) < 0 || 
                     locations.BinarySearch(dir.c1, comparer) < 0 ||
                     locations.BinarySearch(dir.c2, comparer) < 0 ||
                     locations.BinarySearch(dir.c3, comparer) < 0)

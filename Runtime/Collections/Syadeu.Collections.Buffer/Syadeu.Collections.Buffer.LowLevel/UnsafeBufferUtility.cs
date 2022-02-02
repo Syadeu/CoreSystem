@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
@@ -174,5 +175,35 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return true;
         }
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        private static readonly Dictionary<IntPtr, (DisposeSentinel, Allocator)> m_Safety
+            = new Dictionary<IntPtr, (DisposeSentinel, Allocator)>();
+
+        public static void CreateSafety(UnsafeReference ptr, Allocator allocator, out AtomicSafetyHandle handle)
+        {
+            DisposeSentinel.Create(out handle, out var sentinel, 1, allocator);
+
+            IntPtr p = ptr.IntPtr;
+            m_Safety.Add(p, (sentinel, allocator));
+        }
+        public static void RemoveSafety(UnsafeReference ptr, ref AtomicSafetyHandle handle)
+        {
+            IntPtr p = ptr.IntPtr;
+            var sentinel = m_Safety[p];
+
+            DisposeSentinel.Dispose(ref handle, ref sentinel.Item1);
+            m_Safety.Remove(p);
+        }
+
+        public static void DisposeAllSafeties()
+        {
+            foreach (var item in m_Safety)
+            {
+                UnsafeUtility.Free(item.Key.ToPointer(), item.Value.Item2);
+            }
+            m_Safety.Clear();
+        }
+#endif
     }
 }

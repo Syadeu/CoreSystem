@@ -26,6 +26,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid.LowLevel;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -657,6 +658,32 @@ namespace Syadeu.Presentation.Grid
             return true;
         }
 
+        /// <summary>
+        /// 해당 엔티티가 그리드에서 점유중인 인덱스들의 총 AABB 를 반환합니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="aabb"></param>
+        /// <returns></returns>
+        public bool TryGetIndicesAABBOfEntity(in InstanceID entity, out AABB aabb)
+        {
+            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            {
+                aabb = AABB.Zero;
+                return false;
+            }
+
+            float3 tempPos = m_Grid.IndexToPosition(in index);
+            aabb = new AABB(tempPos, 0);
+
+            while (m_Entities.TryGetNextValue(out index, ref iter))
+            {
+                tempPos = m_Grid.IndexToPosition(in index);
+                aabb.Encapsulate(tempPos);
+            }
+
+            return true;
+        }
+
         public int GetObserverIndicesCount()
         {
             CompleteGridJob();
@@ -688,6 +715,8 @@ namespace Syadeu.Presentation.Grid
                 predicate
                 );
         }
+
+        #region Enumerator
 
         [BurstCompatible]
         public struct IndexEnumerator<TPredicate> : IEnumerator<GridIndex>, IEnumerable<GridIndex>
@@ -727,6 +756,7 @@ namespace Syadeu.Presentation.Grid
                 m_Iterator.Reset();
             }
         }
+        [BurstCompatible]
         public struct IndicesOfEntityEnumerator : IEnumerable<GridIndex>
         {
             private WorldGrid m_Grid;
@@ -786,6 +816,8 @@ namespace Syadeu.Presentation.Grid
             [NotBurstCompatible]
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
+
+        #endregion
 
         public bool ValidateIndex(in GridIndex index)
         {
@@ -1182,6 +1214,82 @@ namespace Syadeu.Presentation.Grid
             int3 location;
             BurstGridMathematics.getDirection(index.Location, in direction, &location);
             return location;
+        }
+
+        // TODO : point 가 그리드 좌표에서 변환한 좌표값이 아니면 예상한 값이 아닐 확률이 높음.
+        // 나중에 radian 으로 연산을 수정할 것
+        public Direction GetNormalizedDirection(in float3 point, in float3 center, in quaternion rot)
+        {
+            float4x4 mat = math.fastinverse(float4x4.TRS(center, rot, 1));
+            float3
+                xzProj = math.mul(mat, new float4(point, 1)).xyz;
+
+            Direction result = Direction.NONE;
+            if (xzProj.x > 0.01f)
+            {
+                result = Direction.Right;
+            }
+            else if (xzProj.x < -0.01f)
+            {
+                result = Direction.Left;
+            }
+
+            if (xzProj.z > 0.01f)
+            {
+                result |= Direction.Backward;
+            }
+            else if (xzProj.z < -0.01f)
+            {
+                result |= Direction.Forward;
+            }
+
+            if (xzProj.y > 0.01f)
+            {
+                result |= Direction.Up;
+            }
+            else if (xzProj.y < -0.01f)
+            {
+                result |= Direction.Down;
+            }
+            //$"123,, {xzProj} :: {center}, {point}".ToLog();
+
+            return result;
+        }
+        public Direction GetReletiveDirectionFrom(in GridIndex index, in InstanceID entity)
+        {
+            TryGetIndicesAABBOfEntity(in entity, out AABB gridBounds);
+            AABB.Planes planes = gridBounds.planes;
+
+            float3
+                gridPos = IndexToPosition(in index);
+
+            ProxyTransform tr = entity.GetTransform();
+            Direction direction;
+            for (int i = 0; i < 6; i++)
+            {
+                if (!planes[i].GetSide(gridPos)) continue;
+
+                direction = (Direction)(1 << i);
+                
+                int3 oppoLoc;
+                float3 pos;
+                unsafe
+                {
+                    BurstGridMathematics.getDirection(index.Location, direction.GetOpposite(), &oppoLoc);
+                    BurstGridMathematics.locationToPosition(m_Grid.aabb, CellSize, oppoLoc, &pos);
+                }
+
+                var temp = GetNormalizedDirection(
+                    pos,
+                    gridPos,
+                    tr.rotation
+                    );
+                //$"123123: {direction} :: {temp}".ToLog();
+
+                return temp;
+            }
+
+            return Direction.NONE;
         }
 
         public float3 IndexToPosition(in GridIndex index)

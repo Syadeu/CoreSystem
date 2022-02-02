@@ -19,5 +19,66 @@ namespace Syadeu.Collections
     public static class CollectionExtensionMethods
     {
         public static TypeInfo ToTypeInfo(this Type t) => CollectionUtility.GetTypeInfo(t);
+
+        public static Direction GetOpposite(this Direction t)
+        {
+            Direction result = Direction.NONE;
+
+            if ((t & Direction.Left) == Direction.Left)
+            {
+                result |= Direction.Right;
+            }
+            if ((t & Direction.Right) == Direction.Right)
+            {
+                result |= Direction.Left;
+            }
+            if ((t & Direction.Up) == Direction.Up)
+            {
+                result |= Direction.Down;
+            }
+            if ((t & Direction.Down) == Direction.Down)
+            {
+                result |= Direction.Up;
+            }
+            if ((t & Direction.Forward) == Direction.Forward)
+            {
+                result |= Direction.Backward;
+            }
+            if ((t & Direction.Backward) == Direction.Backward)
+            {
+                result |= Direction.Forward;
+            }
+
+            return result;
+        }
+        public static int ToIndex(this Direction t)
+        {
+            if ((t & Direction.Up) == Direction.Left)
+            {
+                return 0;
+            }
+            if ((t & Direction.Down) == Direction.Right)
+            {
+                return 1;
+            }
+            if ((t & Direction.Left) == Direction.Up)
+            {
+                return 2;
+            }
+            if ((t & Direction.Right) == Direction.Down)
+            {
+                return 3;
+            }
+            if ((t & Direction.Forward) == Direction.Forward)
+            {
+                return 4;
+            }
+            if ((t & Direction.Backward) == Direction.Backward)
+            {
+                return 5;
+            }
+
+            return -1;
+        }
     }
 }

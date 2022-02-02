@@ -59,10 +59,10 @@ namespace Syadeu.Presentation.TurnTable
         [JsonProperty(Order = 1, PropertyName = "DimensionInfomations")]
         internal DimensionInfo[] m_DimensionInfomations = new DimensionInfo[4]
         {
-            new DimensionInfo(Direction.Left, 1),
-            new DimensionInfo(Direction.Right, 1),
-            new DimensionInfo(Direction.Forward, 1),
-            new DimensionInfo(Direction.Backward, 1)
+            new DimensionInfo((Direction)(1 << 2), 1),
+            new DimensionInfo((Direction)(1 << 3), 1),
+            new DimensionInfo((Direction)(1 << 4), 1),
+            new DimensionInfo((Direction)(1 << 5), 1)
         };
     }
     internal sealed class TRPGGridCoverAttributeProcessor : AttributeProcessor<TRPGGridCoverAttribute>
@@ -72,14 +72,18 @@ namespace Syadeu.Presentation.TurnTable
             ref TRPGGridCoverComponent component = ref entity.GetComponent<TRPGGridCoverComponent>();
 
             component.immutable = attribute.m_Immutable;
+            TRPGGridCoverComponent.Dimension4 dimensions = new TRPGGridCoverComponent.Dimension4();
             for (int i = 0; i < 4; i++)
             {
-                component.dimensions[i] = new TRPGGridCoverComponent.Dimension
+                dimensions[(Direction)(1 << (i + 2))] = new TRPGGridCoverComponent.Dimension
                 {
                     direction = attribute.m_DimensionInfomations[i].m_Direction,
                     forwardLength = attribute.m_DimensionInfomations[i].m_ForwardLength
                 };
             }
+            component.dimensions = dimensions;
+
+            "asdasd".ToLog();
         }
     }
 
@@ -95,27 +99,27 @@ namespace Syadeu.Presentation.TurnTable
             public Dimension
                 a, b, c, d;
 
-            public Dimension this[int index]
+            public Dimension this[Direction dir]
             {
                 get
                 {
-                    return index switch
+                    return dir switch
                     {
-                        0 => a,
-                        1 => b,
-                        2 => c,
-                        3 => d,
+                        Direction.Left => a,
+                        Direction.Right => b,
+                        Direction.Forward => c,
+                        Direction.Backward => d,
                         _ => throw new IndexOutOfRangeException(),
                     };
                 }
                 set
                 {
-                    switch (index)
+                    switch (dir)
                     {
-                        case 0: a = value; break;
-                        case 1: b = value; break;
-                        case 2: c = value; break;
-                        case 3: d = value; break;
+                        case Direction.Left: a = value; break;
+                        case Direction.Right: b = value; break;
+                        case Direction.Forward: c = value; break;
+                        case Direction.Backward: d = value; break;
                         default:
                             throw new IndexOutOfRangeException();
                     }

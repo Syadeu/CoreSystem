@@ -341,12 +341,16 @@ namespace Syadeu.Presentation.TurnTable
         }
         public Direction GetCoverableDirection(in GridIndex index)
         {
-            WorldGridSystem.EntitiesAtIndexEnumerator iter = default;
-            Direction result = Direction.NONE;
+            WorldGridSystem.EntitiesAtIndexEnumerator iter;
+            GridIndex tempIndex;
+            Direction 
+                result = Direction.NONE,
+                tempResult;
 
             for (int a = 2; a < 6; a++)
             {
-                if (!m_GridSystem.TryGetDirection(index, (Direction)(1 << a), out var tempIndex))
+                tempResult = (Direction)(1 << a);
+                if (!m_GridSystem.TryGetDirection(in index, tempResult, out tempIndex))
                 {
                     continue;
                 }
@@ -357,6 +361,8 @@ namespace Syadeu.Presentation.TurnTable
 
                 foreach (var entity in iter)
                 {
+                    if (!entity.HasComponent<TRPGGridCoverComponent>()) continue;
+
                     GridComponent grid = entity.GetComponentReadOnly<GridComponent>();
                     if ((grid.ObstacleType & GridComponent.Obstacle.Block) 
                             != GridComponent.Obstacle.Block)
@@ -364,7 +370,17 @@ namespace Syadeu.Presentation.TurnTable
                         continue;
                     }
 
-                    result |= (Direction)(1 << a);
+                    TRPGGridCoverComponent cover = entity.GetComponentReadOnly<TRPGGridCoverComponent>();
+                    Direction targetDir = m_GridSystem.GetReletiveDirectionFrom(index, entity);
+
+                    $"{index.Location} is {targetDir}({cover.dimensions[targetDir].direction}, {cover.dimensions[targetDir].forwardLength}) from {entity.GetEntity().Name}".ToLog();
+
+                    if (cover.dimensions[targetDir].forwardLength < 1)
+                    {
+                        continue;
+                    }
+
+                    result |= tempResult;
                     break;
                 }
             }

@@ -27,13 +27,17 @@ namespace Syadeu.Collections
         float3 m_Normal;
         float m_Distance;
 
-        // Normal vector of the plane.
+        /// <summary>
+        /// Normal vector of the plane.
+        /// </summary>
         public float3 normal
         {
             get { return m_Normal; }
             set { m_Normal = value; }
         }
-        // Distance from the origin to the plane.
+        /// <summary>
+        /// Distance from the origin to the plane.
+        /// </summary>
         public float distance
         {
             get { return m_Distance; }
@@ -62,45 +66,74 @@ namespace Syadeu.Collections
         }
 
         // Sets a plane using a point that lies within it plus a normal to orient it (note that the normal must be a normalized vector).
-        public void SetNormalAndPosition(Vector3 inNormal, Vector3 inPoint)
+        public void SetNormalAndPosition(float3 inNormal, float3 inPoint)
         {
             m_Normal = math.normalize(inNormal);
             m_Distance = -math.dot(inNormal, inPoint);
         }
 
         // Sets a plane using three points that lie within it.  The points go around clockwise as you look down on the top surface of the plane.
-        public void Set3Points(Vector3 a, Vector3 b, Vector3 c)
+        public void Set3Points(float3 a, float3 b, float3 c)
         {
             m_Normal = math.normalize(math.cross(b - a, c - a));
             m_Distance = -math.dot(m_Normal, a);
         }
 
-        // Make the plane face the opposite direction
+        /// <summary>
+        /// Make the plane face the opposite direction
+        /// </summary>
         public void Flip() { m_Normal = -m_Normal; m_Distance = -m_Distance; }
 
-        // Return a version of the plane that faces the opposite direction
+        /// <summary>
+        /// Return a version of the plane that faces the opposite direction
+        /// </summary>
         public Plane flipped { get { return new Plane(-m_Normal, -m_Distance); } }
 
-        // Translates the plane into a given direction
+        /// <summary>
+        /// Translates the plane into a given direction
+        /// </summary>
+        /// <param name="translation"></param>
         public void Translate(float3 translation) { m_Distance += math.dot(m_Normal, translation); }
 
-        // Creates a plane that's translated into a given direction
+        /// <summary>
+        /// Creates a plane that's translated into a given direction
+        /// </summary>
+        /// <param name="plane"></param>
+        /// <param name="translation"></param>
+        /// <returns></returns>
         public static Plane Translate(Plane plane, float3 translation) { return new Plane(plane.m_Normal, plane.m_Distance += math.dot(plane.m_Normal, translation)); }
 
-        // Calculates the closest point on the plane.
+        /// <summary>
+        /// Calculates the closest point on the plane.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
         public float3 ClosestPointOnPlane(float3 point)
         {
             var pointToPlaneDistance = math.dot(m_Normal, point) + m_Distance;
             return point - (m_Normal * pointToPlaneDistance);
         }
 
-        // Returns a signed distance from plane to point.
+        /// <summary>
+        /// Returns a signed distance from plane to point.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
         public float GetDistanceToPoint(float3 point) { return math.dot(m_Normal, point) + m_Distance; }
 
-        // Is a point on the positive side of the plane?
+        /// <summary>
+        /// Is a point on the positive side of the plane?
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
         public bool GetSide(float3 point) { return math.dot(m_Normal, point) + m_Distance > 0.0F; }
 
-        // Are two points on the same side of the plane?
+        /// <summary>
+        /// Are two points on the same side of the plane?
+        /// </summary>
+        /// <param name="inPt0"></param>
+        /// <param name="inPt1"></param>
+        /// <returns></returns>
         public bool SameSide(float3 inPt0, float3 inPt1)
         {
             float d0 = GetDistanceToPoint(inPt0);
@@ -109,7 +142,12 @@ namespace Syadeu.Collections
                 (d0 <= 0.0f && d1 <= 0.0f);
         }
 
-        // Intersects a ray with the plane.
+        /// <summary>
+        /// Intersects a ray with the plane.
+        /// </summary>
+        /// <param name="ray"></param>
+        /// <param name="enter"></param>
+        /// <returns></returns>
         public bool Raycast(Ray ray, out float enter)
         {
             float vdot = math.dot(ray.direction, m_Normal);
@@ -125,6 +163,25 @@ namespace Syadeu.Collections
             enter = ndot / vdot;
 
             return enter > 0.0F;
+        }
+        /// <summary>
+        /// Projects a vector onto a plane defined by a normal orthogonal to the plane.
+        /// </summary>
+        /// <param name="point">The location of the vector above the plane.</param>
+        /// <returns></returns>
+        public float3 Project(float3 point)
+        {
+            float num = math.dot(m_Normal, m_Normal);
+            if (num < math.EPSILON)
+            {
+                return point;
+            }
+
+            float num2 = math.dot(point, m_Normal);
+            return new float3(
+                point.x - m_Normal.x * num2 / num,
+                point.y - m_Normal.y * num2 / num,
+                point.z - m_Normal.z * num2 / num);
         }
 
         public override string ToString() => ToString(null, CultureInfo.InvariantCulture.NumberFormat);
