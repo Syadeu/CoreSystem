@@ -72,7 +72,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             GetOrAddComponent<CanvasRenderer>();
             RectTransform tr = (RectTransform)transform;
             tr.sizeDelta = data.m_Generals.m_SizeDelta;
-
+            
             GameObject boxObj = new GameObject("Box");
             Image boxImg;
             {
@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
                 float half = data.m_Generals.m_TextureOffset * .5f;
 
-                texTr.anchoredPosition = new Vector2(0, half);
+                texTr.anchoredPosition = new Vector2(0, -half);
                 texTr.sizeDelta = data.m_Generals.m_SizeDelta - (float2)data.m_Generals.m_TextureOffset;
             }
 

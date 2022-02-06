@@ -287,6 +287,36 @@ namespace Syadeu.Presentation.TurnTable
 
         #region Math
 
+        public IEnumerator<InstanceID> GetTargetsWithin(InstanceID entity, int range)
+        {
+            if (!entity.HasComponent<GridComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.GetEntity().Name}) doesn\'t have any {nameof(GridComponent)}.");
+
+                yield break;
+            }
+
+            GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
+            TRPGActorAttackComponent att = entity.GetComponentReadOnly<TRPGActorAttackComponent>();
+
+            foreach (var index in m_GridSystem.GetRange(gridSize.Indices[0], new int3(range, 0, range)))
+            {
+                if (m_GridSystem.TryGetEntitiesAt(index, out var enumerator))
+                {
+                    foreach (var item in enumerator)
+                    {
+                        if (item.Equals(entity) || !item.IsActorEntity()) continue;
+                        else if (!item.IsEnemy(entity)) continue;
+                        // TODO : 임시코드
+                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+                        yield return item;
+                    }
+                }
+            }
+        }
+
         private void GetMoveablePositions(in InstanceID entity,
             ref NativeList<GridIndex> gridPositions)
         {
@@ -456,7 +486,7 @@ namespace Syadeu.Presentation.TurnTable
 
         #region UI
 
-        private void DrawUICell(Entity<IEntityData> entity)
+        public void DrawUICell(Entity<IEntityData> entity)
         {
             using (m_DrawUICellMarker.Auto())
             {
@@ -468,23 +498,9 @@ namespace Syadeu.Presentation.TurnTable
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
                 m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
                 m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines, m_GridTempMoveables);
-                //m_GridSystem.GetOutcoastVertices(m_GridTempMoveables, ref m_GridTempOutlines);
-                //for (int i = 0; i < m_GridTempOutcoasts.Length; i++)
-                //{
-                //    $"out loc:: {m_GridTempOutcoasts[i]}".ToLog();
-                //}
+
                 $"out loc count : {m_GridTempOutcoasts.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
 
-                //for (int i = 0; i < m_GridTempMoveables.Length; i++)
-                //{
-                //    Direction direction = GetCoverableDirection((m_GridTempOutcoasts[i]));
-                //    if (direction == 0)
-                //    {
-                //        continue;
-                //    }
-
-                //    $"{TypeHelper.Enum<Direction>.ToString(direction)} at {m_GridTempOutcoasts[i]}".ToLog();
-                //}
                 GetCoverables(m_GridTempMoveables, 
                     out m_CoverableIndices, out m_CoverableDirections, out m_CoverableLength);
 
@@ -501,19 +517,16 @@ namespace Syadeu.Presentation.TurnTable
                 m_IsDrawingGrids = true;
             }
         }
-        private void ClearUICell()
+        public void ClearUICell()
         {
             using (m_ClearUICellMarker.Auto())
             {
                 if (!m_IsDrawingGrids) return;
 
-                //m_GridSystem.ClearUICell();
                 m_GridTempMoveables.Clear();
                 m_GridTempOutcoasts.Clear();
                 m_GridTempOutlines.Clear();
 
-                //m_ShapesOutlinePath.ClearAllPoints();
-                //m_GridOutlineRenderer.positionCount = 0;
                 ReserveCoverableBuffers(ref m_CoverableIndices, ref m_CoverableDirections);
 
 #if CORESYSTEM_HDRP

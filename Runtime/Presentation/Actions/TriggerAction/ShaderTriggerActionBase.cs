@@ -17,28 +17,18 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Presentation.Render;
 using System;
-using System.Runtime.InteropServices;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [Guid("0C11829E-730C-4082-B6E5-2ED487607F2E")]
-    public sealed class TestConstAction : ConstAction<int>
+    public abstract class ShaderTriggerActionBase : TriggerAction
     {
-        [JsonProperty]
-        private int m_TestInt = 0;
-        [JsonProperty]
-        private float m_TestFloat = 0;
-        [JsonProperty]
-        private string m_TestString;
-        [JsonProperty]
-        private Vector3 testfloat3;
+        [JsonProperty(Order = -10, PropertyName = "ShaderData")]
+        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
+        
 
-        protected override int Execute()
-        {
-            "test const action".ToLog();
-            return 1;
-        }
+        [JsonIgnore]
+        protected Reference<ShaderConstantData>[] ShaderData => m_ShaderData;
     }
 }

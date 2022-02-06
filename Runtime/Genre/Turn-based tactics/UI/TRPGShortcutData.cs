@@ -57,15 +57,21 @@ namespace Syadeu.Presentation.TurnTable.UI
         public ConstActionReference<bool>[] m_ConstVisibleOptions = Array.Empty<ConstActionReference<bool>>();
 
         [Space]
-        [JsonProperty(Order = 4, PropertyName = "OnEnable")]
+        [JsonProperty(Order = 4, PropertyName = "OnEnableConst")]
+        public ConstActionReference[] m_OnEnableConst = Array.Empty<ConstActionReference>();
+        [JsonProperty(Order = 5, PropertyName = "OnEnable")]
         public Reference<InstanceAction>[] m_OnEnable = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnTargetEnable")]
+        [JsonProperty(Order = 6, PropertyName = "OnTargetEnable")]
+        [Description("대상은 현재 턴의 엔티티입니다.")]
         public Reference<TriggerAction>[] m_OnTargetEnable = Array.Empty<Reference<TriggerAction>>();
 
         [Space]
-        [JsonProperty(Order = 6, PropertyName = "OnDisable")]
+        [JsonProperty(Order = 7, PropertyName = "OnDisableConst")]
+        public ConstActionReference[] m_OnDisableConst = Array.Empty<ConstActionReference>();
+        [JsonProperty(Order = 8, PropertyName = "OnDisable")]
         public Reference<InstanceAction>[] m_OnDisable = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 7, PropertyName = "OnTargetDisable")]
+        [JsonProperty(Order = 9, PropertyName = "OnTargetDisable")]
+        [Description("대상은 현재 턴의 엔티티입니다.")]
         public Reference<TriggerAction>[] m_OnTargetDisable = Array.Empty<Reference<TriggerAction>>();
 
         int IComparable<TRPGShortcutData>.CompareTo(TRPGShortcutData other)

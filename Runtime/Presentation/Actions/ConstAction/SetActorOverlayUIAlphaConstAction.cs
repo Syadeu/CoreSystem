@@ -17,28 +17,44 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Presentation.Render;
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [Guid("0C11829E-730C-4082-B6E5-2ED487607F2E")]
-    public sealed class TestConstAction : ConstAction<int>
+    [DisplayName("Canvas/Actor/Set Overlay alpha")]
+    [Guid("98965511-E2EB-4343-B0AB-32B6ADBE07F7")]
+    internal sealed class SetActorOverlayUIAlphaConstAction : ConstAction<int>
     {
-        [JsonProperty]
-        private int m_TestInt = 0;
-        [JsonProperty]
-        private float m_TestFloat = 0;
-        [JsonProperty]
-        private string m_TestString;
-        [JsonProperty]
-        private Vector3 testfloat3;
+        [JsonProperty(Order = 0, PropertyName = "Alpha")]
+        [Range(0, 1)]
+        public float m_Alpha;
+
+        [JsonIgnore]
+        private WorldCanvasSystem m_WorldCanvasSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_WorldCanvasSystem = null;
+        }
+
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
 
         protected override int Execute()
         {
-            "test const action".ToLog();
-            return 1;
+            m_WorldCanvasSystem.SetAlphaActorOverlayUI(m_Alpha);
+
+            return 0;
         }
     }
 }

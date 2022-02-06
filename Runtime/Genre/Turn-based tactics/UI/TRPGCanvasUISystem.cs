@@ -289,6 +289,7 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         private void DisableCurrentShortcut()
         {
+            if (m_CurrentShortcut.IsEmpty()) return;
 
             //switch (m_CurrentShortcut)
             //{
@@ -305,6 +306,11 @@ namespace Syadeu.Presentation.TurnTable.UI
             //        m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
             //        break;
             //}
+            var data = m_CurrentShortcut.GetObject();
+
+            data.m_OnDisableConst.Execute();
+            data.m_OnDisable.Execute();
+            data.m_OnTargetDisable.Execute(m_TurnTableSystem.CurrentTurn);
 
             m_TRPGInputSystem.SetIngame_Default();
 
@@ -315,7 +321,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             if (ev.Shortcut.Equals(m_CurrentShortcut))
             {
-                //"same return".ToLog();
+                "same return".ToLog();
                 DisableCurrentShortcut();
                 return;
             }
@@ -386,6 +392,12 @@ namespace Syadeu.Presentation.TurnTable.UI
             //}
 
             m_CurrentShortcut = ev.Shortcut;
+            var data = m_CurrentShortcut.GetObject();
+
+            data.m_OnEnableConst.Execute();
+            data.m_OnEnable.Execute();
+            data.m_OnTargetEnable.Execute(m_TurnTableSystem.CurrentTurn);
+
             m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
         }
         private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)

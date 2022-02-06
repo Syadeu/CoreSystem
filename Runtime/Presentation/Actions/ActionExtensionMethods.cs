@@ -20,6 +20,7 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -404,6 +405,40 @@ namespace Syadeu.Presentation.Actions
             }
         }
 
+        public static object Execute(this ConstActionReference action)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return null;
+            }
+
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            info.SetArguments(constAction, action.Arguments);
+
+            object result;
+            try
+            {
+                result = constAction.Execute();
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"Unexpected error has been raised while executing ConstAction");
+
+                UnityEngine.Debug.LogError(ex);
+
+                return null;
+            }
+            return result;
+        }
+        public static void Execute(this IList<ConstActionReference> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                action[i].Execute();
+            }
+        }
         public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
         {
             if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
