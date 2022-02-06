@@ -56,6 +56,7 @@ namespace Syadeu.Presentation.TurnTable
             "true 일 경우, 파괴 불가능한 오브젝트로 선언되며, 어떠한 환경요소에도 영향받지 않는다.")]
         [JsonProperty(Order = 0, PropertyName = "Immutable")]
         internal bool m_Immutable = false;
+        [ReflectionSealedView]
         [JsonProperty(Order = 1, PropertyName = "DimensionInfomations")]
         internal DimensionInfo[] m_DimensionInfomations = new DimensionInfo[4]
         {
@@ -109,7 +110,7 @@ namespace Syadeu.Presentation.TurnTable
                         Direction.Right => b,
                         Direction.Forward => c,
                         Direction.Backward => d,
-                        _ => throw new IndexOutOfRangeException(),
+                        _ => throw new IndexOutOfRangeException($"{dir}"),
                     };
                 }
                 set
@@ -121,7 +122,7 @@ namespace Syadeu.Presentation.TurnTable
                         case Direction.Forward: c = value; break;
                         case Direction.Backward: d = value; break;
                         default:
-                            throw new IndexOutOfRangeException();
+                            throw new IndexOutOfRangeException($"{dir}");
                     }
                 }
             }

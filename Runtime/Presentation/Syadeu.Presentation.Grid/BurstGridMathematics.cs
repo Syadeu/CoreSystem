@@ -316,38 +316,74 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [BurstCompile]
         public static void getOutcoastLocations(
             in AABB grid, in float cellSize,
-            in NativeArray<int3> locations, ref NativeList<int3> output)
+            in NativeArray<GridIndex> locations, ref NativeList<GridIndex> output)
         {
             output.Clear();
-            LocationComparer comparer = new LocationComparer();
-            locations.Sort(comparer);
+            //LocationComparer comparer = new LocationComparer();
+            IndexComparer indexComparer = new IndexComparer();
+            locations.Sort(indexComparer);
 
             bool4 contains;
             int3x4 dir;
+            //ulong a0, a1, a2, a3;
+            //GridIndex4 gridIndex4 = new GridIndex4();
             for (int i = 0; i < locations.Length; i++)
             {
-                dir.c0 = new int3(locations[i].x, locations[i].y, locations[i].z + 1); // down
-                dir.c1 = new int3(locations[i].x, locations[i].y, locations[i].z - 1); // up
-                dir.c2 = new int3(locations[i].x - 1, locations[i].y, locations[i].z); // left
-                dir.c3 = new int3(locations[i].x + 1, locations[i].y, locations[i].z); // right
+                int3 loc = locations[i].Location;
+
+                dir.c0 = new int3(loc.x, loc.y, loc.z + 1); // down
+                dir.c1 = new int3(loc.x, loc.y, loc.z - 1); // up
+                dir.c2 = new int3(loc.x - 1, loc.y, loc.z); // left
+                dir.c3 = new int3(loc.x + 1, loc.y, loc.z); // right
 
                 containLocation(in grid, in cellSize, in dir.c0, &contains.x);
                 containLocation(in grid, in cellSize, in dir.c1, &contains.y);
                 containLocation(in grid, in cellSize, in dir.c2, &contains.z);
                 containLocation(in grid, in cellSize, in dir.c3, &contains.w);
 
+                //locationToIndex(in dir.c0, &a0);
+                //locationToIndex(in dir.c1, &a1);
+                //locationToIndex(in dir.c2, &a2);
+                //locationToIndex(in dir.c3, &a3);
+                //gridIndex4[0] = new GridIndex(locations[i].m_CheckSum, a0);
+                //gridIndex4[1] = new GridIndex(locations[i].m_CheckSum, a1);
+                //gridIndex4[2] = new GridIndex(locations[i].m_CheckSum, a2);
+                //gridIndex4[3] = new GridIndex(locations[i].m_CheckSum, a3);
+
                 if (!contains[0] || !contains[1] || !contains[2] || !contains[3])
                 {
                     output.Add(locations[i]);
                     //continue;
                 }
-                else if (locations.BinarySearch(dir.c0, comparer) < 0 || 
-                    locations.BinarySearch(dir.c1, comparer) < 0 ||
-                    locations.BinarySearch(dir.c2, comparer) < 0 ||
-                    locations.BinarySearch(dir.c3, comparer) < 0)
+                else if (!locations.Contains(dir.c0) || 
+                    !locations.Contains(dir.c1) ||
+                    !locations.Contains(dir.c2) ||
+                    !locations.Contains(dir.c3))
                 {
                     output.Add(locations[i]);
                 }
+            }
+        }
+        private struct IndexComparer : IComparer<GridIndex>
+        {
+            public int Compare(GridIndex xx, GridIndex yy)
+            {
+                int3 
+                    x = xx.Location,
+                    y = yy.Location;
+                if (x.z == y.z)
+                {
+                    if (x.x == y.x)
+                    {
+                        if (x.y == y.y) return 0;
+
+                        return x.y < y.y ? -1 : 1;
+                    }
+
+                    return x.x < y.x ? -1 : 1;
+                }
+
+                return x.z < y.z ? -1 : 1;
             }
         }
         private struct LocationComparer : IComparer<int3>
@@ -380,8 +416,8 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [SkipLocalsInit, BurstCompile]
         public static void getOutcoastLocationVertices(
             in AABB grid, in float cellSize,
-            in NativeArray<int3> locations, ref NativeList<float3> output, 
-            NativeArray<int3> indicesMap)
+            in NativeArray<GridIndex> locations, ref NativeList<float3> output, 
+            NativeArray<GridIndex> indicesMap)
         {
             output.Clear();
 
@@ -397,7 +433,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             {
                 indicesMap = locations;
             }
-            LocationComparer comparer = new LocationComparer();
+            IndexComparer comparer = new IndexComparer();
             indicesMap.Sort(comparer);
 
             float3x2* tempBuffer = stackalloc float3x2[locations.Length * 4];
@@ -407,13 +443,15 @@ namespace Syadeu.Presentation.Grid.LowLevel
             int3 directional;
             float3 gridPos;
             bool contains;
+            //GridIndex temp;
             for (int i = 0; i < locations.Length; i++)
             {
-                locationToPosition(in grid, in cellSize, locations[i], &gridPos);
+                indexToPosition(in grid, in cellSize, locations[i].Index, &gridPos);
 
-                getDirection(locations[i], Direction.Right, &directional);
+                getDirection(locations[i].Location, Direction.Right, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || indicesMap.BinarySearch(directional, comparer) < 0)
+                //temp = new GridIndex(locations[i].m_CheckSum, directional);
+                if (!contains || !indicesMap.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upright,
@@ -422,9 +460,10 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 }
 
                 // Down
-                getDirection(locations[i], Direction.Forward, &directional);
+                getDirection(locations[i].Location, Direction.Forward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || indicesMap.BinarySearch(directional, comparer) < 0)
+                //temp = new GridIndex(locations[i].m_CheckSum, directional);
+                if (!contains || !indicesMap.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downright,
@@ -432,9 +471,10 @@ namespace Syadeu.Presentation.Grid.LowLevel
                         ));
                 }
 
-                getDirection(locations[i], Direction.Left, &directional);
+                getDirection(locations[i].Location, Direction.Left, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || indicesMap.BinarySearch(directional, comparer) < 0)
+                //temp = new GridIndex(locations[i].m_CheckSum, directional);
+                if (!contains || !indicesMap.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downleft,
@@ -442,9 +482,10 @@ namespace Syadeu.Presentation.Grid.LowLevel
                         ));
                 }
 
-                getDirection(locations[i], Direction.Backward, &directional);
+                getDirection(locations[i].Location, Direction.Backward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
-                if (!contains || indicesMap.BinarySearch(directional, comparer) < 0)
+                //temp = new GridIndex(locations[i].m_CheckSum, directional);
+                if (!contains || !indicesMap.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upleft,

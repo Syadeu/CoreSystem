@@ -28,6 +28,8 @@ using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -49,17 +51,16 @@ namespace Syadeu.Presentation.TurnTable
         //private LineRenderer 
         //    m_GridOutlineRenderer, m_GridPathlineRenderer;
 
-        private NativeList<int3> 
-            m_GridTempLocationHolder01,
-            m_GridTempLocationHolder02,
+        private NativeList<GridIndex> 
             m_GridTempCoverables,
             m_GridTempMoveables, 
             m_GridTempOutcoasts;
         private NativeList<float3> 
             m_GridTempOutlines, m_GridTempPathlines;
 
-        //private ComputeBuffer m_GridOutlineBuffer;
-        //private Mesh m_OutlineMesh;
+        private GridIndex[] m_CoverableIndices;
+        private Direction[] m_CoverableDirections;
+        private int m_CoverableLength;
 
         private bool 
             m_IsDrawingGrids = false,
@@ -77,9 +78,13 @@ namespace Syadeu.Presentation.TurnTable
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
-        public NativeArray<int3>.ReadOnly CurrentMoveableTiles => m_GridTempMoveables.AsArray().AsReadOnly();
+        public NativeArray<GridIndex>.ReadOnly CurrentMoveableTiles => m_GridTempMoveables.AsArray().AsReadOnly();
         public NativeArray<float3>.ReadOnly CurrentMoveableOutline => m_GridTempOutlines.AsArray().AsReadOnly();
         public NativeArray<float3>.ReadOnly CurrentPathline => m_GridTempPathlines.AsArray().AsReadOnly();
+
+        public int CoverableLength => m_CoverableLength;
+        public IReadOnlyList<GridIndex> CoverableIndices => m_CoverableIndices;
+        public IReadOnlyList<Direction> CoverableDirections => m_CoverableDirections;
 
         private InputSystem m_InputSystem;
         private WorldGridSystem m_GridSystem;
@@ -135,11 +140,9 @@ namespace Syadeu.Presentation.TurnTable
 //                m_GridPathlineRenderer.positionCount = 0;
 //            }
 
-            m_GridTempLocationHolder01 = new NativeList<int3>(512, AllocatorManager.Persistent);
-            m_GridTempLocationHolder02 = new NativeList<int3>(512, AllocatorManager.Persistent);
-            m_GridTempCoverables = new NativeList<int3>(512, Allocator.Persistent);
-            m_GridTempMoveables = new NativeList<int3>(512, Allocator.Persistent);
-            m_GridTempOutcoasts = new NativeList<int3>(512, Allocator.Persistent);
+            m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
+            m_GridTempMoveables = new NativeList<GridIndex>(512, Allocator.Persistent);
+            m_GridTempOutcoasts = new NativeList<GridIndex>(512, Allocator.Persistent);
             m_GridTempOutlines = new NativeList<float3>(512, Allocator.Persistent);
             m_GridTempPathlines = new NativeList<float3>(512, Allocator.Persistent);
 
@@ -164,8 +167,6 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnDispose()
         {
-            m_GridTempLocationHolder01.Dispose();
-            m_GridTempLocationHolder02.Dispose();
             m_GridTempCoverables.Dispose();
             m_GridTempMoveables.Dispose();
             m_GridTempOutcoasts.Dispose();
@@ -250,7 +251,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             var grid = m_TurnTableSystem.CurrentTurn.GetComponent<GridComponent>();
 
-            if (!m_GridTempMoveables.Contains(ev.Index.Location))
+            if (!m_GridTempMoveables.Contains(ev.Index))
             {
                 ClearUIPath();
                 return;
@@ -260,7 +261,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
         {
-            if (!m_GridTempMoveables.Contains(ev.Index.Location))
+            if (!m_GridTempMoveables.Contains(ev.Index))
             {
                 return;
             }
@@ -287,7 +288,7 @@ namespace Syadeu.Presentation.TurnTable
         #region Math
 
         private void GetMoveablePositions(in InstanceID entity,
-            ref NativeList<int3> gridPositions)
+            ref NativeList<GridIndex> gridPositions)
         {
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
@@ -309,7 +310,7 @@ namespace Syadeu.Presentation.TurnTable
                     continue;
                 }
 
-                gridPositions.Add(item.Location);
+                gridPositions.Add(item);
             }
         }
         public void GetMoveablePositions(in InstanceID entity,
@@ -371,9 +372,9 @@ namespace Syadeu.Presentation.TurnTable
                     }
 
                     TRPGGridCoverComponent cover = entity.GetComponentReadOnly<TRPGGridCoverComponent>();
-                    Direction targetDir = m_GridSystem.GetReletiveDirectionFrom(index, entity);
+                    Direction targetDir = m_GridSystem.GetReletiveDirectionFrom(index, tempIndex, entity.GetTransform().rotation);
 
-                    $"{index.Location} is {targetDir}({cover.dimensions[targetDir].direction}, {cover.dimensions[targetDir].forwardLength}) from {entity.GetEntity().Name}".ToLog();
+                    //$"{index.Location} is {targetDir} from {entity.GetEntity().Name}".ToLog();
 
                     if (cover.dimensions[targetDir].forwardLength < 1)
                     {
@@ -386,6 +387,71 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             return result;
+        }
+
+        public void GetCoverables(
+            in NativeArray<GridIndex> locations, 
+            out GridIndex[] outputIndices, 
+            out Direction[] outputDirections,
+            out int length)
+        {
+            length = 0;
+            
+            if (locations.Length == 0)
+            {
+                outputIndices = Array.Empty<GridIndex>();
+                outputDirections = Array.Empty<Direction>();
+                return;
+            }
+
+            outputIndices = ArrayPool<GridIndex>.Shared.Rent(locations.Length);
+            outputDirections = ArrayPool<Direction>.Shared.Rent(locations.Length);
+
+            for (int i = 0; i < locations.Length; i++)
+            {
+                Direction direction = GetCoverableDirection((locations[i]));
+                if (direction == 0)
+                {
+                    continue;
+                }
+
+                outputIndices[length] = locations[i];
+                outputDirections[length] = direction;
+
+                //$"{TypeHelper.Enum<Direction>.ToString(direction)} at {locations[i]}".ToLog();
+                length++;
+            }
+
+            if (length == 0)
+            {
+                ArrayPool<GridIndex>.Shared.Return(outputIndices);
+                ArrayPool<Direction>.Shared.Return(outputDirections);
+
+                outputIndices = Array.Empty<GridIndex>();
+                outputDirections = Array.Empty<Direction>();
+                return;
+            }
+        }
+        public void ReserveCoverableBuffers(ref GridIndex[] indices, ref Direction[] directions)
+        {
+            if (indices == null || directions == null)
+            {
+                indices = null;
+                directions = null;
+                return;
+            }
+            else if (indices.Length == 0 || directions.Length == 0)
+            {
+                indices = null;
+                directions = null;
+                return;
+            }
+
+            ArrayPool<GridIndex>.Shared.Return(indices);
+            ArrayPool<Direction>.Shared.Return(directions);
+
+            indices = null;
+            directions = null;
         }
 
         #endregion
@@ -411,16 +477,18 @@ namespace Syadeu.Presentation.TurnTable
                 //}
                 $"out loc count : {m_GridTempOutcoasts.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
 
-                for (int i = 0; i < m_GridTempOutcoasts.Length; i++)
-                {
-                    Direction direction = GetCoverableDirection(m_GridSystem.LocationToIndex(m_GridTempOutcoasts[i]));
-                    if (direction == 0)
-                    {
-                        continue;
-                    }
+                //for (int i = 0; i < m_GridTempMoveables.Length; i++)
+                //{
+                //    Direction direction = GetCoverableDirection((m_GridTempOutcoasts[i]));
+                //    if (direction == 0)
+                //    {
+                //        continue;
+                //    }
 
-                    $"{TypeHelper.Enum<Direction>.ToString(direction)} at {m_GridTempOutcoasts[i]}".ToLog();
-                }
+                //    $"{TypeHelper.Enum<Direction>.ToString(direction)} at {m_GridTempOutcoasts[i]}".ToLog();
+                //}
+                GetCoverables(m_GridTempMoveables, 
+                    out m_CoverableIndices, out m_CoverableDirections, out m_CoverableLength);
 
                 GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
 
@@ -448,6 +516,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 //m_ShapesOutlinePath.ClearAllPoints();
                 //m_GridOutlineRenderer.positionCount = 0;
+                ReserveCoverableBuffers(ref m_CoverableIndices, ref m_CoverableDirections);
 
 #if CORESYSTEM_HDRP
                 m_GridOutlineCamera.Dispose();

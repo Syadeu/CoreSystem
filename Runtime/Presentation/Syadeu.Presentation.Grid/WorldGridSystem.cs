@@ -1145,15 +1145,15 @@ namespace Syadeu.Presentation.Grid
         //}
 
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
-        public void GetOutcoastLocations(in NativeArray<int3> locations, ref NativeList<int3> result)
+        public void GetOutcoastLocations(in NativeArray<GridIndex> locations, ref NativeList<GridIndex> result)
         {
             BurstGridMathematics.getOutcoastLocations(m_Grid.aabb, CellSize, in locations, ref result);
         }
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
         public void GetOutcoastVertices(
-            in NativeArray<int3> locations, 
+            in NativeArray<GridIndex> locations, 
             ref NativeList<float3> result,
-            NativeArray<int3> indicesMap = default)
+            NativeArray<GridIndex> indicesMap = default)
         {
             BurstGridMathematics.getOutcoastLocationVertices(
                 m_Grid.aabb,
@@ -1216,9 +1216,69 @@ namespace Syadeu.Presentation.Grid
             return location;
         }
 
+        public float3x2 GetLineVerticesOf(in GridIndex index, Direction direction)
+        {
+            AABB aabb;
+            unsafe
+            {
+                BurstGridMathematics.indexToAABB(m_Grid.aabb, CellSize, index.Index, &aabb);
+            }
+            AABB.Vertices vertices = aabb.vertices;
+
+            float
+                cellHalf = CellSize * .5f;
+
+            float3
+                pos = IndexToPosition(in index);
+
+            if ((direction & Direction.Up) == Direction.Up)
+            {
+                pos.y += CellSize;
+            }
+
+            if ((direction & Direction.Left) == Direction.Left)
+            {
+                pos.x -= cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x, pos.y, pos.z + cellHalf),
+                    new float3(pos.x, pos.y, pos.z - cellHalf)
+                    );
+            }
+            else if ((direction & Direction.Right) == Direction.Right)
+            {
+                pos.x += cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x, pos.y, pos.z - cellHalf),
+                    new float3(pos.x, pos.y, pos.z + cellHalf)
+                    );
+            }
+
+            if ((direction & Direction.Forward) == Direction.Forward)
+            {
+                pos.z -= cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x + cellHalf, pos.y, pos.z),
+                    new float3(pos.x - cellHalf, pos.y, pos.z)
+                    );
+            }
+            else if ((direction & Direction.Backward) == Direction.Backward)
+            {
+                pos.z += cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x - cellHalf, pos.y, pos.z),
+                    new float3(pos.x + cellHalf, pos.y, pos.z)
+                    );
+            }
+
+            return 0;
+        }
         // TODO : point 가 그리드 좌표에서 변환한 좌표값이 아니면 예상한 값이 아닐 확률이 높음.
         // 나중에 radian 으로 연산을 수정할 것
-        public Direction GetNormalizedDirection(in float3 point, in float3 center, in quaternion rot)
+        private Direction GetNormalizedDirection(in float3 point, in float3 center, in quaternion rot)
         {
             float4x4 mat = math.fastinverse(float4x4.TRS(center, rot, 1));
             float3
@@ -1255,22 +1315,30 @@ namespace Syadeu.Presentation.Grid
 
             return result;
         }
-        public Direction GetReletiveDirectionFrom(in GridIndex index, in InstanceID entity)
+        public Direction GetReletiveDirectionFrom(in GridIndex index, in GridIndex from, in quaternion rot)
         {
-            TryGetIndicesAABBOfEntity(in entity, out AABB gridBounds);
-            AABB.Planes planes = gridBounds.planes;
+            if (index.Equals(from))
+            {
+                "?? same".ToLog();
+                return Direction.NONE;
+            }
 
-            float3
-                gridPos = IndexToPosition(in index);
+            float3 gridPos = IndexToPosition(in index);
 
-            ProxyTransform tr = entity.GetTransform();
+            AABB fromAAbb;
+            unsafe
+            {
+                BurstGridMathematics.indexToAABB(m_Grid.aabb, CellSize, from.Index, &fromAAbb);
+            }
+            var planes = fromAAbb.planes;
+
             Direction direction;
             for (int i = 0; i < 6; i++)
             {
                 if (!planes[i].GetSide(gridPos)) continue;
 
                 direction = (Direction)(1 << i);
-                
+
                 int3 oppoLoc;
                 float3 pos;
                 unsafe
@@ -1282,16 +1350,13 @@ namespace Syadeu.Presentation.Grid
                 var temp = GetNormalizedDirection(
                     pos,
                     gridPos,
-                    tr.rotation
+                    rot
                     );
-                //$"123123: {direction} :: {temp}".ToLog();
-
                 return temp;
             }
 
             return Direction.NONE;
         }
-
         public float3 IndexToPosition(in GridIndex index)
         {
             return m_Grid.IndexToPosition(index.Index);

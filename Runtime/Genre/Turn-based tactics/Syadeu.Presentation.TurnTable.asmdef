@@ -26,7 +26,8 @@
         "DOTween.dll",
         "DemiLib.dll",
         "DOTweenPro.dll",
-        "Newtonsoft.Json.dll"
+        "Newtonsoft.Json.dll",
+        "System.Buffers.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [

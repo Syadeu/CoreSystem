@@ -25,7 +25,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation.Grid
 {
     [BurstCompatible]
-    public readonly struct GridIndex : IEmpty, IEquatable<GridIndex>
+    public readonly struct GridIndex : IEmpty, IEquatable<GridIndex>, IEquatable<int3>
     {
         internal readonly short m_CheckSum;
         private readonly ulong m_Index;
@@ -96,6 +96,7 @@ namespace Syadeu.Presentation.Grid
         //}
 
         public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
+        public bool Equals(int3 other) => Location.Equals(other);
 
         public bool IsEmpty() => m_CheckSum == 0 && m_Index == 0;
 

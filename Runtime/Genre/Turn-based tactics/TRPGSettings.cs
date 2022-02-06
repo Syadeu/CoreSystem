@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using UnityEngine;
 
 namespace Syadeu.Presentation.TurnTable
@@ -37,5 +38,12 @@ namespace Syadeu.Presentation.TurnTable
         public Vector3 
             m_OutlineWallColorStartPos = new Vector3(0, -2.3f, 0), 
             m_OutlineWallColorEndPos;
+
+        [SerializeField]
+        public PrefabReference<Texture2D> m_CoverableSprite = PrefabReference<Texture2D>.None;
+        [SerializeField]
+        public Vector3
+            m_CoverableWallColorStartPos = new Vector3(0, -2.3f, 0),
+            m_CoverableWallColorEndPos;
     }
 }

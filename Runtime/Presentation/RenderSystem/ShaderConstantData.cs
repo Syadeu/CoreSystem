@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    [DisplayName("Data: Shader Keywords")]
+    [DisplayName("ConstantData: Shader Keywords")]
     public class ShaderConstantData : ConstantData
     {
         public enum KeywordType : short
@@ -162,7 +162,7 @@ namespace Syadeu.Presentation.Render
             }
         }
     }
-    [DisplayName("Data: Local Shader Keywords")]
+    [DisplayName("ConstantData: Local Shader Keywords")]
     public sealed class LocalShaderConstantData : ShaderConstantData
     {
         [JsonProperty(Order = 0, PropertyName = "Material")]
