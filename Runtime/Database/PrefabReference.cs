@@ -31,6 +31,7 @@ namespace Syadeu.Collections
         public static readonly PrefabReference None = new PrefabReference(-2);
 
         [UnityEngine.SerializeField] private long m_Idx;
+        [UnityEngine.SerializeField] private FixedString128Bytes m_SubAssetName;
 
         public long Index => m_Idx;
         public UnityEngine.Object Asset
@@ -43,14 +44,23 @@ namespace Syadeu.Collections
                 return set.LoadedObject;
             }
         }
+        public bool IsSubAsset => !m_SubAssetName.IsEmpty;
+        public FixedString128Bytes SubAssetName => m_SubAssetName;
 
         public PrefabReference(int idx)
         {
             m_Idx = idx;
+            m_SubAssetName = string.Empty;
         }
         public PrefabReference(long idx)
         {
             m_Idx = idx;
+            m_SubAssetName = string.Empty;
+        }
+        public PrefabReference(long idx, string subAssetName)
+        {
+            m_Idx = idx;
+            m_SubAssetName = subAssetName;
         }
 
         public bool Equals(PrefabReference other) => m_Idx.Equals(other.m_Idx);
@@ -64,9 +74,9 @@ namespace Syadeu.Collections
         }
 
         [Obsolete]
-        public UnityEngine.Object LoadAsset() => GetObjectSetting().LoadAsset();
-        public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
-        public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>();
+        public UnityEngine.Object LoadAsset() => GetObjectSetting().LoadAsset(m_SubAssetName);
+        public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync(m_SubAssetName);
+        public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>(m_SubAssetName);
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
 
@@ -113,6 +123,7 @@ namespace Syadeu.Collections
         public static readonly PrefabReference<T> None = new PrefabReference<T>(-2);
 
         [UnityEngine.SerializeField] private long m_Idx;
+        [UnityEngine.SerializeField] private FixedString128Bytes m_SubAssetName;
 
         public long Index => m_Idx;
 
@@ -138,14 +149,23 @@ namespace Syadeu.Collections
                 return (T)target;
             }
         }
+        public bool IsSubAsset => !m_SubAssetName.IsEmpty;
+        public FixedString128Bytes SubAssetName => m_SubAssetName;
 
         public PrefabReference(int idx)
         {
             m_Idx = idx;
+            m_SubAssetName = string.Empty;
         }
         public PrefabReference(long idx)
         {
             m_Idx = idx;
+            m_SubAssetName = string.Empty;
+        }
+        public PrefabReference(long idx, string subAssetName)
+        {
+            m_Idx = idx;
+            m_SubAssetName = subAssetName;
         }
 
         public bool Equals(PrefabReference<T> other) => m_Idx.Equals(other.m_Idx);
@@ -160,9 +180,9 @@ namespace Syadeu.Collections
         }
 
         [Obsolete]
-        public T LoadAsset() => (T)GetObjectSetting().LoadAsset();
-        AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync();
-        AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>();
+        public T LoadAsset() => (T)GetObjectSetting()?.LoadAsset(m_SubAssetName);
+        AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync(m_SubAssetName);
+        AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>(m_SubAssetName);
         public AsyncOperationHandle<T> LoadAssetAsync()
         {
             var setting = GetObjectSetting();
@@ -174,9 +194,29 @@ namespace Syadeu.Collections
                 return default(AsyncOperationHandle<T>);
             }
 
-            return setting.LoadAssetAsync<T>();
+            return setting.LoadAssetAsync<T>(m_SubAssetName);
         }
-        public AsyncOperationHandle LoadAssetUntypedAsync() => GetObjectSetting().LoadAssetAsync();
+        public void LoadAssetAsync(Action<T> onCompleted)
+        {
+            var setting = GetObjectSetting();
+            if (setting == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Prefab(at {m_Idx}) is not valid.");
+
+                return;
+            }
+
+            var temp = setting.LoadAssetAsync<T>(m_SubAssetName);
+            if (temp.IsDone)
+            {
+                onCompleted?.Invoke(temp.Result);
+                return;
+            }
+
+            temp.Completed += t => onCompleted?.Invoke(t.Result);
+        }
+        public AsyncOperationHandle LoadAssetUntypedAsync() => GetObjectSetting().LoadAssetAsync(m_SubAssetName);
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
 
         public AsyncOperationHandle<UnityEngine.GameObject> InstantiateAysnc(in float3 pos, in quaternion rot, in UnityEngine.Transform parent)

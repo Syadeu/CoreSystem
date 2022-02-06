@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Render
             {
                 if (m_Canvas == null)
                 {
-                    GameObject obj = m_SceneSystem.CreateGameObject("Screen Canvas");
+                    GameObject obj = CreateGameObject("Screen Canvas", true);
                     m_Canvas = obj.AddComponent<Canvas>();
                     m_Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                     obj.AddComponent<CanvasScaler>();
@@ -116,6 +116,15 @@ namespace Syadeu.Presentation.Render
             //CoreSystem.OnGUIUpdate += Instance_OnGUIEvent;
 
             return base.OnStartPresentation();
+        }
+
+        public GameObject CreateUIObject(string name)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(Canvas.transform);
+            obj.transform.position = Vector3.zero;
+
+            return obj;
         }
 
         //private void Instance_OnGUIEvent()

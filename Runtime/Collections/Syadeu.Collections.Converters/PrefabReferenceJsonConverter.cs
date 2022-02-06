@@ -31,21 +31,26 @@ namespace Syadeu.Collections.Converters
 
         public PrefabReferenceJsonConverter() : base()
         {
-            m_ConstructorParam = new Type[] { TypeHelper.TypeOf<long>.Type };
+            m_ConstructorParam = new Type[] { TypeHelper.TypeOf<long>.Type, TypeHelper.TypeOf<string>.Type };
         }
 
         public override IPrefabReference ReadJson(JsonReader reader, Type objectType, IPrefabReference existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             JToken jToken = JToken.Load(reader);
             long value;
+            string subAssetName;
 
-            // Prev
             if (jToken.Type == JTokenType.Object)
             {
                 JObject jObj = (JObject)jToken;
-                value = jObj.Value<long>("m_Idx");
+                value = jObj.Value<long>("Index");
+                subAssetName = jObj.Value<string>("SubAssetName");
             }
-            else value = jToken.Value<long>();
+            else
+            {
+                value = jToken.Value<long>();
+                subAssetName = string.Empty;
+            }
 
             return (IPrefabReference)objectType.GetConstructor(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
@@ -53,12 +58,20 @@ namespace Syadeu.Collections.Converters
                 CallingConventions.HasThis, 
                 m_ConstructorParam, 
                 null)
-                .Invoke(new object[] { value });
+                .Invoke(new object[] { value, subAssetName });
         }
 
         public override void WriteJson(JsonWriter writer, IPrefabReference value, JsonSerializer serializer)
         {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("Index");
             writer.WriteValue(value.Index);
+
+            writer.WritePropertyName("SubAssetName");
+            writer.WriteValue(value.SubAssetName.ToString());
+
+            writer.WriteEndObject();
         }
     }
 }

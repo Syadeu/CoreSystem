@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using Syadeu.Collections;
+using System.Collections;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -11,11 +13,12 @@ using EventSystem = Syadeu.Presentation.Events.EventSystem;
 
 namespace Syadeu.Presentation.TurnTable.UI
 {
-    [RequireComponent(typeof(Button))]
+    //[RequireComponent(typeof(Button))]
     public sealed class TRPGShortcutUI : PresentationBehaviour,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
     {
-        [SerializeField] private ShortcutType m_ShortcutType;
+        //[SerializeField] private ShortcutType m_ShortcutType;
+        private FixedReference<TRPGShortcutData> m_Data;
 
         [SerializeField] private TextMeshProUGUI m_ShortcutIndexText;
 
@@ -27,7 +30,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         private Events.EventSystem m_EventSystem;
         private int m_Index;
 
-        public ShortcutType ShortcutType => m_ShortcutType;
+        //public ShortcutType ShortcutType => m_ShortcutType;
         public bool Hide 
         { 
             get => m_IsHide;
@@ -47,11 +50,68 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
         }
         public int Index => m_Index + 1;
+        public FixedReference<TRPGShortcutData> Data => m_Data;
 
         private void Awake()
         {
-            m_Button = GetComponent<Button>();
-            m_Button.onClick.AddListener(Click);
+            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
+        }
+        private void Bind(EventSystem other)
+        {
+            m_EventSystem = other;
+        }
+        private void Bind(TRPGCanvasUISystem other)
+        {
+            m_CanvasUISystem = other;
+        }
+        public void Initialize(TRPGShortcutData data)
+        {
+            m_Data = data.AsOriginal();
+
+            GetOrAddComponent<CanvasRenderer>();
+            RectTransform tr = (RectTransform)transform;
+            tr.sizeDelta = data.m_Generals.m_SizeDelta;
+
+            GameObject boxObj = new GameObject("Box");
+            Image boxImg;
+            {
+                boxObj.AddComponent<CanvasRenderer>();
+                boxObj.transform.SetParent(tr);
+
+                boxImg = boxObj.AddComponent<Image>();
+                data.m_Generals.m_BackgroundImage.LoadAssetAsync(t => boxImg.sprite = t);
+
+                RectTransform boxTr = (RectTransform)boxObj.transform;
+                SetupAnchors(boxTr);
+                boxTr.anchoredPosition = Vector2.zero;
+                boxTr.sizeDelta = data.m_Generals.m_SizeDelta;
+            }
+
+            GameObject textureObj = new GameObject("Texture");
+            {
+                textureObj.AddComponent<CanvasRenderer>();
+                textureObj.transform.SetParent(tr);
+
+                var texImg = textureObj.AddComponent<Image>();
+                //texImg.sprite = data.m_Generals.m_Image.LoadAsset();
+                data.m_Generals.m_Image.LoadAssetAsync(t => texImg.sprite = t);
+
+                RectTransform texTr = (RectTransform)textureObj.transform;
+                SetupAnchors(texTr);
+
+                float half = data.m_Generals.m_TextureOffset * .5f;
+
+                texTr.anchoredPosition = new Vector2(0, half);
+                texTr.sizeDelta = data.m_Generals.m_SizeDelta - (float2)data.m_Generals.m_TextureOffset;
+            }
+
+            m_Button = GetOrAddComponent<Button>();
+            {
+                m_Button.onClick.AddListener(Click);
+
+                m_Button.targetGraphic = boxImg;
+            }
 
             Transform parent = transform.parent;
             for (int i = 0; i < parent.childCount; i++)
@@ -63,46 +123,26 @@ namespace Syadeu.Presentation.TurnTable.UI
                 }
             }
 
-            m_ShortcutIndexText.text = $"{m_Index + 1}";
-
-            RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
-            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
+            //m_ShortcutIndexText.text = $"{m_Index + 1}";
         }
-        private void Bind(EventSystem other)
+        private static void SetupAnchors(RectTransform tr)
         {
-            m_EventSystem = other;
-        }
-        private void Bind(TRPGCanvasUISystem other)
-        {
-            m_CanvasUISystem = other;
-
-            //m_CanvasUISystem.AuthoringShortcut(this, m_ShortcutType);
+            tr.anchorMin = new Vector2(.5f, 1);
+            tr.anchorMax = new Vector2(.5f, 1);
+            tr.pivot = new Vector2(.5f, 1);
         }
 
-        private IEnumerator Start()
-        {
-            //yield return PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>.GetAwaiter();
-            yield return new WaitUntil(() => m_CanvasUISystem != null);
-
-            m_CanvasUISystem.AuthoringShortcut(this, m_ShortcutType);
-
-            //PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
-            //    .System
-            //    .AuthoringShortcut(this, m_ShortcutType);
-        }
-        //internal void Initialize(TRPGCanvasUISystem uiSystem, Events.EventSystem eventSystem)
+        //private IEnumerator Start()
         //{
-        //    m_CanvasUISystem = uiSystem;
-        //    m_EventSystem = eventSystem;
+            
+
+        //    yield return new WaitUntil(() => m_CanvasUISystem != null);
+
+        //    //m_CanvasUISystem.AuthoringShortcut(this, m_ShortcutType);
         //}
         private void OnDestroy()
         {
-            // TODO : Temp code
-            //var system = PresentationSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>
-            //    .System;
-            //if (system == null) return;
-
-            m_CanvasUISystem.RemoveShortcut(this, m_ShortcutType);
+            //m_CanvasUISystem.RemoveShortcut(this, m_ShortcutType);
 
             m_CanvasUISystem = null;
             m_EventSystem = null;
@@ -131,7 +171,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             if (!m_Enabled || m_IsHide) return;
 
-            m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_ShortcutType));
+            m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_Data));
         }
 
         internal void OnKeyboardPressed(InputAction.CallbackContext obj)

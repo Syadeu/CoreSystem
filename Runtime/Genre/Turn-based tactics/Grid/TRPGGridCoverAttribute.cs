@@ -24,6 +24,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
+using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -90,11 +91,13 @@ namespace Syadeu.Presentation.TurnTable
 
     public struct TRPGGridCoverComponent : IEntityComponent
     {
+        [BurstCompatible]
         public struct Dimension
         {
             public Direction direction;
             public int forwardLength;
         }
+        [BurstCompatible]
         public struct Dimension4
         {
             public Dimension

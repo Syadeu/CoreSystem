@@ -225,27 +225,27 @@ namespace Syadeu.Presentation.TurnTable
 
         private void OnShortcutStateChangedEventHandler(OnShortcutStateChangedEvent ev)
         {
-            switch (ev.ShortcutType)
-            {
-                default:
-                case UI.ShortcutType.None:
-                    break;
-                case UI.ShortcutType.Move:
-                    m_GridSystem.EnableCursorObserve(ev.Enabled);
-                    if (ev.Enabled)
-                    {
-                        DrawUICell(m_TurnTableSystem.CurrentTurn);
-                    }
-                    else
-                    {
-                        ClearUICell();
-                        ClearUIPath();
-                    }
+            //switch (ev.ShortcutType)
+            //{
+            //    default:
+            //    case UI.ShortcutType.None:
+            //        break;
+            //    case UI.ShortcutType.Move:
+            //        m_GridSystem.EnableCursorObserve(ev.Enabled);
+            //        if (ev.Enabled)
+            //        {
+            //            DrawUICell(m_TurnTableSystem.CurrentTurn);
+            //        }
+            //        else
+            //        {
+            //            ClearUICell();
+            //            ClearUIPath();
+            //        }
 
-                    break;
-                case UI.ShortcutType.Attack:
-                    break;
-            }
+            //        break;
+            //    case UI.ShortcutType.Attack:
+            //        break;
+            //}
         }
         private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverrapEvent ev)
         {
@@ -360,10 +360,8 @@ namespace Syadeu.Presentation.TurnTable
                     continue;
                 }
 
-                foreach (var entity in iter)
+                foreach (var entity in iter.HasComponent<TRPGGridCoverComponent>())
                 {
-                    if (!entity.HasComponent<TRPGGridCoverComponent>()) continue;
-
                     GridComponent grid = entity.GetComponentReadOnly<GridComponent>();
                     if ((grid.ObstacleType & GridComponent.Obstacle.Block) 
                             != GridComponent.Obstacle.Block)

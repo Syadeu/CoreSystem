@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections.Converters;
 using System;
+using Unity.Collections;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Syadeu.Collections
@@ -24,6 +25,8 @@ namespace Syadeu.Collections
     {
         long Index { get; }
         UnityEngine.Object Asset { get; }
+        bool IsSubAsset { get; }
+        FixedString128Bytes SubAssetName { get; }
 
         IPrefabResource GetObjectSetting();
 

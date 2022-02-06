@@ -27,6 +27,7 @@ using Syadeu.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using Unity.Collections;
 #endif
 
 namespace Syadeu.Mono
@@ -38,7 +39,7 @@ namespace Syadeu.Mono
         public sealed class ObjectSetting : IPrefabResource
         {
             public string m_Name;
-            [SerializeField] private AssetReference m_RefPrefab;
+            [SerializeField] public AssetReference m_RefPrefab;
             public bool m_IsWorldUI = false;
 
             [NonSerialized] public bool m_IsRuntimeObject = false;
@@ -46,6 +47,8 @@ namespace Syadeu.Mono
 
             [NonSerialized] private int m_InstantateCount = 0;
             //[NonSerialized] private UnityEngine.Object m_LoadedObject = null;
+
+            [NonSerialized] private Dictionary<FixedString128Bytes, AssetReference> m_SubAssets;
 
             public string Name => m_Name;
             public UnityEngine.Object LoadedObject => m_RefPrefab.Asset;
@@ -60,18 +63,59 @@ namespace Syadeu.Mono
             #region Resource Control
 
             [Obsolete]
-            public UnityEngine.Object LoadAsset()
+            public UnityEngine.Object LoadAsset(FixedString128Bytes name)
             {
+                if (!name.IsEmpty)
+                {
+                    if (m_SubAssets == null) m_SubAssets = new Dictionary<FixedString128Bytes, AssetReference>();
+
+                    if (!m_SubAssets.TryGetValue(name, out var assetRef))
+                    {
+                        assetRef = new AssetReference(m_RefPrefab.AssetGUID);
+                        assetRef.SubObjectName = name.ToString();
+
+                        m_SubAssets.Add(name, assetRef);
+                    }
+
+                    if (assetRef.Asset == null)
+                    {
+                        assetRef.LoadAsset<UnityEngine.Object>();
+                    }
+
+                    return assetRef.Asset;
+                }
+
                 if (m_RefPrefab.Asset == null)
                 {
-                    var temp = m_RefPrefab.LoadAsset<UnityEngine.Object>();
-                    //m_LoadedObject = temp.Result;
+                    m_RefPrefab.LoadAsset<UnityEngine.Object>();
                 }
 
                 return m_RefPrefab.Asset;
             }
-            public AsyncOperationHandle LoadAssetAsync()
+            public AsyncOperationHandle LoadAssetAsync(FixedString128Bytes name)
             {
+                if (!name.IsEmpty)
+                {
+                    if (m_SubAssets == null) m_SubAssets = new Dictionary<FixedString128Bytes, AssetReference>();
+
+                    if (!m_SubAssets.TryGetValue(name, out var assetRef))
+                    {
+                        assetRef = new AssetReference(m_RefPrefab.AssetGUID);
+                        assetRef.SubObjectName = name.ToString();
+
+                        m_SubAssets.Add(name, assetRef);
+                    }
+
+                    if (assetRef.OperationHandle.IsValid())
+                    {
+                        return assetRef.OperationHandle;
+                    }
+
+                    return assetRef.LoadAssetAsync<UnityEngine.Object>();
+
+                    //return Addressables.LoadAssetAsync<UnityEngine.Object>(m_RefPrefab.AssetGUID + $"[{name}]");
+                }
+
                 if (m_RefPrefab.OperationHandle.IsValid())
                 {
                     return m_RefPrefab.OperationHandle;
@@ -93,12 +137,30 @@ namespace Syadeu.Mono
 
                 return handle;
             }
-            //private void Handle_Completed(AsyncOperationHandle<UnityEngine.Object> obj)
-            //{
-            //    m_LoadedObject = obj.Result;
-            //}
-            public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object
+            public AsyncOperationHandle<T> LoadAssetAsync<T>(FixedString128Bytes name) where T : UnityEngine.Object
             {
+                if (!name.IsEmpty)
+                {
+                    if (m_SubAssets == null) m_SubAssets = new Dictionary<FixedString128Bytes, AssetReference>();
+
+                    if (!m_SubAssets.TryGetValue(name, out var assetRef))
+                    {
+                        assetRef = new AssetReference(m_RefPrefab.AssetGUID);
+                        assetRef.SubObjectName = name.ToString();
+
+                        m_SubAssets.Add(name, assetRef);
+                    }
+
+                    if (assetRef.OperationHandle.IsValid())
+                    {
+                        return assetRef.OperationHandle.Convert<T>();
+                    }
+
+                    return assetRef.LoadAssetAsync<T>();
+
+                    //return Addressables.LoadAssetAsync<T>(m_RefPrefab.AssetGUID + $"[{name}]");
+                }
+
                 if (m_RefPrefab.Asset != null)
                 {
                     CoreSystem.Logger.LogError(Channel.Data, "already loaded");
@@ -139,17 +201,8 @@ namespace Syadeu.Mono
                     throw;
                 }
 
-                //handle.Completed += this.AsynHandleOnCompleted;
-
                 return handle;
             }
-            //private void AsynHandleOnCompleted<T>(AsyncOperationHandle<T> obj) where T : UnityEngine.Object
-            //{
-            //    m_LoadedObject = obj.Result;
-
-            //    CoreSystem.Logger.Log(Channel.Data,
-            //        $"Loaded asset {m_Name}");
-            //}
 
             public void UnloadAsset()
             {
@@ -214,7 +267,7 @@ namespace Syadeu.Mono
             m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
             for (int i = 0; i < m_ObjectSettings.Count; i++)
             {
-                var obj = m_ObjectSettings[i].LoadAsset();
+                var obj = m_ObjectSettings[i].LoadAsset(string.Empty);
                 if (obj == null) continue;
 
                 m_PrefabHashMap.Add(obj, i);
