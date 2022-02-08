@@ -826,7 +826,10 @@ namespace Syadeu.Presentation.Grid
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
         public void GetOutcoastLocations(in NativeArray<GridIndex> locations, ref NativeList<GridIndex> result)
         {
-            BurstGridMathematics.getOutcoastLocations(m_Grid.aabb, CellSize, in locations, ref result);
+            UnsafeFixedListWrapper<GridIndex> temp2 = result.ConvertToFixedWrapper();
+            BurstGridMathematics.getOutcoastLocations(m_Grid.aabb, CellSize, locations, ref temp2);
+
+            temp2.CopyToNativeList(ref result);
         }
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
         public void GetOutcoastVertices(
@@ -834,13 +837,21 @@ namespace Syadeu.Presentation.Grid
             ref NativeList<float3> result,
             NativeArray<GridIndex> indicesMap = default)
         {
+            if (result.Capacity < locations.Length * 4)
+            {
+                result.Resize(locations.Length * 4, NativeArrayOptions.UninitializedMemory);
+            }
+
+            UnsafeFixedListWrapper<float3> temp = result.ConvertToFixedWrapper();
             BurstGridMathematics.getOutcoastLocationVertices(
                 m_Grid.aabb,
                 CellSize,
-                in locations,
-                ref result,
+                locations,
+                ref temp,
                 indicesMap
                 );
+
+            temp.CopyToNativeList(ref result);
         }
         public float3x2 GetLineVerticesOf(in GridIndex index, Direction direction)
         {

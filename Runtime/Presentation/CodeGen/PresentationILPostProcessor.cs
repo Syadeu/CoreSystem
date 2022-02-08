@@ -32,6 +32,8 @@ namespace Syadeu.Presentation.CodeGen
 
     // https://docs.unity3d.com/ScriptReference/SessionState.html
     // https://www.gamedeveloper.com/programming/code-generation-in-unity
+
+    // https://forum.unity.com/threads/while-custom-package-need-a-link-xml.727460/
     internal class PresentationConstantHashGenerator
     {
         public int callbackOrder => 0;

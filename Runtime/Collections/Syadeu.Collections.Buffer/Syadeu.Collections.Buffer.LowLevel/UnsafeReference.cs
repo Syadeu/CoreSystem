@@ -13,9 +13,9 @@
 // limitations under the License.
 
 using System;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -25,6 +25,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompatible]
     public struct UnsafeReference : IUnsafeReference, IEquatable<UnsafeReference>
     {
+        [MarshalAs(UnmanagedType.U1)]
         private bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction]
         private unsafe void* m_Ptr;
@@ -108,6 +109,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         IEquatable<UnsafeReference<T>>, IEquatable<UnsafeReference>
         where T : unmanaged
     {
+        [MarshalAs(UnmanagedType.U1)]
         private bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction]
         private unsafe T* m_Ptr;

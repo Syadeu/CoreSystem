@@ -68,8 +68,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
-        public static void Sort<T>(T* buffer, in int length, IComparer<T> comparer)
+        [BurstCompile]
+        public static void Sort<T, U>(T* buffer, in int length, U comparer)
             where T : unmanaged
+            where U : unmanaged, IComparer<T>
         {
             for (int i = 0; i + 1 < length; i++)
             {

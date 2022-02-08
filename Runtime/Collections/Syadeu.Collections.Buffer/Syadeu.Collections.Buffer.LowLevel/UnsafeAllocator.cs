@@ -17,6 +17,7 @@
 #endif
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -121,6 +122,16 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Dispose()
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!UnsafeUtility.IsValidAllocator(m_Allocator))
+            {
+                UnityEngine.Debug.LogError(
+                    $"{nameof(UnsafeAllocator)} that doesn\'t have valid allocator mark cannot be disposed. " +
+                    $"Most likely this {nameof(UnsafeAllocator)} has been wrapped from NativeArray.");
+                return;
+            }
+#endif
+
             unsafe
             {
                 UnsafeUtility.Free(m_Buffer.Value.Ptr, m_Allocator);
@@ -133,6 +144,16 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!UnsafeUtility.IsValidAllocator(m_Allocator))
+            {
+                UnityEngine.Debug.LogError(
+                    $"{nameof(UnsafeAllocator)} that doesn\'t have valid allocator mark cannot be disposed. " +
+                    $"Most likely this {nameof(UnsafeAllocator)} has been wrapped from NativeArray.");
+                return default(JobHandle);
+            }
+#endif
+
             DisposeJob disposeJob = new DisposeJob()
             {
                 Buffer = m_Buffer,
@@ -321,6 +342,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
             return array;
         }
+        public static implicit operator UnsafeAllocator<T>(NativeArray<T> t)
+        {
+            return t.ToUnsafeAllocator(Allocator.Invalid);
+        }
     }
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static class UnsafeAllocatorExtensions
@@ -358,6 +383,30 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeUtility.AlignOf<T>(),
                 options
                 );
+        }
+
+        public static void Sort<T, U>(this ref UnsafeAllocator<T> t, U comparer)
+            where T : unmanaged
+            where U : unmanaged, IComparer<T>
+        {
+            unsafe
+            {
+                UnsafeBufferUtility.Sort<T, U>(t.Ptr, t.Length, comparer);
+            }
+        }
+
+        public static bool Contains<T, U>(this in UnsafeAllocator<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            int length = t.Length;
+            bool result = false;
+
+            for (int i = 0; i < length && !result; i++)
+            {
+                result |= t[i].Equals(item);
+            }
+            return result;
         }
 
         public static NativeArray<T> ToNativeArray<T>(this in UnsafeAllocator<T> other, Allocator allocator) where T : unmanaged

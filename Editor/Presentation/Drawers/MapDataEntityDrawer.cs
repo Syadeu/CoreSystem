@@ -1,5 +1,4 @@
-﻿using DG.DemiEditor;
-using Syadeu;
+﻿using Syadeu;
 using Syadeu.Collections;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Map;
@@ -235,7 +234,7 @@ namespace SyadeuEditor.Presentation
                 if (GUILayout.Button("Import SVG"))
                 {
                     string path = EditorUtility.OpenFilePanel("Select SVG", Application.dataPath, "svg");
-                    if (!path.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(path))
                     {
                         RawSVGEntity obj = (RawSVGEntity)m_TargetObject;
                         obj.m_RawData = File.ReadAllText(path);

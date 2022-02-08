@@ -134,6 +134,26 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 maxZ - 1
                 );
         }
+        [BurstCompile]
+        public static void minMaxLocation(in UnsafeAllocator<int3> locations, int3* min, int3* max)
+        {
+            int length = locations.Length;
+
+            int3
+                target,
+                tempMin = int.MaxValue,
+                tempMax = int.MinValue;
+            for (int i = 0; i < length; i++)
+            {
+                target = locations[i];
+
+                tempMin = math.min(tempMin, target);
+                tempMax = math.max(tempMax, target);
+            }
+
+            *min = tempMin;
+            *max = tempMax;
+        }
 
         #endregion
 
@@ -292,7 +312,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             *output = result;
         }
         [BurstCompile]
-        public static void getMaxOutcoastLocationLength(in NativeArray<int3> locations, int* output)
+        public static void getMaxOutcoastLocationLength(in UnsafeAllocator<int3> locations, int* output)
         {
             int3 min, max;
             minMaxLocation(in locations, &min, &max);
@@ -316,17 +336,14 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [BurstCompile]
         public static void getOutcoastLocations(
             in AABB grid, in float cellSize,
-            in NativeArray<GridIndex> locations, ref NativeList<GridIndex> output)
+            in UnsafeAllocator<GridIndex> locations, ref UnsafeFixedListWrapper<GridIndex> output)
         {
             output.Clear();
-            //LocationComparer comparer = new LocationComparer();
-            IndexComparer indexComparer = new IndexComparer();
-            locations.Sort(indexComparer);
+            //IndexComparer indexComparer = new IndexComparer();
+            //locations.Sort(indexComparer);
 
             bool4 contains;
             int3x4 dir;
-            //ulong a0, a1, a2, a3;
-            //GridIndex4 gridIndex4 = new GridIndex4();
             for (int i = 0; i < locations.Length; i++)
             {
                 int3 loc = locations[i].Location;
@@ -341,19 +358,9 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 containLocation(in grid, in cellSize, in dir.c2, &contains.z);
                 containLocation(in grid, in cellSize, in dir.c3, &contains.w);
 
-                //locationToIndex(in dir.c0, &a0);
-                //locationToIndex(in dir.c1, &a1);
-                //locationToIndex(in dir.c2, &a2);
-                //locationToIndex(in dir.c3, &a3);
-                //gridIndex4[0] = new GridIndex(locations[i].m_CheckSum, a0);
-                //gridIndex4[1] = new GridIndex(locations[i].m_CheckSum, a1);
-                //gridIndex4[2] = new GridIndex(locations[i].m_CheckSum, a2);
-                //gridIndex4[3] = new GridIndex(locations[i].m_CheckSum, a3);
-
                 if (!contains[0] || !contains[1] || !contains[2] || !contains[3])
                 {
                     output.Add(locations[i]);
-                    //continue;
                 }
                 else if (!locations.Contains(dir.c0) || 
                     !locations.Contains(dir.c1) ||
@@ -416,8 +423,8 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [SkipLocalsInit, BurstCompile]
         public static void getOutcoastLocationVertices(
             in AABB grid, in float cellSize,
-            in NativeArray<GridIndex> locations, ref NativeList<float3> output, 
-            NativeArray<GridIndex> indicesMap)
+            in UnsafeAllocator<GridIndex> locations, ref UnsafeFixedListWrapper<float3> output,
+            in UnsafeAllocator<GridIndex> indicesMap)
         {
             output.Clear();
 
@@ -429,12 +436,15 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 downleft = new float3(-cellHalf, 0, -cellHalf),
                 downright = new float3(cellHalf, 0, -cellHalf);
 
+            UnsafeAllocator<GridIndex> map;
             if (!indicesMap.IsCreated)
             {
-                indicesMap = locations;
+                map = locations;
             }
-            IndexComparer comparer = new IndexComparer();
-            indicesMap.Sort(comparer);
+            else map = indicesMap;
+
+            //IndexComparer comparer = new IndexComparer();
+            //map.Sort(comparer);
 
             float3x2* tempBuffer = stackalloc float3x2[locations.Length * 4];
             UnsafeFixedListWrapper<float3x2> list
@@ -451,7 +461,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 getDirection(locations[i].Location, Direction.Right, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
-                if (!contains || !indicesMap.Contains(directional))
+                if (!contains || !map.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upright,
@@ -463,7 +473,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 getDirection(locations[i].Location, Direction.Forward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
-                if (!contains || !indicesMap.Contains(directional))
+                if (!contains || !map.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downright,
@@ -474,7 +484,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 getDirection(locations[i].Location, Direction.Left, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
-                if (!contains || !indicesMap.Contains(directional))
+                if (!contains || !map.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + downleft,
@@ -485,7 +495,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 getDirection(locations[i].Location, Direction.Backward, &directional);
                 containLocation(in grid, in cellSize, in directional, &contains);
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
-                if (!contains || !indicesMap.Contains(directional))
+                if (!contains || !map.Contains(directional))
                 {
                     list.Add(new float3x2(
                         gridPos + upleft,
@@ -501,7 +511,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             while (FindFloat3x2(ref list, in next, out current))
             {
-                if (!output[output.Length - 1].Equals(current.c0))
+                if (!output.Last.Equals(current.c0))
                 {
                     output.Add(current.c0);
                 }
@@ -523,27 +533,6 @@ namespace Syadeu.Presentation.Grid.LowLevel
             }
             found = 0;
             return false;
-        }
-
-        [BurstCompile]
-        public static void minMaxLocation(in NativeArray<int3> locations, int3* min, int3* max)
-        {
-            int length = locations.Length;
-
-            int3
-                target, 
-                tempMin = int.MaxValue, 
-                tempMax = int.MinValue;
-            for (int i = 0; i < length; i++)
-            {
-                target = locations[i];
-
-                tempMin = math.min(tempMin, target);
-                tempMax = math.max(tempMax, target);
-            }
-
-            *min = tempMin;
-            *max = tempMax;
         }
     }
 }

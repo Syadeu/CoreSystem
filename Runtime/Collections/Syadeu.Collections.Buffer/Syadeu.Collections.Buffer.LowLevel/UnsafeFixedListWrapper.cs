@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -33,7 +34,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     public struct UnsafeFixedListWrapper<T> : IFixedList<T>
         where T : unmanaged
     {
-        private readonly UnsafeReference<T> m_Buffer;
+        internal readonly UnsafeReference<T> m_Buffer;
         private readonly int m_Capacity;
         private int m_Count;
 
@@ -60,10 +61,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Capacity = allocator.Length;
             m_Count = 0;
         }
-        public UnsafeFixedListWrapper(UnsafeReference<T> buffer, int length, int initialCount = 0)
+        public UnsafeFixedListWrapper(UnsafeReference<T> buffer, int capacity, int initialCount = 0)
         {
             m_Buffer = buffer;
-            m_Capacity = length;
+            m_Capacity = capacity;
             m_Count = initialCount;
         }
 
@@ -76,6 +77,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             m_Buffer[m_Count] = element;
             m_Count++;
+        }
+
+        public void Clear(NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        {
+            if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
+            {
+                for (int i = 0; i < m_Count; i++)
+                {
+                    m_Buffer[i] = default(T);
+                }
+            }
+
+            m_Count = 0;
         }
 
         public void RemoveSwapback(T element)
@@ -101,12 +115,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Count -= 1;
         }
 
-        public void Sort<TComparer>(TComparer comparer)
-            where TComparer : IComparer<T>
+        public void Sort<U>(U comparer)
+            where U : unmanaged, IComparer<T>
         {
             unsafe
             {
-                UnsafeBufferUtility.Sort(m_Buffer, m_Count, comparer);
+                UnsafeBufferUtility.Sort<T, U>(m_Buffer, m_Count, comparer);
             }
         }
         public int BinarySearch<TComparer>(T value, TComparer comparer)
@@ -118,6 +132,55 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 index = NativeSortExtension.BinarySearch<T, TComparer>(m_Buffer, m_Count, value, comparer);
             }
             return index;
+        }
+    }
+
+    public static class UnsafeFixedListWrapperExtensions
+    {
+        public static UnsafeFixedListWrapper<T> ConvertToFixedWrapper<T>(this ref NativeList<T> t)
+            where T : unmanaged
+        {
+            UnsafeReference<T> buffer;
+            unsafe
+            {
+                buffer = (*t.GetUnsafeList()).Ptr;
+            }
+
+            return new UnsafeFixedListWrapper<T>(buffer, t.Capacity, t.Length);
+        }
+        /// <summary>
+        /// 값을 <paramref name="list"/> 에 복사합니다.
+        /// </summary>
+        /// <remarks>
+        /// 만약 같은 포인터라면 <paramref name="list"/> 에는 현재 가지고 있는 갯수만 적용하며, 
+        /// 다른 포인터라면 <paramref name="t"/> 가 가지고 있는 갯수만큼 복사하여 <paramref name="list"/> 에 붙여넣습니다.
+        /// </remarks>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <param name="list"></param>
+        public static void CopyToNativeList<T>(this ref UnsafeFixedListWrapper<T> t, 
+            ref NativeList<T> list)
+            where T : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (list.Capacity < t.Count)
+            {
+                UnityEngine.Debug.LogError(
+                    "Cannot copy. Exceeding capacity of NativeList");
+                return;
+            }
+#endif
+            unsafe
+            {
+                T* listBuffer = (*list.GetUnsafeList()).Ptr;
+                if (t.m_Buffer.Ptr != listBuffer)
+                {
+                    UnsafeUtility.MemCpy(listBuffer, t.m_Buffer.Ptr,
+                        UnsafeUtility.SizeOf<T>() * t.Count);
+                }
+
+                (*list.GetUnsafeList()).m_length = t.Count;
+            }
         }
     }
 }

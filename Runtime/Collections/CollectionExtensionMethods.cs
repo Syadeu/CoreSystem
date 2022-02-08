@@ -80,5 +80,7 @@ namespace Syadeu.Collections
 
             return -1;
         }
+
+        public static bool IsNullOrEmpty(this string t) => string.IsNullOrEmpty(t);
     }
 }
