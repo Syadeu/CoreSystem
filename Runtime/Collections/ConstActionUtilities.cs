@@ -23,7 +23,11 @@ namespace Syadeu.Collections
 {
     public static class ConstActionUtilities
     {
+        /// <summary>
+        /// 모든 <see cref="IConstAction"/> 의 타입입니다.
+        /// </summary>
         private static Type[] s_Types;
+        /// <inheritdoc cref="s_Types"/>
         public static Type[] Types
         {
             get
@@ -38,7 +42,11 @@ namespace Syadeu.Collections
                 return s_Types;
             }
         }
+        /// <summary>
+        /// <see cref="IConstAction"/> 타입의 정보를 담은 해시맵입니다.
+        /// </summary>
         private static Dictionary<Type, Info> s_HashMap;
+        /// <inheritdoc cref="s_HashMap"/>
         public static Dictionary<Type, Info> HashMap
         {
             get
@@ -99,6 +107,12 @@ namespace Syadeu.Collections
             }
         }
 
+        /// <summary>
+        /// <paramref name="guid"/> 의 <see cref="IConstAction"/> 타입을 반환합니다.
+        /// </summary>
+        /// <param name="guid"></param>
+        /// <param name="info"></param>
+        /// <returns></returns>
         public static bool TryGetWithGuid(Guid guid, out Info info)
         {
             var iter = Types.Where(t => t.GUID.Equals(guid));
