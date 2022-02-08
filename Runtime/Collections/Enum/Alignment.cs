@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Syadeu.Presentation.Render
+namespace Syadeu.Collections
 {
-    public enum LayoutGroupType : int
+    public enum Alignment : short
     {
-        None,
+        None = 0,
 
-        Horizontal,
-        Vertical,
+        Left = 0b0001,
+        Right = 0b0010,
+        Down = 0b0100,
+        Up = 0b1000,
+
+        Center = Left | Right | Down | Up,
+        DownLeft = Down | Left,
     }
-
-    
 }

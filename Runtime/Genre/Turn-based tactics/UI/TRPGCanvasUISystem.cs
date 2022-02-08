@@ -147,7 +147,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             GameObject shortcutGroup = m_ScreenCanvasSystem.CreateUIObject("Shortcut Group");
             m_Shortcuts = new ShortcutGroup(shortcutGroup.AddComponent<HorizontalLayoutGroup>());
-            m_Shortcuts.CreateShortcuts(m_ScreenCanvasSystem, TRPGShortcutDataProcessor.Data);
+            m_Shortcuts.InitializeShortcuts(m_ScreenCanvasSystem, TRPGShortcutDataProcessor.Data);
 
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
@@ -190,25 +190,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 m_CanvasGroup.blocksRaycasts = visible;
                 m_CanvasGroup.alpha = visible ? 1 : 0;
-
-                //if (!visible)
-                //{
-                //    for (int i = 0; i < m_Shortcuts.Length; i++)
-                //    {
-                //        m_Shortcuts[i].gameObject.SetActive(false);
-                //    }
-                //    return;
-                //}
-
-                //for (int i = 0; i < m_Shortcuts.Length; i++)
-                //{
-                //    if (m_Shortcuts[i].Hide) continue;
-
-                //    m_Shortcuts[i].gameObject.SetActive(true);
-                //}
             }
 
-            public void CreateShortcuts(ScreenCanvasSystem system, IReadOnlyList<TRPGShortcutData> data)
+            public void InitializeShortcuts(ScreenCanvasSystem system, IReadOnlyList<TRPGShortcutData> data)
             {
                 m_Shortcuts = new TRPGShortcutUI[data.Count];
                 for (int i = 0; i < data.Count; i++)
@@ -229,12 +213,6 @@ namespace Syadeu.Presentation.TurnTable.UI
                 element.preferredWidth = 40;
                 element.preferredHeight = 40;
 
-                //var backgroundImgObj = system.CreateUIObject("Background");
-                //backgroundImgObj.transform.SetParent(obj.transform);
-
-                //var button = obj.AddComponent<Button>();
-                //button.targetGraphic = backgroundImgObj.AddComponent<Image>();
-
                 var script = obj.AddComponent<TRPGShortcutUI>();
                 script.Initialize(data);
 
@@ -246,8 +224,6 @@ namespace Syadeu.Presentation.TurnTable.UI
                 UnityEngine.Object.Destroy(m_LayoutGroup.gameObject);
             }
         }
-
-        
 
         #endregion
 

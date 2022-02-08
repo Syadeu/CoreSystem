@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Proxy;
 using Unity.Mathematics;
 using UnityEngine;
@@ -118,14 +119,7 @@ namespace Syadeu.Presentation.Render
             return base.OnStartPresentation();
         }
 
-        public GameObject CreateUIObject(string name)
-        {
-            GameObject obj = new GameObject(name);
-            obj.transform.SetParent(Canvas.transform);
-            obj.transform.position = Vector3.zero;
 
-            return obj;
-        }
 
         //private void Instance_OnGUIEvent()
         //{
@@ -180,9 +174,18 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
+
+        public GameObject CreateUIObject(string name)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(Canvas.transform);
+            obj.transform.position = Vector3.zero;
+
+            return obj;
+        }
+
         public sealed class UIGroup
         {
-
         }
     }
 }

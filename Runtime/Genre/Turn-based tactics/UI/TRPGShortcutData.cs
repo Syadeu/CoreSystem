@@ -37,12 +37,16 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             [JsonProperty(Order = 2, PropertyName = "BackgroundImage")]
             public PrefabReference<Sprite> m_BackgroundImage = PrefabReference<Sprite>.None;
-            [JsonProperty(Order = 3, PropertyName = "Image")]
+            [JsonProperty(Order = 3, PropertyName = "BackgroundColor")]
+            public Color32 m_BackgroundColor = Color.white;
+            [JsonProperty(Order = 4, PropertyName = "Image")]
             public PrefabReference<Sprite> m_Image = PrefabReference<Sprite>.None;
+            [JsonProperty(Order = 5, PropertyName = "ImageColor")]
+            public Color32 m_ImageColor = Color.white;
 
-            [JsonProperty(Order = 4, PropertyName = "Font")]
+            [JsonProperty(Order = 6, PropertyName = "Font")]
             public PrefabReference<TMP_FontAsset> m_Font = PrefabReference<TMP_FontAsset>.None;
-            [JsonProperty(Order = 5, PropertyName = "FontSize")]
+            [JsonProperty(Order = 7, PropertyName = "FontSize")]
             public float m_FontSize = 18;
         }
 

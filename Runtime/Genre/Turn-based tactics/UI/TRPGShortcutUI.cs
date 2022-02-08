@@ -14,6 +14,7 @@ using EventSystem = Syadeu.Presentation.Events.EventSystem;
 namespace Syadeu.Presentation.TurnTable.UI
 {
     //[RequireComponent(typeof(Button))]
+    [AddComponentMenu("")]
     public sealed class TRPGShortcutUI : PresentationBehaviour,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
     {
@@ -73,44 +74,46 @@ namespace Syadeu.Presentation.TurnTable.UI
             RectTransform tr = (RectTransform)transform;
             tr.sizeDelta = data.m_Generals.m_SizeDelta;
             
-            GameObject boxObj = new GameObject("Box");
-            Image boxImg;
+            GameObject backgroundObj = new GameObject("Background");
+            Image backgroundImg;
             {
-                boxObj.AddComponent<CanvasRenderer>();
-                boxObj.transform.SetParent(tr);
+                backgroundObj.AddComponent<CanvasRenderer>();
+                backgroundObj.transform.SetParent(tr);
 
-                boxImg = boxObj.AddComponent<Image>();
-                data.m_Generals.m_BackgroundImage.LoadAssetAsync(t => boxImg.sprite = t);
+                backgroundImg = backgroundObj.AddComponent<Image>();
+                data.m_Generals.m_BackgroundImage.LoadAssetAsync(t => backgroundImg.sprite = t);
+                backgroundImg.color = data.m_Generals.m_BackgroundColor;
 
-                RectTransform boxTr = (RectTransform)boxObj.transform;
-                SetupAnchors(boxTr);
-                boxTr.anchoredPosition = Vector2.zero;
-                boxTr.sizeDelta = data.m_Generals.m_SizeDelta;
+                RectTransform backgroundTr = (RectTransform)backgroundObj.transform;
+                SetupAnchors(backgroundTr);
+                backgroundTr.anchoredPosition = Vector2.zero;
+                backgroundTr.sizeDelta = data.m_Generals.m_SizeDelta;
             }
 
-            GameObject textureObj = new GameObject("Texture");
+            GameObject imageObj = new GameObject("Image");
             {
-                textureObj.AddComponent<CanvasRenderer>();
-                textureObj.transform.SetParent(tr);
+                imageObj.AddComponent<CanvasRenderer>();
+                imageObj.transform.SetParent(tr);
 
-                var texImg = textureObj.AddComponent<Image>();
+                var imageImg = imageObj.AddComponent<Image>();
                 //texImg.sprite = data.m_Generals.m_Image.LoadAsset();
-                data.m_Generals.m_Image.LoadAssetAsync(t => texImg.sprite = t);
+                data.m_Generals.m_Image.LoadAssetAsync(t => imageImg.sprite = t);
+                imageImg.color = data.m_Generals.m_ImageColor;
 
-                RectTransform texTr = (RectTransform)textureObj.transform;
-                SetupAnchors(texTr);
+                RectTransform imageTr = (RectTransform)imageObj.transform;
+                SetupAnchors(imageTr);
 
                 float half = data.m_Generals.m_TextureOffset * .5f;
 
-                texTr.anchoredPosition = new Vector2(0, -half);
-                texTr.sizeDelta = data.m_Generals.m_SizeDelta - (float2)data.m_Generals.m_TextureOffset;
+                imageTr.anchoredPosition = new Vector2(0, -half);
+                imageTr.sizeDelta = data.m_Generals.m_SizeDelta - (float2)data.m_Generals.m_TextureOffset;
             }
 
             m_Button = GetOrAddComponent<Button>();
             {
                 m_Button.onClick.AddListener(Click);
 
-                m_Button.targetGraphic = boxImg;
+                m_Button.targetGraphic = backgroundImg;
             }
 
             Transform parent = transform.parent;
