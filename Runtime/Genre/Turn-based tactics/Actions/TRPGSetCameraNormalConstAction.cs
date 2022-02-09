@@ -19,19 +19,27 @@ namespace Syadeu.Presentation.TurnTable
         private RenderSystem m_RenderSystem;
         [JsonIgnore]
         private TRPGCameraMovement m_TRPGCameraMovement;
+        [JsonIgnore]
+        private TRPGInputSystem m_TRPGInputSystem;
 
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<TRPGAppCommonSystemGroup, TRPGInputSystem>(Bind);
         }
         protected override void OnDispose()
         {
             m_RenderSystem = null;
+            m_TRPGInputSystem = null;
         }
 
         private void Bind(RenderSystem other)
         {
             m_RenderSystem = other;
+        }
+        private void Bind(TRPGInputSystem other)
+        {
+            m_TRPGInputSystem = other;
         }
 
         protected override int Execute()
@@ -42,6 +50,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 
             m_TRPGCameraMovement.SetNormal();
+            m_TRPGInputSystem.SetIngame_Default();
 
             return 0;
         }

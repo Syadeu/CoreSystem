@@ -178,6 +178,22 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
+        #region Native Array
+
+        public static ref T ElementAtAsRef<T>(this NativeArray<T> t, in int index)
+            where T : unmanaged
+        {
+            unsafe
+            {
+                void* buffer = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(t);
+                return ref UnsafeUtility.ArrayElementAsRef<T>(buffer, index);
+            }
+        }
+
+        #endregion
+
+        #region Safety Checks
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private static readonly Dictionary<IntPtr, (DisposeSentinel, Allocator)> m_Safety
             = new Dictionary<IntPtr, (DisposeSentinel, Allocator)>();
@@ -207,5 +223,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Safety.Clear();
         }
 #endif
+
+        #endregion
     }
 }

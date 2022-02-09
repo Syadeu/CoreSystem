@@ -84,6 +84,15 @@ namespace Syadeu.Presentation.TurnTable.UI
             else if (m_Order > other.m_Order) return 1;
             return 0;
         }
+
+        protected override ObjectBase Copy()
+        {
+            TRPGShortcutData other = (TRPGShortcutData)base.Copy();
+
+
+
+            return other;
+        }
     }
     internal sealed class TRPGShortcutDataProcessor : EntityProcessor<TRPGShortcutData>
     {

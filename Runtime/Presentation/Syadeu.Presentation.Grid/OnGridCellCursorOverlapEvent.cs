@@ -19,11 +19,11 @@
 
 namespace Syadeu.Presentation.Grid
 {
-    public sealed class OnGridCellCursorOverrapEvent : SynchronizedEvent<OnGridCellCursorOverrapEvent>
+    public sealed class OnGridCellCursorOverlapEvent : SynchronizedEvent<OnGridCellCursorOverlapEvent>
     {
         public GridIndex Index { get; private set; }
 
-        public static OnGridCellCursorOverrapEvent GetEvent(GridIndex index)
+        public static OnGridCellCursorOverlapEvent GetEvent(GridIndex index)
         {
             var temp = Dequeue();
 

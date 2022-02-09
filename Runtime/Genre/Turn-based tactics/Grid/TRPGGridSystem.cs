@@ -163,7 +163,7 @@ namespace Syadeu.Presentation.TurnTable
             //Destroy(m_GridPathlineRenderer.gameObject);
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
-            m_EventSystem.RemoveEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
+            m_EventSystem.RemoveEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
         }
         protected override void OnDispose()
         {
@@ -207,7 +207,7 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
-            m_EventSystem.AddEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
+            m_EventSystem.AddEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
         }
 
         private void Bind(TRPGTurnTableSystem other)
@@ -247,7 +247,7 @@ namespace Syadeu.Presentation.TurnTable
             //        break;
             //}
         }
-        private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverrapEvent ev)
+        private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverlapEvent ev)
         {
             var grid = m_TurnTableSystem.CurrentTurn.GetComponent<GridComponent>();
 

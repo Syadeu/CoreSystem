@@ -62,6 +62,8 @@ namespace Syadeu.Presentation.Grid
 
         private bool m_EnabledCursorObserve = false;
 
+        public event Action<bool> OnEnableCursorObserve;
+
         private EntityComponentSystem m_ComponentSystem;
         private EventSystem m_EventSystem;
         private InputSystem m_InputSystem;
@@ -94,6 +96,11 @@ namespace Syadeu.Presentation.Grid
         }
         protected override void OnShutDown()
         {
+            if (m_EnabledCursorObserve)
+            {
+                EnableCursorObserve(false);
+            }
+
             m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
 
@@ -1391,7 +1398,7 @@ namespace Syadeu.Presentation.Grid
                 m_CurrentOverlayIndex = index;
                 //$"pointing {index}, {info.point}".ToLog();
 
-                m_EventSystem.PostEvent(OnGridCellCursorOverrapEvent.GetEvent(m_CurrentOverlayIndex));
+                m_EventSystem.PostEvent(OnGridCellCursorOverlapEvent.GetEvent(m_CurrentOverlayIndex));
             }
 
             if (m_InputSystem.IsCursorPressedInThisFrame)
@@ -1404,14 +1411,18 @@ namespace Syadeu.Presentation.Grid
         /// 
         /// </summary>
         /// <remarks>
-        /// <seealso cref="OnGridCellCursorOverrapEvent"/>, <seealso cref="OnGridCellPreseedEvent"/>
+        /// <seealso cref="OnGridCellCursorOverlapEvent"/>, <seealso cref="OnGridCellPreseedEvent"/>
         /// </remarks>
         /// <param name="enable"></param>
         public void EnableCursorObserve(bool enable)
         {
+            if (m_EnabledCursorObserve == enable) return;
+
             m_EnabledCursorObserve = enable;
 
             m_CurrentOverlayIndex = default(GridIndex);
+
+            OnEnableCursorObserve?.Invoke(enable);
         }
         public bool TryGetGridIndexAtCursor(out GridIndex index)
         {
