@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer;
@@ -75,7 +79,7 @@ namespace Syadeu.Presentation.Map
                 NavMeshQueryHandler.OnRelease
                 );
             m_DefaultQuery = m_QueryPool.Get();
-
+            
             return base.OnInitialize();
         }
         protected override void OnShutDown()
@@ -339,28 +343,60 @@ namespace Syadeu.Presentation.Map
             return NavMesh.Raycast(ray.origin, ray.direction * distance, out hit, areaMask);
         }
 
-        public ActorEventHandler FixCurrentGridPosition(Entity<IEntity> entity)
+        /// <summary>
+        /// <paramref name="entity"/> 의 좌표를 그리드에 맞게 셀 중앙으로 즉시 이동을 시작합니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public void FixCurrentGridPositionImmediate(InstanceID entity)
         {
-            NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
-            if (navAgent == null)
+#if DEBUG_MODE
+            if (!entity.HasComponent<NavAgentComponent>())
+            {
+                "no agent".ToLogError();
+                return;
+            }
+#endif
+            FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
+            position.Add(entity.GetTransform().position);
+            position.Add(m_GridSystem.IndexToPosition(entity.GetComponent<GridComponent>().Indices[0]));
+            var ev = new MoveJob()
+            {
+                m_Entity = entity.GetEntity<IEntityData>(),
+                m_Positions = position
+            };
+
+            //ActorSystem.PostEvent(entity, ev);
+            //m_ImmediateMoveJobs.Add(ev.Execute());
+            m_CoroutineSystem.StartCoroutine(ev);
+        }
+        /// <summary>
+        /// <paramref name="entity"/> 의 좌표를 그리드에 맞게 셀 중앙으로 이동을 예약합니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public ActorEventHandler FixCurrentGridPosition(InstanceID entity)
+        {
+#if DEBUG_MODE
+            if (!entity.HasComponent<NavAgentComponent>())
             {
                 "no agent".ToLogError();
                 return ActorEventHandler.Empty;
             }
-
+#endif
             FixedList4096Bytes<float3> position = new FixedList4096Bytes<float3>();
-            position.Add(entity.transform.position);
+            position.Add(entity.GetTransform().position);
             position.Add(m_GridSystem.IndexToPosition(entity.GetComponent<GridComponent>().Indices[0]));
-            ActorMoveEvent ev = new ActorMoveEvent(entity.Idx, 0)
+            ActorMoveEvent ev = new ActorMoveEvent(entity, 0)
             {
                 m_MoveJob = new MoveJob()
                 {
-                    m_Entity = entity.ToEntity<IEntityData>(),
+                    m_Entity = entity.GetEntity<IEntityData>(),
                     m_Positions = position
                 }
             };
 
-            return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev, true);
+            return m_ActorSystem.ScheduleEvent(entity.GetEntity<ActorEntity>(), ev, true);
         }
         public ActorEventHandler MoveTo(Entity<IEntity> entity, float3 point, ActorMoveEvent ev)
         {
@@ -450,6 +486,11 @@ namespace Syadeu.Presentation.Map
 
             return m_ActorSystem.ScheduleEvent(entity.ToEntity<ActorEntity>(), ev);
         }
+
+        public void CancelMove(InstanceID entity)
+        {
+            m_ActorSystem.RemoveAllEvents(entity);
+        }
         internal struct MoveJob : ICoroutineJob
         {
             public Entity<IEntityData> m_Entity;
@@ -466,6 +507,14 @@ namespace Syadeu.Presentation.Map
                 PresentationSystem<DefaultPresentationGroup, EventSystem>.System.PostEvent(OnMoveStateChangedEvent.GetEvent(m_Entity.ToEntity<IEntity>(),
                     OnMoveStateChangedEvent.MoveState.Stopped | OnMoveStateChangedEvent.MoveState.Idle));
                 agent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
+
+                ProxyTransform tr = m_Entity.transform;
+
+                //if (tr.hasProxy)
+                //{
+                //    NavMeshAgent agentCom = tr.proxy.GetComponent<NavMeshAgent>();
+                //    agentCom.ResetPath();
+                //}
             }
             private void SetPreviousPosition(float3 pos)
             {
@@ -520,7 +569,8 @@ namespace Syadeu.Presentation.Map
 
             public IEnumerator Execute()
             {
-                if (m_Positions.Length == 0)
+                FixedList4096Bytes<float3> positions = m_Positions;
+                if (positions.Length == 0)
                 {
                     "no path".ToLog();
 
@@ -534,19 +584,17 @@ namespace Syadeu.Presentation.Map
                 
                 var animator = m_Entity.GetAttribute<AnimatorAttribute>();
                 
-                SetDestination(m_Positions[m_Positions.Length - 1]);
+                SetDestination(positions[positions.Length - 1]);
 
                 if (!tr.hasProxy)
                 {
-                    SetPreviousPosition(m_Positions[m_Positions.Length - 1]);
+                    SetPreviousPosition(positions[positions.Length - 1]);
 
-                    tr.position = m_Positions[m_Positions.Length - 1];
+                    tr.position = positions[positions.Length - 1];
                     eventSystem.PostEvent(
                         OnMoveStateChangedEvent.GetEvent(entity,
                             OnMoveStateChangedEvent.MoveState.Teleported | OnMoveStateChangedEvent.MoveState.Idle));
                     navAgent.m_OnMoveActions.Execute(m_Entity.ToEntity<IObject>());
-
-                    m_Positions.Clear();
 
                     yield break;
                 }
@@ -568,7 +616,6 @@ namespace Syadeu.Presentation.Map
                 eventSystem.PostEvent(OnMoveStateChangedEvent.GetEvent(
                         entity, OnMoveStateChangedEvent.MoveState.AboutToMove));
 
-                
                 if (rootMotion)
                 {
                     agent.updatePosition = false;
@@ -587,11 +634,11 @@ namespace Syadeu.Presentation.Map
                 }
 
                 agent.ResetPath();
-                agent.SetDestination(m_Positions[0]);
-                SetPreviousPosition(m_Positions[0]);
+                agent.SetDestination(positions[0]);
+                SetPreviousPosition(positions[0]);
 
                 float cacheStoppingDis = agent.stoppingDistance;
-                if (m_Positions.Length > 1)
+                if (positions.Length > 1)
                 {
                     agent.stoppingDistance = 0;
                     agent.autoBraking = false;
@@ -612,20 +659,20 @@ namespace Syadeu.Presentation.Map
                 SetPathPoints(agent.path.corners);
                 SetIsMoving(true);
 
-                while (tr.hasProxy && m_Positions.Length > 0 && !agent.isStopped)
+                while (tr.hasProxy && positions.Length > 0 && !agent.isStopped)
                 {
                     if (agent.remainingDistance < 1f)
                     {
-                        m_Positions.RemoveAt(0);
-                        if (m_Positions.Length == 0)
+                        positions.RemoveAt(0);
+                        if (positions.Length == 0)
                         {
                             agent.stoppingDistance = cacheStoppingDis;
                             agent.autoBraking = true;
                             break;
                         }
 
-                        agent.SetDestination(m_Positions[0]);
-                        SetPreviousPosition(m_Positions[0]);
+                        agent.SetDestination(positions[0]);
+                        SetPreviousPosition(positions[0]);
 
                         pendingStartTime = CoreSystem.time;
                         while (agent.pathPending)
@@ -712,7 +759,8 @@ namespace Syadeu.Presentation.Map
         }
     }
 
-    public struct ActorMoveEvent : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent>
+    public struct ActorMoveEvent : IActorEvent, IEventSequence, 
+        IEquatable<ActorMoveEvent>, IDisposable
     {
         private InstanceID m_Entity;
         private float m_AfterDelay;
@@ -727,7 +775,6 @@ namespace Syadeu.Presentation.Map
             }
         }
         public float AfterDelay => m_AfterDelay;
-        public bool BurstCompile => false;
 
         public ActorMoveEvent(InstanceID entity, float afterDelay)
         {
@@ -750,6 +797,17 @@ namespace Syadeu.Presentation.Map
             agent.m_MoveJob 
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
         }
+        public void Dispose()
+        {
+            ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+            if (agent.m_MoveJob.IsValid())
+            {
+                agent.m_MoveJob.Stop();
+            }
+
+            agent.m_IsMoving = false;
+        }
+
         public bool Equals(ActorMoveEvent other) => m_Entity.Equals(other.m_Entity);
     }
 
@@ -757,7 +815,8 @@ namespace Syadeu.Presentation.Map
     /// 이벤트를 수행할 시점에 <see cref="TPredicate.Predicate(in Entity{ActorEntity})"/> 가 <see langword="true"/> 를 반환할 경우에만 실행하는 이동 이벤트 명령입니다.
     /// </summary>
     /// <typeparam name="TPredicate"></typeparam>
-    public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence, IEquatable<ActorMoveEvent<TPredicate>>
+    public struct ActorMoveEvent<TPredicate> : IActorEvent, IEventSequence, 
+        IEquatable<ActorMoveEvent<TPredicate>>, IDisposable
         where TPredicate : unmanaged, IExecutable<Entity<ActorEntity>>
     {
         private Entity<IEntityData> m_Entity;
@@ -770,7 +829,7 @@ namespace Syadeu.Presentation.Map
             get
             {
                 NavAgentComponent agent = m_Entity.GetComponent<NavAgentComponent>();
-                return agent.m_IsMoving;
+                return agent.m_MoveJob.Running;
             }
         }
         public float AfterDelay => m_AfterDelay;
@@ -806,7 +865,21 @@ namespace Syadeu.Presentation.Map
 
             agent.m_MoveJob
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
+
+            "exe".ToLog();
         }
+        public void Dispose()
+        {
+            ref NavAgentComponent agent = ref m_Entity.GetComponent<NavAgentComponent>();
+            if (agent.m_MoveJob.IsValid())
+            {
+                agent.m_MoveJob.Stop();
+            }
+
+            agent.m_IsMoving = false;
+            "dispose".ToLog();
+        }
+
         public bool Equals(ActorMoveEvent<TPredicate> other) => m_Entity.Equals(other.m_Entity);
     }
 

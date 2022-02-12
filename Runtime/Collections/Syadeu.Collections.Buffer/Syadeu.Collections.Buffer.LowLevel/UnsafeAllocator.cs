@@ -170,7 +170,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator other) => m_Buffer.Equals(other.m_Buffer);
 
-        [BurstCompatible, NativeContainerIsReadOnly]
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference m_Ptr;
@@ -268,7 +268,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public bool Equals(UnsafeAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
 
-        [BurstCompatible, NativeContainerIsReadOnly]
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference<T>.ReadOnly m_Ptr;

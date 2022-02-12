@@ -64,11 +64,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
             set { m_Buffer[index] = value; }
         }
 
-        public UnsafeFixedListWrapper(UnsafeAllocator<T> allocator)
+        public UnsafeFixedListWrapper(UnsafeAllocator<T> allocator, int initialCount)
         {
             m_Buffer = allocator.Ptr;
             m_Capacity = allocator.Length;
-            m_Count = 0;
+            m_Count = initialCount;
         }
         public UnsafeFixedListWrapper(NativeArray<T> array)
         {
@@ -106,25 +106,23 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Count++;
         }
 
-        public void Clear(NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        public void Clear()
+        {
+            m_Count = 0;
+        }
+        public void Clear(NativeArrayOptions options)
         {
             if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
             {
-                for (int i = 0; i < m_Count; i++)
+                unsafe
                 {
-                    m_Buffer[i] = default(T);
+                    UnsafeUtility.MemClear(m_Buffer, UnsafeUtility.SizeOf<T>() * m_Count);
                 }
             }
-
             m_Count = 0;
         }
 
         public bool Equals(UnsafeFixedListWrapper<T> other) => m_Buffer.Equals(other.m_Buffer);
-
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
 
         public static implicit operator UnsafeFixedListWrapper<T>(NativeArray<T> t)
         {

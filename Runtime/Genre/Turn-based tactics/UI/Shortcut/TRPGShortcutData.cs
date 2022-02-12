@@ -78,6 +78,17 @@ namespace Syadeu.Presentation.TurnTable.UI
         [Description("대상은 현재 턴의 엔티티입니다.")]
         public Reference<TriggerAction>[] m_OnTargetDisable = Array.Empty<Reference<TriggerAction>>();
 
+        [Space]
+        [JsonProperty(Order = 10, PropertyName = "OnExecuteConst")]
+        public ConstActionReference[] m_OnExecuteConst = Array.Empty<ConstActionReference>();
+        [JsonProperty(Order = 11, PropertyName = "OnExecute")]
+        public Reference<InstanceAction>[] m_OnExecute = Array.Empty<Reference<InstanceAction>>();
+        [JsonProperty(Order = 12, PropertyName = "OnTargetExecute")]
+        [Description("대상은 현재 턴의 엔티티입니다.")]
+        public Reference<TriggerAction>[] m_OnTargetExecute = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 13, PropertyName = "DisableOnExecute")]
+        public bool m_DisableOnExecute = false;
+
         int IComparable<TRPGShortcutData>.CompareTo(TRPGShortcutData other)
         {
             if (m_Order < other.m_Order) return -1;

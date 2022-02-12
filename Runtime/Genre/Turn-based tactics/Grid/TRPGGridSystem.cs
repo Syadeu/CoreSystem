@@ -28,6 +28,7 @@ using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using Syadeu.Presentation.TurnTable.UI;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -94,6 +95,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGSelectionSystem m_SelectionSystem;
+        private TRPGCanvasUISystem m_TRPGCanvasUISystem;
 
         #region Presentation Methods
 
@@ -154,6 +156,7 @@ namespace Syadeu.Presentation.TurnTable
 
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGSelectionSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -181,6 +184,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_TurnTableSystem = null;
             m_SelectionSystem = null;
+            m_TRPGCanvasUISystem = null;
         }
 
         #region Binds
@@ -217,6 +221,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(TRPGSelectionSystem other)
         {
             m_SelectionSystem = other;
+        }
+        private void Bind(TRPGCanvasUISystem other)
+        {
+            m_TRPGCanvasUISystem = other;
         }
 
         #endregion
@@ -263,10 +271,12 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!m_GridTempMoveables.Contains(ev.Index))
             {
+                "something is wrong..".ToLog();
                 return;
             }
 
             MoveToCell(m_TurnTableSystem.CurrentTurn.Idx, ev.Index);
+            m_TRPGCanvasUISystem.GetModule<TRPGShortcutUIModule>().ExecuteCurrentShortcut();
         }
 
         private bool m_DrawMesh = false;
@@ -551,6 +561,7 @@ namespace Syadeu.Presentation.TurnTable
                 m_GridOutlineCamera = null;
 #endif
                 m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
+                ClearUIPath();
 
                 m_IsDrawingGrids = false;
             }

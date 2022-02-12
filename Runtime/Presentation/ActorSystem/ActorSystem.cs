@@ -210,6 +210,11 @@ namespace Syadeu.Presentation.Actor
                 handler.SetEvent(SystemEventResult.Success, ev.EventType);
                 m_ScheduledEventIDs.Remove(new ActorEventHandler(ev.Hash));
 
+                if (ev.EventSequence is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+
                 //ev.Reserve();
             }
         }
@@ -239,6 +244,11 @@ namespace Syadeu.Presentation.Actor
 
                 scheduledEventIDs.Remove(new ActorEventHandler(Event.Hash));
                 pool.Enqueue(Event);
+
+                if (Event.EventSequence is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
                 Event = null;
 
                 TimerStarted = false;
@@ -361,6 +371,35 @@ namespace Syadeu.Presentation.Actor
             return !m_ScheduledEventIDs.Contains(handler);
         }
 
+        public void RemoveAllEvents(InstanceID entity)
+        {
+            if (!entity.HasComponent<ActorControllerComponent>())
+            {
+                "?".ToLogError();
+                return;
+            }
+
+            for (int i = 0; i < m_ScheduledEvents.Count; i++)
+            {
+                IEventHandler ev = m_ScheduledEvents[i];
+                if (!ev.Actor.Idx.Equals(entity))
+                {
+                    continue;
+                }
+                m_ScheduledEvents.RemoveAt(i);
+
+                m_ScheduledEventIDs.Remove(new ActorEventHandler(ev.Hash));
+                m_EventDataPool.Enqueue(ev);
+            }
+
+            if (!m_CurrentEvent.IsEmpty() && m_CurrentEvent.Event.Actor.Idx.Equals(entity))
+            {
+                ref ActorControllerComponent ctr = ref entity.GetComponent<ActorControllerComponent>();
+                ctr.m_IsExecutingEvent = false;
+
+                m_CurrentEvent.Clear(m_EventDataPool, m_ScheduledEventIDs);
+            }
+        }
         /// <summary><inheritdoc cref="ScheduleEvent{TEvent}(Entity{ActorEntity}, TEvent)"/></summary>
         /// <remarks>
         /// <paramref name="overrideSameEvent"/> 가 true 일 경우에 다음 이벤트가 없을 경우에만 
@@ -513,10 +552,10 @@ namespace Syadeu.Presentation.Actor
             }
             ctr.m_OnEventReceived.Execute(ev);
 
-            if (ev is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
+            //if (ev is IDisposable disposable)
+            //{
+            //    disposable.Dispose();
+            //}
         }
         public static void PostEvent<TEvent>(Entity<ActorEntity> entity, TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -526,6 +565,11 @@ namespace Syadeu.Presentation.Actor
 #endif
         {
             InternalPostEvent(entity, ev);
+
+            if (ev is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
 
         [Preserve]

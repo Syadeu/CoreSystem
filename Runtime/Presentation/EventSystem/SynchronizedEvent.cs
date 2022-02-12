@@ -32,14 +32,14 @@ namespace Syadeu.Presentation
         internal static readonly Hash s_Key = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
         private static readonly Queue<TEvent> m_Pool = new Queue<TEvent>();
 
-        private static Unity.Profiling.ProfilerMarker
-            s_Marker = new Unity.Profiling.ProfilerMarker($"Execute Event ({TypeHelper.TypeOf<TEvent>.ToString()})");
+        //private static Unity.Profiling.ProfilerMarker
+        //    s_Marker = new Unity.Profiling.ProfilerMarker($"Execute Event ({TypeHelper.TypeOf<TEvent>.ToString()})");
 
-        private static readonly Dictionary<int, ActionWrapper<TEvent>>
-            s_EventActions = new Dictionary<int, ActionWrapper<TEvent>>();
+        //private static readonly Dictionary<int, ActionWrapper<TEvent>>
+        //    s_EventActions = new Dictionary<int, ActionWrapper<TEvent>>();
 
-        public override sealed string Name => TypeHelper.TypeOf<TEvent>.Name;
-        public override sealed Type EventType => TypeHelper.TypeOf<TEvent>.Type;
+        protected override sealed string Name => TypeHelper.TypeOf<TEvent>.Name;
+        protected override sealed Type EventType => TypeHelper.TypeOf<TEvent>.Type;
         internal override Hash EventHash => Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
 
         internal override sealed void InternalTerminate()

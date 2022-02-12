@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Events
     /// </remarks>
     public sealed class OnMoveStateChangedEvent : SynchronizedEvent<OnMoveStateChangedEvent>
     {
-        public override bool DisplayLog => false;
+        protected override bool DisplayLog => false;
 
         [Flags]
         public enum MoveState

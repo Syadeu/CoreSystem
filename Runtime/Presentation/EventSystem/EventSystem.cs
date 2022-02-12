@@ -131,7 +131,7 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.Name}) has been posted");
+                        $"Invalid event({ev.InternalName}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
                 finally
@@ -139,10 +139,10 @@ namespace Syadeu.Presentation.Events
                     ev.InternalTerminate();
                 }
 
-                if (ev.DisplayLog)
+                if (ev.InternalDisplayLog)
                 {
                     CoreSystem.Logger.Log(Channel.Event,
-                        string.Format(c_LogPostedEvent, ev.Name));
+                        string.Format(c_LogPostedEvent, ev.InternalName));
                 }
             }
         }
@@ -173,7 +173,7 @@ namespace Syadeu.Presentation.Events
                     catch (Exception ex)
                     {
                         CoreSystem.Logger.LogError(Channel.Event,
-                            $"Invalid event({ev.Name}, {ev.EventHash}) has been posted");
+                            $"Invalid event({ev.InternalName}, {ev.EventHash}) has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
                     finally
@@ -181,10 +181,10 @@ namespace Syadeu.Presentation.Events
                         ev.InternalTerminate();
                     }
 
-                    if (ev.DisplayLog)
+                    if (ev.InternalDisplayLog)
                     {
                         CoreSystem.Logger.Log(Channel.Event, 
-                            string.Format(c_LogPostedEvent, ev.Name));
+                            string.Format(c_LogPostedEvent, ev.InternalName));
                     }
                 }
             }
@@ -290,7 +290,7 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            switch (ev.Loop)
+            switch (ev.InternalLoop)
             {
                 default:
                 case UpdateLoop.Default:
@@ -421,7 +421,7 @@ namespace Syadeu.Presentation.Events
             if (ev.IsValid() && m_Events.ContainsKey(ev.EventHash))
             {
                 CoreSystem.Logger.Log(Channel.Action,
-                    string.Format(c_ExecuteEventMsg, ev.Name));
+                    string.Format(c_ExecuteEventMsg, ev.InternalName));
 
                 try
                 {
@@ -431,7 +431,7 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.Name}) has been posted");
+                        $"Invalid event({ev.InternalName}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
                 finally
@@ -440,10 +440,10 @@ namespace Syadeu.Presentation.Events
                 }
 
                 CoreSystem.Logger.Log(Channel.Event,
-                    string.Format(c_PostedEventMsg, ev.Name));
+                    string.Format(c_PostedEventMsg, ev.InternalName));
             }
 
-            handler.SetEvent(SystemEventResult.Success, ev.EventType);
+            handler.SetEvent(SystemEventResult.Success, ev.InternalEventType);
         }
     }
 }
