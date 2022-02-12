@@ -14,6 +14,7 @@ namespace Syadeu.Presentation.BehaviorTree
     using Syadeu.Presentation.Grid;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
+    using System.Linq;
 
     [TaskCategory("Entity/Actor/TRPG")]
     public sealed class IsActorTargetInAttackRange : ConditionalBase
@@ -50,18 +51,23 @@ namespace Syadeu.Presentation.BehaviorTree
                 return TaskStatus.Failure;
             }
 
-            var targetPos = att.GetTargetAt(0).GetEntity<IEntity>().GetComponentReadOnly<GridComponent>().Indices;
+            var targetPos = att.GetTargetAt(0).GetComponentReadOnly<GridComponent>().Indices;
 
-            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            //FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
             GridComponent gridSize = Entity.GetComponentReadOnly<GridComponent>();
 
             WorldGridSystem gridSystem = PresentationSystem<DefaultPresentationGroup, WorldGridSystem>.System;
 
-            gridSystem.GetRange(gridSize.Indices[0], m_DesireRange, ref list, WorldGridSystem.SortOption.CloseDistance);
+            var iter = gridSystem.GetRange(gridSize.Indices[0], m_DesireRange);
 
+            //foreach (var item in gridSystem.GetRange(gridSize.Indices[0], m_DesireRange))
+            //{
+            //    if (item.Equals(targetPos[i])) return TaskStatus.Success;
+            //}
+            
             for (int i = 0; i < targetPos.Length; i++)
             {
-                if (list.Contains(targetPos[i]))
+                if (iter.Contains(targetPos[i]))
                 {
                     return TaskStatus.Success;
                 }

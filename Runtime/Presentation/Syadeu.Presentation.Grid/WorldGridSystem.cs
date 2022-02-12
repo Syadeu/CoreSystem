@@ -831,31 +831,37 @@ namespace Syadeu.Presentation.Grid
             return true;
         }
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
-        public void GetOutcoastLocations(in NativeArray<GridIndex> locations, ref NativeList<GridIndex> result)
+        public void GetOutcoastLocations(
+            in UnsafeFixedListWrapper<GridIndex> locations, 
+            ref NativeList<GridIndex> result)
         {
             UnsafeFixedListWrapper<GridIndex> temp2 = result.ConvertToFixedWrapper();
-            BurstGridMathematics.getOutcoastLocations(m_Grid.aabb, CellSize, locations, ref temp2);
+            BurstGridMathematics.getOutcoastLocations(
+                m_Grid.aabb, CellSize, in locations, ref temp2);
 
             temp2.CopyToNativeList(ref result);
         }
         /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
         public void GetOutcoastVertices(
-            in NativeArray<GridIndex> locations,
+            in UnsafeFixedListWrapper<GridIndex> locations,
             ref NativeList<float3> result,
-            NativeArray<GridIndex> indicesMap = default)
+            UnsafeFixedListWrapper<GridIndex> indicesMap = default)
         {
-            if (result.Capacity < locations.Length * 4)
+            if (result.Capacity < locations.Capacity * 4)
             {
-                result.Resize(locations.Length * 4, NativeArrayOptions.UninitializedMemory);
+                result.ResizeUninitialized(locations.Capacity);
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"You cannot calculate vertices because exceeding capacity.");
+                //return;
             }
 
             UnsafeFixedListWrapper<float3> temp = result.ConvertToFixedWrapper();
             BurstGridMathematics.getOutcoastLocationVertices(
                 m_Grid.aabb,
                 CellSize,
-                locations,
+                in locations,
                 ref temp,
-                indicesMap
+                in indicesMap
                 );
 
             temp.CopyToNativeList(ref result);
@@ -1011,172 +1017,175 @@ namespace Syadeu.Presentation.Grid
             return new RangeEnumerator(in m_Grid, in from, in range);
         }
 
-        [Obsolete]
-        [SkipLocalsInit]
-        public void GetRange(in GridIndex from,
-            in int3 range,
-            ref NativeList<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            if (!ValidateIndex(in from))
-            {
-                "err".ToLogError();
-                return;
-            }
+        //[Obsolete]
+        //[SkipLocalsInit]
+        //public void GetRange(in GridIndex from,
+        //    in int3 range,
+        //    ref NativeList<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
+        //{
+        //    if (!ValidateIndex(in from))
+        //    {
+        //        "err".ToLogError();
+        //        return;
+        //    }
 
-            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-            if (maxCount > 255)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"You\'re trying to get range of grid that exceeding length 255. " +
-                    $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-            }
+        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
+        //    if (maxCount > 255)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Presentation,
+        //            $"You\'re trying to get range of grid that exceeding length 255. " +
+        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
+        //    }
 
-            output.Clear();
+        //    output.Clear();
 
-            int3
-                location = from.Location,
-                minRange, maxRange;
-            m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+        //    int3
+        //        location = from.Location,
+        //        minRange, maxRange;
+        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
 
-            int
-                minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-                maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
+        //    int
+        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
+        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
 
-                minY = location.y - range.y < 0 ?
-                    math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-                maxY = location.y + range.y < 0 ?
-                    math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
+        //        minY = location.y - range.y < 0 ?
+        //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
+        //        maxY = location.y + range.y < 0 ?
+        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
 
-                minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-                maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
+        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
+        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
 
-            int3
-                start = new int3(minX, minY, minZ),
-                end = new int3(maxX, maxY, maxZ),
+        //    int3
+        //        start = new int3(minX, minY, minZ),
+        //        end = new int3(maxX, maxY, maxZ),
 
-                dir = end - start;
+        //        dir = end - start;
 
-            unsafe
-            {
-                int3* buffer = stackalloc int3[maxCount];
-                int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                    {
-                        for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
-                            z++, count++)
-                        {
-                            buffer[count] = new int3(x, y, z);
-                        }
-                    }
-                }
+        //    UnsafeFixedListWrapper<int3> result;
+        //    unsafe
+        //    {
+        //        int3* buffer = stackalloc int3[maxCount];
+        //        result = new UnsafeFixedListWrapper<int3>(buffer, maxCount);
+        //    }
 
-                if (sortOption == SortOption.CloseDistance)
-                {
-                    UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                }
+        //    //int count = 0;
+        //    for (int y = start.y; y < end.y + 1 && result.Count < maxCount; y++)
+        //    {
+        //        for (int x = start.x; x < end.x + 1 && result.Count < maxCount; x++)
+        //        {
+        //            for (int z = start.z;
+        //                z < end.z + 1 && result.Count < maxCount;
+        //                z++)
+        //            {
+        //                result.Add(new int3(x, y, z));
+        //            }
+        //        }
+        //    }
 
-                for (int i = 0; i < count && i < 255; i++)
-                {
-                    output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-                }
-            }
-        }
-        [Obsolete]
-        public void GetRange(in InstanceID from,
-            in int3 range,
-            ref FixedList4096Bytes<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            CompleteGridJob();
+        //    if (sortOption == SortOption.CloseDistance)
+        //    {
+        //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
+        //    }
 
-            if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
-            {
-                "err".ToLogError();
-                return;
-            }
+        //    for (int i = 0; i < count && i < 255; i++)
+        //    {
+        //        output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
+        //    }
+        //}
+        //[Obsolete]
+        //public void GetRange(in InstanceID from,
+        //    in int3 range,
+        //    ref FixedList4096Bytes<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
+        //{
+        //    CompleteGridJob();
 
-            // TODO : Temp code
-            GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
-        }
-        [Obsolete]
-        [SkipLocalsInit]
-        public void GetRange(in GridIndex from,
-            in int3 range,
-            ref FixedList4096Bytes<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            if (!ValidateIndex(in from))
-            {
-                "err".ToLogError();
-                return;
-            }
+        //    if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
+        //    {
+        //        "err".ToLogError();
+        //        return;
+        //    }
 
-            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-            if (maxCount > 255)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"You\'re trying to get range of grid that exceeding length 255. " +
-                    $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-            }
+        //    // TODO : Temp code
+        //    GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
+        //}
+        //[Obsolete]
+        //[SkipLocalsInit]
+        //public void GetRange(in GridIndex from,
+        //    in int3 range,
+        //    ref FixedList4096Bytes<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
+        //{
+        //    if (!ValidateIndex(in from))
+        //    {
+        //        "err".ToLogError();
+        //        return;
+        //    }
 
-            output.Clear();
+        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
+        //    if (maxCount > 255)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Presentation,
+        //            $"You\'re trying to get range of grid that exceeding length 255. " +
+        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
+        //    }
 
-            int3
-                location = from.Location,
-                minRange, maxRange;
-            m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+        //    output.Clear();
 
-            int
-                minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-                maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
+        //    int3
+        //        location = from.Location,
+        //        minRange, maxRange;
+        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
 
-                minY = location.y - range.y < 0 ?
-                    math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-                maxY = location.y + range.y < 0 ?
-                    math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
+        //    int
+        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
+        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
 
-                minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-                maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
-            //if (log) $"minmax: {minRange}, {maxRange}".ToLog();
-            int3
-                start = new int3(minX, minY, minZ),
-                end = new int3(maxX, maxY, maxZ),
+        //        minY = location.y - range.y < 0 ?
+        //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
+        //        maxY = location.y + range.y < 0 ?
+        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
+
+        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
+        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
+        //    //if (log) $"minmax: {minRange}, {maxRange}".ToLog();
+        //    int3
+        //        start = new int3(minX, minY, minZ),
+        //        end = new int3(maxX, maxY, maxZ),
                 
-                dir = end - start;
+        //        dir = end - start;
 
             
-            unsafe
-            {
-                int3* buffer = stackalloc int3[maxCount];
-                int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                    {
-                        for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
-                            z++, count++)
-                        {
-                            buffer[count] = new int3(x, y, z);
-                        }
-                    }
-                }
-                //if (log) $"{count} < {maxCount}: {start}, {end}".ToLog();
-                if (sortOption == SortOption.CloseDistance)
-                {
-                    UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                }
+        //    unsafe
+        //    {
+        //        int3* buffer = stackalloc int3[maxCount];
+        //        int count = 0;
+        //        for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+        //        {
+        //            for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+        //            {
+        //                for (int z = start.z;
+        //                    z < end.z + 1 && count < maxCount;
+        //                    z++, count++)
+        //                {
+        //                    buffer[count] = new int3(x, y, z);
+        //                }
+        //            }
+        //        }
+        //        //if (log) $"{count} < {maxCount}: {start}, {end}".ToLog();
+        //        if (sortOption == SortOption.CloseDistance)
+        //        {
+        //            UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
+        //        }
 
-                for (int i = 0; i < count && i < 255; i++)
-                {
-                    output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-                }
-            }
-        }
+        //        for (int i = 0; i < count && i < 255; i++)
+        //        {
+        //            output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
+        //        }
+        //    }
+        //}
 
         #endregion
 

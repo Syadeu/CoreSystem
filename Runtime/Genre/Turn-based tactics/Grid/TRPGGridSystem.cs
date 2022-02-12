@@ -349,26 +349,40 @@ namespace Syadeu.Presentation.TurnTable
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
 
-            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            //FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
             // TODO : Temp code
-            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref list);
+            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint));
 
             gridPositions.Clear();
-            for (int i = 0; i < list.Length; i++)
+            foreach (var item in m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint)))
             {
-                if (m_GridSystem.HasEntityAt(list[i]))
+                if (m_GridSystem.HasEntityAt(item))
                 {
                     continue;
                 }
-                else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+                else if (!m_GridSystem.HasPath(gridsize.Indices[0], item, out int pathCount) ||
                     pathCount > turnPlayer.ActionPoint)
                 {
                     continue;
                 }
 
-                gridPositions.Add((list[i]));
-                //$"{list[i].Location} added".ToLog();
+                gridPositions.Add(item);
             }
+            //for (int i = 0; i < list.Length; i++)
+            //{
+            //    if (m_GridSystem.HasEntityAt(list[i]))
+            //    {
+            //        continue;
+            //    }
+            //    else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+            //        pathCount > turnPlayer.ActionPoint)
+            //    {
+            //        continue;
+            //    }
+
+            //    gridPositions.Add((list[i]));
+            //    //$"{list[i].Location} added".ToLog();
+            //}
         }
         public Direction GetCoverableDirection(in GridIndex index)
         {
@@ -466,12 +480,14 @@ namespace Syadeu.Presentation.TurnTable
             {
                 indices = null;
                 directions = null;
+                m_CoverableLength = 0;
                 return;
             }
             else if (indices.Length == 0 || directions.Length == 0)
             {
                 indices = null;
                 directions = null;
+                m_CoverableLength = 0;
                 return;
             }
 
@@ -480,6 +496,7 @@ namespace Syadeu.Presentation.TurnTable
 
             indices = null;
             directions = null;
+            m_CoverableLength = 0;
         }
 
         #endregion

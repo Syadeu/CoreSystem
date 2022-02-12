@@ -266,29 +266,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return result;
         }
 
-        public int IndexOf(T item) => UnsafeBufferUtility.IndexOf(Ptr, Length, item);
-        public bool Contains(T item)
-        {
-            int length = Length;
-            bool result = false;
-
-            if (item is IEquatable<T> equatable)
-            {
-                for (int i = 0; i < length && !result; i++)
-                {
-                    result |= equatable.Equals(this[i]);
-                }
-                return result;
-            }
-
-            for (int i = 0; i < length && !result; i++)
-            {
-                result |= UnsafeBufferUtility.BinaryComparer(ref this[i], ref item);
-            }
-            return result;
-        }
-        public bool RemoveForSwapBack(T element) => UnsafeBufferUtility.RemoveForSwapBack(Ptr, Length, element);
-
         public bool Equals(UnsafeAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
 
         [BurstCompatible, NativeContainerIsReadOnly]
@@ -341,10 +318,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
                     );
             }
             return array;
-        }
-        public static implicit operator UnsafeAllocator<T>(NativeArray<T> t)
-        {
-            return t.ToUnsafeAllocator(Allocator.Invalid);
         }
     }
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
@@ -408,6 +381,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
             return result;
         }
+        public static int IndexOf<T, U>(this in UnsafeAllocator<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            return UnsafeBufferUtility.IndexOf(t.Ptr, t.Length, item);
+        }
+        public static bool RemoveForSwapBack<T, U>(this in UnsafeAllocator<T> t, U element)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            return UnsafeBufferUtility.RemoveForSwapBack(t.Ptr, t.Length, element);
+        }
 
         public static NativeArray<T> ToNativeArray<T>(this in UnsafeAllocator<T> other, Allocator allocator) where T : unmanaged
         {
@@ -419,17 +404,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             return arr;
-        }
-        public static UnsafeAllocator<T> ToUnsafeAllocator<T>(this in NativeArray<T> other, Allocator allocator) where T : unmanaged
-        {
-            unsafe
-            {
-                return new UnsafeAllocator<T>(
-                    (T*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(other),
-                    other.Length,
-                    allocator
-                    );
-            }
         }
     }
 }

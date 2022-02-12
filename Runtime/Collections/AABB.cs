@@ -427,6 +427,7 @@ namespace Syadeu.Collections
         {
             public Plane
                 a0, a1, a2, a3, a4, a5;
+
             public Plane this[int index]
             {
                 get
@@ -442,12 +443,50 @@ namespace Syadeu.Collections
                         _ => throw new IndexOutOfRangeException(),
                     };
                 }
+                set
+                {
+                    switch (index)
+                    {
+                        case 0:
+                            a0 = value;
+                            break;
+                        case 1:
+                            a1 = value;
+                            break;
+                        case 2:
+                            a2 = value;
+                            break;
+                        case 3:
+                            a3 = value;
+                            break;
+                        case 4:
+                            a4 = value;
+                            break;
+                        case 5:
+                            a5 = value;
+                            break;
+                        default:
+                            throw new IndexOutOfRangeException();
+                    }
+                }
             }
-
             public Plane First => a0;
             public Plane Last => a5;
 
             public int Length => 6;
+            public int Capacity { get => 6; set => throw new NotImplementedException(); }
+            public bool IsEmpty => false;
+
+            int IIndexable<Plane>.Length { get => 6; set => throw new NotImplementedException(); }
+
+            void INativeList<Plane>.Clear()
+            {
+                throw new NotImplementedException();
+            }
+            ref Plane IIndexable<Plane>.ElementAt(int index)
+            {
+                throw new NotImplementedException();
+            }
         }
         [BurstCompatible]
         public struct Vertices : IFixedList<float3>
@@ -473,12 +512,29 @@ namespace Syadeu.Collections
                         _ => throw new IndexOutOfRangeException(),
                     };
                 }
+                set
+                {
+                    throw new NotImplementedException();
+                }
             }
 
             public float3 First => a0;
             public float3 Last => b3;
 
             public int Length => 8;
+            public int Capacity { get => 8; set => throw new NotImplementedException(); }
+            public bool IsEmpty => false;
+
+            int IIndexable<float3>.Length { get => 8; set => throw new NotImplementedException(); }
+
+            void INativeList<float3>.Clear()
+            {
+                throw new NotImplementedException();
+            }
+            ref float3 IIndexable<float3>.ElementAt(int index)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

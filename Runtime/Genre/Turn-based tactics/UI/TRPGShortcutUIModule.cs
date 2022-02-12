@@ -84,7 +84,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         protected override void OnShutDown()
         {
             m_RenderSystem.OnResolutionChanged -= M_RenderSystem_OnResolutionChanged;
-            m_GridSystem.OnEnableCursorObserve -= M_GridSystem_OnEnableCursorObserve;
 
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
         }
@@ -111,7 +110,6 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_Shortcuts.InitializeShortcuts(m_ScreenCanvasSystem, TRPGShortcutDataProcessor.Data);
 
             m_RenderSystem.OnResolutionChanged += M_RenderSystem_OnResolutionChanged;
-            m_GridSystem.OnEnableCursorObserve += M_GridSystem_OnEnableCursorObserve;
 
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
         }
@@ -124,26 +122,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_Shortcuts.m_Transform.sizeDelta = new Vector2(current.width, 100);
         }
-        private void M_GridSystem_OnEnableCursorObserve(bool enabled)
-        {
-            if (enabled)
-            {
-                m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-            }
-            else
-            {
-                m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-            }
-        }
 
-        private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
-        {
-            DisableCurrentShortcut();
-
-            //m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
-            //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-            //move.movet
-        }
         private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
         {
             if (ev.Shortcut.Equals(m_CurrentShortcut))

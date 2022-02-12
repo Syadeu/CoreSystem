@@ -114,49 +114,4 @@ namespace Syadeu.Presentation.Grid
         public bool4 HasBlocks;
         public float3x2 Vertices0, Vertices1, Vertices2, Vertices3;
     }
-
-    public struct GridIndex4 : IFixedList<GridIndex>
-    {
-        private GridIndex a, b, c, d;
-
-        public GridIndex this[int index]
-        {
-            get
-            {
-                return index switch
-                {
-                    0 => a,
-                    1 => b,
-                    2 => c,
-                    3 => d,
-                    _ => throw new Exception(),
-                };
-            }
-            set
-            {
-                switch (index)
-                {
-                    case 0:
-                        a = value;
-                        break;
-                    case 1:
-                        b = value;
-                        break;
-                    case 2:
-                        c = value;
-                        break;
-                    case 3:
-                        d = value;
-                        break;
-                    default:
-                        throw new Exception();
-                }
-            }
-        }
-
-        public GridIndex First => a;
-        public GridIndex Last => d;
-
-        public int Length => throw new NotImplementedException();
-    }
 }

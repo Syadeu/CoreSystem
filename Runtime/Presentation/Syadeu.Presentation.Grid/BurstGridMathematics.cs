@@ -135,7 +135,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 );
         }
         [BurstCompile]
-        public static void minMaxLocation(in UnsafeAllocator<int3> locations, int3* min, int3* max)
+        public static void minMaxLocation(in UnsafeFixedListWrapper<int3> locations, int3* min, int3* max)
         {
             int length = locations.Length;
 
@@ -312,7 +312,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             *output = result;
         }
         [BurstCompile]
-        public static void getMaxOutcoastLocationLength(in UnsafeAllocator<int3> locations, int* output)
+        public static void getMaxOutcoastLocationLength(in UnsafeFixedListWrapper<int3> locations, int* output)
         {
             int3 min, max;
             minMaxLocation(in locations, &min, &max);
@@ -336,7 +336,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [BurstCompile]
         public static void getOutcoastLocations(
             in AABB grid, in float cellSize,
-            in UnsafeAllocator<GridIndex> locations, ref UnsafeFixedListWrapper<GridIndex> output)
+            in UnsafeFixedListWrapper<GridIndex> locations, ref UnsafeFixedListWrapper<GridIndex> output)
         {
             output.Clear();
             //IndexComparer indexComparer = new IndexComparer();
@@ -423,8 +423,8 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [SkipLocalsInit, BurstCompile]
         public static void getOutcoastLocationVertices(
             in AABB grid, in float cellSize,
-            in UnsafeAllocator<GridIndex> locations, ref UnsafeFixedListWrapper<float3> output,
-            in UnsafeAllocator<GridIndex> indicesMap)
+            in UnsafeFixedListWrapper<GridIndex> locations, ref UnsafeFixedListWrapper<float3> output,
+            in UnsafeFixedListWrapper<GridIndex> indicesMap)
         {
             output.Clear();
 
@@ -436,7 +436,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 downleft = new float3(-cellHalf, 0, -cellHalf),
                 downright = new float3(cellHalf, 0, -cellHalf);
 
-            UnsafeAllocator<GridIndex> map;
+            UnsafeFixedListWrapper<GridIndex> map;
             if (!indicesMap.IsCreated)
             {
                 map = locations;
@@ -505,7 +505,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
             }
 
             float3x2 current = list.Last;
-            list.RemoveAtSwapback(list.Count - 1);
+            list.RemoveAtSwapback(list.Length - 1);
             output.Add(current.c0);
             float3 next = current.c1;
 
@@ -522,7 +522,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
         [BurstCompile]
         private static bool FindFloat3x2(ref UnsafeFixedListWrapper<float3x2> list, in float3 next, out float3x2 found)
         {
-            for (int i = list.Count - 1; i >= 0; i--)
+            for (int i = list.Length - 1; i >= 0; i--)
             {
                 if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
                 {

@@ -167,9 +167,15 @@ namespace Syadeu.Presentation.TurnTable
             {
                 return;
             }
-            else if (!m_SelectionSystem.CurrentSelection.hasTransform)
+            else if (
+                m_SelectionSystem.CurrentSelection.IsEmpty() ||
+                !m_SelectionSystem.CurrentSelection.hasTransform)
             {
                 m_DrawWarningTiles = false;
+                return;
+            }
+            else if (m_WarningOutlineVertices.Length == 0)
+            {
                 return;
             }
 
