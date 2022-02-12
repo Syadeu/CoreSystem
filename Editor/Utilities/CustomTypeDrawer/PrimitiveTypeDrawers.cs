@@ -624,6 +624,7 @@ namespace SyadeuEditor.Utilities
         public override int FieldCount => DrawerBases.Count;
 
         private readonly List<ObjectDrawerBase> DrawerBases = new List<ObjectDrawerBase>();
+        private readonly MemberInfo[] m_Members;
 
         public IReadOnlyList<ObjectDrawerBase> Drawers => DrawerBases;
 
@@ -669,10 +670,10 @@ namespace SyadeuEditor.Utilities
 
             if (declaredType.IsAbstract && obj != null) declaredType = obj.GetType();
 
-            MemberInfo[] members;
+            //MemberInfo[] members;
             if (Application.isPlaying)
             {
-                members = declaredType.GetMembers(
+                m_Members = declaredType.GetMembers(
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                         .Where((other) =>
                         {
@@ -696,12 +697,12 @@ namespace SyadeuEditor.Utilities
             }
             else
             {
-                members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
+                m_Members = ReflectionHelper.GetSerializeMemberInfos(declaredType);
             }
 
-            for (int a = 0; a < members.Length; a++)
+            for (int a = 0; a < m_Members.Length; a++)
             {
-                ObjectDrawerBase drawer = ToDrawer(obj, members[a], true);
+                ObjectDrawerBase drawer = ToDrawer(obj, m_Members[a], true);
                 DrawerBases.Add(drawer);
             }
         }
@@ -779,6 +780,10 @@ namespace SyadeuEditor.Utilities
                         continue;
                     }
 
+                    foreach (var item in m_Members[i].GetCustomAttributes())
+                    {
+                        DrawSystemAttribute(in item);
+                    }
                     DrawerBases[i].OnGUI();
                 }
 

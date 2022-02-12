@@ -30,11 +30,13 @@ namespace Syadeu.Presentation.TurnTable.UI
     {
         public sealed class GeneralOptions : PropertyBlock<GeneralOptions>
         {
+            [Space]
             [JsonProperty(Order = 0, PropertyName = "SizeDelta")]
             public float2 m_SizeDelta = new float2(40, 40);
             [JsonProperty(Order = 1, PropertyName = "TextureOffset")]
             public float m_TextureOffset = 2.5f;
 
+            [Space, Header("Image")]
             [JsonProperty(Order = 2, PropertyName = "BackgroundImage")]
             public PrefabReference<Sprite> m_BackgroundImage = PrefabReference<Sprite>.None;
             [JsonProperty(Order = 3, PropertyName = "BackgroundColor")]
@@ -44,50 +46,81 @@ namespace Syadeu.Presentation.TurnTable.UI
             [JsonProperty(Order = 5, PropertyName = "ImageColor")]
             public Color32 m_ImageColor = Color.white;
 
+            [Space]
             [JsonProperty(Order = 6, PropertyName = "Font")]
             public PrefabReference<TMP_FontAsset> m_Font = PrefabReference<TMP_FontAsset>.None;
             [JsonProperty(Order = 7, PropertyName = "FontSize")]
             public float m_FontSize = 18;
         }
+        public sealed class VisibleOptions : PropertyBlock<VisibleOptions>
+        {
+            [Space]
+            [JsonProperty(Order = 0, PropertyName = "VisibleOptions")]
+            public Reference<TriggerPredicateAction>[] m_VisibleOptions = Array.Empty<Reference<TriggerPredicateAction>>();
+            [JsonProperty(Order = 1, PropertyName = "ConstVisibleOptions")]
+            public ConstActionReference<bool>[] m_ConstVisibleOptions = Array.Empty<ConstActionReference<bool>>();
+        }
+        public sealed class OnEnableOptions : PropertyBlock<OnEnableOptions>
+        {
+            [Space]
+            [JsonProperty(Order = 0, PropertyName = "OnEnableConst")]
+            public ConstActionReference[] m_OnEnableConst = Array.Empty<ConstActionReference>();
+            [JsonProperty(Order = 1, PropertyName = "OnEnable")]
+            public Reference<InstanceAction>[] m_OnEnable = Array.Empty<Reference<InstanceAction>>();
+            [JsonProperty(Order = 2, PropertyName = "OnTargetEnable")]
+            [Description("대상은 현재 턴의 엔티티입니다.")]
+            public Reference<TriggerAction>[] m_OnTargetEnable = Array.Empty<Reference<TriggerAction>>();
+        }
+        public sealed class OnDisableOptions : PropertyBlock<OnDisableOptions>
+        {
+            [Space]
+            [JsonProperty(Order = 0, PropertyName = "OnDisableConst")]
+            public ConstActionReference[] m_OnDisableConst = Array.Empty<ConstActionReference>();
+            [JsonProperty(Order = 1, PropertyName = "OnDisable")]
+            public Reference<InstanceAction>[] m_OnDisable = Array.Empty<Reference<InstanceAction>>();
+            [JsonProperty(Order = 2, PropertyName = "OnTargetDisable")]
+            [Description("대상은 현재 턴의 엔티티입니다.")]
+            public Reference<TriggerAction>[] m_OnTargetDisable = Array.Empty<Reference<TriggerAction>>();
+        }
+        public sealed class OnExecuteOptions : PropertyBlock<OnExecuteOptions>
+        {
+            [Space]
+            [Description(
+                "true 일 경우, 이 버튼이 실제로 동작하고 난 직후 비활성화 됩니다.")]
+            [JsonProperty(Order = 0, PropertyName = "DisableOnExecute")]
+            public bool m_DisableOnExecute = false;
 
+            [Space]
+            [JsonProperty(Order = 1, PropertyName = "OnExecuteConst")]
+            public ConstActionReference[] m_OnExecuteConst = Array.Empty<ConstActionReference>();
+            [JsonProperty(Order = 2, PropertyName = "OnExecute")]
+            public Reference<InstanceAction>[] m_OnExecute = Array.Empty<Reference<InstanceAction>>();
+            [JsonProperty(Order = 3, PropertyName = "OnTargetExecute")]
+            [Description("대상은 현재 턴의 엔티티입니다.")]
+            public Reference<TriggerAction>[] m_OnTargetExecute = Array.Empty<Reference<TriggerAction>>();
+        }
+
+        [Description("왼쪽으로부터 몇번째 순서에 위치할지 결정합니다.")]
         [JsonProperty(Order = 0, PropertyName = "Order")]
         public int m_Order;
         [JsonProperty(Order = 1, PropertyName = "Generals")]
         public GeneralOptions m_Generals = new GeneralOptions();
 
+        [Space]
         [JsonProperty(Order = 2, PropertyName = "VisibleOptions")]
-        public Reference<TriggerPredicateAction>[] m_VisibleOptions = Array.Empty<Reference<TriggerPredicateAction>>();
-        [JsonProperty(Order = 3, PropertyName = "ConstVisibleOptions")]
-        public ConstActionReference<bool>[] m_ConstVisibleOptions = Array.Empty<ConstActionReference<bool>>();
+        public VisibleOptions m_VisibleOptions = new VisibleOptions();
 
         [Space]
-        [JsonProperty(Order = 4, PropertyName = "OnEnableConst")]
-        public ConstActionReference[] m_OnEnableConst = Array.Empty<ConstActionReference>();
-        [JsonProperty(Order = 5, PropertyName = "OnEnable")]
-        public Reference<InstanceAction>[] m_OnEnable = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnTargetEnable")]
-        [Description("대상은 현재 턴의 엔티티입니다.")]
-        public Reference<TriggerAction>[] m_OnTargetEnable = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 4, PropertyName = "OnEnableOptions")]
+        public OnEnableOptions m_OnEnableOptions = new OnEnableOptions();
 
         [Space]
-        [JsonProperty(Order = 7, PropertyName = "OnDisableConst")]
-        public ConstActionReference[] m_OnDisableConst = Array.Empty<ConstActionReference>();
-        [JsonProperty(Order = 8, PropertyName = "OnDisable")]
-        public Reference<InstanceAction>[] m_OnDisable = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 9, PropertyName = "OnTargetDisable")]
-        [Description("대상은 현재 턴의 엔티티입니다.")]
-        public Reference<TriggerAction>[] m_OnTargetDisable = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 7, PropertyName = "OnDisableOptions")]
+        public OnDisableOptions m_OnDisableOptions = new OnDisableOptions();
 
         [Space]
-        [JsonProperty(Order = 10, PropertyName = "OnExecuteConst")]
-        public ConstActionReference[] m_OnExecuteConst = Array.Empty<ConstActionReference>();
-        [JsonProperty(Order = 11, PropertyName = "OnExecute")]
-        public Reference<InstanceAction>[] m_OnExecute = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 12, PropertyName = "OnTargetExecute")]
-        [Description("대상은 현재 턴의 엔티티입니다.")]
-        public Reference<TriggerAction>[] m_OnTargetExecute = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 13, PropertyName = "DisableOnExecute")]
-        public bool m_DisableOnExecute = false;
+        [JsonProperty(Order = 10, PropertyName = "OnExecuteOptions")]
+        public OnExecuteOptions m_OnExecuteOptions = new OnExecuteOptions();
 
         int IComparable<TRPGShortcutData>.CompareTo(TRPGShortcutData other)
         {

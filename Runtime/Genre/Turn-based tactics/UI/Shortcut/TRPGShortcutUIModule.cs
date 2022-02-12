@@ -20,6 +20,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Render;
@@ -88,6 +89,8 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+            m_EventSystem.RemoveEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
+            m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
         }
         protected override void OnDispose()
         {
@@ -116,6 +119,8 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
+            m_EventSystem.AddEvent<OnTurnStateChangedEvent>(OnTurnStateChangedEventHandler);
+            m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
         }
 
         #endregion
@@ -154,7 +159,34 @@ namespace Syadeu.Presentation.TurnTable.UI
         
         private void OnTurnTableStateChangedEventHandler(OnTurnTableStateChangedEvent ev)
         {
-            SetVisible(ev.Enabled);
+            //SetVisible(ev.Enabled);
+            if (!ev.Enabled)
+            {
+                SetVisible(false);
+            }
+        }
+        private void OnTurnStateChangedEventHandler(OnTurnStateChangedEvent ev)
+        {
+            if (ev.Entity.GetComponentReadOnly<ActorFactionComponent>().FactionType != FactionType.Player)
+            {
+                return;
+            }
+
+            if (ev.State == OnTurnStateChangedEvent.TurnState.Start)
+            {
+                m_Shortcuts.UpdateShortcuts(ev.Entity, TRPGShortcutDataProcessor.Data);
+                SetVisible(true);
+
+                return;
+            }
+            else if (ev.State == OnTurnStateChangedEvent.TurnState.End)
+            {
+                SetVisible(false);
+            }
+        }
+        private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
+        {
+            SetVisible(false);
         }
 
         #endregion
@@ -166,9 +198,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_CurrentShortcut = shortcut;
             var data = m_CurrentShortcut.GetObject();
 
-            data.m_OnEnableConst.Execute();
-            data.m_OnEnable.Execute();
-            data.m_OnTargetEnable.Execute(m_TurnTableSystem.CurrentTurn);
+            data.m_OnEnableOptions.m_OnEnableConst.Execute();
+            data.m_OnEnableOptions.m_OnEnable.Execute();
+            data.m_OnEnableOptions.m_OnTargetEnable.Execute(m_TurnTableSystem.CurrentTurn);
 
             m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(shortcut, true));
         }
@@ -188,9 +220,9 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             var data = m_CurrentShortcut.GetObject();
 
-            data.m_OnDisableConst.Execute();
-            data.m_OnDisable.Execute();
-            data.m_OnTargetDisable.Execute(m_TurnTableSystem.CurrentTurn);
+            data.m_OnDisableOptions.m_OnDisableConst.Execute();
+            data.m_OnDisableOptions.m_OnDisable.Execute();
+            data.m_OnDisableOptions.m_OnTargetDisable.Execute(m_TurnTableSystem.CurrentTurn);
 
             m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(m_CurrentShortcut, false));
 
@@ -200,19 +232,20 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         public void ExecuteCurrentShortcut()
         {
+#if DEBUG_MODE
             if (m_CurrentShortcut.IsEmpty())
             {
                 "something is wrong..".ToLog();
                 return;
             }
-
+#endif
             var data = m_CurrentShortcut.GetObject();
 
-            data.m_OnExecute.Execute();
-            data.m_OnExecuteConst.Execute();
-            data.m_OnTargetExecute.Execute(m_TurnTableSystem.CurrentTurn);
+            data.m_OnExecuteOptions.m_OnExecute.Execute();
+            data.m_OnExecuteOptions.m_OnExecuteConst.Execute();
+            data.m_OnExecuteOptions.m_OnTargetExecute.Execute(m_TurnTableSystem.CurrentTurn);
 
-            if (data.m_DisableOnExecute)
+            if (data.m_OnExecuteOptions.m_DisableOnExecute)
             {
                 DisableCurrentShortcut();
             }
@@ -255,6 +288,34 @@ namespace Syadeu.Presentation.TurnTable.UI
             {
                 m_CanvasGroup.blocksRaycasts = visible;
                 m_CanvasGroup.alpha = visible ? 1 : 0;
+            }
+            public void UpdateShortcuts(Entity<IObject> entity, IReadOnlyList<TRPGShortcutData> data)
+            {
+                for (int i = 0; i < data.Count; i++)
+                {
+                    var options = data[i].m_VisibleOptions;
+
+                    if (!options.m_VisibleOptions.Execute(entity, out bool predicate) ||
+                        !predicate)
+                    {
+                        m_Shortcuts[i].SetVisible(false);
+                        continue;
+                    }
+
+                    bool constResult = false;
+                    for (int j = 0; j < options.m_ConstVisibleOptions.Length && !constResult; j++)
+                    {
+                        constResult |= !options.m_ConstVisibleOptions[j].Execute();
+                    }
+
+                    if (constResult)
+                    {
+                        m_Shortcuts[i].SetVisible(false);
+                        continue;
+                    }
+
+                    m_Shortcuts[i].SetVisible(true);
+                }
             }
 
             public void InitializeShortcuts(ScreenCanvasSystem system, IReadOnlyList<TRPGShortcutData> data)

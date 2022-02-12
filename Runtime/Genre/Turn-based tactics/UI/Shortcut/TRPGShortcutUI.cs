@@ -23,8 +23,8 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         [SerializeField] private TextMeshProUGUI m_ShortcutIndexText;
 
-        private bool m_IsHide = false;
-        private bool m_Enabled = true;
+        //private bool m_IsHide = false;
+        //private bool m_Enabled = true;
 
         private Button m_Button;
         private TRPGCanvasUISystem m_CanvasUISystem;
@@ -32,24 +32,25 @@ namespace Syadeu.Presentation.TurnTable.UI
         private int m_Index;
 
         //public ShortcutType ShortcutType => m_ShortcutType;
-        public bool Hide 
-        { 
-            get => m_IsHide;
-            set
-            {
-                m_IsHide = value;
-                gameObject.SetActive(!m_IsHide);
-            }
-        }
-        public bool Enable
-        {
-            get => m_Enabled;
-            set
-            {
-                m_Enabled = value;
-                m_Button.interactable = value;
-            }
-        }
+        //public bool Hide 
+        //{ 
+        //    get => m_IsHide;
+        //    set
+        //    {
+        //        m_IsHide = value;
+        //        gameObject.SetActive(!m_IsHide);
+        //    }
+        //}
+        //public bool Enable
+        //{
+        //    get => m_Enabled;
+        //    set
+        //    {
+        //        m_Enabled = value;
+        //        m_Button.interactable = value;
+        //        gameObject.SetActive(value);
+        //    }
+        //}
         public int Index => m_Index + 1;
         public FixedReference<TRPGShortcutData> Data => m_Data;
 
@@ -134,6 +135,10 @@ namespace Syadeu.Presentation.TurnTable.UI
             tr.anchorMax = new Vector2(.5f, 1);
             tr.pivot = new Vector2(.5f, 1);
         }
+        public void SetVisible(bool visible)
+        {
+            gameObject.SetActive(visible);
+        }
 
         //private IEnumerator Start()
         //{
@@ -172,8 +177,6 @@ namespace Syadeu.Presentation.TurnTable.UI
         }
         private void Click()
         {
-            if (!m_Enabled || m_IsHide) return;
-
             m_EventSystem.PostEvent(TRPGShortcutUIPressedEvent.GetEvent(this, m_Data));
         }
 
