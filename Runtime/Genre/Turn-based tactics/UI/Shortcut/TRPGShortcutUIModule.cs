@@ -198,8 +198,8 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_CurrentShortcut = shortcut;
             var data = m_CurrentShortcut.GetObject();
 
-            data.m_OnEnableOptions.m_OnEnableConst.Execute();
             data.m_OnEnableOptions.m_OnEnable.Execute();
+            data.m_OnEnableOptions.m_OnEnableConst.Execute(m_TurnTableSystem.CurrentTurn.Idx);
             data.m_OnEnableOptions.m_OnTargetEnable.Execute(m_TurnTableSystem.CurrentTurn);
 
             m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(shortcut, true));
@@ -220,8 +220,8 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             var data = m_CurrentShortcut.GetObject();
 
-            data.m_OnDisableOptions.m_OnDisableConst.Execute();
             data.m_OnDisableOptions.m_OnDisable.Execute();
+            data.m_OnDisableOptions.m_OnDisableConst.Execute(m_TurnTableSystem.CurrentTurn.Idx);
             data.m_OnDisableOptions.m_OnTargetDisable.Execute(m_TurnTableSystem.CurrentTurn);
 
             m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(m_CurrentShortcut, false));
@@ -242,7 +242,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             var data = m_CurrentShortcut.GetObject();
 
             data.m_OnExecuteOptions.m_OnExecute.Execute();
-            data.m_OnExecuteOptions.m_OnExecuteConst.Execute();
+            data.m_OnExecuteOptions.m_OnExecuteConst.Execute(m_TurnTableSystem.CurrentTurn.Idx);
             data.m_OnExecuteOptions.m_OnTargetExecute.Execute(m_TurnTableSystem.CurrentTurn);
 
             if (data.m_OnExecuteOptions.m_DisableOnExecute)
@@ -305,7 +305,7 @@ namespace Syadeu.Presentation.TurnTable.UI
                     bool constResult = false;
                     for (int j = 0; j < options.m_ConstVisibleOptions.Length && !constResult; j++)
                     {
-                        constResult |= !options.m_ConstVisibleOptions[j].Execute();
+                        constResult |= !options.m_ConstVisibleOptions[j].Execute(entity.Idx);
                     }
 
                     if (constResult)

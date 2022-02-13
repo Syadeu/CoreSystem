@@ -1,4 +1,5 @@
 ﻿using Syadeu;
+using Syadeu.Collections;
 using Syadeu.Internal;
 using System;
 using System.Collections;
@@ -17,12 +18,13 @@ namespace SyadeuEditor.Utilities
         private Action<T> m_Setter;
         private Func<T> m_Getter;
 
-        private readonly Attribute[] m_Attributes;
+        private readonly Attribute[] m_FieldAttributes;
         private readonly bool m_Disable;
 
         public override sealed object TargetObject => m_TargetObject;
         public override string Name { get; }
         public Type DeclaredType => m_DelaredType;
+        public Attribute[] Attributes => m_FieldAttributes;
 
         public Func<T> Getter => m_Getter;
         public Action<T> Setter => m_Setter;
@@ -34,7 +36,7 @@ namespace SyadeuEditor.Utilities
             m_Setter = setter;
             m_Getter = getter;
 
-            m_Attributes = Array.Empty<Attribute>();
+            m_FieldAttributes = Array.Empty<Attribute>();
             m_Disable = false;
 
             Name = string.Empty;
@@ -47,7 +49,7 @@ namespace SyadeuEditor.Utilities
             m_Setter = other => list[index] = other;
             m_Getter = () => list[index] == null ? default(T) : (T)list[index];
 
-            m_Attributes = Array.Empty<Attribute>();
+            m_FieldAttributes = Array.Empty<Attribute>();
             m_Disable = false;
 
             Name = string.Empty;
@@ -94,7 +96,7 @@ namespace SyadeuEditor.Utilities
             }
             else throw new NotImplementedException();
 
-            m_Attributes = memberInfo.GetCustomAttributes().ToArray();
+            m_FieldAttributes = memberInfo.GetCustomAttributes().ToArray();
             m_Disable = memberInfo.GetCustomAttribute<ReflectionSealedViewAttribute>() != null;
 
             Name = ReflectionHelper.SerializeMemberInfoName(memberInfo);
@@ -147,5 +149,18 @@ namespace SyadeuEditor.Utilities
             }
         }
         public abstract T Draw(T currentValue);
+
+        protected TAttribute GetFieldAttribute<TAttribute>() where TAttribute : Attribute
+        {
+            for (int i = 0; i < m_FieldAttributes.Length; i++)
+            {
+                if (TypeHelper.TypeOf<TAttribute>.Type.IsAssignableFrom(m_FieldAttributes[i].GetType()))
+                {
+                    return (TAttribute)m_FieldAttributes[i];
+                }
+            }
+
+            return null;
+        }
     }
 }

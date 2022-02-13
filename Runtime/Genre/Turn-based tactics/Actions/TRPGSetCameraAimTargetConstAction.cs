@@ -3,6 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Components;
@@ -15,7 +16,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     [DisplayName("Camera/TRPG/Set Camera Aim Target")]
     [Guid("5416C26F-4188-4FE1-94AC-874BDEB4363E")]
-    internal sealed class TRPGSetCameraAimTargetConstAction : ConstAction<int>
+    internal sealed class TRPGSetCameraAimTargetConstAction : ConstTriggerAction<int>
     {
         [JsonIgnore]
         private RenderSystem m_RenderSystem;
@@ -44,41 +45,32 @@ namespace Syadeu.Presentation.TurnTable
             m_TRPGInputSystem = other;
         }
 
-        protected override int Execute()
+        protected override int Execute(InstanceID entity)
         {
             if (m_TRPGCameraMovement == null)
             {
                 m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
             }
 
-            if (!PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Action,
-                    $"Is not ingame.");
-
-                return 0;
-            }
-
-            TRPGTurnTableSystem system = PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System;
-            ActorControllerComponent ctr = system.CurrentTurn.GetComponent<ActorControllerComponent>();
-            if (!system.CurrentTurn.HasComponent<TRPGActorAttackComponent>())
+            ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
+            if (!entity.HasComponent<TRPGActorAttackComponent>())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({system.CurrentTurn.RawName}) doesn\'t have {nameof(TRPGActorAttackComponent)}.");
+                    $"Entity({entity.GetEntity().Target.Name}) doesn\'t have {nameof(TRPGActorAttackComponent)}.");
 
                 return 0;
             }
 
             Entity<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
             var targets = attProvider.Target.GetTargetsInRange();
-            var tr = system.CurrentTurn.transform;
+            var tr = entity.GetTransform();
 
             $"{targets.Length} found".ToLog();
             m_TRPGInputSystem.SetIngame_TargetAim();
 
             if (targets.Length == 0) return 0;
 
-            ref TRPGActorAttackComponent attackComponent = ref system.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
+            ref TRPGActorAttackComponent attackComponent = ref entity.GetComponent<TRPGActorAttackComponent>();
             if (attackComponent.GetTarget().IsEmpty())
             {
                 attackComponent.SetTarget(0);

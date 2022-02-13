@@ -123,10 +123,10 @@ namespace SyadeuEditor.Presentation
                     }
                 }
             }
-
+            
             if (clicked)
             {
-                DrawSelectionWindow((t) =>
+                DrawSelectionWindow(GetFieldAttribute<ConstActionOptionsAttribute>(), (t) =>
                 {
                     var ctor = TypeHelper.GetConstructorInfo(
                         DeclaredType, TypeHelper.TypeOf<Guid>.Type, TypeHelper.TypeOf<IEnumerable<object>>.Type);
@@ -149,7 +149,7 @@ namespace SyadeuEditor.Presentation
             return currentValue;
         }
 
-        static void DrawSelectionWindow(Action<Type> setter, Type targetType)
+        static void DrawSelectionWindow(ConstActionOptionsAttribute option, Action<Type> setter, Type targetType)
         {
             Rect rect = GUILayoutUtility.GetRect(150, 300);
             rect.position = Event.current.mousePosition;
@@ -157,12 +157,17 @@ namespace SyadeuEditor.Presentation
             Type[] sort;
             if (targetType != null)
             {
-                sort = ConstActionUtilities.Types
-                    .Where(t => t.BaseType.GenericTypeArguments[0].Equals(targetType)).ToArray();
+                var temp = ConstActionUtilities.Types
+                    .Where(t => t.BaseType.GenericTypeArguments[0].Equals(targetType));
+
+                temp = SortOptions(temp, option);
+
+                sort = temp.ToArray();
             }
             else
             {
-                sort = ConstActionUtilities.Types;
+                var temp = SortOptions(ConstActionUtilities.Types, option);
+                sort = temp.ToArray();
             }
 
             PopupWindow.Show(rect, SelectorPopup<Type, Type>.GetWindow(
@@ -175,6 +180,20 @@ namespace SyadeuEditor.Presentation
                 noneValue: null,
                 other => TypeHelper.ToString(other)
                 ));
+        }
+        static IEnumerable<Type> SortOptions(IEnumerable<Type> arr, ConstActionOptionsAttribute option)
+        {
+            if (option == null)
+            {
+                return arr;
+            }
+
+            if (option.TriggerActionOnly)
+            {
+                arr = arr.Where(t => TypeHelper.TypeOf<IConstTriggerAction>.Type.IsAssignableFrom(t));
+            }
+
+            return arr;
         }
     }
 }

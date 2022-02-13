@@ -22,9 +22,7 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using System;
 using System.ComponentModel;
-using Unity.Collections;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -57,7 +55,6 @@ namespace Syadeu.Presentation.TurnTable
             "true 일 경우, 파괴 불가능한 오브젝트로 선언되며, 어떠한 환경요소에도 영향받지 않는다.")]
         [JsonProperty(Order = 0, PropertyName = "Immutable")]
         internal bool m_Immutable = false;
-        [ReflectionSealedView]
         [JsonProperty(Order = 1, PropertyName = "DimensionInfomations")]
         internal DimensionInfo[] m_DimensionInfomations = new DimensionInfo[4]
         {
@@ -84,54 +81,6 @@ namespace Syadeu.Presentation.TurnTable
                 };
             }
             component.dimensions = dimensions;
-
-            "asdasd".ToLog();
         }
-    }
-
-    public struct TRPGGridCoverComponent : IEntityComponent
-    {
-        [BurstCompatible]
-        public struct Dimension
-        {
-            public Direction direction;
-            public int forwardLength;
-        }
-        [BurstCompatible]
-        public struct Dimension4
-        {
-            public Dimension
-                a, b, c, d;
-
-            public Dimension this[Direction dir]
-            {
-                get
-                {
-                    return dir switch
-                    {
-                        Direction.Left => a,
-                        Direction.Right => b,
-                        Direction.Forward => c,
-                        Direction.Backward => d,
-                        _ => throw new IndexOutOfRangeException($"{dir}"),
-                    };
-                }
-                set
-                {
-                    switch (dir)
-                    {
-                        case Direction.Left: a = value; break;
-                        case Direction.Right: b = value; break;
-                        case Direction.Forward: c = value; break;
-                        case Direction.Backward: d = value; break;
-                        default:
-                            throw new IndexOutOfRangeException($"{dir}");
-                    }
-                }
-            }
-        }
-
-        public bool immutable;
-        public Dimension4 dimensions;
     }
 }

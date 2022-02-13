@@ -3,20 +3,21 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [DisplayName("Grid/TRPG/Draw UI Cell For Current Turn")]
+    [DisplayName("Grid/TRPG/Draw UI Cell At Target")]
     [Guid("D0E18103-0E86-4ECC-BAC2-847EEDD343F4")]
-    internal sealed class TRPGDrawUICellConstAction : ConstAction<int>
+    internal sealed class TRPGDrawUICellConstAction : ConstTriggerAction<int>
     {
         [JsonProperty(Order = 0, PropertyName = "Enable")]
         public bool m_Enable = false;
 
-        protected override int Execute()
+        protected override int Execute(InstanceID entity)
         {
             if (!PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.IsValid())
             {
@@ -29,9 +30,7 @@ namespace Syadeu.Presentation.TurnTable
             var gridSystem = PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.System;
             if (m_Enable)
             {
-                var turntable = PresentationSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>.System;
-
-                gridSystem.DrawUICell(turntable.CurrentTurn);
+                gridSystem.DrawUICell(entity);
                 return 0;
             }
 

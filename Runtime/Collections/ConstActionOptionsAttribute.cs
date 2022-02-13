@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Newtonsoft.Json;
-using Syadeu.Collections.Converters;
 using System;
 
 namespace Syadeu.Collections
 {
-    /// <summary>
-    /// <see cref="IConstAction"/> 을 참조할 수 있는 레퍼런스 입니다.
-    /// </summary>
-    /// <remarks>
-    /// 필드에 <seealso cref="ConstActionOptionsAttribute"/> 를 추가하여 추가적인 설정을 할 수 있습니다.
-    /// </remarks>
-    [JsonConverter(typeof(ConstActionReferenceJsonConverter))]
-    public interface IConstActionReference : IEmpty
+    public sealed class ConstActionOptionsAttribute : Attribute
     {
-        [JsonIgnore]
-        Guid Guid { get; }
-        [JsonIgnore]
-        object[] Arguments { get; }
-
-        void SetArguments(params object[] args);
+        /// <summary>
+        /// <see langword="true"/> 일 경우, <see cref="IConstTriggerAction"/> 만 허용합니다.
+        /// </summary>
+        public bool TriggerActionOnly = false;
     }
 }

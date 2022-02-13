@@ -20,6 +20,8 @@ using System.Linq;
 
 namespace Syadeu.Collections
 {
+    /// <inheritdoc cref="IConstActionReference"/>
+    /// <typeparam name="TValue">이 액션이 수행했을 때 반환하는 값의 타입입니다.</typeparam>
     public sealed class ConstActionReference<TValue> : IConstActionReference
     {
         [JsonProperty(Order = 0, PropertyName = "Guid")]
@@ -48,6 +50,7 @@ namespace Syadeu.Collections
         public bool IsEmpty() => m_Guid.Equals(Guid.Empty);
         public void SetArguments(params object[] args) => m_Arguments = args;
     }
+    /// <inheritdoc cref="IConstActionReference"/>
     public sealed class ConstActionReference : IConstActionReference
     {
         [JsonProperty(Order = 0, PropertyName = "Guid")]
