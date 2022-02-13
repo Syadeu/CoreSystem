@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
 using Syadeu.Mono;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -26,11 +27,16 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using Syadeu.Presentation.TurnTable.UI;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -48,17 +54,23 @@ namespace Syadeu.Presentation.TurnTable
         //private LineRenderer 
         //    m_GridOutlineRenderer, m_GridPathlineRenderer;
 
-        private NativeList<int3> 
-            m_GridTempMoveables, m_GridTempOutcoasts;
+        private NativeList<GridIndex> 
+            m_GridTempCoverables,
+            m_GridTempMoveables, 
+            m_GridTempOutcoasts;
         private NativeList<float3> 
             m_GridTempOutlines, m_GridTempPathlines;
 
-        //private ComputeBuffer m_GridOutlineBuffer;
-        //private Mesh m_OutlineMesh;
+        private GridIndex[] m_CoverableIndices;
+        private Direction[] m_CoverableDirections;
+        private int m_CoverableLength;
 
         private bool 
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
+
+        private ObjectPool<GameObject> m_CoverableWallUIObjectPool;
+        private List<GameObject> m_CoverableWallUIObjects = new List<GameObject>();
 
         private Unity.Profiling.ProfilerMarker
             m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
@@ -72,66 +84,80 @@ namespace Syadeu.Presentation.TurnTable
         public bool IsDrawingUIGrid => m_IsDrawingGrids;
         public bool ISDrawingUIPath => m_IsDrawingPaths;
 
-        public NativeArray<int3>.ReadOnly CurrentMoveableTiles => m_GridTempMoveables.AsArray().AsReadOnly();
+        public NativeArray<GridIndex>.ReadOnly CurrentMoveableTiles => m_GridTempMoveables.AsArray().AsReadOnly();
         public NativeArray<float3>.ReadOnly CurrentMoveableOutline => m_GridTempOutlines.AsArray().AsReadOnly();
         public NativeArray<float3>.ReadOnly CurrentPathline => m_GridTempPathlines.AsArray().AsReadOnly();
+
+        public int CoverableLength => m_CoverableLength;
+        public IReadOnlyList<GridIndex> CoverableIndices => m_CoverableIndices;
+        public IReadOnlyList<Direction> CoverableDirections => m_CoverableDirections;
 
         private InputSystem m_InputSystem;
         private WorldGridSystem m_GridSystem;
         private RenderSystem m_RenderSystem;
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
+        private WorldCanvasSystem m_WorldCanvasSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGSelectionSystem m_SelectionSystem;
+        private TRPGCanvasUISystem m_TRPGCanvasUISystem;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
+            #region Old
             //m_GridOutlineBuffer = new ComputeBuffer(128, 12, ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
 
-//            m_OutlineMesh = new Mesh();
+            //            m_OutlineMesh = new Mesh();
 
-//            {
-//                m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
-//                m_GridOutlineRenderer.numCornerVertices = 0;
-//                m_GridOutlineRenderer.numCapVertices = 1;
-//                m_GridOutlineRenderer.alignment = LineAlignment.View;
-//                m_GridOutlineRenderer.textureMode = LineTextureMode.Tile;
+            //            {
+            //                m_GridOutlineRenderer = CreateGameObject("Grid Outline Renderer", true).AddComponent<LineRenderer>();
+            //                m_GridOutlineRenderer.numCornerVertices = 0;
+            //                m_GridOutlineRenderer.numCapVertices = 1;
+            //                m_GridOutlineRenderer.alignment = LineAlignment.View;
+            //                m_GridOutlineRenderer.textureMode = LineTextureMode.Tile;
 
-//                m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            //                m_GridOutlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
-//                m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
-//                m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
+            //                m_GridOutlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridLineWidth;
+            //                m_GridOutlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridLineMaterial;
 
-//                m_GridOutlineRenderer.loop = true;
-//                m_GridOutlineRenderer.positionCount = 0;
+            //                m_GridOutlineRenderer.loop = true;
+            //                m_GridOutlineRenderer.positionCount = 0;
 
-//#if CORESYSTEM_HDRP
-//                m_GridOutlineRenderer.gameObject.layer = RenderSystem.ProjectionLayer;
-//#endif
-//            }
+            //#if CORESYSTEM_HDRP
+            //                m_GridOutlineRenderer.gameObject.layer = RenderSystem.ProjectionLayer;
+            //#endif
+            //            }
 
-//            {
-//                m_GridPathlineRenderer = CreateGameObject("Grid Pathline Renderer", true).AddComponent<LineRenderer>();
-//                m_GridPathlineRenderer.numCornerVertices = 1;
-//                m_GridPathlineRenderer.numCapVertices = 1;
-//                m_GridPathlineRenderer.alignment = LineAlignment.View;
-//                m_GridPathlineRenderer.textureMode = LineTextureMode.Tile;
-//                m_GridPathlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-//                m_GridPathlineRenderer.receiveShadows = false;
+            //            {
+            //                m_GridPathlineRenderer = CreateGameObject("Grid Pathline Renderer", true).AddComponent<LineRenderer>();
+            //                m_GridPathlineRenderer.numCornerVertices = 1;
+            //                m_GridPathlineRenderer.numCapVertices = 1;
+            //                m_GridPathlineRenderer.alignment = LineAlignment.View;
+            //                m_GridPathlineRenderer.textureMode = LineTextureMode.Tile;
+            //                m_GridPathlineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            //                m_GridPathlineRenderer.receiveShadows = false;
 
-//                m_GridPathlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
-//                m_GridPathlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
-//                m_GridPathlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridPathLineMaterial;
+            //                m_GridPathlineRenderer.startWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
+            //                m_GridPathlineRenderer.endWidth = CoreSystemSettings.Instance.m_TRPGGridPathLineWidth;
+            //                m_GridPathlineRenderer.material = CoreSystemSettings.Instance.m_TRPGGridPathLineMaterial;
 
-//                m_GridPathlineRenderer.loop = false;
-//                m_GridPathlineRenderer.positionCount = 0;
-//            }
+            //                m_GridPathlineRenderer.loop = false;
+            //                m_GridPathlineRenderer.positionCount = 0;
+            //            }
+            #endregion
 
-            m_GridTempMoveables = new NativeList<int3>(512, Allocator.Persistent);
-            m_GridTempOutcoasts = new NativeList<int3>(512, Allocator.Persistent);
+            m_CoverableWallUIObjectPool = new ObjectPool<GameObject>(
+                CoverableWallUIObjectPoolFactory, CoverableWallUIObjectPoolOnGet, 
+                CoverableWallUIObjectPoolOnReserve, null);
+            TRPGSettings.Instance.m_CoverableSprite.LoadAsset();
+
+            m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
+            m_GridTempMoveables = new NativeList<GridIndex>(512, Allocator.Persistent);
+            m_GridTempOutcoasts = new NativeList<GridIndex>(512, Allocator.Persistent);
             m_GridTempOutlines = new NativeList<float3>(512, Allocator.Persistent);
             m_GridTempPathlines = new NativeList<float3>(512, Allocator.Persistent);
 
@@ -140,9 +166,11 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
 
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGSelectionSystem>(Bind);
+            RequestSystem<TRPGIngameSystemGroup, TRPGCanvasUISystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -152,10 +180,11 @@ namespace Syadeu.Presentation.TurnTable
             //Destroy(m_GridPathlineRenderer.gameObject);
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
-            m_EventSystem.RemoveEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
+            m_EventSystem.RemoveEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
         }
         protected override void OnDispose()
         {
+            m_GridTempCoverables.Dispose();
             m_GridTempMoveables.Dispose();
             m_GridTempOutcoasts.Dispose();
             m_GridTempOutlines.Dispose();
@@ -166,9 +195,30 @@ namespace Syadeu.Presentation.TurnTable
             m_RenderSystem = null;
             m_NavMeshSystem = null;
             m_EventSystem = null;
+            m_WorldCanvasSystem = null;
 
             m_TurnTableSystem = null;
             m_SelectionSystem = null;
+            m_TRPGCanvasUISystem = null;
+        }
+
+        private GameObject CoverableWallUIObjectPoolFactory()
+        {
+            GameObject obj = m_WorldCanvasSystem.CreateUIObject();
+
+            obj.AddComponent<CanvasGroup>();
+            obj.AddComponent<Image>();
+
+            return obj;
+        }
+        private static void CoverableWallUIObjectPoolOnGet(GameObject obj)
+        {
+            obj.SetActive(true);
+        }
+        private static void CoverableWallUIObjectPoolOnReserve(GameObject obj)
+        {
+            obj.GetComponent<Image>().sprite = null;
+            obj.SetActive(false);
         }
 
         #region Binds
@@ -195,7 +245,11 @@ namespace Syadeu.Presentation.TurnTable
             m_EventSystem = other;
 
             m_EventSystem.AddEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
-            m_EventSystem.AddEvent<OnGridCellCursorOverrapEvent>(OnGridCellCursorOverrapEventHandler);
+            m_EventSystem.AddEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
+        }
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
         }
 
         private void Bind(TRPGTurnTableSystem other)
@@ -206,6 +260,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_SelectionSystem = other;
         }
+        private void Bind(TRPGCanvasUISystem other)
+        {
+            m_TRPGCanvasUISystem = other;
+        }
 
         #endregion
 
@@ -213,33 +271,33 @@ namespace Syadeu.Presentation.TurnTable
 
         private void OnShortcutStateChangedEventHandler(OnShortcutStateChangedEvent ev)
         {
-            switch (ev.ShortcutType)
-            {
-                default:
-                case UI.ShortcutType.None:
-                    break;
-                case UI.ShortcutType.Move:
-                    m_GridSystem.EnableCursorObserve(ev.Enabled);
-                    if (ev.Enabled)
-                    {
-                        DrawUICell(m_TurnTableSystem.CurrentTurn);
-                    }
-                    else
-                    {
-                        ClearUICell();
-                        ClearUIPath();
-                    }
+            //switch (ev.ShortcutType)
+            //{
+            //    default:
+            //    case UI.ShortcutType.None:
+            //        break;
+            //    case UI.ShortcutType.Move:
+            //        m_GridSystem.EnableCursorObserve(ev.Enabled);
+            //        if (ev.Enabled)
+            //        {
+            //            DrawUICell(m_TurnTableSystem.CurrentTurn);
+            //        }
+            //        else
+            //        {
+            //            ClearUICell();
+            //            ClearUIPath();
+            //        }
 
-                    break;
-                case UI.ShortcutType.Attack:
-                    break;
-            }
+            //        break;
+            //    case UI.ShortcutType.Attack:
+            //        break;
+            //}
         }
-        private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverrapEvent ev)
+        private void OnGridCellCursorOverrapEventHandler(OnGridCellCursorOverlapEvent ev)
         {
             var grid = m_TurnTableSystem.CurrentTurn.GetComponent<GridComponent>();
 
-            if (!m_GridTempMoveables.Contains(ev.Index.Location))
+            if (!m_GridTempMoveables.Contains(ev.Index))
             {
                 ClearUIPath();
                 return;
@@ -249,12 +307,14 @@ namespace Syadeu.Presentation.TurnTable
         }
         private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
         {
-            if (!m_GridTempMoveables.Contains(ev.Index.Location))
+            if (!m_GridTempMoveables.Contains(ev.Index))
             {
+                "something is wrong..".ToLogError();
                 return;
             }
 
             MoveToCell(m_TurnTableSystem.CurrentTurn.Idx, ev.Index);
+            m_TRPGCanvasUISystem.GetModule<TRPGShortcutUIModule>().ExecuteCurrentShortcut();
         }
 
         private bool m_DrawMesh = false;
@@ -275,8 +335,38 @@ namespace Syadeu.Presentation.TurnTable
 
         #region Math
 
+        public IEnumerator<InstanceID> GetTargetsWithin(InstanceID entity, int range)
+        {
+            if (!entity.HasComponent<GridComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Entity({entity.GetEntity().Name}) doesn\'t have any {nameof(GridComponent)}.");
+
+                yield break;
+            }
+
+            GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
+            TRPGActorAttackComponent att = entity.GetComponentReadOnly<TRPGActorAttackComponent>();
+
+            foreach (var index in m_GridSystem.GetRange(gridSize.Indices[0], new int3(range, 0, range)))
+            {
+                if (m_GridSystem.TryGetEntitiesAt(index, out var enumerator))
+                {
+                    foreach (var item in enumerator)
+                    {
+                        if (item.Equals(entity) || !item.IsActorEntity()) continue;
+                        else if (!item.IsEnemy(entity)) continue;
+                        // TODO : 임시코드
+                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
+
+                        yield return item;
+                    }
+                }
+            }
+        }
+
         private void GetMoveablePositions(in InstanceID entity,
-            ref NativeList<int3> gridPositions)
+            ref NativeList<GridIndex> gridPositions)
         {
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
@@ -298,7 +388,7 @@ namespace Syadeu.Presentation.TurnTable
                     continue;
                 }
 
-                gridPositions.Add(item.Location);
+                gridPositions.Add(item);
             }
         }
         public void GetMoveablePositions(in InstanceID entity,
@@ -307,142 +397,161 @@ namespace Syadeu.Presentation.TurnTable
             var turnPlayer = entity.GetComponent<TurnPlayerComponent>();
             var gridsize = entity.GetComponent<GridComponent>();
 
-            FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
+            //FixedList4096Bytes<GridIndex> list = new FixedList4096Bytes<GridIndex>();
             // TODO : Temp code
-            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint), ref list);
+            m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint));
 
             gridPositions.Clear();
-            for (int i = 0; i < list.Length; i++)
+            foreach (var item in m_GridSystem.GetRange(in entity, new int3(turnPlayer.ActionPoint, 0, turnPlayer.ActionPoint)))
             {
-                if (m_GridSystem.HasEntityAt(list[i]))
+                if (m_GridSystem.HasEntityAt(item))
                 {
                     continue;
                 }
-                else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+                else if (!m_GridSystem.HasPath(gridsize.Indices[0], item, out int pathCount) ||
                     pathCount > turnPlayer.ActionPoint)
                 {
                     continue;
                 }
 
-                gridPositions.Add((list[i]));
-                //$"{list[i].Location} added".ToLog();
+                gridPositions.Add(item);
+            }
+            //for (int i = 0; i < list.Length; i++)
+            //{
+            //    if (m_GridSystem.HasEntityAt(list[i]))
+            //    {
+            //        continue;
+            //    }
+            //    else if (!m_GridSystem.HasPath(gridsize.Indices[0], list[i], out int pathCount) ||
+            //        pathCount > turnPlayer.ActionPoint)
+            //    {
+            //        continue;
+            //    }
+
+            //    gridPositions.Add((list[i]));
+            //    //$"{list[i].Location} added".ToLog();
+            //}
+        }
+        public Direction GetCoverableDirection(in GridIndex index)
+        {
+            WorldGridSystem.EntitiesAtIndexEnumerator iter;
+            GridIndex tempIndex;
+            Direction 
+                result = Direction.NONE,
+                tempResult;
+
+            for (int a = 2; a < 6; a++)
+            {
+                tempResult = (Direction)(1 << a);
+                if (!m_GridSystem.TryGetDirection(in index, tempResult, out tempIndex))
+                {
+                    continue;
+                }
+                else if (!m_GridSystem.TryGetEntitiesAt(tempIndex, out iter))
+                {
+                    continue;
+                }
+
+                foreach (var entity in iter.HasComponent<TRPGGridCoverComponent>())
+                {
+                    GridComponent grid = entity.GetComponentReadOnly<GridComponent>();
+                    if ((grid.ObstacleType & GridComponent.Obstacle.Block) 
+                            != GridComponent.Obstacle.Block)
+                    {
+                        continue;
+                    }
+
+                    TRPGGridCoverComponent cover = entity.GetComponentReadOnly<TRPGGridCoverComponent>();
+                    Direction targetDir = m_GridSystem.GetReletiveDirectionFrom(index, tempIndex, entity.GetTransform().rotation);
+
+                    //$"{index.Location} is {targetDir} from {entity.GetEntity().Name}".ToLog();
+
+                    if (cover.dimensions[targetDir].forwardLength < 1)
+                    {
+                        continue;
+                    }
+
+                    result |= tempResult;
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        public void GetCoverables(
+            in NativeArray<GridIndex> locations, 
+            out GridIndex[] outputIndices, 
+            out Direction[] outputDirections,
+            out int length)
+        {
+            length = 0;
+            
+            if (locations.Length == 0)
+            {
+                outputIndices = Array.Empty<GridIndex>();
+                outputDirections = Array.Empty<Direction>();
+                return;
+            }
+
+            outputIndices = ArrayPool<GridIndex>.Shared.Rent(locations.Length);
+            outputDirections = ArrayPool<Direction>.Shared.Rent(locations.Length);
+
+            for (int i = 0; i < locations.Length; i++)
+            {
+                Direction direction = GetCoverableDirection((locations[i]));
+                if (direction == 0)
+                {
+                    continue;
+                }
+
+                outputIndices[length] = locations[i];
+                outputDirections[length] = direction;
+
+                //$"{TypeHelper.Enum<Direction>.ToString(direction)} at {locations[i]}".ToLog();
+                length++;
+            }
+
+            if (length == 0)
+            {
+                ArrayPool<GridIndex>.Shared.Return(outputIndices);
+                ArrayPool<Direction>.Shared.Return(outputDirections);
+
+                outputIndices = Array.Empty<GridIndex>();
+                outputDirections = Array.Empty<Direction>();
+                return;
             }
         }
-        //private void CalculateOutlineVertices(
-        //    in InstanceID entity,
-        //    NativeArray<int3> moveables,
-        //    ref NativeList<float3> vertices)
-        //{
-        //    var gridsize = entity.GetComponent<GridComponent>();
-        //    m_GridSystem.GetOutcoastLocations(in moveables, ref m_GridTempOutcoasts);
-        //    m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref vertices);
-        //    //float half = m_GridSystem.CellSize * .5f;
+        public void ReserveCoverableBuffers(ref GridIndex[] indices, ref Direction[] directions)
+        {
+            if (indices == null || directions == null)
+            {
+                indices = null;
+                directions = null;
+                m_CoverableLength = 0;
+                return;
+            }
+            else if (indices.Length == 0 || directions.Length == 0)
+            {
+                indices = null;
+                directions = null;
+                m_CoverableLength = 0;
+                return;
+            }
 
-        //    //float3
-        //    //    upleft = new float3(-half, 0, half),
-        //    //    upright = new float3(half, 0, half),
-        //    //    downleft = new float3(-half, 0, -half),
-        //    //    downright = new float3(half, 0, -half);
+            ArrayPool<GridIndex>.Shared.Return(indices);
+            ArrayPool<Direction>.Shared.Return(directions);
 
-        //    //vertices.Clear();
-        //    //float3 gridPos;
-
-        //    //if (moveables.Length == 0)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(gridsize.Indices[0]);
-
-        //    //    vertices.Add(gridPos + upright);
-        //    //    vertices.Add(gridPos + downright);
-        //    //    vertices.Add(gridPos + downleft);
-        //    //    vertices.Add(gridPos + upleft);
-
-        //    //    return;
-        //    //}
-        //    //else if (moveables.Length == 1)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(moveables[0]);
-
-        //    //    vertices.Add(gridPos + upright);
-        //    //    vertices.Add(gridPos + downright);
-        //    //    vertices.Add(gridPos + downleft);
-        //    //    vertices.Add(gridPos + upleft);
-
-        //    //    return;
-        //    //}
-
-        //    //List<float3x2> temp = new List<float3x2>();
-        //    //for (int i = 0; i < moveables.Length; i++)
-        //    //{
-        //    //    gridPos = m_GridSystem.IndexToPosition(moveables[i]);
-        //    //    //$"{gridPos}".ToLog();
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Right, out var right) ||
-        //    //        !moveables.Contains(right))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + upright,
-        //    //            gridPos + downright
-        //    //            ));
-        //    //    }
-
-        //    //    // Down
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Forward, out var down) ||
-        //    //        !moveables.Contains(down))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + downright,
-        //    //            gridPos + downleft
-        //    //            ));
-        //    //    }
-
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Left, out var left) ||
-        //    //        !moveables.Contains(left))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + downleft,
-        //    //            gridPos + upleft
-        //    //            ));
-        //    //    }
-
-        //    //    // Up
-        //    //    if (!m_GridSystem.TryGetDirection(moveables[i], Direction.Backward, out var up) ||
-        //    //        !moveables.Contains(up))
-        //    //    {
-        //    //        temp.Add(new float3x2(
-        //    //            gridPos + upleft,
-        //    //            gridPos + upright
-        //    //            ));
-        //    //    }
-        //    //}
-
-        //    //float3x2 current = temp[temp.Count - 1];
-        //    //temp.RemoveAt(temp.Count - 1);
-
-        //    //do
-        //    //{
-        //    //    vertices.Add(current.c0);
-        //    //} while (FindFloat3x2(temp, current.c1, out current));
-        //}
-
-        //private static bool FindFloat3x2(List<float3x2> list, float3 next, out float3x2 found)
-        //{
-        //    found = 0;
-        //    for (int i = list.Count - 1; i >= 0; i--)
-        //    {
-        //        if (list[i].c0.Equals(next) || list[i].c1.Equals(next))
-        //        {
-        //            found = list[i];
-        //            list.RemoveAt(i);
-        //            return true;
-        //        }
-        //    }
-        //    return false;
-        //}
+            indices = null;
+            directions = null;
+            m_CoverableLength = 0;
+        }
 
         #endregion
 
         #region UI
 
-        private void DrawUICell(Entity<IEntityData> entity)
+        public void DrawUICell(Entity<IEntityData> entity)
         {
             using (m_DrawUICellMarker.Auto())
             {
@@ -452,11 +561,14 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 GetMoveablePositions(entity.Idx, ref m_GridTempMoveables);
-                //m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
-                //m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines);
-                m_GridSystem.GetOutcoastVertices(m_GridTempMoveables, ref m_GridTempOutlines);
-                $"out loc count : {m_GridTempMoveables.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
-                //CalculateOutlineVertices(entity.Idx, m_GridTempMoveables, ref m_GridTempOutlines);
+                m_GridSystem.GetOutcoastLocations(m_GridTempMoveables, ref m_GridTempOutcoasts);
+                m_GridSystem.GetOutcoastVertices(m_GridTempOutcoasts, ref m_GridTempOutlines, m_GridTempMoveables);
+
+                $"out loc count : {m_GridTempOutcoasts.Length}, vert : {m_GridTempOutlines.Length}".ToLog();
+
+                GetCoverables(m_GridTempMoveables, 
+                    out m_CoverableIndices, out m_CoverableDirections, out m_CoverableLength);
+                DrawCoverableWallTexture();
 
                 GridComponent gridSize = entity.GetComponentReadOnly<GridComponent>();
 
@@ -471,28 +583,82 @@ namespace Syadeu.Presentation.TurnTable
                 m_IsDrawingGrids = true;
             }
         }
-        private void ClearUICell()
+        public void ClearUICell()
         {
             using (m_ClearUICellMarker.Auto())
             {
                 if (!m_IsDrawingGrids) return;
 
-                //m_GridSystem.ClearUICell();
                 m_GridTempMoveables.Clear();
                 m_GridTempOutcoasts.Clear();
                 m_GridTempOutlines.Clear();
 
-                //m_ShapesOutlinePath.ClearAllPoints();
-                //m_GridOutlineRenderer.positionCount = 0;
+                ReserveCoverableBuffers(ref m_CoverableIndices, ref m_CoverableDirections);
+                ClearCoverableWallTexture();
 
 #if CORESYSTEM_HDRP
                 m_GridOutlineCamera.Dispose();
                 m_GridOutlineCamera = null;
 #endif
                 m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
+                ClearUIPath();
 
                 m_IsDrawingGrids = false;
             }
+        }
+
+        private void DrawCoverableWallTexture()
+        {
+            float cellHalf = m_GridSystem.CellSize * .5f;
+
+            Direction direction;
+            float3x2 line;
+            float3 a, b,
+                dir,
+                center,
+                normal;
+            quaternion rot;
+
+            float2 sizeDelta = (float2)m_GridSystem.CellSize;
+            sizeDelta.x *= TRPGSettings.Instance.m_CoverableSpriteSizeDeltaMultiplier.x;
+            sizeDelta.y *= TRPGSettings.Instance.m_CoverableSpriteSizeDeltaMultiplier.y;
+
+            for (int i = 0; i < m_CoverableLength; i++)
+            {
+                direction = m_CoverableDirections[i];
+                line = m_GridSystem.GetLineVerticesOf(m_CoverableIndices[i], direction);
+
+                a = line.c0;
+                b = line.c1;
+                dir = b - a;
+                center = a + (dir * .5f);
+                center.y += cellHalf;
+                normal = math.cross(dir, math.up());
+
+                rot = quaternion.LookRotationSafe(normal, math.up());
+
+                GameObject obj = m_CoverableWallUIObjectPool.Get();
+                var img = obj.GetComponent<Image>();
+
+                img.sprite = TRPGSettings.Instance.m_CoverableSprite.Asset;
+
+                RectTransform rectTransform = (RectTransform)obj.transform;
+                rectTransform.sizeDelta = sizeDelta;
+
+                var tr = obj.transform;
+                tr.position = center;
+                tr.rotation = rot;
+
+                m_CoverableWallUIObjects.Add(obj);
+            }
+        }
+        private void ClearCoverableWallTexture()
+        {
+            for (int i = 0; i < m_CoverableWallUIObjects.Count; i++)
+            {
+                m_CoverableWallUIObjectPool.Reserve(m_CoverableWallUIObjects[i]);
+            }
+            m_CoverableWallUIObjects.Clear();
         }
 
         private void DrawUIPath(in FixedList4096Bytes<GridIndex> path, float heightOffset = .5f)

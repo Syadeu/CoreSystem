@@ -361,7 +361,8 @@ namespace Syadeu.Presentation
                     CoreSystem.WaitInvoke(1, () => StartSceneDependences(this, sceneRef));
                 }
 #if DEBUG_MODE
-                if (SceneSettings.Instance.CameraPrefab.IsNone() || !SceneSettings.Instance.CameraPrefab.IsValid())
+                if (SceneSettings.Instance.CameraPrefab.IsNone() || 
+                    !SceneSettings.Instance.CameraPrefab.IsValid())
                 {
                     CoreSystem.Logger.LogError(Channel.Presentation,
                         $"Camera prefab is null. This is not allowed. " +

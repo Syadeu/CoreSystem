@@ -289,7 +289,7 @@ namespace SyadeuEditor
         }
 
         private static Editor objectPreviewWindow;
-        public static void ObjectPreview(this EditorWindow t, GameObject obj)
+        public static void ObjectPreview(this EditorWindow t, UnityEngine.Object obj)
         {
             if (objectPreviewWindow == null)
             {

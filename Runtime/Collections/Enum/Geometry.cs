@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
-#define DEBUG_MODE
-#endif
+using Syadeu.Collections.Buffer.LowLevel;
+using Unity.Mathematics;
 
-namespace Syadeu.Presentation.Grid
+namespace Syadeu.Collections
 {
-    public enum Alignment : int
+    public struct Geometry
     {
-        None        = 0,
+        public struct Triangle
+        {
+            public float3x3 point;
+            public float2x3 uv;
+        }
+        public struct Model
+        {
+            public UnsafeAllocator<Triangle> triangles;
+            public AABB localAABB;
+            public float4x4 local2world;
 
-        Left        = 0b0001,
-        Right       = 0b0010,
-        Down        = 0b0100,
-        Up          = 0b1000,
 
-        Center = Left | Right | Down | Up,
-        DownLeft = Down | Left,
+        }
     }
 }

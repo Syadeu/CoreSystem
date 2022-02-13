@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
@@ -28,6 +29,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static unsafe class UnsafeBufferUtility
     {
+        [BurstCompile]
         public static byte* AsBytes<T>(ref T t, out int length)
             where T : unmanaged
         {
@@ -36,12 +38,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
             
             return (byte*)p;
         }
+
         /// <summary>
         /// <see cref="FNV1a64"/> 알고리즘으로 바이너리 해시 연산을 하여 반환합니다.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="t"></param>
         /// <returns></returns>
+        [BurstCompile]
         public static Hash Calculate<T>(this ref T t) where T : unmanaged
         {
             byte* bytes = AsBytes(ref t, out int length);
@@ -50,8 +54,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return hash;
         }
 
-        public static bool BinaryComparer<T>(ref T x, ref T y)
+        [BurstCompile]
+        public static bool BinaryComparer<T, U>(ref T x, ref U y)
             where T : unmanaged
+            where U : unmanaged
         {
             byte*
                 a = AsBytes(ref x, out int length),
@@ -67,8 +73,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
-        public static void Sort<T>(T* buffer, in int length, IComparer<T> comparer)
+        [BurstCompile]
+        public static void Sort<T, U>(in UnsafeReference<T> buffer, in int length, U comparer)
             where T : unmanaged
+            where U : unmanaged, IComparer<T>
         {
             for (int i = 0; i + 1 < length; i++)
             {
@@ -82,7 +90,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         [BurstCompile]
-        public static void Swap<T>(T* buffer, in int from, in int to)
+        public static void Swap<T>(in UnsafeReference<T> buffer, in int from, in int to)
             where T : unmanaged
         {
             T temp = buffer[from];
@@ -90,41 +98,52 @@ namespace Syadeu.Collections.Buffer.LowLevel
             buffer[to] = temp;
         }
 
-        public static bool Contains<T>(T* buffer, in int length, in T value) where T : unmanaged, IEquatable<T>
+        public static bool Contains<T, U>(in UnsafeReference<T> buffer, in int length, U item) 
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
         {
-            for (int i = 0; i < length; i++)
-            {
-                if (buffer[i].Equals(value)) return true;
-            }
+            int index = IndexOf(buffer, length, item);
 
-            return false;
+            return index >= 0;
         }
+        //public static bool Contains<T, U, L>(in T iterator, U list)
+        //    where T : unmanaged, IEnumerator<L>
+        //    where U : unmanaged, INativeList<L>
+        //    where L : unmanaged
+        //{
+        //    int count = 0;
+        //    while (iterator.MoveNext())
+        //    {
+        //        count++;
+        //    }
+        //}
 
         [BurstCompile]
-        public static int IndexOf<T>(UnsafeReference<T> array, int length, T item)
-            where T : unmanaged
+        public static int IndexOf<T, U>(in UnsafeReference<T> array, in int length, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
         {
-            if (item is IEquatable<T> equatable)
-            {
-                for (int i = 0; i < length; i++)
-                {
-                    if (equatable.Equals(array[i])) return i;
-                }
-                return -1;
-            }
-
             for (int i = 0; i < length; i++)
             {
-                if (BinaryComparer(ref array[i], ref item))
-                {
-                    return i;
-                }
+                if (array[i].Equals(item)) return i;
             }
             return -1;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int IndexOf<T>(this T[] array, T element)
+            where T : IEquatable<T>
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i].Equals(element)) return i;
+            }
+            return -1;
+        }
+
         [BurstCompile]
-        public static bool RemoveForSwapBack<T>(UnsafeReference<T> array, int length, T element)
-           where T : unmanaged
+        public static bool RemoveForSwapBack<T, U>(UnsafeReference<T> array, int length, U element)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
         {
             int index = IndexOf(array, length, element);
             if (index < 0) return false;
@@ -150,16 +169,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int IndexOf<T>(this T[] array, T element)
-            where T : IEquatable<T>
-        {
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (array[i].Equals(element)) return i;
-            }
-            return -1;
-        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool RemoveForSwapBack<T>(this T[] array, T element)
             where T : IEquatable<T>
@@ -174,5 +184,53 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return true;
         }
+
+        #region Native Array
+
+        public static ref T ElementAtAsRef<T>(this NativeArray<T> t, in int index)
+            where T : unmanaged
+        {
+            unsafe
+            {
+                void* buffer = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(t);
+                return ref UnsafeUtility.ArrayElementAsRef<T>(buffer, index);
+            }
+        }
+
+        #endregion
+
+        #region Safety Checks
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        private static readonly Dictionary<IntPtr, (DisposeSentinel, Allocator)> m_Safety
+            = new Dictionary<IntPtr, (DisposeSentinel, Allocator)>();
+
+        public static void CreateSafety(UnsafeReference ptr, Allocator allocator, out AtomicSafetyHandle handle)
+        {
+            DisposeSentinel.Create(out handle, out var sentinel, 1, allocator);
+
+            IntPtr p = ptr.IntPtr;
+            m_Safety.Add(p, (sentinel, allocator));
+        }
+        public static void RemoveSafety(UnsafeReference ptr, ref AtomicSafetyHandle handle)
+        {
+            IntPtr p = ptr.IntPtr;
+            var sentinel = m_Safety[p];
+
+            DisposeSentinel.Dispose(ref handle, ref sentinel.Item1);
+            m_Safety.Remove(p);
+        }
+
+        public static void DisposeAllSafeties()
+        {
+            foreach (var item in m_Safety)
+            {
+                UnsafeUtility.Free(item.Key.ToPointer(), item.Value.Item2);
+            }
+            m_Safety.Clear();
+        }
+#endif
+
+        #endregion
     }
 }

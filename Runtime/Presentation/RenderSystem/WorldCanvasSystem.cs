@@ -20,6 +20,7 @@
 using DG.Tweening;
 #endif
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
 using Syadeu.Collections.Proxy;
 using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
@@ -53,6 +54,7 @@ namespace Syadeu.Presentation.Render
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
+        private GameObjectSystem m_GameObjectSystem;
 
         public Canvas Canvas
         {
@@ -90,6 +92,7 @@ namespace Syadeu.Presentation.Render
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectSystem>(Bind);
 
             m_AttachedUIHashMap = new UnsafeMultiHashMap<Entity<IEntity>, Entity<UIObjectEntity>>(1024, AllocatorManager.Persistent);
 
@@ -117,6 +120,7 @@ namespace Syadeu.Presentation.Render
             m_SceneSystem = null;
             m_RenderSystem = null;
             m_CoroutineSystem = null;
+            m_GameObjectSystem = null;
         }
 
         #region Binds
@@ -153,23 +157,23 @@ namespace Syadeu.Presentation.Render
         {
             m_CoroutineSystem = other;
         }
-
-        #endregion
-
-        #endregion
-
-        public void RemoveAllOverlayUI(Entity<IEntity> entity)
+        
+        private void Bind(GameObjectSystem other)
         {
-            if (m_AttachedUIHashMap.TryGetFirstValue(entity, out Entity<UIObjectEntity> uiEntity, out var iterator))
-            {
-                do
-                {
-                    uiEntity.Destroy();
+            m_GameObjectSystem = other;
+        }
 
-                } while (m_AttachedUIHashMap.TryGetNextValue(out uiEntity, ref iterator));
-            }
+        #endregion
 
-            m_AttachedUIHashMap.Remove(entity);
+        #endregion
+
+        public GameObject CreateUIObject()
+        {
+            GameObject obj = new GameObject();
+            obj.name = obj.GetInstanceID().ToString();
+            obj.transform.SetParent(Canvas.transform);
+
+            return obj;
         }
 
         internal void InternalSetProxy(EntityBase entityBase, Entity<UIObjectEntity> entity, 
@@ -207,6 +211,20 @@ namespace Syadeu.Presentation.Render
         #region Actor Overlay UI
 
         private readonly List<Entity<UIObjectEntity>> m_AllActorOverlayUI = new List<Entity<UIObjectEntity>>();
+
+        public void RemoveAllOverlayUI(Entity<IEntity> entity)
+        {
+            if (m_AttachedUIHashMap.TryGetFirstValue(entity, out Entity<UIObjectEntity> uiEntity, out var iterator))
+            {
+                do
+                {
+                    uiEntity.Destroy();
+
+                } while (m_AttachedUIHashMap.TryGetNextValue(out uiEntity, ref iterator));
+            }
+
+            m_AttachedUIHashMap.Remove(entity);
+        }
 
         public void SetAlphaActorOverlayUI(float alpha)
         {
@@ -521,11 +539,5 @@ namespace Syadeu.Presentation.Render
         }
 
         #endregion
-    }
-
-    public interface ICanvasSystem : IPresentationSystem
-    {
-        Canvas Canvas { get; }
-        GraphicRaycaster CanvasRaycaster { get; }
     }
 }

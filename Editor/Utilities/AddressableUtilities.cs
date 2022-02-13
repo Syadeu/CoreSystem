@@ -1,3 +1,4 @@
+using Syadeu;
 using Syadeu.Collections;
 using System;
 using System.Collections;
@@ -11,8 +12,29 @@ using UnityEngine.AddressableAssets;
 
 namespace SyadeuEditor.Utilities
 {
-    public sealed class AddressableUtilities : CLRSingleTone<AddressableUtilities>
+    public static class AddressableUtilities
     {
+        public static List<AddressableAssetEntry> GetSubAssets(this AssetReference t)
+        {
+            AddressableAssetEntry entry = AddressableAssetSettingsDefaultObject.GetSettings(true).FindAssetEntry(t.AssetGUID);
+            var list = new List<AddressableAssetEntry>();
+            entry.GatherAllAssets(list, false, true, true);
+
+            return list;
+        }
+        public static UnityEngine.Object GetSubAsset(this AssetReference t, string name)
+        {
+            var subAssets = GetSubAssets(t);
+
+            foreach (var asset in subAssets)
+            {
+                if (asset.TargetAsset.name.Equals(name))
+                {
+                    return asset.TargetAsset;
+                }
+            }
+            return null;
+        }
         public static void DrawAssetReference(string name, Action<AssetReference> setter, AssetReference refAsset)
         {
             string assetPath = AssetDatabase.GUIDToAssetPath(refAsset?.AssetGUID);

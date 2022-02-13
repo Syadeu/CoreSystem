@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
@@ -988,6 +989,8 @@ namespace Syadeu.Presentation
 
             PlayerLoopSystem defaultLoop = PlayerLoop.GetDefaultPlayerLoop();
             PlayerLoop.SetPlayerLoop(defaultLoop);
+
+            UnsafeBufferUtility.DisposeAllSafeties();
 
             base.Dispose();
         }

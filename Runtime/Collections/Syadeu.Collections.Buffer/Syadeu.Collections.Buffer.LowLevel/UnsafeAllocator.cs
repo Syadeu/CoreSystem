@@ -17,6 +17,7 @@
 #endif
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -39,6 +40,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         internal UnsafeReference<Buffer> m_Buffer;
         internal readonly Allocator m_Allocator;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        internal AtomicSafetyHandle m_SafetyHandle;
+#endif
 
         public UnsafeReference Ptr => m_Buffer.Value.Ptr;
         public long Size => m_Buffer.Value.Size;
@@ -66,6 +71,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 }
             }
             m_Allocator = allocator;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.CreateSafety(m_Buffer, allocator, out m_SafetyHandle);
+#endif
         }
         public UnsafeAllocator(UnsafeReference ptr, long size, Allocator allocator)
         {
@@ -84,6 +93,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 };
             }
             m_Allocator = allocator;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.CreateSafety(m_Buffer, allocator, out m_SafetyHandle);
+#endif
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
@@ -110,15 +122,38 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Dispose()
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!UnsafeUtility.IsValidAllocator(m_Allocator))
+            {
+                UnityEngine.Debug.LogError(
+                    $"{nameof(UnsafeAllocator)} that doesn\'t have valid allocator mark cannot be disposed. " +
+                    $"Most likely this {nameof(UnsafeAllocator)} has been wrapped from NativeArray.");
+                return;
+            }
+#endif
+
             unsafe
             {
                 UnsafeUtility.Free(m_Buffer.Value.Ptr, m_Allocator);
                 UnsafeUtility.Free(m_Buffer, m_Allocator);
             }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.RemoveSafety(m_Buffer, ref m_SafetyHandle);
+#endif
             m_Buffer = default(UnsafeReference<Buffer>);
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!UnsafeUtility.IsValidAllocator(m_Allocator))
+            {
+                UnityEngine.Debug.LogError(
+                    $"{nameof(UnsafeAllocator)} that doesn\'t have valid allocator mark cannot be disposed. " +
+                    $"Most likely this {nameof(UnsafeAllocator)} has been wrapped from NativeArray.");
+                return default(JobHandle);
+            }
+#endif
+
             DisposeJob disposeJob = new DisposeJob()
             {
                 Buffer = m_Buffer,
@@ -126,13 +161,16 @@ namespace Syadeu.Collections.Buffer.LowLevel
             };
             JobHandle result = disposeJob.Schedule(inputDeps);
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            UnsafeBufferUtility.RemoveSafety(m_Buffer, ref m_SafetyHandle);
+#endif
             m_Buffer = default(UnsafeReference<Buffer>);
             return result;
         }
 
         public bool Equals(UnsafeAllocator other) => m_Buffer.Equals(other.m_Buffer);
 
-        [BurstCompatible, NativeContainerIsReadOnly]
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference m_Ptr;
@@ -228,32 +266,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return result;
         }
 
-        public int IndexOf(T item) => UnsafeBufferUtility.IndexOf(Ptr, Length, item);
-        public bool Contains(T item)
-        {
-            int length = Length;
-            bool result = false;
-
-            if (item is IEquatable<T> equatable)
-            {
-                for (int i = 0; i < length && !result; i++)
-                {
-                    result |= equatable.Equals(this[i]);
-                }
-                return result;
-            }
-
-            for (int i = 0; i < length && !result; i++)
-            {
-                result |= UnsafeBufferUtility.BinaryComparer(ref this[i], ref item);
-            }
-            return result;
-        }
-        public bool RemoveForSwapBack(T element) => UnsafeBufferUtility.RemoveForSwapBack(Ptr, Length, element);
-
         public bool Equals(UnsafeAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
 
-        [BurstCompatible, NativeContainerIsReadOnly]
+        [BurstCompatible]
         public readonly struct ReadOnly
         {
             private readonly UnsafeReference<T>.ReadOnly m_Ptr;
@@ -343,6 +358,42 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 );
         }
 
+        public static void Sort<T, U>(this ref UnsafeAllocator<T> t, U comparer)
+            where T : unmanaged
+            where U : unmanaged, IComparer<T>
+        {
+            unsafe
+            {
+                UnsafeBufferUtility.Sort<T, U>(t.Ptr, t.Length, comparer);
+            }
+        }
+
+        public static bool Contains<T, U>(this in UnsafeAllocator<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            int length = t.Length;
+            bool result = false;
+
+            for (int i = 0; i < length && !result; i++)
+            {
+                result |= t[i].Equals(item);
+            }
+            return result;
+        }
+        public static int IndexOf<T, U>(this in UnsafeAllocator<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            return UnsafeBufferUtility.IndexOf(t.Ptr, t.Length, item);
+        }
+        public static bool RemoveForSwapBack<T, U>(this in UnsafeAllocator<T> t, U element)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            return UnsafeBufferUtility.RemoveForSwapBack(t.Ptr, t.Length, element);
+        }
+
         public static NativeArray<T> ToNativeArray<T>(this in UnsafeAllocator<T> other, Allocator allocator) where T : unmanaged
         {
             var arr = new NativeArray<T>(other.Length, allocator, NativeArrayOptions.UninitializedMemory);
@@ -353,17 +404,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             return arr;
-        }
-        public static UnsafeAllocator<T> ToUnsafeAllocator<T>(this in NativeArray<T> other, Allocator allocator) where T : unmanaged
-        {
-            unsafe
-            {
-                return new UnsafeAllocator<T>(
-                    (T*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(other),
-                    other.Length,
-                    allocator
-                    );
-            }
         }
     }
 }

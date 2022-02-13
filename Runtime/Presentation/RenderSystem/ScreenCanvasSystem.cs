@@ -17,7 +17,11 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Grid;
 using Syadeu.Presentation.Proxy;
+using System;
+using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +41,7 @@ namespace Syadeu.Presentation.Render
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
         private GameObjectProxySystem m_ProxySystem;
+        private GameObjectSystem m_GameObjectSystem;
 
         public Canvas Canvas
         {
@@ -44,7 +49,7 @@ namespace Syadeu.Presentation.Render
             {
                 if (m_Canvas == null)
                 {
-                    GameObject obj = m_SceneSystem.CreateGameObject("Screen Canvas");
+                    GameObject obj = CreateGameObject("Screen Canvas", true);
                     m_Canvas = obj.AddComponent<Canvas>();
                     m_Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                     obj.AddComponent<CanvasScaler>();
@@ -73,6 +78,7 @@ namespace Syadeu.Presentation.Render
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, GameObjectProxySystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, GameObjectSystem>(Bind);
 
             return base.OnInitialize();
         }
@@ -107,6 +113,10 @@ namespace Syadeu.Presentation.Render
         {
             m_ProxySystem = other;
         }
+        private void Bind(GameObjectSystem other)
+        {
+            m_GameObjectSystem = other;
+        }
 
         #endregion
 
@@ -117,6 +127,8 @@ namespace Syadeu.Presentation.Render
 
             return base.OnStartPresentation();
         }
+
+
 
         //private void Instance_OnGUIEvent()
         //{
@@ -171,9 +183,14 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
-        public sealed class UIGroup
-        {
 
+        public GameObject CreateUIObject(string name)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(Canvas.transform);
+            obj.transform.position = Vector3.zero;
+
+            return obj;
         }
     }
 }

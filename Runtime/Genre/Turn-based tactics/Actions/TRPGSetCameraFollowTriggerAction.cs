@@ -9,12 +9,13 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using System;
 using System.ComponentModel;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    [DisplayName("TriggerAction: TRPG Set Camera")]
-    public sealed class TRPGSetCameraAction : TriggerAction
+    [DisplayName("TriggerAction: TRPG Set Camera Follow")]
+    public sealed class TRPGSetCameraFollowTriggerAction : TriggerAction
     {
         [JsonProperty(Order = 0, PropertyName = "Follow")]
         private bool m_Follow = false;

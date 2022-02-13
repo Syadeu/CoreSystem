@@ -46,6 +46,13 @@ namespace SyadeuEditor.Presentation
                 Pool.Add(objectBase, drawer);
                 return drawer;
             }
+            //else if (TypeHelper.TypeOf<Syadeu.Presentation.Render.SVGEntity>.Type.IsAssignableFrom(objType))
+            //{
+            //    drawer = new SVGEntityDrawer(objectBase);
+            //    Pool.Add(objectBase, drawer);
+
+            //    return drawer;
+            //}
 
             Type[] drawerTypes = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<ObjectBaseDrawer>.Type.IsAssignableFrom(other));
             var iter = drawerTypes.Where((other) =>

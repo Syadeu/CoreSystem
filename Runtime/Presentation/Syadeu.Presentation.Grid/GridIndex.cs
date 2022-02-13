@@ -25,7 +25,7 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation.Grid
 {
     [BurstCompatible]
-    public readonly struct GridIndex : IEmpty, IEquatable<GridIndex>
+    public readonly struct GridIndex : IEmpty, IEquatable<GridIndex>, IEquatable<int3>
     {
         internal readonly short m_CheckSum;
         private readonly ulong m_Index;
@@ -96,6 +96,7 @@ namespace Syadeu.Presentation.Grid
         //}
 
         public bool Equals(GridIndex other) => m_Index.Equals(other.m_Index) && m_CheckSum.Equals(m_CheckSum);
+        public bool Equals(int3 other) => Location.Equals(other);
 
         public bool IsEmpty() => m_CheckSum == 0 && m_Index == 0;
 
@@ -112,50 +113,5 @@ namespace Syadeu.Presentation.Grid
         // 3 Up (Backward)
         public bool4 HasBlocks;
         public float3x2 Vertices0, Vertices1, Vertices2, Vertices3;
-    }
-
-    public struct GridIndex4 : IFixedList<GridIndex>
-    {
-        private GridIndex a, b, c, d;
-
-        public GridIndex this[int index]
-        {
-            get
-            {
-                return index switch
-                {
-                    0 => a,
-                    1 => b,
-                    2 => c,
-                    3 => d,
-                    _ => throw new Exception(),
-                };
-            }
-            set
-            {
-                switch (index)
-                {
-                    case 0:
-                        a = value;
-                        break;
-                    case 1:
-                        b = value;
-                        break;
-                    case 2:
-                        c = value;
-                        break;
-                    case 3:
-                        d = value;
-                        break;
-                    default:
-                        throw new Exception();
-                }
-            }
-        }
-
-        public GridIndex First => a;
-        public GridIndex Last => d;
-
-        public int Length => throw new NotImplementedException();
     }
 }

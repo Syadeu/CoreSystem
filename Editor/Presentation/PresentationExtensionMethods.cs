@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Syadeu;
 using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -7,6 +8,7 @@ using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
+using SyadeuEditor.Utilities;
 using System;
 using System.IO;
 using System.Reflection;
@@ -25,7 +27,7 @@ namespace SyadeuEditor.Presentation
             if (m_RefPrefabField == null)
             {
                 m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
-                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
+                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
             }
             if (objectSetting == null) return null;
 
@@ -58,7 +60,7 @@ namespace SyadeuEditor.Presentation
             if (m_RefPrefabField == null)
             {
                 m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
-                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
+                    .GetField("m_RefPrefab", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             }
             if (prefab == null) return null;
 
@@ -67,13 +69,20 @@ namespace SyadeuEditor.Presentation
 
             object value = m_RefPrefabField.GetValue(set);
             if (value == null) return null;
-
+            
             AssetReference asset = (AssetReference)value;
-            return asset.editorAsset;
+            
+            if (prefab.IsSubAsset)
+            {
+                var obj = asset.GetSubAsset(prefab.SubAssetName.ToString());
+
+                return obj;
+            }
+            else return asset.editorAsset;
         }
 
         const string c_JsonFilePath = "{0}/{1}.json";
-        public static string GetRawJson(this ObjectBase obj)
+        public static string GetRawJsonPath(this ObjectBase obj)
         {
             Type objType = obj.GetType();
             string objPath;
@@ -99,7 +108,12 @@ namespace SyadeuEditor.Presentation
             }
 
             string filePath = string.Format(c_JsonFilePath, objPath, EntityDataList.ToFileName(obj));
-            if (!Directory.Exists(objPath) /*|| !File.Exists(filePath)*/) return string.Empty;
+            return filePath;
+        }
+        public static string GetRawJson(this ObjectBase obj)
+        {
+            string filePath = GetRawJsonPath(obj);
+            if (!File.Exists(filePath)) return string.Empty;
             return File.ReadAllText(filePath);
         }
     }

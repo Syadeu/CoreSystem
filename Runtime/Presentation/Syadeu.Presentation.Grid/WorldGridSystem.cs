@@ -26,6 +26,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Grid.LowLevel;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,6 +62,8 @@ namespace Syadeu.Presentation.Grid
 
         private bool m_EnabledCursorObserve = false;
 
+        public event Action<bool> OnEnableCursorObserve;
+
         private EntityComponentSystem m_ComponentSystem;
         private EventSystem m_EventSystem;
         private InputSystem m_InputSystem;
@@ -93,6 +96,11 @@ namespace Syadeu.Presentation.Grid
         }
         protected override void OnShutDown()
         {
+            if (m_EnabledCursorObserve)
+            {
+                EnableCursorObserve(false);
+            }
+
             m_ComponentSystem.OnComponentAdded -= M_ComponentSystem_OnComponentAdded;
             m_ComponentSystem.OnComponentRemove -= M_ComponentSystem_OnComponentRemove;
 
@@ -593,6 +601,8 @@ namespace Syadeu.Presentation.Grid
             FullIndexingUpdate();
         }
 
+        #region Grid Entity
+
         public void UpdateEntity(in InstanceID entity)
         {
             m_GridUpdateJob.Complete();
@@ -612,49 +622,80 @@ namespace Syadeu.Presentation.Grid
         {
             return m_Indices.ContainsKey(index.Index);
         }
-        public bool TryGetEntitiesAt(in GridIndex index, out EntityEnumerator iter)
+        public bool TryGetEntityAt(in GridIndex index, out InstanceID entity)
         {
-            if (!m_Indices.ContainsKey(index.Index))
+            if (!m_Indices.TryGetFirstValue(index.Index, out entity, out _))
             {
-                iter = default(EntityEnumerator);
+                entity = InstanceID.Empty;
                 return false;
             }
 
-            iter = new EntityEnumerator(m_Indices.GetValuesForKey(index.Index));
+            return true;
+        }
+        public bool TryGetEntitiesAt(in GridIndex index, out EntitiesAtIndexEnumerator iter)
+        {
+            if (!HasEntityAt(index))
+            {
+                iter = default(EntitiesAtIndexEnumerator);
+                return false;
+            }
+
+            iter = new EntitiesAtIndexEnumerator(m_Indices, index.Index);
+            return true;
+        }
+        public IndicesOfEntityEnumerator GetIndiceOfEntity(in InstanceID entity)
+        {
+            return new IndicesOfEntityEnumerator(
+                m_Grid,
+                m_Entities,
+                entity
+                );
+        }
+        public bool TryGetIndiceOfEntity(in InstanceID entity, ref NativeList<int3> output)
+        {
+            output.Clear();
+            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            {
+                return false;
+            }
+
+            do
+            {
+                output.Add(m_Grid.IndexToLocation(index));
+            } while (m_Entities.TryGetNextValue(out index, ref iter));
+
             return true;
         }
 
-        public int GetObserverIndicesCount()
+        /// <summary>
+        /// 해당 엔티티가 그리드에서 점유중인 인덱스들의 총 AABB 를 반환합니다.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="aabb"></param>
+        /// <returns></returns>
+        public bool TryGetIndicesAABBOfEntity(in InstanceID entity, out AABB aabb)
         {
-            CompleteGridJob();
+            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            {
+                aabb = AABB.Zero;
+                return false;
+            }
 
-            return GetModule<GridDetectorModule>().GridObservers.Count();
-        }
-        public NativeArray<GridIndex> GetObserverIndices(AllocatorManager.AllocatorHandle allocator)
-        {
-            CompleteGridJob();
+            float3 tempPos = m_Grid.IndexToPosition(in index);
+            aabb = new AABB(tempPos, 0);
 
-            return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
-        }
-        public IndexEnumerator<AlwaysTrue<GridIndex>> GetObserverIndices()
-        {
-            CompleteGridJob();
+            while (m_Entities.TryGetNextValue(out index, ref iter))
+            {
+                tempPos = m_Grid.IndexToPosition(in index);
+                aabb.Encapsulate(tempPos);
+            }
 
-            return new IndexEnumerator<AlwaysTrue<GridIndex>>
-                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
-                new AlwaysTrue<GridIndex>()
-                );
+            return true;
         }
-        public IndexEnumerator<TPredicate> GetObserverIndices<TPredicate>(TPredicate predicate)
-            where TPredicate : struct, IExecutable<GridIndex>
-        {
-            CompleteGridJob();
 
-            return new IndexEnumerator<TPredicate>
-                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
-                predicate
-                );
-        }
+        #endregion
+
+        #region Enumerator
 
         [BurstCompatible]
         public struct IndexEnumerator<TPredicate> : IEnumerator<GridIndex>, IEnumerable<GridIndex>
@@ -695,35 +736,91 @@ namespace Syadeu.Presentation.Grid
             }
         }
         [BurstCompatible]
-        public struct EntityEnumerator : IEnumerator<InstanceID>, IEnumerable<InstanceID>
+        public struct IndicesOfEntityEnumerator : IEnumerable<GridIndex>
         {
-            private NativeMultiHashMap<ulong, InstanceID>.Enumerator m_Iterator;
+            private WorldGrid m_Grid;
+            private NativeMultiHashMap<InstanceID, ulong> m_HashMap;
+            private InstanceID m_Target;
 
-            public EntityEnumerator(NativeMultiHashMap<ulong, InstanceID>.Enumerator iter)
+            internal IndicesOfEntityEnumerator(
+                WorldGrid grid,
+                NativeMultiHashMap<InstanceID, ulong> hashMap,
+                InstanceID target)
             {
-                m_Iterator = iter;
+                m_Grid = grid;
+                m_HashMap = hashMap;
+                m_Target = target;
             }
 
-            public InstanceID Current => m_Iterator.Current;
+            public IEnumerator<GridIndex> GetEnumerator()
+            {
+                if (!m_HashMap.TryGetFirstValue(m_Target, out ulong index, out var iter))
+                {
+                    yield break;
+                }
+
+                do
+                {
+                    yield return new GridIndex(m_Grid, index);
+                } while (m_HashMap.TryGetNextValue(out index, ref iter));
+            }
             [NotBurstCompatible]
-            object IEnumerator.Current => m_Iterator.Current;
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+        [BurstCompatible]
+        public struct EntitiesAtIndexEnumerator : IEnumerable<InstanceID>
+        {
+            private NativeMultiHashMap<ulong, InstanceID> m_Iterator;
+            private ulong m_Index;
 
-            public IEnumerator<InstanceID> GetEnumerator() => this;
-            IEnumerator IEnumerable.GetEnumerator() => this;
+            public EntitiesAtIndexEnumerator(NativeMultiHashMap<ulong, InstanceID> hashMap, ulong index)
+            {
+                m_Iterator = hashMap;
+                m_Index = index;
+            }
 
-            public void Dispose()
+            [NotBurstCompatible]
+            public IEnumerator<InstanceID> GetEnumerator()
             {
-                m_Iterator.Dispose();
+                if (!m_Iterator.TryGetFirstValue(m_Index, out InstanceID entity, out var iter))
+                {
+                    yield break;
+                }
+
+                do
+                {
+                    yield return entity;
+                } while (m_Iterator.TryGetNextValue(out entity, ref iter));
             }
-            public bool MoveNext()
+            [NotBurstCompatible]
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            /// <summary>
+            /// <typeparamref name="TComponent"/> 를 가진 엔티티만 반환하는 iterator 입니다.
+            /// </summary>
+            /// <typeparam name="TComponent"></typeparam>
+            /// <returns></returns>
+            [NotBurstCompatible]
+            public IEnumerable<InstanceID> HasComponent<TComponent>()
+                where TComponent : unmanaged, IEntityComponent
             {
-                return m_Iterator.MoveNext();
-            }
-            public void Reset()
-            {
-                m_Iterator.Reset();
+                if (!m_Iterator.TryGetFirstValue(m_Index, out InstanceID entity, out var iter))
+                {
+                    yield break;
+                }
+
+                do
+                {
+                    if (!entity.HasComponent<TComponent>()) continue;
+                    
+                    yield return entity;
+                } while (m_Iterator.TryGetNextValue(out entity, ref iter));
             }
         }
+
+        #endregion
+
+        #region Utils
 
         public bool ValidateIndex(in GridIndex index)
         {
@@ -733,6 +830,104 @@ namespace Syadeu.Presentation.Grid
             }
             return true;
         }
+        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
+        public void GetOutcoastLocations(
+            in UnsafeFixedListWrapper<GridIndex> locations, 
+            ref NativeList<GridIndex> result)
+        {
+            UnsafeFixedListWrapper<GridIndex> temp2 = result.ConvertToFixedWrapper();
+            BurstGridMathematics.getOutcoastLocations(
+                m_Grid.aabb, CellSize, in locations, ref temp2);
+
+            temp2.CopyToNativeList(ref result);
+        }
+        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
+        public void GetOutcoastVertices(
+            in UnsafeFixedListWrapper<GridIndex> locations,
+            ref NativeList<float3> result,
+            UnsafeFixedListWrapper<GridIndex> indicesMap = default)
+        {
+            if (result.Capacity < locations.Capacity * 4)
+            {
+                result.ResizeUninitialized(locations.Capacity);
+                //CoreSystem.Logger.LogError(Channel.Entity,
+                //    $"You cannot calculate vertices because exceeding capacity.");
+                //return;
+            }
+
+            UnsafeFixedListWrapper<float3> temp = result.ConvertToFixedWrapper();
+            BurstGridMathematics.getOutcoastLocationVertices(
+                m_Grid.aabb,
+                CellSize,
+                in locations,
+                ref temp,
+                in indicesMap
+                );
+
+            temp.CopyToNativeList(ref result);
+        }
+        public float3x2 GetLineVerticesOf(in GridIndex index, Direction direction)
+        {
+            AABB aabb;
+            unsafe
+            {
+                BurstGridMathematics.indexToAABB(m_Grid.aabb, CellSize, index.Index, &aabb);
+            }
+            AABB.Vertices vertices = aabb.vertices;
+
+            float
+                cellHalf = CellSize * .5f;
+
+            float3
+                pos = IndexToPosition(in index);
+
+            if ((direction & Direction.Up) == Direction.Up)
+            {
+                pos.y += CellSize;
+            }
+
+            if ((direction & Direction.Left) == Direction.Left)
+            {
+                pos.x -= cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x, pos.y, pos.z + cellHalf),
+                    new float3(pos.x, pos.y, pos.z - cellHalf)
+                    );
+            }
+            else if ((direction & Direction.Right) == Direction.Right)
+            {
+                pos.x += cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x, pos.y, pos.z - cellHalf),
+                    new float3(pos.x, pos.y, pos.z + cellHalf)
+                    );
+            }
+
+            if ((direction & Direction.Forward) == Direction.Forward)
+            {
+                pos.z -= cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x + cellHalf, pos.y, pos.z),
+                    new float3(pos.x - cellHalf, pos.y, pos.z)
+                    );
+            }
+            else if ((direction & Direction.Backward) == Direction.Backward)
+            {
+                pos.z += cellHalf;
+
+                return new float3x2(
+                    new float3(pos.x - cellHalf, pos.y, pos.z),
+                    new float3(pos.x + cellHalf, pos.y, pos.z)
+                    );
+            }
+
+            return 0;
+        }
+
+        #endregion
 
         #region Get Range
 
@@ -761,14 +956,6 @@ namespace Syadeu.Presentation.Grid
 
             public IEnumerator<GridIndex> GetEnumerator()
             {
-                int maxCount = ((m_Range.x * 2) + 1) * ((m_Range.z * 2) + 1) * ((m_Range.y * 2) + 1);
-                if (maxCount > 255)
-                {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"You\'re trying to get range of grid that exceeding length 255. " +
-                        $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-                }
-
                 int3
                     location = m_From.Location,
                     minRange, maxRange;
@@ -791,46 +978,21 @@ namespace Syadeu.Presentation.Grid
                     end = new int3(maxX, maxY, maxZ);
                 
                 int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+                for (int y = start.y; y < end.y + 1; y++)
                 {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+                    for (int x = start.x; x < end.x + 1; x++)
                     {
                         for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
+                            z < end.z;
                             z++, count++)
                         {
-                            yield return new GridIndex(m_Grid.m_CheckSum, new int3(x, y, z));
+                            int3 target = new int3(x, y, z);
+                            if (!m_Grid.Contains(in target)) continue;
+
+                            yield return new GridIndex(m_Grid.m_CheckSum, target);
                         }
                     }
                 }
-
-                //unsafe
-                //{
-                //    int3* buffer = stackalloc int3[maxCount];
-                //    int count = 0;
-                //    for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                //    {
-                //        for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                //        {
-                //            for (int z = start.z;
-                //                z < end.z + 1 && count < maxCount;
-                //                z++, count++)
-                //            {
-                //                buffer[count] = new int3(x, y, z);
-                //            }
-                //        }
-                //    }
-
-                //    if (m_SortOption == SortOption.CloseDistance)
-                //    {
-                //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                //    }
-
-                //    for (int i = 0; i < count && i < 255; i++)
-                //    {
-                //        yield return new GridIndex(m_Grid.m_CheckSum, buffer[i]);
-                //    }
-                //}
             }
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
@@ -855,249 +1017,175 @@ namespace Syadeu.Presentation.Grid
             return new RangeEnumerator(in m_Grid, in from, in range);
         }
 
-        [Obsolete]
-        [SkipLocalsInit]
-        public void GetRange(in GridIndex from,
-            in int3 range,
-            ref NativeList<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            if (!ValidateIndex(in from))
-            {
-                "err".ToLogError();
-                return;
-            }
-
-            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-            if (maxCount > 255)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"You\'re trying to get range of grid that exceeding length 255. " +
-                    $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-            }
-
-            output.Clear();
-
-            int3
-                location = from.Location,
-                minRange, maxRange;
-            m_Grid.GetMinMaxLocation(out minRange, out maxRange);
-
-            int
-                minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-                maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
-
-                minY = location.y - range.y < 0 ?
-                    math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-                maxY = location.y + range.y < 0 ?
-                    math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
-
-                minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-                maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
-
-            int3
-                start = new int3(minX, minY, minZ),
-                end = new int3(maxX, maxY, maxZ),
-
-                dir = end - start;
-
-            unsafe
-            {
-                int3* buffer = stackalloc int3[maxCount];
-                int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                    {
-                        for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
-                            z++, count++)
-                        {
-                            buffer[count] = new int3(x, y, z);
-                        }
-                    }
-                }
-
-                if (sortOption == SortOption.CloseDistance)
-                {
-                    UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                }
-
-                for (int i = 0; i < count && i < 255; i++)
-                {
-                    output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-                }
-            }
-        }
-        [Obsolete]
-        public void GetRange(in InstanceID from,
-            in int3 range,
-            ref FixedList4096Bytes<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            CompleteGridJob();
-
-            if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
-            {
-                "err".ToLogError();
-                return;
-            }
-
-            // TODO : Temp code
-            GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
-        }
-        [Obsolete]
-        [SkipLocalsInit]
-        public void GetRange(in GridIndex from,
-            in int3 range,
-            ref FixedList4096Bytes<GridIndex> output,
-            SortOption sortOption = SortOption.None)
-        {
-            if (!ValidateIndex(in from))
-            {
-                "err".ToLogError();
-                return;
-            }
-
-            int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-            if (maxCount > 255)
-            {
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"You\'re trying to get range of grid that exceeding length 255. " +
-                    $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-            }
-
-            output.Clear();
-
-            int3
-                location = from.Location,
-                minRange, maxRange;
-            m_Grid.GetMinMaxLocation(out minRange, out maxRange);
-
-            int
-                minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-                maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
-
-                minY = location.y - range.y < 0 ?
-                    math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-                maxY = location.y + range.y < 0 ?
-                    math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
-
-                minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-                maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
-            //if (log) $"minmax: {minRange}, {maxRange}".ToLog();
-            int3
-                start = new int3(minX, minY, minZ),
-                end = new int3(maxX, maxY, maxZ),
-                
-                dir = end - start;
-
-            
-            unsafe
-            {
-                int3* buffer = stackalloc int3[maxCount];
-                int count = 0;
-                for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-                {
-                    for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-                    {
-                        for (int z = start.z;
-                            z < end.z + 1 && count < maxCount;
-                            z++, count++)
-                        {
-                            buffer[count] = new int3(x, y, z);
-                        }
-                    }
-                }
-                //if (log) $"{count} < {maxCount}: {start}, {end}".ToLog();
-                if (sortOption == SortOption.CloseDistance)
-                {
-                    UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-                }
-
-                for (int i = 0; i < count && i < 255; i++)
-                {
-                    output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-                }
-            }
-        }
+        //[Obsolete]
         //[SkipLocalsInit]
-        //public void GetEntitiesInRange(in GridIndex from,
-        //    in int xzRange, in int yRange,
-        //    ref NativeList<InstanceID> output)
+        //public void GetRange(in GridIndex from,
+        //    in int3 range,
+        //    ref NativeList<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
         //{
-        //    if (!ValidateIndex(in index))
+        //    if (!ValidateIndex(in from))
         //    {
-        //        throw new Exception();
+        //        "err".ToLogError();
+        //        return;
+        //    }
+
+        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
+        //    if (maxCount > 255)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Presentation,
+        //            $"You\'re trying to get range of grid that exceeding length 255. " +
+        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
         //    }
 
         //    output.Clear();
 
         //    int3
         //        location = from.Location,
-        //        maxRange = m_Grid.gridSize,
-        //        minRange = new int3(0, -maxRange.y, 0);
+        //        minRange, maxRange;
+        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+
         //    int
+        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
+        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
+
         //        minY = location.y - range.y < 0 ?
         //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
         //        maxY = location.y + range.y < 0 ?
-        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y);
+        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
+
+        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
+        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
 
         //    int3
-        //        start = new int3(math.min(location.x - range.x, maxRange.x), minY, math.min(location.z - range.z, maxRange.z)),
-        //        end = new int3(math.min(location.x + range.x, maxRange.x), maxY, math.min(location.z + range.z, maxRange.z));
+        //        start = new int3(minX, minY, minZ),
+        //        end = new int3(maxX, maxY, maxZ),
 
-        //    int maxCount = (range.x + 1) * (range.z + 1) * (range.y + 1);
+        //        dir = end - start;
+
+        //    UnsafeFixedListWrapper<int3> result;
         //    unsafe
         //    {
         //        int3* buffer = stackalloc int3[maxCount];
-        //        for (int y = start.y, i = 0; y < end.y + 1 && i < maxCount; y++)
+        //        result = new UnsafeFixedListWrapper<int3>(buffer, maxCount);
+        //    }
+
+        //    //int count = 0;
+        //    for (int y = start.y; y < end.y + 1 && result.Count < maxCount; y++)
+        //    {
+        //        for (int x = start.x; x < end.x + 1 && result.Count < maxCount; x++)
         //        {
-        //            for (int x = start.x; x < end.x + 1 && i < maxCount; x++)
+        //            for (int z = start.z;
+        //                z < end.z + 1 && result.Count < maxCount;
+        //                z++)
         //            {
-        //                for (int z = start.x;
-        //                    z < end.z + 1 && i < maxCount;
-        //                    z++, i++)
+        //                result.Add(new int3(x, y, z));
+        //            }
+        //        }
+        //    }
+
+        //    if (sortOption == SortOption.CloseDistance)
+        //    {
+        //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
+        //    }
+
+        //    for (int i = 0; i < count && i < 255; i++)
+        //    {
+        //        output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
+        //    }
+        //}
+        //[Obsolete]
+        //public void GetRange(in InstanceID from,
+        //    in int3 range,
+        //    ref FixedList4096Bytes<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
+        //{
+        //    CompleteGridJob();
+
+        //    if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
+        //    {
+        //        "err".ToLogError();
+        //        return;
+        //    }
+
+        //    // TODO : Temp code
+        //    GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
+        //}
+        //[Obsolete]
+        //[SkipLocalsInit]
+        //public void GetRange(in GridIndex from,
+        //    in int3 range,
+        //    ref FixedList4096Bytes<GridIndex> output,
+        //    SortOption sortOption = SortOption.None)
+        //{
+        //    if (!ValidateIndex(in from))
+        //    {
+        //        "err".ToLogError();
+        //        return;
+        //    }
+
+        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
+        //    if (maxCount > 255)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Presentation,
+        //            $"You\'re trying to get range of grid that exceeding length 255. " +
+        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
+        //    }
+
+        //    output.Clear();
+
+        //    int3
+        //        location = from.Location,
+        //        minRange, maxRange;
+        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+
+        //    int
+        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
+        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
+
+        //        minY = location.y - range.y < 0 ?
+        //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
+        //        maxY = location.y + range.y < 0 ?
+        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
+
+        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
+        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
+        //    //if (log) $"minmax: {minRange}, {maxRange}".ToLog();
+        //    int3
+        //        start = new int3(minX, minY, minZ),
+        //        end = new int3(maxX, maxY, maxZ),
+                
+        //        dir = end - start;
+
+            
+        //    unsafe
+        //    {
+        //        int3* buffer = stackalloc int3[maxCount];
+        //        int count = 0;
+        //        for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
+        //        {
+        //            for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
+        //            {
+        //                for (int z = start.z;
+        //                    z < end.z + 1 && count < maxCount;
+        //                    z++, count++)
         //                {
-        //                    buffer[i] = new int3(x, y, z);
+        //                    buffer[count] = new int3(x, y, z);
         //                }
         //            }
         //        }
-
-        //        UnsafeBufferUtility.Sort(buffer, maxCount, new CloseDistanceComparer(location));
-
-        //        for (int i = 0;
-        //            i < maxCount;
-        //            i++)
+        //        //if (log) $"{count} < {maxCount}: {start}, {end}".ToLog();
+        //        if (sortOption == SortOption.CloseDistance)
         //        {
-        //            if (!m_Indices.TryGetFirstValue(m_Grid.LocationToIndex(buffer[i]), out InstanceID entity, out var iter))
-        //            {
-        //                continue;
-        //            }
+        //            UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
+        //        }
 
-        //            do
-        //            {
-        //                output.Add(entity);
-        //            } while (m_Indices.TryGetNextValue(out entity, ref iter));
+        //        for (int i = 0; i < count && i < 255; i++)
+        //        {
+        //            output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
         //        }
         //    }
         //}
-
-        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocations"/>
-        public void GetOutcoastLocations(in NativeArray<int3> locations, ref NativeList<int3> result)
-        {
-            BurstGridMathematics.getOutcoastLocations(in locations, ref result);
-        }
-        /// <inheritdoc cref="BurstGridMathematics.getOutcoastLocationVertices"/>
-        public void GetOutcoastVertices(in NativeArray<int3> locations, ref NativeList<float3> result)
-        {
-            BurstGridMathematics.getOutcoastLocationVertices(
-                m_Grid.aabb,
-                CellSize,
-                in locations,
-                ref result
-                );
-        }
 
         #endregion
 
@@ -1108,6 +1196,20 @@ namespace Syadeu.Presentation.Grid
             int3 location = CalculateDirection(in index, in direction);
 
             return m_Grid.Contains(location);
+        }
+        public GridIndex GetDirection(in GridIndex index, in Direction direction)
+        {
+            int3 location = CalculateDirection(in index, in direction);
+            return new GridIndex(m_Grid.m_CheckSum, location);
+        }
+        public GridIndex GetDirection(in int3 location, in Direction direction)
+        {
+            int3 output;
+            unsafe
+            {
+                BurstGridMathematics.getDirection(location, in direction, &output);
+            }
+            return new GridIndex(m_Grid.m_CheckSum, output);
         }
         public bool TryGetDirection(in GridIndex index, in Direction direction, out GridIndex result)
         {
@@ -1137,6 +1239,87 @@ namespace Syadeu.Presentation.Grid
             return location;
         }
 
+        // TODO : point 가 그리드 좌표에서 변환한 좌표값이 아니면 예상한 값이 아닐 확률이 높음.
+        // 나중에 radian 으로 연산을 수정할 것
+        private Direction GetNormalizedDirection(in float3 point, in float3 center, in quaternion rot)
+        {
+            float4x4 mat = math.fastinverse(float4x4.TRS(center, rot, 1));
+            float3
+                xzProj = math.mul(mat, new float4(point, 1)).xyz;
+
+            Direction result = Direction.NONE;
+            if (xzProj.x > 0.01f)
+            {
+                result = Direction.Right;
+            }
+            else if (xzProj.x < -0.01f)
+            {
+                result = Direction.Left;
+            }
+
+            if (xzProj.z > 0.01f)
+            {
+                result |= Direction.Backward;
+            }
+            else if (xzProj.z < -0.01f)
+            {
+                result |= Direction.Forward;
+            }
+
+            if (xzProj.y > 0.01f)
+            {
+                result |= Direction.Up;
+            }
+            else if (xzProj.y < -0.01f)
+            {
+                result |= Direction.Down;
+            }
+            //$"123,, {xzProj} :: {center}, {point}".ToLog();
+
+            return result;
+        }
+        public Direction GetReletiveDirectionFrom(in GridIndex index, in GridIndex from, in quaternion rot)
+        {
+            if (index.Equals(from))
+            {
+                "?? same".ToLog();
+                return Direction.NONE;
+            }
+
+            float3 gridPos = IndexToPosition(in index);
+
+            AABB fromAAbb;
+            unsafe
+            {
+                BurstGridMathematics.indexToAABB(m_Grid.aabb, CellSize, from.Index, &fromAAbb);
+            }
+            var planes = fromAAbb.planes;
+
+            Direction direction;
+            for (int i = 0; i < 6; i++)
+            {
+                if (!planes[i].GetSide(gridPos)) continue;
+
+                direction = (Direction)(1 << i);
+
+                int3 oppoLoc;
+                float3 pos;
+                unsafe
+                {
+                    BurstGridMathematics.getDirection(index.Location, direction.GetOpposite(), &oppoLoc);
+                    BurstGridMathematics.locationToPosition(m_Grid.aabb, CellSize, oppoLoc, &pos);
+                }
+
+                var temp = GetNormalizedDirection(
+                    pos,
+                    gridPos,
+                    rot
+                    );
+                return temp;
+            }
+
+            return Direction.NONE;
+        }
         public float3 IndexToPosition(in GridIndex index)
         {
             return m_Grid.IndexToPosition(index.Index);
@@ -1144,6 +1327,15 @@ namespace Syadeu.Presentation.Grid
         public float3 LocationToPosition(in int3 location)
         {
             return m_Grid.LocationToPosition(in location);
+        }
+        public GridIndex LocationToIndex(in int3 location)
+        {
+            return new GridIndex(m_Grid, m_Grid.LocationToIndex(location));
+        }
+        public GridIndex PositionToIndex(in float3 position)
+        {
+            ulong index = m_Grid.PositionToIndex(in position);
+            return new GridIndex(m_Grid, index);
         }
 
         #endregion
@@ -1215,7 +1407,7 @@ namespace Syadeu.Presentation.Grid
                 m_CurrentOverlayIndex = index;
                 //$"pointing {index}, {info.point}".ToLog();
 
-                m_EventSystem.PostEvent(OnGridCellCursorOverrapEvent.GetEvent(m_CurrentOverlayIndex));
+                m_EventSystem.PostEvent(OnGridCellCursorOverlapEvent.GetEvent(m_CurrentOverlayIndex));
             }
 
             if (m_InputSystem.IsCursorPressedInThisFrame)
@@ -1228,14 +1420,18 @@ namespace Syadeu.Presentation.Grid
         /// 
         /// </summary>
         /// <remarks>
-        /// <seealso cref="OnGridCellCursorOverrapEvent"/>, <seealso cref="OnGridCellPreseedEvent"/>
+        /// <seealso cref="OnGridCellCursorOverlapEvent"/>, <seealso cref="OnGridCellPreseedEvent"/>
         /// </remarks>
         /// <param name="enable"></param>
         public void EnableCursorObserve(bool enable)
         {
+            if (m_EnabledCursorObserve == enable) return;
+
             m_EnabledCursorObserve = enable;
 
             m_CurrentOverlayIndex = default(GridIndex);
+
+            OnEnableCursorObserve?.Invoke(enable);
         }
         public bool TryGetGridIndexAtCursor(out GridIndex index)
         {
@@ -1267,6 +1463,39 @@ namespace Syadeu.Presentation.Grid
         {
             return GetModule<GridDetectorModule>().IsObserveIndexOfOnly(in index, in entity);
         }
+
+        public int GetObserverIndicesCount()
+        {
+            CompleteGridJob();
+
+            return GetModule<GridDetectorModule>().GridObservers.Count();
+        }
+        public NativeArray<GridIndex> GetObserverIndices(AllocatorManager.AllocatorHandle allocator)
+        {
+            CompleteGridJob();
+
+            return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
+        }
+        public IndexEnumerator<AlwaysTrue<GridIndex>> GetObserverIndices()
+        {
+            CompleteGridJob();
+
+            return new IndexEnumerator<AlwaysTrue<GridIndex>>
+                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
+                new AlwaysTrue<GridIndex>()
+                );
+        }
+        public IndexEnumerator<TPredicate> GetObserverIndices<TPredicate>(TPredicate predicate)
+            where TPredicate : struct, IExecutable<GridIndex>
+        {
+            CompleteGridJob();
+
+            return new IndexEnumerator<TPredicate>
+                (GetModule<GridDetectorModule>().GridObservers.GetEnumerator(),
+                predicate
+                );
+        }
+
 
         #endregion
     }

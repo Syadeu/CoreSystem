@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -256,13 +256,14 @@ namespace Syadeu.Presentation.TurnTable
 
             player.ActionPoint = player.MaxActionPoint;
 
-            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} reset turn");
+            $"{entity.Target.Name} reset turn".ToLog();
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Reset));
 
             // TODO : Temp code
             //entity.GetAttribute<TurnPlayerAttribute>().m_OnResetTurnActions.Schedule(entity);
-            m_NavMeshSystem.FixCurrentGridPosition(entity.ToEntity<IEntity>());
+            m_NavMeshSystem.CancelMove(entity.Idx);
+            m_NavMeshSystem.FixCurrentGridPositionImmediate(entity.Idx);
             player.OnResetTurnActions.Schedule(entity);
 
             return ref player;

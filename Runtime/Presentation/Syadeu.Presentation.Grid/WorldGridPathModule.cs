@@ -28,7 +28,7 @@ namespace Syadeu.Presentation.Grid
 {
     internal sealed class WorldGridPathModule : PresentationSystemModule<WorldGridSystem>
     {
-        private struct PathTile : IEmpty
+        private struct PathTile : IEmpty, IEquatable<GridIndex>
         {
             public GridIndex parent, index;
             /// <summary>
@@ -111,6 +111,8 @@ namespace Syadeu.Presentation.Grid
                         (location.z == targetA.z && location.z == targetB.z);
                 }
             }
+
+            public bool Equals(GridIndex other) => index.Equals(other);
         }
         private struct ClosedBoolen6
         {
@@ -155,6 +157,9 @@ namespace Syadeu.Presentation.Grid
         {
             PathTile root = new PathTile(from);
             CalculatePathTile(ref root);
+
+            UnsafeFixedListWrapper<GridIndex> fourList;
+            UnsafeFixedListWrapper<PathTile> pathList;
             unsafe
             {
                 GridIndex* four = stackalloc GridIndex[6];
@@ -164,77 +169,93 @@ namespace Syadeu.Presentation.Grid
                     four[i] = result;
                 }
 
+                fourList = new UnsafeFixedListWrapper<GridIndex>(
+                    four, 6, 6);
+            }
+
+            unsafe
+            {
                 PathTile* path = stackalloc PathTile[512];
-                path[0] = root;
+                pathList = new UnsafeFixedListWrapper<PathTile>(
+                    path, 512);
+            }
 
-                pathFound = 1;
-                uint count = 1, iteration = 0, currentTileIdx = 0;
+            pathList.Add(root);
+            //path[0] = root;
 
-                while (
-                    iteration < maxIteration &&
-                    count < 512 &&
-                    path[count - 1].index.Index != to.Index)
+            pathFound = 1;
+            uint /*count = 1,*/ iteration = 0, currentTileIdx = 0;
+
+            while (
+                iteration < maxIteration &&
+                pathList.Length < pathList.Capacity &&
+                pathList.Last.index.Index != to.Index)
+            {
+                ref PathTile lastTileData = ref pathList.ElementAt(currentTileIdx);
+
+                Direction nextDirection = GetLowestCost(ref lastTileData, in to, out GridIndex result);
+                if (nextDirection < 0)
                 {
-                    ref PathTile lastTileData = ref path[currentTileIdx];
+                    pathFound--;
 
-                    Direction nextDirection = GetLowestCost(ref lastTileData, in to, out GridIndex result);
-                    if (nextDirection < 0)
-                    {
-                        pathFound--;
+                    if (pathFound <= 0) break;
 
-                        if (pathFound <= 0) break;
+                    ref PathTile parentTile = ref pathList.ElementAt(lastTileData.parentArrayIdx);
+                    parentTile.SetClose(lastTileData.direction, true);
 
-                        ref PathTile parentTile = ref path[lastTileData.parentArrayIdx];
-                        parentTile.SetClose(lastTileData.direction, true);
+                    currentTileIdx = lastTileData.parentArrayIdx;
 
-                        currentTileIdx = lastTileData.parentArrayIdx;
-
-                        iteration++;
-                        continue;
-                    }
-
-                    PathTile nextTile = GetOrCreateNext(path, count, lastTileData, result, nextDirection, out bool isNew);
-
-                    lastTileData.SetClose(nextDirection, true);
-                    CalculatePathTile(ref nextTile);
-
-                    if (isNew)
-                    {
-                        path[count] = (nextTile);
-                        currentTileIdx = count;
-                        count++;
-                    }
-                    else
-                    {
-                        currentTileIdx = nextTile.arrayIdx;
-                    }
-
-                    pathFound++;
+                    iteration++;
+                    continue;
                 }
 
-                // Path Found
-                if (path[count - 1].index.Equals(to))
+                PathTile nextTile = GetOrCreateNext(pathList, lastTileData, result, nextDirection, out bool isNew);
+
+                lastTileData.SetClose(nextDirection, true);
+                CalculatePathTile(ref nextTile);
+
+                if (isNew)
                 {
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (UnsafeBufferUtility.Contains(four, 6, path[i].index))   
-                        {
-                            path[i].parent = from;
-                            path[i].parentArrayIdx = 0;
-                        }
-                    }
-
-                    int sortedFound = 0;
-                    PathTile current = path[count - 1];
-                    for (int i = 0; i < pathFound && !current.index.Equals(from); i++, sortedFound++)
-                    {
-                        current = path[current.parentArrayIdx];
-                    }
-
-                    pathFound = sortedFound;
-
-                    return true;
+                    currentTileIdx = (uint)pathList.Length;
+                    pathList.Add(nextTile);
+                    //count++;
                 }
+                else
+                {
+                    currentTileIdx = nextTile.arrayIdx;
+                }
+
+                pathFound++;
+            }
+
+            // Path Found
+            if (pathList.Last.Equals(to))
+            {
+                for (int i = 0; i < pathList.Length; i++)
+                {
+                    if (fourList.Contains(pathList[i].index))
+                    {
+                        ref var target = ref pathList.ElementAt(i);
+                        target.parent = from;
+                        target.parentArrayIdx = 0;
+                    }
+                    //if (UnsafeBufferUtility.Contains(four, 6, path[i].index))
+                    //{
+                    //    path[i].parent = from;
+                    //    path[i].parentArrayIdx = 0;
+                    //}
+                }
+
+                int sortedFound = 0;
+                PathTile current = pathList.Last;
+                for (int i = 0; i < pathFound && !current.index.Equals(from); i++, sortedFound++)
+                {
+                    current = pathList[current.parentArrayIdx];
+                }
+
+                pathFound = sortedFound;
+
+                return true;
             }
 
             return false;
@@ -250,6 +271,9 @@ namespace Syadeu.Presentation.Grid
         {
             PathTile root = new PathTile(from);
             CalculatePathTile(ref root);
+
+            UnsafeFixedListWrapper<GridIndex> fourList;
+            UnsafeFixedListWrapper<PathTile> pathList;
             unsafe
             {
                 GridIndex* four = stackalloc GridIndex[6];
@@ -258,122 +282,132 @@ namespace Syadeu.Presentation.Grid
                     System.TryGetDirection(from, (Direction)(1 << i), out GridIndex result);
                     four[i] = result;
                 }
+                fourList = new UnsafeFixedListWrapper<GridIndex>(
+                    four, 6, 6);
 
                 PathTile* path = stackalloc PathTile[512];
-                path[0] = root;
+                pathList = new UnsafeFixedListWrapper<PathTile>(
+                    path, 512);
+            }
+            pathList.Add(root);
 
-                int pathFound = 1;
-                uint count = 1, iteration = 0, currentTileIdx = 0;
+            int pathFound = 1;
+            uint /*count = 1, */iteration = 0, currentTileIdx = 0;
 
-                while (
-                    iteration < maxIteration &&
-                    count < 512 &&
-                    path[count - 1].index.Index != to.Index)
+            while (
+                iteration < maxIteration &&
+                pathList.Length < pathList.Capacity &&
+                pathList.Last.index.Index != to.Index)
+            {
+                ref PathTile lastTileData = ref pathList.ElementAt(currentTileIdx);
+
+                Direction nextDirection = GetLowestCost(ref lastTileData, in to, out GridIndex result);
+                if (nextDirection == Direction.NONE)
                 {
-                    ref PathTile lastTileData = ref path[currentTileIdx];
+                    pathFound--;
 
-                    Direction nextDirection = GetLowestCost(ref lastTileData, in to, out GridIndex result);
-                    if (nextDirection == Direction.NONE)
-                    {
-                        pathFound--;
+                    if (pathFound <= 0) break;
 
-                        if (pathFound <= 0) break;
+                    ref PathTile parentTile = ref pathList.ElementAt(lastTileData.parentArrayIdx);
+                    parentTile.SetClose(lastTileData.direction, true);
 
-                        ref PathTile parentTile = ref path[lastTileData.parentArrayIdx];
-                        parentTile.SetClose(lastTileData.direction, true);
+                    currentTileIdx = lastTileData.parentArrayIdx;
 
-                        currentTileIdx = lastTileData.parentArrayIdx;
-
-                        iteration++;
-                        continue;
-                    }
-
-                    PathTile nextTile = GetOrCreateNext(path, count, lastTileData, result, nextDirection, out bool isNew);
-
-                    lastTileData.SetClose(nextDirection, true);
-                    CalculatePathTile(ref nextTile);
-
-                    if (isNew)
-                    {
-                        path[count] = (nextTile);
-                        currentTileIdx = count;
-                        count++;
-                    }
-                    else
-                    {
-                        currentTileIdx = nextTile.arrayIdx;
-                    }
-
-                    pathFound++;
+                    iteration++;
+                    continue;
                 }
 
-                // Path Found
-                if (path[count - 1].index.Equals(to))
-                {
-                    //for (int i = 0; i < count; i++)
-                    //{
-                    //    if (UnsafeBufferUtility.Contains(four, 6, path[i].index))
-                    //    {
-                    //        path[i].parent = from;
-                    //        path[i].parentArrayIdx = 0;
-                    //    }
-                    //}
+                PathTile nextTile = GetOrCreateNext(pathList, lastTileData, result, nextDirection, out bool isNew);
 
+                lastTileData.SetClose(nextDirection, true);
+                CalculatePathTile(ref nextTile);
+
+                if (isNew)
+                {
+                    currentTileIdx = (uint)pathList.Length;
+                    pathList.Add(nextTile);
+                }
+                else
+                {
+                    currentTileIdx = nextTile.arrayIdx;
+                }
+
+                pathFound++;
+            }
+
+            // Path Found
+            if (pathList.Last.index.Equals(to))
+            {
+                UnsafeFixedListWrapper<PathTile> output;
+                unsafe
+                {
                     PathTile* arr = stackalloc PathTile[pathFound];
-
-                    int length = 0;
-                    PathTile current = path[count - 1];
-                    for (int i = 0; i < pathFound && !current.index.Equals(from); i++, length++)
-                    {
-                        if (UnsafeBufferUtility.Contains(four, 6, current.index))
-                        {
-                            current.parent = from;
-                            current.parentArrayIdx = 0;
-                        }
-                        arr[i] = current;
-
-                        current = path[current.parentArrayIdx];
-                    }
-                    arr[length++] = path[0];
-
-                    foundPath.Clear();
-                    //foundPath.Add(from);
-                    for (int i = length - 1; i >= 0; i--)
-                    {
-                        if (i + 1 < length && i - 1 >= 0)
-                        {
-                            if (arr[i].IsSameAxis(arr[i + 1].index, arr[i - 1].index))
-                            {
-                                continue;
-                            }
-                        }
-
-                        foundPath.Add(arr[i].index);
-                    }
-
-                    tileCount = length;
-                    return true;
+                    output = new UnsafeFixedListWrapper<PathTile>(arr, pathFound);
                 }
+
+                PathTile current = pathList.Last;
+                for (int i = 0; i < pathFound && !current.index.Equals(from); i++)
+                {
+                    if (fourList.Contains(pathList[i].index))
+                    {
+                        ref var target = ref pathList.ElementAt(i);
+                        target.parent = from;
+                        target.parentArrayIdx = 0;
+                    }
+                    output.Add(current);
+
+                    current = pathList[current.parentArrayIdx];
+                }
+                //arr[length++] = path[0];
+                output.Add(pathList[0]);
+
+                foundPath.Clear();
+                //foundPath.Add(from);
+                for (int i = output.Length - 1; i >= 0; i--)
+                {
+                    if (i + 1 < output.Length && i - 1 >= 0)
+                    {
+                        if (output[i].IsSameAxis(output[i + 1].index, output[i - 1].index))
+                        {
+                            continue;
+                        }
+                    }
+
+                    foundPath.Add(output[i].index);
+                }
+
+                tileCount = output.Length;
+                return true;
             }
 
             tileCount = 0;
             return false;
         }
 
-        private unsafe PathTile GetOrCreateNext(PathTile* array, in uint length,
+        private unsafe PathTile GetOrCreateNext(UnsafeFixedListWrapper<PathTile> array,
             in PathTile from, in GridIndex target, in Direction targetDirection, out bool isNew)
         {
-            for (int i = 0; i < length; i++)
+            int index = array.IndexOf(target);
+            if (index < 0)
             {
-                if (array[i].index.Equals(target))
-                {
-                    isNew = false;
-                    return array[i];
-                }
+                isNew = true;
+                return new PathTile(from, target, targetDirection, (uint)array.Length);
             }
 
-            isNew = true;
-            return new PathTile(from, target, targetDirection, length);
+            isNew = false;
+            return array[index];
+
+            //for (int i = 0; i < array.Count; i++)
+            //{
+            //    if (array[i].index.Equals(target))
+            //    {
+            //        isNew = false;
+            //        return array[i];
+            //    }
+            //}
+
+            //isNew = true;
+            //return new PathTile(from, target, targetDirection, length);
         }
         private Direction GetLowestCost(ref PathTile prev, in GridIndex to, out GridIndex result)
         {

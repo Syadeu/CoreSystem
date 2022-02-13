@@ -28,4 +28,7 @@ namespace Syadeu.Collections
 
         void OnShutdown();
     }
+    public interface IConstTriggerAction : IConstAction
+    {
+    }
 }

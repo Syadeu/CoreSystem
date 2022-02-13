@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Syadeu.Collections.Buffer.LowLevel;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -47,6 +48,26 @@ namespace Syadeu.Collections
             unsafe
             {
                 output = GetSum((byte*)&data, UnsafeUtility.SizeOf<T>());
+
+                // https://pretagteam.com/question/converting-c-byte-to-bitarray
+                //if (BitConverter.IsLittleEndian)
+                output = RemoveHighNibble(in output);
+
+                // Complement
+                output = Complement(in output) + 1;
+            }
+
+            return output;
+        }
+        public static uint Calculate<T>(in UnsafeReference<T> buffer, in int length)
+            where T : unmanaged
+        {
+            uint output;
+            unsafe
+            {
+                byte* bytes = UnsafeBufferUtility.AsBytes(ref buffer.Value, out int byteLength);
+
+                output = GetSum(bytes, byteLength);
 
                 // https://pretagteam.com/question/converting-c-byte-to-bitarray
                 //if (BitConverter.IsLittleEndian)
@@ -104,7 +125,7 @@ namespace Syadeu.Collections
         }
 
         [BurstCompile]
-        private static unsafe uint GetSum(byte* bytes, int size)
+        private static uint GetSum(UnsafeReference<byte> bytes, int size)
         {
             uint output = 0;
             for (int i = 0; i < size; i++)

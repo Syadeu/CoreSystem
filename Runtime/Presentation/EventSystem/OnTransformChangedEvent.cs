@@ -28,8 +28,8 @@ namespace Syadeu.Presentation.Events
     /// </remarks>
     public sealed class OnTransformChangedEvent : SynchronizedEvent<OnTransformChangedEvent>
     {
-        public override UpdateLoop Loop => UpdateLoop.Transform;
-        public override bool DisplayLog => false;
+        protected override UpdateLoop Loop => UpdateLoop.Transform;
+        protected override bool DisplayLog => false;
 
 #pragma warning disable IDE1006 // Naming Styles
         public Entity<IEntity> entity { get; private set; }

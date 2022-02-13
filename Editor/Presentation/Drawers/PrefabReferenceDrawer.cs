@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace SyadeuEditor.Presentation
 {
@@ -28,14 +30,14 @@ namespace SyadeuEditor.Presentation
 
         public PrefabReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
         {
-            m_Constructor = TypeHelper.GetConstructorInfo(elementType, TypeHelper.TypeOf<int>.Type);
+            m_Constructor = TypeHelper.GetConstructorInfo(elementType, TypeHelper.TypeOf<long>.Type, TypeHelper.TypeOf<string>.Type);
 
             IPrefabReference prefab = Getter.Invoke();
             if (!prefab.IsNone() && prefab.IsValid())
             {
                 if (prefab.GetEditorAsset() == null)
                 {
-                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     return;
                 }
 
@@ -44,21 +46,21 @@ namespace SyadeuEditor.Presentation
                     Type targetType = elementType.GenericTypeArguments[0];
                     if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
                     {
-                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     }
                 }
             }
         }
         public PrefabReferenceDrawer(object parentObject, MemberInfo memberInfo, bool drawName) : base(parentObject, memberInfo)
         {
-            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
+            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type, TypeHelper.TypeOf<string>.Type);
 
             IPrefabReference prefab = Getter.Invoke();
             if (!prefab.IsNone() && prefab.IsValid())
             {
                 if (prefab.GetEditorAsset() == null)
                 {
-                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     return;
                 }
 
@@ -67,7 +69,7 @@ namespace SyadeuEditor.Presentation
                     Type targetType = DeclaredType.GenericTypeArguments[0];
                     if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
                     {
-                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                        Setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     }
                 }
             }
@@ -76,14 +78,14 @@ namespace SyadeuEditor.Presentation
         }
         public PrefabReferenceDrawer(object parentObject, Type declaredType, Action<IPrefabReference> setter, Func<IPrefabReference> getter) : base(parentObject, declaredType, setter, getter)
         {
-            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type);
+            m_Constructor = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<int>.Type, TypeHelper.TypeOf<string>.Type);
 
             IPrefabReference prefab = getter.Invoke();
             if (!prefab.IsNone() && prefab.IsValid())
             {
                 if (prefab.GetEditorAsset() == null)
                 {
-                    setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                    setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     return;
                 }
 
@@ -92,7 +94,7 @@ namespace SyadeuEditor.Presentation
                     Type targetType = declaredType.GenericTypeArguments[0];
                     if (!targetType.IsAssignableFrom(prefab.GetEditorAsset().GetType()))
                     {
-                        setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1 }));
+                        setter.Invoke((IPrefabReference)m_Constructor.Invoke(new object[] { -1, string.Empty }));
                     }
                 }
             }
@@ -107,7 +109,7 @@ namespace SyadeuEditor.Presentation
                     DrawPrefabReference(DisableHeader ? string.Empty : Name,
                     (idx) =>
                     {
-                        IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx });
+                        IPrefabReference prefab = (IPrefabReference)m_Constructor.Invoke(new object[] { idx.index, idx.subAssetName.ToString() });
 
                         IPrefabReference origin = Getter.Invoke();
                         Setter.Invoke(prefab);
@@ -171,28 +173,40 @@ namespace SyadeuEditor.Presentation
             return currentValue;
         }
 
-        private void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
+        private void DrawPrefabReference(string name, Action<ReferenceAsset> setter, IPrefabReference current)
         {
             GUIContent displayName;
+            IPrefabResource objSetting;
             if (current.Equals(PrefabReference.None))
             {
                 displayName = new GUIContent("None");
+                objSetting = null;
             }
             else if (current.Index >= 0)
             {
-                //PrefabList.ObjectSetting objSetting = current.GetObjectSetting();
-                IPrefabResource objSetting = current.GetObjectSetting();
-                displayName = objSetting == null ? new GUIContent("INVALID") : new GUIContent(objSetting.Name);
+                objSetting = current.GetObjectSetting();
+                if (objSetting == null)
+                {
+                    displayName = new GUIContent("INVALID");
+                }
+                else
+                {
+                    displayName 
+                        = current.IsSubAsset ? 
+                        new GUIContent(objSetting.Name + $"[{current.SubAssetName}]") :
+                        new GUIContent(objSetting.Name);
+                }
             }
             else
             {
                 displayName = new GUIContent("INVALID");
+                objSetting = null;
             }
 
             bool clicked;
             using (new EditorGUILayout.HorizontalScope())
             {
-                //GUILayout.Space(EditorGUI.indentLevel * 15);
+                GUILayout.Space(EditorGUI.indentLevel * 15);
 
                 if (!string.IsNullOrEmpty(name))
                 {
@@ -205,11 +219,19 @@ namespace SyadeuEditor.Presentation
                     menu.AddDisabledItem(displayName);
                     menu.AddSeparator(string.Empty);
 
-                    menu.AddItem(new GUIContent("Select"), false, () =>
+                    if (objSetting == null)
                     {
-                        Selection.activeObject = current.GetEditorAsset();
-                        EditorGUIUtility.PingObject(Selection.activeObject);
-                    });
+                        menu.AddDisabledItem(new GUIContent("Select"));
+                    }
+                    else
+                    {
+                        menu.AddItem(new GUIContent("Select"), false, () =>
+                        {
+                            Selection.activeObject = current.GetEditorAsset();
+                            EditorGUIUtility.PingObject(Selection.activeObject);
+                        });
+                    }
+
                     menu.AddDisabledItem(new GUIContent("Edit"));
 
                     menu.ShowAsContext();
@@ -222,7 +244,7 @@ namespace SyadeuEditor.Presentation
                 rect.position = Event.current.mousePosition;
 
                 Type type = current.GetType();
-                List<PrefabList.ObjectSetting> list;
+                List<ReferenceAsset> list;
 
                 if (type.GenericTypeArguments.Length > 0)
                 {
@@ -236,129 +258,80 @@ namespace SyadeuEditor.Presentation
                                 return true;
                             }
                             return false;
+                        })
+                        .Select(t => new ReferenceAsset()
+                        {
+                            index = PrefabList.Instance.ObjectSettings.IndexOf(t)
                         }).ToList();
+
+                    for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                    {
+                        var subAssets = PrefabList.Instance.ObjectSettings[i].m_RefPrefab.GetSubAssets();
+                        for (int h = 0; h < subAssets?.Count; h++)
+                        {
+                            if (!type.GenericTypeArguments[0].IsAssignableFrom(subAssets[h].TargetAsset.GetType()))
+                            {
+                                continue;
+                            }
+
+                            list.Add(new ReferenceAsset
+                            {
+                                index = i,
+                                subAssetName = subAssets[h].TargetAsset.name
+                            });
+                        }
+                    }
                 }
                 else
                 {
-                    list = PrefabList.Instance.ObjectSettings;
-                }
+                    list = PrefabList.Instance.ObjectSettings.Select(t => new ReferenceAsset()
+                    {
+                        index = PrefabList.Instance.ObjectSettings.IndexOf(t)
+                    }).ToList();
 
-                var popup = SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
-                {
                     for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
                     {
-                        if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                        var subAssets = PrefabList.Instance.ObjectSettings[i].m_RefPrefab.GetSubAssets();
+
+                        for (int h = 0; h < subAssets?.Count; h++)
+                        {
+                            list.Add(new ReferenceAsset
+                            {
+                                index = i,
+                                subAssetName = subAssets[h].TargetAsset.name
+                            });
+                        }
                     }
-                    return -1;
-                }, -2);
+                }
+
+                var popup = SelectorPopup<ReferenceAsset, ReferenceAsset>.GetWindow(
+                    list, setter, (objSet) =>
+                {
+                    return objSet;
+
+                }, ReferenceAsset.None,
+                    getName: (t) =>
+                    {
+                        if (t.subAssetName.IsEmpty)
+                        {
+                            return PrefabList.Instance.ObjectSettings[(int)t.index].Name;
+                        }
+
+                        return PrefabList.Instance.ObjectSettings[(int)t.index].Name + $"[{t.subAssetName}]";
+                    });
 
                 PopupWindow.Show(rect, popup);
             }
 
             return;
+        }
 
-            #region Old
+        private struct ReferenceAsset
+        {
+            public static ReferenceAsset None => new ReferenceAsset { index = -2 };
 
-            Rect fieldRect;
-            int selectorID;
-            using (new GUILayout.HorizontalScope())
-            {
-                GUILayout.Space(EditorGUI.indentLevel * 15);
-
-                if (!string.IsNullOrEmpty(name)) GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
-
-                fieldRect = GUILayoutUtility.GetRect(displayName, EditorStyleUtilities.SelectorStyle, GUILayout.ExpandWidth(true));
-                selectorID = GUIUtility.GetControlID(FocusType.Passive, fieldRect);
-            }
-
-            switch (Event.current.GetTypeForControl(selectorID))
-            {
-                case EventType.Repaint:
-                    IsHover = fieldRect.Contains(Event.current.mousePosition);
-                    EditorStyleUtilities.SelectorStyle.Draw(fieldRect, displayName, IsHover, isActive: false, on: false, false);
-                    break;
-                case EventType.ContextClick:
-                    if (!fieldRect.Contains(Event.current.mousePosition)) break;
-
-                    Event.current.Use();
-
-                    GenericMenu menu = new GenericMenu();
-
-                    menu.AddDisabledItem(displayName);
-                    menu.AddSeparator(string.Empty);
-
-                    menu.AddItem(new GUIContent("Select"), false, () =>
-                    {
-                        Selection.activeObject = current.GetEditorAsset();
-                        EditorGUIUtility.PingObject(Selection.activeObject);
-                    });
-                    menu.AddDisabledItem(new GUIContent("Edit"));
-
-                    menu.ShowAsContext();
-                    break;
-                case EventType.MouseDown:
-                    if (!fieldRect.Contains(Event.current.mousePosition) ||
-                        Event.current.button != 0) break;
-
-                    Event.current.Use();
-                    GUI.changed = true;
-
-                    Rect rect = GUILayoutUtility.GetLastRect();
-                    rect.position = Event.current.mousePosition;
-
-                    Type type = current.GetType();
-                    List<PrefabList.ObjectSetting> list;
-
-                    if (type.GenericTypeArguments.Length > 0)
-                    {
-                        list = PrefabList.Instance.ObjectSettings
-                            .Where((other) =>
-                            {
-                                if (other.GetEditorAsset() == null) return false;
-
-                                if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
-                                {
-                                    return true;
-                                }
-                                return false;
-                            }).ToList();
-                    }
-                    else
-                    {
-                        list = PrefabList.Instance.ObjectSettings;
-                    }
-
-                    var popup = SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, setter, (objSet) =>
-                    {
-                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
-                        {
-                            if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
-                        }
-                        return -1;
-                    }, -2);
-
-                    PopupWindow.Show(rect, popup);
-                    //GUIUtility.ExitGUI();
-
-                    //"asd".ToLog();
-                    //await popup.WaitForClose();
-                    //"out".ToLog();
-
-
-                    GUIUtility.hotControl = 0;
-                    break;
-                case EventType.MouseUp:
-                    if (GUIUtility.hotControl == selectorID)
-                    {
-                        Event.current.Use();
-                        GUIUtility.hotControl = 0;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            #endregion
+            public long index;
+            public FixedString128Bytes subAssetName;
         }
     }
 }

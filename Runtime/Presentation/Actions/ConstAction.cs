@@ -16,8 +16,11 @@
 #define DEBUG_MODE
 #endif
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
 using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
@@ -42,15 +45,18 @@ namespace Syadeu.Presentation.Actions
         }
 
         ConstActionUtilities.Info IConstAction.GetInfo() => ConstActionUtilities.HashMap[GetType()];
-        void IConstAction.SetArguments(params object[] args)
+        void IConstAction.SetArguments(params object[] args) => InternalSetArguments(args);
+
+        void IConstAction.Initialize() => OnInitialize();
+        object IConstAction.Execute() => InternalExecute();
+        void IConstAction.OnShutdown() => OnShutdown();
+        void IDisposable.Dispose() => OnDispose();
+
+        protected virtual void InternalSetArguments(params object[] args)
         {
             ConstActionUtilities.HashMap[GetType()].SetArguments(this, args);
         }
-
-        void IConstAction.Initialize() => OnInitialize();
-        object IConstAction.Execute() => Execute();
-        void IConstAction.OnShutdown() => OnShutdown();
-        void IDisposable.Dispose() => OnDispose();
+        protected virtual TValue InternalExecute() => Execute();
 
         protected virtual void OnInitialize() { }
         protected abstract TValue Execute();
@@ -85,5 +91,28 @@ namespace Syadeu.Presentation.Actions
         }
 
         #endregion
+    }
+    public abstract class ConstTriggerAction<TValue> : ConstAction<TValue>, IConstTriggerAction
+    {
+        [JsonIgnore] private InstanceID m_Entity;
+
+        protected override sealed void InternalSetArguments(params object[] args)
+        {
+            object[] arr = ArrayPool<object>.Shared.Rent(args.Length - 1);
+            Array.Copy(args, 1, arr, 0, args.Length - 1);
+
+            m_Entity = (InstanceID)args[0];
+
+            ConstActionUtilities.HashMap[GetType()].SetArguments(this, arr);
+
+            ArrayPool<object>.Shared.Return(arr);
+        }
+        protected override TValue InternalExecute() => Execute(m_Entity);
+
+        protected abstract TValue Execute(InstanceID entity);
+        protected override sealed TValue Execute()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

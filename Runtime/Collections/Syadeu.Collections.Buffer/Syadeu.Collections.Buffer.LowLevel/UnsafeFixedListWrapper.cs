@@ -17,7 +17,9 @@
 #endif
 
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -29,43 +31,70 @@ namespace Syadeu.Collections.Buffer.LowLevel
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     [BurstCompatible]
-    public struct UnsafeFixedListWrapper<T> : IFixedList<T>
+    public struct UnsafeFixedListWrapper<T> : IFixedList<T>, IEquatable<UnsafeFixedListWrapper<T>>
         where T : unmanaged
     {
-        private readonly UnsafeReference<T> m_Buffer;
+        internal readonly UnsafeReference<T> m_Buffer;
         private readonly int m_Capacity;
         private int m_Count;
 
         public int Capacity => m_Capacity;
-        int IFixedList.Length => Count;
-        public int Count
+        int INativeList<T>.Capacity { get => m_Capacity; set => throw new NotImplementedException(); }
+        int IFixedList.Length => Length;
+        public int Length
         {
             get => m_Count;
             set => m_Count = value;
         }
+        public bool IsCreated => m_Buffer.IsCreated;
 
         public T First => m_Buffer[0];
         public T Last => m_Buffer[m_Count - 1];
 
+        public bool IsEmpty => !m_Buffer.IsCreated;
+        
         public T this[int index]
         {
             get { return m_Buffer[index]; }
             set { m_Buffer[index] = value; }
         }
+        public T this[uint index]
+        {
+            get { return m_Buffer[index]; }
+            set { m_Buffer[index] = value; }
+        }
 
-        public UnsafeFixedListWrapper(UnsafeAllocator<T> allocator)
+        public UnsafeFixedListWrapper(UnsafeAllocator<T> allocator, int initialCount)
         {
             m_Buffer = allocator.Ptr;
             m_Capacity = allocator.Length;
-            m_Count = 0;
+            m_Count = initialCount;
         }
-        public UnsafeFixedListWrapper(UnsafeReference<T> buffer, int length, int initialCount = 0)
+        public UnsafeFixedListWrapper(NativeArray<T> array)
+        {
+            UnsafeReference<T> buffer;
+            unsafe
+            {
+                buffer = (T*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(array);
+            }
+
+            m_Buffer = buffer;
+            m_Capacity = array.Length;
+            m_Count = array.Length;
+        }
+        public UnsafeFixedListWrapper(NativeList<T> list)
+        {
+            this = list.ConvertToFixedWrapper();
+        }
+        public UnsafeFixedListWrapper(UnsafeReference<T> buffer, int capacity, int initialCount = 0)
         {
             m_Buffer = buffer;
-            m_Capacity = length;
+            m_Capacity = capacity;
             m_Count = initialCount;
         }
 
+        public ref T ElementAt(int index) => ref m_Buffer[index];
+        public ref T ElementAt(uint index) => ref m_Buffer[index];
         public void Add(T element)
         {
             if (m_Count >= Capacity)
@@ -77,27 +106,142 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Count++;
         }
 
-        public void RemoveSwapback(T element)
+        public void Clear()
         {
-            if (m_Count == 0) return;
-
-            if (!UnsafeBufferUtility.RemoveForSwapBack(m_Buffer, m_Count, element))
-            {
-                return;
-            }
-
-            m_Count -= 1;
+            m_Count = 0;
         }
-        public void RemoveAtSwapback(int index)
+        public void Clear(NativeArrayOptions options)
         {
-            if (m_Count == 0) return;
+            if ((options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
+            {
+                unsafe
+                {
+                    UnsafeUtility.MemClear(m_Buffer, UnsafeUtility.SizeOf<T>() * m_Count);
+                }
+            }
+            m_Count = 0;
+        }
 
-            if (!UnsafeBufferUtility.RemoveAtSwapBack(m_Buffer, m_Count, index))
+        public bool Equals(UnsafeFixedListWrapper<T> other) => m_Buffer.Equals(other.m_Buffer);
+
+        public static implicit operator UnsafeFixedListWrapper<T>(NativeArray<T> t)
+        {
+            return new UnsafeFixedListWrapper<T>(t);
+        }
+        public static implicit operator UnsafeFixedListWrapper<T>(NativeList<T> t)
+        {
+            return new UnsafeFixedListWrapper<T>(t);
+        }
+    }
+
+    public static class UnsafeFixedListWrapperExtensions
+    {
+        public static UnsafeFixedListWrapper<T> ConvertToFixedWrapper<T>(this ref NativeList<T> t)
+            where T : unmanaged
+        {
+            UnsafeReference<T> buffer;
+            unsafe
+            {
+                buffer = (*t.GetUnsafeList()).Ptr;
+            }
+
+            return new UnsafeFixedListWrapper<T>(buffer, t.Capacity, t.Length);
+        }
+        /// <summary>
+        /// 값을 <paramref name="list"/> 에 복사합니다.
+        /// </summary>
+        /// <remarks>
+        /// 만약 같은 포인터라면 <paramref name="list"/> 에는 현재 가지고 있는 갯수만 적용하며, 
+        /// 다른 포인터라면 <paramref name="t"/> 가 가지고 있는 갯수만큼 복사하여 <paramref name="list"/> 에 붙여넣습니다.
+        /// </remarks>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <param name="list"></param>
+        public static void CopyToNativeList<T>(this ref UnsafeFixedListWrapper<T> t, 
+            ref NativeList<T> list)
+            where T : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (list.Capacity < t.Length)
+            {
+                UnityEngine.Debug.LogError(
+                    "Cannot copy. Exceeding capacity of NativeList");
+                return;
+            }
+#endif
+            unsafe
+            {
+                T* listBuffer = (*list.GetUnsafeList()).Ptr;
+                if (t.m_Buffer.Ptr != listBuffer)
+                {
+                    UnsafeUtility.MemCpy(listBuffer, t.m_Buffer.Ptr,
+                        UnsafeUtility.SizeOf<T>() * t.Length);
+                }
+
+                (*list.GetUnsafeList()).m_length = t.Length;
+            }
+        }
+
+        public static void Sort<T, U>(this ref UnsafeFixedListWrapper<T> t, U comparer)
+            where T : unmanaged
+            where U : unmanaged, IComparer<T>
+        {
+            unsafe
+            {
+                UnsafeBufferUtility.Sort<T, U>(t.m_Buffer, t.Length, comparer);
+            }
+        }
+        public static int BinarySearch<T, TComparer>(this ref UnsafeFixedListWrapper<T> t, T value, TComparer comparer)
+            where T : unmanaged
+            where TComparer : unmanaged, IComparer<T>
+        {
+            int index;
+            unsafe
+            {
+                index = NativeSortExtension.BinarySearch<T, TComparer>(t.m_Buffer, t.Length, value, comparer);
+            }
+            return index;
+        }
+
+        public static void RemoveSwapback<T, U>(this ref UnsafeFixedListWrapper<T> t, U element)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            if (t.Length == 0) return;
+
+            if (!UnsafeBufferUtility.RemoveForSwapBack(t.m_Buffer, t.Length, element))
             {
                 return;
             }
 
-            m_Count -= 1;
+            t.Length -= 1;
+        }
+        public static void RemoveAtSwapback<T>(this ref UnsafeFixedListWrapper<T> t, int index)
+            where T : unmanaged
+        {
+            if (t.Length == 0) return;
+
+            if (!UnsafeBufferUtility.RemoveAtSwapBack(t.m_Buffer, t.Length, index))
+            {
+                return;
+            }
+
+            t.Length -= 1;
+        }
+
+        public static int IndexOf<T, U>(this in UnsafeFixedListWrapper<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            int index = UnsafeBufferUtility.IndexOf(t.m_Buffer, t.Length, item);
+            return index;
+        } 
+        public static bool Contains<T, U>(this in UnsafeFixedListWrapper<T> t, U item)
+            where T : unmanaged, IEquatable<U>
+            where U : unmanaged
+        {
+            int index = UnsafeBufferUtility.IndexOf(t.m_Buffer, t.Length, item);
+            return index >= 0;
         }
     }
 }

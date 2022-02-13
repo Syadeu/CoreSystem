@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Syadeu.Presentation.TurnTable.UI
-{
-    public enum ShortcutType
-    {
-        None        =   0,
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
-        Move        =   1,
-        Attack      =   2
+using Newtonsoft.Json;
+using Syadeu.Presentation.Render;
+using System;
+
+namespace Syadeu.Presentation.Actions
+{
+    public abstract class ShaderTriggerActionBase : TriggerAction
+    {
+        [JsonProperty(Order = -10, PropertyName = "ShaderData")]
+        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
+        
+
+        [JsonIgnore]
+        protected Reference<ShaderConstantData>[] ShaderData => m_ShaderData;
     }
 }

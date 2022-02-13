@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Unity.Collections;
+
 namespace Syadeu.Collections
 {
     public interface IFixedList
     {
         int Length { get; }
     }
-    public interface IFixedList<T> : IFixedList
+    public interface IFixedList<T> : IFixedList, INativeList<T>
+        where T : struct
     {
         T First { get; }
         T Last { get; }
 
-        T this[int index] { get; }
+        //T this[int index] { get; }
     }
 }

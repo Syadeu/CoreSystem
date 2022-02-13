@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.TurnTable
     {
 #if CORESYSTEM_SHAPES
         private Shapes.PolylinePath m_WarningOutlinePath = new Shapes.PolylinePath();
-        private NativeList<int3> m_WarningOutlineLocations;
+        private NativeList<GridIndex> m_WarningOutlineLocations;
         private NativeList<float3> m_WarningOutlineVertices;
 
         private float m_PathlineDrawOffset = 0;
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.TurnTable
 
         protected override void OnInitialize()
         {
-            m_WarningOutlineLocations = new NativeList<int3>(512, AllocatorManager.Persistent);
+            m_WarningOutlineLocations = new NativeList<GridIndex>(512, AllocatorManager.Persistent);
             m_WarningOutlineVertices = new NativeList<float3>(512, AllocatorManager.Persistent);
 
             RequestSystem<DefaultPresentationGroup, WorldGridSystem>(Bind);
@@ -131,8 +131,9 @@ namespace Syadeu.Presentation.TurnTable
                     continue;
                 }
 
-                m_WarningOutlineLocations.Add(index.Location);
+                m_WarningOutlineLocations.Add(index);
             }
+
             m_GridSystem.GetOutcoastVertices(m_WarningOutlineLocations, ref m_WarningOutlineVertices);
         }
 
@@ -153,6 +154,8 @@ namespace Syadeu.Presentation.TurnTable
             DrawMoveableTiles(settings);
             DrawMoveableOutline(settings);
             DrawMoveableOutlineWall(settings);
+            DrawCoverable(settings);
+
             DrawPathline(settings);
 
             Shapes.Draw.Pop();
@@ -164,9 +167,15 @@ namespace Syadeu.Presentation.TurnTable
             {
                 return;
             }
-            else if (!m_SelectionSystem.CurrentSelection.hasTransform)
+            else if (
+                m_SelectionSystem.CurrentSelection.IsEmpty() ||
+                !m_SelectionSystem.CurrentSelection.hasTransform)
             {
                 m_DrawWarningTiles = false;
+                return;
+            }
+            else if (m_WarningOutlineVertices.Length == 0)
+            {
                 return;
             }
 
@@ -250,7 +259,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 for (int i = 0; i < m_GridTempMoveables.Length; i++)
                 {
-                    var pos = m_GridSystem.LocationToPosition(m_GridTempMoveables[i]);
+                    var pos = m_GridSystem.IndexToPosition(m_GridTempMoveables[i]);
 
                     Shapes.Draw.RectangleBorder(
                         pos: pos,
@@ -332,6 +341,50 @@ namespace Syadeu.Presentation.TurnTable
                     size: (float2)m_GridSystem.CellSize,
                     pivot: Shapes.RectPivot.Center
                     );
+            }
+        }
+        private void DrawCoverable(TRPGSettings settings)
+        {
+            if (System.CoverableLength < 1) return;
+
+            float cellHalf = m_GridSystem.CellSize * .5f;
+
+            using (Shapes.Draw.Scope)
+            using (Shapes.Draw.GradientFillScope())
+            {
+                Shapes.Draw.GradientFill = Shapes.GradientFill.Linear(
+                    start: settings.m_CoverableWallColorStartPos,
+                    end: settings.m_CoverableWallColorEndPos,
+                    colorStart: settings.m_MovableOutlineColor,
+                    colorEnd: Color.clear,
+                    space: Shapes.FillSpace.Local
+                    );
+
+                Direction direction;
+                float3x2 line;
+                float3 a, b,
+                    dir,
+                    center,
+                    normal;
+                for (int i = 0; i < System.CoverableLength; i++)
+                {
+                    direction = System.CoverableDirections[i];
+                    line = m_GridSystem.GetLineVerticesOf(System.CoverableIndices[i], direction);
+
+                    a = line.c0;
+                    b = line.c1;
+                    dir = b - a;
+                    center = a + (dir * .5f);
+                    center.y += cellHalf;
+                    normal = math.cross(dir, math.up());
+
+                    Shapes.Draw.Rectangle(
+                        pos: center,
+                        normal: normal,
+                        size: (float2)m_GridSystem.CellSize,
+                        pivot: Shapes.RectPivot.Center
+                        );
+                }
             }
         }
         private void DrawPathline(TRPGSettings settings)

@@ -37,6 +37,8 @@ namespace Syadeu.Collections
     public struct FixedReference<T> : IFixedReference<T>, IEquatable<FixedReference<T>>
         where T : class, IObject
     {
+        public static FixedReference<T> Empty => new FixedReference<T>(Hash.Empty);
+
         private readonly Hash m_Hash;
 
         public Hash Hash => m_Hash;

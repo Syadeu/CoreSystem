@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Grid.LowLevel;
 using Unity.Collections;
 using Unity.Mathematics;
 
@@ -38,7 +39,7 @@ namespace Syadeu.Presentation.Grid
             Block       =   0b00001,
             Actor       =   0b00010,
             
-            Static      =   0b10000,
+            //Static      =   0b10000,
         }
 
         internal FixedList4096Bytes<GridIndex> m_Indices;

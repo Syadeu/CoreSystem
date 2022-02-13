@@ -17,9 +17,7 @@
 #endif
 
 using Newtonsoft.Json;
-using Syadeu.Presentation.Render;
 using System;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -41,41 +39,6 @@ namespace Syadeu.Presentation.Actions
         {
             "test const action".ToLog();
             return 1;
-        }
-    }
-
-    [DisplayName("Camera/Forward")]
-    [Guid("DEDCEB13-5777-4C94-9CD9-86B8CE86BDAB")]
-    internal sealed class GetCameraForwardConstAction : ConstAction<Vector3>
-    {
-        [JsonProperty(Order = 0, PropertyName = "Backward")]
-        public bool m_Backward = false;
-
-        private RenderSystem m_RenderSystem;
-
-        protected override void OnInitialize()
-        {
-            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
-        }
-        private void Bind(RenderSystem other)
-        {
-            m_RenderSystem = other;
-        }
-        protected override void OnDispose()
-        {
-            m_RenderSystem = null;
-        }
-
-        protected override Vector3 Execute()
-        {
-            Vector3 forward = m_RenderSystem.Camera.transform.forward;
-
-            if (m_Backward)
-            {
-                forward *= -1;
-            }
-
-            return forward;
         }
     }
 }

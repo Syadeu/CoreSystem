@@ -23,12 +23,17 @@ namespace Syadeu.Presentation
     /// </summary>
     public abstract class SynchronizedEventBase : IValidation
     {
-        public abstract string Name { get; }
-        public abstract Type EventType { get; }
         internal abstract Hash EventHash { get; }
-        public virtual bool DisplayLog => true;
+        internal string InternalName => Name;
+        internal Type InternalEventType => EventType;
+        internal bool InternalDisplayLog => DisplayLog;
+        internal UpdateLoop InternalLoop => Loop;
 
-        public virtual UpdateLoop Loop => UpdateLoop.Default;
+        protected abstract string Name { get; }
+        protected abstract Type EventType { get; }
+        protected virtual bool DisplayLog => true;
+
+        protected virtual UpdateLoop Loop => UpdateLoop.Default;
 
         //internal abstract void InternalPost();
         internal abstract void InternalTerminate();

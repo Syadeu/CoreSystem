@@ -67,13 +67,16 @@ namespace Syadeu.Presentation.Proxy
         public FixedGameObject GetGameObject()
         {
             GameObjectHandler obj;
+            ProxyTransform tr = m_ProxySystem.CreateTransform(0, quaternion.identity, 1);
             int index;
+
             if (m_ReservedObjects.Count > 0)
             {
                 index = m_ReservedObjects.Pop();
                 obj = m_GameObjects[index];
 
-                obj.m_GameObject.SetActive(true);
+                obj.GameObject.SetActive(true);
+                obj.Transform = tr;
             }
             else
             {
@@ -82,24 +85,18 @@ namespace Syadeu.Presentation.Proxy
 #if UNITY_EDITOR
                 temp.name = index.ToString();
 #endif
-                obj = new GameObjectHandler()
-                {
-                    m_GameObject = temp,
-                    m_AddedComponents = new List<Component>()
-                };
+                obj = new GameObjectHandler(temp, tr);
                 m_GameObjects.Add(index, obj);
             }
 
-            ProxyTransform tr = m_ProxySystem.CreateTransform(0, quaternion.identity, 1);
-            m_ProxySystem.ConnectTransform(in tr, obj.m_GameObject.transform);
-            obj.m_Transform = tr;
-
+            m_ProxySystem.ConnectTransform(in tr, obj.GameObject.transform);
+            
             return new FixedGameObject(index, tr);
         }
         public void ReserveGameObject(in FixedGameObject obj)
         {
             GameObjectHandler handler = m_GameObjects[obj.m_Index];
-            m_ProxySystem.Destroy(handler.m_Transform);
+            m_ProxySystem.Destroy(handler.Transform);
 
             for (int i = 0; i < handler.m_AddedComponents.Count; i++)
             {
@@ -108,16 +105,32 @@ namespace Syadeu.Presentation.Proxy
 
             handler.m_AddedComponents.Clear();
 
-            handler.m_GameObject.SetActive(false);
+            handler.GameObject.SetActive(false);
+            handler.GameObject.transform.parent = null;
             m_ReservedObjects.Push(obj.m_Index);
         }
 
-        internal sealed class GameObjectHandler
+        internal sealed class GameObjectHandler : IDisposable
         {
-            public GameObject m_GameObject;
-            public ProxyTransform m_Transform;
+            private GameObject m_GameObject;
+            private ProxyTransform m_Transform;
 
             public List<Component> m_AddedComponents;
+
+            public GameObject GameObject => m_GameObject;
+            public ProxyTransform Transform
+            {
+                get => m_Transform;
+                set => m_Transform = value;
+            }
+
+            public GameObjectHandler(GameObject obj, ProxyTransform tr)
+            {
+                m_GameObject = obj;
+                m_Transform = tr;
+
+                m_AddedComponents = new List<Component>();
+            }
 
             public Component AddComponent(Type t)
             {
@@ -129,6 +142,11 @@ namespace Syadeu.Presentation.Proxy
             public Component GetComponent(Type t)
             {
                 return m_GameObject.GetComponent(t);
+            }
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
             }
         }
     }
@@ -143,15 +161,19 @@ namespace Syadeu.Presentation.Proxy
 
         public static GameObject GetTarget(this FixedGameObject t)
         {
-            return GetHandler(t).m_GameObject;
+            return GetHandler(t).GameObject;
         }
         public static int GetInstanceID(this FixedGameObject t)
         {
-            return GetHandler(t).m_GameObject.GetInstanceID();
+            return GetHandler(t).GameObject.GetInstanceID();
         }
         public static void SetLayer(this FixedGameObject t, int layer)
         {
-            GetHandler(t).m_GameObject.layer = layer;
+            GetHandler(t).GameObject.layer = layer;
+        }
+        public static void SetParent(this FixedGameObject t, Transform parent)
+        {
+            GetHandler(t).GameObject.transform.SetParent(parent);
         }
         public static void Reserve(this FixedGameObject t)
         {

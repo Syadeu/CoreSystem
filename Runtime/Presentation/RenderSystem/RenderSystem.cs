@@ -112,6 +112,19 @@ namespace Syadeu.Presentation.Render
             }
         }
 		public CameraFrustum.ReadOnly Frustum => GetFrustum();
+
+        public Resolution Resolution
+        {
+            get => Screen.currentResolution;
+            set
+            {
+                var cur = Screen.currentResolution;
+                var scrMode = Screen.fullScreenMode;
+
+                Screen.SetResolution(value.width, value.height, scrMode, value.refreshRate);
+                OnResolutionChanged?.Invoke(cur, value);
+            }
+        }
         public ScreenAspect ScreenAspect => new ScreenAspect(Screen.currentResolution);
 
         public event Action<Camera, Camera> OnCameraChanged;
@@ -119,6 +132,8 @@ namespace Syadeu.Presentation.Render
         public event Action<ScriptableRenderContext, Camera> OnRenderShapes;
 
         public event Action<ScriptableRenderContext, Camera[]> OnFrameRender;
+
+        public event Action<Resolution, Resolution> OnResolutionChanged;
 
         private JobHandle m_RenderJobHandle;
 
@@ -153,7 +168,6 @@ namespace Syadeu.Presentation.Render
             m_DirectionalLight = new ObClass<Light>(ObValueDetection.Changed);
             m_LastDirectionalLightData = new LightData() { orientation = quaternion.identity };
 
-            
 
             return base.OnInitialize();
         }

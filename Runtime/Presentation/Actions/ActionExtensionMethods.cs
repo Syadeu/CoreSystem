@@ -20,6 +20,8 @@ using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Actions
 {
@@ -404,18 +406,101 @@ namespace Syadeu.Presentation.Actions
             }
         }
 
-        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
+        public static object Execute(this IConstActionReference action, InstanceID entity)
         {
             if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
             {
                 "?".ToLogError();
-                return default(TValue);
+                return null;
             }
 
             IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
-            info.SetArguments(constAction, action.Arguments);
+            if (!TypeHelper.TypeOf<IConstTriggerAction>.Type.IsAssignableFrom(info.Type))
+            {
+                constAction.SetArguments(action.Arguments);
+            }
+            else
+            {
+                var args = ArrayPool<object>.Shared.Rent(action.Arguments.Length + 1);
+                args[0] = entity;
+                Array.Copy(action.Arguments, 0, args, 1, action.Arguments.Length);
 
-            return (TValue)constAction.Execute();
+                constAction.SetArguments(args);
+
+                ArrayPool<object>.Shared.Return(args);
+            }
+
+            object result;
+            try
+            {
+                result = constAction.Execute();
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"Unexpected error has been raised while executing ConstAction({TypeHelper.ToString(info.Type)})");
+
+                UnityEngine.Debug.LogError(ex);
+
+                return null;
+            }
+            return result;
+        }
+        public static object Execute(this IConstActionReference action)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return null;
+            }
+#if DEBUG_MODE
+            if (TypeHelper.TypeOf<IConstTriggerAction>.Type.IsAssignableFrom(info.Type))
+            {
+                "cannot execute triggeraction without entity param".ToLogError();
+                return null;
+            }
+#endif
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            constAction.SetArguments(action.Arguments);
+            //info.SetArguments(constAction, action.Arguments);
+
+            object result;
+            try
+            {
+                result = constAction.Execute();
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"Unexpected error has been raised while executing ConstAction");
+
+                UnityEngine.Debug.LogError(ex);
+
+                return null;
+            }
+            return result;
+        }
+        public static void Execute(this IList<ConstActionReference> action, InstanceID entity)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                action[i].Execute(entity);
+            }
+        }
+        public static void Execute(this IList<ConstActionReference> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                action[i].Execute();
+            }
+        }
+        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
+        {
+            return (TValue)Execute((IConstActionReference)action);
+        }
+        public static TValue Execute<TValue>(this ConstActionReference<TValue> action, InstanceID entity)
+        {
+            return (TValue)Execute((IConstActionReference)action, entity);
         }
     }
 }

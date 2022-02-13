@@ -12,27 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
-#define DEBUG_MODE
-#endif
-
-
-namespace Syadeu.Presentation.Grid
+namespace Syadeu.Collections
 {
-    public sealed class OnGridCellCursorOverrapEvent : SynchronizedEvent<OnGridCellCursorOverrapEvent>
+    public enum Alignment : short
     {
-        public GridIndex Index { get; private set; }
+        None = 0,
 
-        public static OnGridCellCursorOverrapEvent GetEvent(GridIndex index)
-        {
-            var temp = Dequeue();
+        Left = 0b0001,
+        Right = 0b0010,
+        Down = 0b0100,
+        Up = 0b1000,
 
-            temp.Index = index;
-
-            return temp;
-        }
-        protected override void OnTerminate()
-        {
-        }
+        Center = Left | Right | Down | Up,
+        DownLeft = Down | Left,
     }
 }

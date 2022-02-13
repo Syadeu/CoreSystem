@@ -1,8 +1,14 @@
-﻿using Syadeu.Presentation;
+﻿using Syadeu;
+using Syadeu.Collections;
+using Syadeu.Presentation;
 using Syadeu.Presentation.Map;
+using Syadeu.Presentation.Render;
 using SyadeuEditor.Utilities;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using Unity.VectorGraphics;
 using UnityEditor;
 using UnityEngine;
 
@@ -171,13 +177,99 @@ namespace SyadeuEditor.Presentation
             }
         }
     }
-    //[EditorTool("TestTool", typeof(EntityWindow))]
-    //public sealed class TestTool : EditorTool
-    //{
-    //    public override void OnToolGUI(EditorWindow window)
-    //    {
-    //        EditorGUILayout.LabelField("test");
-    //        base.OnToolGUI(window);
-    //    }
-    //}
+
+    public sealed class RawSVGEntityDrawer : ObjectBaseDrawer<RawSVGEntity>
+    {
+        //VectorUtils.TextureAtlas m_Atlas;
+        Sprite m_Atlas;
+        Material m_Material;
+
+        public RawSVGEntityDrawer(ObjectBase objectBase) : base(objectBase)
+        {
+            m_Material = new Material(Shader.Find("Unlit/Vector"));
+            RawSVGEntity obj = (RawSVGEntity)objectBase;
+
+            if (!string.IsNullOrEmpty(obj.m_RawData))
+            {
+                m_Atlas = GenerateAtlas(obj);
+            }
+        }
+        private static Sprite GenerateAtlas(RawSVGEntity obj)
+        {
+            SVGParser.SceneInfo svg;
+            //using (var str = new MemoryStream(obj.m_RawData, false))
+            using (var rdr = new StringReader(obj.m_RawData))
+            {
+                svg = SVGParser.ImportSVG(rdr,
+                    dpi: obj.m_DPI,
+                    pixelsPerUnit: obj.m_PixelPerUnit,
+                    windowWidth: obj.m_WindowWidth,
+                    windowHeight: obj.m_WindowHeight,
+                    clipViewport: obj.m_ClipViewport
+                    );
+            }
+            //svg.
+            var geo = VectorUtils.TessellateScene(svg.Scene, new VectorUtils.TessellationOptions()
+            {
+                StepDistance = 10,
+                MaxCordDeviation = .5f,
+                MaxTanAngleDeviation = .1f,
+                SamplingStepSize = 100
+            });
+            //$"{geo.Count}".ToLog();
+            Sprite sprite = VectorUtils.BuildSprite(geo, 128, VectorUtils.Alignment.Center, Vector2.zero, 512);
+            //var atlas = VectorUtils.GenerateAtlas(geo, 128);
+            //VectorUtils.FillUVs(geo, atlas);
+
+            return sprite;
+        }
+
+        protected override void DrawGUI()
+        {
+            DrawHeader();
+            EditorUtilities.Line();
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Import SVG"))
+                {
+                    string path = EditorUtility.OpenFilePanel("Select SVG", Application.dataPath, "svg");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        RawSVGEntity obj = (RawSVGEntity)m_TargetObject;
+                        obj.m_RawData = File.ReadAllText(path);
+
+                        m_Atlas = GenerateAtlas(obj);
+                    }
+                }
+                if (GUILayout.Button("Generate Atlas"))
+                {
+                    RawSVGEntity obj = (RawSVGEntity)m_TargetObject;
+                    m_Atlas = GenerateAtlas(obj);
+                }
+            }
+            
+            if (m_Atlas != null)
+            {
+                EditorUtilities.Line();
+                //Rect last = GUILayoutUtility.GetLastRect();
+                //EditorGUI.DrawPreviewTexture(
+                //    GUILayoutUtility.GetRect(last.width, 200),
+                //    m_Atlas.Texture,
+                //    GridExtensions.DefaultMaterial
+                //    );
+                GUILayout.Box(new GUIContent(m_Atlas.texture));
+                EditorGUILayout.LabelField("draw");
+                EditorUtilities.Line();
+                //EditorUtilities.ObjectPreview(null, m_Atlas.Texture);
+            }
+            else EditorGUILayout.LabelField("not draw");
+
+            for (int i = 0; i < Drawers.Length; i++)
+            {
+                DrawField(Drawers[i]);
+            }
+            //base.DrawGUI();
+        }
+    }
 }

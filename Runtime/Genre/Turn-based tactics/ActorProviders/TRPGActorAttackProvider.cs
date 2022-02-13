@@ -71,21 +71,16 @@ namespace Syadeu.Presentation.TurnTable
             FixedList512Bytes<InstanceID> list = new FixedList512Bytes<InstanceID>();
             foreach (var index in gridSystem.GetRange(gridSize.Indices[0], new int3(range, 0, range)))
             {
-                if (gridSystem.TryGetEntitiesAt(index, out var iter))
+                if (gridSystem.TryGetEntitiesAt(index, out var enumerator))
                 {
-                    using (iter)
+                    foreach (var item in enumerator)
                     {
-                        while (iter.MoveNext())
-                        {
-                            var item = iter.Current;
+                        if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
+                        else if (!item.IsEnemy(Parent.Idx)) continue;
+                        // TODO : 임시코드
+                        else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
 
-                            if (item.Equals(Parent.Idx) || !item.IsActorEntity()) continue;
-                            else if (!item.IsEnemy(Parent.Idx)) continue;
-                            // TODO : 임시코드
-                            else if (item.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>().HP <= 0) continue;
-
-                            list.Add(item);
-                        }
+                        list.Add(item);
                     }
                 }
             }

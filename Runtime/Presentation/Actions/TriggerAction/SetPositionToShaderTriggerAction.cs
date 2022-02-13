@@ -20,7 +20,6 @@ using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Render;
-using System;
 using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
@@ -68,35 +67,5 @@ namespace Syadeu.Presentation.Actions
 
             ShaderConstantData.ApplyToGlobal(keyword, new float4(pos.x, pos.y, pos.z, 0));
         }
-    }
-    public sealed class SetShaderValueInstanceAction : InstanceAction
-    {
-        public sealed class ConstActionProperty
-        {
-            [JsonProperty(Order = 0, PropertyName = "FriendlyName")]
-            public string m_FriendlyName = "None";
-            [JsonProperty(Order = 1, PropertyName = "ConstAction")]
-            public ConstActionReference m_ConstAction;
-        }
-
-        [JsonProperty(Order = 0, PropertyName = "ShaderData")]
-        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
-
-        [JsonProperty(Order = 1, PropertyName = "ConstActionProperties")]
-        private ConstActionProperty[] m_ConstActionProperties = Array.Empty<ConstActionProperty>();
-
-        protected override void OnExecute()
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public abstract class ShaderTriggerActionBase : TriggerAction
-    {
-        [JsonProperty(Order = -10, PropertyName = "ShaderData")]
-        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
-        
-
-        [JsonIgnore]
-        protected Reference<ShaderConstantData>[] ShaderData => m_ShaderData;
     }
 }

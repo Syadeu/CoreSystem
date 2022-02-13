@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -22,10 +23,10 @@ namespace Syadeu.Collections
     public interface IPrefabResource
     {
         string Name { get; }
-        UnityEngine.Object LoadedObject { get; }
+        //UnityEngine.Object LoadedObject { get; }
 
-        AsyncOperationHandle LoadAssetAsync();
-        AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object;
+        AsyncOperationHandle LoadAssetAsync(FixedString128Bytes name);
+        AsyncOperationHandle<T> LoadAssetAsync<T>(FixedString128Bytes name) where T : UnityEngine.Object;
         void UnloadAsset();
 
         AsyncOperationHandle<GameObject> InstantiateAsync(in float3 pos, in quaternion rot, in Transform parent);

@@ -24,6 +24,15 @@ namespace Syadeu.Presentation
 {
     public abstract class PresentationBehaviour : MonoBehaviour
     {
+        public TComponent GetOrAddComponent<TComponent>()
+            where TComponent : Component
+        {
+            TComponent component = GetComponent<TComponent>();
+            if (component == null) component = gameObject.AddComponent<TComponent>();
+
+            return component;
+        }
+
         /// <summary>
         /// <inheritdoc cref="PresentationManager.RegisterRequest{TGroup, TSystem}(Action{TSystem}, string)"/>
         /// </summary>

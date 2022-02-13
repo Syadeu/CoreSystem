@@ -1,4 +1,22 @@
-﻿using Syadeu.Collections;
+﻿// Copyright 2022 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Actor;
@@ -14,16 +32,17 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Syadeu.Presentation.TurnTable.UI
 {
-    public sealed class TRPGCanvasUISystem : PresentationSystemEntity<TRPGCanvasUISystem>
+    public sealed class TRPGCanvasUISystem : PresentationSystemEntity<TRPGCanvasUISystem>,
+        INotifySystemModule<TRPGShortcutUIModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        private TRPGShortcutUI[] m_Shortcuts;
         private TRPGEndTurnUI m_EndTurn;
         private TRPGFireUI m_FireUI;
 
@@ -32,12 +51,11 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_ShortcutsHide = false,
             m_FireHide = false;
 
-        private ShortcutType m_CurrentShortcut = ShortcutType.None;
-
         private RenderSystem m_RenderSystem;
         private EventSystem m_EventSystem;
         private Input.InputSystem m_InputSystem;
         private WorldCanvasSystem m_WorldCanvasSystem;
+        private ScreenCanvasSystem m_ScreenCanvasSystem;
 
         private TRPGTurnTableSystem m_TurnTableSystem;
         private TRPGInputSystem m_TRPGInputSystem;
@@ -49,12 +67,11 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         protected override PresentationResult OnInitialize()
         {
-            m_Shortcuts = new TRPGShortcutUI[TypeHelper.Enum<ShortcutType>.Length];
-
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, Input.InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, ScreenCanvasSystem>(Bind);
 
             RequestSystem<TRPGAppCommonSystemGroup, TRPGInputSystem>(Bind);
 
@@ -63,27 +80,18 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             return base.OnInitialize();
         }
-        protected override void OnDispose()
+        protected override void OnShutDown()
         {
-            for (int i = 0; i < m_Shortcuts.Length; i++)
-            {
-                if (m_Shortcuts[i] == null) continue;
-
-                m_TRPGInputSystem.UnbindShortcut(m_Shortcuts[i]);
-
-                m_Shortcuts[i] = null;
-            }
-
             m_EventSystem.RemoveEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
-            m_EventSystem.RemoveEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.RemoveEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
             m_TurnTableSystem.RemoveOnStartTurnEvent(CheckStartTurnActorOverlayUI);
             m_TurnTableSystem.RemoveOnEndTurnEvent(CheckEndTurnActorOverlayUI);
-
-            m_Shortcuts = null;
+        }
+        protected override void OnDispose()
+        {
             m_EndTurn = null;
             m_FireUI = null;
 
@@ -91,6 +99,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             m_EventSystem = null;
             m_InputSystem = null;
             m_WorldCanvasSystem = null;
+            m_ScreenCanvasSystem = null;
 
             m_TurnTableSystem = null;
             m_TRPGInputSystem = null;
@@ -116,6 +125,10 @@ namespace Syadeu.Presentation.TurnTable.UI
         {
             m_WorldCanvasSystem = other;
         }
+        private void Bind(ScreenCanvasSystem other)
+        {
+            m_ScreenCanvasSystem = other;
+        }
         private void Bind(TRPGTurnTableSystem other)
         {
             m_TurnTableSystem = other;
@@ -140,7 +153,6 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             m_EventSystem.AddEvent<OnTurnTableStateChangedEvent>(OnTurnTableStateChangedEventHandler);
 
-            m_EventSystem.AddEvent<TRPGShortcutUIPressedEvent>(TRPGShortcutUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGEndTurnUIPressedEvent>(TRPGEndTurnUIPressedEventHandler);
             m_EventSystem.AddEvent<TRPGFireUIPressedEvent>(TRPGFireUIPressedEventHandler);
 
@@ -185,117 +197,9 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
         }
 
-        private void DisableCurrentShortcut()
-        {
-            switch (m_CurrentShortcut)
-            {
-                default:
-                case ShortcutType.None:
-                    break;
-                case ShortcutType.Move:
-                    m_EventSystem.RemoveEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-
-                    break;
-                case ShortcutType.Attack:
-                    m_TRPGCameraMovement.SetNormal();
-                    SetFire(true);
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
-                    break;
-            }
-
-            m_TRPGInputSystem.SetIngame_Default();
-
-            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(m_CurrentShortcut, false));
-            m_CurrentShortcut = ShortcutType.None;
-        }
-        private void TRPGShortcutUIPressedEventHandler(TRPGShortcutUIPressedEvent ev)
-        {
-            if (ev.Shortcut == m_CurrentShortcut)
-            {
-                //"same return".ToLog();
-                DisableCurrentShortcut();
-                return;
-            }
-            else if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(ActorControllerComponent)}.");
-                return;
-            }
-
-            ActorControllerComponent ctr = m_TurnTableSystem.CurrentTurn.GetComponent<ActorControllerComponent>();
-            if (ctr.IsBusy(out TypeInfo lastExecutedEv))
-            {
-                $"busy out :: {lastExecutedEv.Type.Name}".ToLog();
-                return;
-            }
-
-            DisableCurrentShortcut();
-
-            switch (ev.Shortcut)
-            {
-                default:
-                case ShortcutType.None:
-                    break;
-                case ShortcutType.Move:
-                    m_TRPGCameraMovement.SetNormal();
-
-                    m_CurrentShortcut = ShortcutType.Move;
-
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(1);
-                    m_TRPGInputSystem.SetIngame_Default();
-
-                    m_EventSystem.AddEvent<OnGridCellPreseedEvent>(TRPGGridCellUIPressedEventHandler);
-
-                    break;
-                case ShortcutType.Attack:
-                    if (!ctr.HasProvider<TRPGActorAttackProvider>())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(TRPGActorAttackProvider)}.");
-
-                        return;
-                    }
-
-                    Entity<TRPGActorAttackProvider> attProvider = ctr.GetProvider<TRPGActorAttackProvider>();
-                    var targets = attProvider.Target.GetTargetsInRange();
-                    var tr = m_TurnTableSystem.CurrentTurn.ToEntity<IEntity>().transform;
-
-                    $"{targets.Length} found".ToLog();
-                    if (targets.Length == 0) break;
-                     
-                    m_WorldCanvasSystem.SetAlphaActorOverlayUI(0);
-                    SetFire(false);
-                    m_TRPGInputSystem.SetIngame_TargetAim();
-
-                    ref TRPGActorAttackComponent attackComponent = ref m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorAttackComponent>();
-
-                    if (attackComponent.GetTarget().IsEmpty())
-                    {
-                        attackComponent.SetTarget(0);
-                    }
-
-                    m_TRPGCameraMovement.SetAim(tr, attackComponent.GetTarget().GetTransform());
-
-                    m_CurrentShortcut = ShortcutType.Attack;
-
-                    break;
-            }
-
-            m_EventSystem.PostEvent(OnShortcutStateChangedEvent.GetEvent(ev.Shortcut, true));
-        }
-        private void TRPGGridCellUIPressedEventHandler(OnGridCellPreseedEvent ev)
-        {
-            DisableCurrentShortcut();
-            m_CurrentShortcut = ShortcutType.None;
-
-            //m_TRPGGridSystem.MoveToCell(m_TurnTableSystem.CurrentTurn, ev.Index);
-            //var move = m_TurnTableSystem.CurrentTurn.GetComponent<TRPGActorMoveComponent>();
-            //move.movet
-        }
         private void TRPGEndTurnUIPressedEventHandler(TRPGEndTurnUIPressedEvent ev)
         {
-            DisableCurrentShortcut();
+            GetModule<TRPGShortcutUIModule>().DisableCurrentShortcut();
 
             SetPlayerUI(false);
 
@@ -314,24 +218,24 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         #region UI Controls
 
-        public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
-        {
-            m_Shortcuts[(int)shortcutType] = shortcut;
+        //public void AuthoringShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
+        //{
+        //    m_Shortcuts[(int)shortcutType] = shortcut;
 
-            //shortcut.Initialize(this, m_EventSystem);
+        //    //shortcut.Initialize(this, m_EventSystem);
 
-            m_TRPGInputSystem.BindShortcut(shortcut);
+        //    m_TRPGInputSystem.BindShortcut(shortcut);
 
-            shortcut.Hide = m_ShortcutsHide;
-        }
-        public void RemoveShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
-        {
-            if (m_TRPGInputSystem == null) return;
+        //    shortcut.Hide = m_ShortcutsHide;
+        //}
+        //public void RemoveShortcut(TRPGShortcutUI shortcut, ShortcutType shortcutType)
+        //{
+        //    if (m_TRPGInputSystem == null) return;
 
-            m_TRPGInputSystem.UnbindShortcut(shortcut);
+        //    m_TRPGInputSystem.UnbindShortcut(shortcut);
 
-            m_Shortcuts[(int)shortcutType] = null;
-        }
+        //    m_Shortcuts[(int)shortcutType] = null;
+        //}
         public void AuthoringEndTurn(TRPGEndTurnUI endTurn)
         {
             m_EndTurn = endTurn;
@@ -352,21 +256,22 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             m_EndTurnHide = hide;
         }
-        public void SetShortcuts(bool hide, bool enable)
+        public void SetShortcuts(bool enable)
         {
-            for (int i = 1; i < m_Shortcuts.Length; i++)
-            {
-                if (m_Shortcuts[i] == null)
-                {
-                    "no shortcut found".ToLog();
-                    continue;
-                }
+            //for (int i = 1; i < m_Shortcuts.Length; i++)
+            //{
+            //    if (m_Shortcuts[i] == null)
+            //    {
+            //        "no shortcut found".ToLog();
+            //        continue;
+            //    }
 
-                m_Shortcuts[i].Hide = hide;
-                m_Shortcuts[i].Enable = enable;
-            }
+            //    m_Shortcuts[i].Hide = hide;
+            //    m_Shortcuts[i].Enable = enable;
+            //}
 
-            m_ShortcutsHide = hide;
+            //m_Shortcuts.SetVisible(enable);
+            m_ShortcutsHide = enable;
         }
         public void SetFire(bool hide)
         {
@@ -378,7 +283,7 @@ namespace Syadeu.Presentation.TurnTable.UI
         public void SetPlayerUI(bool enable)
         {
             SetEndTurn(!enable);
-            SetShortcuts(!enable, true);
+            SetShortcuts(!enable);
         }
 
         #endregion

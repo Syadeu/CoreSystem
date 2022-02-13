@@ -18,6 +18,12 @@ using System;
 
 namespace Syadeu.Collections
 {
+    /// <summary>
+    /// <see cref="IConstAction"/> 을 참조할 수 있는 레퍼런스 입니다.
+    /// </summary>
+    /// <remarks>
+    /// 필드에 <seealso cref="ConstActionOptionsAttribute"/> 를 추가하여 추가적인 설정을 할 수 있습니다.
+    /// </remarks>
     [JsonConverter(typeof(ConstActionReferenceJsonConverter))]
     public interface IConstActionReference : IEmpty
     {
