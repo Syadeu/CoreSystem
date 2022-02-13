@@ -152,7 +152,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_CoverableWallUIObjectPool = new ObjectPool<GameObject>(
                 CoverableWallUIObjectPoolFactory, CoverableWallUIObjectPoolOnGet, 
-                CoverableWallUIObjectPoolOnReserve, null);
+                CoverableWallUIObjectPoolOnReserve, CoverableWallUIObjectPoolOnRelease);
             TRPGSettings.Instance.m_CoverableSprite.LoadAsset();
 
             m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
@@ -178,6 +178,14 @@ namespace Syadeu.Presentation.TurnTable
         {
             //Destroy(m_GridOutlineRenderer.gameObject);
             //Destroy(m_GridPathlineRenderer.gameObject);
+
+            if (m_IsDrawingGrids)
+            {
+                ClearUICell();
+            }
+            ClearUIPath();
+
+            m_CoverableWallUIObjectPool.Dispose();
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
             m_EventSystem.RemoveEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
@@ -219,6 +227,10 @@ namespace Syadeu.Presentation.TurnTable
         {
             obj.GetComponent<Image>().sprite = null;
             obj.SetActive(false);
+        }
+        private static void CoverableWallUIObjectPoolOnRelease(GameObject obj)
+        {
+            UnityEngine.Object.Destroy(obj);
         }
 
         #region Binds

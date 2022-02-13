@@ -33,9 +33,9 @@ namespace SyadeuEditor.Presentation
                 m_Cached = true;
             }
 
-            long index = property.FindPropertyRelative("m_Idx").longValue;
-            PrefabReference currentValue = new PrefabReference(index);
-
+            PrefabReference currentValue 
+                = SerializedPropertyHelper.ReadPrefabReference(m_IdxProperty, m_SubAssetNameProperty);
+            
             GUIContent displayName;
             if (!currentValue.IsValid() || currentValue.IsNone())
             {
@@ -136,8 +136,10 @@ namespace SyadeuEditor.Presentation
                     var popup = SelectorPopup<ReferenceAsset, ReferenceAsset>.GetWindow(
                         list, (prefabIdx) =>
                         {
-                            m_IdxProperty.longValue = prefabIdx.index;
-                            PropertyHelper.SetFixedString128Bytes(m_SubAssetNameProperty, prefabIdx.subAssetName);
+                            SerializedPropertyHelper.SetPrefabReference(
+                                m_IdxProperty, m_SubAssetNameProperty,
+                                prefabIdx.index, prefabIdx.subAssetName
+                                );
 
                             m_IdxProperty.serializedObject.ApplyModifiedProperties();
                         }, 
