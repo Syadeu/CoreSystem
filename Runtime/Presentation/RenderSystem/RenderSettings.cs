@@ -21,14 +21,24 @@ namespace Syadeu.Presentation.Render
 {
     public sealed class RenderSettings : StaticSettingEntity<RenderSettings>
     {
+        public Material[] m_Materials = Array.Empty<Material>();
         public ComputeShader[] m_ComputeShaders = Array.Empty<ComputeShader>();
         public Shader[] m_Shaders = Array.Empty<Shader>();
 
+        private Dictionary<Hash, Material> m_MaterialHashMap;
         private Dictionary<Hash, ComputeShader> m_ComputeShaderHashMap;
         private Dictionary<Hash, Shader> m_ShaderHashMap;
 
         private void OnEnable()
         {
+            m_MaterialHashMap = new Dictionary<Hash, Material>(m_Materials.Length);
+            foreach (var item in m_Materials)
+            {
+                Hash hash = Hash.NewHash(item.name);
+
+                m_MaterialHashMap.Add(hash, item);
+            }
+
             m_ComputeShaderHashMap = new Dictionary<Hash, ComputeShader>(m_ComputeShaders.Length);
             foreach (var item in m_ComputeShaders)
             {
@@ -46,6 +56,18 @@ namespace Syadeu.Presentation.Render
             }
         }
 
+        public Material GetMaterial(string name)
+        {
+            Hash hash = Hash.NewHash(name);
+            if (!m_MaterialHashMap.ContainsKey(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Render,
+                    $"");
+                return null;
+            }
+
+            return m_MaterialHashMap[hash];
+        }
         public ComputeShader GetComputeShader(string name)
         {
             Hash hash = Hash.NewHash(name);

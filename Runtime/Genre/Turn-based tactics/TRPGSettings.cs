@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Syadeu.Presentation.TurnTable
 {
@@ -39,8 +40,11 @@ namespace Syadeu.Presentation.TurnTable
             m_OutlineWallColorStartPos = new Vector3(0, -2.3f, 0), 
             m_OutlineWallColorEndPos;
 
+        [Header("Coverable Wall")]
         [SerializeField]
-        public PrefabReference<Texture2D> m_CoverableSprite = PrefabReference<Texture2D>.None;
+        public PrefabReference<Sprite> m_CoverableSprite = PrefabReference<Sprite>.None;
+        [SerializeField]
+        public Vector2 m_CoverableSpriteSizeDeltaMultiplier = new Vector2(1, 1);
         [SerializeField]
         public Vector3
             m_CoverableWallColorStartPos = new Vector3(0, -2.3f, 0),

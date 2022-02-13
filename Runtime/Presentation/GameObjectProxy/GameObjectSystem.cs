@@ -106,6 +106,7 @@ namespace Syadeu.Presentation.Proxy
             handler.m_AddedComponents.Clear();
 
             handler.GameObject.SetActive(false);
+            handler.GameObject.transform.parent = null;
             m_ReservedObjects.Push(obj.m_Index);
         }
 
@@ -169,6 +170,10 @@ namespace Syadeu.Presentation.Proxy
         public static void SetLayer(this FixedGameObject t, int layer)
         {
             GetHandler(t).GameObject.layer = layer;
+        }
+        public static void SetParent(this FixedGameObject t, Transform parent)
+        {
+            GetHandler(t).GameObject.transform.SetParent(parent);
         }
         public static void Reserve(this FixedGameObject t)
         {

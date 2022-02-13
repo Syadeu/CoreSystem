@@ -1039,14 +1039,28 @@ namespace SyadeuEditor
             Syadeu.Presentation.Render.RenderSettings Settings => Syadeu.Presentation.Render.RenderSettings.Instance;
 
             const string
+                c_MaterialLabel = "Material",
                 c_ComputeShaderLabel = "ComputeShader",
                 c_ShaderLabel = "Shader";
 
+            private Material[] m_FoundMaterials;
             private ComputeShader[] m_FoundComputeShaders;
             private Shader[] m_FoundShaders;
 
             public override void OnInitialize()
             {
+                try
+                {
+                    m_FoundMaterials = AssetDatabase
+                        .FindAssets($"l: {c_MaterialLabel} t:material")
+                        .Select(AssetDatabase.GUIDToAssetPath)
+                        .Select(AssetDatabase.LoadAssetAtPath<Material>)
+                        .ToArray();
+                }
+                catch (Exception)
+                {
+                    m_FoundMaterials = Array.Empty<Material>();
+                }
                 try
                 {
                     m_FoundComputeShaders = AssetDatabase
@@ -1079,6 +1093,19 @@ namespace SyadeuEditor
             }
             public override bool Predicate()
             {
+                #region Material
+
+                if (m_FoundMaterials.Length != Settings.m_Materials.Length)
+                {
+                    return false;
+                }
+                for (int i = 0; i < m_FoundMaterials.Length; i++)
+                {
+                    if (m_FoundMaterials[i] != Settings.m_Materials[i]) return false;
+                }
+
+                #endregion
+
                 #region Compute Shaders
 
                 if (m_FoundComputeShaders.Length != Settings.m_ComputeShaders.Length)
@@ -1115,6 +1142,7 @@ namespace SyadeuEditor
 
                     if (GUILayout.Button("Fix"))
                     {
+                        Settings.m_Materials = m_FoundMaterials;
                         Settings.m_ComputeShaders = m_FoundComputeShaders;
                         Settings.m_Shaders = m_FoundShaders;
 

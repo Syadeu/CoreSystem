@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,8 @@ namespace SyadeuEditor.Presentation
     {
         Editor m_Editor = null;
         private GUIContent name = null;
-        private SerializedProperty m_IdxProperty;
+        private SerializedProperty 
+            m_IdxProperty, m_SubAssetNameProperty;
         private bool
             m_Cached = false,
             m_Open = false;
@@ -26,6 +28,7 @@ namespace SyadeuEditor.Presentation
             {
                 name = new GUIContent(property.displayName);
                 m_IdxProperty = property.FindPropertyRelative("m_Idx");
+                m_SubAssetNameProperty = property.FindPropertyRelative("m_SubAssetName");
 
                 m_Cached = true;
             }
@@ -33,12 +36,30 @@ namespace SyadeuEditor.Presentation
             long index = property.FindPropertyRelative("m_Idx").longValue;
             PrefabReference currentValue = new PrefabReference(index);
 
-            string displayName;
+            GUIContent displayName;
             if (!currentValue.IsValid() || currentValue.IsNone())
             {
-                displayName = "None";
+                displayName = new GUIContent("None");
             }
-            else displayName = currentValue.GetEditorAsset().name;
+            else if (currentValue.Index >= 0)
+            {
+                var objSetting = currentValue.GetObjectSetting();
+                if (objSetting == null)
+                {
+                    displayName = new GUIContent("INVALID");
+                }
+                else
+                {
+                    displayName
+                        = currentValue.IsSubAsset ?
+                        new GUIContent(objSetting.Name + $"[{currentValue.SubAssetName}]") :
+                        new GUIContent(objSetting.Name);
+                }
+            }
+            else
+            {
+                displayName = new GUIContent("INVALID");
+            }
 
             Rect contextPos = EditorGUI.PrefixLabel(position, name);
 
@@ -52,7 +73,7 @@ namespace SyadeuEditor.Presentation
                     rect.position = Event.current.mousePosition;
 
                     Type type = fieldInfo.FieldType;
-                    List<PrefabList.ObjectSetting> list;
+                    List<ReferenceAsset> list;
 
                     if (type.GenericTypeArguments.Length > 0)
                     {
@@ -66,27 +87,77 @@ namespace SyadeuEditor.Presentation
                                     return true;
                                 }
                                 return false;
+                            })
+                            .Select(t => new ReferenceAsset()
+                            {
+                                index = PrefabList.Instance.ObjectSettings.IndexOf(t)
                             }).ToList();
+
+                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        {
+                            var subAssets = PrefabList.Instance.ObjectSettings[i].m_RefPrefab.GetSubAssets();
+                            for (int h = 0; h < subAssets?.Count; h++)
+                            {
+                                if (!type.GenericTypeArguments[0].IsAssignableFrom(subAssets[h].TargetAsset.GetType()))
+                                {
+                                    continue;
+                                }
+
+                                list.Add(new ReferenceAsset
+                                {
+                                    index = i,
+                                    subAssetName = subAssets[h].TargetAsset.name
+                                });
+                            }
+                        }
                     }
                     else
                     {
-                        list = PrefabList.Instance.ObjectSettings;
+                        list = PrefabList.Instance.ObjectSettings.Select(t => new ReferenceAsset()
+                        {
+                            index = PrefabList.Instance.ObjectSettings.IndexOf(t)
+                        }).ToList();
+
+                        for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                        {
+                            var subAssets = PrefabList.Instance.ObjectSettings[i].m_RefPrefab.GetSubAssets();
+
+                            for (int h = 0; h < subAssets?.Count; h++)
+                            {
+                                list.Add(new ReferenceAsset
+                                {
+                                    index = i,
+                                    subAssetName = subAssets[h].TargetAsset.name
+                                });
+                            }
+                        }
                     }
 
-                    var popup = SelectorPopup<int, PrefabList.ObjectSetting>.GetWindow(list, 
-                        (prefabIdx) =>
+                    var popup = SelectorPopup<ReferenceAsset, ReferenceAsset>.GetWindow(
+                        list, (prefabIdx) =>
                         {
-                            m_IdxProperty.longValue = prefabIdx;
+                            m_IdxProperty.longValue = prefabIdx.index;
+                            PropertyHelper.SetFixedString128Bytes(m_SubAssetNameProperty, prefabIdx.subAssetName);
+
                             m_IdxProperty.serializedObject.ApplyModifiedProperties();
                         }, 
                         (objSet) =>
                         {
-                            for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                            //for (int i = 0; i < PrefabList.Instance.ObjectSettings.Count; i++)
+                            //{
+                            //    if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                            //}
+                            return objSet;
+                        }, ReferenceAsset.None,
+                        getName: (t) =>
+                        {
+                            if (t.subAssetName.IsEmpty)
                             {
-                                if (objSet.Equals(PrefabList.Instance.ObjectSettings[i])) return i;
+                                return PrefabList.Instance.ObjectSettings[(int)t.index].Name;
                             }
-                            return -1;
-                        }, -2);
+
+                            return PrefabList.Instance.ObjectSettings[(int)t.index].Name + $"[{t.subAssetName}]";
+                        });
 
                     PopupWindow.Show(rect, popup);
                 }
@@ -139,7 +210,13 @@ namespace SyadeuEditor.Presentation
 
             //base.OnGUI(position, property, label);
         }
+        private struct ReferenceAsset
+        {
+            public static ReferenceAsset None => new ReferenceAsset { index = -2 };
 
+            public long index;
+            public FixedString128Bytes subAssetName;
+        }
         private void DrawPrefabReference(string name, Action<int> setter, IPrefabReference current)
         {
             GUIContent displayName;

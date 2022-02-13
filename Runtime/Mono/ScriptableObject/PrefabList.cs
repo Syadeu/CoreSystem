@@ -51,13 +51,32 @@ namespace Syadeu.Mono
             [NonSerialized] private Dictionary<FixedString128Bytes, AssetReference> m_SubAssets;
 
             public string Name => m_Name;
-            public UnityEngine.Object LoadedObject => m_RefPrefab.Asset;
+            //public UnityEngine.Object LoadedObject => m_RefPrefab.Asset;
 
             public ObjectSetting(string name, AssetReference refPrefab, bool isWorldUI)
             {
                 m_Name = name;
                 m_RefPrefab = refPrefab;
                 m_IsWorldUI = isWorldUI;
+            }
+
+            public UnityEngine.Object GetLoadedObject(FixedString128Bytes name)
+            {
+                if (!name.IsEmpty)
+                {
+                    if (m_SubAssets == null) m_SubAssets = new Dictionary<FixedString128Bytes, AssetReference>();
+
+                    if (!m_SubAssets.TryGetValue(name, out var assetRef))
+                    {
+                        assetRef = new AssetReference(m_RefPrefab.AssetGUID);
+                        assetRef.SubObjectName = name.ToString();
+
+                        m_SubAssets.Add(name, assetRef);
+                    }
+                    return assetRef.Asset;
+                }
+
+                return m_RefPrefab.Asset;
             }
 
             #region Resource Control

@@ -23,7 +23,7 @@ namespace Syadeu.Collections
     public interface IPrefabResource
     {
         string Name { get; }
-        UnityEngine.Object LoadedObject { get; }
+        //UnityEngine.Object LoadedObject { get; }
 
         AsyncOperationHandle LoadAssetAsync(FixedString128Bytes name);
         AsyncOperationHandle<T> LoadAssetAsync<T>(FixedString128Bytes name) where T : UnityEngine.Object;

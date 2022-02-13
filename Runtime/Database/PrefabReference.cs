@@ -41,7 +41,7 @@ namespace Syadeu.Collections
                 var set = GetObjectSetting();
                 if (set == null) return null;
 
-                return set.LoadedObject;
+                return set.GetLoadedObject(SubAssetName);
             }
         }
         public bool IsSubAsset => !m_SubAssetName.IsEmpty;
@@ -134,7 +134,7 @@ namespace Syadeu.Collections
                 var set = GetObjectSetting();
                 if (set == null) return null;
 
-                return set.LoadedObject;
+                return set.GetLoadedObject(SubAssetName);
             }
         }
         public T Asset
@@ -144,7 +144,7 @@ namespace Syadeu.Collections
                 var set = GetObjectSetting();
                 if (set == null) return null;
 
-                var target = set.LoadedObject;
+                var target = set.GetLoadedObject(SubAssetName);
                 if (target == null) return null;
                 return (T)target;
             }
@@ -180,7 +180,22 @@ namespace Syadeu.Collections
         }
 
         [Obsolete]
-        public T LoadAsset() => (T)GetObjectSetting()?.LoadAsset(m_SubAssetName);
+        public T LoadAsset()
+        {
+            var temp = GetObjectSetting()?.LoadAsset(m_SubAssetName);
+
+            try
+            {
+                return (T)temp;
+            }
+            catch (InvalidCastException)
+            {
+                CoreSystem.Logger.LogError(Channel.Data,
+                    $"Asset({temp.name}) is {TypeHelper.ToString(temp.GetType())} " +
+                    $"but you're trying to cast {TypeHelper.TypeOf<T>.ToString()}.");
+                throw;
+            }
+        }
         AsyncOperationHandle IPrefabReference.LoadAssetAsync() => GetObjectSetting().LoadAssetAsync(m_SubAssetName);
         AsyncOperationHandle<TObject> IPrefabReference.LoadAssetAsync<TObject>() => GetObjectSetting().LoadAssetAsync<TObject>(m_SubAssetName);
         public AsyncOperationHandle<T> LoadAssetAsync()

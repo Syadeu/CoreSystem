@@ -371,8 +371,6 @@ namespace Syadeu.Presentation.TurnTable
                     direction = System.CoverableDirections[i];
                     line = m_GridSystem.GetLineVerticesOf(System.CoverableIndices[i], direction);
 
-                    //a = m_ShapesOutlinePath[i];
-                    //b = m_ShapesOutlinePath[i + 1];
                     a = line.c0;
                     b = line.c1;
                     dir = b - a;
