@@ -207,5 +207,17 @@ namespace Syadeu.Collections
         #endregion
 
         #endregion
+
+        public static TComponent GetOrAddComponent<TComponent>(this GameObject t)
+            where TComponent : Component
+        {
+            TComponent component = t.GetComponent<TComponent>();
+            if (component == null)
+            {
+                component = t.AddComponent<TComponent>();
+            }
+
+            return component;
+        }
     }
 }

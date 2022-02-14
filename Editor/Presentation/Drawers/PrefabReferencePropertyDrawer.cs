@@ -35,31 +35,8 @@ namespace SyadeuEditor.Presentation
 
             PrefabReference currentValue 
                 = SerializedPropertyHelper.ReadPrefabReference(m_IdxProperty, m_SubAssetNameProperty);
-            
-            GUIContent displayName;
-            if (!currentValue.IsValid() || currentValue.IsNone())
-            {
-                displayName = new GUIContent("None");
-            }
-            else if (currentValue.Index >= 0)
-            {
-                var objSetting = currentValue.GetObjectSetting();
-                if (objSetting == null)
-                {
-                    displayName = new GUIContent("INVALID");
-                }
-                else
-                {
-                    displayName
-                        = currentValue.IsSubAsset ?
-                        new GUIContent(objSetting.Name + $"[{currentValue.SubAssetName}]") :
-                        new GUIContent(objSetting.Name);
-                }
-            }
-            else
-            {
-                displayName = new GUIContent("INVALID");
-            }
+
+            GUIContent displayName = currentValue.GetDisplayName();
 
             Rect contextPos = EditorGUI.PrefixLabel(position, name);
 

@@ -69,8 +69,7 @@ namespace Syadeu.Presentation.TurnTable
             m_IsDrawingGrids = false,
             m_IsDrawingPaths = false;
 
-        private ObjectPool<GameObject> m_CoverableWallUIObjectPool;
-        private List<GameObject> m_CoverableWallUIObjects = new List<GameObject>();
+        private List<Image> m_CoverableWallUIObjects = new List<Image>();
 
         private Unity.Profiling.ProfilerMarker
             m_DrawUICellMarker = new Unity.Profiling.ProfilerMarker($"{nameof(TRPGGridSystem)}.{nameof(DrawUICell)}"),
@@ -150,9 +149,6 @@ namespace Syadeu.Presentation.TurnTable
             //            }
             #endregion
 
-            m_CoverableWallUIObjectPool = new ObjectPool<GameObject>(
-                CoverableWallUIObjectPoolFactory, CoverableWallUIObjectPoolOnGet, 
-                CoverableWallUIObjectPoolOnReserve, CoverableWallUIObjectPoolOnRelease);
             TRPGSettings.Instance.m_CoverableSprite.LoadAsset();
 
             m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
@@ -185,8 +181,6 @@ namespace Syadeu.Presentation.TurnTable
             }
             ClearUIPath();
 
-            m_CoverableWallUIObjectPool.Dispose();
-
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
             m_EventSystem.RemoveEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
         }
@@ -208,29 +202,6 @@ namespace Syadeu.Presentation.TurnTable
             m_TurnTableSystem = null;
             m_SelectionSystem = null;
             m_TRPGCanvasUISystem = null;
-        }
-
-        private GameObject CoverableWallUIObjectPoolFactory()
-        {
-            GameObject obj = m_WorldCanvasSystem.CreateUIObject();
-
-            obj.AddComponent<CanvasGroup>();
-            obj.AddComponent<Image>();
-
-            return obj;
-        }
-        private static void CoverableWallUIObjectPoolOnGet(GameObject obj)
-        {
-            obj.SetActive(true);
-        }
-        private static void CoverableWallUIObjectPoolOnReserve(GameObject obj)
-        {
-            obj.GetComponent<Image>().sprite = null;
-            obj.SetActive(false);
-        }
-        private static void CoverableWallUIObjectPoolOnRelease(GameObject obj)
-        {
-            UnityEngine.Object.Destroy(obj);
         }
 
         #region Binds
@@ -649,26 +620,24 @@ namespace Syadeu.Presentation.TurnTable
 
                 rot = quaternion.LookRotationSafe(normal, math.up());
 
-                GameObject obj = m_CoverableWallUIObjectPool.Get();
-                var img = obj.GetComponent<Image>();
+                //GameObject obj = m_WorldCanvasSystem.GetImageObject();
+                Image img = m_WorldCanvasSystem.GetImageObject();
 
                 img.sprite = TRPGSettings.Instance.m_CoverableSprite.Asset;
 
-                RectTransform rectTransform = (RectTransform)obj.transform;
+                RectTransform rectTransform = (RectTransform)img.transform;
                 rectTransform.sizeDelta = sizeDelta;
+                rectTransform.position = center;
+                rectTransform.rotation = rot;
 
-                var tr = obj.transform;
-                tr.position = center;
-                tr.rotation = rot;
-
-                m_CoverableWallUIObjects.Add(obj);
+                m_CoverableWallUIObjects.Add(img);
             }
         }
         private void ClearCoverableWallTexture()
         {
             for (int i = 0; i < m_CoverableWallUIObjects.Count; i++)
             {
-                m_CoverableWallUIObjectPool.Reserve(m_CoverableWallUIObjects[i]);
+                m_WorldCanvasSystem.ReserveImageObject(m_CoverableWallUIObjects[i]);
             }
             m_CoverableWallUIObjects.Clear();
         }

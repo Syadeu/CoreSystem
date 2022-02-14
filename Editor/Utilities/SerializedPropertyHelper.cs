@@ -3,12 +3,36 @@ using System;
 using System.Reflection;
 using Unity.Collections;
 using UnityEditor;
+using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
     public static class SerializedPropertyHelper
     {
+        private static GUIContent
+            s_None = new GUIContent(("None")),
+            s_Invalid = new GUIContent("Invalid");
+
         #region PrefabReference
+
+        public static void ApplyToProperty(this in PrefabReference t, SerializedProperty property) => SetPrefabReference(property, t);
+        public static void ApplyToProperty(this in PrefabReference t, SerializedProperty idxProperty, SerializedProperty subAssetNameProperty) => SetPrefabReference(idxProperty, subAssetNameProperty, t.Index, t.SubAssetName);
+        public static GUIContent GetDisplayName(this in PrefabReference t)
+        {
+            if (t.IsNone()) return s_None;
+            else
+            {
+                IPrefabResource resource = t.GetObjectSetting();
+                if (resource == null) return s_Invalid;
+
+                if (t.IsSubAsset)
+                {
+                    return new GUIContent(resource.Name + $"[{t.SubAssetName}]");
+                }
+
+                return new GUIContent(resource.Name);
+            }
+        }
 
         public static PrefabReference ReadPrefabReference(SerializedProperty property)
         {
@@ -27,6 +51,15 @@ namespace SyadeuEditor.Utilities
                 ReadFixedString128Bytes(subAssetName).ToString());
         }
 
+        public static void SetPrefabReference(SerializedProperty property, PrefabReference prefabReference)
+        {
+            SerializedProperty
+                idxProperty = property.FindPropertyRelative("m_Idx"),
+                subAssetNameProperty = property.FindPropertyRelative("m_SubAssetName");
+
+            idxProperty.longValue = prefabReference.Index;
+            SetFixedString128Bytes(subAssetNameProperty, prefabReference.SubAssetName);
+        }
         public static void SetPrefabReference(
             SerializedProperty idxProperty, SerializedProperty subAssetNameProperty, 
             long idx, FixedString128Bytes subAssetName)
@@ -36,6 +69,10 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+
+        #region Hash
+
+        public static void ApplyToProperty(this in Hash hash, SerializedProperty property) => SetHash(property, hash);
 
         public static Hash ReadHash(SerializedProperty property)
         {
@@ -51,6 +88,8 @@ namespace SyadeuEditor.Utilities
 
             bits.longValue = (long)(ulong)hash;
         }
+
+        #endregion
 
         #region Unity.Collections
 

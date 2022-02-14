@@ -125,6 +125,12 @@ namespace Syadeu.Presentation.Grid
             ClearDetectorObserveIndices(ref m_GridObservers, entity, ref detector);
         }
         
+        /// <summary>
+        /// <paramref name="entity"/> 가 <paramref name="index"/> 를 감시하는지 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public bool IsObserveIndexOf(in GridIndex index, in InstanceID entity)
         {
             if (m_GridObservers.TryGetFirstValue(index, out InstanceID temp, out var iter))
@@ -138,6 +144,13 @@ namespace Syadeu.Presentation.Grid
 
             return false;
         }
+        /// <summary>
+        /// <paramref name="entity"/> 만 <paramref name="index"/> 를 감시하는지 반환합니다. 
+        /// 다른 Entity 가 해당 그리드 좌표를 감시하면 <see langword="false"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public bool IsObserveIndexOfOnly(in GridIndex index, in InstanceID entity)
         {
             if (m_GridObservers.TryGetFirstValue(index, out InstanceID temp, out _) &&
@@ -150,7 +163,7 @@ namespace Syadeu.Presentation.Grid
         }
 
         /// <summary>
-        /// 해당 그리드 인덱스가 Observer에 의해 감시되고 있는지를 반환하고, 감시하는 Observer 들을 반환합니다.
+        /// <paramref name="index"/> 가 Observer에 의해 감시되고 있는지 반환합니다.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
@@ -158,7 +171,9 @@ namespace Syadeu.Presentation.Grid
         {
             return m_GridObservers.ContainsKey(index);
         }
-        /// <summary><inheritdoc cref="IsObserveIndex(in int)"/></summary>
+        /// <summary>
+        /// <paramref name="index"/> 가 Observer에 의해 감시되고 있는지를 반환하고, 감시하는 Observer 들을 반환합니다.
+        /// </summary>
         /// <param name="index"></param>
         /// <param name="observers"></param>
         /// <returns></returns>
@@ -315,7 +330,7 @@ namespace Syadeu.Presentation.Grid
         }
 
         /// <summary>
-        /// <see cref="GridComponent"/> 를 상속받는 모든 Entity 들을 Detector 에 의해 발견되었는 가를 연산합니다.
+        /// <see cref="GridComponent"/> 를 상속받는 모든 Entity 들을 Detector 에 의해 발견되었는가를 연산합니다.
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="gridSize"></param>

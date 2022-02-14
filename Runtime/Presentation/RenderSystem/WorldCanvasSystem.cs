@@ -51,6 +51,8 @@ namespace Syadeu.Presentation.Render
 
         private UnsafeMultiHashMap<Entity<IEntity>, Entity<UIObjectEntity>> m_AttachedUIHashMap;
 
+        private ObjectPool<Image> m_ImageObjectPool;
+
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
         private CoroutineSystem m_CoroutineSystem;
@@ -89,6 +91,10 @@ namespace Syadeu.Presentation.Render
 
         protected override PresentationResult OnInitialize()
         {
+            m_ImageObjectPool = new ObjectPool<Image>(
+                ImageObjectFactory, ImageObjectOnGet, 
+                ImageObjectOnReserve, ImageObjectOnRelease);
+
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
@@ -107,14 +113,15 @@ namespace Syadeu.Presentation.Render
                     entity.Destroy();
                 }
             }
-
+        }
+        protected override void OnDispose()
+        {
+            m_ImageObjectPool.Dispose();
             if (m_Canvas != null)
             {
                 Destroy(m_Canvas.gameObject);
             }
-        }
-        protected override void OnDispose()
-        {
+
             m_AttachedUIHashMap.Dispose();
 
             m_SceneSystem = null;
@@ -167,6 +174,8 @@ namespace Syadeu.Presentation.Render
 
         #endregion
 
+        #region GameObject
+
         public GameObject CreateUIObject()
         {
             GameObject obj = new GameObject();
@@ -175,6 +184,44 @@ namespace Syadeu.Presentation.Render
 
             return obj;
         }
+
+        #region Image
+
+        public Image GetImageObject()
+        {
+            return m_ImageObjectPool.Get();
+        }
+        public void ReserveImageObject(Image img)
+        {
+            m_ImageObjectPool.Reserve(img);
+        }
+
+        private Image ImageObjectFactory()
+        {
+            GameObject obj = CreateUIObject();
+            obj.AddComponent<CanvasGroup>();
+            return obj.GetOrAddComponent<Image>();
+        }
+        private static void ImageObjectOnGet(Image img)
+        {
+            img.gameObject.SetActive(true);
+        }
+        private static void ImageObjectOnReserve(Image img)
+        {
+            img.sprite = null;
+            img.material = null;
+
+            img.gameObject.SetActive(false);
+        }
+        private static void ImageObjectOnRelease(Image img)
+        {
+            UnityEngine.Object.Destroy(img.gameObject);
+        }
+
+        #endregion
+
+
+        #endregion
 
         internal void InternalSetProxy(EntityBase entityBase, Entity<UIObjectEntity> entity, 
             CanvasGroup cg)
