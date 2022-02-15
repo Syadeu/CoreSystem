@@ -119,6 +119,42 @@ public unsafe sealed class WorldGridTests
         }
     }
 
+    [Test]
+    public void c0_CLRHeavyTest()
+    {
+        for (int i = 0; i < 1000000; i++)
+        {
+            func();
+        }
+
+        static void func()
+        {
+            float temp = 9999999;
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+
+            temp /= 397;
+            temp /= 397;
+        }
+    }
+    [Test]
+    public void c0_BurstHeavyTest()
+    {
+        for (int i = 0; i < 1000000; i++)
+        {
+            func();
+        }
+
+        static void func()
+        {
+            BurstGridMathematics.heavyTest();
+        }
+    }
+
     private float3 RandomFloat3(float min, float max)
     {
         return new float3(

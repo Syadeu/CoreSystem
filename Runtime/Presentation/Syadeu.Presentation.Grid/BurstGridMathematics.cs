@@ -31,6 +31,21 @@ namespace Syadeu.Presentation.Grid.LowLevel
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static unsafe class BurstGridMathematics
     {
+        [BurstCompile]
+        public static void heavyTest()
+        {
+            float temp = 9999999;
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+            temp = math.sqrt(temp);
+
+            temp /= 397;
+            temp /= 397;
+        }
+
         #region Indexing
 
         // https://www.koreascience.or.kr/article/JAKO201113663898554.pdf
