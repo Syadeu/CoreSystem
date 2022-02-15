@@ -125,7 +125,7 @@ namespace Syadeu.Collections
         }
 
         [BurstCompile]
-        private static uint GetSum(UnsafeReference<byte> bytes, int size)
+        private static uint GetSum(in UnsafeReference<byte> bytes, int size)
         {
             uint output = 0;
             for (int i = 0; i < size; i++)

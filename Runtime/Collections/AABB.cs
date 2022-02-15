@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections.Converters;
+using Syadeu.Collections.LowLevel;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -104,14 +105,20 @@ namespace Syadeu.Collections
         public bool Intersect(Ray ray)
         {
             float3x4[] squares = GetSquares(in this);
+            float distance;
 
-            for (int i = 0; i < squares.Length; i++)
+            unsafe
             {
-                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out _))
+                for (int i = 0; i < squares.Length; i++)
                 {
-                    return true;
+                    if (BurstMathematics.IntersectQuad(
+                        squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, &distance))
+                    {
+                        return true;
+                    }
                 }
             }
+            
             return false;
         }
         public bool Intersect(Ray ray, out float distance)
@@ -120,17 +127,23 @@ namespace Syadeu.Collections
             float3x4[] squares = GetSquares(in this);
 
             bool intersect = false;
-            for (int i = 0; i < squares.Length; i++)
+            unsafe
             {
-                if (IntersectQuad(squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, out float tempDistance))
+                float tempDistance;
+                for (int i = 0; i < squares.Length; i++)
                 {
-                    if (tempDistance < distance)
+                    if (BurstMathematics.IntersectQuad(
+                        squares[i].c0, squares[i].c1, squares[i].c2, squares[i].c3, ray, &tempDistance))
                     {
-                        distance = tempDistance;
+                        if (tempDistance < distance)
+                        {
+                            distance = tempDistance;
+                        }
+                        intersect = true;
                     }
-                    intersect = true;
                 }
             }
+            
             return intersect;
         }
         public bool Intersect(Ray ray, out float distance, out float3 point)
@@ -160,7 +173,15 @@ namespace Syadeu.Collections
             Encapsulate(aabb.center + aabb.extents);
         }
 
-        public AABB Rotation(in quaternion rot, in float3 scale) => CalculateRotationWithVertices(in this, in rot, in scale);
+        public AABB Rotation(in quaternion rot, in float3 scale)
+        {
+            AABB result;
+            unsafe
+            {
+                BurstMathematics.CalculateRotationWithVertices(in this, in rot, in scale, &result);
+            }
+            return result;
+        }
 
         private static AABB CalculateRotation(in AABB aabb, in quaternion quaternion)
         {
@@ -189,40 +210,6 @@ namespace Syadeu.Collections
             //temp.SetMinMax(
             //    math.min(originMin + (minPos - originMin), limitMinf),
             //    math.max(originMax + (maxPos - originMax), limitMaxf));
-
-            return temp;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static AABB CalculateRotationWithVertices(in AABB aabb, in quaternion quaternion, in float3 scale)
-        {
-            float3
-                originCenter = aabb.center;
-                //originExtents = aabb.extents;
-            //float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, originExtents);
-            float4x4 trMatrix = float4x4.TRS(originCenter, quaternion, scale * .5f);
-
-            AABB temp = new AABB(originCenter, float3.zero);
-
-            float3
-                min = aabb.min,
-                max = aabb.max,
-
-                a1 = new float3(min.x, max.y, min.z),
-                a2 = new float3(max.x, max.y, min.z),
-                a3 = new float3(max.x, min.y, min.z),
-
-                b1 = new float3(max.x, min.y, max.z),
-                b3 = new float3(min.x, max.y, max.z),
-                b4 = new float3(min.x, min.y, max.z);
-
-            temp.Encapsulate(math.mul(trMatrix, new float4((min - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((a1 - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((a2 - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((a3 - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((b1 - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((max - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((b3 - originCenter) * 2, 1)).xyz);
-            temp.Encapsulate(math.mul(trMatrix, new float4((b4 - originCenter) * 2, 1)).xyz);
 
             return temp;
         }
@@ -344,74 +331,6 @@ namespace Syadeu.Collections
                     new float3(maxPos.x, maxPos.y, minPos.z)
                     )
             };
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IntersectQuad(float3 p1, float3 p2, float3 p3, float3 p4, Ray ray, out float distance)
-        {
-            if (IntersectTriangle(p1, p2, p4, ray, out distance)) return true;
-            else if (IntersectTriangle(p3, p4, p2, ray, out distance)) return true;
-            return false;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        /// <summary>
-        /// Checks if the specified ray hits the triagnlge descibed by p1, p2 and p3.
-        /// Möller–Trumbore ray-triangle intersection algorithm implementation.
-        /// </summary>
-        /// <param name="p1">Vertex 1 of the triangle.</param>
-        /// <param name="p2">Vertex 2 of the triangle.</param>
-        /// <param name="p3">Vertex 3 of the triangle.</param>
-        /// <param name="ray">The ray to test hit for.</param>
-        /// <returns><c>true</c> when the ray hits the triangle, otherwise <c>false</c></returns>
-        private static bool IntersectTriangle(float3 p1, float3 p2, float3 p3, Ray ray, out float distance)
-        {
-            distance = 0;
-            // Vectors from p1 to p2/p3 (edges)
-            float3 e1, e2;
-
-            float3 p, q, t;
-            float det, invDet, u, v;
-
-            //Find vectors for two edges sharing vertex/point p1
-            e1 = p2 - p1;
-            e2 = p3 - p1;
-
-            // calculating determinant 
-            p = math.cross(ray.direction, e2);
-
-            //Calculate determinat
-            det = math.dot(e1, p);
-            
-            //if determinant is near zero, ray lies in plane of triangle otherwise not
-            if (det > -math.EPSILON && det < math.EPSILON) { return false; }
-            invDet = 1.0f / det;
-
-            //calculate distance from p1 to ray origin
-            t = ((float3)ray.origin) - p1;
-
-            //Calculate u parameter
-            u = Vector3.Dot(t, p) * invDet;
-
-            //Check for ray hit
-            if (u < 0 || u > 1) { return false; }
-
-            //Prepare to test v parameter
-            q = math.cross(t, e1);
-
-            //Calculate v parameter
-            v = math.dot(ray.direction, q) * invDet;
-
-            //Check for ray hit
-            if (v < 0 || u + v > 1) { return false; }
-
-            distance = (math.dot(e2, q) * invDet);
-            if (distance > math.EPSILON)
-            {
-                //ray does intersect
-                return true;
-            }
-
-            // No hit at all
-            return false;
         }
 
         public bool Equals(AABB other)
