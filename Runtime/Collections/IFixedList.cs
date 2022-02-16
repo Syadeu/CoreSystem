@@ -25,7 +25,5 @@ namespace Syadeu.Collections
     {
         T First { get; }
         T Last { get; }
-
-        //T this[int index] { get; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Presentation.Grid.LowLevel;
 using System;
 using Unity.Mathematics;
@@ -153,6 +154,25 @@ public unsafe sealed class WorldGridTests
         {
             BurstGridMathematics.heavyTest();
         }
+    }
+
+    [Test]
+    public void c1_CLRAllocationTest()
+    {
+        TestStruct[] temp = new TestStruct[10000000];
+    }
+    [Test]
+    public void c1_NativeAllocationTest()
+    {
+        UnsafeAllocator<TestStruct> temp = new UnsafeAllocator<TestStruct>(10000000, Unity.Collections.Allocator.Temp);
+    }
+
+    private struct TestStruct
+    {
+        public int x;
+        public int y;
+        public int z;
+        public bool test;
     }
 
     private float3 RandomFloat3(float min, float max)
