@@ -367,6 +367,15 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 UnsafeBufferUtility.Sort<T, U>(t.Ptr, t.Length, comparer);
             }
         }
+        public static void Sort<T, U>(this ref UnsafeAllocator<T> t, U comparer, int count)
+            where T : unmanaged
+            where U : unmanaged, IComparer<T>
+        {
+            unsafe
+            {
+                UnsafeBufferUtility.Sort<T, U>(t.Ptr, count, comparer);
+            }
+        }
 
         public static bool Contains<T, U>(this in UnsafeAllocator<T> t, U item)
             where T : unmanaged, IEquatable<U>

@@ -212,6 +212,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return new UnsafeReference<T>(a.m_Ptr - b);
             }
         }
+        /// <summary>
+        /// 두 포인터 간의 거리를 반환합니다.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static long operator -(UnsafeReference<T> a, UnsafeReference<T> b)
+        {
+            unsafe
+            {
+                return a.m_Ptr - b.m_Ptr;
+            }
+        }
 
         public static unsafe implicit operator UnsafeReference<T>(T* p) => new UnsafeReference<T>(p);
         public static unsafe implicit operator UnsafeReference(UnsafeReference<T> p) => new UnsafeReference(p.IntPtr);
