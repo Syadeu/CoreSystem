@@ -17,13 +17,19 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections.Reflection;
 using Syadeu.Internal;
 using Syadeu.Presentation.Internal;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Events
@@ -36,6 +42,8 @@ namespace Syadeu.Presentation.Events
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
+
+        private Hash m_CurrentHash;
 
         private ConcurrentDictionary<Hash, IEventDescriptor> m_Events = new ConcurrentDictionary<Hash, IEventDescriptor>();
         private readonly ConcurrentDictionary<int, IActionWrapper>
@@ -91,6 +99,8 @@ namespace Syadeu.Presentation.Events
             m_UpdateEvents.Clear();
             m_TransformEvents.Clear();
 
+            m_CurrentHash = Hash.NewHash();
+
             m_LoadingLock = false;
         }
 
@@ -145,6 +155,13 @@ namespace Syadeu.Presentation.Events
                         string.Format(c_LogPostedEvent, ev.InternalName));
                 }
             }
+        }
+
+        protected override PresentationResult OnStartPresentation()
+        {
+            m_CurrentHash = Hash.NewHash();
+
+            return base.OnStartPresentation();
         }
         protected override PresentationResult OnPresentation()
         {
@@ -445,5 +462,100 @@ namespace Syadeu.Presentation.Events
 
             handler.SetEvent(SystemEventResult.Success, ev.InternalEventType);
         }
+
+        internal unsafe struct UnsafeEventBucket : IDisposable
+        {
+            private readonly DelegateWrapper m_EventInfo;
+            private readonly UnsafeAllocator<byte> m_Bytes;
+            private readonly int m_TotalBytes;
+
+            public UnsafeEventBucket(DelegateWrapper eventInfo, int totalBytes)
+            {
+                m_EventInfo = eventInfo;
+                m_Bytes = new UnsafeAllocator<byte>(totalBytes * JobsUtility.MaxJobThreadCount, Allocator.Persistent);
+                m_TotalBytes = totalBytes;
+            }
+
+            public void Read(int stride)
+            {
+
+            }
+            public void Set(int threadIndex, UnsafeReference<byte> bytes)
+            {
+                UnsafeReference<byte> p = m_Bytes.Ptr + (m_TotalBytes * threadIndex);
+                UnsafeUtility.MemCpy(p, bytes, m_TotalBytes);
+            }
+
+            public void Dispose()
+            {
+                m_Bytes.Dispose();
+            }
+        }
+        internal struct UnsafeParallelBroadcaster<TEvent, T0>
+        {
+            private UnsafeAllocator<UnsafeEventBucket> m_Buckets;
+            private UnsafeFixedListWrapper<UnsafeEventBucket> m_BucketList;
+
+            private DelegateWrapper m_EventGetterInfo;
+
+            //public UnsafeParallelBroadcaster(Func<TEvent, T0> getter)
+            //{
+            //    m_EventGetterInfo = new DelegateWrapper(getter);
+            //}
+        }
+//        internal struct UnsafeParallelEventBroadcaster
+//        {
+//            private UnsafeAllocator<UnsafeEventBucket> m_Buckets;
+//            private UnsafeFixedListWrapper<UnsafeEventBucket> m_BucketList;
+//            private UnsafeAllocator<TypeInfo> m_ArgumentTypes;
+
+//            private TypeInfo m_EventType;
+//            private System.Reflection.BindingFlags m_BindingFlags;
+//            private FixedString128Bytes m_GetterMethodName;
+
+//            public UnsafeParallelEventBroadcaster(Delegate action, int capacity)
+//            {
+//                var parameters = action.Method.GetParameters();
+//                m_Buckets = new UnsafeAllocator<UnsafeEventBucket>(capacity, Allocator.Persistent);
+//                m_BucketList = new UnsafeFixedListWrapper<UnsafeEventBucket>(m_Buckets, capacity);
+
+//                m_ArgumentTypes = new UnsafeAllocator<TypeInfo>(parameters.Length, Allocator.Persistent);
+//                int totalArgumentSize = 0;
+//                for (int i = 0; i < parameters.Length; i++)
+//                {
+//                    m_ArgumentTypes[i] = parameters[i].ParameterType.ToTypeInfo();
+//                    totalArgumentSize += m_ArgumentTypes[i].Size;
+//                }
+//                for (int i = 0; i < capacity; i++)
+//                {
+//                    m_Buckets[i] = new UnsafeEventBucket(totalArgumentSize);
+//                }
+
+//                m_EventType = action.Method.DeclaringType.ToTypeInfo();
+//                if (action.Method.IsStatic) m_BindingFlags = System.Reflection.BindingFlags.Static;
+//                else
+//                {
+//                    if (action.Method.IsPublic) m_BindingFlags = System.Reflection.BindingFlags.Public;
+//                    else m_BindingFlags = System.Reflection.BindingFlags.NonPublic;
+
+//                    m_BindingFlags |= System.Reflection.BindingFlags.Instance;
+//                }
+//                m_GetterMethodName = action.Method.Name;
+//            }
+//            public void Add(int threadIndex, UnsafeReference data)
+//            {
+//                int length = 0;
+//#if DEBUG_MODE
+//                length = m_EventType.Size;
+//#endif
+
+//            }
+//        }
     }
+
+    //public struct ParallelEventBroadcaster
+    //{
+    //    private UnsafeReference<EventSystem.UnsafeParallelEventBroadcaster> m_Buffer;
+
+    //}
 }

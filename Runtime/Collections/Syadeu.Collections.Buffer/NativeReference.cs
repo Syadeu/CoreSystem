@@ -93,3 +93,7 @@ namespace Syadeu.Collections.Buffer
         public static explicit operator UnsafeReference<T>(NativeReference<T> t) => t.m_Ptr;
     }
 }
+
+namespace Syadeu.Collections.Reflection
+{
+}

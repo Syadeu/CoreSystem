@@ -38,6 +38,7 @@ namespace Syadeu.Presentation.Grid
 
             Block       =   0b00001,
             Actor       =   0b00010,
+            Moveable    =   0b00100,
             
             //Static      =   0b10000,
         }

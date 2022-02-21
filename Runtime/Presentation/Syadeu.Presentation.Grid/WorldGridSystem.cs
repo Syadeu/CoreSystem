@@ -54,7 +54,7 @@ namespace Syadeu.Presentation.Grid
         private JobHandle m_GridUpdateJob;
 
         internal NativeMultiHashMap<ulong, InstanceID> m_Indices;
-        private NativeMultiHashMap<InstanceID, ulong> m_Entities;
+        //private NativeMultiHashMap<InstanceID, ulong> m_Entities;
         private NativeQueue<InstanceID>
             m_WaitForAdd, m_WaitForRemove;
 
@@ -82,7 +82,7 @@ namespace Syadeu.Presentation.Grid
             m_WaitForRemove = new NativeQueue<InstanceID>(AllocatorManager.Persistent);
 
             m_Indices = new NativeMultiHashMap<ulong, InstanceID>(1024, AllocatorManager.Persistent);
-            m_Entities = new NativeMultiHashMap<InstanceID, ulong>(1024, AllocatorManager.Persistent);
+            //m_Entities = new NativeMultiHashMap<InstanceID, ulong>(1024, AllocatorManager.Persistent);
 
             m_NeedUpdateEntities = new UnsafeFixedQueue<InstanceID>(128, Allocator.Persistent, NativeArrayOptions.ClearMemory);
 
@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Grid
             m_WaitForRemove.Dispose();
 
             m_Indices.Dispose();
-            m_Entities.Dispose();
+            //m_Entities.Dispose();
 
             m_NeedUpdateEntities.Dispose();
 
@@ -183,8 +183,8 @@ namespace Syadeu.Presentation.Grid
 
             while (m_NeedUpdateEntities.TryDequeue(out InstanceID entity))
             {
-                Remove(entity);
                 ref GridComponent component = ref entity.GetComponent<GridComponent>();
+                Remove(entity, ref component);
                 FixedList4096Bytes<GridIndex> prev = component.Indices;
                 requireReindex |= !Add(entity, ref component, out bool locationChanged);
 
@@ -201,7 +201,7 @@ namespace Syadeu.Presentation.Grid
                 for (int i = 0; i < removeCount; i++)
                 {
                     InstanceID entity = m_WaitForRemove.Dequeue();
-                    Remove(entity);
+                    Remove(entity, ref entity.GetComponent<GridComponent>());
                 }
 
                 int addCount = m_WaitForAdd.Count;
@@ -286,7 +286,7 @@ namespace Syadeu.Presentation.Grid
                     for (int i = 0; i < indices.Length; i++)
                     {
                         m_Indices.Add(indices[i].Index, entity);
-                        m_Entities.Add(entity, indices[i].Index);
+                        //m_Entities.Add(entity, indices[i].Index);
                     }
                 }
                 else
@@ -294,7 +294,7 @@ namespace Syadeu.Presentation.Grid
                     for (int i = 0; i < indices.Length; i++)
                     {
                         m_Indices.Add(indices[i].Index, entity);
-                        m_Entities.Add(entity, indices[i].Index);
+                        //m_Entities.Add(entity, indices[i].Index);
 
                         locationChanged |= component.m_Indices[i].Index != indices[i].Index;
                     }
@@ -337,7 +337,7 @@ namespace Syadeu.Presentation.Grid
                             ulong index = m_Grid.LocationToIndex(location + new int3(x, y, z));
 
                             m_Indices.Add(index, entity);
-                            m_Entities.Add(entity, index);
+                            //m_Entities.Add(entity, index);
 
                             indices.Add(new GridIndex(m_Grid, index));
                         }
@@ -361,21 +361,32 @@ namespace Syadeu.Presentation.Grid
 
             return true;
         }
-        private void Remove(in InstanceID entity)
+        private void Remove(in InstanceID entity, ref GridComponent component)
         {
-            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter)) return;
+            //if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter)) return;
 
-            do
+            ulong index;
+            for (int i = 0; i < component.m_Indices.Length; i++)
             {
+                index = component.m_Indices[i].Index;
+
                 if (m_Indices.CountValuesForKey(index) == 1)
                 {
                     m_Indices.Remove(index);
                 }
                 else m_Indices.Remove(index, entity);
+            }
+            //do
+            //{
+            //    if (m_Indices.CountValuesForKey(index) == 1)
+            //    {
+            //        m_Indices.Remove(index);
+            //    }
+            //    else m_Indices.Remove(index, entity);
 
-            } while (m_Entities.TryGetNextValue(out index, ref iter));
+            //} while (m_Entities.TryGetNextValue(out index, ref iter));
 
-            m_Entities.Remove(entity);
+            //m_Entities.Remove(entity);
         }
 
         [BurstCompatible]
@@ -417,27 +428,23 @@ namespace Syadeu.Presentation.Grid
             m_WaitForRemove.Clear();
             m_WaitForAdd.Clear();
 
-            int prevCount = m_Entities.Capacity;
-            int targetCap = prevCount - m_Entities.Count() < prevCount / 3 ? prevCount * 2 : prevCount;
+            int prevCount = m_Indices.Capacity;
+            int targetCap = prevCount - m_Indices.Count() < prevCount / 3 ? prevCount * 2 : prevCount;
 
             if (prevCount != targetCap)
             {
-                m_Entities.Dispose(); m_Indices.Dispose();
+                m_Indices.Dispose();
                 m_Indices = new NativeMultiHashMap<ulong, InstanceID>(targetCap, AllocatorManager.Persistent);
-                m_Entities = new NativeMultiHashMap<InstanceID, ulong>(targetCap, AllocatorManager.Persistent);
             }
             else
             {
                 m_Indices.Clear();
-                m_Entities.Clear();
             }
 
             UpdateGridComponentJob componentJob = new UpdateGridComponentJob(
                 m_Grid,
-                ref m_Indices,
-                ref m_Entities);
+                ref m_Indices);
             PostChangedEventJob postChangedEventJob = new PostChangedEventJob(
-                ref m_Entities,
                 m_EventSystem
                 );
             NativeMultiHashMap<GridIndex, InstanceID> observers = GetModule<GridDetectorModule>().GridObservers;
@@ -446,7 +453,6 @@ namespace Syadeu.Presentation.Grid
             FullObserverUpdateJob observerUpdateJob = new FullObserverUpdateJob
             {
                 grid = m_Grid,
-                entities = m_Entities,
                 observers = observers.AsParallelWriter()
             };
 
@@ -455,7 +461,7 @@ namespace Syadeu.Presentation.Grid
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle);
 
             var handle2 =
-                ScheduleAt(JobPosition.Before, postChangedEventJob);
+                ScheduleAt<PostChangedEventJob, GridComponent>(JobPosition.Before, postChangedEventJob);
             m_GridUpdateJob = JobHandle.CombineDependencies(m_GridUpdateJob, handle2);
 
             var handle3 = ScheduleAt<FullObserverUpdateJob, GridDetectorComponent>(JobPosition.Before, observerUpdateJob);
@@ -473,19 +479,15 @@ namespace Syadeu.Presentation.Grid
 
             [WriteOnly]
             private NativeMultiHashMap<ulong, InstanceID>.ParallelWriter indices;
-            [WriteOnly]
-            private NativeMultiHashMap<InstanceID, ulong>.ParallelWriter entities;
 
             public UpdateGridComponentJob(
                 WorldGrid grid,
-                ref NativeMultiHashMap<ulong, InstanceID> indices,
-                ref NativeMultiHashMap<InstanceID, ulong> entities)
+                ref NativeMultiHashMap<ulong, InstanceID> indices)
             {
                 this.grid = grid;
                 m_TrHashMap = EntityTransformStatic.GetHashMap();
 
                 this.indices = indices.AsParallelWriter();
-                this.entities = entities.AsParallelWriter();
             }
 
             public void Execute(in InstanceID entity, ref GridComponent component)
@@ -498,7 +500,6 @@ namespace Syadeu.Presentation.Grid
                     for (int i = 0; i < component.m_Indices.Length; i++)
                     {
                         indices.Add(component.m_Indices[i].Index, entity);
-                        entities.Add(entity, component.m_Indices[i].Index);
                     }
 
                     return;
@@ -535,51 +536,55 @@ namespace Syadeu.Presentation.Grid
                             ulong index = grid.LocationToIndex(location + new int3(x, y, z));
 
                             indices.Add(index, entity);
-                            entities.Add(entity, index);
                         }
                     }
                 }
             }
         }
-        private struct PostChangedEventJob : IJob
+        private struct PostChangedEventJob : IJobParallelForEntities<GridComponent>
         {
-            private NativeMultiHashMap<InstanceID, ulong> entities;
             private PresentationSystemID<EventSystem> m_EventSystemID;
 
-            public PostChangedEventJob(
-                ref NativeMultiHashMap<InstanceID, ulong> entities, EventSystem eventSystem)
+            public PostChangedEventJob(EventSystem eventSystem)
             {
-                this.entities = entities;
                 m_EventSystemID = eventSystem.SystemID;
             }
 
-            public void Execute()
+            //public void Execute()
+            //{
+            //    EventSystem eventSystem = m_EventSystemID.System;
+            //    var array = entities.GetKeyArray(AllocatorManager.Temp);
+
+            //    for (int i = 0; i < array.Length; i++)
+            //    {
+            //        var component = array[i].GetComponentReadOnly<GridComponent>();
+            //        eventSystem.PostEvent(
+            //            OnGridLocationChangedEvent.GetEvent(
+            //                array[i], new FixedList4096Bytes<GridIndex>(), component.Indices, true));
+            //    }
+            //}
+
+            public void Execute(in InstanceID entity, ref GridComponent component)
             {
                 EventSystem eventSystem = m_EventSystemID.System;
-                var array = entities.GetKeyArray(AllocatorManager.Temp);
-
-                for (int i = 0; i < array.Length; i++)
-                {
-                    var component = array[i].GetComponentReadOnly<GridComponent>();
-                    eventSystem.PostEvent(
-                        OnGridLocationChangedEvent.GetEvent(
-                            array[i], new FixedList4096Bytes<GridIndex>(), component.Indices, true));
-                }
+                eventSystem.PostEvent(
+                    OnGridLocationChangedEvent.GetEvent(
+                        entity, new FixedList4096Bytes<GridIndex>(), component.Indices, true));
             }
         }
         private struct FullObserverUpdateJob : IJobParallelForEntities<GridDetectorComponent>
         {
             [ReadOnly]
             public WorldGrid grid;
-            [ReadOnly]
-            public NativeMultiHashMap<InstanceID, ulong> entities;
             [WriteOnly]
             public NativeMultiHashMap<GridIndex, InstanceID>.ParallelWriter observers;
 
             public void Execute(in InstanceID entity, ref GridDetectorComponent detector)
             {
                 // TODO : temp
-                entities.TryGetFirstValue(entity, out ulong index, out var iter);
+                //entities.TryGetFirstValue(entity, out ulong index, out var iter);
+                GridComponent component = entity.GetComponentReadOnly<GridComponent>();
+                ulong index = component.Indices[0].Index;
 
                 detector.m_ObserveIndices = new FixedList4096Bytes<GridIndex>();
 
@@ -603,12 +608,16 @@ namespace Syadeu.Presentation.Grid
 
         #region Grid Entity
 
+        /// <summary>
+        /// <paramref name="entity"/> 의 그리드 좌표를 업데이트합니다.
+        /// </summary>
+        /// <param name="entity"></param>
         public void UpdateEntity(in InstanceID entity)
         {
             m_GridUpdateJob.Complete();
 
-            Remove(entity);
             ref GridComponent component = ref entity.GetComponent<GridComponent>();
+            Remove(entity, ref component);
             FixedList4096Bytes<GridIndex> prev = component.Indices;
             Add(entity, ref component, out bool changed);
 
@@ -618,10 +627,25 @@ namespace Syadeu.Presentation.Grid
                     OnGridLocationChangedEvent.GetEvent(entity, prev, component.Indices, false));
             }
         }
+        /// <summary>
+        /// <paramref name="index"/> 에 Entity 가 존재하는지 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public bool HasEntityAt(in GridIndex index)
         {
             return m_Indices.ContainsKey(index.Index);
         }
+        /// <summary>
+        /// <paramref name="index"/> 에 Entity 가 존재한다면 <paramref name="entity"/> 에 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 만약 다수의 Entity 가 존재한다면 가장 첫번째의 Entity 를 반환합니다. 
+        /// 다수의 Entity 를 전부 반환받고 싶다면 <seealso cref="TryGetEntitiesAt(in GridIndex, out EntitiesAtIndexEnumerator)"/> 를 참조하세요.
+        /// </remarks>
+        /// <param name="index"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public bool TryGetEntityAt(in GridIndex index, out InstanceID entity)
         {
             if (!m_Indices.TryGetFirstValue(index.Index, out entity, out _))
@@ -632,6 +656,12 @@ namespace Syadeu.Presentation.Grid
 
             return true;
         }
+        /// <summary>
+        /// <paramref name="index"/> 에 하나 이상의 Entity 가 존재한다면 <paramref name="iter"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="iter"></param>
+        /// <returns></returns>
         public bool TryGetEntitiesAt(in GridIndex index, out EntitiesAtIndexEnumerator iter)
         {
             if (!HasEntityAt(index))
@@ -643,29 +673,6 @@ namespace Syadeu.Presentation.Grid
             iter = new EntitiesAtIndexEnumerator(m_Indices, index.Index);
             return true;
         }
-        public IndicesOfEntityEnumerator GetIndiceOfEntity(in InstanceID entity)
-        {
-            return new IndicesOfEntityEnumerator(
-                m_Grid,
-                m_Entities,
-                entity
-                );
-        }
-        public bool TryGetIndiceOfEntity(in InstanceID entity, ref NativeList<int3> output)
-        {
-            output.Clear();
-            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
-            {
-                return false;
-            }
-
-            do
-            {
-                output.Add(m_Grid.IndexToLocation(index));
-            } while (m_Entities.TryGetNextValue(out index, ref iter));
-
-            return true;
-        }
 
         /// <summary>
         /// 해당 엔티티가 그리드에서 점유중인 인덱스들의 총 AABB 를 반환합니다.
@@ -675,20 +682,38 @@ namespace Syadeu.Presentation.Grid
         /// <returns></returns>
         public bool TryGetIndicesAABBOfEntity(in InstanceID entity, out AABB aabb)
         {
-            if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            //if (!m_Entities.TryGetFirstValue(entity, out ulong index, out var iter))
+            //{
+            //    aabb = AABB.Zero;
+            //    return false;
+            //}
+#if DEBUG_MODE
+            if (!entity.HasComponent<GridComponent>())
             {
+                "??".ToLogError();
+
                 aabb = AABB.Zero;
                 return false;
             }
+#endif
+            GridComponent component = entity.GetComponentReadOnly<GridComponent>();
+            ulong index = component.Indices[0].Index;
 
             float3 tempPos = m_Grid.IndexToPosition(in index);
             aabb = new AABB(tempPos, 0);
 
-            while (m_Entities.TryGetNextValue(out index, ref iter))
+            for (int i = 1; i < component.Indices.Length; i++)
             {
+                index = component.Indices[i].Index;
+
                 tempPos = m_Grid.IndexToPosition(in index);
                 aabb.Encapsulate(tempPos);
             }
+            //while (m_Entities.TryGetNextValue(out index, ref iter))
+            //{
+            //    tempPos = m_Grid.IndexToPosition(in index);
+            //    aabb.Encapsulate(tempPos);
+            //}
 
             return true;
         }
@@ -715,7 +740,9 @@ namespace Syadeu.Presentation.Grid
             public GridIndex Current => m_Iterator.Current.Key;
             object IEnumerator.Current => m_Iterator.Current.Key;
 
+            [NotBurstCompatible]
             public IEnumerator<GridIndex> GetEnumerator() => this;
+            [NotBurstCompatible]
             IEnumerator IEnumerable.GetEnumerator() => this;
 
             public void Dispose()
@@ -735,38 +762,37 @@ namespace Syadeu.Presentation.Grid
                 m_Iterator.Reset();
             }
         }
-        [BurstCompatible]
-        public struct IndicesOfEntityEnumerator : IEnumerable<GridIndex>
-        {
-            private WorldGrid m_Grid;
-            private NativeMultiHashMap<InstanceID, ulong> m_HashMap;
-            private InstanceID m_Target;
+        //[BurstCompatible]
+        //public struct IndicesOfEntityEnumerator : IEnumerable<GridIndex>
+        //{
+        //    private WorldGrid m_Grid;
+        //    private InstanceID m_Target;
 
-            internal IndicesOfEntityEnumerator(
-                WorldGrid grid,
-                NativeMultiHashMap<InstanceID, ulong> hashMap,
-                InstanceID target)
-            {
-                m_Grid = grid;
-                m_HashMap = hashMap;
-                m_Target = target;
-            }
+        //    internal IndicesOfEntityEnumerator(
+        //        WorldGrid grid,
+        //        InstanceID target)
+        //    {
+        //        m_Grid = grid;
+        //        m_HashMap = hashMap;
+        //        m_Target = target;
+        //    }
 
-            public IEnumerator<GridIndex> GetEnumerator()
-            {
-                if (!m_HashMap.TryGetFirstValue(m_Target, out ulong index, out var iter))
-                {
-                    yield break;
-                }
+        //    [NotBurstCompatible]
+        //    public IEnumerator<GridIndex> GetEnumerator()
+        //    {
+        //        if (!m_HashMap.TryGetFirstValue(m_Target, out ulong index, out var iter))
+        //        {
+        //            yield break;
+        //        }
 
-                do
-                {
-                    yield return new GridIndex(m_Grid, index);
-                } while (m_HashMap.TryGetNextValue(out index, ref iter));
-            }
-            [NotBurstCompatible]
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
+        //        do
+        //        {
+        //            yield return new GridIndex(m_Grid, index);
+        //        } while (m_HashMap.TryGetNextValue(out index, ref iter));
+        //    }
+        //    [NotBurstCompatible]
+        //    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        //}
         [BurstCompatible]
         public struct EntitiesAtIndexEnumerator : IEnumerable<InstanceID>
         {
@@ -816,6 +842,67 @@ namespace Syadeu.Presentation.Grid
                     yield return entity;
                 } while (m_Iterator.TryGetNextValue(out entity, ref iter));
             }
+        }
+        [BurstCompatible]
+        public struct RangeEnumerator : IEnumerable<GridIndex>
+        {
+            private WorldGrid m_Grid;
+            private GridIndex m_From;
+            private int3 m_Range;
+
+            internal RangeEnumerator(
+                in WorldGrid grid,
+                in GridIndex from,
+                in int3 range)
+            {
+                m_Grid = grid;
+                m_From = from;
+                m_Range = range;
+            }
+
+            [NotBurstCompatible]
+            public IEnumerator<GridIndex> GetEnumerator()
+            {
+                int3
+                    location = m_From.Location,
+                    minRange, maxRange;
+                m_Grid.GetMinMaxLocation(out minRange, out maxRange);
+
+                int
+                    minX = location.x - m_Range.x < 0 ? 0 : math.min(location.x - m_Range.x, maxRange.x),
+                    maxX = location.x + m_Range.x < 0 ? 0 : math.min(location.x + m_Range.x, maxRange.x),
+
+                    minY = location.y - m_Range.y < 0 ?
+                        math.max(location.y - m_Range.y, minRange.y) : math.min(location.y - m_Range.y, maxRange.y),
+                    maxY = location.y + m_Range.y < 0 ?
+                        math.max(location.y + m_Range.y, minRange.y) : math.min(location.y + m_Range.y, maxRange.y),
+
+                    minZ = location.z - m_Range.z < 0 ? 0 : math.min(location.z - m_Range.z, maxRange.z),
+                    maxZ = location.z + m_Range.z < 0 ? 0 : math.min(location.z + m_Range.z, maxRange.z);
+
+                int3
+                    start = new int3(minX, minY, minZ),
+                    end = new int3(maxX, maxY, maxZ);
+
+                int count = 0;
+                for (int y = start.y; y < end.y + 1; y++)
+                {
+                    for (int x = start.x; x < end.x + 1; x++)
+                    {
+                        for (int z = start.z;
+                            z < end.z;
+                            z++, count++)
+                        {
+                            int3 target = new int3(x, y, z);
+                            if (!m_Grid.Contains(in target)) continue;
+
+                            yield return new GridIndex(m_Grid.m_CheckSum, target);
+                        }
+                    }
+                }
+            }
+            [NotBurstCompatible]
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         #endregion
@@ -931,261 +1018,31 @@ namespace Syadeu.Presentation.Grid
 
         #region Get Range
 
-        public enum SortOption
-        {
-            None,
-
-            CloseDistance
-        }
-
-        public struct RangeEnumerator : IEnumerable<GridIndex>
-        {
-            private WorldGrid m_Grid;
-            private GridIndex m_From;
-            private int3 m_Range;
-
-            internal RangeEnumerator(
-                in WorldGrid grid, 
-                in GridIndex from, 
-                in int3 range)
-            {
-                m_Grid = grid;
-                m_From = from;
-                m_Range = range;
-            }
-
-            public IEnumerator<GridIndex> GetEnumerator()
-            {
-                int3
-                    location = m_From.Location,
-                    minRange, maxRange;
-                m_Grid.GetMinMaxLocation(out minRange, out maxRange);
-
-                int
-                    minX = location.x - m_Range.x < 0 ? 0 : math.min(location.x - m_Range.x, maxRange.x),
-                    maxX = location.x + m_Range.x < 0 ? 0 : math.min(location.x + m_Range.x, maxRange.x),
-
-                    minY = location.y - m_Range.y < 0 ?
-                        math.max(location.y - m_Range.y, minRange.y) : math.min(location.y - m_Range.y, maxRange.y),
-                    maxY = location.y + m_Range.y < 0 ?
-                        math.max(location.y + m_Range.y, minRange.y) : math.min(location.y + m_Range.y, maxRange.y),
-
-                    minZ = location.z - m_Range.z < 0 ? 0 : math.min(location.z - m_Range.z, maxRange.z),
-                    maxZ = location.z + m_Range.z < 0 ? 0 : math.min(location.z + m_Range.z, maxRange.z);
-
-                int3
-                    start = new int3(minX, minY, minZ),
-                    end = new int3(maxX, maxY, maxZ);
-                
-                int count = 0;
-                for (int y = start.y; y < end.y + 1; y++)
-                {
-                    for (int x = start.x; x < end.x + 1; x++)
-                    {
-                        for (int z = start.z;
-                            z < end.z;
-                            z++, count++)
-                        {
-                            int3 target = new int3(x, y, z);
-                            if (!m_Grid.Contains(in target)) continue;
-
-                            yield return new GridIndex(m_Grid.m_CheckSum, target);
-                        }
-                    }
-                }
-            }
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        public RangeEnumerator GetRange(in InstanceID from,
-            in int3 range)
+        public RangeEnumerator GetRange(in InstanceID from, in int3 range)
         {
             CompleteGridJob();
 
-            if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
+            //if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
+            //{
+            //    "err".ToLogError();
+            //    return default(RangeEnumerator);
+            //}
+            if (!from.HasComponent<GridComponent>())
             {
                 "err".ToLogError();
                 return default(RangeEnumerator);
             }
+            GridComponent component = from.GetComponentReadOnly<GridComponent>();
+            //ulong index = component.Indices[0].Index;
 
             // TODO : Temp code
-            return GetRange(new GridIndex(m_Grid.m_CheckSum, index), in range);
+            return GetRange(component.Indices[0], in range);
         }
         public RangeEnumerator GetRange(in GridIndex from,
             in int3 range)
         {
             return new RangeEnumerator(in m_Grid, in from, in range);
         }
-
-        //[Obsolete]
-        //[SkipLocalsInit]
-        //public void GetRange(in GridIndex from,
-        //    in int3 range,
-        //    ref NativeList<GridIndex> output,
-        //    SortOption sortOption = SortOption.None)
-        //{
-        //    if (!ValidateIndex(in from))
-        //    {
-        //        "err".ToLogError();
-        //        return;
-        //    }
-
-        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-        //    if (maxCount > 255)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Presentation,
-        //            $"You\'re trying to get range of grid that exceeding length 255. " +
-        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-        //    }
-
-        //    output.Clear();
-
-        //    int3
-        //        location = from.Location,
-        //        minRange, maxRange;
-        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
-
-        //    int
-        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
-
-        //        minY = location.y - range.y < 0 ?
-        //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-        //        maxY = location.y + range.y < 0 ?
-        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
-
-        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
-
-        //    int3
-        //        start = new int3(minX, minY, minZ),
-        //        end = new int3(maxX, maxY, maxZ),
-
-        //        dir = end - start;
-
-        //    UnsafeFixedListWrapper<int3> result;
-        //    unsafe
-        //    {
-        //        int3* buffer = stackalloc int3[maxCount];
-        //        result = new UnsafeFixedListWrapper<int3>(buffer, maxCount);
-        //    }
-
-        //    //int count = 0;
-        //    for (int y = start.y; y < end.y + 1 && result.Count < maxCount; y++)
-        //    {
-        //        for (int x = start.x; x < end.x + 1 && result.Count < maxCount; x++)
-        //        {
-        //            for (int z = start.z;
-        //                z < end.z + 1 && result.Count < maxCount;
-        //                z++)
-        //            {
-        //                result.Add(new int3(x, y, z));
-        //            }
-        //        }
-        //    }
-
-        //    if (sortOption == SortOption.CloseDistance)
-        //    {
-        //        UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-        //    }
-
-        //    for (int i = 0; i < count && i < 255; i++)
-        //    {
-        //        output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-        //    }
-        //}
-        //[Obsolete]
-        //public void GetRange(in InstanceID from,
-        //    in int3 range,
-        //    ref FixedList4096Bytes<GridIndex> output,
-        //    SortOption sortOption = SortOption.None)
-        //{
-        //    CompleteGridJob();
-
-        //    if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter))
-        //    {
-        //        "err".ToLogError();
-        //        return;
-        //    }
-
-        //    // TODO : Temp code
-        //    GetRange(new GridIndex(m_Grid.m_CheckSum, index), range, ref output, sortOption);
-        //}
-        //[Obsolete]
-        //[SkipLocalsInit]
-        //public void GetRange(in GridIndex from,
-        //    in int3 range,
-        //    ref FixedList4096Bytes<GridIndex> output,
-        //    SortOption sortOption = SortOption.None)
-        //{
-        //    if (!ValidateIndex(in from))
-        //    {
-        //        "err".ToLogError();
-        //        return;
-        //    }
-
-        //    int maxCount = ((range.x * 2) + 1) * ((range.z * 2) + 1) * ((range.y * 2) + 1);
-        //    if (maxCount > 255)
-        //    {
-        //        CoreSystem.Logger.LogError(Channel.Presentation,
-        //            $"You\'re trying to get range of grid that exceeding length 255. " +
-        //            $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
-        //    }
-
-        //    output.Clear();
-
-        //    int3
-        //        location = from.Location,
-        //        minRange, maxRange;
-        //    m_Grid.GetMinMaxLocation(out minRange, out maxRange);
-
-        //    int
-        //        minX = location.x - range.x < 0 ? 0 : math.min(location.x - range.x, maxRange.x),
-        //        maxX = location.x + range.x < 0 ? 0 : math.min(location.x + range.x, maxRange.x),
-
-        //        minY = location.y - range.y < 0 ?
-        //            math.max(location.y - range.y, minRange.y) : math.min(location.y - range.y, maxRange.y),
-        //        maxY = location.y + range.y < 0 ?
-        //            math.max(location.y + range.y, minRange.y) : math.min(location.y + range.y, maxRange.y),
-
-        //        minZ = location.z - range.z < 0 ? 0 : math.min(location.z - range.z, maxRange.z),
-        //        maxZ = location.z + range.z < 0 ? 0 : math.min(location.z + range.z, maxRange.z);
-        //    //if (log) $"minmax: {minRange}, {maxRange}".ToLog();
-        //    int3
-        //        start = new int3(minX, minY, minZ),
-        //        end = new int3(maxX, maxY, maxZ),
-                
-        //        dir = end - start;
-
-            
-        //    unsafe
-        //    {
-        //        int3* buffer = stackalloc int3[maxCount];
-        //        int count = 0;
-        //        for (int y = start.y; y < end.y + 1 && count < maxCount; y++)
-        //        {
-        //            for (int x = start.x; x < end.x + 1 && count < maxCount; x++)
-        //            {
-        //                for (int z = start.z;
-        //                    z < end.z + 1 && count < maxCount;
-        //                    z++, count++)
-        //                {
-        //                    buffer[count] = new int3(x, y, z);
-        //                }
-        //            }
-        //        }
-        //        //if (log) $"{count} < {maxCount}: {start}, {end}".ToLog();
-        //        if (sortOption == SortOption.CloseDistance)
-        //        {
-        //            UnsafeBufferUtility.Sort(buffer, count, new CloseDistanceComparer(location));
-        //        }
-
-        //        for (int i = 0; i < count && i < 255; i++)
-        //        {
-        //            output.Add(new GridIndex(m_Grid.m_CheckSum, buffer[i]));
-        //        }
-        //    }
-        //}
 
         #endregion
 
@@ -1367,9 +1224,11 @@ namespace Syadeu.Presentation.Grid
             )
         {
             tileCount = 0;
-            if (!m_Entities.TryGetFirstValue(from, out ulong index, out var iter)) return false;
+            if (!from.HasComponent<GridComponent>()) return false;
 
-            return GetModule<WorldGridPathModule>().GetPath(new GridIndex(m_Grid.m_CheckSum, index), in to, ref foundPath, out tileCount, in maxIteration);
+            GridComponent component = from.GetComponentReadOnly<GridComponent>();
+
+            return GetModule<WorldGridPathModule>().GetPath(component.Indices[0], in to, ref foundPath, out tileCount, in maxIteration);
         }
 
         #endregion
@@ -1377,20 +1236,6 @@ namespace Syadeu.Presentation.Grid
         #region Cursor
 
         private GridIndex m_CurrentOverlayIndex;
-//        public GridIndex CurrentOverlayIndex
-//        {
-//            get
-//            {
-//#if DEBUG_MODE
-//                if (!m_EnabledCursorObserve)
-//                {
-//                    CoreSystem.Logger.LogError(Channel.Presentation,
-//                        $"You\'re trying to get grid index at cursor but currently not observing cursor. You should enable observation with {nameof(EnableCursorObserve)} method.");
-//                }
-//#endif
-//                return m_CurrentOverlayIndex;
-//            }
-//        }
 
         private void UpdateCursorObservation()
         {
@@ -1455,29 +1300,42 @@ namespace Syadeu.Presentation.Grid
 
         #region Detector
 
+        /// <summary>
+        /// <inheritdoc cref="GridDetectorModule.IsObserveIndexOf(in GridIndex, in InstanceID)"/>
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="entity"/> 만 해당 그리드 좌표를 감시하는지 확인하려면 
+        /// <seealso cref="IsObserveIndexOfOnly(in GridIndex, in InstanceID)"/> 를 참조하세요.
+        /// </remarks>
+        /// <param name="index"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public bool IsObserveIndexOf(in GridIndex index, in InstanceID entity)
         {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+            CompleteGridJob();
+
             return GetModule<GridDetectorModule>().IsObserveIndexOf(in index, in entity);
         }
+        /// <inheritdoc cref="GridDetectorModule.IsObserveIndexOfOnly(in GridIndex, in InstanceID)"/>
         public bool IsObserveIndexOfOnly(in GridIndex index, in InstanceID entity)
         {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
+            CompleteGridJob();
+
             return GetModule<GridDetectorModule>().IsObserveIndexOfOnly(in index, in entity);
         }
 
-        public int GetObserverIndicesCount()
-        {
-            CompleteGridJob();
-
-            return GetModule<GridDetectorModule>().GridObservers.Count();
-        }
         public NativeArray<GridIndex> GetObserverIndices(AllocatorManager.AllocatorHandle allocator)
         {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
             CompleteGridJob();
 
             return GetModule<GridDetectorModule>().GridObservers.GetKeyArray(allocator);
         }
         public IndexEnumerator<AlwaysTrue<GridIndex>> GetObserverIndices()
         {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
             CompleteGridJob();
 
             return new IndexEnumerator<AlwaysTrue<GridIndex>>
@@ -1488,6 +1346,7 @@ namespace Syadeu.Presentation.Grid
         public IndexEnumerator<TPredicate> GetObserverIndices<TPredicate>(TPredicate predicate)
             where TPredicate : struct, IExecutable<GridIndex>
         {
+            CoreSystem.Logger.ThreadBlock(Syadeu.Internal.ThreadInfo.Unity);
             CompleteGridJob();
 
             return new IndexEnumerator<TPredicate>
@@ -1495,7 +1354,6 @@ namespace Syadeu.Presentation.Grid
                 predicate
                 );
         }
-
 
         #endregion
     }

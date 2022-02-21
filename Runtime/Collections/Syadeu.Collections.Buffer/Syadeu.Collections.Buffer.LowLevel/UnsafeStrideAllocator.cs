@@ -23,15 +23,15 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     // https://github.com/Eothaun/DOTS-Playground/blob/master/Assets/Articles/CustomNativeContainer/NativeValue.cs
-    [BurstCompatible, Obsolete("", true)]
+    [BurstCompatible]
     public struct UnsafeStrideAllocator<T> : IDisposable, IEquatable<UnsafeStrideAllocator<T>>
         where T : unmanaged
     {
-        private UnsafeAllocator m_Allocator;
+        private UnsafeAllocator m_Buffer;
         private readonly int m_Stride;
 
-        public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Allocator.Ptr;
-        public bool Created => m_Allocator.IsCreated;
+        public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Buffer.Ptr;
+        public bool Created => m_Buffer.IsCreated;
 
         public UnsafeStrideAllocator(
             in int stride, 
@@ -43,7 +43,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             int totalSize = size * stride * length;
 
-            m_Allocator 
+            m_Buffer 
                 = new UnsafeAllocator(totalSize, UnsafeUtility.AlignOf<T>(), allocator, options);
         }
         private UnsafeReference<T> ElementAt(in int index, in int stride)
@@ -68,10 +68,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public void Dispose()
         {
-            m_Allocator.Dispose();
+            m_Buffer.Dispose();
         }
 
-        public bool Equals(UnsafeStrideAllocator<T> other) => m_Allocator.Equals(other.m_Allocator);
+        public bool Equals(UnsafeStrideAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
 
         //[BurstCompatible]
         //public struct ParallelWriter
@@ -96,5 +96,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
         //        element.Value = value;
         //    }
         //}
+    }
+    public struct UnsafeLinearAllocator<T> : IDisposable
+        where T : unmanaged
+    {
+        private UnsafeAllocator<T> m_Buffer;
+
+        public UnsafeLinearAllocator(int length, int stride, Allocator allocator)
+        {
+            m_Buffer = new UnsafeAllocator<T>(length, allocator);
+        }
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
