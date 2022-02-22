@@ -242,6 +242,8 @@ namespace Syadeu.Collections
             {
                 CoreSystem.Logger.LogError(Channel.Core,
                     $"Cannot instantiate object(Prefab Index: {m_Idx}).");
+
+                return default(AsyncOperationHandle<UnityEngine.GameObject>);
             }
 #endif
             return objSetting.InstantiateAsync(in pos, in rot, in parent);

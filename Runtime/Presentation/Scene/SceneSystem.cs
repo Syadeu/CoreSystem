@@ -368,8 +368,9 @@ namespace Syadeu.Presentation
                         $"Camera prefab is null. This is not allowed. " +
                         $"You can set this at SetupWizard -> Scene tab.");
                 }
+                else
 #endif
-                SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
+                    SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 
                 OnSceneChanged?.Invoke();
 
