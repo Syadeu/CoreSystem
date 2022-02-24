@@ -180,7 +180,7 @@ namespace Syadeu.Presentation.Grid
                     path, 512);
             }
 
-            pathList.Add(root);
+            pathList.AddNoResize(root);
             //path[0] = root;
 
             pathFound = 1;
@@ -217,7 +217,7 @@ namespace Syadeu.Presentation.Grid
                 if (isNew)
                 {
                     currentTileIdx = (uint)pathList.Length;
-                    pathList.Add(nextTile);
+                    pathList.AddNoResize(nextTile);
                     //count++;
                 }
                 else
@@ -289,7 +289,7 @@ namespace Syadeu.Presentation.Grid
                 pathList = new UnsafeFixedListWrapper<PathTile>(
                     path, 512);
             }
-            pathList.Add(root);
+            pathList.AddNoResize(root);
 
             int pathFound = 1;
             uint /*count = 1, */iteration = 0, currentTileIdx = 0;
@@ -325,7 +325,7 @@ namespace Syadeu.Presentation.Grid
                 if (isNew)
                 {
                     currentTileIdx = (uint)pathList.Length;
-                    pathList.Add(nextTile);
+                    pathList.AddNoResize(nextTile);
                 }
                 else
                 {
@@ -354,12 +354,12 @@ namespace Syadeu.Presentation.Grid
                         target.parent = from;
                         target.parentArrayIdx = 0;
                     }
-                    output.Add(current);
+                    output.AddNoResize(current);
 
                     current = pathList[current.parentArrayIdx];
                 }
                 //arr[length++] = path[0];
-                output.Add(pathList[0]);
+                output.AddNoResize(pathList[0]);
 
                 foundPath.Clear();
                 //foundPath.Add(from);

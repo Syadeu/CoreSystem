@@ -51,7 +51,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public T First => m_Buffer[0];
         public T Last => m_Buffer[m_Count - 1];
 
-        public bool IsEmpty => !m_Buffer.IsCreated;
+        public bool IsEmpty => !m_Buffer.IsCreated || m_Count == 0;
         
         public T this[int index]
         {
@@ -95,7 +95,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public ref T ElementAt(int index) => ref m_Buffer[index];
         public ref T ElementAt(uint index) => ref m_Buffer[index];
-        public void Add(T element)
+        public void AddNoResize(T element)
         {
             if (m_Count >= Capacity)
             {

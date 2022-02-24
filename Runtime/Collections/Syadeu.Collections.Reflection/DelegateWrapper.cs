@@ -18,6 +18,7 @@
 
 using Syadeu.Collections.Buffer.LowLevel;
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 
@@ -30,6 +31,32 @@ namespace Syadeu.Collections.Reflection
         private readonly System.Reflection.BindingFlags m_BindingFlags;
         private readonly FixedString128Bytes m_MethodName;
         private readonly FixedList512Bytes<TypeInfo> m_ArgumentTypes;
+
+        private readonly bool m_IsCreated;
+
+        public bool IsCreated => m_IsCreated;
+        public int RequireArgumentBytes
+        {
+            get
+            {
+                int sum = 0;
+                for (int i = 0; i < m_ArgumentTypes.Length; i++)
+                {
+                    sum += m_ArgumentTypes[i].Size;
+                }
+                return sum;
+            }
+        }
+
+        [NotBurstCompatible]
+        public MethodInfo MethodInfo
+        {
+            get
+            {
+                return m_Type.Type.GetMethod(
+                    m_MethodName.ToString(), m_BindingFlags, null, GetArgumentTypes(), null);
+            }
+        }
 
         [NotBurstCompatible]
         public DelegateWrapper(Delegate action)
@@ -49,6 +76,8 @@ namespace Syadeu.Collections.Reflection
             {
                 m_ArgumentTypes[i] = parameters[i].ParameterType.ToTypeInfo();
             }
+
+            m_IsCreated = true;
         }
 
         [NotBurstCompatible]
@@ -89,9 +118,7 @@ namespace Syadeu.Collections.Reflection
         [NotBurstCompatible]
         public object DynamicInvoke(object obj, params object[] args)
         {
-            System.Reflection.MethodInfo methodInfo =
-                m_Type.Type.GetMethod(
-                    m_MethodName.ToString(), m_BindingFlags, null, GetArgumentTypes(), null);
+            MethodInfo methodInfo = MethodInfo;
 #if DEBUG_MODE
             if (methodInfo == null)
             {
@@ -100,5 +127,8 @@ namespace Syadeu.Collections.Reflection
 #endif
             return methodInfo.Invoke(obj, args);
         }
+
+        [NotBurstCompatible]
+        public static implicit operator DelegateWrapper(Delegate action) => new DelegateWrapper(action);
     }
 }

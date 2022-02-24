@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Burst;
+using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -223,6 +224,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return ref Ptr[index];
             }
         }
+        public ref T this[long index]
+        {
+            get
+            {
+#if DEBUG_MODE
+                if (index < 0 || index >= Length)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+#endif
+                return ref Ptr[index];
+            }
+        }
         public long Size => m_Buffer.Size;
         public int Length => Convert.ToInt32(m_Buffer.Size / UnsafeUtility.SizeOf<T>());
 
@@ -351,11 +365,33 @@ namespace Syadeu.Collections.Buffer.LowLevel
         {
             if (length < 0) throw new Exception();
 
-            t.m_Buffer.Resize(
-                UnsafeUtility.SizeOf<T>() * length,
-                UnsafeUtility.AlignOf<T>(),
-                options
-                );
+            long size = UnsafeUtility.SizeOf<T>() * length;
+            int alignment = UnsafeUtility.AlignOf<T>();
+
+            UnityEngine.Debug.Log($"re allocate from {t.m_Buffer.m_Buffer.Value.Size} -> {size}");
+            unsafe
+            {
+                void* ptr = UnsafeUtility.Malloc(size, alignment, t.m_Buffer.m_Allocator);
+
+                UnsafeUtility.MemCpy(ptr, t.Ptr, math.min(size, t.Size));
+                UnsafeUtility.Free(t.Ptr, t.m_Buffer.m_Allocator);
+
+                t.m_Buffer.m_Buffer.Value.Ptr = ptr;
+
+                if (size > t.Size &&
+                    (options & NativeArrayOptions.ClearMemory) == NativeArrayOptions.ClearMemory)
+                {
+                    UnsafeUtility.MemClear(t.m_Buffer.Ptr[t.m_Buffer.Size].ToPointer(), size - t.m_Buffer.Size);
+                }
+
+                t.m_Buffer.m_Buffer.Value.Size = size;
+            }
+
+            //t.m_Buffer.Resize(
+            //    UnsafeUtility.SizeOf<T>() * length,
+            //    UnsafeUtility.AlignOf<T>(),
+            //    options
+            //    );
         }
 
         public static void Sort<T, U>(this ref UnsafeAllocator<T> t, U comparer)

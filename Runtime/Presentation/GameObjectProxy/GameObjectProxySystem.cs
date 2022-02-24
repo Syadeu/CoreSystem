@@ -849,7 +849,6 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-
         public struct VisibleEnumerator : IEnumerable<ProxyTransform>
         {
             private NativeProxyData m_ProxyData;

@@ -23,17 +23,20 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Syadeu.Collections.Buffer.LowLevel
 {
     /// <summary>
-    /// <see cref="MemoryPool"/> 에서 할당받은 메모리 공간입니다.
+    /// <see cref="UnsafeMemoryPool"/> 에서 할당받은 메모리 공간입니다.
     /// </summary>
     [BurstCompatible]
-    public readonly struct MemoryBlock : IEquatable<MemoryBlock>, IValidation
+    public struct UnsafeMemoryBlock : IValidation, IEquatable<UnsafeMemoryBlock>, IEquatable<Hash>
     {
+        private readonly Hash m_Identifier;
         private readonly Hash m_Owner;
 
-        internal readonly UnsafeReference<byte> m_Block;
+        private UnsafeReference<byte> m_Block;
         private readonly int m_Length;
+        private readonly long m_Index;
 
         public ref byte this[int index] => ref m_Block[index];
+        public Hash Identifier => m_Identifier;
         /// <summary>
         /// 버퍼의 포인터입니다.
         /// </summary>
@@ -42,11 +45,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
         /// 이 메모리의 총 크기입니다.
         /// </summary>
         public int Length => m_Length;
+        /// <summary>
+        /// 버퍼 시작부터 이 포인터까지의 길이입니다.
+        /// </summary>
+        public long Index => m_Index;
 
-        internal MemoryBlock(Hash owner, UnsafeReference<byte> p, int length)
+        internal UnsafeMemoryBlock(Hash owner, UnsafeReference<byte> p, long index, int length)
         {
+            m_Identifier = Hash.NewHash();
+
             m_Owner = owner;
             m_Block = p;
+
+            m_Index = index;
             m_Length = length;
         }
 
@@ -55,22 +66,25 @@ namespace Syadeu.Collections.Buffer.LowLevel
             if (!pool.Equals(m_Owner)) return false;
             return true;
         }
+        internal UnsafeReference<byte> Last() => m_Block + m_Length;
+
         public bool IsValid() => m_Block.IsCreated && m_Length > 0;
 
-        public bool Equals(MemoryBlock other) => m_Block.Equals(other.m_Block) && m_Length == other.m_Length;
+        public bool Equals(UnsafeMemoryBlock other) => m_Block.Equals(other.m_Block) && m_Length == other.m_Length;
+        public bool Equals(Hash other) => m_Identifier.Equals(other);
     }
     /// <summary>
-    /// <inheritdoc cref="MemoryBlock"/>
+    /// <inheritdoc cref="UnsafeMemoryBlock"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [BurstCompatible]
-    public readonly struct MemoryBlock<T> : IValidation, IEquatable<MemoryBlock<T>>, IEquatable<MemoryBlock>
+    public struct UnsafeMemoryBlock<T> : IValidation, IEquatable<UnsafeMemoryBlock<T>>, IEquatable<UnsafeMemoryBlock>
         where T : unmanaged
     {
-        private readonly MemoryBlock m_MemoryBlock;
+        private UnsafeMemoryBlock m_MemoryBlock;
 
         /// <summary>
-        /// <inheritdoc cref="MemoryBlock.Ptr"/>
+        /// <inheritdoc cref="UnsafeMemoryBlock.Ptr"/>
         /// </summary>
         public UnsafeReference<T> Ptr
         {
@@ -81,7 +95,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
         /// <summary>
-        /// <inheritdoc cref="MemoryBlock.Length"/>
+        /// <inheritdoc cref="UnsafeMemoryBlock.Length"/>
         /// </summary>
         public int Size => m_MemoryBlock.Length;
         /// <summary>
@@ -89,18 +103,23 @@ namespace Syadeu.Collections.Buffer.LowLevel
         /// </summary>
         public int Length => m_MemoryBlock.Length / UnsafeUtility.SizeOf<T>();
 
-        internal MemoryBlock(MemoryBlock block)
+        internal UnsafeMemoryBlock(UnsafeMemoryBlock block)
         {
             m_MemoryBlock = block;
         }
 
+        public UnsafeReference<T> GetPointer(int stride)
+        {
+            return Ptr + (Size * stride);
+        }
+
         public bool IsValid() => m_MemoryBlock.IsValid();
 
-        public bool Equals(MemoryBlock other) => m_MemoryBlock.Equals(other);
-        public bool Equals(MemoryBlock<T> other) => m_MemoryBlock.Equals(other.m_MemoryBlock);
+        public bool Equals(UnsafeMemoryBlock other) => m_MemoryBlock.Equals(other);
+        public bool Equals(UnsafeMemoryBlock<T> other) => m_MemoryBlock.Equals(other.m_MemoryBlock);
 
-        public static implicit operator MemoryBlock(MemoryBlock<T> t) => t.m_MemoryBlock;
+        public static implicit operator UnsafeMemoryBlock(UnsafeMemoryBlock<T> t) => t.m_MemoryBlock;
 
-        public static explicit operator MemoryBlock<T>(MemoryBlock t) => new MemoryBlock<T>(t);
+        public static explicit operator UnsafeMemoryBlock<T>(UnsafeMemoryBlock t) => new UnsafeMemoryBlock<T>(t);
     }
 }

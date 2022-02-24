@@ -14,6 +14,7 @@
 
 using System;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Collections
 {
@@ -26,7 +27,7 @@ namespace Syadeu.Collections
     [BurstCompatible]
     public readonly struct TypeInfo : IValidation, IEquatable<TypeInfo>
     {
-        private readonly RuntimeTypeHandle m_TypeHandle;
+        private readonly FixedString512Bytes m_TypeHandle;
         private readonly int m_Size;
         private readonly int m_Align;
 
@@ -41,7 +42,7 @@ namespace Syadeu.Collections
                 {
                     return null;
                 }
-                return Type.GetTypeFromHandle(m_TypeHandle);
+                return Type.GetType(m_TypeHandle.ToString());
             }
         }
         public int Size => m_Size;
@@ -49,7 +50,7 @@ namespace Syadeu.Collections
 
         internal TypeInfo(Type type, int size, int align, int hashCode)
         {
-            m_TypeHandle = type.TypeHandle;
+            m_TypeHandle = type.AssemblyQualifiedName;
             m_Size = size;
             m_Align = align;
 
@@ -71,7 +72,7 @@ namespace Syadeu.Collections
 
         public bool IsValid()
         {
-            if (m_TypeHandle.Value == IntPtr.Zero ||
+            if (m_TypeHandle.IsEmpty ||
                 m_Size == 0 || m_HashCode == 0) return false;
 
             return true;

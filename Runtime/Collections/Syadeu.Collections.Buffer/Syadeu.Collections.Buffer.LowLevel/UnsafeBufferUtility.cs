@@ -30,7 +30,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     public static unsafe class UnsafeBufferUtility
     {
         [BurstCompile]
-        public static byte* AsBytes<T>(ref T t, out int length)
+        public static UnsafeReference<byte> AsBytes<T>(ref T t, out int length)
             where T : unmanaged
         {
             length = UnsafeUtility.SizeOf<T>();
@@ -72,6 +72,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
             if (index != length) return false;
             return true;
         }
+        public static int BinarySearch<T, U>(in UnsafeReference<T> buffer, in int length, T value, U comparer)
+            where T : unmanaged
+            where U : IComparer<T>
+        {
+            int index = NativeSortExtension.BinarySearch<T, U>(buffer, length, value, comparer);
+
+            return index;
+        }
 
         [BurstCompile]
         public static void Sort<T, U>(in UnsafeReference<T> buffer, in int length, U comparer)
@@ -106,17 +114,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return index >= 0;
         }
-        //public static bool Contains<T, U, L>(in T iterator, U list)
-        //    where T : unmanaged, IEnumerator<L>
-        //    where U : unmanaged, INativeList<L>
-        //    where L : unmanaged
-        //{
-        //    int count = 0;
-        //    while (iterator.MoveNext())
-        //    {
-        //        count++;
-        //    }
-        //}
 
         [BurstCompile]
         public static int IndexOf<T, U>(in UnsafeReference<T> array, in int length, U item)
@@ -185,6 +182,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
+        #region Memory
+
+        [BurstCompile]
+        public static long CalculateFreeSpaceBetween(in UnsafeReference from, in int length, in UnsafeReference to)
+        {
+            UnsafeReference<byte> p = (UnsafeReference<byte>)from;
+
+            return to - (p + length);
+        }
+
+        #endregion
+
         #region Native Array
 
         public static ref T ElementAtAsRef<T>(this NativeArray<T> t, in int index)
@@ -205,6 +214,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         private static readonly Dictionary<IntPtr, (DisposeSentinel, Allocator)> m_Safety
             = new Dictionary<IntPtr, (DisposeSentinel, Allocator)>();
 
+        [BurstDiscard]
         public static void CreateSafety(UnsafeReference ptr, Allocator allocator, out AtomicSafetyHandle handle)
         {
             DisposeSentinel.Create(out handle, out var sentinel, 1, allocator);
@@ -212,6 +222,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             IntPtr p = ptr.IntPtr;
             m_Safety.Add(p, (sentinel, allocator));
         }
+        [BurstDiscard]
         public static void RemoveSafety(UnsafeReference ptr, ref AtomicSafetyHandle handle)
         {
             IntPtr p = ptr.IntPtr;
@@ -220,7 +231,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             DisposeSentinel.Dispose(ref handle, ref sentinel.Item1);
             m_Safety.Remove(p);
         }
-
+        [BurstDiscard]
         public static void DisposeAllSafeties()
         {
             foreach (var item in m_Safety)

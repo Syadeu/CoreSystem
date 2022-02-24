@@ -375,14 +375,14 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
                 if (!contains[0] || !contains[1] || !contains[2] || !contains[3])
                 {
-                    output.Add(locations[i]);
+                    output.AddNoResize(locations[i]);
                 }
                 else if (!locations.Contains(dir.c0) || 
                     !locations.Contains(dir.c1) ||
                     !locations.Contains(dir.c2) ||
                     !locations.Contains(dir.c3))
                 {
-                    output.Add(locations[i]);
+                    output.AddNoResize(locations[i]);
                 }
             }
         }
@@ -478,7 +478,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
                 if (!contains || !map.Contains(directional))
                 {
-                    list.Add(new float3x2(
+                    list.AddNoResize(new float3x2(
                         gridPos + upright,
                         gridPos + downright
                         ));
@@ -490,7 +490,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
                 if (!contains || !map.Contains(directional))
                 {
-                    list.Add(new float3x2(
+                    list.AddNoResize(new float3x2(
                         gridPos + downright,
                         gridPos + downleft
                         ));
@@ -501,7 +501,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
                 if (!contains || !map.Contains(directional))
                 {
-                    list.Add(new float3x2(
+                    list.AddNoResize(new float3x2(
                         gridPos + downleft,
                         gridPos + upleft
                         ));
@@ -512,7 +512,7 @@ namespace Syadeu.Presentation.Grid.LowLevel
                 //temp = new GridIndex(locations[i].m_CheckSum, directional);
                 if (!contains || !map.Contains(directional))
                 {
-                    list.Add(new float3x2(
+                    list.AddNoResize(new float3x2(
                         gridPos + upleft,
                         gridPos + upright
                         ));
@@ -521,14 +521,14 @@ namespace Syadeu.Presentation.Grid.LowLevel
 
             float3x2 current = list.Last;
             list.RemoveAtSwapback(list.Length - 1);
-            output.Add(current.c0);
+            output.AddNoResize(current.c0);
             float3 next = current.c1;
 
             while (FindFloat3x2(ref list, in next, out current))
             {
                 if (!output.Last.Equals(current.c0))
                 {
-                    output.Add(current.c0);
+                    output.AddNoResize(current.c0);
                 }
 
                 next = current.c1;

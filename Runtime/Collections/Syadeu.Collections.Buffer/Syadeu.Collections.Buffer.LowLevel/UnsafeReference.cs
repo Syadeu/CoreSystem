@@ -153,6 +153,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 }
             }
         }
+        /// <inheritdoc cref="this[int]"/>
+        public ref T this[long index]
+        {
+            get
+            {
+                unsafe
+                {
+                    return ref *(m_Ptr + index);
+                }
+            }
+        }
 
         public unsafe T* Ptr => m_Ptr;
         public IntPtr IntPtr { get { unsafe { return (IntPtr)m_Ptr; } } }
@@ -205,7 +216,21 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return new UnsafeReference<T>(a.m_Ptr + b);
             }
         }
+        public static UnsafeReference<T> operator +(UnsafeReference<T> a, long b)
+        {
+            unsafe
+            {
+                return new UnsafeReference<T>(a.m_Ptr + b);
+            }
+        }
         public static UnsafeReference<T> operator -(UnsafeReference<T> a, int b)
+        {
+            unsafe
+            {
+                return new UnsafeReference<T>(a.m_Ptr - b);
+            }
+        }
+        public static UnsafeReference<T> operator -(UnsafeReference<T> a, long b)
         {
             unsafe
             {
@@ -223,6 +248,32 @@ namespace Syadeu.Collections.Buffer.LowLevel
             unsafe
             {
                 return a.m_Ptr - b.m_Ptr;
+            }
+        }
+        /// <summary>
+        /// 두 포인터 간의 거리를 반환합니다.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static long operator -(UnsafeReference<T> a, UnsafeReference b)
+        {
+            unsafe
+            {
+                return (byte*)a.Ptr - (byte*)b.Ptr;
+            }
+        }
+        /// <summary>
+        /// 두 포인터 간의 거리를 반환합니다.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static long operator -(UnsafeReference a, UnsafeReference<T> b)
+        {
+            unsafe
+            {
+                return (byte*)a.Ptr - (byte*)b.Ptr;
             }
         }
 

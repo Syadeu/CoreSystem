@@ -53,7 +53,7 @@ namespace Syadeu.Collections
             ulong hash = entity.Hash;
             uint shortHash = unchecked((uint)hash * 397);
 
-            list.Add(shortHash);
+            list.AddNoResize(shortHash);
             list.Sort(new Comparer());
 
             m_Count[0]++;

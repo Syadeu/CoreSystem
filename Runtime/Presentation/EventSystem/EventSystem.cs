@@ -39,9 +39,10 @@ namespace Syadeu.Presentation.Events
     /// </summary>
     public sealed class EventSystem : PresentationSystemEntity<EventSystem>, ISystemEventScheduler
     {
-        public override bool EnableBeforePresentation => false;
+        public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
+        public override bool EnableTransformPresentation => true;
 
         private Hash m_CurrentHash;
 
@@ -60,6 +61,9 @@ namespace Syadeu.Presentation.Events
         private ISystemEventScheduler m_CurrentTicket;
         private bool m_PausedScheduledEvent = false;
 
+        private UnsafeMemoryPool m_EventMemoryPool;
+        //private NativeQueue<EventDescription> m_QueuedDescriptions;
+
 #if DEBUG_MODE
         private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
 #endif
@@ -71,12 +75,16 @@ namespace Syadeu.Presentation.Events
         private SceneSystem m_SceneSystem;
         private CoroutineSystem m_CoroutineSystem;
 
+        private object m_Lock = new object();
         private bool m_LoadingLock = false;
 
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
+            m_EventMemoryPool = new UnsafeMemoryPool(1024 * 40, Allocator.Persistent, 64);
+            //m_QueuedDescriptions = new NativeQueue<EventDescription>(AllocatorManager.Persistent);
+
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
 
@@ -107,18 +115,17 @@ namespace Syadeu.Presentation.Events
         private void Bind(CoroutineSystem other)
         {
             m_CoroutineSystem = other;
-
-            PresentationManager.Instance.TransformUpdate += M_CoroutineSystem_OnTransformUpdate;
         }
 
         #endregion
 
         protected override void OnDispose()
         {
+            m_EventMemoryPool.Dispose();
+            //m_QueuedDescriptions.Dispose();
+
             m_UpdateEvents.Clear();
             m_TransformEvents.Clear();
-
-            PresentationManager.Instance.TransformUpdate -= M_CoroutineSystem_OnTransformUpdate;
 
             m_SceneSystem = null;
             m_CoroutineSystem = null;
@@ -126,42 +133,35 @@ namespace Syadeu.Presentation.Events
 
         const string c_LogPostedEvent = "Posted event : {0}";
 
-        private void M_CoroutineSystem_OnTransformUpdate()
-        {
-            int eventCount = m_TransformEvents.Count;
-            for (int i = 0; i < eventCount; i++)
-            {
-                SynchronizedEventBase ev = m_TransformEvents.Dequeue();
-                if (!ev.IsValid() || !m_Events.ContainsKey(ev.EventHash)) continue;
-                try
-                {
-                    //ev.InternalPost();
-                    m_Events[ev.EventHash].Invoke(ev.EventHash, ev);
-                }
-                catch (Exception ex)
-                {
-                    CoreSystem.Logger.LogError(Channel.Event,
-                        $"Invalid event({ev.InternalName}) has been posted");
-                    UnityEngine.Debug.LogException(ex);
-                }
-                finally
-                {
-                    ev.InternalTerminate();
-                }
-
-                if (ev.InternalDisplayLog)
-                {
-                    CoreSystem.Logger.Log(Channel.Event,
-                        string.Format(c_LogPostedEvent, ev.InternalName));
-                }
-            }
-        }
-
         protected override PresentationResult OnStartPresentation()
         {
             m_CurrentHash = Hash.NewHash();
 
             return base.OnStartPresentation();
+        }
+
+        protected override PresentationResult BeforePresentation()
+        {
+            //int parallelCount = m_QueuedDescriptions.Count;
+            //for (int i = 0; i < parallelCount; i++)
+            //{
+            //    EventDescription description = m_QueuedDescriptions.Dequeue();
+            //    SynchronizedEventBase ev = (SynchronizedEventBase)description.Execute();
+            //    description.Dispose();
+
+            //    switch (ev.InternalLoop)
+            //    {
+            //        default:
+            //        case UpdateLoop.Default:
+            //            m_UpdateEvents.Enqueue(ev);
+            //            break;
+            //        case UpdateLoop.Transform:
+            //            m_TransformEvents.Enqueue(ev);
+            //            break;
+            //    }
+            //}
+
+            return base.BeforePresentation();
         }
         protected override PresentationResult OnPresentation()
         {
@@ -231,6 +231,38 @@ namespace Syadeu.Presentation.Events
 
             return base.OnPresentation();
         }
+        protected override PresentationResult TransformPresentation()
+        {
+            int eventCount = m_TransformEvents.Count;
+            for (int i = 0; i < eventCount; i++)
+            {
+                SynchronizedEventBase ev = m_TransformEvents.Dequeue();
+                if (!ev.IsValid() || !m_Events.ContainsKey(ev.EventHash)) continue;
+                try
+                {
+                    //ev.InternalPost();
+                    m_Events[ev.EventHash].Invoke(ev.EventHash, ev);
+                }
+                catch (Exception ex)
+                {
+                    CoreSystem.Logger.LogError(Channel.Event,
+                        $"Invalid event({ev.InternalName}) has been posted");
+                    UnityEngine.Debug.LogException(ex);
+                }
+                finally
+                {
+                    ev.InternalTerminate();
+                }
+
+                if (ev.InternalDisplayLog)
+                {
+                    CoreSystem.Logger.Log(Channel.Event,
+                        string.Format(c_LogPostedEvent, ev.InternalName));
+                }
+            }
+
+            return base.TransformPresentation();
+        }
 
         #endregion
 
@@ -265,7 +297,11 @@ namespace Syadeu.Presentation.Events
                 m_Events.TryAdd(eventHash, eventDescriptor);
             }
             Action<TEvent> action = temp.Invoke;
-            eventDescriptor.AddEvent(eventHash, action);
+
+            lock (m_Lock)
+            {
+                eventDescriptor.AddEvent(eventHash, action);
+            }
 
             //SynchronizedEvent<TEvent>.AddEvent(ev);
         }
@@ -289,14 +325,18 @@ namespace Syadeu.Presentation.Events
                 return;
             }
 
-            IEventDescriptor eventDescriptor = m_Events[eventHash];
-            ActionWrapper<TEvent> temp = (ActionWrapper<TEvent>)m_EventActions[hash];
+            lock (m_Lock)
+            {
+                ActionWrapper<TEvent> temp = (ActionWrapper<TEvent>)m_EventActions[hash];
+                Action<TEvent> action = temp.Invoke;
 
-            Action<TEvent> action = temp.Invoke;
-            eventDescriptor.RemoveEvent(eventHash, action);
+                IEventDescriptor eventDescriptor = m_Events[eventHash];
+                eventDescriptor.RemoveEvent(eventHash, action);
 
+                temp.Reserve();
+            }
+            
             m_EventActions.TryRemove(hash, out _);
-            temp.Reserve();
             //SynchronizedEvent<TEvent>.RemoveEvent(ev);
         }
 
@@ -307,21 +347,27 @@ namespace Syadeu.Presentation.Events
         /// <param name="ev"></param>
         public void PostEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            switch (ev.InternalLoop)
+            lock (m_Lock)
             {
-                default:
-                case UpdateLoop.Default:
-                    m_UpdateEvents.Enqueue(ev);
-                    break;
-                case UpdateLoop.Transform:
-                    m_TransformEvents.Enqueue(ev);
-                    break;
+                switch (ev.InternalLoop)
+                {
+                    default:
+                    case UpdateLoop.Default:
+                        m_UpdateEvents.Enqueue(ev);
+                        break;
+                    case UpdateLoop.Transform:
+                        m_TransformEvents.Enqueue(ev);
+                        break;
+                }
             }
         }
         public void ScheduleEvent<TEvent>(TEvent ev) where TEvent : SynchronizedEvent<TEvent>, new()
         {
-            m_ScheduledEvents.Enqueue(ev);
-            TakeQueueTicket(this);
+            lock (m_Lock)
+            {
+                m_ScheduledEvents.Enqueue(ev);
+                TakeQueueTicket(this);
+            }
         }
 
         public void SetPauseScheduleEvent(bool pause)
@@ -329,6 +375,7 @@ namespace Syadeu.Presentation.Events
             m_PausedScheduledEvent = pause;
         }
 
+        [Obsolete]
         public void PostAction(Action action)
         {
             m_PostedActions.Enqueue(action);
@@ -462,100 +509,145 @@ namespace Syadeu.Presentation.Events
 
             handler.SetEvent(SystemEventResult.Success, ev.InternalEventType);
         }
-
-        internal unsafe struct UnsafeEventBucket : IDisposable
-        {
-            private readonly DelegateWrapper m_EventInfo;
-            private readonly UnsafeAllocator<byte> m_Bytes;
-            private readonly int m_TotalBytes;
-
-            public UnsafeEventBucket(DelegateWrapper eventInfo, int totalBytes)
-            {
-                m_EventInfo = eventInfo;
-                m_Bytes = new UnsafeAllocator<byte>(totalBytes * JobsUtility.MaxJobThreadCount, Allocator.Persistent);
-                m_TotalBytes = totalBytes;
-            }
-
-            public void Read(int stride)
-            {
-
-            }
-            public void Set(int threadIndex, UnsafeReference<byte> bytes)
-            {
-                UnsafeReference<byte> p = m_Bytes.Ptr + (m_TotalBytes * threadIndex);
-                UnsafeUtility.MemCpy(p, bytes, m_TotalBytes);
-            }
-
-            public void Dispose()
-            {
-                m_Bytes.Dispose();
-            }
-        }
-        internal struct UnsafeParallelBroadcaster<TEvent, T0>
-        {
-            private UnsafeAllocator<UnsafeEventBucket> m_Buckets;
-            private UnsafeFixedListWrapper<UnsafeEventBucket> m_BucketList;
-
-            private DelegateWrapper m_EventGetterInfo;
-
-            //public UnsafeParallelBroadcaster(Func<TEvent, T0> getter)
-            //{
-            //    m_EventGetterInfo = new DelegateWrapper(getter);
-            //}
-        }
-//        internal struct UnsafeParallelEventBroadcaster
-//        {
-//            private UnsafeAllocator<UnsafeEventBucket> m_Buckets;
-//            private UnsafeFixedListWrapper<UnsafeEventBucket> m_BucketList;
-//            private UnsafeAllocator<TypeInfo> m_ArgumentTypes;
-
-//            private TypeInfo m_EventType;
-//            private System.Reflection.BindingFlags m_BindingFlags;
-//            private FixedString128Bytes m_GetterMethodName;
-
-//            public UnsafeParallelEventBroadcaster(Delegate action, int capacity)
-//            {
-//                var parameters = action.Method.GetParameters();
-//                m_Buckets = new UnsafeAllocator<UnsafeEventBucket>(capacity, Allocator.Persistent);
-//                m_BucketList = new UnsafeFixedListWrapper<UnsafeEventBucket>(m_Buckets, capacity);
-
-//                m_ArgumentTypes = new UnsafeAllocator<TypeInfo>(parameters.Length, Allocator.Persistent);
-//                int totalArgumentSize = 0;
-//                for (int i = 0; i < parameters.Length; i++)
-//                {
-//                    m_ArgumentTypes[i] = parameters[i].ParameterType.ToTypeInfo();
-//                    totalArgumentSize += m_ArgumentTypes[i].Size;
-//                }
-//                for (int i = 0; i < capacity; i++)
-//                {
-//                    m_Buckets[i] = new UnsafeEventBucket(totalArgumentSize);
-//                }
-
-//                m_EventType = action.Method.DeclaringType.ToTypeInfo();
-//                if (action.Method.IsStatic) m_BindingFlags = System.Reflection.BindingFlags.Static;
-//                else
-//                {
-//                    if (action.Method.IsPublic) m_BindingFlags = System.Reflection.BindingFlags.Public;
-//                    else m_BindingFlags = System.Reflection.BindingFlags.NonPublic;
-
-//                    m_BindingFlags |= System.Reflection.BindingFlags.Instance;
-//                }
-//                m_GetterMethodName = action.Method.Name;
-//            }
-//            public void Add(int threadIndex, UnsafeReference data)
-//            {
-//                int length = 0;
-//#if DEBUG_MODE
-//                length = m_EventType.Size;
-//#endif
-
-//            }
-//        }
     }
 
-    //public struct ParallelEventBroadcaster
-    //{
-    //    private UnsafeReference<EventSystem.UnsafeParallelEventBroadcaster> m_Buffer;
+    [Obsolete("", true), NativeContainer]
+    public struct EventDescription : IDisposable
+    {
+        private readonly DelegateWrapper m_EventInfo;
 
-    //}
+        private UnsafeMemoryPool m_Pool;
+        private UnsafeMemoryBlock<byte> m_Bytes;
+
+        [NativeSetThreadIndex]
+        private int m_ThreadIndex;
+
+        internal EventDescription(UnsafeMemoryPool memoryPool, DelegateWrapper eventInfo)
+        {
+            m_EventInfo = eventInfo;
+
+            m_Pool = memoryPool;
+            if (eventInfo.RequireArgumentBytes > 0)
+            {
+                m_Bytes = (UnsafeMemoryBlock<byte>)memoryPool.Get(eventInfo.RequireArgumentBytes * JobsUtility.MaxJobThreadCount, NativeArrayOptions.ClearMemory);
+            }
+            else m_Bytes = default(UnsafeMemoryBlock<byte>);
+
+            m_ThreadIndex = 0;
+        }
+
+        [NotBurstCompatible]
+        internal object Execute()
+        {
+            object[] args;
+            if (m_Bytes.IsValid())
+            {
+                args = m_EventInfo.ConvertToArguments(m_Bytes.Ptr, m_Bytes.Length);
+            }
+            else args = null;
+
+            return m_EventInfo.DynamicInvoke(null, args);
+        }
+
+        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int) })]
+        public void Set<T>(T t)
+            where T : unmanaged
+        {
+            unsafe
+            {
+                UnsafeUtility.MemCpy(
+                    m_Bytes.GetPointer(m_ThreadIndex),
+                    UnsafeBufferUtility.AsBytes(ref t, out int length),
+                    length
+                    );
+            }
+        }
+        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int) })]
+        public void Set<T0, T1>(T0 t0, T1 t1)
+            where T0 : unmanaged where T1 : unmanaged
+        {
+            unsafe
+            {
+                UnsafeUtility.MemCpy(
+                    m_Bytes.GetPointer(m_ThreadIndex),
+                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
+                    length
+                    );
+                UnsafeUtility.MemCpy(
+                    m_Bytes.GetPointer(m_ThreadIndex) + length,
+                    UnsafeBufferUtility.AsBytes(ref t1, out length),
+                    length
+                    );
+            }
+        }
+        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int), typeof(int) })]
+        public void Set<T0, T1, T2>(T0 t0, T1 t1, T2 t2)
+            where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged
+        {
+            unsafe
+            {
+                UnsafeUtility.MemCpy(
+                    m_Bytes.GetPointer(m_ThreadIndex),
+                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
+                    length
+                    );
+
+                UnsafeReference<byte> next = m_Bytes.GetPointer(m_ThreadIndex) + length;
+                UnsafeUtility.MemCpy(
+                    next,
+                    UnsafeBufferUtility.AsBytes(ref t1, out length),
+                    length
+                    );
+
+                next += length;
+                UnsafeUtility.MemCpy(
+                    next,
+                    UnsafeBufferUtility.AsBytes(ref t2, out length),
+                    length
+                    );
+            }
+        }
+        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int), typeof(int), typeof(int) })]
+        public void Set<T0, T1, T2, T3>(T0 t0, T1 t1, T2 t2, T3 t3)
+            where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged where T3 : unmanaged
+        {
+            unsafe
+            {
+                UnsafeUtility.MemCpy(
+                    m_Bytes.GetPointer(m_ThreadIndex),
+                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
+                    length
+                    );
+
+                UnsafeReference<byte> next = m_Bytes.GetPointer(m_ThreadIndex) + length;
+                UnsafeUtility.MemCpy(
+                    next,
+                    UnsafeBufferUtility.AsBytes(ref t1, out length),
+                    length
+                    );
+
+                next += length;
+                UnsafeUtility.MemCpy(
+                    next,
+                    UnsafeBufferUtility.AsBytes(ref t2, out length),
+                    length
+                    );
+
+                next += length;
+                UnsafeUtility.MemCpy(
+                    next,
+                    UnsafeBufferUtility.AsBytes(ref t3, out length),
+                    length
+                    );
+            }
+        }
+
+        public void Dispose()
+        {
+            if (m_Bytes.IsValid())
+            {
+                m_Pool.Reserve(m_Bytes);
+            }
+        }
+    }
 }

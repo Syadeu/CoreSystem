@@ -550,20 +550,6 @@ namespace Syadeu.Presentation.Grid
                 m_EventSystemID = eventSystem.SystemID;
             }
 
-            //public void Execute()
-            //{
-            //    EventSystem eventSystem = m_EventSystemID.System;
-            //    var array = entities.GetKeyArray(AllocatorManager.Temp);
-
-            //    for (int i = 0; i < array.Length; i++)
-            //    {
-            //        var component = array[i].GetComponentReadOnly<GridComponent>();
-            //        eventSystem.PostEvent(
-            //            OnGridLocationChangedEvent.GetEvent(
-            //                array[i], new FixedList4096Bytes<GridIndex>(), component.Indices, true));
-            //    }
-            //}
-
             public void Execute(in InstanceID entity, ref GridComponent component)
             {
                 EventSystem eventSystem = m_EventSystemID.System;

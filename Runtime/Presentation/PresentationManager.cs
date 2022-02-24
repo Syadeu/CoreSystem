@@ -1686,7 +1686,7 @@ namespace Syadeu.Presentation
                 }
             }
 
-            for (int i = 0; i < group.Count; i++)
+            for (int i = 0; i < group.Systems.Count; i++)
             {
                 while (!group.Systems[i].IsStartable)
                 {

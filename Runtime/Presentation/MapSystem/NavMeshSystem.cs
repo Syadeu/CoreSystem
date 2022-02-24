@@ -865,8 +865,6 @@ namespace Syadeu.Presentation.Map
 
             agent.m_MoveJob
                 = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(m_MoveJob);
-
-            "exe".ToLog();
         }
         public void Dispose()
         {
@@ -877,7 +875,6 @@ namespace Syadeu.Presentation.Map
             }
 
             agent.m_IsMoving = false;
-            "dispose".ToLog();
         }
 
         public bool Equals(ActorMoveEvent<TPredicate> other) => m_Entity.Equals(other.m_Entity);
