@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Syadeu.Collections.Buffer
 {
@@ -71,11 +72,12 @@ namespace Syadeu.Collections.Buffer
 
         public void Dispose()
         {
+#if DEBUG_MODE
             if (m_CheckSum != 0)
             {
-                throw new Exception();
+                UnityEngine.Debug.LogError("Pool is not fully reserved");
             }
-
+#endif
             if (m_OnRelease != null)
             {
                 int poolCount = m_Pool.Count;

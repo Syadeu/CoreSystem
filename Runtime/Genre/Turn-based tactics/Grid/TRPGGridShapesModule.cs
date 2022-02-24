@@ -266,7 +266,7 @@ namespace Syadeu.Presentation.TurnTable
                         normal: Vector3.up,
                         size: (float2)m_GridSystem.CellSize,
                         pivot: Shapes.RectPivot.Center,
-                        thickness: .03f
+                        thickness: .02f
                     );
                 }
             }
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation.TurnTable
                     Shapes.Draw.Line(
                         start: m_ShapesOutlinePath[i],
                         end: m_ShapesOutlinePath[i + 1],
-                        thickness: .03f);
+                        thickness: .02f);
                 }
             }
         }

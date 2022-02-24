@@ -17,6 +17,7 @@
 #endif
 
 using System;
+using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -29,17 +30,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         IEquatable<UnsafeFixedQueue<T>>
         where T : unmanaged
     {
-        private struct Item
-        {
-            public bool Occupied;
-            public T Data;
-        }
-        private struct List
-        {
-            public UnsafeAllocator<Item> Buffer;
-            public int NextIndex, CurrentIndex;
-        }
-
         private UnsafeAllocator<List> m_List;
 
         public bool IsCreated => m_List.IsCreated;
@@ -70,6 +60,8 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 CurrentIndex = 0
             };
         }
+
+        public ParallelWriter AsParallelWriter() => new ParallelWriter(this);
 
         public bool Enqueue(T item)
         {
@@ -154,5 +146,51 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public bool Equals(UnsafeFixedQueue<T> other) => m_List.Equals(other.m_List);
+
+        [BurstCompatible]
+        private struct Item
+        {
+            public bool Occupied;
+            public T Data;
+        }
+        [BurstCompatible]
+        private struct List
+        {
+            public UnsafeAllocator<Item> Buffer;
+            public int NextIndex, CurrentIndex;
+        }
+        [BurstCompatible]
+        public struct ParallelWriter
+        {
+            private UnsafeAllocator<List> m_List;
+
+            internal ParallelWriter(UnsafeFixedQueue<T> queue)
+            {
+                m_List = queue.m_List;
+            }
+
+            public bool Enqueue(T item)
+            {
+                ref List list = ref m_List[0];
+                ref Item temp = ref list.Buffer[list.NextIndex];
+#if DEBUG_MODE
+                if (temp.Occupied)
+                {
+                    UnityEngine.Debug.LogError("Exceeding max count");
+                    return false;
+                }
+#endif
+                if (list.NextIndex + 1 >= list.Buffer.Length)
+                {
+                    Interlocked.Exchange(ref list.NextIndex, 0);
+                }
+                else Interlocked.Increment(ref list.NextIndex);
+
+                temp.Occupied = true;
+                temp.Data = item;
+
+                return true;
+            }
+        }
     }
 }

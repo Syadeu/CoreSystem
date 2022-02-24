@@ -39,7 +39,7 @@ namespace Syadeu.Presentation.Events
     /// </summary>
     public sealed class EventSystem : PresentationSystemEntity<EventSystem>, ISystemEventScheduler
     {
-        public override bool EnableBeforePresentation => true;
+        public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => true;
         public override bool EnableAfterPresentation => false;
         public override bool EnableTransformPresentation => true;
@@ -61,9 +61,6 @@ namespace Syadeu.Presentation.Events
         private ISystemEventScheduler m_CurrentTicket;
         private bool m_PausedScheduledEvent = false;
 
-        private UnsafeMemoryPool m_EventMemoryPool;
-        //private NativeQueue<EventDescription> m_QueuedDescriptions;
-
 #if DEBUG_MODE
         private readonly HashSet<int> m_AddedEvents = new HashSet<int>();
 #endif
@@ -82,9 +79,6 @@ namespace Syadeu.Presentation.Events
 
         protected override PresentationResult OnInitialize()
         {
-            m_EventMemoryPool = new UnsafeMemoryPool(1024 * 40, Allocator.Persistent, 64);
-            //m_QueuedDescriptions = new NativeQueue<EventDescription>(AllocatorManager.Persistent);
-
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
 
@@ -121,9 +115,6 @@ namespace Syadeu.Presentation.Events
 
         protected override void OnDispose()
         {
-            m_EventMemoryPool.Dispose();
-            //m_QueuedDescriptions.Dispose();
-
             m_UpdateEvents.Clear();
             m_TransformEvents.Clear();
 
@@ -140,29 +131,6 @@ namespace Syadeu.Presentation.Events
             return base.OnStartPresentation();
         }
 
-        protected override PresentationResult BeforePresentation()
-        {
-            //int parallelCount = m_QueuedDescriptions.Count;
-            //for (int i = 0; i < parallelCount; i++)
-            //{
-            //    EventDescription description = m_QueuedDescriptions.Dequeue();
-            //    SynchronizedEventBase ev = (SynchronizedEventBase)description.Execute();
-            //    description.Dispose();
-
-            //    switch (ev.InternalLoop)
-            //    {
-            //        default:
-            //        case UpdateLoop.Default:
-            //            m_UpdateEvents.Enqueue(ev);
-            //            break;
-            //        case UpdateLoop.Transform:
-            //            m_TransformEvents.Enqueue(ev);
-            //            break;
-            //    }
-            //}
-
-            return base.BeforePresentation();
-        }
         protected override PresentationResult OnPresentation()
         {
             if (m_LoadingLock) return base.OnPresentation();
@@ -558,85 +526,6 @@ namespace Syadeu.Presentation.Events
                 UnsafeUtility.MemCpy(
                     m_Bytes.GetPointer(m_ThreadIndex),
                     UnsafeBufferUtility.AsBytes(ref t, out int length),
-                    length
-                    );
-            }
-        }
-        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int) })]
-        public void Set<T0, T1>(T0 t0, T1 t1)
-            where T0 : unmanaged where T1 : unmanaged
-        {
-            unsafe
-            {
-                UnsafeUtility.MemCpy(
-                    m_Bytes.GetPointer(m_ThreadIndex),
-                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
-                    length
-                    );
-                UnsafeUtility.MemCpy(
-                    m_Bytes.GetPointer(m_ThreadIndex) + length,
-                    UnsafeBufferUtility.AsBytes(ref t1, out length),
-                    length
-                    );
-            }
-        }
-        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int), typeof(int) })]
-        public void Set<T0, T1, T2>(T0 t0, T1 t1, T2 t2)
-            where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged
-        {
-            unsafe
-            {
-                UnsafeUtility.MemCpy(
-                    m_Bytes.GetPointer(m_ThreadIndex),
-                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
-                    length
-                    );
-
-                UnsafeReference<byte> next = m_Bytes.GetPointer(m_ThreadIndex) + length;
-                UnsafeUtility.MemCpy(
-                    next,
-                    UnsafeBufferUtility.AsBytes(ref t1, out length),
-                    length
-                    );
-
-                next += length;
-                UnsafeUtility.MemCpy(
-                    next,
-                    UnsafeBufferUtility.AsBytes(ref t2, out length),
-                    length
-                    );
-            }
-        }
-        [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int), typeof(int), typeof(int), typeof(int) })]
-        public void Set<T0, T1, T2, T3>(T0 t0, T1 t1, T2 t2, T3 t3)
-            where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged where T3 : unmanaged
-        {
-            unsafe
-            {
-                UnsafeUtility.MemCpy(
-                    m_Bytes.GetPointer(m_ThreadIndex),
-                    UnsafeBufferUtility.AsBytes(ref t0, out int length),
-                    length
-                    );
-
-                UnsafeReference<byte> next = m_Bytes.GetPointer(m_ThreadIndex) + length;
-                UnsafeUtility.MemCpy(
-                    next,
-                    UnsafeBufferUtility.AsBytes(ref t1, out length),
-                    length
-                    );
-
-                next += length;
-                UnsafeUtility.MemCpy(
-                    next,
-                    UnsafeBufferUtility.AsBytes(ref t2, out length),
-                    length
-                    );
-
-                next += length;
-                UnsafeUtility.MemCpy(
-                    next,
-                    UnsafeBufferUtility.AsBytes(ref t3, out length),
                     length
                     );
             }

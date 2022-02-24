@@ -175,11 +175,7 @@ namespace Syadeu.Presentation.TurnTable
             //Destroy(m_GridOutlineRenderer.gameObject);
             //Destroy(m_GridPathlineRenderer.gameObject);
 
-            if (m_IsDrawingGrids)
-            {
-                ClearUICell();
-            }
-            ClearUIPath();
+            ClearUICell();
 
             m_EventSystem.RemoveEvent<OnShortcutStateChangedEvent>(OnShortcutStateChangedEventHandler);
             m_EventSystem.RemoveEvent<OnGridCellCursorOverlapEvent>(OnGridCellCursorOverrapEventHandler);
