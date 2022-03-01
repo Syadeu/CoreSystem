@@ -18,6 +18,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
@@ -55,6 +56,9 @@ namespace Syadeu.Presentation.Actor
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
         }
+
+        #region Binds
+
         private void Bind(WorldCanvasSystem other)
         {
             m_WorldCanvasSystem = other;
@@ -63,13 +67,16 @@ namespace Syadeu.Presentation.Actor
         {
             m_ActorSystem = other;
         }
+
+        #endregion
+
         protected override void OnDispose()
         {
             m_WorldCanvasSystem = null;
             m_ActorSystem = null;
         }
 
-        protected override void OnCreated(ActorControllerAttribute attribute, Entity<IEntityData> entity)
+        protected unsafe override void OnCreated(ActorControllerAttribute attribute, Entity<IEntityData> entity)
         {
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
 
@@ -78,7 +85,10 @@ namespace Syadeu.Presentation.Actor
             component.m_Parent = actor;
             component.m_InstanceProviders = new FixedInstanceList64<IActorProvider>();
             component.m_OnEventReceived = attribute.m_OnEventReceived.ToFixedList64();
-            
+
+            Entity<IActorProvider>* tempBuffer = stackalloc Entity<IActorProvider>[attribute.m_Providers.Length];
+            UnsafeFixedListWrapper<Entity<IActorProvider>> list = new UnsafeFixedListWrapper<Entity<IActorProvider>>(tempBuffer, attribute.m_Providers.Length);
+
             for (int i = 0; i < attribute.m_Providers.Length; i++)
             {
 #if DEBUG_MODE
@@ -91,13 +101,19 @@ namespace Syadeu.Presentation.Actor
 #endif
                 Entity<IActorProvider> clone = EntitySystem.CreateEntity(attribute.m_Providers[i]);
                 Initialize(entity, clone.Target);
+
                 component.m_InstanceProviders.Add(clone.Idx);
+                list.AddNoResize(clone);
             }
 
-            for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+            for (int i = 0; i < list.Length; i++)
             {
-                ExecuteOnCreated(component.m_InstanceProviders[i].GetEntity<IActorProvider>().Target);
+                ExecuteOnCreated(list[i].Target);
             }
+            //for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+            //{
+            //    ExecuteOnCreated(component.m_InstanceProviders[i].GetEntity<IActorProvider>().Target);
+            //}
 
             if (attribute.m_SetAliveOnCreated)
             {

@@ -291,4 +291,23 @@ namespace Syadeu.Presentation.TurnTable
 
         Aim
     }
+
+    public static class TRPGCameraExtensions
+    {
+        private static TRPGCameraMovement GetMovement(RenderSystem t)
+        {
+            return t.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
+        }
+
+        public static void AddictiveCameraAxis(this RenderSystem t, float2 axis)
+        {
+            GetMovement(t).AxisVelocity += axis;
+        }
+        public static void SetCameraAxis(this RenderSystem t, float2 axis)
+        {
+            TRPGCameraMovement movement = GetMovement(t);
+
+            movement.AxisVelocity = axis;
+        }
+    }
 }

@@ -126,6 +126,17 @@ namespace Syadeu.Presentation.Render
             }
         }
         public ScreenAspect ScreenAspect => new ScreenAspect(Screen.currentResolution);
+        public Vector2 ScreenCenter
+        {
+            get
+            {
+                var scr = ScreenAspect;
+                float width = scr.Width * .5f;
+                float height = scr.Height * .5f;
+
+                return new Vector2(width, height);
+            }
+        }
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;

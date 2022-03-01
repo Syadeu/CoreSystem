@@ -94,8 +94,7 @@ namespace Syadeu.Presentation.Actor
             m_Parent = Entity<IEntityData>.Empty;
         }
 
-        protected virtual void OnEventReceived(IActorEvent ev)
-        { }
+        protected virtual void OnEventReceived(IActorEvent ev) { }
 
         /// <summary><inheritdoc cref="ObjectBase.OnInitialize"/></summary>
         /// <param name="component"></param>

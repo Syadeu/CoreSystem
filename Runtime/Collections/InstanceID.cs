@@ -22,7 +22,7 @@ using Unity.Collections;
 namespace Syadeu.Collections
 {
     [BurstCompatible]
-    public readonly struct InstanceID : IValidation, IEquatable<InstanceID>, IEquatable<Hash>
+    public readonly struct InstanceID : IValidation, IEmpty, IEquatable<InstanceID>, IEquatable<Hash>
     {
         public static InstanceID Empty => new InstanceID(Hash.Empty);
 
@@ -52,5 +52,41 @@ namespace Syadeu.Collections
             return unchecked((int)hash);
         }
         //public static implicit operator InstanceID(Hash hash) => new InstanceID(hash);
+    }
+    [BurstCompatible]
+    public readonly struct InstanceID<T> : IValidation, IEmpty, IEquatable<InstanceID>, IEquatable<InstanceID<T>>, IEquatable<Hash>
+        where T : class, IObject
+    {
+        public static InstanceID<T> Empty => new InstanceID<T>(Hash.Empty);
+
+        private readonly Hash m_Hash;
+
+        public Hash Hash => m_Hash;
+
+        public InstanceID(Hash idx)
+        {
+            m_Hash = idx;
+        }
+
+        public bool Equals(InstanceID<T> other) => m_Hash.Equals(other.m_Hash);
+        public bool Equals(InstanceID other) => m_Hash.Equals(other.Hash);
+        public bool Equals(Hash other) => m_Hash.Equals(other);
+
+        public bool IsEmpty() => m_Hash.IsEmpty();
+        public bool IsValid() => !m_Hash.IsEmpty();
+
+        [NotBurstCompatible]
+        public override string ToString()
+        {
+            return m_Hash.ToString();
+        }
+        public override int GetHashCode()
+        {
+            ulong hash = m_Hash;
+            return unchecked((int)hash);
+        }
+
+        public static implicit operator InstanceID(InstanceID<T> t) => new InstanceID(t.m_Hash);
+        public static explicit operator InstanceID<T>(InstanceID t) => new InstanceID<T>(t.Hash);
     }
 }

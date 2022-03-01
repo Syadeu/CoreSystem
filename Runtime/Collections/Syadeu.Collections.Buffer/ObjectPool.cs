@@ -32,6 +32,8 @@ namespace Syadeu.Collections.Buffer
         private Stack<T> m_Pool;
         private int m_CheckSum;
 
+        private bool m_Disposed;
+
         private ObjectPool() { }
         public ObjectPool(Func<T> factory, Action<T> onGet, Action<T> onReserve, Action<T> onRelease)
         {
@@ -46,6 +48,13 @@ namespace Syadeu.Collections.Buffer
 
         public T Get()
         {
+#if DEBUG_MODE
+            if (m_Disposed)
+            {
+                UnityEngine.Debug.LogError("This ObjectPool is disposed.");
+                return null;
+            }
+#endif
             T t;
             if (m_Pool.Count > 0)
             {
@@ -62,6 +71,13 @@ namespace Syadeu.Collections.Buffer
         }
         public void Reserve(T t)
         {
+#if DEBUG_MODE
+            if (m_Disposed)
+            {
+                UnityEngine.Debug.LogError("This ObjectPool is disposed.");
+                return;
+            }
+#endif
             m_OnReserve?.Invoke(t);
 
             int hash = t.GetHashCode();
@@ -94,6 +110,8 @@ namespace Syadeu.Collections.Buffer
             m_OnRelease = null;
 
             m_Pool = null;
+
+            m_Disposed = true;
         }
     }
 }

@@ -20,12 +20,12 @@ namespace Syadeu.Presentation.Render
     {
         public readonly int
             WidthRatio, HeightRatio,
-            Width, Heigth;
+            Width, Height;
 
         public ScreenAspect(Resolution resolution)
         {
             Width = resolution.width;
-            Heigth = resolution.height;
+            Height = resolution.height;
 
             WidthRatio = resolution.width / 80;
             HeightRatio = resolution.height / 80;

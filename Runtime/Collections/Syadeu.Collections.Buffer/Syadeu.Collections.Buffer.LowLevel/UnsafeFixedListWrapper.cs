@@ -95,15 +95,25 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
         public ref T ElementAt(int index) => ref m_Buffer[index];
         public ref T ElementAt(uint index) => ref m_Buffer[index];
-        public void AddNoResize(T element)
+        /// <summary>
+        /// <paramref name="element"/> 를 추가합니다.
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        /// <param name="element"></param>
+        /// <returns>만약 추가되지 못하였다면 <see langword="false"/> 를 반환합니다.</returns>
+        public bool AddNoResize(in T element)
         {
             if (m_Count >= Capacity)
             {
-                throw new Exception();
+                return false;
             }
 
             m_Buffer[m_Count] = element;
             m_Count++;
+
+            return true;
         }
 
         public void Clear()
@@ -210,6 +220,19 @@ namespace Syadeu.Collections.Buffer.LowLevel
             if (t.Length == 0) return;
 
             if (!UnsafeBufferUtility.RemoveForSwapBack(t.m_Buffer, t.Length, element))
+            {
+                return;
+            }
+
+            t.Length -= 1;
+        }
+        public static void RemoveSwapbackRev<T, U>(this ref UnsafeFixedListWrapper<T> t, U element)
+            where T : unmanaged
+            where U : unmanaged, IEquatable<T>
+        {
+            if (t.Length == 0) return;
+
+            if (!UnsafeBufferUtility.RemoveForSwapBackRev(t.m_Buffer, t.Length, element))
             {
                 return;
             }

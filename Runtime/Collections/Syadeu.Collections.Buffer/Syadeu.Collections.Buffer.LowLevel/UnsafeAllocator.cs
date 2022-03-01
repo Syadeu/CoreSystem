@@ -216,7 +216,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
             get
             {
 #if DEBUG_MODE
-                if (index < 0 || index >= Length)
+                if (!IsCreated)
+                {
+                    throw new InvalidOperationException();
+                }
+                else if (index < 0 || index >= Length)
                 {
                     throw new IndexOutOfRangeException();
                 }
@@ -229,7 +233,11 @@ namespace Syadeu.Collections.Buffer.LowLevel
             get
             {
 #if DEBUG_MODE
-                if (index < 0 || index >= Length)
+                if (!IsCreated)
+                {
+                    throw new InvalidOperationException();
+                }
+                else if(index < 0 || index >= Length)
                 {
                     throw new IndexOutOfRangeException();
                 }

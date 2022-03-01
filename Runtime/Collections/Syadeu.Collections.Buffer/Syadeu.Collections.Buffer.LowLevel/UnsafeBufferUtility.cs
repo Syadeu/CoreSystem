@@ -126,6 +126,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
             return -1;
         }
+        [BurstCompile]
+        public static int IndexOfRev<T, U>(in UnsafeReference<T> array, in int length, U item)
+            where T : unmanaged
+            where U : unmanaged, IEquatable<T>
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if (item.Equals(array[i])) return i;
+            }
+            return -1;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int IndexOf<T>(this T[] array, T element)
             where T : IEquatable<T>
@@ -152,6 +163,22 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return true;
         }
+        [BurstCompile]
+        public static bool RemoveForSwapBackRev<T, U>(UnsafeReference<T> array, int length, U element)
+            where T : unmanaged
+            where U : unmanaged, IEquatable<T>
+        {
+            int index = IndexOfRev(in array, in length, element);
+            if (index < 0) return false;
+
+            for (int i = index + 1; i < length; i++)
+            {
+                array[i - 1] = array[i];
+            }
+
+            return true;
+        }
+
         [BurstCompile]
         public static bool RemoveAtSwapBack<T>(UnsafeReference<T> array, int length, int index)
            where T : unmanaged

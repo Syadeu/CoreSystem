@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
@@ -40,6 +39,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     [SubSystem(typeof(DefaultPresentationGroup), typeof(RenderSystem))]
     public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>,
+        INotifySystemModule<TRPGScreenControlSystem>,
         ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
@@ -263,11 +263,6 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
-
-        //public FixedList512Bytes<EntityID> GetTargetsWithin(in EntityID entity, in int range, in bool sort = true)
-        //{
-
-        //}
 
         private readonly Queue<Action> m_ScheduledActions = new Queue<Action>();
         void ISystemEventScheduler.Execute(ScheduledEventHandler handler)
