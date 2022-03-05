@@ -27,6 +27,13 @@ namespace Syadeu.Presentation
     /// <summary>
     /// <see cref="EntitySystem"/>의 모든 객체들이 참조하는 가장 기본 abstract 입니다.
     /// </summary>
+    /// <remarks>
+    /// 객체 Entity 는 <seealso cref="Entities.EntityDataBase"/>, <seealso cref="Entities.EntityBase"/>, <seealso cref="Entities.FXEntity"/>, <seealso cref="Entities.ObjectEntity"/>, <seealso cref="Entities.UIObjectEntity"/> 를 참조하세요. <br/><br/>
+    /// 
+    /// 행동 Entity 는 <seealso cref="Actions.TriggerAction"/>, <seealso cref="Actions.TriggerPredicateAction"/>, <seealso cref="Actions.InstanceAction"/> 을 참조하세요. <br/><br/>
+    /// 
+    /// 데이터 Entity 는 <seealso cref="Data.DataObjectBase"/>, <seealso cref="Data.ConstantData"/> 를 참조하세요.
+    /// </remarks>
     [RequireDerived]
     public abstract class ObjectBase : IObject, IDisposable, IEquatable<ObjectBase>
     {
@@ -35,11 +42,11 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 오브젝트의 이름입니다.
         /// </summary>
-        [JsonProperty(Order = -20, PropertyName = "Name")] public string Name { get; set; }
+        [JsonProperty(Order = -1000, PropertyName = "Name")] public string Name { get; set; }
         /// <summary>
         /// 이 오브젝트의 오리지널 해쉬입니다.
         /// </summary>
-        [JsonProperty(Order = -19, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
+        [JsonProperty(Order = -999, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
         /// <summary>
         /// 이 오브젝트의 인스턴스 해쉬입니다.
         /// </summary>

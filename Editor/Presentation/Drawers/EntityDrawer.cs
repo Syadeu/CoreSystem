@@ -11,6 +11,7 @@ using Syadeu.Collections;
 using Unity.Mathematics;
 using SyadeuEditor.Utilities;
 using Syadeu.Mono;
+using Syadeu;
 
 namespace SyadeuEditor.Presentation
 {
@@ -46,7 +47,10 @@ namespace SyadeuEditor.Presentation
                     }
                     else
                     {
-                        throw new Exception("??");
+                        //throw new Exception("??");
+                        //"??".ToLogError();
+
+                        mesh = null;
                     }
                 }
                 else

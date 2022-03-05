@@ -151,7 +151,7 @@ namespace Syadeu.Presentation.Internal
             return false;
         }
 
-        protected void DontDestroyOnLoad(UnityEngine.GameObject obj)
+        public static void DontDestroyOnLoad(UnityEngine.GameObject obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
 
@@ -164,7 +164,7 @@ namespace Syadeu.Presentation.Internal
 
             obj.transform.SetParent(s_PresentationUnityFolder);
         }
-        protected void Destroy(UnityEngine.Object obj)
+        public static void Destroy(UnityEngine.Object obj)
         {
             CoreSystem.Logger.ThreadBlock(nameof(Destroy), Syadeu.Internal.ThreadInfo.Unity);
 

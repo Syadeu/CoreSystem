@@ -114,6 +114,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return index >= 0;
         }
+        public static bool ContainsRev<T, U>(in UnsafeReference<T> buffer, in int length, U item) 
+            where T : unmanaged
+            where U : unmanaged, IEquatable<T>
+        {
+            int index = IndexOfRev(buffer, length, item);
+
+            return index >= 0;
+        }
 
         [BurstCompile]
         public static int IndexOf<T, U>(in UnsafeReference<T> array, in int length, U item)

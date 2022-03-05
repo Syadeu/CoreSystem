@@ -21,8 +21,10 @@ using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections.Threading;
 using Syadeu.Internal;
 using System;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Unity.Collections;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Data
 {
@@ -38,9 +40,12 @@ namespace Syadeu.Presentation.Data
         private readonly ConcurrentDictionary<Hash, object> m_DataContainer = new ConcurrentDictionary<Hash, object>();
 
         private NativeMultiHashMap<TypeInfo, InstanceID> m_ConstantEntities;
+        private Dictionary<Guid, InstanceID> m_ConstantEntitiesGUID;
         private AtomicSafeInteger m_CreatedConstantEntityCount;
 
         private EntitySystem m_EntitySystem;
+
+        #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
         {
@@ -66,22 +71,34 @@ namespace Syadeu.Presentation.Data
         {
             m_EntitySystem = other;
         }
+
         protected override PresentationResult OnStartPresentation()
         {
             ConstantData[] constantEntities = EntityDataList.Instance.GetData<ConstantData>();
             m_ConstantEntities = new NativeMultiHashMap<TypeInfo, InstanceID>(constantEntities.Length, Allocator.Persistent);
+            m_ConstantEntitiesGUID = new Dictionary<Guid, InstanceID>();
 
             for (int i = 0; i < constantEntities.Length; i++)
             {
+                Type t = constantEntities[i].GetType();
+                Entity<ConstantData> instance = m_EntitySystem.CreateEntity(constantEntities[i].AsOriginal());
+
                 m_ConstantEntities.Add(
-                    constantEntities[i].GetType().ToTypeInfo(),
-                    m_EntitySystem.CreateEntity(constantEntities[i].AsOriginal()).Idx
+                    t.ToTypeInfo(),
+                    instance.Idx
                     );
+
+                if (!t.GUID.Equals(Guid.Empty))
+                {
+                    m_ConstantEntitiesGUID.Add(t.GUID, instance.Idx);
+                }
             }
             m_CreatedConstantEntityCount = constantEntities.Length;
 
             return base.OnStartPresentation();
         }
+
+        #endregion
 
         public bool TryGetConstantEntities(TypeInfo type, out FixedList4096Bytes<InstanceID> entities)
         {
@@ -100,7 +117,7 @@ namespace Syadeu.Presentation.Data
             return true;
         }
 
-        public static Hash ToDataHash(string value) => Hash.NewHash(value, Hash.Algorithm.FNV1a64);
+        #region Data Operations
 
         public bool HasValue(Hash key) => m_DataContainer.ContainsKey(key);
         public bool HasValue(string key) => HasValue(ToDataHash(key));
@@ -153,5 +170,9 @@ namespace Syadeu.Presentation.Data
 #endif
             return (T)value;
         }
+
+        #endregion
+
+        public static Hash ToDataHash(string value) => Hash.NewHash(value, Hash.Algorithm.FNV1a64);
     }
 }

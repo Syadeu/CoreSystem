@@ -728,46 +728,5 @@ namespace Syadeu.Presentation
         {
             return GetModule<EntityProcessorModule>().GetProcessor<T>();
         }
-
-        #region Experiments
-
-        [Obsolete("", true)]
-        /// <summary>
-        /// 이미 생성된 유니티 게임 오브젝트를 엔티티 시스템로 편입시켜 엔티티로 변환하여 반환합니다.
-        /// </summary>
-        /// <remarks>
-        /// <seealso cref="Entity{T}.transform"/> 은 <seealso cref="IUnityTransform"/>을 담습니다.
-        /// </remarks>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public Entity<ConvertedEntity> Convert(GameObject obj)
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(Convert), ThreadInfo.Unity);
-
-            ConvertedEntity temp = new ConvertedEntity
-            {
-                Name = obj.name,
-                Hash = Hash.Empty
-            };
-            ConvertedEntity entity = (ConvertedEntity)temp.Clone();
-
-            entity.transform = new UnityTransform
-            {
-                entity = entity,
-                provider = obj.transform
-            };
-
-            ConvertedEntityComponent component = obj.AddComponent<ConvertedEntityComponent>();
-            component.m_Entity = entity;
-
-            //entity.m_IsCreated = true;
-
-            m_ObjectEntities.Add(entity.Idx, entity);
-
-            GetModule<EntityProcessorModule>().ProceessOnCreated(entity);
-            return Entity<ConvertedEntity>.GetEntity(entity.Idx);
-        }
-
-        #endregion
     }
 }

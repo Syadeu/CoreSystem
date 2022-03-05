@@ -18,8 +18,10 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
+using Syadeu.Presentation.Internal;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Syadeu.Presentation
 {
@@ -27,6 +29,18 @@ namespace Syadeu.Presentation
     {
         private readonly Dictionary<Hash, Stack<IObject>> m_ReservedObjects
             = new Dictionary<Hash, Stack<IObject>>();
+
+        private readonly Dictionary<PrefabReference, Stack<UnityEngine.Object>> m_ReservedPrefabObjects
+            = new Dictionary<PrefabReference, Stack<UnityEngine.Object>>();
+
+        protected override void OnInitialize()
+        {
+            EntityExtensionMethods.s_EntityRecycleModule = this;
+        }
+        protected override void OnDispose()
+        {
+            EntityExtensionMethods.s_EntityRecycleModule = null;
+        }
 
         public void ExecuteDisposeAll()
         {
@@ -45,13 +59,10 @@ namespace Syadeu.Presentation
             }
         }
 
+        #region Entity Recycle
+
         public void InsertReservedObject(IObject obj)
         {
-            //if (obj is ConvertedEntity)
-            //{
-            //    return;
-            //}
-
             if (!m_ReservedObjects.TryGetValue(obj.Hash, out var list))
             {
                 list = new Stack<IObject>();
@@ -88,5 +99,75 @@ namespace Syadeu.Presentation
             obj = null;
             return false;
         }
+
+        #endregion
+
+        #region Prefab Recycle
+
+        public UnityEngine.Object GetOrCreatePrefab(PrefabReference prefab)
+        {
+#if DEBUG_MODE
+            if (!prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This prefab(at {prefab.Index}) is invalid.");
+
+                return null;
+            }
+            else if (prefab.Asset == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This prefab({prefab.GetObjectSetting().Name}) is not loaded. You can preload prefab with {nameof(IPrefabPreloader)}.");
+
+                return null;
+            }
+#endif
+            if (!m_ReservedPrefabObjects.TryGetValue(prefab, out var stack))
+            {
+                stack = new Stack<UnityEngine.Object>();
+                m_ReservedPrefabObjects.Add(prefab, stack);
+            }
+
+            UnityEngine.Object obj;
+            if (stack.Count == 0)
+            {
+                obj = UnityEngine.Object.Instantiate(prefab.Asset);
+                if (obj is GameObject gameobj)
+                {
+                    PresentationSystemEntity.DontDestroyOnLoad(gameobj);
+                }
+            }
+
+            obj = stack.Pop();
+            return obj;
+        }
+        public void ReservePrefab(PrefabReference prefab, UnityEngine.Object obj)
+        {
+#if DEBUG_MODE
+            if (!prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This prefab(at {prefab.Index}) is invalid.");
+
+                return;
+            }
+            else if (obj == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    "");
+
+                return;
+            }
+#endif
+            if (!m_ReservedPrefabObjects.TryGetValue(prefab, out var stack))
+            {
+                stack = new Stack<UnityEngine.Object>();
+                m_ReservedPrefabObjects.Add(prefab, stack);
+            }
+
+            stack.Push(obj);
+        }
+
+        #endregion
     }
 }

@@ -27,6 +27,8 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
+        internal static EntityRecycleModule s_EntityRecycleModule;
+
         public static EntityShortID GetShortID(this InstanceID id)
         {
             return PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.Convert(id);
@@ -310,6 +312,47 @@ namespace Syadeu.Presentation
             }
 #endif
             PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.InternalDestroyEntity(t.Idx);
+        }
+
+        #endregion
+
+        #region PrefabReference
+
+        /// <summary>
+        /// <see cref="EntityRecycleModule"/> 을 통해 재사용 가능한 인스턴스를 가져옵니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static UnityEngine.Object GetOrCreateInstance(this in PrefabReference t)
+        {
+            return s_EntityRecycleModule.GetOrCreatePrefab(t);
+        }
+        /// <inheritdoc cref="GetOrCreateInstance(in PrefabReference)"/>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static T GetOrCreateInstance<T>(this in PrefabReference t)
+            where T : UnityEngine.Object
+        {
+            return (T)s_EntityRecycleModule.GetOrCreatePrefab(t);
+        }
+        /// <inheritdoc cref="GetOrCreateInstance(in PrefabReference)"/>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static T GetOrCreateInstance<T>(this in PrefabReference<T> t)
+            where T : UnityEngine.Object
+        {
+            return (T)s_EntityRecycleModule.GetOrCreatePrefab(t);
+        }
+        /// <summary>
+        /// 재사용 인스턴스를 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="obj"></param>
+        public static void ReserveInstance(this in PrefabReference t, UnityEngine.Object obj)
+        {
+            s_EntityRecycleModule.ReservePrefab(t, obj);
         }
 
         #endregion

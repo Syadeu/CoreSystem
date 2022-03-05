@@ -39,43 +39,24 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// 이 엔티티의 Raw 프리팹 주소입니다.
         /// </summary>
-        [JsonProperty(Order = -9, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; } = PrefabReference<GameObject>.None;
+        [JsonProperty(Order = -800, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; } = PrefabReference<GameObject>.None;
 
-        [JsonProperty(Order = -8, PropertyName = "StaticBatching")] public bool StaticBatching { get; set; } = false;
+        [JsonProperty(Order = -799, PropertyName = "StaticBatching")] public bool StaticBatching { get; set; } = false;
 
         [Description("AABB 의 Center")]
-        [JsonProperty(Order = -7, PropertyName = "Center")] public float3 Center { get; set; }
+        [JsonProperty(Order = -798, PropertyName = "Center")] public float3 Center { get; set; }
 
         [Description("AABB 의 Size")]
-        [JsonProperty(Order = -6, PropertyName = "Size")] public float3 Size { get; set; }
+        [JsonProperty(Order = -797, PropertyName = "Size")] public float3 Size { get; set; }
 
         [Space]
-        [JsonProperty(Order = -5, PropertyName = "EnableCull")] public bool m_EnableCull = true;
-
-        /// <summary>
-        /// <see cref="GameObjectProxySystem"/>을 통해 연결된 <see cref="DataTransform"/> 입니다.
-        /// </summary>
-        [JsonIgnore, Obsolete("", true)] public ITransform transform { get; internal set; }
+        [JsonProperty(Order = -796, PropertyName = "EnableCull")] public bool m_EnableCull = true;
 
         public override bool IsValid()
         {
-            if (Reserved/* || transform == null*/) return false;
-            //else if (!CoreSystem.BlockCreateInstance)
-            //{
-            //    if (transform is ProxyTransform proxyTransform &&
-            //    (proxyTransform.isDestroyed || proxyTransform.isDestroyQueued))
-            //    {
-            //        return false;
-            //    }
-            //}
+            if (Reserved) return false;
 
             return true;
-        }
-        internal override void InternalOnReserve()
-        {
-            base.InternalOnReserve();
-
-            //transform = null;
         }
 
         [Preserve]

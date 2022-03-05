@@ -36,8 +36,10 @@ namespace Syadeu.Presentation.Entities
     [InternalLowLevelEntity]
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
-        ///// <summary><inheritdoc cref="isCreated"/></summary>
-        //[JsonIgnore] internal bool m_IsCreated = false;
+        /// <summary><inheritdoc cref="m_Attributes"/></summary>
+        [JsonProperty(Order = -900, PropertyName = "Attributes")]
+        private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
+
         /// <summary><inheritdoc cref="IEntityData.Attributes"/></summary>
         [JsonIgnore] internal Dictionary<Type, AttributeBase[]> m_AttributesHashMap;
         // TODO : 이거 임시, 나중에 최적화시 지울 것
@@ -45,9 +47,6 @@ namespace Syadeu.Presentation.Entities
 
         InstanceID IObject.Idx => Idx;
         IAttribute[] IEntityData.Attributes => m_Attributes;
-
-        /// <summary><inheritdoc cref="m_Attributes"/></summary>
-        [JsonProperty(Order = -10, PropertyName = "Attributes")] private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
 
         [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList;
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();

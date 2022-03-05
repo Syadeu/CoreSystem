@@ -17,89 +17,38 @@
 #endif
 
 using Syadeu.Collections;
-using Syadeu.Collections.Buffer.LowLevel;
-using Syadeu.Collections.LowLevel;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.Actor
 {
-    public class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
+    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
     {
-        protected override void OnInitialize(ref ActorInventoryComponent component)
+        protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
-            component = new ActorInventoryComponent(128);
+            component = new ActorInventoryComponent(parent.Idx, 128);
         }
         public void Insert(Entity<IObject> item)
         {
 
         }
     }
-    //internal sealed class ActorInventoryProviderProcessor : EntityProcessor<ActorInventoryProvider>
-    //{
-    //    protected override void OnCreated(ActorInventoryProvider obj)
-    //    {
-    //        ref ActorInventoryComponent inventory = ref obj.GetComponent<ActorInventoryComponent>();
-
-    //        inventory = new ActorInventoryComponent(128);
-    //        "asd".ToLog();
-    //    }
-    //}
 
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
     {
-        private UnsafeInstanceArray<ActorItem> m_Inventory;
+        private ItemInventory m_Inventory;
 
-        public ActorInventoryComponent(int initialLength)
-        {
-            m_Inventory = new UnsafeInstanceArray<ActorItem>(initialLength, Allocator.Persistent);
-        }
+        public ItemInventory Inventory => m_Inventory;
 
-        public InventoryEnumerator GetEnumerator() => new InventoryEnumerator(m_Inventory);
-        public void Add(in InstanceID<ActorItem> item)
+        public ActorInventoryComponent(InstanceID owner, int initialLength)
         {
-            m_Inventory.Add(item);
+            m_Inventory = new ItemInventory(owner, initialLength, Allocator.Persistent);
         }
 
         void IDisposable.Dispose()
         {
             m_Inventory.Dispose();
-        }
-
-        [BurstCompatible]
-        public struct InventoryEnumerator : IEnumerator<InstanceID<ActorItem>>
-        {
-            private int m_Index;
-            private UnsafeInstanceArray<ActorItem> m_Inventory;
-
-            public InstanceID<ActorItem> Current => m_Inventory[m_Index];
-            [NotBurstCompatible]
-            object IEnumerator.Current => m_Inventory[m_Index];
-
-            internal InventoryEnumerator(UnsafeInstanceArray<ActorItem> inventory)
-            {
-                m_Index = -1;
-                m_Inventory = inventory;
-            }
-            void IDisposable.Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                m_Index++;
-
-                if (m_Index >= m_Inventory.Length) return false;
-                return true;
-            }
-            public void Reset()
-            {
-                m_Index = -1;
-            }
         }
     }
 }

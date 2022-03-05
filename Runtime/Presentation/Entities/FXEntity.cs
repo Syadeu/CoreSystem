@@ -24,7 +24,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Entities
 {
     [DisplayName("Entity: FX Entity")]
-    public sealed class FXEntity : EntityBase
+    public sealed class FXEntity : EntityBase, IPrefabPreloader
     {
         [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
         private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
@@ -114,6 +114,11 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<Entity<FXEntity>>();
             AotHelper.EnsureType<FXEntity>();
             AotHelper.EnsureList<FXEntity>();
+        }
+
+        void IPrefabPreloader.Register(PrefabPreloader loader)
+        {
+            loader.Add(Prefab);
         }
     }
     internal sealed class FXEntityProcessor : EntityProcessor<FXEntity>,

@@ -27,7 +27,7 @@ using UnityEngine;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Data: Actor Weapon")]
-    public class ActorWeaponData : DataObjectBase
+    public class ActorWeaponData : ActorItem
     {
         public enum OverrideOptions
         {
@@ -71,8 +71,6 @@ namespace Syadeu.Presentation.Actor
 
         [JsonProperty(Order = 0, PropertyName = "WeaponType")]
         protected Reference<ActorWeaponTypeData> m_WeaponType = Reference<ActorWeaponTypeData>.Empty;
-        [JsonProperty(Order = 1, PropertyName = "Prefab")]
-        protected Reference<ObjectEntity> m_Prefab = Reference<ObjectEntity>.Empty;
 
         [Space, Header("General")]
         [JsonProperty(Order = 2, PropertyName = "Damage")] protected float m_Damage;

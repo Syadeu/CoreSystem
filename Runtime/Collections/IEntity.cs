@@ -30,9 +30,6 @@ namespace Syadeu.Collections
     /// </remarks>
     public interface IEntity : IEntityData
     {
-        [Obsolete("", true)]
-        ITransform transform { get; }
-
         /// <summary>
         /// 이 엔티티의 프리팹 <see cref="Prefab"/>의 AABB Center translation 값입니다.
         /// </summary>

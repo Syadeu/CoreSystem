@@ -16,9 +16,11 @@
 #define DEBUG_MODE
 #endif
 
-
 namespace Syadeu.Presentation
 {
+    /// <summary>
+    /// Low-level Entity's entry
+    /// </summary>
     internal sealed class InternalLowLevelEntityAttribute : System.Attribute
     {
 

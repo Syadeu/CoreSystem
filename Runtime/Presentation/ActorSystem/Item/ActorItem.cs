@@ -16,19 +16,35 @@
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Presentation.Data;
+using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
-    public abstract class ActorItem : EntityBase
+    /// <summary>
+    /// <see cref="ActorEntity"/> 의 <see cref="ActorInventoryProvider"/> 에서 사용되는 모든 아이템들의 기본 <see langword="abstract"/> 입니다.
+    /// </summary>
+    [InternalLowLevelEntity]
+    public abstract class ActorItem : EntityDataBase
     {
-        public Reference<ActorItemType> m_ItemType;
+        public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
+        {
+            [JsonProperty(Order = 0, PropertyName = "IconImage")]
+            public PrefabReference<Sprite> m_IconImage = PrefabReference<Sprite>.None;
+        }
 
+        [JsonProperty(Order = -500, PropertyName = "Prefab")]
+        protected Reference<ObjectEntity> m_Prefab = Reference<ObjectEntity>.Empty;
+        [JsonProperty(Order = -499, PropertyName = "ItemType")]
+        protected Reference<ActorItemType> m_ItemType;
 
-    }
-    public sealed class ActorItemType : DataObjectBase
-    {
+        [Space]
+        [JsonProperty(Order = -498, PropertyName = "GraphicsInformation")]
+        protected GraphicsInformation m_GeneralInfo = new GraphicsInformation();
 
+        [JsonIgnore]
+        public Reference<ActorItemType> ItemType => m_ItemType;
     }
 }

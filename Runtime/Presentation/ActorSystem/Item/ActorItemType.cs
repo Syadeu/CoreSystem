@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
 using Syadeu.Presentation.Data;
 using System.ComponentModel;
 
 namespace Syadeu.Presentation.Actor
 {
-    [DisplayName("Data: Actor Weapon Type")]
-    public class ActorWeaponTypeData : ActorItemType
+    [DisplayName("ConstantData: Actor Item Type")]
+    public class ActorItemType : ConstantData
     {
-        public enum WeaponType
-        {
-            Melee,
-            Ranged
-        }
+        [Description(
+            "얼마나 겹쳐질 수 있는지 결정합니다. " +
+            "1보다 작을 수 없습니다.")]
+        [JsonProperty(Order = 0, PropertyName = "MaximumCount")]
+        private int m_MaximumMultipleCount = 1;
 
-        [JsonProperty(Order = 0, PropertyName = "WeaponType")]
-        protected WeaponType m_WeaponType = WeaponType.Melee;
+        [JsonIgnore]
+        public int MaximumMultipleCount => m_MaximumMultipleCount;
     }
 }

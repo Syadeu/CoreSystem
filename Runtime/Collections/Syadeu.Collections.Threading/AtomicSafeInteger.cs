@@ -17,7 +17,7 @@ using System.Threading;
 
 namespace Syadeu.Collections.Threading
 {
-    public struct AtomicSafeInteger : IEquatable<AtomicSafeInteger>
+    public struct AtomicSafeInteger : IEquatable<AtomicSafeInteger>, IEquatable<int>
     {
         private volatile int m_Value;
 
@@ -31,7 +31,11 @@ namespace Syadeu.Collections.Threading
             m_Value = value;
         }
 
+        public void Increment() => Interlocked.Increment(ref m_Value);
+        public void Decrement() => Interlocked.Decrement(ref m_Value);
+
         public bool Equals(AtomicSafeInteger other) => m_Value.Equals(other.m_Value);
+        public bool Equals(int other) => m_Value.Equals(other);
         public override int GetHashCode() => m_Value.GetHashCode();
         public override bool Equals(object obj)
         {

@@ -32,7 +32,7 @@ namespace Syadeu.Collections.LowLevel
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     [BurstCompatible]
-    public struct UnsafeInstanceArray<T> : IFixedList<InstanceID<T>>, IDisposable, INativeDisposable
+    public struct UnsafeInstanceArray<T> : IDisposable, INativeDisposable, IEquatable<UnsafeInstanceArray<T>>
         where T : class, IObject
     {
         private UnsafeAllocator<Buffer> m_Buffer;
@@ -114,6 +114,8 @@ namespace Syadeu.Collections.LowLevel
         }
 
         public void Resize(in int length) => Target.Resize(in length);
+        public void Clear() => Target.List.Clear();
+
         public bool AddNoResize(in InstanceID<T> item) => Target.List.AddNoResize(item);
         public void Add(in InstanceID<T> item)
         {
@@ -134,6 +136,11 @@ namespace Syadeu.Collections.LowLevel
             Target.List.RemoveSwapbackRev(item);
         }
 
+        public bool Contains(in InstanceID<T> item)
+        {
+            return UnsafeBufferUtility.ContainsRev(m_Buffer[0].List.m_Buffer, Length, item);
+        }
+
         public void Dispose()
         {
             Target.Dispose();
@@ -147,14 +154,6 @@ namespace Syadeu.Collections.LowLevel
             return temp;
         }
 
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        public ref InstanceID<T> ElementAt(int index)
-        {
-            throw new NotImplementedException();
-        }
+        public bool Equals(UnsafeInstanceArray<T> other) => m_Buffer.Equals(other.m_Buffer);
     }
 }
