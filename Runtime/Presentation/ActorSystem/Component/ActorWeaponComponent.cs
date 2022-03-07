@@ -34,8 +34,8 @@ namespace Syadeu.Presentation.Actor
 
         internal FixedReferenceList16<ActorWeaponData> m_ExcludeWeapon;
         internal FixedReferenceList16<ActorWeaponData> m_IncludeWeapon;
-        internal FixedReferenceList16<ActorWeaponTypeData> m_ExcludeWeaponType;
-        internal FixedReferenceList16<ActorWeaponTypeData> m_IncludeWeaponType;
+        internal FixedReferenceList16<ActorItemType> m_ExcludeWeaponType;
+        internal FixedReferenceList16<ActorItemType> m_IncludeWeaponType;
 
         internal FixedReferenceList16<TriggerAction> m_OnWeaponSelected;
         internal FixedReferenceList16<TriggerAction> m_OnEquipWeapon;
@@ -111,11 +111,11 @@ namespace Syadeu.Presentation.Actor
 
             //ActorWeaponProvider provider = Provider;
 
-            if (m_ExcludeWeaponType.Contains(weaponObj.WeaponType))
+            if (m_ExcludeWeaponType.Contains(weaponObj.ItemType))
             {
                 if (!m_IncludeWeapon.Contains(original)) return false;
             }
-            else if (m_IncludeWeaponType.Contains(weaponObj.WeaponType))
+            else if (m_IncludeWeaponType.Contains(weaponObj.ItemType))
             {
                 if (m_ExcludeWeapon.Contains(original)) return false;
             }

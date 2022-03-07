@@ -40,9 +40,9 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 1, PropertyName = "IncludeWeapon")]
         internal Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
-        internal Reference<ActorWeaponTypeData>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        internal Reference<ActorItemType>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorItemType>>();
         [JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
-        internal Reference<ActorWeaponTypeData>[] m_IncludeWeaponType = Array.Empty<Reference<ActorWeaponTypeData>>();
+        internal Reference<ActorItemType>[] m_IncludeWeaponType = Array.Empty<Reference<ActorItemType>>();
 
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]

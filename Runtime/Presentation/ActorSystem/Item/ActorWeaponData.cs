@@ -69,9 +69,6 @@ namespace Syadeu.Presentation.Actor
             public float3 m_WeaponRotOffset = float3.zero;
         }
 
-        [JsonProperty(Order = 0, PropertyName = "WeaponType")]
-        protected Reference<ActorWeaponTypeData> m_WeaponType = Reference<ActorWeaponTypeData>.Empty;
-
         [Space, Header("General")]
         [JsonProperty(Order = 2, PropertyName = "Damage")] protected float m_Damage;
         [JsonProperty(Order = 3, PropertyName = "Range")] protected float m_Range;
@@ -90,7 +87,6 @@ namespace Syadeu.Presentation.Actor
 
         [JsonIgnore] public Entity<ObjectEntity> PrefabInstance => m_PrefabInstance;
         [JsonIgnore] public OverrideData Overrides => new OverrideData(this);
-        [JsonIgnore] public Reference<ActorWeaponTypeData> WeaponType => m_WeaponType;
         [JsonIgnore] public float Damage
         {
             get
