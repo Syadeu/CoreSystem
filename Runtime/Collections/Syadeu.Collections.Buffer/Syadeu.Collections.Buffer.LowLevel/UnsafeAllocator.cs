@@ -47,8 +47,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
         internal AtomicSafetyHandle m_SafetyHandle;
 #endif
 
+        /// <summary>
+        /// 이 메모리 버퍼의 메모리 주소입니다.
+        /// </summary>
         public UnsafeReference Ptr => m_Buffer.Value.Ptr;
+        /// <summary>
+        /// 이 메모리 버퍼의 총 사이즈입니다.
+        /// </summary>
         public long Size => m_Buffer.Value.Size;
+        /// <summary>
+        /// 이 메모리 버퍼가 생성되어 정상적으로 할당되었는지 반환합니다.
+        /// </summary>
         public bool IsCreated => m_Buffer.IsCreated;
 
         public UnsafeAllocator(long size, int alignment, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
@@ -101,6 +110,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
 
+        /// <summary>
+        /// 이 메모리 버퍼의 메모리를 전부 초기화합니다.
+        /// </summary>
         public void Clear()
         {
             unsafe
@@ -109,6 +121,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
+        /// <summary>
+        /// <paramref name="item"/> 을 이 메모리에 작성합니다.
+        /// </summary>
+        /// <remarks>
+        /// 만약 이 메모리가 버퍼라면, 0 번째 인덱스에 작성합니다.
+        /// </remarks>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="item"></param>
         public void Write<T>(T item) where T : unmanaged
         {
             unsafe
@@ -209,7 +229,9 @@ namespace Syadeu.Collections.Buffer.LowLevel
     {
         internal UnsafeAllocator m_Buffer;
 
+        /// <inheritdoc cref="UnsafeAllocator.Ptr"/>
         public UnsafeReference<T> Ptr => (UnsafeReference<T>)m_Buffer.Ptr;
+        /// <inheritdoc cref="UnsafeAllocator.IsCreated"/>
         public bool IsCreated => m_Buffer.IsCreated;
 
         public ref T this[int index]
@@ -246,7 +268,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return ref Ptr[index];
             }
         }
+
+        /// <inheritdoc cref="UnsafeAllocator.Size"/>
         public long Size => m_Buffer.Size;
+        /// <summary>
+        /// 이 메모리 버퍼의 사이즈를 <typeparamref name="T"/> 의 크기에 맞춘 최대 길이입니다.
+        /// </summary>
         public int Length => Convert.ToInt32(m_Buffer.Size / UnsafeUtility.SizeOf<T>());
 
         public UnsafeAllocator(int length, Allocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
@@ -258,10 +285,20 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 options
                 );
         }
+        /// <summary>
+        /// <paramref name="length"/> 만큼 새로운 <typeparamref name="T"/> 의 버퍼를 할당합니다.
+        /// </summary>
+        /// <param name="length"></param>
+        /// <param name="allocator"></param>
+        /// <param name="options"></param>
         public UnsafeAllocator(UnsafeReference<T> ptr, int length, Allocator allocator)
         {
             m_Buffer = new UnsafeAllocator(ptr, UnsafeUtility.SizeOf<T>() * length, allocator);
         }
+        /// <summary>
+        /// 이 버퍼를 읽기 전용으로 반환합니다.
+        /// </summary>
+        /// <returns></returns>
         public ReadOnly AsReadOnly() => new ReadOnly(this);
         public ParallelWriter AsParallelWriter() => new ParallelWriter(this);
 
@@ -378,6 +415,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true)]
     public static class UnsafeAllocatorExtensions
     {
+        /// <summary>
+        /// 이 메모리 버퍼를 <paramref name="size"/> 만큼 다시 재 할당합니다.
+        /// </summary>
+        /// <remarks>
+        /// 이전에 작성된 데이터는 자동으로 복사되어 초기화됩니다. 만약 사이즈가 이전보다 증가하였으면 
+        /// 증가한 메모리 사이즈의 초기화를 <paramref name="options"/> 에서 결정할 수 있습니다.
+        /// </remarks>
+        /// <param name="t"></param>
+        /// <param name="size"></param>
+        /// <param name="alignment"></param>
+        /// <param name="options"></param>
+        /// <exception cref="Exception"></exception>
         public static void Resize(this ref UnsafeAllocator t, long size, int alignment, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
         {
             if (size < 0) throw new Exception();
@@ -480,6 +529,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return UnsafeBufferUtility.RemoveForSwapBack(t.Ptr, t.Length, element);
         }
 
+        /// <summary>
+        /// <paramref name="other"/ 의 데이터들을 모아 새로운 <seealso cref="NativeArray{T}"/> 의 메모리 버퍼를 생성하여 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="other"></param>
+        /// <param name="allocator"></param>
+        /// <returns></returns>
         public static NativeArray<T> ToNativeArray<T>(this in UnsafeAllocator<T> other, Allocator allocator) where T : unmanaged
         {
             var arr = new NativeArray<T>(other.Length, allocator, NativeArrayOptions.UninitializedMemory);
@@ -490,6 +546,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             return arr;
+        }
+        public static UnsafeAllocator<T> ToUnsafeAllocator<T>(this in NativeArray<T> other, Allocator allocator) where T : unmanaged
+        {
+            unsafe
+            {
+                return new UnsafeAllocator<T>(
+                    (T*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(other),
+                    other.Length,
+                    allocator
+                    );
+            }
         }
     }
 }
