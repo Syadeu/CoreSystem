@@ -238,12 +238,12 @@ namespace Syadeu.Presentation
                 {
                     m_LoadingScene = SceneManager.CreateScene("Loading Scene");
 
-                    GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", typeof(Camera));
+                    GameObject camObj = CreateObject(m_LoadingScene, "Default Camera", TypeHelper.TypeOf<Camera>.Type);
                     Camera m_DefaultCamera = camObj.GetComponent<Camera>();
                     m_DefaultCamera.cameraType = CameraType.Game;
                     m_DefaultCamera.transform.position = Vector3.zero;
 
-                    GameObject obj = CreateObject(m_LoadingScene, "Default Canvas", typeof(Canvas), typeof(CanvasScaler));
+                    GameObject obj = CreateObject(m_LoadingScene, "Default Canvas", TypeHelper.TypeOf<Canvas>.Type, TypeHelper.TypeOf<CanvasScaler>.Type);
 
                     Canvas canvas = obj.GetComponent<Canvas>();
                     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
