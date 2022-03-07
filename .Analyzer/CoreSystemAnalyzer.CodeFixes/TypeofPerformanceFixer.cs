@@ -58,9 +58,14 @@ namespace CoreSystemAnalyzer
             //var temp = SyntaxFactory.GenericName(SyntaxFactory.Identifier("TypeOf"), synf localDeclaration.Type);
 
             var usingSyntax = SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Syadeu.Collections"));
-            if (!oldRoot.Contains(usingSyntax))
+            var oldUsingSyntax = oldRoot.FindNode(usingSyntax.Span);
+            if (oldUsingSyntax == null)
             {
-                oldRoot = oldRoot.AddUsings(usingSyntax).NormalizeWhitespace();
+                oldRoot = oldRoot.AddUsings(usingSyntax);
+            }
+            else if (oldUsingSyntax.HasLeadingTrivia)
+            {
+                oldRoot = oldRoot.ReplaceNode(oldUsingSyntax, usingSyntax);
             }
 
             string newSyntax = $"TypeHelper.TypeOf<{localDeclaration.Type.ToString()}>.Type";
