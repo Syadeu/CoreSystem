@@ -327,8 +327,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
             private readonly int m_Length;
 
             private AtomicOperator m_Op;
-            [NativeSetThreadIndex]
-            private int m_ThreadIndex;
 
             public int Length => m_Length;
 
@@ -343,15 +341,14 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 m_Length = allocator.Length;
 
                 m_Op = new AtomicOperator();
-                m_ThreadIndex = 0;
             }
 
             public void SetValue(in int index, in T value)
             {
-                m_Op.Enter(m_ThreadIndex);
+                m_Op.Enter(index);
                 UnsafeReference<T> p = m_Ptr + index;
                 p.Value = value;
-                m_Op.Exit(m_ThreadIndex);
+                m_Op.Exit(index);
             }
         }
 

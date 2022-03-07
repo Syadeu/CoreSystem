@@ -11,6 +11,8 @@ using Syadeu.Mono;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System;
+using Unity.Jobs;
+using Syadeu.Collections.Buffer.LowLevel;
 
 public class CoreSystemTests
 {
@@ -453,7 +455,41 @@ public unsafe class UnsafeTests
     //public TestClass _A;
     //public TestClass* _B;
 
-    
+    [Test]
+    public void AllocatorParallelTest()
+    {
+        const int iterations = 1024 * 10;
+
+        var alloc = new UnsafeAllocator<TestStruct>(iterations, Unity.Collections.Allocator.Temp);
+        AllocatorParallelJob job = new AllocatorParallelJob()
+        {
+            temp = alloc.AsParallelWriter()
+        };
+
+        var handle = job.Schedule(iterations, 64);
+
+        handle.Complete();
+
+        for (int i = 0; i < iterations; i++)
+        {
+            Assert.IsTrue(alloc[i].a == i);
+            Assert.IsTrue(alloc[i].b == i + 1);
+        }
+    }
+
+    private struct AllocatorParallelJob : IJobParallelFor
+    {
+        public UnsafeAllocator<TestStruct>.ParallelWriter temp;
+
+        public void Execute(int i)
+        {
+            temp.SetValue(in i, new TestStruct()
+            {
+                a = i,
+                b = i + 1
+            });
+        }
+    }
 }
 
 public class TestClass

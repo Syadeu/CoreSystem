@@ -30,9 +30,9 @@ namespace Syadeu.Collections.Threading
         private ThreadInfo m_Owner;
 #endif
 
-        public void Enter(in int threadIndex)
+        public void Enter(in int index)
         {
-            int value = 1 << threadIndex;
+            int value = 1 << (index % 32);
 
             while (true)
             {
@@ -63,9 +63,9 @@ namespace Syadeu.Collections.Threading
             }
         }
 
-        public void Exit(in int threadIndex)
+        public void Exit(in int index)
         {
-            int value = 1 << threadIndex;
+            int value = 1 << (index % 32);
 #if DEBUG_MODE
             if (!m_Owner.Equals(ThreadInfo.CurrentThread))
             {
