@@ -53,8 +53,15 @@ namespace CoreSystemAnalyzer
             TypeOfExpressionSyntax localDeclaration,
             CancellationToken cancellationToken)
         {
+            CompilationUnitSyntax oldRoot = (CompilationUnitSyntax)await document.GetSyntaxRootAsync(cancellationToken);
             //NameSyntax newSyntax = SyntaxFactory.IdentifierName("TypeHelper");
             //var temp = SyntaxFactory.GenericName(SyntaxFactory.Identifier("TypeOf"), synf localDeclaration.Type);
+
+            var usingSyntax = SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Syadeu.Collections"));
+            if (!oldRoot.Contains(usingSyntax))
+            {
+                oldRoot = oldRoot.AddUsings(usingSyntax).NormalizeWhitespace();
+            }
 
             string newSyntax = $"TypeHelper.TypeOf<{localDeclaration.Type.ToString()}>.Type";
 
@@ -63,9 +70,7 @@ namespace CoreSystemAnalyzer
             ExpressionSyntax memberAccess
                 = SyntaxFactory.ParseExpression(newSyntax);
 
-            var oldRoot = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = oldRoot.ReplaceNode(localDeclaration, memberAccess);
-
             return document.WithSyntaxRoot(newRoot);
         }
     }

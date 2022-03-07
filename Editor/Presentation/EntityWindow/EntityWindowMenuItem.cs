@@ -1,4 +1,4 @@
-﻿using Syadeu.Collections;
+﻿//using Syadeu.Collections;
 using System;
 using UnityEngine;
 
@@ -11,7 +11,7 @@ namespace SyadeuEditor.Presentation
         protected EntityWindow Window => m_Window;
         protected bool IsFocused => m_Window.IsFocused;
 
-        public virtual string Name => TypeHelper.ToString(GetType());
+        public virtual string Name => Syadeu.Collections.TypeHelper.ToString(GetType());
         public virtual string Description => string.Empty;
 
         public abstract int Order { get; }
@@ -19,7 +19,7 @@ namespace SyadeuEditor.Presentation
         public void Initialize(EntityWindow window)
         {
             m_Window = window;
-
+            Type t = typeof(AudioClip);
             OnIntialize(window);
         }
         public virtual void OnIntialize(EntityWindow window) { }

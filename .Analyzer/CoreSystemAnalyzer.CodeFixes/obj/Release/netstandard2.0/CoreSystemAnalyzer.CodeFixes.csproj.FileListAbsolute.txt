@@ -13,3 +13,13 @@ D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer
 D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\obj\Release\netstandard2.0\CoreSystemAnalyzer.CodeFixes.csproj.CopyComplete
 D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\obj\Release\netstandard2.0\CoreSystemAnalyzer.CodeFixes.dll
 D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\obj\Release\netstandard2.0\CoreSystemAnalyzer.CodeFixes.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Syadeu.Collections.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Collections.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Mathematics.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Burst.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.ResourceManager.dll
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Syadeu.Collections.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Collections.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Mathematics.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.Burst.pdb
+D:\AudioSystemProject\AudioSystem\Assets\CoreSystem\.Analyzer\CoreSystemAnalyzer.CodeFixes\bin\Release\netstandard2.0\Unity.ResourceManager.pdb
