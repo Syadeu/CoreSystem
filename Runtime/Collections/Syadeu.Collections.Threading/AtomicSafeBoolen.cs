@@ -19,20 +19,34 @@ namespace Syadeu.Collections.Threading
 {
     public struct AtomicSafeBoolen : IEquatable<AtomicSafeBoolen>
     {
-        private volatile bool m_Value;
+        private AtomicOperator m_AtomicOp;
+        private bool m_Value;
 
         public bool Value
         {
-            get => m_Value;
-            set => m_Value = value;
+            get
+            {
+                m_AtomicOp.Enter();
+                bool value = m_Value;
+                m_AtomicOp.Exit();
+
+                return value;
+            }
+            set
+            {
+                m_AtomicOp.Enter();
+                m_Value = value;
+                m_AtomicOp.Exit();
+            }
         }
         public AtomicSafeBoolen(bool value)
         {
+            m_AtomicOp = new AtomicOperator();
             m_Value = value;
         }
 
-        public bool Equals(AtomicSafeBoolen other) => m_Value.Equals(other.m_Value);
-        public override int GetHashCode() => m_Value.GetHashCode();
+        public bool Equals(AtomicSafeBoolen other) => Value.Equals(other.Value);
+        public override int GetHashCode() => Value.GetHashCode();
         public override bool Equals(object obj)
         {
             if (obj is bool boolen)

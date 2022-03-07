@@ -19,45 +19,46 @@ namespace Syadeu.Collections.Threading
 {
     public struct AtomicSafeReference<T> where T : IEquatable<T>
     {
+        private AtomicOperator m_AtomicOp;
         private T m_Value;
 
         public T Value
         {
             get
             {
-                T temp;
-                Interlocked.MemoryBarrier();
-                temp = m_Value;
-                Interlocked.MemoryBarrier();
+                m_AtomicOp.Enter();
+                T temp = m_Value;
+                m_AtomicOp.Exit();
 
                 return temp;
             }
             set
             {
-                Interlocked.MemoryBarrier();
+                m_AtomicOp.Enter();
                 m_Value = value;
-                Interlocked.MemoryBarrier();
+                m_AtomicOp.Exit();
             }
         }
 
         public AtomicSafeReference(T value)
         {
+            m_AtomicOp = new AtomicOperator();
             m_Value = value;
         }
 
-        public bool Equals(AtomicSafeReference<T> other) => m_Value.Equals(other.m_Value);
-        public override int GetHashCode() => m_Value.GetHashCode();
+        public bool Equals(AtomicSafeReference<T> other) => Value.Equals(other.Value);
+        public override int GetHashCode() => Value.GetHashCode();
         public override bool Equals(object obj)
         {
             if (obj is int integer)
             {
-                return m_Value.Equals(integer);
+                return Value.Equals(integer);
             }
             else if (obj is AtomicSafeReference<T> atomicInteger)
             {
-                return m_Value.Equals(atomicInteger.m_Value);
+                return Value.Equals(atomicInteger.Value);
             }
-
+            
             return false;
         }
     }

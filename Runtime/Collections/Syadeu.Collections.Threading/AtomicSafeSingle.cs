@@ -18,47 +18,60 @@ namespace Syadeu.Collections.Threading
 {
     public struct AtomicSafeSingle : IEquatable<AtomicSafeSingle>
     {
-        private volatile float m_Value;
+        private AtomicOperator m_AtomicOp;
+        private float m_Value;
 
         public float Value
         {
-            get => m_Value;
-            set => m_Value = value;
+            get
+            {
+                m_AtomicOp.Enter();
+                float value = m_Value;
+                m_AtomicOp.Exit();
+                return value;
+            }
+            set
+            {
+                m_AtomicOp.Enter();
+                m_Value = value;
+                m_AtomicOp.Exit();
+            }
         }
         public AtomicSafeSingle(float value)
         {
+            m_AtomicOp = new AtomicOperator();
             m_Value = value;
         }
 
-        public bool Equals(AtomicSafeSingle other) => m_Value.Equals(other.m_Value);
-        public override int GetHashCode() => m_Value.GetHashCode();
+        public bool Equals(AtomicSafeSingle other) => Value.Equals(other.Value);
+        public override int GetHashCode() => Value.GetHashCode();
         public override bool Equals(object obj)
         {
             if (obj is float single)
             {
-                return m_Value.Equals(single);
+                return Value.Equals(single);
             }
             else if (obj is AtomicSafeSingle atomicSingle)
             {
-                return m_Value.Equals(atomicSingle.m_Value);
+                return Value.Equals(atomicSingle.Value);
             }
 
             return false;
         }
 
-        public static AtomicSafeSingle operator +(AtomicSafeSingle a, float b) => a.Value = a.m_Value + b;
-        public static AtomicSafeSingle operator -(AtomicSafeSingle a, float b) => a.Value = a.m_Value - b;
-        public static AtomicSafeSingle operator /(AtomicSafeSingle a, float b) => a.Value = a.m_Value / b;
-        public static AtomicSafeSingle operator *(AtomicSafeSingle a, float b) => a.Value = a.m_Value * b;
-        public static AtomicSafeSingle operator /(AtomicSafeSingle a, int b) => a.Value = a.m_Value / b;
-        public static AtomicSafeSingle operator *(AtomicSafeSingle a, int b) => a.Value = a.m_Value * b;
-        public static AtomicSafeSingle operator %(AtomicSafeSingle a, float b) => a.Value = a.m_Value % b;
+        public static AtomicSafeSingle operator +(AtomicSafeSingle a, float b) => a.Value = a.Value + b;
+        public static AtomicSafeSingle operator -(AtomicSafeSingle a, float b) => a.Value = a.Value - b;
+        public static AtomicSafeSingle operator /(AtomicSafeSingle a, float b) => a.Value = a.Value / b;
+        public static AtomicSafeSingle operator *(AtomicSafeSingle a, float b) => a.Value = a.Value * b;
+        public static AtomicSafeSingle operator /(AtomicSafeSingle a, int b) => a.Value = a.Value / b;
+        public static AtomicSafeSingle operator *(AtomicSafeSingle a, int b) => a.Value = a.Value * b;
+        public static AtomicSafeSingle operator %(AtomicSafeSingle a, float b) => a.Value = a.Value % b;
 
-        public static AtomicSafeBoolen operator ==(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value == b);
-        public static AtomicSafeBoolen operator !=(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value != b);
+        public static AtomicSafeBoolen operator ==(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.Value == b);
+        public static AtomicSafeBoolen operator !=(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.Value != b);
 
-        public static AtomicSafeBoolen operator <(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value < b);
-        public static AtomicSafeBoolen operator >(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.m_Value > b);
+        public static AtomicSafeBoolen operator <(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.Value < b);
+        public static AtomicSafeBoolen operator >(AtomicSafeSingle a, float b) => new AtomicSafeBoolen(a.Value > b);
 
         public static implicit operator float(AtomicSafeSingle other) => other.Value;
         public static implicit operator AtomicSafeSingle(float other) => new AtomicSafeSingle(other);

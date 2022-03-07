@@ -31,7 +31,8 @@ namespace Syadeu.Collections.Threading
         /// <summary>
         /// 현재 스레드 정보를 가져옵니다.
         /// </summary>
-        public static ThreadInfo CurrentThread => new ThreadInfo(Thread.CurrentThread);
+        [ThreadStatic]
+        public static readonly ThreadInfo CurrentThread = new ThreadInfo(Thread.CurrentThread);
 
         //
         //
@@ -59,20 +60,16 @@ namespace Syadeu.Collections.Threading
         [NotBurstCompatible]
         public void ValidateAndThrow()
         {
-            Thread currentThread = Thread.CurrentThread;
-
-            if (!Equals(currentThread))
+            if (!Equals(CurrentThread))
             {
                 UnityEngine.Debug.LogError(
-                    $"Thread affinity error. Expected thread({this}) but {currentThread}");
+                    $"Thread affinity error. Expected thread({this}) but {CurrentThread}");
             }
         }
         [NotBurstCompatible]
         public bool Validate()
         {
-            Thread currentThread = Thread.CurrentThread;
-
-            return Equals(currentThread);
+            return Equals(CurrentThread);
         }
 
         public bool Equals(ThreadInfo other)
