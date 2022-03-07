@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Threading;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -262,6 +263,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             m_Buffer = new UnsafeAllocator(ptr, UnsafeUtility.SizeOf<T>() * length, allocator);
         }
         public ReadOnly AsReadOnly() => new ReadOnly(this);
+        public ParallelWriter AsParallelWriter() => new ParallelWriter(this);
 
         public void Clear() => m_Buffer.Clear();
 
@@ -316,6 +318,40 @@ namespace Syadeu.Collections.Buffer.LowLevel
             {
                 m_Ptr = allocator.Ptr.AsReadOnly();
                 m_Length = allocator.Length;
+            }
+        }
+        [BurstCompatible]
+        public struct ParallelWriter
+        {
+            private readonly UnsafeReference<T> m_Ptr;
+            private readonly int m_Length;
+
+            private AtomicOperator m_Op;
+            [NativeSetThreadIndex]
+            private int m_ThreadIndex;
+
+            public int Length => m_Length;
+
+            public T this[int index]
+            {
+                set => SetValue(in index, in value);
+            }
+
+            internal ParallelWriter(UnsafeAllocator<T> allocator)
+            {
+                m_Ptr = allocator.Ptr;
+                m_Length = allocator.Length;
+
+                m_Op = new AtomicOperator();
+                m_ThreadIndex = 0;
+            }
+
+            public void SetValue(in int index, in T value)
+            {
+                m_Op.Enter(m_ThreadIndex);
+                UnsafeReference<T> p = m_Ptr + index;
+                p.Value = value;
+                m_Op.Exit(m_ThreadIndex);
             }
         }
 

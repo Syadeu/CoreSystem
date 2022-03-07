@@ -193,6 +193,13 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 return ref *m_Ptr;
             }
         }
+        public T ReadValue()
+        {
+            unsafe
+            {
+                return *m_Ptr;
+            }
+        }
 
         public bool Equals(UnsafeReference<T> other)
         {

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using System;
 using System.Threading;
+using Unity.Collections;
 
 namespace Syadeu.Collections.Threading
 {
+    [BurstCompatible]
     public struct AtomicOperator
     {
         private volatile int m_Value;
+#if DEBUG_MODE
         private ThreadInfo m_Owner;
+#endif
 
+        public void Enter(in int threadIndex)
+        {
+            int value = 1 << threadIndex;
+
+            while (true)
+            {
+                int original = Interlocked.Exchange(ref m_Value, m_Value | value);
+
+                if ((original & value) != value)
+                {
+#if DEBUG_MODE
+                    m_Owner = ThreadInfo.CurrentThread;
+#endif
+                    break;
+                }
+            }
+        }
         public void Enter()
         {
             while (true)
@@ -30,18 +55,37 @@ namespace Syadeu.Collections.Threading
 
                 if (original == 0)
                 {
+#if DEBUG_MODE
                     m_Owner = ThreadInfo.CurrentThread;
+#endif
                     break;
                 }
             }
         }
-        public void Exit()
+
+        public void Exit(in int threadIndex)
         {
+            int value = 1 << threadIndex;
+#if DEBUG_MODE
             if (!m_Owner.Equals(ThreadInfo.CurrentThread))
             {
                 throw new InvalidOperationException();
             }
-
+            else if ((m_Value & value) != value)
+            {
+                throw new InvalidOperationException();
+            }
+#endif
+            m_Value -= value;
+        }
+        public void Exit()
+        {
+#if DEBUG_MODE
+            if (!m_Owner.Equals(ThreadInfo.CurrentThread))
+            {
+                throw new InvalidOperationException();
+            }
+#endif
             m_Value = 0;
         }
     }
