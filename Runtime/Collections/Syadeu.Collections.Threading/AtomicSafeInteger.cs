@@ -17,6 +17,9 @@ using System.Threading;
 
 namespace Syadeu.Collections.Threading
 {
+    /// <summary>
+    /// Thread-safe <see cref="int"/> 입니다.
+    /// </summary>
     public struct AtomicSafeInteger : IEquatable<AtomicSafeInteger>, IEquatable<int>
     {
         private AtomicOperator m_AtomicOp;

@@ -17,6 +17,9 @@ using System.Threading;
 
 namespace Syadeu.Collections.Threading
 {
+    /// <summary>
+    /// Thread-safe <see cref="bool"/> 입니다.
+    /// </summary>
     public struct AtomicSafeBoolen : IEquatable<AtomicSafeBoolen>
     {
         private AtomicOperator m_AtomicOp;
