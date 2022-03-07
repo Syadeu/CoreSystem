@@ -230,13 +230,13 @@ public class PresentationSystemTests
     }
 
     [Test]
-    public void BitArray32Test()
+    public void BitArray32Test1()
     {
         BitArray32 bits = 1483; // 10111001011
-        Debug.Log(bits);
+        //Debug.Log(bits);
 
         bits.SetValue(0, 0xF, 4);
-        Debug.Log(bits);        // 10111001111 : 1487
+        //Debug.Log(bits);        // 10111001111 : 1487
         Assert.AreEqual(1487, bits.Value);
 
         try
@@ -252,40 +252,56 @@ public class PresentationSystemTests
         }
 
         bits.SetValue(0, 0, 4);
-        Debug.Log(bits);        // 10111000000 : 1472
+        //Debug.Log(bits);        // 10111000000 : 1472
         Assert.AreEqual(1472, bits.Value);
     }
     [Test]
-    public void BitArray64Test()
+    public void BitArray32Test2()
+    {
+        for (int i = 0; i < 100000; i++)
+        {
+            BitArray32Test1();
+        }
+    }
+    [Test]
+    public void BitArray64Test1()
     {
         BitArray64 bits = 14532445787463;
         // 11010011011110011001010001001101010101000111
         // 
-        Debug.Log(bits);
+        //Debug.Log(bits);
         // 10011001010001001101010101000111:110100110111
 
         bits.SetValue(0, 0xF, 4);
-        Debug.Log(bits);
+        //Debug.Log(bits);
         // 11010011011110011001010001001101010101001111 : 14532445787471
         // 10011001010001001101010101000111110100110111
 
         Assert.AreEqual(14532445787471, bits.Value);
 
-        try
-        {
-            bits.SetValue(0, 0xF, 3);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-        }
-        catch (Exception ex)
-        {
-            Debug.LogException(ex);
-        }
+        //try
+        //{
+        //    bits.SetValue(0, 0xF, 3);
+        //}
+        //catch (ArgumentOutOfRangeException)
+        //{
+        //}
+        //catch (Exception ex)
+        //{
+        //    Debug.LogException(ex);
+        //}
 
         bits.SetValue(0, 0, 4);
-        Debug.Log(bits);
+        //Debug.Log(bits);
         // 11010011011110011001010001001101010101000000 : 14532445787456
         Assert.AreEqual(14532445787456, bits.Value);
+    }
+    [Test]
+    public void BitArray64Test2()
+    {
+        for (int i = 0; i < 100000; i++)
+        {
+            BitArray64Test1();
+        }
     }
 }

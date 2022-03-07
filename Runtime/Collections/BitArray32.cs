@@ -30,10 +30,25 @@ namespace Syadeu.Collections
         private byte
             x01, x02, y01, y02;
 
-        public bool this[int index]
+        public unsafe bool this[int index]
         {
             get
             {
+                int mul = 0;
+                int left = index;
+                while (left > 7)
+                {
+                    left -= 8;
+                    mul++;
+                }
+
+                fixed (byte* ptr = &x01)
+                {
+                    byte* p = ptr + mul;
+                    var target = 1 << left;
+                    return (*p & target) == target;
+                }
+
                 return index switch
                 {
                     0 => (x01 & 0b0000_0001) == 0b0000_0001,
@@ -80,6 +95,26 @@ namespace Syadeu.Collections
             }
             set
             {
+                int mul = 0;
+                int left = index;
+                while (left > 7)
+                {
+                    left -= 8;
+                    mul++;
+                }
+
+                fixed (byte* ptr = &x01)
+                {
+                    byte* p = ptr + mul;
+                    var target = 1 << left;
+                    if (((*p & target) == target) != value)
+                    {
+                        *p = (byte)(value ? *p + target : *p - target);
+                    }
+
+                    return;
+                }
+
                 byte temp = (byte)(1 << index % 8);
                 if (index < 8)
                 {

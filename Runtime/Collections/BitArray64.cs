@@ -28,11 +28,44 @@ namespace Syadeu.Collections
     {
         private BitArray32 x, y;
 
-        public bool this[int index]
+        public unsafe bool this[int index]
         {
-            get => index < 32 ? x[index] : y[index - 32];
+            get
+            {
+                //int mul = 0;
+                //int left = index;
+                //while (left > 31)
+                //{
+                //    left -= 32;
+                //    mul++;
+                //}
+
+                //fixed (BitArray32* ptr = &x)
+                //{
+                //    BitArray32* p = ptr + mul;
+                //    return (*p)[left];
+                //}
+
+                return index < 32 ? x[index] : y[index - 32];
+            }
             set 
             {
+                //int mul = 0;
+                //int left = index;
+                //while (left > 31)
+                //{
+                //    left -= 32;
+                //    mul++;
+                //}
+
+                //fixed (BitArray32* ptr = &x)
+                //{
+                //    BitArray32* p = ptr + mul;
+                //    (*p)[left] = value;
+
+                //    return;
+                //}
+
                 if (index < 32) x[index] = value;
                 else y[index - 32] = value;
             }
