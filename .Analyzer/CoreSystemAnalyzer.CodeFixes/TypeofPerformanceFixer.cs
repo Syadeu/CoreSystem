@@ -53,30 +53,22 @@ namespace CoreSystemAnalyzer
             TypeOfExpressionSyntax localDeclaration,
             CancellationToken cancellationToken)
         {
-            CompilationUnitSyntax oldRoot = (CompilationUnitSyntax)await document.GetSyntaxRootAsync(cancellationToken);
-            //NameSyntax newSyntax = SyntaxFactory.IdentifierName("TypeHelper");
-            //var temp = SyntaxFactory.GenericName(SyntaxFactory.Identifier("TypeOf"), synf localDeclaration.Type);
-
-            var usingSyntax = SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Syadeu.Collections"));
-            var oldUsingSyntax = oldRoot.FindNode(usingSyntax.Span);
-            if (oldUsingSyntax == null)
-            {
-                oldRoot = oldRoot.AddUsings(usingSyntax);
-            }
-            else if (oldUsingSyntax.HasLeadingTrivia)
-            {
-                oldRoot = oldRoot.ReplaceNode(oldUsingSyntax, usingSyntax);
-            }
+            CompilationUnitSyntax root = await SyntaxHelper.GetSyntaxRootAsync(document, cancellationToken);
 
             string newSyntax = $"TypeHelper.TypeOf<{localDeclaration.Type.ToString()}>.Type";
 
-
-            //SyntaxGenerator generator = SyntaxGenerator.GetGenerator(document);
             ExpressionSyntax memberAccess
                 = SyntaxFactory.ParseExpression(newSyntax);
 
-            var newRoot = oldRoot.ReplaceNode(localDeclaration, memberAccess);
-            return document.WithSyntaxRoot(newRoot);
+            root = root.ReplaceNode(localDeclaration, memberAccess);
+
+            UsingDirectiveSyntax usingSyntax = SyntaxHelper.ToUsingSyntax("Syadeu.Collections");
+            if (!root.HasUsingSyntax(usingSyntax.Span))
+            {
+                root = root.AddUsings(usingSyntax);
+            }
+
+            return document.WithSyntaxRoot(root);
         }
     }
 }

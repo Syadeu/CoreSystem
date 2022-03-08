@@ -1,5 +1,4 @@
-﻿//using Syadeu.Collections;
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace SyadeuEditor.Presentation
@@ -19,7 +18,6 @@ namespace SyadeuEditor.Presentation
         public void Initialize(EntityWindow window)
         {
             m_Window = window;
-            Type t = typeof(AudioClip);
             OnIntialize(window);
         }
         public virtual void OnIntialize(EntityWindow window) { }
