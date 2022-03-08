@@ -21,7 +21,7 @@ namespace CoreSystemAnalyzer
                         return SyntaxFactory.CarriageReturn;
                     default:
                         return trivia;
-                }
+                }   
                 return base.VisitTrivia(trivia);
             }
         }
