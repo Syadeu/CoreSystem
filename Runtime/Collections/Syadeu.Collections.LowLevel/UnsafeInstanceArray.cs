@@ -41,8 +41,7 @@ namespace Syadeu.Collections.LowLevel
         [BurstCompatible]
         private struct Buffer : IDisposable, INativeDisposable
         {
-            private UnsafeAllocator<InstanceID> m_Buffer;
-
+            public UnsafeAllocator<InstanceID> m_Buffer;
             public UnsafeFixedListWrapper<InstanceID> List;
 
             public Buffer(int length, Allocator allocator)
@@ -72,15 +71,18 @@ namespace Syadeu.Collections.LowLevel
         public struct ParallelWriter
         {
             private UnsafeAllocator<InstanceID>.ParallelWriter m_Wr;
+            private readonly int m_Length;
 
             public InstanceID<T> this[int index]
             {
                 set => SetValue(in index, in value);
             }
+            public int Length => m_Length;
 
-            internal ParallelWriter(UnsafeAllocator<InstanceID> allocator)
+            internal ParallelWriter(UnsafeAllocator<InstanceID> allocator, int length)
             {
                 m_Wr = allocator.AsParallelWriter();
+                m_Length = length;
             }
 
             public void SetValue(in int index, in InstanceID<T> value)
@@ -134,6 +136,7 @@ namespace Syadeu.Collections.LowLevel
             m_Buffer = new UnsafeAllocator<Buffer>(1, allocator, NativeArrayOptions.UninitializedMemory);
             m_Buffer[0] = new Buffer(length, allocator);
         }
+        public ParallelWriter AsParallelWriter() => new ParallelWriter(Target.m_Buffer, Target.List.Length);
 
         public void Resize(in int length) => Target.Resize(in length);
         public void Clear() => Target.List.Clear();

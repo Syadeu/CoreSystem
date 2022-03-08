@@ -24,6 +24,7 @@ using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.IL2CPP.CompilerServices;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.UIElements;
@@ -223,7 +224,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
     }
-    [BurstCompatible]
+    [BurstCompatible(GenericTypeArguments = new Type[] { typeof(int) })]
     public struct UnsafeAllocator<T> : INativeDisposable, IDisposable, IEquatable<UnsafeAllocator<T>>
         where T : unmanaged
     {
