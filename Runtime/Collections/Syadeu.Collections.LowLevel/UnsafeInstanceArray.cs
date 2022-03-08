@@ -38,6 +38,7 @@ namespace Syadeu.Collections.LowLevel
         private UnsafeAllocator<Buffer> m_Buffer;
         private ref Buffer Target => ref m_Buffer[0];
 
+        [BurstCompatible]
         private struct Buffer : IDisposable, INativeDisposable
         {
             private UnsafeAllocator<InstanceID> m_Buffer;
@@ -61,9 +62,30 @@ namespace Syadeu.Collections.LowLevel
             {
                 m_Buffer.Dispose();
             }
+         
             public JobHandle Dispose(JobHandle inputDeps)
             {
                 return m_Buffer.Dispose(inputDeps);
+            }
+        }
+        [BurstCompatible]
+        public struct ParallelWriter
+        {
+            private UnsafeAllocator<InstanceID>.ParallelWriter m_Wr;
+
+            public InstanceID<T> this[int index]
+            {
+                set => SetValue(in index, in value);
+            }
+
+            internal ParallelWriter(UnsafeAllocator<InstanceID> allocator)
+            {
+                m_Wr = allocator.AsParallelWriter();
+            }
+
+            public void SetValue(in int index, in InstanceID<T> value)
+            {
+                m_Wr.SetValue(in index, value);
             }
         }
 
