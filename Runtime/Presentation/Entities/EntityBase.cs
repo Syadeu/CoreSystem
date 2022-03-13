@@ -50,7 +50,9 @@ namespace Syadeu.Presentation.Entities
         [JsonProperty(Order = -797, PropertyName = "Size")] public float3 Size { get; set; }
 
         [Space]
-        [JsonProperty(Order = -796, PropertyName = "EnableCull")] public bool m_EnableCull = true;
+        [JsonProperty(Order = -796, PropertyName = "EnableCull")] private bool m_EnableCull = true;
+
+        [JsonIgnore] public virtual bool EnableCull => m_EnableCull;
 
         public override bool IsValid()
         {

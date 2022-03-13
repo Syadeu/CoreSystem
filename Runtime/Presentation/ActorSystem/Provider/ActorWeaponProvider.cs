@@ -35,18 +35,14 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorWeaponProvider : ActorProviderBase<ActorWeaponComponent>
     {
         [Header("Accept Weapon Types")]
-        [JsonProperty(Order = 0, PropertyName = "ExcludeWeapon")]
-        internal Reference<ActorWeaponData>[] m_ExcludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
-        [JsonProperty(Order = 1, PropertyName = "IncludeWeapon")]
-        internal Reference<ActorWeaponData>[] m_IncludeWeapon = Array.Empty<Reference<ActorWeaponData>>();
         [JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
         internal Reference<ActorItemType>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorItemType>>();
-        [JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
-        internal Reference<ActorItemType>[] m_IncludeWeaponType = Array.Empty<Reference<ActorItemType>>();
+        //[JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
+        //internal Reference<ActorItemType>[] m_IncludeWeaponType = Array.Empty<Reference<ActorItemType>>();
 
         [Header("General")]
         [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
-        internal Reference<ActorWeaponData> m_DefaultWeapon = Reference<ActorWeaponData>.Empty;
+        internal Reference<EntityBase> m_DefaultWeapon = Reference<EntityBase>.Empty;
         [Tooltip("최대로 착용할 수 있는 무기의 개수입니다. 0과 같거나 작을 수 없습니다.")]
         [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
         internal int m_MaxEquipableCount = 1;
@@ -68,10 +64,10 @@ namespace Syadeu.Presentation.Actor
             component.m_DefaultWeapon = m_DefaultWeapon;
             component.m_MaxEquipableCount = m_MaxEquipableCount;
 
-            component.m_ExcludeWeapon = m_ExcludeWeapon.ToFixedList16();
-            component.m_IncludeWeapon = m_IncludeWeapon.ToFixedList16();
+            //component.m_ExcludeWeapon = m_ExcludeWeapon.ToFixedList16();
+            //component.m_IncludeWeapon = m_IncludeWeapon.ToFixedList16();
             component.m_ExcludeWeaponType = m_ExcludeWeaponType.ToFixedList16();
-            component.m_IncludeWeaponType = m_IncludeWeaponType.ToFixedList16();
+            //component.m_IncludeWeaponType = m_IncludeWeaponType.ToFixedList16();
 
             component.m_OnWeaponSelected = m_OnWeaponSelected.ToFixedList16();
             component.m_OnEquipWeapon = m_OnEquipWeapon.ToFixedList16();
@@ -86,24 +82,24 @@ namespace Syadeu.Presentation.Actor
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
             
-            component.m_EquipedWeapons = new FixedInstanceList16<ActorWeaponData>();
+            component.m_EquipedWeapons = new FixedInstanceList16<EntityBase>();
 
-            for (int i = 0; i < m_ExcludeWeapon.Length; i++)
-            {
-                if (m_IncludeWeapon.Contains(m_ExcludeWeapon[i]))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"1");
-                }
-            }
-            for (int i = 0; i < m_ExcludeWeaponType.Length; i++)
-            {
-                if (m_IncludeWeaponType.Contains(m_ExcludeWeaponType[i]))
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"2");
-                }
-            }
+            //for (int i = 0; i < m_ExcludeWeapon.Length; i++)
+            //{
+            //    if (m_IncludeWeapon.Contains(m_ExcludeWeapon[i]))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity,
+            //            $"1");
+            //    }
+            //}
+            //for (int i = 0; i < m_ExcludeWeaponType.Length; i++)
+            //{
+            //    if (m_IncludeWeaponType.Contains(m_ExcludeWeaponType[i]))
+            //    {
+            //        CoreSystem.Logger.LogError(Channel.Entity,
+            //            $"2");
+            //    }
+            //}
 
             if (!m_DefaultWeapon.IsEmpty() && m_DefaultWeapon.IsValid())
             {
@@ -142,7 +138,7 @@ namespace Syadeu.Presentation.Actor
                 if (inventory == null)
                 {
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Destroying weapon instance({component.SelectedWeapon.Target.Name}) because there\'s no inventory in this actor({Parent.Name}).");
+                        $"Destroying weapon instance({component.SelectedWeapon.GetEntity().Name}) because there\'s no inventory in this actor({Parent.Name}).");
 
                     //if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
                     //{
@@ -152,17 +148,10 @@ namespace Syadeu.Presentation.Actor
                 }
                 else
                 {
-                    //if (component.Selected == 0)
-                    //{
-                    //    component.m_EquipedWeapons[component.m_SelectedWeaponIndex].Destroy();
-                    //    component.m_DefaultWeaponInstance = Instance<ActorWeaponData>.Empty;
-                    //}
-                    //else inventory.Insert(component.SelectedWeapon.Cast<ActorWeaponData, IObject>());
-
-                    inventory.Insert(component.SelectedWeapon);
+                    //inventory.Insert(component.SelectedWeapon);
                 }
 
-                component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = ev.Weapon.Idx;
+                component.m_EquipedWeapons[component.m_SelectedWeaponIndex] = (InstanceID<EntityBase>)ev.Weapon.Idx;
 
                 component.m_OnEquipWeapon.Execute(Parent.ToEntity<IObject>());
 
@@ -172,7 +161,7 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 CoreSystem.Logger.Log(Channel.Entity,
-                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).");
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetEntity().Name}).");
             }
             else
             {
@@ -213,10 +202,10 @@ namespace Syadeu.Presentation.Actor
                     }
 
                     CoreSystem.Logger.Log(Channel.Entity,
-                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).");
+                        $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetEntity().Name}).");
 
 
-                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.Target.Name}).".ToLog();
+                    $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetEntity().Name}).".ToLog();
                 }
             }
         }
@@ -239,22 +228,29 @@ namespace Syadeu.Presentation.Actor
             public void Dispose()
             {
             }
-            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, in Entity<ActorWeaponData> weapon, bool weaponDrawn)
+            private static void SetPosition(Entity<ActorEntity> entity, in AnimatorAttribute animator, 
+                in InstanceID<EntityBase> weapon, bool weaponDrawn)
             {
-                ActorWeaponData data = weapon.Target;
-                if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
+                //EntityBase data = weapon.Target;
+                //if (data.PrefabInstance.IsEmpty() || !data.PrefabInstance.IsValid())
+                if (!weapon.IsValid())
+                {
+                    return;
+                }
+                else if (!weapon.HasComponent<EntityBase, ActorWeaponItemComponent>())
                 {
                     return;
                 }
 
-                ActorWeaponData.OverrideData overrideData = data.Overrides;
-                ITransform weaponTr = data.PrefabInstance.transform;
+                //ActorWeaponData.OverrideData overrideData = data.Overrides;
+                ActorWeaponItemComponent data = weapon.GetComponent<EntityBase, ActorWeaponItemComponent>();
+                ProxyTransform weaponTr = ((InstanceID)weapon).GetTransform();
 
-                ActorWeaponData.OverrideOptions options = weaponDrawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;
-                bool useBone = weaponDrawn ? overrideData.DrawUseBone : overrideData.HolsterUseBone;
-                HumanBodyBones attachedBone = weaponDrawn ? overrideData.DrawAttachedBone : overrideData.HolsterAttachedBone;
-                float3 posOffset = weaponDrawn ? overrideData.DrawWeaponPosOffset : overrideData.HolsterWeaponPosOffset;
-                float3 rotOffset = weaponDrawn ? overrideData.DrawWeaponRotOffset : overrideData.HolsterWeaponRotOffset;
+                //ActorWeaponData.OverrideOptions options = weaponDrawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;
+                bool useBone = weaponDrawn ? data.m_DrawPosition.m_UseBone : data.m_HolsterPosition.m_UseBone;
+                HumanBodyBones attachedBone = weaponDrawn ? data.m_DrawPosition.m_AttachedBone : data.m_HolsterPosition.m_AttachedBone;
+                float3 posOffset = weaponDrawn ? data.m_DrawPosition.m_WeaponPosOffset : data.m_HolsterPosition.m_WeaponPosOffset;
+                float3 rotOffset = weaponDrawn ? data.m_DrawPosition.m_WeaponRotOffset : data.m_HolsterPosition.m_WeaponRotOffset;
 
                 float3 targetPosition;
                 quaternion targetRotation;
@@ -281,12 +277,12 @@ namespace Syadeu.Presentation.Actor
                 }
 
                 //
-                if (options == ActorWeaponData.OverrideOptions.Addictive)
-                {
-                    //targetRot *= Quaternion.Euler(m_RotOffset);
-                    "not implements".ToLogError();
-                }
-                else if (options == ActorWeaponData.OverrideOptions.Override)
+                //if (options == ActorWeaponData.OverrideOptions.Addictive)
+                //{
+                //    //targetRot *= Quaternion.Euler(m_RotOffset);
+                //    "not implements".ToLogError();
+                //}
+                //else if (options == ActorWeaponData.OverrideOptions.Override)
                 {
                     targetRotation *= Quaternion.Euler(rotOffset);
                     targetPosition += math.mul(targetRotation, posOffset);

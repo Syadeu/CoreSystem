@@ -192,6 +192,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public bool Equals(UnsafeAllocator other) => m_Buffer.Equals(other.m_Buffer);
+        public override int GetHashCode() => m_Buffer.IntPtr.GetHashCode();
 
         [BurstCompatible]
         public readonly struct ReadOnly
@@ -329,6 +330,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
 
         public bool Equals(UnsafeAllocator<T> other) => m_Buffer.Equals(other.m_Buffer);
+        public override int GetHashCode() => m_Buffer.GetHashCode();
 
         [BurstCompatible]
         public readonly struct ReadOnly

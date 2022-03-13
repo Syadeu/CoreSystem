@@ -18,20 +18,23 @@
 
 using Newtonsoft.Json;
 using Syadeu.Presentation.Data;
+using Syadeu.Collections;
 using System.ComponentModel;
 
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ConstantData: Actor Item Type")]
-    public class ActorItemType : ConstantData
+    public sealed class ActorItemType : ConstantData
     {
         [Description(
             "얼마나 겹쳐질 수 있는지 결정합니다. " +
             "1보다 작을 수 없습니다.")]
         [JsonProperty(Order = 0, PropertyName = "MaximumCount")]
         private int m_MaximumMultipleCount = 1;
+        [JsonProperty(Order = 1, PropertyName = "Equipable")]
+        private HumanBody m_Equipable = HumanBody.None;
 
-        [JsonIgnore]
-        public int MaximumMultipleCount => m_MaximumMultipleCount;
+        [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
+        [JsonIgnore] public HumanBody Equipable => m_Equipable;
     }
 }

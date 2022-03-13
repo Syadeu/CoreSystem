@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.LowLevel;
+using Syadeu.Collections.Threading;
 using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using System;
@@ -65,7 +66,7 @@ namespace Syadeu.Presentation.Components
         /// </summary>
         private UnsafeMultiHashMap<int, int> m_ComponentHashMap;
 
-        //private Unity.Mathematics.Random m_Random;
+        private AtomicOperator m_ComponentAccessOp;
 
         private static Unity.Profiling.ProfilerMarker
             s_AddComponentMarker = new Unity.Profiling.ProfilerMarker("EntityComponentSystem.set_AddComponent"),
@@ -105,6 +106,8 @@ namespace Syadeu.Presentation.Components
             // 왜인지 모르겠지만 간혈적으로 Type.GetHashCode() 가 0 을 반환하여, 직접 값을 만듭니다.
             //m_Random = new Unity.Mathematics.Random();
             //m_Random.InitState();
+            EntityComponentExtensionMethods.s_ComponentSystem = this;
+            m_ComponentAccessOp = new AtomicOperator();
 
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
@@ -149,8 +152,6 @@ namespace Syadeu.Presentation.Components
                 (ComponentBuffer*)m_ComponentArrayBuffer.GetUnsafePtr(),
                 hashMapPointer);
 
-            ConstructSharedStatics();
-
             m_CompleteAllDisposedComponents = ActionWrapper.GetWrapper();
             m_CompleteAllDisposedComponents.SetProfiler($"{nameof(EntityComponentSystem)}.{nameof(CompleteAllDisposedComponents)}");
             m_CompleteAllDisposedComponents.SetAction(CompleteAllDisposedComponents);
@@ -184,13 +185,6 @@ namespace Syadeu.Presentation.Components
             temp.Initialize(ecb, typeInfo);
 
             return temp;
-        }
-        private void ConstructSharedStatics()
-        {
-            Constants.Value.Data.SystemID = SystemID;
-
-            //UntypedUnsafeHashMap test = new UntypedUnsafeHashMap();
-            
         }
 
         protected override void OnDispose()
@@ -231,6 +225,7 @@ namespace Syadeu.Presentation.Components
 
             m_ComponentHashMap.Dispose();
 
+            EntityComponentExtensionMethods.s_ComponentSystem = null;
             m_EntitySystem = null;
             m_SceneSystem = null;
         }
@@ -454,7 +449,7 @@ namespace Syadeu.Presentation.Components
 
         public void AddComponent(in InstanceID entity, in Type type)
         {
-            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), Syadeu.Internal.ThreadInfo.Unity);
 
             using (s_AddComponentMarker.Auto())
             {
@@ -500,7 +495,7 @@ namespace Syadeu.Presentation.Components
         public void AddComponent(in InstanceID entity, in TypeInfo type) => AddComponent(in entity, type.Type);
         public void AddComponent(in InstanceID entity, in TypeInfo type, byte* data)
         {
-            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), Syadeu.Internal.ThreadInfo.Unity);
 
             using (s_AddComponentMarker.Auto())
             {
@@ -547,7 +542,7 @@ namespace Syadeu.Presentation.Components
         }
         public ref TComponent AddComponent<TComponent>(in InstanceID entity) where TComponent : unmanaged, IEntityComponent
         {
-            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), ThreadInfo.Unity);
+            CoreSystem.Logger.ThreadBlock(nameof(AddComponent), Syadeu.Internal.ThreadInfo.Unity);
 
             using (s_AddComponentMarker.Auto())
             {
@@ -835,13 +830,6 @@ namespace Syadeu.Presentation.Components
 
         #region Inner Classes
 
-        public struct Constants
-        {
-            public static SharedStatic<EntityComponentConstrains> Value = SharedStatic<EntityComponentConstrains>.GetOrCreate<EntityComponentSystem, Constants>();
-
-            public static PresentationSystemID<EntityComponentSystem> SystemID => Value.Data.SystemID;
-        }
-        
         /// <summary>
         /// Frame 단위로 Presentation 이 진행되기 떄문에, 해당 프레임에서 제거된 프레임일지어도
         /// 같은 프레임내에서 접근하는 Data Access Call 을 허용하기 위해 다음 프레임에 제거되도록 합니다.

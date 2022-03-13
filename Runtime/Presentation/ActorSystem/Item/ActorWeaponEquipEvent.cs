@@ -20,19 +20,19 @@ namespace Syadeu.Presentation.Actor
     public struct ActorWeaponEquipEvent : IActorWeaponEquipEvent
     {
         private ActorWeaponEquipOptions m_EquipOptions;
-        private Entity<ActorWeaponData> m_Weapon;
+        private Entity<EntityBase> m_Weapon;
 
         public ActorWeaponEquipOptions EquipOptions => m_EquipOptions;
-        public Entity<ActorWeaponData> Weapon => m_Weapon;
+        public Entity<EntityBase> Weapon => m_Weapon;
 
         public bool BurstCompile => false;
 
-        public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Entity<ActorWeaponData> weapon)
+        public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Entity<EntityBase> weapon)
         {
             m_EquipOptions = options;
             m_Weapon = weapon;
         }
-        public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Reference<ActorWeaponData> weapon)
+        public ActorWeaponEquipEvent(ActorWeaponEquipOptions options, Reference<EntityBase> weapon)
         {
             m_EquipOptions = options;
             m_Weapon = weapon.CreateEntity();

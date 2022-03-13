@@ -27,9 +27,9 @@ namespace Syadeu.Collections
 
         public int Length => m_Hashes.Length;
 
-        public InstanceID this[int index]
+        public InstanceID<T> this[int index]
         {
-            get => m_Hashes[index];
+            get => (InstanceID<T>)m_Hashes[index];
             set => m_Hashes[index] = value;
         }
 

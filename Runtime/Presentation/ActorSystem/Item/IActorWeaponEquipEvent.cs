@@ -19,6 +19,6 @@ namespace Syadeu.Presentation.Actor
     public interface IActorWeaponEquipEvent : IActorEvent
     {
         ActorWeaponEquipOptions EquipOptions { get; }
-        Entity<ActorWeaponData> Weapon { get; }
+        Entity<EntityBase> Weapon { get; }
     }
 }

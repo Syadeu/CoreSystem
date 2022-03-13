@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
-using Syadeu.Presentation.Data;
-using System;
-using System.ComponentModel;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation.Actor
 {
-    //[Obsolete("", true)]
-    //[DisplayName("ConstantData: Actor Weapon Type")]
-    //public sealed class ActorWeaponTypeData : ActorItemType
-    //{
-    //    //public enum WeaponType
-    //    //{
-    //    //    Melee,
-    //    //    Ranged
-    //    //}
-
-    //    //[JsonProperty(Order = 0, PropertyName = "WeaponType")]
-    //    //protected WeaponType m_WeaponType = WeaponType.Melee;
-    //}
+    public interface IActorItemAttribute : IObject
+    {
+        [JsonIgnore]
+        Reference<ActorItemType> ItemType { get; }
+    }
 }

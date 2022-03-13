@@ -22,7 +22,7 @@ using Unity.Collections;
 namespace Syadeu.Collections
 {
     [BurstCompatible]
-    public readonly struct InstanceID : IValidation, IEmpty, IEquatable<InstanceID>, IEquatable<Hash>
+    public readonly struct InstanceID : IInstanceID, IEquatable<InstanceID>
     {
         public static InstanceID Empty => new InstanceID(Hash.Empty);
 
@@ -54,7 +54,7 @@ namespace Syadeu.Collections
         //public static implicit operator InstanceID(Hash hash) => new InstanceID(hash);
     }
     [BurstCompatible]
-    public readonly struct InstanceID<T> : IValidation, IEmpty, IEquatable<InstanceID>, IEquatable<InstanceID<T>>, IEquatable<Hash>
+    public readonly struct InstanceID<T> : IInstanceID, IEquatable<InstanceID>, IEquatable<InstanceID<T>>
         where T : class, IObject
     {
         public static InstanceID<T> Empty => new InstanceID<T>(Hash.Empty);
@@ -88,5 +88,9 @@ namespace Syadeu.Collections
 
         public static implicit operator InstanceID(InstanceID<T> t) => new InstanceID(t.m_Hash);
         public static explicit operator InstanceID<T>(InstanceID t) => new InstanceID<T>(t.Hash);
+    }
+    public interface IInstanceID : IValidation, IEmpty, IEquatable<Hash>
+    {
+        Hash Hash { get; }
     }
 }

@@ -26,6 +26,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
+    [Obsolete("", true)]
     [DisplayName("Data: Actor Weapon")]
     public class ActorWeaponData : ActorItem
     {
@@ -98,23 +99,8 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnCreated()
         {
-            if (!m_Prefab.IsEmpty())
-            {
-                if (!m_Prefab.IsValid())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"{nameof(ActorWeaponData)}({Name}) has an invalid entity. This is not allowed.");
-                    return;
-                }
-
-                m_PrefabInstance = m_Prefab.CreateEntity(float3.zero);
-
-                $"weapon({Name}, {m_Prefab.GetObject().Name}) created".ToLog();
-            }
-
             m_HolsterPosition = m_HolsterPosition.GetProperty();
             m_DrawPosition = m_DrawPosition.GetProperty();
-            //FireFXBounds((FXBounds.TriggerOptions)~0);
         }
         protected override void OnDestroy()
         {

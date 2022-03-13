@@ -18,17 +18,19 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Presentation.Attributes;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using System;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
     /// <summary>
-    /// <see cref="ActorEntity"/> 의 <see cref="ActorInventoryProvider"/> 에서 사용되는 모든 아이템들의 기본 <see langword="abstract"/> 입니다.
+    /// <see cref="ActorEntity"/> 의 <see cref="ActorInventoryProvider"/> 에서 사용되는 모든 아이템입니다.
     /// </summary>
-    [Obsolete("", true), InternalLowLevelEntity]
-    public abstract class ActorItem : EntityBase
+    [DisplayName("Attribute: Actor Item")]
+    public sealed class ActorItemAttribute : AttributeBase, IActorItemAttribute, INotifyComponent<ActorItemComponent>
     {
         public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
         {
@@ -36,16 +38,24 @@ namespace Syadeu.Presentation.Actor
             public PrefabReference<Sprite> m_IconImage = PrefabReference<Sprite>.None;
         }
 
-        //[JsonProperty(Order = -500, PropertyName = "Prefab")]
-        //protected Reference<ObjectEntity> m_Prefab = Reference<ObjectEntity>.Empty;
         [JsonProperty(Order = -499, PropertyName = "ItemType")]
-        protected Reference<ActorItemType> m_ItemType;
+        private Reference<ActorItemType> m_ItemType = Reference<ActorItemType>.Empty;
 
         [Space]
         [JsonProperty(Order = -498, PropertyName = "GraphicsInformation")]
-        protected GraphicsInformation m_GeneralInfo = new GraphicsInformation();
+        private GraphicsInformation m_GeneralInfo = new GraphicsInformation();
 
-        [JsonIgnore]
-        public Reference<ActorItemType> ItemType => m_ItemType;
+        [JsonIgnore] public Reference<ActorItemType> ItemType => m_ItemType;
+    }
+    internal sealed class ActorItemAttributeProcessor : AttributeProcessor<ActorItemAttribute>
+    {
+        protected override void OnCreated(ActorItemAttribute attribute, Entity<IEntityData> entity)
+        {
+             entity.GetComponent<ActorItemComponent>();
+        }
+    }
+    public struct ActorItemComponent : IEntityComponent
+    {
+        public bool m_Equipable;
     }
 }

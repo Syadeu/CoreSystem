@@ -610,7 +610,7 @@ namespace Syadeu.Presentation
                 .CreateTransform(
                 entity.Idx, entityBase.Prefab, 
                 in position, in rotation, in localSize, 
-                in entityBase.m_EnableCull, entityBase.Center, entityBase.Size, entityBase.StaticBatching);
+                entityBase.EnableCull, entityBase.Center, entityBase.Size, entityBase.StaticBatching);
 
             GetModule<EntityProcessorModule>().ProceessOnCreated(entity);
             return Entity<IEntity>.GetEntity(entity.Idx);

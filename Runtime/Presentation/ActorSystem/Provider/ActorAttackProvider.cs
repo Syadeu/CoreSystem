@@ -85,7 +85,7 @@ namespace Syadeu.Presentation.Actor
 
             ActorWeaponComponent component = Parent.GetComponent<ActorWeaponComponent>();
 
-            Entity<ActorWeaponData> currentWeaponIns = component.SelectedWeapon;
+            InstanceID currentWeaponIns = component.SelectedWeapon;
             if (currentWeaponIns.IsEmpty() || !currentWeaponIns.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
@@ -103,12 +103,14 @@ namespace Syadeu.Presentation.Actor
 
             if (!isFailed)
             {
-                currentWeaponIns.Target.FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnSuccess);
+                "TODO : DO FX".ToLog();
+                //currentWeaponIns.GetEntity().Target.FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnSuccess);
                 SendHitEvent(ev.Target.GetEntity<ActorEntity>(), component.WeaponDamage);
             }
             else
             {
-                currentWeaponIns.Target.FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnFailed);
+                "TODO : DO FX".ToLog();
+                //currentWeaponIns.Target.FireFXBounds(parent.transform, FXBounds.TriggerOptions.FireOnFailed);
             }
         }
 

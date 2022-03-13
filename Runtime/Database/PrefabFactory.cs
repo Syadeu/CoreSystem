@@ -18,6 +18,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
+    [Obsolete("", true)]
     public struct PrefabFactory
     {
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);

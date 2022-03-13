@@ -28,14 +28,14 @@ namespace Syadeu.Presentation.Actor
         //internal CoroutineJob m_WeaponPoser;
 
         internal int m_MaxEquipableCount;
-        internal Reference<ActorWeaponData> m_DefaultWeapon;
+        internal Reference<EntityBase> m_DefaultWeapon;
         //internal Instance<ActorWeaponData> m_DefaultWeaponInstance;
-        internal FixedInstanceList16<ActorWeaponData> m_EquipedWeapons;
+        internal FixedInstanceList16<EntityBase> m_EquipedWeapons;
 
-        internal FixedReferenceList16<ActorWeaponData> m_ExcludeWeapon;
-        internal FixedReferenceList16<ActorWeaponData> m_IncludeWeapon;
+        //internal FixedReferenceList16<ActorWeaponData> m_ExcludeWeapon;
+        //internal FixedReferenceList16<ActorWeaponData> m_IncludeWeapon;
         internal FixedReferenceList16<ActorItemType> m_ExcludeWeaponType;
-        internal FixedReferenceList16<ActorItemType> m_IncludeWeaponType;
+        //internal FixedReferenceList16<ActorItemType> m_IncludeWeaponType;
 
         internal FixedReferenceList16<TriggerAction> m_OnWeaponSelected;
         internal FixedReferenceList16<TriggerAction> m_OnEquipWeapon;
@@ -46,14 +46,14 @@ namespace Syadeu.Presentation.Actor
         internal bool m_WeaponAiming;
 
         //public ActorWeaponProvider Provider => m_Provider.GetObject();
-        public FixedInstanceList16<ActorWeaponData> EquipedWeapons => m_EquipedWeapons;
-        public Entity<ActorWeaponData> SelectedWeapon
+        public FixedInstanceList16<EntityBase> EquipedWeapons => m_EquipedWeapons;
+        public InstanceID<EntityBase> SelectedWeapon
         {
             get
             {
                 if (m_EquipedWeapons.Length == 0 || m_SelectedWeaponIndex >= m_EquipedWeapons.Length)
                 {
-                    return Entity<ActorWeaponData>.Empty;
+                    return InstanceID<EntityBase>.Empty;
                 }
 
                 return m_EquipedWeapons[m_SelectedWeaponIndex];
@@ -85,10 +85,11 @@ namespace Syadeu.Presentation.Actor
                         return 0;
                     }
 
-                    return m_DefaultWeapon.GetObject().Damage;
+                    return m_DefaultWeapon.GetObject().GetAttribute<ActorWeaponItemAttribute>().Damage;
                 }
 
-                return EquipedWeapons[m_SelectedWeaponIndex].GetEntity<ActorWeaponData>().Target.Damage;
+                return ((InstanceID)EquipedWeapons[m_SelectedWeaponIndex])
+                    .GetComponentReadOnly<ActorWeaponItemComponent>().Damage;
             }
         }
 
@@ -104,21 +105,29 @@ namespace Syadeu.Presentation.Actor
             m_SelectedWeaponIndex = index;
             m_OnWeaponSelected.Execute(m_Parent.ToEntity<IObject>());
         }
-        public bool IsEquipable(Entity<ActorWeaponData> weapon)
+        public bool IsEquipable(Entity<EntityBase> weapon)
         {
-            var original = weapon.AsOriginal();
-            var weaponObj = weapon.Target;
+            if (!weapon.HasComponent<ActorWeaponItemComponent>())
+            {
+                return false;
+            }
+            ActorWeaponItemComponent com = weapon.GetComponentReadOnly<ActorWeaponItemComponent>();
+
+            //var original = weapon.AsOriginal();
+            //var weaponObj = weapon.Target;
 
             //ActorWeaponProvider provider = Provider;
 
-            if (m_ExcludeWeaponType.Contains(weaponObj.ItemType))
+            if (m_ExcludeWeaponType.Contains(com.ItemType))
             {
-                if (!m_IncludeWeapon.Contains(original)) return false;
+                //if (!m_IncludeWeapon.Contains(original)) return false;
+                return false;
             }
-            else if (m_IncludeWeaponType.Contains(weaponObj.ItemType))
-            {
-                if (m_ExcludeWeapon.Contains(original)) return false;
-            }
+            //else if (m_IncludeWeaponType.Contains(com.ItemType))
+            //{
+            //    //if (m_ExcludeWeapon.Contains(original)) return false;
+            //    return true;
+            //}
 
             return true;
         }

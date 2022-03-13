@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.LowLevel;
+using Syadeu.Presentation.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,11 +27,13 @@ using Unity.Jobs;
 
 namespace Syadeu.Presentation.Actor
 {
-    public struct ItemInventory : IDisposable, INativeDisposable, IEquatable<ItemInventory>, IEnumerable<InstanceID<ActorItem>>
+    [BurstCompatible]
+    public struct ItemInventory : IDisposable, INativeDisposable, 
+        IEquatable<ItemInventory>, IEnumerable<InstanceID>
     {
         private readonly InstanceID m_Owner;
 
-        private UnsafeInstanceArray<ActorItem> m_Inventory;
+        private UnsafeInstanceArray m_Inventory;
 
         public InstanceID Owner => m_Owner;
 
@@ -38,20 +41,29 @@ namespace Syadeu.Presentation.Actor
         {
             m_Owner = owner;
             
-            m_Inventory = new UnsafeInstanceArray<ActorItem>(initialCapacity, allocator);
+            m_Inventory = new UnsafeInstanceArray(initialCapacity, allocator);
         }
 
-        public void Add(in InstanceID<ActorItem> item)
+        public void Add(in InstanceID item)
         {
+#if DEBUG_MODE
+            if (!item.HasComponent<ActorItemComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"This instance({item.GetEntity().Name}) doesn\'t have {nameof(ActorItemAttribute)}.");
+
+                return;
+            }
+#endif
             m_Inventory.Add(item);
         }
-        public void Remove(in InstanceID<ActorItem> item)
+        public void Remove(in InstanceID item)
         {
             m_Inventory.Remove(in item);
         }
         public void Clear() => m_Inventory.Clear();
 
-        public bool Contains(in InstanceID<ActorItem> item)
+        public bool Contains(in InstanceID item)
         {
             return m_Inventory.Contains(item);
         }
@@ -64,18 +76,18 @@ namespace Syadeu.Presentation.Actor
         #region Enumerator 
 
         public Enumerator GetEnumerator() => new Enumerator(m_Inventory);
-        IEnumerator<InstanceID<ActorItem>> IEnumerable<InstanceID<ActorItem>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<InstanceID> IEnumerable<InstanceID>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public struct Enumerator : IEnumerator<InstanceID<ActorItem>>
+        public struct Enumerator : IEnumerator<InstanceID>
         {
             private int m_Index;
-            private UnsafeInstanceArray<ActorItem> m_Inventory;
+            private UnsafeInstanceArray m_Inventory;
 
-            public InstanceID<ActorItem> Current => throw new NotImplementedException();
+            public InstanceID Current => throw new NotImplementedException();
             object IEnumerator.Current => throw new NotImplementedException();
 
-            internal Enumerator(UnsafeInstanceArray<ActorItem> inventory)
+            internal Enumerator(UnsafeInstanceArray inventory)
             {
                 m_Index = -1;
                 m_Inventory = inventory;

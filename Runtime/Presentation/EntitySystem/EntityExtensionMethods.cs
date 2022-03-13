@@ -152,9 +152,17 @@ namespace Syadeu.Presentation
         {
             return Entity<T>.GetEntity(id);
         }
+        public static Entity<T> GetEntity<T>(this InstanceID<T> id)
+           where T : class, IObject
+        {
+            return Entity<T>.GetEntity(id);
+        }
         public static Entity<T> GetEntityWithoutCheck<T>(this in InstanceID idx)
             where T : class, IObject
             => Entity<T>.GetEntityWithoutCheck(in idx);
+        public static Entity<T> GetEntityWithoutCheck<T>(this in InstanceID<T> idx)
+            where T : class, IObject
+            => Entity<T>.GetEntityWithoutCheck(idx);
 
         public static ObjectBase GetObject(this InstanceID id)
         {
@@ -164,6 +172,14 @@ namespace Syadeu.Presentation
             return obj;
         }
         public static T GetObject<T>(this InstanceID id)
+            where T : ObjectBase
+        {
+            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            ObjectBase obj = entitySystem.GetEntityByID(id);
+            return (T)obj;
+        }
+        public static T GetObject<T>(this InstanceID<T> id)
             where T : ObjectBase
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;

@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+
 namespace Syadeu.Collections
 {
+    [Flags]
     public enum Layout : short
     {
         None = 0,
