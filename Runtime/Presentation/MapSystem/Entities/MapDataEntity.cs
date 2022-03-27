@@ -19,7 +19,14 @@ using Syadeu.Internal;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using Syadeu.ThreadSafe;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Threading;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Map
@@ -29,6 +36,91 @@ namespace Syadeu.Presentation.Map
     [Description("파괴되지않는 오브젝트들로 구성된 오브젝트 데이터 테이블 입니다.")]
     public sealed class MapDataEntity : MapDataEntityBase
     {
+        [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
+        [JsonProperty(Order = 1, PropertyName = "Objects")] public EntityObject[] m_Objects = Array.Empty<EntityObject>();
+        [JsonProperty(Order = 2, PropertyName = "RawObjects")] public RawObject[] m_RawObjects = Array.Empty<RawObject>();
+
+        protected override ICustomYieldAwaiter LoadAllAssets()
+        {
+            return new Awaiter(m_Objects, m_RawObjects);
+        }
+
+        private sealed class Awaiter : ICustomYieldAwaiter
+        {
+            private readonly int m_AssetCount;
+            private int m_Counter;
+
+            public Awaiter(EntityObject[] objs, RawObject[] rawObjs)
+            {
+                AsyncOperationHandle<GameObject> handle;
+                m_Counter = 0;
+
+                IEnumerable<PrefabReference<GameObject>> temp1 = objs
+                    .Select(other => other.m_Object.GetObject().Prefab);
+                foreach (var item in temp1)
+                {
+                    if (item.IsNone())
+                    {
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    if (!item.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"MapDataEntity() trying to load an invalid entity.");
+
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    if (item.Asset == null)
+                    {
+                        handle = item.LoadAssetAsync();
+                        handle.CompletedTypeless += Handle_CompletedTypeless;
+                    }
+                    else Interlocked.Increment(ref m_Counter);
+                }
+                m_AssetCount += temp1.Count();
+
+                IEnumerable<PrefabReference<GameObject>> temp2 = rawObjs
+                    .Select(other => other.m_Object);
+                foreach (var item in temp2)
+                {
+                    if (item.IsNone())
+                    {
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    if (!item.IsValid())
+                    {
+                        CoreSystem.Logger.LogError(Channel.Entity,
+                            $"MapDataEntity() trying to load an invalid entity.");
+
+                        Interlocked.Increment(ref m_Counter);
+
+                        continue;
+                    }
+
+                    handle = item.LoadAssetAsync();
+                    handle.CompletedTypeless += Handle_CompletedTypeless;
+                }
+
+                m_AssetCount += temp2.Count();
+            }
+
+            private void Handle_CompletedTypeless(AsyncOperationHandle obj)
+            {
+                Interlocked.Increment(ref m_Counter);
+            }
+
+            public bool KeepWait => m_Counter != m_AssetCount;
+        }
+
         [JsonIgnore] public Entity<EntityBase>[] CreatedEntities { get; internal set; }
         [JsonIgnore] public ProxyTransform[] CreatedRawObjects { get; internal set; }
         //[JsonIgnore] public bool DestroyChildOnDestroy { get; set; } = true;
@@ -37,10 +129,10 @@ namespace Syadeu.Presentation.Map
         protected override ObjectBase Copy()
         {
             MapDataEntity clone = (MapDataEntity)base.Copy();
-            Object[] temp = new Object[m_Objects.Length];
+            EntityObject[] temp = new EntityObject[m_Objects.Length];
             for (int i = 0; i < temp.Length; i++)
             {
-                temp[i] = (Object)m_Objects[i].Clone();
+                temp[i] = (EntityObject)m_Objects[i].Clone();
             }
             clone.m_Objects = temp;
             clone.CreatedEntities = null;

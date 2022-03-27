@@ -118,83 +118,83 @@ namespace Syadeu.Presentation.Map
 //        }
 //#endif
 
-        public static GameObject InstantiateObjectaa(Transform parent, MapDataEntityBase.Object target)
-        {
-#if UNITY_EDITOR
-            if (Application.isPlaying)
-            {
-                CoreSystem.Logger.ThreadBlock(nameof(InstantiateObjectaa), ThreadInfo.Unity);
-            }
-#endif
-            GameObject obj;
-            if (!target.m_Object.IsValid() ||
-                target.m_Object.GetObject().Prefab.IsNone() ||
-                !target.m_Object.GetObject().Prefab.IsValid())
-            {
-                obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                obj.transform.SetParent(parent);
+//        public static GameObject InstantiateObjectaa(Transform parent, MapDataEntityBase.Object target)
+//        {
+//#if UNITY_EDITOR
+//            if (Application.isPlaying)
+//            {
+//                CoreSystem.Logger.ThreadBlock(nameof(InstantiateObjectaa), ThreadInfo.Unity);
+//            }
+//#endif
+//            GameObject obj;
+//            if (!target.m_Object.IsValid() ||
+//                target.m_Object.GetObject().Prefab.IsNone() ||
+//                !target.m_Object.GetObject().Prefab.IsValid())
+//            {
+//                obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+//                obj.transform.SetParent(parent);
 
-                CoreSystem.Logger.LogError(Channel.Presentation,
-                    $"{target.m_Object.GetObject().Name} is not valid. Returned as Empty Cube");
-            }
-            else
-            {
-                EntityBase targetObj = target.m_Object.GetObject();
-                UnityEngine.Object temp;
-#if UNITY_EDITOR
-                if (!Application.isPlaying)
-                {
-                    temp = targetObj.Prefab.GetEditorAsset();
-                }
-                else
-#endif
-                {
-                    if (targetObj.Prefab.Asset == null)
-                    {
-                        CoreSystem.Logger.LogError(Channel.Presentation,
-                            $"You need to load ({targetObj.Name}) prefab first.");
-                        return null;
-                    }
+//                CoreSystem.Logger.LogError(Channel.Presentation,
+//                    $"{target.m_Object.GetObject().Name} is not valid. Returned as Empty Cube");
+//            }
+//            else
+//            {
+//                EntityBase targetObj = target.m_Object.GetObject();
+//                UnityEngine.Object temp;
+//#if UNITY_EDITOR
+//                if (!Application.isPlaying)
+//                {
+//                    temp = targetObj.Prefab.GetEditorAsset();
+//                }
+//                else
+//#endif
+//                {
+//                    if (targetObj.Prefab.Asset == null)
+//                    {
+//                        CoreSystem.Logger.LogError(Channel.Presentation,
+//                            $"You need to load ({targetObj.Name}) prefab first.");
+//                        return null;
+//                    }
 
-                    temp = targetObj.Prefab.Asset;
-                }
+//                    temp = targetObj.Prefab.Asset;
+//                }
 
-                if (!(temp is GameObject gameObj))
-                {
-                    obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    obj.transform.SetParent(parent);
+//                if (!(temp is GameObject gameObj))
+//                {
+//                    obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+//                    obj.transform.SetParent(parent);
 
-                    CoreSystem.Logger.LogError(Channel.Presentation,
-                        $"Type error, {target.m_Object.GetObject().Name} is not a GameObject. Returned as Empty Cube");
-                }
-                else
-                {
-#if UNITY_EDITOR
-                    if (!Application.isPlaying)
-                    {
-                        obj = (GameObject)PrefabUtility.InstantiatePrefab(gameObj, parent);
-                    }
-                    else
-#endif
-                    {
-                        obj = UnityEngine.Object.Instantiate(targetObj.Prefab.Asset);
-                    }
-                }
-                //
-            }
+//                    CoreSystem.Logger.LogError(Channel.Presentation,
+//                        $"Type error, {target.m_Object.GetObject().Name} is not a GameObject. Returned as Empty Cube");
+//                }
+//                else
+//                {
+//#if UNITY_EDITOR
+//                    if (!Application.isPlaying)
+//                    {
+//                        obj = (GameObject)PrefabUtility.InstantiatePrefab(gameObj, parent);
+//                    }
+//                    else
+//#endif
+//                    {
+//                        obj = UnityEngine.Object.Instantiate(targetObj.Prefab.Asset);
+//                    }
+//                }
+//                //
+//            }
 
-#if UNITY_EDITOR
-            obj.tag = c_EditorOnly;
-            obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
-#endif
+//#if UNITY_EDITOR
+//            obj.tag = c_EditorOnly;
+//            obj.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+//#endif
 
-            Transform tr = obj.transform;
+//            Transform tr = obj.transform;
 
-            tr.position = target.m_Translation;
-            tr.rotation = target.m_Rotation;
-            tr.localScale = target.m_Scale;
+//            tr.position = target.m_Translation;
+//            tr.rotation = target.m_Rotation;
+//            tr.localScale = target.m_Scale;
 
-            return obj;
-        }
+//            return obj;
+//        }
     }
 }

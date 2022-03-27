@@ -32,7 +32,7 @@ namespace SyadeuEditor.Presentation.Map
 
         private Vector2 m_Scroll;
 
-        private readonly List<Reference<MapDataEntityBase>> m_LoadedMapDataReference = new List<Reference<MapDataEntityBase>>();
+        private readonly List<Reference<MapDataEntity>> m_LoadedMapDataReference = new List<Reference<MapDataEntity>>();
         private readonly List<MapData> m_LoadedMapData = new List<MapData>();
 
         private readonly List<GameObject> m_CreatedObjects = new List<GameObject>();
@@ -40,7 +40,7 @@ namespace SyadeuEditor.Presentation.Map
         private MapData m_EditingMapData = null;
 
         private MapData m_SelectedMapData = null;
-        private MapDataEntityBase.Object[] m_SelectedObjects = null;
+        private MapDataEntityBase.EntityObject[] m_SelectedObjects = null;
         private MapDataEntityBase.RawObject[] m_SelectedRawObjects = null;
         private GameObject[] m_SelectedGameObjects = null;
 
@@ -53,7 +53,7 @@ namespace SyadeuEditor.Presentation.Map
             if (!EntityDataList.IsLoaded) EntityDataList.Instance.LoadData();
         }
 
-        private MapDataEntityBase.Object GetMapDataObject(GameObject target, out MapData mapData)
+        private MapDataEntityBase.EntityObject GetMapDataObject(GameObject target, out MapData mapData)
         {
             mapData = null;
             if (target == null) return null;
@@ -61,7 +61,7 @@ namespace SyadeuEditor.Presentation.Map
             for (int i = 0; i < m_LoadedMapData.Count; i++)
             {
                 if (m_LoadedMapData[i][target] != null &&
-                    m_LoadedMapData[i][target] is MapDataEntityBase.Object temp)
+                    m_LoadedMapData[i][target] is MapDataEntityBase.EntityObject temp)
                 {
                     mapData = m_LoadedMapData[i];
                     return temp;
@@ -100,7 +100,7 @@ namespace SyadeuEditor.Presentation.Map
             var entityObj = GetMapDataObject(obj, out m_SelectedMapData);
             if (entityObj != null)
             {
-                m_SelectedObjects = new MapDataEntityBase.Object[1];
+                m_SelectedObjects = new MapDataEntityBase.EntityObject[1];
                 m_SelectedObjects[0] = entityObj;
                 m_SelectedMapData.SetDirty();
 
@@ -136,7 +136,7 @@ namespace SyadeuEditor.Presentation.Map
             }
 
             List<GameObject> gameObjects = new List<GameObject>();
-            List<MapDataEntityBase.Object> entityObjs = new List<MapDataEntityBase.Object>();
+            List<MapDataEntityBase.EntityObject> entityObjs = new List<MapDataEntityBase.EntityObject>();
             List<MapDataEntityBase.RawObject> rawObjs = new List<MapDataEntityBase.RawObject>();
             for (int i = 0; i < obj.Length; i++)
             {
@@ -488,7 +488,7 @@ namespace SyadeuEditor.Presentation.Map
                                     }
 
                                     Reference<EntityBase> refobj = new Reference<EntityBase>(hash);
-                                    MapDataEntityBase.Object obj = new MapDataEntityBase.Object
+                                    MapDataEntityBase.EntityObject obj = new MapDataEntityBase.EntityObject
                                     {
                                         m_Object = refobj,
                                         m_Translation = pos,
@@ -558,7 +558,7 @@ namespace SyadeuEditor.Presentation.Map
             UnityEngine.Object.DestroyImmediate(Folder.gameObject);
         }
 
-        private void DrawSelectedObject(MapDataEntityBase.Object obj, GameObject proxy)
+        private void DrawSelectedObject(MapDataEntityBase.EntityObject obj, GameObject proxy)
         {
             const float width = 180;
 
@@ -710,17 +710,17 @@ namespace SyadeuEditor.Presentation.Map
             Handles.DrawWireCube(selectAabb.center, selectAabb.size);
         }
 
-        private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntityBase>> setter)
+        private static void DrawMapDataSelector(IFixedReference current, Action<Reference<MapDataEntity>> setter)
         {
             ReferenceDrawer.DrawReferenceSelector("Map data: ", (hash) =>
             {
                 if (hash.Equals(Hash.Empty))
                 {
-                    setter.Invoke(Reference<MapDataEntityBase>.Empty);
+                    setter.Invoke(Reference<MapDataEntity>.Empty);
                     return;
                 }
 
-                Reference<MapDataEntityBase> reference = new Reference<MapDataEntityBase>(hash);
+                Reference<MapDataEntity> reference = new Reference<MapDataEntity>(hash);
                 setter.Invoke(reference);
             }, current, TypeHelper.TypeOf<MapDataEntityBase>.Type);
         }
@@ -730,30 +730,30 @@ namespace SyadeuEditor.Presentation.Map
             const string c_EditorOnly = "EditorOnly";
 
             private readonly Transform m_Folder = null;
-            private readonly MapDataEntityBase m_MapData;
-            private readonly Dictionary<MapDataEntityBase.Object, GameObject> m_MapDataObjects = new Dictionary<MapDataEntityBase.Object, GameObject>();
+            private readonly MapDataEntity m_MapData;
+            private readonly Dictionary<MapDataEntityBase.EntityObject, GameObject> m_MapDataObjects = new Dictionary<MapDataEntityBase.EntityObject, GameObject>();
             private readonly Dictionary<MapDataEntityBase.RawObject, GameObject> m_MapDataRawObjects = new Dictionary<MapDataEntityBase.RawObject, GameObject>();
 
             private readonly List<GameObject> m_CreatedObjects = new List<GameObject>();
 
-            private readonly Dictionary<GameObject, MapDataEntityBase.Object> m_Dictionary = new Dictionary<GameObject, MapDataEntityBase.Object>();
+            private readonly Dictionary<GameObject, MapDataEntityBase.EntityObject> m_Dictionary = new Dictionary<GameObject, MapDataEntityBase.EntityObject>();
             private readonly Dictionary<GameObject, MapDataEntityBase.RawObject> m_RawDictionary = new Dictionary<GameObject, MapDataEntityBase.RawObject>();
 
             public bool IsDirty { get; private set; } = false;
             public IReadOnlyList<GameObject> CreatedObjects => m_CreatedObjects;
-            public MapDataEntityBase Entity => m_MapData;
+            public MapDataEntity Entity => m_MapData;
 
             public object this[GameObject i]
             {
                 get
                 {
-                    if (m_Dictionary.TryGetValue(i, out MapDataEntityBase.Object obj)) return obj;
+                    if (m_Dictionary.TryGetValue(i, out MapDataEntityBase.EntityObject obj)) return obj;
                     else if (m_RawDictionary.TryGetValue(i, out var data)) return data;
 
                     return null;
                 }
             }
-            public GameObject this[MapDataEntityBase.Object i]
+            public GameObject this[MapDataEntityBase.EntityObject i]
             {
                 get
                 {
@@ -770,7 +770,7 @@ namespace SyadeuEditor.Presentation.Map
                 }
             }
 
-            public MapData(Transform parent, Reference<MapDataEntityBase> reference)
+            public MapData(Transform parent, Reference<MapDataEntity> reference)
             {
                 m_MapData = reference.GetObject();
 
@@ -800,7 +800,7 @@ namespace SyadeuEditor.Presentation.Map
 
             #region Add & Remove
 
-            public GameObject Add(MapDataEntityBase.Object target)
+            public GameObject Add(MapDataEntityBase.EntityObject target)
             {
                 GameObject obj = InstantiateObject(m_Folder, target);
 
@@ -828,7 +828,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 return obj;
             }
-            public void Remove(MapDataEntityBase.Object target)
+            public void Remove(MapDataEntityBase.EntityObject target)
             {
                 GameObject obj = this[target];
                 if (obj == null) return;
@@ -837,7 +837,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             public void Remove(GameObject target)
             {
-                if (m_Dictionary.TryGetValue(target, out MapDataEntityBase.Object data))
+                if (m_Dictionary.TryGetValue(target, out MapDataEntityBase.EntityObject data))
                 {
                     m_MapDataObjects.Remove(data);
 
@@ -909,7 +909,7 @@ namespace SyadeuEditor.Presentation.Map
 
                 return obj;
             }
-            private static GameObject InstantiateObject(Transform parent, MapDataEntityBase.Object target)
+            private static GameObject InstantiateObject(Transform parent, MapDataEntityBase.EntityObject target)
             {
                 GameObject obj;
                 if (!target.m_Object.IsValid() || 

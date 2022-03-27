@@ -276,6 +276,8 @@ namespace Syadeu.Presentation.Entities
             }
             return GetEntity(a.Idx);
         }
+        public static implicit operator InstanceID(Entity<T> t) => t.Idx;
+        public static implicit operator InstanceID<T>(Entity<T> t) => (InstanceID<T>)t.Idx;
 
         public static implicit operator Entity<IObject>(Entity<T> a)
         {

@@ -82,7 +82,10 @@ namespace Syadeu.Presentation.Map
             List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
             for (int i = 0; i < m_MapData.Length; i++)
             {
-                awaiters.Add(m_MapData[i].GetObject().LoadAllAssets());
+                var awaiter = m_MapData[i].GetObject().InternalLoadAllAssets();
+                if (awaiter == null) continue;
+
+                awaiters.Add(awaiter);
             }
 
             return new Awaiter(awaiters);

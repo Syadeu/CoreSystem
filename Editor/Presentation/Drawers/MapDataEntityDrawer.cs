@@ -31,7 +31,7 @@ namespace SyadeuEditor.Presentation
                 return base.Name;
             }
         }
-        MapDataEntityBase Entity => (MapDataEntityBase)Target;
+        MapDataEntity Entity => (MapDataEntity)Target;
         ArrayDrawer ArrayDrawer;
 
         public MapDataEntityDrawer(ObjectBase objectBase) : base(objectBase)
@@ -42,7 +42,7 @@ namespace SyadeuEditor.Presentation
             ArrayDrawer = GetDrawer<ArrayDrawer>("Objects");
         }
 
-        private static bool IsInvalidObject(MapDataEntityBase.Object obj)
+        private static bool IsInvalidObject(MapDataEntityBase.EntityObject obj)
         {
             if (!obj.m_Object.IsValid() || obj.m_Object.IsEmpty())
             {
@@ -57,7 +57,7 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < Entity.m_Objects.Length; i++)
             {
-                MapDataEntityBase.Object obj = Entity.m_Objects[i];
+                MapDataEntityBase.EntityObject obj = Entity.m_Objects[i];
                 if (IsInvalidObject(obj))
                 {
                     obj.m_Object = Reference<Syadeu.Presentation.Entities.EntityBase>.Empty;
@@ -77,7 +77,7 @@ namespace SyadeuEditor.Presentation
                 m_OpenInvalidList = EditorUtilities.Foldout(m_OpenInvalidList, "Invalid Objects Founded", 13);
                 if (GUILayout.Button("Remove All"))
                 {
-                    List<MapDataEntityBase.Object> temp = Entity.m_Objects.ToList();
+                    List<MapDataEntityBase.EntityObject> temp = Entity.m_Objects.ToList();
                     temp.RemoveAll(IsInvalidObject);
                     Entity.m_Objects = temp.ToArray();
 

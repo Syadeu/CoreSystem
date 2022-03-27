@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
@@ -27,10 +28,16 @@ using AABB = Syadeu.Collections.AABB;
 
 namespace Syadeu.Presentation.Map
 {
+    [InternalLowLevelEntity]
     public abstract class MapDataEntityBase : EntityDataBase
     {
         [Serializable]
-        public sealed class Object : ICloneable
+        public abstract class Entry : ICloneable
+        {
+            public virtual object Clone() => MemberwiseClone();
+        }
+        [Serializable]
+        public sealed class EntityObject : Entry
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
@@ -41,7 +48,8 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 4, PropertyName = "Static")]
             public bool m_Static = false;
 
-            [JsonIgnore] public AABB aabb
+            [JsonIgnore]
+            public AABB aabb
             {
                 get
                 {
@@ -51,14 +59,13 @@ namespace Syadeu.Presentation.Map
             }
             [JsonIgnore] public TRS trs => new TRS(m_Translation, m_Rotation, m_Scale);
 
-            public Object()
+            public EntityObject()
             {
                 m_Rotation = quaternion.identity;
             }
-            public object Clone() => MemberwiseClone();
         }
         [Serializable]
-        public sealed class RawObject : ICloneable
+        public sealed class RawObject : Entry
         {
             [JsonProperty(Order = 0, PropertyName = "Object")] public PrefabReference<GameObject> m_Object;
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
@@ -89,92 +96,24 @@ namespace Syadeu.Presentation.Map
             {
                 m_Rotation = quaternion.identity;
             }
-            public object Clone() => MemberwiseClone();
         }
-
-        [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
-        [JsonProperty(Order = 1, PropertyName = "Objects")] public Object[] m_Objects = Array.Empty<Object>();
-        [JsonProperty(Order = 2, PropertyName = "RawObjects")] public RawObject[] m_RawObjects = Array.Empty<RawObject>();
-
-        public ICustomYieldAwaiter LoadAllAssets()
+        public sealed class EntityDataObject : Entry
         {
-            return new Awaiter(m_Objects, m_RawObjects);
+            [JsonProperty(Order = 0, PropertyName = "")]
+            public Reference<EntityDataBase> m_Object = Reference<EntityDataBase>.Empty;
         }
-
-        private sealed class Awaiter : ICustomYieldAwaiter
+        public sealed class DataObject : Entry
         {
-            private readonly int m_AssetCount;
-            private int m_Counter;
-
-            public Awaiter(Object[] objs, RawObject[] rawObjs)
-            {
-                AsyncOperationHandle<GameObject> handle;
-                m_Counter = 0;
-
-                IEnumerable<PrefabReference<GameObject>> temp1 = objs
-                    .Select(other => other.m_Object.GetObject().Prefab);
-                foreach (var item in temp1)
-                {
-                    if (item.IsNone())
-                    {
-                        Interlocked.Increment(ref m_Counter);
-
-                        continue;
-                    }
-
-                    if (!item.IsValid())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"MapDataEntity() trying to load an invalid entity.");
-
-                        Interlocked.Increment(ref m_Counter);
-
-                        continue;
-                    }
-
-                    if (item.Asset == null)
-                    {
-                        handle = item.LoadAssetAsync();
-                        handle.CompletedTypeless += Handle_CompletedTypeless;
-                    }
-                    else Interlocked.Increment(ref m_Counter);
-                }
-                m_AssetCount += temp1.Count();
-
-                IEnumerable<PrefabReference<GameObject>> temp2 = rawObjs
-                    .Select(other => other.m_Object);
-                foreach (var item in temp2)
-                {
-                    if (item.IsNone())
-                    {
-                        Interlocked.Increment(ref m_Counter);
-
-                        continue;
-                    }
-
-                    if (!item.IsValid())
-                    {
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"MapDataEntity() trying to load an invalid entity.");
-
-                        Interlocked.Increment(ref m_Counter);
-
-                        continue;
-                    }
-
-                    handle = item.LoadAssetAsync();
-                    handle.CompletedTypeless += Handle_CompletedTypeless;
-                }
-
-                m_AssetCount += temp2.Count();
-            }
-
-            private void Handle_CompletedTypeless(AsyncOperationHandle obj)
-            {
-                Interlocked.Increment(ref m_Counter);
-            }
-
-            public bool KeepWait => m_Counter != m_AssetCount;
+            [JsonProperty(Order = 0, PropertyName = "")]
+            public Reference<DataObjectBase> m_Object = Reference<DataObjectBase>.Empty;
         }
+
+        /// <summary>
+        /// 이 데이터에서 프리로드 되야될 에셋을 지정합니다.
+        /// </summary>
+        /// <returns></returns>
+        internal ICustomYieldAwaiter InternalLoadAllAssets() => LoadAllAssets();
+        /// <inheritdoc cref="InternalLoadAllAssets"/>
+        protected virtual ICustomYieldAwaiter LoadAllAssets() { return null; }
     }
 }
