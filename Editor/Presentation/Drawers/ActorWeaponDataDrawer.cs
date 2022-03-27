@@ -5,6 +5,7 @@ using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using SyadeuEditor.Utilities;
+using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -12,6 +13,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [Obsolete("", true)]
     public sealed class ActorWeaponDataDrawer : ObjectBaseDrawer<ActorWeaponData>
     {
         private ActorWeaponPreviewScene m_PreviewScene = null;

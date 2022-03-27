@@ -1,151 +1,170 @@
-﻿using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿//// Copyright 2022 Seung Ha Kim
+//// 
+//// Licensed under the Apache License, Version 2.0 (the "License");
+//// you may not use this file except in compliance with the License.
+//// You may obtain a copy of the License at
+//// 
+////     http://www.apache.org/licenses/LICENSE-2.0
+//// 
+//// Unless required by applicable law or agreed to in writing, software
+//// distributed under the License is distributed on an "AS IS" BASIS,
+//// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//// See the License for the specific language governing permissions and
+//// limitations under the License.
 
-namespace Syadeu.Presentation.Data
-{
-    public sealed class DialogueHandler
-    {
-        internal Reference<DialogueNodeData>[] m_Dialogues = null;
-        private bool m_Ended = false;
-        private int m_CurrentSelection = 0;
-        private IEnumerator<TextInfo> m_Iterator = null;
+//#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+//#define DEBUG_MODE
+//#endif
 
-        public TextInfo Current => m_Iterator.Current;
+//using Syadeu.Collections;
+//using Syadeu.Presentation.Actor;
+//using Syadeu.Presentation.Entities;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
 
-        public sealed class TextInfo
-        {
-            private readonly LocalizedTextData.Culture culture;
-            public readonly Entity<ActorEntity> speaker;
-            private readonly Reference<LocalizedTextData>[] textData;
-            private readonly int[] textIndices;
+//namespace Syadeu.Presentation.Data
+//{
+//    public sealed class DialogueHandler
+//    {
+//        internal Reference<DialogueNodeData>[] m_Dialogues = null;
+//        private bool m_Ended = false;
+//        private int m_CurrentSelection = 0;
+//        private IEnumerator<TextInfo> m_Iterator = null;
 
-            public string[] texts
-            {
-                get
-                {
-                    List<string> texts = new List<string>();
-                    for (int i = 0; i < textIndices.Length; i++)
-                    {
-                        if (!textData[i].IsValid())
-                        {
-                            CoreSystem.Logger.LogError(Channel.Entity, $"invalid textdata");
-                            continue;
-                        }
-                        LocalizedTextData.Entry entries = textData[i].GetObject().m_Entries[textIndices[i]];
-                        for (int j = 0; j < entries.m_Texts.Length; j++)
-                        {
-                            if (entries.m_Texts[j].m_Culture.Equals(culture))
-                            {
-                                texts.Add(entries.m_Texts[j].m_Text);
-                            }
-                        }
+//        public TextInfo Current => m_Iterator.Current;
 
-                        CoreSystem.Logger.LogError(Channel.Entity,
-                            $"cannot found text on that culture({culture}) at {textData[i].GetObject().Name}");
-                        continue;
-                    }
+//        public sealed class TextInfo
+//        {
+//            private readonly Culture culture;
+//            public readonly Entity<ActorEntity> speaker;
+//            private readonly Reference<LocalizedTextData>[] textData;
+//            private readonly int[] textIndices;
 
-                    return texts.ToArray();
-                }
-            }
+//            public string[] texts
+//            {
+//                get
+//                {
+//                    List<string> texts = new List<string>();
+//                    for (int i = 0; i < textIndices.Length; i++)
+//                    {
+//                        if (!textData[i].IsValid())
+//                        {
+//                            CoreSystem.Logger.LogError(Channel.Entity, $"invalid textdata");
+//                            continue;
+//                        }
+//                        LocalizedTextData.Entry entries = textData[i].GetObject().m_Entries[textIndices[i]];
+//                        for (int j = 0; j < entries.m_Texts.Length; j++)
+//                        {
+//                            if (entries.m_Texts[j].m_Culture.Equals(culture))
+//                            {
+//                                texts.Add(entries.m_Texts[j].m_Text);
+//                            }
+//                        }
 
-            public TextInfo(LocalizedTextData.Culture culture, Entity<ActorEntity> speaker, DialogueNodeData.Option[] option)
-            {
-                this.culture = culture;
-                this.speaker = speaker;
+//                        CoreSystem.Logger.LogError(Channel.Entity,
+//                            $"cannot found text on that culture({culture}) at {textData[i].GetObject().Name}");
+//                        continue;
+//                    }
 
-                textData = option.Select((other) => other.m_TextData).ToArray();
-                textIndices = option.Select((other) => other.m_TextIndex).ToArray();
-            }
-        }
+//                    return texts.ToArray();
+//                }
+//            }
 
-        public DialogueHandler(LocalizedTextData.Culture culture, params Entity<ActorEntity>[] entries)
-        {
-            m_Iterator = Conversation(culture, entries);
+//            public TextInfo(Culture culture, Entity<ActorEntity> speaker, DialogueNodeData.Option[] option)
+//            {
+//                this.culture = culture;
+//                this.speaker = speaker;
 
-            currentNode = m_Dialogues[currentIndex].GetObject();
-        }
+//                textData = option.Select((other) => other.m_TextData).ToArray();
+//                textIndices = option.Select((other) => other.m_TextIndex).ToArray();
+//            }
+//        }
 
-        public DialogueHandler Select(int optionIndex)
-        {
-            if (m_Ended) throw new Exception();
-            if (optionIndex >= currentNode.m_Options.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(optionIndex));
-            }
+//        public DialogueHandler(Culture culture, params Entity<ActorEntity>[] entries)
+//        {
+//            m_Iterator = Conversation(culture, entries);
 
-            m_CurrentSelection = optionIndex;
-            m_Ended = !m_Iterator.MoveNext();
-            return this;
-        }
+//            currentNode = m_Dialogues[currentIndex].GetObject();
+//        }
 
-        int currentIndex = 0;
-        DialogueNodeData currentNode;
-        DialogueNodeData.Option currentOption;
+//        public DialogueHandler Select(int optionIndex)
+//        {
+//            if (m_Ended) throw new Exception();
+//            if (optionIndex >= currentNode.m_Options.Length)
+//            {
+//                throw new ArgumentOutOfRangeException(nameof(optionIndex));
+//            }
 
-        private IEnumerator<TextInfo> Conversation(LocalizedTextData.Culture culture, params Entity<ActorEntity>[] entries)
-        {
-            currentOption = currentNode.m_Options[m_CurrentSelection];
+//            m_CurrentSelection = optionIndex;
+//            m_Ended = !m_Iterator.MoveNext();
+//            return this;
+//        }
 
-            if (!TryFindEntity(currentNode.m_Speaker, out Entity<ActorEntity> targetEntity, entries))
-            {
-                CoreSystem.Logger.LogError(Channel.Entity,
-                    "unexpected conversation exit");
-                yield break;
-            }
+//        int currentIndex = 0;
+//        DialogueNodeData currentNode;
+//        DialogueNodeData.Option currentOption;
 
-            TextInfo textInfo = new TextInfo(culture, targetEntity, currentNode.m_Options);
-            yield return textInfo;
+//        private IEnumerator<TextInfo> Conversation(Culture culture, params Entity<ActorEntity>[] entries)
+//        {
+//            currentOption = currentNode.m_Options[m_CurrentSelection];
 
-            DialogueNodeData prevNode = null;
-            DialogueNodeData.Option prevOption = null;
+//            if (!TryFindEntity(currentNode.m_Speaker, out Entity<ActorEntity> targetEntity, entries))
+//            {
+//                CoreSystem.Logger.LogError(Channel.Entity,
+//                    "unexpected conversation exit");
+//                yield break;
+//            }
 
-            while (currentIndex < m_Dialogues.Length)
-            {
-                currentIndex++;
-                if (currentIndex >= m_Dialogues.Length) break;
+//            TextInfo textInfo = new TextInfo(culture, targetEntity, currentNode.m_Options);
+//            yield return textInfo;
 
-                prevNode = currentNode;
-                prevOption = currentOption;
+//            DialogueNodeData prevNode = null;
+//            DialogueNodeData.Option prevOption = null;
 
-                currentNode = GetNode(currentIndex);
-                if (!currentNode.Predicate(prevNode, prevOption))
-                {
-                    CoreSystem.Logger.Log(Channel.Entity,
-                        "current node predicate failed. skipping");
-                    continue;
-                }
-                if (!TryFindEntity(currentNode.m_Speaker, out targetEntity, entries))
-                {
-                    CoreSystem.Logger.Log(Channel.Entity,
-                        "cannot found target entity. skipping");
-                    continue;
-                }
+//            while (currentIndex < m_Dialogues.Length)
+//            {
+//                currentIndex++;
+//                if (currentIndex >= m_Dialogues.Length) break;
 
-                textInfo = new TextInfo(culture, targetEntity, currentNode.m_Options);
-                yield return textInfo;
-            }
+//                prevNode = currentNode;
+//                prevOption = currentOption;
 
-            DialogueNodeData GetNode(int index) => m_Dialogues[currentIndex].GetObject();
+//                currentNode = GetNode(currentIndex);
+//                if (!currentNode.Predicate(prevNode, prevOption))
+//                {
+//                    CoreSystem.Logger.Log(Channel.Entity,
+//                        "current node predicate failed. skipping");
+//                    continue;
+//                }
+//                if (!TryFindEntity(currentNode.m_Speaker, out targetEntity, entries))
+//                {
+//                    CoreSystem.Logger.Log(Channel.Entity,
+//                        "cannot found target entity. skipping");
+//                    continue;
+//                }
 
-            bool TryFindEntity(Reference<ActorEntity> reference, out Entity<ActorEntity> entity, params Entity<ActorEntity>[] entries)
-            {
-                entity = FindEntity(reference, entries);
-                if (entity.IsValid()) return true;
-                return false;
-            }
-            Entity<ActorEntity> FindEntity(Reference<ActorEntity> reference, params Entity<ActorEntity>[] entries)
-            {
-                var iter = entries.Where((other) => other.Hash.Equals(reference.Hash));
-                if (iter.Any())
-                {
-                    return iter.First();
-                }
-                return Entity<ActorEntity>.Empty;
-            }
-        }
-    }
-}
+//                textInfo = new TextInfo(culture, targetEntity, currentNode.m_Options);
+//                yield return textInfo;
+//            }
+
+//            DialogueNodeData GetNode(int index) => m_Dialogues[currentIndex].GetObject();
+
+//            bool TryFindEntity(Reference<ActorEntity> reference, out Entity<ActorEntity> entity, params Entity<ActorEntity>[] entries)
+//            {
+//                entity = FindEntity(reference, entries);
+//                if (entity.IsValid()) return true;
+//                return false;
+//            }
+//            Entity<ActorEntity> FindEntity(Reference<ActorEntity> reference, params Entity<ActorEntity>[] entries)
+//            {
+//                var iter = entries.Where((other) => other.Hash.Equals(reference.Hash));
+//                if (iter.Any())
+//                {
+//                    return iter.First();
+//                }
+//                return Entity<ActorEntity>.Empty;
+//            }
+//        }
+//    }
+//}

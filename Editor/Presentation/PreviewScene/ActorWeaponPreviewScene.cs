@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [Obsolete("", true)]
     public sealed class ActorWeaponPreviewScene : EntityPreviewScene<ActorWeaponData>
     {
         private FieldInfo 

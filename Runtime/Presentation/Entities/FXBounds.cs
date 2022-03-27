@@ -75,22 +75,24 @@ namespace Syadeu.Presentation.Entities
             return m_FXEntity.IsValid();
         }
 
-        public void Fire(CoroutineSystem coroutineSystem, ITransform parent)
+        public void Fire(CoroutineSystem coroutineSystem, ProxyTransform parent)
         {
             if (parent is ProxyTransform proxy)
             {
                 m_Instance = m_FXEntity.CreateEntity();
-                FXEntity fx = m_Instance.Target;
+                //FXEntity fx = m_Instance.Target;
                 //fx.SetPlayOptions(m_PlayOption);
 
-                coroutineSystem.StartCoroutine(new FireCoroutine
-                {
-                    m_FXEntity = m_Instance,
-                    m_PlayOption = fx.PlayOptions,
-                    TRS = TRS,
+                //coroutineSystem.StartCoroutine(new FireCoroutine
+                //{
+                //    m_FXEntity = m_Instance,
+                //    m_PlayOption = fx.PlayOptions,
+                //    TRS = TRS,
 
-                    Parent = proxy
-                });
+                //    Parent = proxy
+                //});
+
+                m_Instance.transform.SetParent(parent);
             }
             else
             {
@@ -105,62 +107,63 @@ namespace Syadeu.Presentation.Entities
                 return;
             }
 
-            m_Instance.Target.Stop();
+            m_Instance.Destroy();
+            m_Instance = Entity<FXEntity>.Empty;
         }
 
-        private struct FireCoroutine : ICoroutineJob
-        {
-            public Entity<FXEntity> m_FXEntity;
-            public PlayOptions m_PlayOption;
-            public TRS TRS;
+        //private struct FireCoroutine : ICoroutineJob
+        //{
+        //    public Entity<FXEntity> m_FXEntity;
+        //    public PlayOptions m_PlayOption;
+        //    public TRS TRS;
 
-            public ProxyTransform Parent;
+        //    public ProxyTransform Parent;
 
-            public UpdateLoop Loop => UpdateLoop.AfterTransform;
+        //    public UpdateLoop Loop => UpdateLoop.AfterTransform;
 
-            public void Dispose()
-            {
-            }
-            public IEnumerator Execute()
-            {
-                if (!m_FXEntity.IsValid())
-                {
-                    CoreSystem.Logger.LogError(Channel.Entity,
-                        $"Null return");
-                    yield break;
-                }
+        //    public void Dispose()
+        //    {
+        //    }
+        //    public IEnumerator Execute()
+        //    {
+        //        if (!m_FXEntity.IsValid())
+        //        {
+        //            CoreSystem.Logger.LogError(Channel.Entity,
+        //                $"Null return");
+        //            yield break;
+        //        }
 
-                //Instance<FXEntity> instance = m_FXEntity.CreateInstance();
-                FXEntity fx = m_FXEntity.Target;
-                //fx.SetPlayOptions(m_PlayOption);
+        //        //Instance<FXEntity> instance = m_FXEntity.CreateInstance();
+        //        FXEntity fx = m_FXEntity.Target;
+        //        //fx.SetPlayOptions(m_PlayOption);
 
-                ITransform tr = fx.GetTransform();
+        //        ITransform tr = fx.GetTransform();
 
-                TRS trs = TRS.Project(new TRS(Parent));
-                tr.position = trs.m_Position;
-                tr.rotation = trs.m_Rotation;
-                tr.scale = TRS.m_Scale;
+        //        TRS trs = TRS.Project(new TRS(Parent));
+        //        tr.position = trs.m_Position;
+        //        tr.rotation = trs.m_Rotation;
+        //        tr.scale = TRS.m_Scale;
 
-                fx.Play();
+        //        fx.Play();
 
-                $"{m_FXEntity.Target.Name} fired".ToLog();
+        //        $"{m_FXEntity.Target.Name} fired".ToLog();
 
-                while (fx.IsPlaying && !fx.Stopped)
-                {
-                    if ((m_PlayOption & PlayOptions.UpdateTransform) == PlayOptions.UpdateTransform)
-                    {
-                        trs = TRS.Project(new TRS(Parent));
-                        tr.position = trs.m_Position;
-                        tr.rotation = trs.m_Rotation;
-                        tr.scale = TRS.m_Scale;
-                    }
+        //        while (fx.IsPlaying && !fx.Stopped)
+        //        {
+        //            if ((m_PlayOption & PlayOptions.UpdateTransform) == PlayOptions.UpdateTransform)
+        //            {
+        //                trs = TRS.Project(new TRS(Parent));
+        //                tr.position = trs.m_Position;
+        //                tr.rotation = trs.m_Rotation;
+        //                tr.scale = TRS.m_Scale;
+        //            }
 
-                    yield return null;
-                }
+        //            yield return null;
+        //        }
 
-                "destroy fx".ToLog();
-                m_FXEntity.Destroy();
-            }
-        }
+        //        "destroy fx".ToLog();
+        //        m_FXEntity.Destroy();
+        //    }
+        //}
     }
 }

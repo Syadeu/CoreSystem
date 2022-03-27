@@ -60,6 +60,10 @@ namespace Syadeu.Presentation.Entities
 
             return true;
         }
+        public void SetCulling(bool enable)
+        {
+            m_EnableCull = enable;
+        }
 
         [Preserve]
         static void AOTCodeGeneration()

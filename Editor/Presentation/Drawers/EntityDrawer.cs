@@ -118,12 +118,12 @@ namespace SyadeuEditor.Presentation
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                entity.m_EnableCull = EditorUtilities.BoxToggleButton(
-                    entity.m_EnableCull ? "Disable Cull" : "Enable Cull",
-                    entity.m_EnableCull,
+                entity.SetCulling(EditorUtilities.BoxToggleButton(
+                    entity.EnableCull ? "Disable Cull" : "Enable Cull",
+                    entity.EnableCull,
                     ColorPalettes.PastelDreams.TiffanyBlue,
                     ColorPalettes.PastelDreams.HotPink
-                    );
+                    ));
                 entity.StaticBatching = EditorUtilities.BoxToggleButton(
                     "Static Batching",
                     entity.StaticBatching,

@@ -110,15 +110,15 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        public void FireFXBounds(ITransform sender, FXBounds.TriggerOptions triggerOptions)
+        public void FireFXBounds(ProxyTransform sender, FXBounds.TriggerOptions triggerOptions)
         {
             CoroutineSystem system = PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System;
             FireFXBounds(sender, system, triggerOptions);
         }
-        public void FireFXBounds(ITransform sender,
+        public void FireFXBounds(ProxyTransform sender,
             CoroutineSystem coroutineSystem, FXBounds.TriggerOptions triggerOptions)
         {
-            ITransform targetTr;
+            ProxyTransform targetTr;
             if (m_PrefabInstance.IsEmpty())
             {
                 targetTr = sender;
