@@ -492,74 +492,82 @@ namespace Syadeu.Presentation.Proxy
 
             #region Jobs
 
-            s_HandleJobsMarker.Begin();
-
-            using (s_HandleScheduleClusterUpdateMarker.Auto())
+            using (s_HandleJobsMarker.Auto())
             {
-                if (m_ClusterUpdates.Count > 0)
+                bool updateCluster = false;
+                using (s_HandleScheduleClusterUpdateMarker.Auto())
                 {
-                    NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
-                    m_ClusterUpdates.Clear();
-                    m_TempSortedUpdateList.Clear();
+                    updateCluster = m_ClusterData.HasEntries;
 
-                    ClusterUpdateSortJob clusterUpdateSortJob = new ClusterUpdateSortJob
+                    if (m_ClusterUpdates.Count > 0)
                     {
-                        m_ClusterData = m_ClusterData,
-                        m_Request = requests,
-                        m_SortedRequests = m_TempSortedUpdateList
-                    };
-                    ScheduleAt(JobPosition.On, clusterUpdateSortJob);
+                        NativeArray<ClusterUpdateRequest> requests = m_ClusterUpdates.ToArray(Allocator.TempJob);
+                        m_ClusterUpdates.Clear();
+                        m_TempSortedUpdateList.Clear();
 
-                    ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
+                        ClusterUpdateSortJob clusterUpdateSortJob = new ClusterUpdateSortJob
+                        {
+                            m_ClusterData = m_ClusterData,
+                            m_Request = requests,
+                            m_SortedRequests = m_TempSortedUpdateList
+                        };
+                        ScheduleAt(JobPosition.On, clusterUpdateSortJob);
+
+                        ClusterUpdateJob clusterUpdateJob = new ClusterUpdateJob
+                        {
+                            m_ClusterData = m_ClusterData.AsParallelWriter(),
+                            m_Requests = m_TempSortedUpdateList.AsDeferredJobArray()
+                        };
+                        ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
+                    }
+
+                    if (updateCluster)
                     {
-                        m_ClusterData = m_ClusterData.AsParallelWriter(),
-                        m_Requests = m_TempSortedUpdateList.AsDeferredJobArray()
-                    };
-                    ScheduleAt(JobPosition.On, clusterUpdateJob, m_TempSortedUpdateList);
+                        m_SortedCluster.Clear();
+                        //var deferredSortedCluster = m_SortedCluster.AsDeferredJobArray();
+                        ClusterJob clusterJob = new ClusterJob
+                        {
+                            m_ClusterData = m_ClusterData,
+                            m_Frustum = frustum,
+                            m_Output = m_SortedCluster.AsParallelWriter(),
+
+                            m_Count = (int*)m_ProxyClusterCounter.GetUnsafePtrWithoutChecks()
+                        };
+                        ScheduleAt(JobPosition.On, clusterJob, m_ClusterData.Length);
+                    }
                 }
 
-                m_SortedCluster.Clear();
-                //var deferredSortedCluster = m_SortedCluster.AsDeferredJobArray();
-                ClusterJob clusterJob = new ClusterJob
+                if (updateCluster)
                 {
-                    m_ClusterData = m_ClusterData,
-                    m_Frustum = frustum,
-                    m_Output = m_SortedCluster.AsParallelWriter(),
+                    using (s_HandleScheduleProxyUpdateMarker.Auto())
+                    unsafe
+                    {
+                        ref NativeProxyData.UnsafeList list = ref m_ProxyData.List;
 
-                    m_Count = (int*)m_ProxyClusterCounter.GetUnsafePtrWithoutChecks()
-                };
-                ScheduleAt(JobPosition.On, clusterJob, m_ClusterData.Length);
+                        ProxyJob proxyJob = new ProxyJob
+                        {
+                            m_Count = (int*)m_ProxyClusterCounter.GetUnsafeReadOnlyPtr(),
+                            m_ActiveData = m_SortedCluster.AsDeferredJobArray(),
+                            List = list,
+
+                            m_Frustum = frustum,
+
+                            m_Remove = m_RemoveProxyList.AsParallelWriter(),
+                            m_Request = m_RequestProxyList.AsParallelWriter(),
+
+                            m_Visible = m_VisibleList.AsParallelWriter(),
+                            m_Invisible = m_InvisibleList.AsParallelWriter()
+                        };
+                        ScheduleAt(JobPosition.On, proxyJob, m_SortedCluster, 64);
+
+                        //UpdateChildDependencies updateChild = new UpdateChildDependencies
+                        //{
+                        //    List = list
+                        //};
+                        //ScheduleAt(JobPosition.On, updateChild, (int)list.m_Length, 64);
+                    }
+                }
             }
-
-            using (s_HandleScheduleProxyUpdateMarker.Auto())
-            unsafe
-            {
-                ref NativeProxyData.UnsafeList list = ref m_ProxyData.List;
-
-                ProxyJob proxyJob = new ProxyJob
-                {
-                    m_Count = (int*)m_ProxyClusterCounter.GetUnsafeReadOnlyPtr(),
-                    m_ActiveData = m_SortedCluster.AsDeferredJobArray(),
-                    List = list,
-
-                    m_Frustum = frustum,
-
-                    m_Remove = m_RemoveProxyList.AsParallelWriter(),
-                    m_Request = m_RequestProxyList.AsParallelWriter(),
-
-                    m_Visible = m_VisibleList.AsParallelWriter(),
-                    m_Invisible = m_InvisibleList.AsParallelWriter()
-                };
-                ScheduleAt(JobPosition.On, proxyJob, m_SortedCluster, 64);
-
-                //UpdateChildDependencies updateChild = new UpdateChildDependencies
-                //{
-                //    List = list
-                //};
-                //ScheduleAt(JobPosition.On, updateChild, (int)list.m_Length, 64);
-            }
-
-            s_HandleJobsMarker.End();
 
             #endregion
 

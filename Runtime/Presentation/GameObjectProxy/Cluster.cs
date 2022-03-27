@@ -87,6 +87,24 @@ namespace Syadeu.Presentation.Proxy
                 return m_Length;
             }
         }
+
+        public bool HasEntries
+        {
+            get
+            {
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+                AtomicSafetyHandle.CheckExistsAndThrow(m_Safety);
+                AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+                for (int i = 0; i < m_Length; i++)
+                {
+                    if (m_Buffer[i].IsCreated) return true;
+                }
+
+                return false;
+            }
+        }
+
         #endregion
 
         #region Constructor
