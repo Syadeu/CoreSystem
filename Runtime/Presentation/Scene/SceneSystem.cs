@@ -76,6 +76,18 @@ namespace Syadeu.Presentation
         public bool IsDebugScene => m_IsDebugScene;
         public bool IsMasterScene => CurrentScene.Equals(m_MasterScene);
         public bool IsStartScene => CurrentSceneRef != null && CurrentSceneRef.Equals(SceneSettings.Instance.StartScene);
+        public bool IsIngame
+        {
+            get
+            {
+                if (IsMasterScene || IsStartScene)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
 
         // OnSceneLoadCall -> OnLoadingEnter -> OnWaitLoading -> OnSceneChanged -> OnAfterLoading -> OnLoadingExit
 
