@@ -24,6 +24,8 @@ namespace Syadeu.Presentation
 {
     public static class PresentationSystemExtensionMethods
     {
+        internal static CoroutineSystem s_CoroutineSystem;
+
         public static FixedReferenceList64<T> ToFixedList64<T>(this IEnumerable<Reference<T>> t)
             where T : class, IObject
         {
@@ -128,6 +130,11 @@ namespace Syadeu.Presentation
                 return target;
             }
             return null;
+        }
+
+        public static CoroutineHandler StartCoroutine<T>(T job) where T : ICoroutineJob
+        {
+            return s_CoroutineSystem.StartCoroutine(job);
         }
     }
 }

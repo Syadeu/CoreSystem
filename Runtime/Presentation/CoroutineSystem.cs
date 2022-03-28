@@ -59,10 +59,14 @@ namespace Syadeu.Presentation
             PresentationManager.Instance.TransformUpdate += PresentationTransformUpdateHandler;
             PresentationManager.Instance.AfterTransformUpdate += PresentationAfterTransformUpdateHandler;
 
+            PresentationSystemExtensionMethods.s_CoroutineSystem = this;
+
             return base.OnInitialize();
         }
         protected override void OnDispose()
         {
+            PresentationSystemExtensionMethods.s_CoroutineSystem = null;
+
             for (int i = 0; i < m_Coroutines.Count; i++)
             {
                 m_Coroutines[i].Dispose();
@@ -74,7 +78,6 @@ namespace Syadeu.Presentation
             PresentationManager.Instance.AfterTransformUpdate -= PresentationAfterTransformUpdateHandler;
 
             m_CoroutineHandlers.Dispose();
-
             m_ReservedIndices.Dispose();
         }
 
@@ -237,7 +240,7 @@ namespace Syadeu.Presentation
         //    return m_CoroutineHandlers[index].m_Activated;
         //}
 
-        public CoroutineHandler StartCoroutine<T>(T job) where T : ICoroutineJob
+        public CoroutineHandler StartCoroutine(ICoroutineJob job)
         {
             CoreSystem.Logger.ThreadBlock(nameof(StartCoroutine), ThreadInfo.Unity);
 
