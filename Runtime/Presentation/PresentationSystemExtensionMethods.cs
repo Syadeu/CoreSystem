@@ -132,7 +132,7 @@ namespace Syadeu.Presentation
             return null;
         }
 
-        public static CoroutineHandler StartCoroutine<T>(T job) where T : ICoroutineJob
+        public static CoroutineHandler StartCoroutine<T>(this T job) where T : ICoroutineJob
         {
             return s_CoroutineSystem.StartCoroutine(job);
         }
