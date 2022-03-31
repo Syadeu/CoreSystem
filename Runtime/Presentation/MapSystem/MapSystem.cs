@@ -19,6 +19,7 @@
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Mono;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
 using Syadeu.ThreadSafe;
@@ -182,21 +183,115 @@ namespace Syadeu.Presentation.Map
 
     internal sealed class SpawnMapDataModule : PresentationSystemModule<MapSystem>
     {
-        private Dictionary<string, Entry> m_Entries = new Dictionary<string, Entry>();
+        private Dictionary<Hash, Entry> m_Entries = new Dictionary<Hash, Entry>();
+
+        protected override void OnInitialize()
+        {
+            SpawnedEntityComponentProcessor.s_Module = this;
+        }
+        protected override void OnDispose()
+        {
+            SpawnedEntityComponentProcessor.s_Module = null;
+        }
 
         public void AddSpawnEntity(params SpawnMapDataEntity.Point[] points)
         {
-
+            for (int i = 0; i < points.Length; i++)
+            {
+                Entry entry = new Entry(points[i]);
+                m_Entries.Add(entry.Hash, entry);
+            }
         }
         public void RemoveSpawnEntity(params SpawnMapDataEntity.Point[] points)
         {
+            for (int i = 0; i < points.Length; i++)
+            {
+                Hash hash = points[i].GetHash();
+                var entry = GetEntry(hash);
+#if DEBUG_MODE
+                if (entry == null) continue;
+#endif
 
+                entry.Dispose();
+                m_Entries.Remove(hash);
+            }
         }
 
-        private sealed class Entry
+        private Entry GetEntry(Hash hash)
         {
-            public SpawnMapDataEntity.Point m_Point;
+#if DEBUG_MODE
+            if (!m_Entries.ContainsKey(hash))
+            {
+                CoreSystem.Logger.LogError(Channel.Presentation,
+                    $"??");
 
+                return null;
+            }
+#endif
+            return m_Entries[hash];
+        }
+
+        private sealed class Entry : IDisposable
+        {
+            private SpawnMapDataEntity.Point m_Point;
+            private List<InstanceID> m_Instances = new List<InstanceID>();
+
+            public Hash Hash => m_Point.GetHash();
+
+            public Entry(SpawnMapDataEntity.Point p)
+            {
+                m_Point = p;
+
+                if (m_Point.m_SpawnAtStart)
+                {
+                    Spawn(1);
+                }
+            }
+
+            public void Spawn(int count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Entity<EntityBase> entity = m_Point.m_TargetEntity.CreateEntity();
+
+                    entity.AddComponent<SpawnedEntityComponent>();
+                    ref SpawnedEntityComponent com = ref entity.GetComponent<SpawnedEntityComponent>();
+                    com.m_Hash = Hash;
+                }
+            }
+            public void Remove(InstanceID entity)
+            {
+                m_Instances.Remove(entity);
+            }
+
+            public void Dispose()
+            {
+                for (int i = 0; i < m_Instances.Count; i++)
+                {
+                    m_Instances[i].RemoveComponent<SpawnedEntityComponent>();
+                }
+            }
+        }
+
+        internal struct SpawnedEntityComponent : IEntityComponent
+        {
+            public Hash m_Hash;
+        }
+        private sealed class SpawnedEntityComponentProcessor : ComponentProcessor<SpawnedEntityComponent>
+        {
+            internal static SpawnMapDataModule s_Module;
+
+            protected override void OnDestroy(in InstanceID entity, ref SpawnedEntityComponent component)
+            {
+                var entry = s_Module.GetEntry(component.m_Hash);
+#if DEBUG_MODE
+                if (entry == null) return;
+#endif
+                entry.Remove(entity);
+            }
         }
     }
+
+    
+
 }

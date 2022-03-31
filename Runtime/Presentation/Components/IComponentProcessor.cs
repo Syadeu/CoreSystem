@@ -22,6 +22,7 @@ using System;
 
 namespace Syadeu.Presentation.Components
 {
+    [UnityEngine.Scripting.RequireImplementors]
     internal interface IComponentProcessor : IDisposable
     {
         bool Disposed { get; }

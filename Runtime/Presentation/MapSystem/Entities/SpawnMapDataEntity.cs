@@ -12,11 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Map
 {
@@ -32,6 +38,7 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = -1, PropertyName = "Name")]
             public string m_Name = "NewPoint";
 
+            [Space]
             [JsonProperty(Order = 0, PropertyName = "TargetEntity")]
             public Reference<EntityBase> m_TargetEntity = Reference<EntityBase>.Empty;
             [JsonProperty(Order = 1, PropertyName = "Position")]
@@ -46,9 +53,15 @@ namespace Syadeu.Presentation.Map
                 "EnableAutoSpawn = true 일 경우에만 " +
                 "x = hour, y = mins, z = secs")]
             public int3 m_PerTime = new int3(0, 0, 30);
+            [JsonProperty(Order = 5, PropertyName = "TimeOffset")]
+            public int3 m_TimeOffset = 0;
 
-            [JsonProperty(Order = 5, PropertyName = "MaximumCount")]
+            [JsonProperty(Order = 6, PropertyName = "SpawnAtStart")]
+            public bool m_SpawnAtStart = true;
+            [JsonProperty(Order = 7, PropertyName = "MaximumCount")]
             public int m_MaximumCount = 1;
+
+            public Hash GetHash() => Hash.NewHash(m_Name);
         }
 
         [JsonProperty(Order = 0, PropertyName = "Points")]
