@@ -82,7 +82,7 @@ namespace SyadeuEditor.Utilities
 
         #region Property Utils
 
-        public SerializedProperty FindPropertyRelative(string path)
+        public SerializedProperty FindProperty(string path)
         {
             return SerializedProperty.FindPropertyRelative(path);
         }
