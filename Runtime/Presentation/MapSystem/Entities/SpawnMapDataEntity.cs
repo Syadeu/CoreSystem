@@ -1,0 +1,89 @@
+﻿// Copyright 2021 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Newtonsoft.Json;
+using Syadeu.Presentation.Entities;
+using System;
+using System.ComponentModel;
+using Unity.Mathematics;
+
+namespace Syadeu.Presentation.Map
+{
+    [DisplayName("MapData: Spawn Map Data Entity")]
+    [EntityAcceptOnly(typeof(MapDataAttributeBase))]
+    [Description(
+        "스폰 테이블")]
+    public sealed class SpawnMapDataEntity : MapDataEntityBase
+    {
+        [Serializable]
+        public sealed class Point : Entry
+        {
+            [JsonProperty(Order = -1, PropertyName = "Name")]
+            public string m_Name = "NewPoint";
+
+            [JsonProperty(Order = 0, PropertyName = "TargetEntity")]
+            public Reference<EntityBase> m_TargetEntity = Reference<EntityBase>.Empty;
+            [JsonProperty(Order = 1, PropertyName = "Position")]
+            public float3 m_Position = 0;
+            [JsonProperty(Order = 2, PropertyName = "SphereOffset")]
+            public float3 m_SphereOffset = 0;
+
+            [JsonProperty(Order = 3, PropertyName = "EnableAutoSpawn")]
+            public bool m_EnableAutoSpawn = false;
+            [JsonProperty(Order = 4, PropertyName = "PerTime")]
+            [Description(
+                "EnableAutoSpawn = true 일 경우에만 " +
+                "x = hour, y = mins, z = secs")]
+            public int3 m_PerTime = new int3(0, 0, 30);
+
+            [JsonProperty(Order = 5, PropertyName = "MaximumCount")]
+            public int m_MaximumCount = 1;
+        }
+
+        [JsonProperty(Order = 0, PropertyName = "Points")]
+        public Point[] m_Points = Array.Empty<Point>();
+    }
+    internal sealed class SpawnMapDataEntityProcessor : EntityProcessor<SpawnMapDataEntity>
+    {
+        private MapSystem m_MapSystem;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, MapSystem>(Bind);
+        }
+        private void Bind(MapSystem other)
+        {
+            m_MapSystem = other;
+        }
+        protected override void OnDispose()
+        {
+            m_MapSystem = null;
+        }
+
+        protected override void OnCreated(SpawnMapDataEntity obj)
+        {
+            for (int i = 0; i < obj.m_Points.Length; i++)
+            {
+                m_MapSystem.AddSpawnEntity(obj.m_Points[i]);
+            }
+        }
+        protected override void OnDestroy(SpawnMapDataEntity obj)
+        {
+            for (int i = 0; i < obj.m_Points.Length; i++)
+            {
+                m_MapSystem.RemoveSpawnEntity(obj.m_Points[i]);
+            }
+        }
+    }
+}

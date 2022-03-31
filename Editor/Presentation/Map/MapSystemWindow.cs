@@ -79,7 +79,7 @@ namespace SyadeuEditor.Presentation.Map
             {
                 EditorUtilities.StringHeader("Map System", 20, true);
             }
-            GUILayout.Space(5);
+            GUILayout.Space(4);
             EditorUtilities.Line();
 
             //EditorGUI.BeginChangeCheck();

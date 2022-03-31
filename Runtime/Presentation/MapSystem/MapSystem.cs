@@ -36,12 +36,7 @@ namespace Syadeu.Presentation.Map
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
-        //private readonly Dictionary<SceneReference, List<EntityData<SceneDataEntity>>> m_SceneDataObjects = new Dictionary<SceneReference, List<EntityData<SceneDataEntity>>>();
         private readonly List<SceneDependence> m_SceneDependences = new List<SceneDependence>();
-
-        //private readonly List<EntityData<SceneDataEntity>> m_LoadedSceneData = new List<EntityData<SceneDataEntity>>();
-
-        //public IReadOnlyList<EntityData<SceneDataEntity>> LoadedSceneData => m_LoadedSceneData;
 
         private SceneSystem m_SceneSystem;
         private EntitySystem m_EntitySystem;
@@ -108,6 +103,15 @@ namespace Syadeu.Presentation.Map
         }
 
         #endregion
+
+        public void AddSpawnEntity(SpawnMapDataEntity.Point point)
+        {
+
+        }
+        public void RemoveSpawnEntity(SpawnMapDataEntity.Point entity)
+        {
+
+        }
 
         #region Inner Classes
 

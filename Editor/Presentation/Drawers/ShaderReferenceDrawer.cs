@@ -76,4 +76,35 @@ namespace SyadeuEditor.Presentation
                 ));
         }
     }
+
+    //public sealed class TimeDataReferenceDrawer : ObjectDrawer<TimeData>
+    //{
+    //    public TimeDataReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+    //    {
+    //    }
+    //    public TimeDataReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
+    //    {
+    //    }
+    //    public TimeDataReferenceDrawer(object parentObject, Type declaredType, Action<TimeData> setter, Func<TimeData> getter) : base(parentObject, declaredType, setter, getter)
+    //    {
+    //    }
+
+    //    public override TimeData Draw(TimeData currentValue)
+    //    {
+    //        int hours = currentValue.Time.Hours;
+    //        int minutes = currentValue.Time.Minutes;
+    //        int seconds = currentValue.Time.Seconds;
+
+    //        Name
+    //        using (new EditorGUILayout.VerticalScope())
+    //        using (new EditorGUILayout.HorizontalScope())
+    //        {
+    //            hours = EditorGUILayout.IntField("Hours", hours);
+    //            minutes = EditorGUILayout.IntField("Minutes", minutes);
+    //            seconds = EditorGUILayout.IntField("Seconds", seconds);
+    //        }
+
+    //        return currentValue;
+    //    }
+    //}
 }
