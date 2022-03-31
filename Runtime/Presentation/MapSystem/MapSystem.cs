@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
@@ -30,7 +31,8 @@ using System.Threading.Tasks;
 
 namespace Syadeu.Presentation.Map
 {
-    public sealed class MapSystem : PresentationSystemEntity<MapSystem>
+    public sealed class MapSystem : PresentationSystemEntity<MapSystem>,
+        INotifySystemModule<SpawnMapDataModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -43,6 +45,7 @@ namespace Syadeu.Presentation.Map
         private Render.RenderSystem m_RenderSystem;
 
         #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
@@ -104,13 +107,13 @@ namespace Syadeu.Presentation.Map
 
         #endregion
 
-        public void AddSpawnEntity(SpawnMapDataEntity.Point point)
+        public void AddSpawnEntity(params SpawnMapDataEntity.Point[] points)
         {
-
+            GetModule<SpawnMapDataModule>().AddSpawnEntity(points);
         }
-        public void RemoveSpawnEntity(SpawnMapDataEntity.Point entity)
+        public void RemoveSpawnEntity(params SpawnMapDataEntity.Point[] points)
         {
-
+            GetModule<SpawnMapDataModule>().RemoveSpawnEntity(points);
         }
 
         #region Inner Classes
@@ -175,5 +178,25 @@ namespace Syadeu.Presentation.Map
         }
 
         #endregion
+    }
+
+    internal sealed class SpawnMapDataModule : PresentationSystemModule<MapSystem>
+    {
+        private Dictionary<string, Entry> m_Entries = new Dictionary<string, Entry>();
+
+        public void AddSpawnEntity(params SpawnMapDataEntity.Point[] points)
+        {
+
+        }
+        public void RemoveSpawnEntity(params SpawnMapDataEntity.Point[] points)
+        {
+
+        }
+
+        private sealed class Entry
+        {
+            public SpawnMapDataEntity.Point m_Point;
+
+        }
     }
 }

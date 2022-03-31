@@ -73,17 +73,11 @@ namespace Syadeu.Presentation.Map
 
         protected override void OnCreated(SpawnMapDataEntity obj)
         {
-            for (int i = 0; i < obj.m_Points.Length; i++)
-            {
-                m_MapSystem.AddSpawnEntity(obj.m_Points[i]);
-            }
+            m_MapSystem.AddSpawnEntity(obj.m_Points);
         }
         protected override void OnDestroy(SpawnMapDataEntity obj)
         {
-            for (int i = 0; i < obj.m_Points.Length; i++)
-            {
-                m_MapSystem.RemoveSpawnEntity(obj.m_Points[i]);
-            }
+            m_MapSystem.RemoveSpawnEntity(obj.m_Points);
         }
     }
 }
