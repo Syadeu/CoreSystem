@@ -40,8 +40,12 @@ namespace Syadeu.Presentation.Attributes
             Terrain
         }
 
-        [JsonProperty(Order = 0, PropertyName = "AreaMask")] public int m_AreaMask = 0;
-        [JsonProperty(Order = 0, PropertyName = "ObstacleType")] public ObstacleType m_ObstacleType;
+        [UnityEngine.SerializeField]
+        [JsonProperty(Order = 0, PropertyName = "AreaMask")] 
+        public int m_AreaMask = 0;
+        [UnityEngine.SerializeField]
+        [JsonProperty(Order = 0, PropertyName = "ObstacleType")] 
+        public ObstacleType m_ObstacleType;
 
         [JsonIgnore] internal NavMeshBuildSource[] m_Sources;
     }

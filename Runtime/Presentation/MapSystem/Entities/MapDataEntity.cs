@@ -36,8 +36,11 @@ namespace Syadeu.Presentation.Map
     [Description("파괴되지않는 오브젝트들로 구성된 오브젝트 데이터 테이블 입니다.")]
     public sealed class MapDataEntity : MapDataEntityBase
     {
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "Objects")] public EntityObject[] m_Objects = Array.Empty<EntityObject>();
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "RawObjects")] public RawObject[] m_RawObjects = Array.Empty<RawObject>();
 
         protected override ICustomYieldAwaiter LoadAllAssets()

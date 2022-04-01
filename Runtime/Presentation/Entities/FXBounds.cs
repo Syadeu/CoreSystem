@@ -47,20 +47,26 @@ namespace Syadeu.Presentation.Entities
             UpdateTransform    =   0b0100,
         }
 
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Name")]
         private string m_Name = string.Empty;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "TriggerOption")]
         private TriggerOptions m_TriggerOption = TriggerOptions.OnFire;
         //[JsonProperty(Order = 2, PropertyName = "PlayOption")]
         //private PlayOptions m_PlayOption = PlayOptions.OneShot;
 
         [Space]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 3, PropertyName = "FXEntity")]
         private Reference<FXEntity> m_FXEntity = Reference<FXEntity>.Empty;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 4, PropertyName = "LocalPosition")]
         private float3 m_LocalPosition;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 5, PropertyName = "LocalRotation")]
         private float3 m_LocalRotation;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 6, PropertyName = "LocalScale")]
         private float3 m_LocalScale = 1;
 

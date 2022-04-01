@@ -38,12 +38,15 @@ namespace Syadeu.Presentation.Attributes
             "You\'re trying to load invalid type of animator key({0}) value at entity({1}). " +
             "Expected type of ({2}) but input was ({3}).";
 
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "EnableRootMotion")]
         internal bool m_EnableRootMotion = false;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "ManualRootMotion")]
         internal bool m_ManualRootMotion = false;
 
         [Space, Header("Trigger Actions")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "AnimationTrigger")]
         internal Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 

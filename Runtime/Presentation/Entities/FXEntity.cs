@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.Entities
     public sealed class FXEntity : EntityBase, IPrefabPreloader,
         INotifyComponent<FXComponent>
     {
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "PlayOptions")]
         private FXBounds.PlayOptions m_PlayOptions = FXBounds.PlayOptions.OneShot;
 

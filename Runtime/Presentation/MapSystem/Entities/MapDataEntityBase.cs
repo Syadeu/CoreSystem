@@ -39,12 +39,17 @@ namespace Syadeu.Presentation.Map
         [Serializable]
         public sealed class EntityObject : Entry
         {
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 4, PropertyName = "Static")]
             public bool m_Static = false;
 
@@ -67,18 +72,25 @@ namespace Syadeu.Presentation.Map
         [Serializable]
         public sealed class RawObject : Entry
         {
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "Object")] public PrefabReference<GameObject> m_Object;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 4, PropertyName = "Center")]
             public float3 m_Center;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 5, PropertyName = "Size")]
             public float3 m_Size = 1;
 
             [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 6, PropertyName = "Static")]
             public bool m_Static = false;
 
@@ -99,12 +111,14 @@ namespace Syadeu.Presentation.Map
         }
         public sealed class EntityDataObject : Entry
         {
-            [JsonProperty(Order = 0, PropertyName = "")]
+            [UnityEngine.SerializeField]
+            [JsonProperty(Order = 0, PropertyName = "Object")]
             public Reference<EntityDataBase> m_Object = Reference<EntityDataBase>.Empty;
         }
         public sealed class DataObject : Entry
         {
-            [JsonProperty(Order = 0, PropertyName = "")]
+            [UnityEngine.SerializeField]
+            [JsonProperty(Order = 0, PropertyName = "Object")]
             public Reference<DataObjectBase> m_Object = Reference<DataObjectBase>.Empty;
         }
 

@@ -30,6 +30,7 @@ namespace Syadeu.Presentation.Entities
         INotifyComponent<UIObjectCanvasGroupComponent>
     {
         [Header("Graphics")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
         internal float m_InitialAlpha = 1;

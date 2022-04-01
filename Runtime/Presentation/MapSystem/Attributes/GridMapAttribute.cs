@@ -35,10 +35,14 @@ namespace Syadeu.Presentation.Map
         [Serializable]
         public sealed class LayerInfo : IEquatable<LayerInfo>, ICloneable
         {
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "Name")] public string m_Name = "NewLayer";
+            [UnityEngine.SerializeField]
             [ReflectionSealedView, JsonProperty(Order = 1, PropertyName = "Hash")] public Hash m_Hash = Hash.NewHash();
+            [UnityEngine.SerializeField]
             [Description("반대로 적용합니다.")]
             [JsonProperty(Order = 2, PropertyName = "Inverse")] public bool m_Inverse = false;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 3, PropertyName = "Indices")] public int[] m_Indices = Array.Empty<int>();
 
             public object Clone()

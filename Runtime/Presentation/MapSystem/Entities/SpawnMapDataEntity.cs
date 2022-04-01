@@ -35,29 +35,40 @@ namespace Syadeu.Presentation.Map
         [Serializable]
         public sealed class Point : Entry
         {
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = -1, PropertyName = "Name")]
             public string m_Name = "NewPoint";
 
             [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "TargetEntity")]
             public Reference<EntityBase> m_TargetEntity = Reference<EntityBase>.Empty;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 1, PropertyName = "Position")]
             public float3 m_Position = 0;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "SphereOffset")]
             public float3 m_SphereOffset = 0;
 
+            [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 3, PropertyName = "EnableAutoSpawn")]
             public bool m_EnableAutoSpawn = false;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 4, PropertyName = "PerTime")]
             [Description(
                 "EnableAutoSpawn = true 일 경우에만 " +
                 "x = hour, y = mins, z = secs")]
             public int3 m_PerTime = new int3(0, 0, 30);
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 5, PropertyName = "TimeOffset")]
             public int3 m_TimeOffset = 0;
 
+            [Space]
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 6, PropertyName = "SpawnAtStart")]
             public bool m_SpawnAtStart = true;
+            [UnityEngine.SerializeField]
             [JsonProperty(Order = 7, PropertyName = "MaximumCount")]
             public int m_MaximumCount = 1;
 

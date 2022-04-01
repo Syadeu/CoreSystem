@@ -35,13 +35,17 @@ namespace Syadeu.Presentation.Map
         INotifyComponent<GridSizeComponent>
     {
         [Description("생성시 이 엔티티를 그리드 셀 중앙에 맞춥니다.")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "FixedToCenter")] internal bool m_FixedToCenter;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "GridLocations")]
         internal int2[] m_GridLocations = Array.Empty<int2>();
 
         [Space, Header("Navigation")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "AllowOverlapping")]
         internal bool m_AllowOverlapping = false;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 3, PropertyName = "ObstacleLayers")] 
         internal int[] m_ObstacleLayers = Array.Empty<int>();
 

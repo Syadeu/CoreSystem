@@ -34,23 +34,30 @@ namespace Syadeu.Presentation.Map
         INotifyComponent<old_GridDetectorComponent>
     {
         [Tooltip("최대로 탐색할 Grid Range 값")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "MaxDetectionRange")] 
         internal int m_MaxDetectionRange = 6;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "IgnoreLayers")]
         internal int[] m_IgnoreLayers = Array.Empty<int>();
 
         [Header("Trigger Only")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "Inverse")] 
         internal bool m_Inverse = false;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 3, PropertyName = "TriggerOnly")]
         internal Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
 
         [Header("TriggerActions")]
+        [UnityEngine.SerializeField]
         [Tooltip("False 를 반환하면 OnDetected 를 실행하지 않습니다.")]
         [JsonProperty(Order = 4, PropertyName = "OnDetectedPredicate")]
         internal Reference<TriggerPredicateAction>[] m_OnDetectedPredicate = Array.Empty<Reference<TriggerPredicateAction>>();
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 5, PropertyName = "OnDetected")]
         internal LogicTriggerAction[] m_OnDetected = Array.Empty<LogicTriggerAction>();
+        [UnityEngine.SerializeField]
         [Tooltip("발견한 Entity 가 범위를 벗어났을때, " +
             "True 를 반환하면 바로 제거하고 아닐 경우 계속 탐지에 넣습니다.")]
         [JsonProperty(Order = 6, PropertyName = "DetectRemoveCondition")]

@@ -38,18 +38,26 @@ namespace Syadeu.Presentation.Attributes
     public sealed class NavAgentAttribute : AttributeBase,
         INotifyComponent<NavAgentComponent>
     {
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "AgentType")] public int m_AgentType = 0;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "BaseOffset")] public float m_BaseOffset = 0;
 
         [Space, Header("Steering")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "Speed")] public float m_Speed = 3.5f;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 3, PropertyName = "AngularSpeed")] public float m_AngularSpeed = 120;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 4, PropertyName = "Acceleration")] public float m_Acceleration = 8;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 5, PropertyName = "StoppingDistance")] public float m_StoppingDistance = 0;
 
         [Space, Header("TriggerActions")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 6, PropertyName = "OnMoveActions")]
         internal Reference<TriggerAction>[] m_OnMoveActions = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 7, PropertyName = "UpdateTRSWhile")]
         internal Reference<TriggerPredicateAction>[] m_UpdateTRSWhile = Array.Empty<Reference<TriggerPredicateAction>>();
 

@@ -185,8 +185,6 @@ namespace SyadeuEditor.Presentation
 
                 EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
             }
-
-
         }
     }
 }

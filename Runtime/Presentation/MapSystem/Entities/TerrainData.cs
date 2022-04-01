@@ -33,22 +33,29 @@ namespace Syadeu.Presentation.Map
     [DisplayName("Data: Terrain Data")]
     public sealed class TerrainData : DataObjectBase, INotifyAsset
     {
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Data")]
         private PrefabReference<UnityEngine.TerrainData> m_Data = PrefabReference<UnityEngine.TerrainData>.None;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 1, PropertyName = "Material")]
         private PrefabReference<UnityEngine.Material> m_Material = PrefabReference<UnityEngine.Material>.None;
 
         [Space, Header("Transformation")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "Position")]
         private float3 m_Position;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 3, PropertyName = "Rotation")]
         private float3 m_Rotation;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 4, PropertyName = "Scale")]
         private float3 m_Scale;
 
         [Space, Header("Terrain NavObstacle")]
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 5, PropertyName = "EnableObstacle")]
         private bool m_EnableObstacle = false;
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = 6, PropertyName = "AreaMask")]
         private int m_AreaMask = 0;
 
