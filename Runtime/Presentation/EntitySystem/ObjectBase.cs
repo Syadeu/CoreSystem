@@ -42,11 +42,16 @@ namespace Syadeu.Presentation
         /// <summary>
         /// 이 오브젝트의 이름입니다.
         /// </summary>
-        [JsonProperty(Order = -1000, PropertyName = "Name")] public string Name { get; set; }
+        [SerializeField]
+        [JsonProperty(Order = -1000, PropertyName = "Name")]
+        public string Name;
         /// <summary>
         /// 이 오브젝트의 오리지널 해쉬입니다.
         /// </summary>
-        [JsonProperty(Order = -999, PropertyName = "Hash")] [ReflectionSealedView] public Hash Hash { get; set; }
+        [JsonProperty(Order = -999, PropertyName = "Hash")]
+        [SerializeField]
+        [ReflectionSealedView]
+        public Hash Hash;
         /// <summary>
         /// 이 오브젝트의 인스턴스 해쉬입니다.
         /// </summary>
@@ -55,6 +60,8 @@ namespace Syadeu.Presentation
         [JsonIgnore] private bool m_Reserved = true;
 
         [JsonIgnore] public bool Reserved => m_Reserved;
+        [JsonIgnore] string IObject.Name => Name;
+        [JsonIgnore] Hash IObject.Hash => Hash;
 
         public ObjectBase()
         {

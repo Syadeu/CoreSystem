@@ -216,6 +216,17 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return true;
         }
+        public static bool RemoveAtSwapBack<T>(this T[] array, int index)
+        {
+            if (index < 0) return false;
+
+            for (int i = index + 1; i < array.Length; i++)
+            {
+                array[i - 1] = array[i];
+            }
+
+            return true;
+        }
 
         #region Memory
 

@@ -25,6 +25,8 @@ namespace SyadeuEditor.Presentation
         private TreeViewState TreeViewState;
         private ObjectBase m_Selected;
 
+        private Editor m_SelectedDrawer;
+
         public string SearchString
         {
             get => EntityListTreeView.searchString;
@@ -38,12 +40,23 @@ namespace SyadeuEditor.Presentation
                 m_Selected = value;
                 if (value != null)
                 {
-                    SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
+                    //SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
+                    SerializedObject = new SerializedObject<ObjectBase>(value);
+                    //SelectedDrawer = SerializedObject.GetEditor();
+                    SerializedObject.GetCachedEditor(ref m_SelectedDrawer);
                 }
-                else SelectedDrawer = null;
+                else
+                {
+                    SerializedObject.Dispose();
+
+                    SerializedObject = null;
+                    m_SelectedDrawer = null;
+                }
             }
         }
-        public ObjectBaseDrawer SelectedDrawer { get; private set; }
+        public SerializedObject<ObjectBase> SerializedObject { get; private set; }
+        public Editor SelectedDrawer => m_SelectedDrawer;
+        //public ObjectBaseDrawer SelectedDrawer { get; private set; }
 
         public void Select(IFixedReference reference)
         {
@@ -113,7 +126,8 @@ namespace SyadeuEditor.Presentation
                 {
                     if (Selected != null)
                     {
-                        SelectedDrawer.OnGUI();
+                        //SelectedDrawer.OnGUI();
+                        SelectedDrawer.OnInspectorGUI();
                     }
                     else
                     {

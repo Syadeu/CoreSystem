@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Presentation;
 using System;
 using System.Reflection;
 using Unity.Collections;
@@ -66,6 +67,27 @@ namespace SyadeuEditor.Utilities
         {
             idxProperty.longValue = idx;
             SetFixedString128Bytes(subAssetNameProperty, subAssetName);
+        }
+
+        #endregion
+
+        #region Reference
+
+        public static Reference ReadReference(SerializedProperty property)
+        {
+            SerializedProperty hashProp = property.FindPropertyRelative("m_Hash");
+            return new Reference(ReadHash(hashProp));
+        }
+        public static Reference<T> ReadReference<T>(SerializedProperty property)
+            where T : class, IObject
+        {
+            SerializedProperty hashProp = property.FindPropertyRelative("m_Hash");
+            return new Reference<T>(ReadHash(hashProp));
+        }
+        public static void SetReference(SerializedProperty property, Reference reference)
+        {
+            SerializedProperty hashProp = property.FindPropertyRelative("m_Hash");
+            SetHash(hashProp, reference);
         }
 
         #endregion

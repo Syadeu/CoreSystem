@@ -39,20 +39,32 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// 이 엔티티의 Raw 프리팹 주소입니다.
         /// </summary>
-        [JsonProperty(Order = -800, PropertyName = "Prefab")] public PrefabReference<GameObject> Prefab { get; set; } = PrefabReference<GameObject>.None;
+        [SerializeField]
+        [JsonProperty(Order = -800, PropertyName = "Prefab")] 
+        public PrefabReference<GameObject> Prefab = PrefabReference<GameObject>.None;
 
-        [JsonProperty(Order = -799, PropertyName = "StaticBatching")] public bool StaticBatching { get; set; } = false;
+        [SerializeField]
+        [JsonProperty(Order = -799, PropertyName = "StaticBatching")]
+        public bool StaticBatching;
 
         [Description("AABB 의 Center")]
-        [JsonProperty(Order = -798, PropertyName = "Center")] public float3 Center { get; set; }
+        [SerializeField]
+        [JsonProperty(Order = -798, PropertyName = "Center")]
+        public float3 Center;
 
         [Description("AABB 의 Size")]
-        [JsonProperty(Order = -797, PropertyName = "Size")] public float3 Size { get; set; }
+        [SerializeField]
+        [JsonProperty(Order = -797, PropertyName = "Size")]
+        public float3 Size;
 
         [Space]
-        [JsonProperty(Order = -796, PropertyName = "EnableCull")] private bool m_EnableCull = true;
+        [SerializeField]
+        [JsonProperty(Order = -796, PropertyName = "EnableCull")] 
+        private bool m_EnableCull = true;
 
         [JsonIgnore] public virtual bool EnableCull => m_EnableCull;
+        [JsonIgnore] float3 IEntity.Center => Center;
+        [JsonIgnore] float3 IEntity.Size => Size;
 
         public override bool IsValid()
         {

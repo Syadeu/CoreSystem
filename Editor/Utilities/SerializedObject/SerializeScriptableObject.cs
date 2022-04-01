@@ -1,61 +1,105 @@
 ﻿using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Internal;
 using System;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
+using UnityEditor.AnimatedValues;
 using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
-    internal sealed class SerializeScriptableObject<T> : ScriptableObject
+    internal sealed class SerializeScriptableObject : ScriptableObject
     {
-        public static SerializeScriptableObject<T> Deserialize(in string json)
+        public static SerializeScriptableObject Deserialize<T>(in string json)
         {
-            SerializeScriptableObject<T> temp = CreateInstance<SerializeScriptableObject<T>>();
+            SerializeScriptableObject temp = CreateInstance<SerializeScriptableObject>();
             temp.m_Object = JsonConvert.DeserializeObject<T>(json);
 
             return temp;
         }
-        public static SerializeScriptableObject<T> Deserialize(in T obj)
+        public static SerializeScriptableObject Deserialize<T>(in T obj)
         {
-            SerializeScriptableObject<T> temp = CreateInstance<SerializeScriptableObject<T>>();
+            SerializeScriptableObject temp = CreateInstance<SerializeScriptableObject>();
             temp.m_Object = obj;
 
             return temp;
         }
 
-        [SerializeField] private T m_Object;
+        [SerializeReference] private object m_Object;
 
-        public T Object => m_Object;
+        public object Object => m_Object;
     }
 
     public sealed class SerializedObject<T> : IDisposable
     {
-        private SerializeScriptableObject<T> m_Object;
+        private static SerializedObject<T> s_Shared = new SerializedObject<T>();
+        public static SerializedObject<T> GetSharedObject(T obj)
+        {
+            if (s_Shared.m_Object != null)
+            {
+                UnityEngine.Object.DestroyImmediate(s_Shared.m_Object);
+            }
+
+            s_Shared.m_Object = SerializeScriptableObject.Deserialize(obj);
+            s_Shared.m_SerializedObject = new SerializedObject(s_Shared.m_Object);
+
+            return s_Shared;
+        }
+        public static float GetPropertyHeight(T obj)
+        {
+            SerializedObject<T> temp = GetSharedObject(obj);
+            return EditorGUI.GetPropertyHeight(temp);
+        }
+
+        private SerializeScriptableObject m_Object;
         private SerializedObject m_SerializedObject;
-        //private SerializedObjectEditor<T> m_Editor;
+        private AnimFloat m_PropertyHeight;
 
         public SerializedProperty SerializedProperty
         {
             get
             {
-                return m_SerializedObject.GetIterator();
+                return m_SerializedObject.FindProperty("m_Object");
+            }
+        }
+        public float PropertyHeight
+        {
+            get
+            {
+                if (m_PropertyHeight == null)
+                {
+                    m_PropertyHeight = new AnimFloat(EditorGUI.GetPropertyHeight(this));
+                }
+
+                if (SerializedProperty.isExpanded)
+                {
+                    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, true);
+                }
+                else
+                {
+                    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, false);
+                }
+
+                return m_PropertyHeight.value;
             }
         }
 
-        internal SerializedObject(SerializeScriptableObject<T> obj, SerializedObject serializedObject)
+        private SerializedObject() { }
+        internal SerializedObject(SerializeScriptableObject obj, SerializedObject serializedObject)
         {
             m_Object = obj;
             m_SerializedObject = serializedObject;
         }
         public SerializedObject(string json)
         {
-            m_Object = SerializeScriptableObject<T>.Deserialize(json);
+            m_Object = SerializeScriptableObject.Deserialize(json);
             m_SerializedObject = new SerializedObject(m_Object);
         }
         public SerializedObject(T obj)
         {
-            m_Object = SerializeScriptableObject<T>.Deserialize(obj);
+            m_Object = SerializeScriptableObject.Deserialize(obj);
             m_SerializedObject = new SerializedObject(m_Object);
         }
         
@@ -69,15 +113,26 @@ namespace SyadeuEditor.Utilities
             m_SerializedObject = null;
         }
 
-        public SerializedObjectEditor<T> GetEditor()
+        public void GetCachedEditor(ref Editor editor)
         {
-            var iter = TypeHelper.GetTypesIter((t) => TypeHelper.TypeOf<SerializedObjectEditor<T>>.Type.IsAssignableFrom(t));
+            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<SerializedObjectEditor<T>>.Type.IsAssignableFrom(t));
+            if (iter.Any())
+            {
+                Editor.CreateCachedEditor(m_Object, iter.First(), ref editor);
+                return;
+            }
+
+            Editor.CreateCachedEditor(m_Object, TypeHelper.TypeOf<DefaultSerializedObjectEditor>.Type, ref editor);
+        }
+        public Editor GetEditor()
+        {
+            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<SerializedObjectEditor<T>>.Type.IsAssignableFrom(t));
             if (iter.Any())
             {
                 return (SerializedObjectEditor<T>)Editor.CreateEditor(m_Object, iter.First());
             }
-
-            return null;
+            
+            return Editor.CreateEditor(m_Object, TypeHelper.TypeOf<DefaultSerializedObjectEditor>.Type);
         }
 
         #region Property Utils
@@ -102,33 +157,23 @@ namespace SyadeuEditor.Utilities
         {
             get
             {
-                SerializeScriptableObject<T> temp = (SerializeScriptableObject<T>)base.target;
-                return temp.Object;
+                SerializeScriptableObject temp = (SerializeScriptableObject)base.target;
+                return (T)temp.Object;
             }
         }
+        protected Type type => target.GetType();
         protected new SerializedObject<T> serializedObject
         {
             get
             {
                 if (m_SerializedObject == null)
                 {
-                    m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject<T>)base.target, base.serializedObject);
+                    m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject)base.target, base.serializedObject);
                 }
 
                 return m_SerializedObject;
             }
         }
-
-        //private void OnEnable()
-        //{
-        //    serializedObject
-        //}
-
-        //public override sealed void OnInspectorGUI()
-        //{
-        //    base.OnInspectorGUI();
-        //}
-        //protected virtual void OnGUI() { }
     }
 
     public abstract class PropertyDrawer<T> : PropertyDrawer
@@ -137,9 +182,13 @@ namespace SyadeuEditor.Utilities
         {
             //base.OnGUI(position, property, label);
 
-            AutoRect rect = new AutoRect(EditorGUI.IndentedRect(position));
+            AutoRect rect = new AutoRect(position);
             BeforePropertyGUI(ref rect, property, label);
 
+            ReflectionSealedViewAttribute sealedViewAttribute
+                = fieldInfo.GetCustomAttribute<ReflectionSealedViewAttribute>();
+
+            using (new EditorGUI.DisabledGroupScope(sealedViewAttribute != null))
             using (new EditorGUI.PropertyScope(position, label, property))
             {
                 OnPropertyGUI(ref rect, property, label);
@@ -148,5 +197,22 @@ namespace SyadeuEditor.Utilities
 
         protected virtual void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
         protected virtual void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
+
+        protected void SaveCache<TObject>(SerializedProperty property, string name, TObject obj)
+        {
+            Hash hash = Hash.NewHash(property.propertyPath);
+            string cacheName = hash.ToString() + name;
+
+            EditorPrefs.SetString(cacheName, JsonConvert.SerializeObject(obj));
+        }
+        protected TObject LoadCache<TObject>(SerializedProperty property, string name) => LoadCache(property, name, default(TObject));
+        protected TObject LoadCache<TObject>(SerializedProperty property, string name, TObject defaultValue)
+        {
+            Hash hash = Hash.NewHash(property.propertyPath);
+            string cacheName = hash.ToString() + name;
+
+            string json = EditorPrefs.GetString(cacheName, JsonConvert.SerializeObject(defaultValue));
+            return JsonConvert.DeserializeObject<TObject>(json);
+        }
     }
 }

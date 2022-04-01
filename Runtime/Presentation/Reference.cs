@@ -30,7 +30,9 @@ namespace Syadeu.Presentation
     {
         public static readonly Reference Empty = new Reference(Hash.Empty);
 
-        [JsonProperty(Order = 0, PropertyName = "Hash")] private Hash m_Hash;
+        [UnityEngine.SerializeField]
+        [JsonProperty(Order = 0, PropertyName = "Hash")] 
+        private Hash m_Hash;
 
         [JsonIgnore] public Hash Hash => m_Hash;
 
@@ -66,7 +68,9 @@ namespace Syadeu.Presentation
         public static readonly Reference<T> Empty = new Reference<T>(Hash.Empty);
         private static PresentationSystemID<EntitySystem> s_EntitySystem = PresentationSystemID<EntitySystem>.Null;
 
-        [JsonProperty(Order = 0, PropertyName = "Hash")] private Hash m_Hash;
+        [UnityEngine.SerializeField]
+        [JsonProperty(Order = 0, PropertyName = "Hash")] 
+        private Hash m_Hash;
 
         [JsonIgnore] public Hash Hash => m_Hash;
 

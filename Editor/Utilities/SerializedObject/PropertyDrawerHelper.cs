@@ -210,5 +210,11 @@ namespace SyadeuEditor.Utilities
             GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
             EditorGUI.DrawRect(rect, color);
         }
+        public static void DrawRect(Rect rect, Color color)
+        {
+            color.a = .25f;
+
+            EditorGUI.DrawRect(rect, color);
+        }
     }
 }

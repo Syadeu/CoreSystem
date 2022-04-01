@@ -37,8 +37,10 @@ namespace Syadeu.Presentation.Entities
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
+        [UnityEngine.SerializeField]
         [JsonProperty(Order = -900, PropertyName = "Attributes")]
-        private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
+        private AttributeArray m_AttributeList = new AttributeArray();
+        //private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
 
         /// <summary><inheritdoc cref="IEntityData.Attributes"/></summary>
         [JsonIgnore] internal Dictionary<Type, AttributeBase[]> m_AttributesHashMap;
@@ -48,7 +50,7 @@ namespace Syadeu.Presentation.Entities
         InstanceID IObject.Idx => Idx;
         IAttribute[] IEntityData.Attributes => m_Attributes;
 
-        [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList;
+        [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList.m_Attributes;
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
         //[JsonIgnore] public bool isCreated => m_IsCreated;
 
@@ -196,9 +198,9 @@ namespace Syadeu.Presentation.Entities
         {
             EntityDataBase entity = (EntityDataBase)base.Copy();
 
-            Reference<AttributeBase>[] copy = new Reference<AttributeBase>[m_AttributeList.Length];
-            Array.Copy(m_AttributeList, copy, m_AttributeList.Length);
-            entity.m_AttributeList = copy;
+            //Reference<AttributeBase>[] copy = new Reference<AttributeBase>[m_AttributeList.Length];
+            //Array.Copy(m_AttributeList, copy, m_AttributeList.Length);
+            entity.m_AttributeList = (AttributeArray)m_AttributeList.Clone();
 
             return entity;
         }

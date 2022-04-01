@@ -30,16 +30,7 @@ namespace Syadeu.Collections
     /// <see cref="AttributeBase"/>와 <seealso cref="AttributeProcessor"/>는 하나처럼 작동합니다.
     /// </remarks>
     public interface IAttribute : IObject
-    {
-        /// <summary>
-        /// 이 어트리뷰트의 이름입니다.
-        /// </summary>
-        [JsonProperty(Order = -11)] string Name { get; }
-        /// <summary>
-        /// 이 어트리뷰트의 고유 해쉬 값입니다. <seealso cref="EntityDataList"/>
-        /// </summary>
-        [JsonProperty(Order = -10)] Hash Hash { get; }
-        
+    {        
         /// <summary>
         /// 이 어트리뷰트의 부모 <see cref="IEntityData"/>입니다.
         /// </summary>

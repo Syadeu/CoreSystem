@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    public sealed class AttributeListDrawer : ObjectDrawer<Reference<AttributeBase>[]>
+    public sealed class AttributeListDrawer : ObjectDrawer<AttributeArray>
     {
         private List<ObjectDrawerBase> m_Drawers = new List<ObjectDrawerBase>();
         private List<bool> m_Open = new List<bool>();
@@ -25,7 +25,7 @@ namespace SyadeuEditor.Presentation
             m_Drawers.Clear();
             m_Open.Clear();
 
-            Reference<AttributeBase>[] arr = Getter.Invoke();
+            AttributeArray arr = Getter.Invoke();
 
             for (int i = 0; i < arr.Length; i++)
             {
@@ -35,7 +35,7 @@ namespace SyadeuEditor.Presentation
                 m_Open.Add(false);
             }
         }
-        public override Reference<AttributeBase>[] Draw(Reference<AttributeBase>[] currentValue)
+        public override AttributeArray Draw(AttributeArray currentValue)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
