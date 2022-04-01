@@ -79,18 +79,7 @@ namespace SyadeuEditor.Utilities
 
         public static void Label(Rect rect, string text) => Label(rect, new GUIContent(text), TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text) => Label(rect, text, TextAnchor.MiddleLeft);
-        public static void Label(Rect rect, GUIContent text, TextAnchor textAnchor)
-        {
-            GUIStyle style;
-            if (textAnchor != TextAnchor.MiddleLeft)
-            {
-                style = new GUIStyle(EditorStyles.label);
-                style.alignment = textAnchor;
-            }
-            else style = EditorStyles.label;
-
-            EditorGUI.LabelField(rect, text, style);
-        }
+        public static void Label(Rect rect, GUIContent text, TextAnchor textAnchor) => EditorGUI.LabelField(rect, text, GetLabelStyle(textAnchor));
         public static void Label(Rect rect, GUIContent text, int size, TextAnchor textAnchor)
         {
             GUIContent temp = new GUIContent(text);

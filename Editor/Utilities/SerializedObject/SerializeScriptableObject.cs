@@ -50,7 +50,7 @@ namespace SyadeuEditor.Utilities
         public static float GetPropertyHeight(T obj)
         {
             SerializedObject<T> temp = GetSharedObject(obj);
-            return EditorGUI.GetPropertyHeight(temp);
+            return temp.PropertyHeight;
         }
 
         private SerializeScriptableObject m_Object;
@@ -68,19 +68,21 @@ namespace SyadeuEditor.Utilities
         {
             get
             {
+                float target = EditorGUI.GetPropertyHeight(this, true) + 20;
+
                 if (m_PropertyHeight == null)
                 {
-                    m_PropertyHeight = new AnimFloat(EditorGUI.GetPropertyHeight(this));
+                    m_PropertyHeight = new AnimFloat(target);
                 }
 
-                if (SerializedProperty.isExpanded)
+                //if (SerializedProperty.isExpanded)
                 {
-                    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, true);
+                    m_PropertyHeight.target = target;
                 }
-                else
-                {
-                    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, false);
-                }
+                //else
+                //{
+                //    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, false);
+                //}
 
                 return m_PropertyHeight.value;
             }

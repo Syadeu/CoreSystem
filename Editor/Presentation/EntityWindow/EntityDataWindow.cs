@@ -41,20 +41,22 @@ namespace SyadeuEditor.Presentation
                 if (value != null)
                 {
                     //SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
-                    SerializedObject = new SerializedObject<ObjectBase>(value);
+                    //SerializedObject = new SerializedObject<ObjectBase>(value);
                     //SelectedDrawer = SerializedObject.GetEditor();
-                    SerializedObject.GetCachedEditor(ref m_SelectedDrawer);
+                    //SerializedObject.GetCachedEditor(ref m_SelectedDrawer);
+
+                    SerializedObject<ObjectBase>.GetSharedObject(value).GetCachedEditor(ref m_SelectedDrawer);
                 }
                 else
                 {
-                    SerializedObject.Dispose();
+                    //SerializedObject.Dispose();
 
-                    SerializedObject = null;
+                    //SerializedObject = null;
                     m_SelectedDrawer = null;
                 }
             }
         }
-        public SerializedObject<ObjectBase> SerializedObject { get; private set; }
+        //public SerializedObject<ObjectBase> SerializedObject { get; private set; }
         public Editor SelectedDrawer => m_SelectedDrawer;
         //public ObjectBaseDrawer SelectedDrawer { get; private set; }
 
