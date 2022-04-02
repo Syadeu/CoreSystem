@@ -19,6 +19,8 @@
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEditor;
+using System.Collections;
+using System;
 
 namespace SyadeuEditor.Utilities
 {
@@ -47,5 +49,11 @@ namespace SyadeuEditor.Utilities
             y.floatValue = EditorGUI.FloatField(rects[2], /*m_ElementContents[1],*/ y.floatValue);
             z.floatValue = EditorGUI.FloatField(rects[3], /*m_ElementContents[2],*/ z.floatValue);
         }
+    }
+
+    [CustomPropertyDrawer(typeof(Array), true)]
+    internal sealed class ArrayPropertyDrawer : PropertyDrawer<IList>
+    {
+
     }
 }
