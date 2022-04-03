@@ -44,6 +44,7 @@ namespace Syadeu.Presentation.Map
             [JsonProperty(Order = 0, PropertyName = "TargetEntity")]
             public Reference<EntityBase> m_TargetEntity = Reference<EntityBase>.Empty;
             [UnityEngine.SerializeField]
+            [PositionSelector]
             [JsonProperty(Order = 1, PropertyName = "Position")]
             public float3 m_Position = 0;
             [UnityEngine.SerializeField]

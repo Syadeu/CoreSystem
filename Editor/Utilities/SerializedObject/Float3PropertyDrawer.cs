@@ -45,15 +45,75 @@ namespace SyadeuEditor.Utilities
                 z = property.FindPropertyRelative("z");
 
             EditorGUI.LabelField(rects[0], label);
-            x.floatValue = EditorGUI.FloatField(rects[1], /*m_ElementContents[0],*/ x.floatValue);
-            y.floatValue = EditorGUI.FloatField(rects[2], /*m_ElementContents[1],*/ y.floatValue);
-            z.floatValue = EditorGUI.FloatField(rects[3], /*m_ElementContents[2],*/ z.floatValue);
+            Rect[] elementRaws = new Rect[2];
+            float[] elementRawRatios = new float[2] { .1f, .9f };
+
+            AutoRect.DivideWithRatio(rects[1], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[0]);
+            x.floatValue = EditorGUI.FloatField(elementRaws[1], x.floatValue);
+
+            AutoRect.DivideWithRatio(rects[2], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[1]);
+            y.floatValue = EditorGUI.FloatField(elementRaws[1], y.floatValue);
+
+            AutoRect.DivideWithRatio(rects[3], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[2]);
+            z.floatValue = EditorGUI.FloatField(elementRaws[1], z.floatValue);
+        }
+    }
+    [CustomPropertyDrawer(typeof(int3))]
+    internal sealed class Int3PropertyDrawer : PropertyDrawer<int3>
+    {
+        private GUIContent[] m_ElementContents = new GUIContent[]
+        {
+            new GUIContent("X"),
+            new GUIContent("Y"),
+            new GUIContent("Z")
+        };
+
+        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            Rect elementRect = rect.Pop();
+            //Rect[] rects = AutoRect.DivideWithRatio(elementRect, .2f, .4f, .4f);
+            Rect[] rects = AutoRect.DivideWithRatio(elementRect, .25f, .25f, .25f, .25f);
+
+            SerializedProperty
+                x = property.FindPropertyRelative("x"),
+                y = property.FindPropertyRelative("y"),
+                z = property.FindPropertyRelative("z");
+
+            EditorGUI.LabelField(rects[0], label);
+            Rect[] elementRaws = new Rect[2];
+            float[] elementRawRatios = new float[2] { .1f, .9f };
+
+            AutoRect.DivideWithRatio(rects[1], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[0]);
+            x.intValue = EditorGUI.IntField(elementRaws[1], x.intValue);
+
+            AutoRect.DivideWithRatio(rects[2], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[1]);
+            y.intValue = EditorGUI.IntField(elementRaws[1], y.intValue);
+
+            AutoRect.DivideWithRatio(rects[3], elementRaws, elementRawRatios);
+            elementRaws[0].width = rects[1].width;
+            EditorGUI.LabelField(elementRaws[0], m_ElementContents[2]);
+            z.intValue = EditorGUI.IntField(elementRaws[1], z.intValue);
         }
     }
 
     [CustomPropertyDrawer(typeof(Array), true)]
     internal sealed class ArrayPropertyDrawer : PropertyDrawer<IList>
     {
+        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.LabelField(rect.Pop(), " test");
 
+            base.OnPropertyGUI(ref rect, property, label);
+        }
     }
 }

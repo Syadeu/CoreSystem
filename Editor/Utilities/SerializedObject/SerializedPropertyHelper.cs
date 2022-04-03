@@ -37,7 +37,7 @@ namespace SyadeuEditor.Utilities
 
         public static PrefabReference ReadPrefabReference(SerializedProperty property)
         {
-            SerializedProperty 
+            SerializedProperty
                 idxProperty = property.FindPropertyRelative("m_Idx"),
                 subAssetNameProperty = property.FindPropertyRelative("m_SubAssetName");
 
@@ -62,7 +62,7 @@ namespace SyadeuEditor.Utilities
             SetFixedString128Bytes(subAssetNameProperty, prefabReference.SubAssetName);
         }
         public static void SetPrefabReference(
-            SerializedProperty idxProperty, SerializedProperty subAssetNameProperty, 
+            SerializedProperty idxProperty, SerializedProperty subAssetNameProperty,
             long idx, FixedString128Bytes subAssetName)
         {
             idxProperty.longValue = idx;
@@ -119,7 +119,7 @@ namespace SyadeuEditor.Utilities
 
         private static class FixedString128Fields
         {
-            private static FieldInfo 
+            private static FieldInfo
                 s_Utf8LengthInBytes, s_bytes;
 
             public const string
@@ -419,5 +419,14 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+
+        public static Type GetSystemType(this SerializedProperty t)
+        {
+            return PropertyDrawerHelper.GetTargetObjectOfProperty(t).GetType();
+        }
+        public static bool IsTypeOf<T>(this SerializedProperty t)
+        {
+            return TypeHelper.TypeOf<T>.Type.Name.Equals(t.type);
+        }
     }
 }

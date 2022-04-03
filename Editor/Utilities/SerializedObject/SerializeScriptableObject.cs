@@ -20,6 +20,8 @@ using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Internal;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -196,6 +198,35 @@ namespace SyadeuEditor.Utilities
         }
     }
 
+    //[CustomPropertyDrawer(typeof(DescriptionAttribute))]
+    //internal sealed class asd : DecoratorDrawer
+    //{
+    //    //new DescriptionAttribute attribute => (DescriptionAttribute)base.attribute;
+
+    //    public override float GetHeight()
+    //    {
+    //        return EditorStyles.helpBox.CalcHeight()
+    //    }
+    //    public override void OnGUI(Rect position)
+    //    {
+    //        base.OnGUI(position);
+    //    }
+    //}
+
+    //[CustomPropertyDrawer(typeof(ReflectionSealedViewAttribute))]
+    //internal sealed class ReflectionSealedViewDrawer : PropertyDrawer
+    //{
+    //    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    //    {
+    //        ReflectionSealedViewAttribute att = (ReflectionSealedViewAttribute)attribute;
+
+    //        using (new EditorGUI.DisabledGroupScope(true))
+    //        {
+    //            EditorGUI.PropertyField(position, property, label, true);
+    //        }
+    //    }
+    //}
+
     public abstract class PropertyDrawer<T> : PropertyDrawer
     {
         public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -218,6 +249,8 @@ namespace SyadeuEditor.Utilities
         protected virtual void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
         protected virtual void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
 
+        #region Cache
+
         protected void SaveCache<TObject>(SerializedProperty property, string name, TObject obj)
         {
             Hash hash = Hash.NewHash(property.propertyPath);
@@ -233,6 +266,15 @@ namespace SyadeuEditor.Utilities
 
             string json = EditorPrefs.GetString(cacheName, JsonConvert.SerializeObject(defaultValue));
             return JsonConvert.DeserializeObject<TObject>(json);
+        }
+
+        #endregion
+
+        protected List<Rect> GetValueRect(Rect rawRect, GUIStyle style, params string[] names)
+        {
+            List<Rect> rects = EditorGUIUtility.GetFlowLayoutedRects(rawRect, style, EditorGUIUtility.standardVerticalSpacing, EditorGUIUtility.standardVerticalSpacing, names.ToList());
+
+            return rects;
         }
     }
 }

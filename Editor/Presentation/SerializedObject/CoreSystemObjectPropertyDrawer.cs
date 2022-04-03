@@ -36,7 +36,11 @@ namespace SyadeuEditor.Presentation
 
             foreach (var item in fieldInfo.GetCustomAttributes())
             {
-                if (item is DescriptionAttribute || item is TooltipAttribute)
+                if (item is DescriptionAttribute desc)
+                {
+                    m_Height.target += c_HelpBoxHeight;
+                }
+                else if (item is TooltipAttribute tooltip)
                 {
                     m_Height.target += c_HelpBoxHeight;
                 }
