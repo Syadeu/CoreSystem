@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Entities
         InstanceID IObject.Idx => Idx;
         IAttribute[] IEntityData.Attributes => m_Attributes;
 
-        [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList.m_Attributes;
+        [JsonIgnore, UnityEngine.HideInInspector] public Reference<AttributeBase>[] Attributes => m_AttributeList.m_Array;
         [JsonIgnore] private HashSet<Hash> AttritbutesHashSet { get; } = new HashSet<Hash>();
         //[JsonIgnore] public bool isCreated => m_IsCreated;
 

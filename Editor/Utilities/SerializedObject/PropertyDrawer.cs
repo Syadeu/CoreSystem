@@ -36,6 +36,7 @@ namespace SyadeuEditor.Utilities
             if (!m_Initialized)
             {
                 OnInitialize(property);
+                OnInitialize(property, label);
                 m_Initialized = true;
             }
 
@@ -52,6 +53,7 @@ namespace SyadeuEditor.Utilities
             }
         }
         protected virtual void OnInitialize(SerializedProperty property) { }
+        protected virtual void OnInitialize(SerializedProperty property, GUIContent label) { }
 
         protected virtual void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
         protected virtual void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }

@@ -1,6 +1,8 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Presentation;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -471,4 +473,13 @@ namespace SyadeuEditor.Utilities
             return PropertyDrawerHelper.GetParentOfProperty(t);
         }
     }
+
+    //[CustomPropertyDrawer(typeof(List<>), true)]
+    //internal sealed class SerializedArrayDrawer : PropertyDrawer<Array>
+    //{
+    //    protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+    //    {
+    //        EditorGUI.LabelField(rect.Pop(), "test");
+    //    }
+    //}
 }

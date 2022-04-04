@@ -5,7 +5,6 @@ using Syadeu.Presentation.Attributes;
 using SyadeuEditor.Utilities;
 using Syadeu.Presentation.Entities;
 using Newtonsoft.Json;
-using System;
 using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections;
 using UnityEditor.AnimatedValues;
@@ -29,7 +28,7 @@ namespace SyadeuEditor.Presentation
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            SerializedProperty arr = property.FindPropertyRelative("m_Attributes");
+            SerializedProperty arr = property.FindPropertyRelative("m_Array");
 
             float height = 20 + 10;
 
@@ -47,7 +46,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            height += 5;
+            height += 15;
             if (m_Height == null)
             {
                 m_Height = new AnimFloat(height);
@@ -55,7 +54,6 @@ namespace SyadeuEditor.Presentation
             }
             else m_Height.target = height;
 
-            //return height;
             return m_Height.value;
         }
 
@@ -66,7 +64,7 @@ namespace SyadeuEditor.Presentation
         }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            SerializedProperty arr = property.FindPropertyRelative("m_Attributes");
+            SerializedProperty arr = property.FindPropertyRelative("m_Array");
 
             var blockRect = new Rect(rect.TotalRect);
             blockRect.height -= 5;
@@ -147,7 +145,6 @@ namespace SyadeuEditor.Presentation
                 }
                 
                 using (new EditorGUI.DisabledGroupScope(reference.IsEmpty() || !reference.IsValid()))
-                using (var change = new EditorGUI.ChangeCheckScope())
                 {
                     if (element.isExpanded && !reference.IsValid()) element.isExpanded = false;
 
@@ -184,9 +181,17 @@ namespace SyadeuEditor.Presentation
 
                     var elementChildRect = rect.Pop(elementProperty.PropertyHeight);
                     PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(elementChildRect), Color.black);
-                    EditorGUI.PropertyField(elementChildRect, elementProperty, true);
 
-                    elementProperty.ApplyModifiedProperties();
+                    using (var change = new EditorGUI.ChangeCheckScope())
+                    {
+                        EditorGUI.PropertyField(elementChildRect, elementProperty, true);
+
+                        if (change.changed)
+                        {
+                            elementProperty.ApplyModifiedProperties();
+                            elementProperty.Update();
+                        }
+                    }
                 }
 
                 EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));

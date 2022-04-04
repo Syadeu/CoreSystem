@@ -53,7 +53,9 @@ namespace SyadeuEditor.Utilities
         {
             get
             {
-                return m_SerializedObject.FindProperty("m_Object");
+                const string c_Str = "m_Object";
+
+                return m_SerializedObject.FindProperty(c_Str);
             }
         }
         public float PropertyHeight
@@ -137,6 +139,7 @@ namespace SyadeuEditor.Utilities
         }
 
         public void ApplyModifiedProperties() => m_SerializedObject.ApplyModifiedProperties();
+        public void Update() => m_SerializedObject.Update();
 
         #endregion
 
