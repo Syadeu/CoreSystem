@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Syadeu.Collections
 {
+    [Conditional("UNITY_EDITOR")]
     public sealed class ScaleHandleAttribute : PropertyAttribute
     {
         public Vector3 Position;
