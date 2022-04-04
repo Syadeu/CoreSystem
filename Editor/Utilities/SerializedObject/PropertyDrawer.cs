@@ -29,14 +29,14 @@ namespace SyadeuEditor.Utilities
 {
     public abstract class PropertyDrawer<T> : PropertyDrawer
     {
-        private static bool s_Initialized = false;
+        private bool m_Initialized = false;
 
         public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            if (!s_Initialized)
+            if (!m_Initialized)
             {
                 OnInitialize(property);
-                s_Initialized = true;
+                m_Initialized = true;
             }
 
             AutoRect rect = new AutoRect(position);

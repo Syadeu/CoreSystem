@@ -3,6 +3,7 @@ using Syadeu.Presentation;
 using System;
 using System.Reflection;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -420,6 +421,38 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        public static Vector3 GetVector3(this SerializedProperty t)
+        {
+            if (t.propertyType == SerializedPropertyType.Vector3)
+            {
+                return t.vector3Value;
+            }
+            else if (t.propertyType == SerializedPropertyType.Vector3Int)
+            {
+                return t.vector3IntValue;
+            }
+            else if (t.IsTypeOf<float3>())
+            {
+                SerializedProperty
+                    x = t.FindPropertyRelative("x"),
+                    y = t.FindPropertyRelative("y"),
+                    z = t.FindPropertyRelative("z");
+
+                return new Vector3(x.floatValue, y.floatValue, z.floatValue);
+            }
+            else if (t.IsTypeOf<int3>())
+            {
+                SerializedProperty
+                    x = t.FindPropertyRelative("x"),
+                    y = t.FindPropertyRelative("y"),
+                    z = t.FindPropertyRelative("z");
+
+                return new Vector3(x.intValue, y.intValue, z.intValue);
+            }
+
+            throw new NotImplementedException();
+        }
+
         public static Type GetSystemType(this SerializedProperty t)
         {
             return PropertyDrawerHelper.GetTargetObjectOfProperty(t).GetType();
@@ -427,6 +460,11 @@ namespace SyadeuEditor.Utilities
         public static bool IsTypeOf<T>(this SerializedProperty t)
         {
             return TypeHelper.TypeOf<T>.Type.Name.Equals(t.type);
+        }
+
+        public static SerializedProperty GetParent(this SerializedProperty t)
+        {
+            return PropertyDrawerHelper.GetParentOfProperty(t);
         }
     }
 }

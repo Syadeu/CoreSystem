@@ -47,6 +47,7 @@ namespace Syadeu.Presentation.Map
             [PositionHandle]
             [JsonProperty(Order = 1, PropertyName = "Position")]
             public float3 m_Position = 0;
+            [ScaleHandle("m_Position")]
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "SphereOffset")]
             public float3 m_SphereOffset = 0;

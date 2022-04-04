@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Reflection;
 using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    public sealed class PositionHandleAttribute : PropertyAttribute { }
+    public sealed class ScaleHandleAttribute : PropertyAttribute
+    {
+        public Vector3 Position;
+        public string PositionField = string.Empty;
+
+        public ScaleHandleAttribute() { }
+        public ScaleHandleAttribute(string positionField)
+        {
+            PositionField = positionField;
+        }
+    }
 }
