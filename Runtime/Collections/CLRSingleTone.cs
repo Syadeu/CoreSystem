@@ -16,6 +16,10 @@ using System;
 
 namespace Syadeu.Collections
 {
+    /// <summary>
+    /// Common language runtime single-tone <see langword="abstract"/> class
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class CLRSingleTone<T> : IDisposable where T : class, new()
     {
         private static T s_Instance;
@@ -26,19 +30,22 @@ namespace Syadeu.Collections
                 if (s_Instance == null)
                 {
                     s_Instance = new T();
+
                     (s_Instance as CLRSingleTone<T>).OnInitialize();
                 }
-
                 return s_Instance;
             }
         }
         ~CLRSingleTone()
         {
-            Dispose();
+            ((IDisposable)this).Dispose();
+        }
+        void IDisposable.Dispose()
+        {
+            OnDispose();
         }
 
         protected virtual void OnInitialize() { }
-
-        public virtual void Dispose() { }
+        protected virtual void OnDispose() { }
     }
 }

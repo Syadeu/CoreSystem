@@ -71,16 +71,27 @@ namespace SyadeuEditor.Utilities
         }
         public static void DivideWithRatio(Rect rect, Rect[] array, float[] ratio)
         {
-            var temp = rect;
-            for (int i = 0; i < ratio.Length; i++)
-            {
-                array[i] = new Rect(temp);
-                array[i].width = rect.width * ratio[i];
+            float lastX = rect.xMax;
 
-                temp.x += array[i].width;
+            for (int i = ratio.Length - 1; i >= 0; i--)
+            {
+                array[i] = new Rect(rect);
+                array[i].x = lastX - (rect.width * ratio[i]);
+                array[i].xMax = lastX;
+
+                lastX = array[i].x;
+
+                //if (i + 1 < ratio.Length)
+                //{
+                //    //array[i].width = array[i + 1].x
+                //}
             }
         }
 
+        public static void AlignRect(ref Rect prev, in Rect next)
+        {
+            prev.width = next.x - prev.x;
+        }
         public static Rect[] DivideWithFixedWidthRight(Rect rect, params float[] width)
         {
             Rect[] array = new Rect[width.Length];
@@ -139,20 +150,8 @@ namespace SyadeuEditor.Utilities
         
         public static Rect LeftBottomAlign(float width, float height)
         {
-            //Vector2 center = CalculateCenter(width, height);
-            //center.x += Screen.width * .5f;
-            //center.y += Screen.height * .5f;
-
             Vector2 pos = CalculateRatio(width, height, .5f, .9f);
-
-            //Rect temp = new Rect((Screen.width - width) * .5f, Screen.height - (height * 1.5f), width, height);
             Rect temp = new Rect(pos.x, pos.y, width, height);
-
-            //return GUIUtility.ScreenToGUIRect(temp);
-
-
-            // 300 / 1920
-
 
             return temp;
         }

@@ -25,6 +25,8 @@ namespace SyadeuEditor.Presentation
             "Anything made changes in this inspector view will affect to original attribute directly not only as this entity.";
         private AnimFloat m_Height;
 
+        Rect[] elementRects = new Rect[3];
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty arr = property.FindPropertyRelative("m_Attributes");
@@ -103,8 +105,8 @@ namespace SyadeuEditor.Presentation
         }
         private void DrawElement(ref AutoRect rect, SerializedProperty property)
         {
-            Rect[] elementRects = new Rect[3];
-            float[] elementRatio = new float[3] { 0.1f, 0.8f, 0.1f };
+            //Rect[] elementRects = new Rect[3];
+            float[] elementRatio = new float[3] { 0.15f, 0.75f, 0.1f };
 
             EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
 
@@ -118,22 +120,22 @@ namespace SyadeuEditor.Presentation
 
                 AutoRect.DivideWithRatio(elementRect, elementRects, elementRatio);
 
+                // Indexer 
                 {
                     int index = i;
-                    index = EditorGUI.DelayedIntField(elementRects[0], GUIContent.none, index);
+                    index = EditorGUI.DelayedIntField(elementRects[0], index);
 
                     if (index != i)
                     {
                         property.MoveArrayElement(i, index);
                     }
                 }
-                
-                EditorGUI.PropertyField(elementRects[1], element);
 
                 const float c_BttWidth = 20;
                 Rect[] bttRects = AutoRect.DivideWithFixedWidthRight(elementRect, c_BttWidth, c_BttWidth, c_BttWidth);
-                //Rect[] bttRects = new Rect[3];
-                //AutoRect.DivideWithFixedWidthRight(elementRect, bttRects, c_BttWidth); 
+
+                AutoRect.AlignRect(ref elementRects[1], bttRects[0]);
+                EditorGUI.PropertyField(elementRects[1], element);
 
                 if (GUI.Button(bttRects[0], "-"))
                 {
