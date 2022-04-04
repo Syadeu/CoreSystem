@@ -16,31 +16,34 @@
 #define DEBUG_MODE
 #endif
 
-using Newtonsoft.Json;
-using System.ComponentModel;
-using UnityEngine;
+using System;
 
 namespace SyadeuEditor.Utilities
 {
-    internal sealed class SerializeScriptableObject : ScriptableObject
+    public abstract class SerializedObjectEditor<T> : EditorEntity
     {
-        public static SerializeScriptableObject Deserialize<T>(in string json)
+        private SerializedObject<T> m_SerializedObject = null;
+
+        protected new T target
         {
-            SerializeScriptableObject temp = CreateInstance<SerializeScriptableObject>();
-            temp.m_Object = JsonConvert.DeserializeObject<T>(json);
-
-            return temp;
+            get
+            {
+                SerializeScriptableObject temp = (SerializeScriptableObject)base.target;
+                return (T)temp.Object;
+            }
         }
-        public static SerializeScriptableObject Deserialize<T>(in T obj)
+        protected Type type => target.GetType();
+        protected new SerializedObject<T> serializedObject
         {
-            SerializeScriptableObject temp = CreateInstance<SerializeScriptableObject>();
-            temp.m_Object = obj;
+            get
+            {
+                if (m_SerializedObject == null)
+                {
+                    m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject)base.target, base.serializedObject);
+                }
 
-            return temp;
+                return m_SerializedObject;
+            }
         }
-
-        [SerializeReference] private object m_Object;
-
-        public object Object => m_Object;
     }
 }

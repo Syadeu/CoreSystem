@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
-    public sealed class PositionSelectorAttribute : PropertyAttribute
+    public sealed class PositionHandleAttribute : PropertyAttribute
     {
 
     }

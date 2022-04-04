@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using Codice.Utils;
+using UnityEditor;
 
 namespace SyadeuEditor
 {
@@ -21,14 +22,19 @@ namespace SyadeuEditor
             }
         }
 
+        public bool Opened { get; private set; } = false;
         protected abstract string DisplayName { get; }
 
         protected virtual void OnEnable()
         {
+            Opened = true;
+
             SceneView.duringSceneGui += OnSceneGUI;
         }
         protected virtual void OnDisable()
         {
+            Opened = false;
+
             SceneView.duringSceneGui -= OnSceneGUI;
         }
 

@@ -131,5 +131,30 @@ namespace SyadeuEditor.Utilities
                 nextX += width[i];
             }
         }
+
+        private static Vector2 CalculateCenter(float width, float height)
+            => new Vector2((Screen.width - width) * .5f, (Screen.height - height) * .5f);
+        private static Vector2 CalculateRatio(float width, float height, float xRatio, float yRatio)
+            => new Vector2((Screen.width - width) * xRatio, (Screen.height - height) * yRatio);
+        
+        public static Rect LeftBottomAlign(float width, float height)
+        {
+            //Vector2 center = CalculateCenter(width, height);
+            //center.x += Screen.width * .5f;
+            //center.y += Screen.height * .5f;
+
+            Vector2 pos = CalculateRatio(width, height, .5f, .9f);
+
+            //Rect temp = new Rect((Screen.width - width) * .5f, Screen.height - (height * 1.5f), width, height);
+            Rect temp = new Rect(pos.x, pos.y, width, height);
+
+            //return GUIUtility.ScreenToGUIRect(temp);
+
+
+            // 300 / 1920
+
+
+            return temp;
+        }
     }
 }
