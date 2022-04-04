@@ -13,23 +13,20 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(IFixedReference), true)]
     public sealed class ReferencePropertyDrawer : PropertyDrawer<IFixedReference>
     {
-        private static readonly RectOffset boxPadding = EditorStyles.helpBox.padding;
-        private const float PAD_SIZE = 2f;
-        private const float FOOTER_HEIGHT = 10f;
-        private static readonly float lineHeight = EditorGUIUtility.singleLineHeight;
-        private static readonly float paddedLine = lineHeight + PAD_SIZE;
+        private SerializedProperty m_HashProperty;
+        private Type m_TargetType;
+        private string m_DisplayName;
 
-        protected override void OnPropertyGUI(ref AutoRect temp, SerializedProperty property, GUIContent label)
+        protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            var hashProperty = property.FindPropertyRelative("m_Hash").FindPropertyRelative("mBits");
+            m_HashProperty = property.FindPropertyRelative("m_Hash").FindPropertyRelative("mBits");
             Type t = fieldInfo.FieldType;
 
-            Type targetType;
             if (!t.IsArray && !TypeHelper.TypeOf<IList>.Type.IsAssignableFrom(t))
             {
                 Type[] generics = t.GetGenericArguments();
-                if (generics.Length > 0) targetType = generics[0];
-                else targetType = null;
+                if (generics.Length > 0) m_TargetType = generics[0];
+                else m_TargetType = null;
             }
             else
             {
@@ -43,16 +40,39 @@ namespace SyadeuEditor.Presentation
                     generics = t.GetGenericArguments()[0].GetGenericArguments();
                 }
 
-                if (generics.Length > 0) targetType = generics[0];
-                else targetType = null;
+                if (generics.Length > 0) m_TargetType = generics[0];
+                else m_TargetType = null;
             }
 
-            string displayName;
-            Reference current = new Reference(new Hash((ulong)hashProperty.longValue));
-            if (current.GetObject() == null) displayName = "None";
-            else displayName = current.GetObject().Name;
+            Reference current = new Reference(new Hash((ulong)m_HashProperty.longValue));
+            if (current.GetObject() == null) m_DisplayName = "None";
+            else m_DisplayName = current.GetObject().Name;
+        }
 
-            if (GUI.Button(temp.Pop(), displayName, EditorStyleUtilities.SelectorStyle))
+        protected override void OnPropertyGUI(ref AutoRect temp, SerializedProperty property, GUIContent label)
+        {
+            Rect buttonRect;
+            if (!property.IsInArray())
+            {
+                Rect elementRect = temp.Pop();
+                var rects = AutoRect.DivideWithRatio(elementRect, .3f, .7f);
+                EditorGUI.LabelField(rects[0], label);
+                buttonRect = rects[1];
+            }
+            else
+            {
+                if (property.GetParent().CountInProperty() > 1)
+                {
+                    Rect elementRect = temp.Pop();
+                    var rects = AutoRect.DivideWithRatio(elementRect, .3f, .7f);
+                    //EditorStyles.label.CalcMinMaxWidth()
+                    EditorGUI.LabelField(rects[0], label);
+                    buttonRect = rects[1];
+                }
+                else buttonRect = temp.Pop();
+            }
+
+            if (GUI.Button(buttonRect, m_DisplayName, EditorStyleUtilities.SelectorStyle))
             {
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
@@ -61,8 +81,8 @@ namespace SyadeuEditor.Presentation
                 var iter = EntityDataList.Instance.GetData<ObjectBase>()
                         .Where((other) =>
                         {
-                            if (other.GetType().Equals(targetType) ||
-                                targetType.IsAssignableFrom(other.GetType()))
+                            if (other.GetType().Equals(m_TargetType) ||
+                                m_TargetType.IsAssignableFrom(other.GetType()))
                             {
                                 return true;
                             }
@@ -82,8 +102,8 @@ namespace SyadeuEditor.Presentation
                         setter: (hash) =>
                         {
                             ulong temp = hash;
-                            hashProperty.longValue = (long)temp;
-                            hashProperty.serializedObject.ApplyModifiedProperties();
+                            m_HashProperty.longValue = (long)temp;
+                            m_HashProperty.serializedObject.ApplyModifiedProperties();
                         },
                         getter: (att) =>
                         {

@@ -461,6 +461,10 @@ namespace SyadeuEditor.Utilities
         {
             return TypeHelper.TypeOf<T>.Type.Name.Equals(t.type);
         }
+        public static bool IsInArray(this SerializedProperty t)
+        {
+            return PropertyDrawerHelper.IsPropertyInArray(t);
+        }
 
         public static SerializedProperty GetParent(this SerializedProperty t)
         {

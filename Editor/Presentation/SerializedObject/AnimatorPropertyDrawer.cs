@@ -30,7 +30,7 @@ namespace SyadeuEditor.Presentation
             EditorGUI.PropertyField(rect.Pop(), enableRootMotionProp);
             EditorGUI.PropertyField(rect.Pop(), manualRootMotion);
 
-            EditorGUI.PropertyField(rect.Pop(), animationTriggers, true);
+            EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(animationTriggers)), animationTriggers, true);
         }
     }
 }

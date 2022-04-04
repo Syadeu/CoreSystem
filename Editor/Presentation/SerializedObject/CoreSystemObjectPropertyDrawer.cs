@@ -11,12 +11,15 @@ namespace SyadeuEditor.Presentation
     public abstract class CoreSystemObjectPropertyDrawer<T> : PropertyDrawer<T>
         where T : class, IObject
     {
-        private const float
-            c_HelpBoxHeight = 35;
+        private const string
+            c_NamePropertyStr = "Name",
+            c_HashPropertyStr = "Hash";
+
+        private const float c_HelpBoxHeight = 35;
         private AnimFloat m_Height;
 
-        protected SerializedProperty GetNameProperty(SerializedProperty property) => property.FindPropertyRelative("Name");
-        protected SerializedProperty GetHashProperty(SerializedProperty property) => property.FindPropertyRelative("Hash");
+        protected SerializedProperty GetNameProperty(SerializedProperty property) => property.FindPropertyRelative(c_NamePropertyStr);
+        protected SerializedProperty GetHashProperty(SerializedProperty property) => property.FindPropertyRelative(c_HashPropertyStr);
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -56,13 +59,13 @@ namespace SyadeuEditor.Presentation
             rect.Indent(5);
             rect.Pop(5);
         }
-        protected override  void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             SerializedProperty nameProp = GetNameProperty(property);
 
             string
                 nameStr = EditorUtilities.String(nameProp.stringValue + ": ", 20),
-                typeStr = EditorUtilities.String(TypeHelper.TypeOf<T>.ToString(), 11);
+                typeStr = EditorUtilities.String(property.type, 11);
 
             CoreGUI.Label(rect.Pop(20), nameStr + typeStr);
             foreach (var item in fieldInfo.GetCustomAttributes())

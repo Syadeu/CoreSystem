@@ -68,7 +68,9 @@ namespace SyadeuEditor.Presentation
         {
             SerializedProperty arr = property.FindPropertyRelative("m_Attributes");
 
-            PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(rect.TotalRect), Color.black);
+            var blockRect = new Rect(rect.TotalRect);
+            blockRect.height -= 5;
+            PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
 
             DrawHeader(ref rect, arr);
 
