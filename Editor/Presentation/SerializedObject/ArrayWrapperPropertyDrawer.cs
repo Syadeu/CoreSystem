@@ -107,9 +107,10 @@ namespace SyadeuEditor.Presentation
             SerializedProperty arr = GetArrayProperty(property);
 
             var blockRect = new Rect(rect.TotalRect);
-            blockRect.y += 2;
+            blockRect.y += 3;
             blockRect.height -= 4;
             PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
+            rect.Pop(3);
 
             if (!DrawHeader(ref rect, arr)) // 15
             {
@@ -256,9 +257,6 @@ namespace SyadeuEditor.Presentation
                     PropertyDrawerHelper.DrawRect(
                         EditorGUI.IndentedRect(elementAutoRect.Current),
                         Color.black);
-
-                    GUIStyle style = new GUIStyle(EditorStyleUtilities.Box);
-                    style.clipping = TextClipping.Clip;
 
                     elementAutoRect.Pop(5);
 
