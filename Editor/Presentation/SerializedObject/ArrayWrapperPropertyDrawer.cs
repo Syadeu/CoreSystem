@@ -170,7 +170,8 @@ namespace SyadeuEditor.Presentation
                 SerializedProperty element = property.GetArrayElementAtIndex(i);
 
                 AutoRect elementAutoRect = new AutoRect(rect.Pop(GetElementHeight(element)));
-                Rect elementRect = elementAutoRect.Pop(EditorGUI.GetPropertyHeight(element, false));
+                //Rect elementRect = elementAutoRect.Pop(EditorGUI.GetPropertyHeight(element, false));
+                Rect elementRect = elementAutoRect.Pop(EditorStyles.textField.CalcHeight(new GUIContent(element.displayName), rect.Current.width));
 
                 PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
                 AutoRect.DivideWithRatio(elementRect, elementRects, elementRatio);
