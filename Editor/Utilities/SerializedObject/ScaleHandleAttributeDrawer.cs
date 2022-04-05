@@ -51,7 +51,7 @@ namespace SyadeuEditor.Utilities
                 var parent = PropertyDrawerHelper.GetParentOfProperty(property);
                 var positionField = parent.FindPropertyRelative(attribute.PositionField);
 
-                Popup.Instance.SetProperty(property, positionField);
+                Popup.Instance.SetProperty(attribute, property, positionField);
                 Popup.Instance.Open();
 
                 m_Opened = true;
@@ -68,6 +68,7 @@ namespace SyadeuEditor.Utilities
             private SerializedProperty
                 m_Property, m_PositionProperty,
                 m_X, m_Y, m_Z;
+            private ScaleHandleAttribute m_Attribute;
 
             public bool IsOpened { get; private set; } = false;
 
@@ -98,8 +99,9 @@ namespace SyadeuEditor.Utilities
                 SceneView.RepaintAll();
                 IsOpened = false;
             }
-            public void SetProperty(SerializedProperty property, SerializedProperty positionProp)
+            public void SetProperty(ScaleHandleAttribute attribute, SerializedProperty property, SerializedProperty positionProp)
             {
+                m_Attribute = attribute;
                 m_Property = property;
                 m_PositionProperty = positionProp;
 
@@ -138,7 +140,24 @@ namespace SyadeuEditor.Utilities
                     scale = (float3)Mathf.Epsilon;
                 }
 
-                scale = Handles.DoScaleHandle(scale, m_PositionProperty.GetVector3(), quaternion.identity, 1);
+                Vector3 pos = m_PositionProperty.GetVector3();
+                scale = Handles.DoScaleHandle(scale, pos, quaternion.identity, 1);
+
+                switch (m_Attribute.Type)
+                {
+                    case ScaleHandleAttribute.GUIType.Cube:
+                        Handles.DrawWireCube(pos, scale);
+                        break;
+                    case ScaleHandleAttribute.GUIType.Sphere:
+                        if (Event.current.type == EventType.Repaint)
+                        {
+                            Handles.SphereHandleCap(0, pos, Quaternion.identity, HandleUtility.GetHandleSize(pos), EventType.Repaint);
+                        }
+                        
+                        break;
+                    default:
+                        break;
+                }
 
                 m_X.floatValue = scale.x;
                 m_Y.floatValue = scale.y;

@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
@@ -26,18 +27,26 @@ namespace SyadeuEditor.Utilities
 {
     public sealed class SerializedObject<T> : IDisposable
     {
-        private static SerializedObject<T> s_Shared = new SerializedObject<T>();
+        private static Dictionary<T, SerializedObject<T>> s_Shared = new Dictionary<T, SerializedObject<T>>();
         public static SerializedObject<T> GetSharedObject(T obj)
         {
-            if (s_Shared.m_Object != null)
+            if (!s_Shared.TryGetValue(obj, out var s))
             {
-                UnityEngine.Object.DestroyImmediate(s_Shared.m_Object);
+                s = new SerializedObject<T>(obj);
+                s_Shared.Add(obj, s);
             }
 
-            s_Shared.m_Object = SerializeScriptableObject.Deserialize(obj);
-            s_Shared.m_SerializedObject = new SerializedObject(s_Shared.m_Object);
+            return s;
 
-            return s_Shared;
+            //if (s_Shared.m_Object != null)
+            //{
+            //    UnityEngine.Object.DestroyImmediate(s_Shared.m_Object);
+            //}
+
+            //s_Shared.m_Object = SerializeScriptableObject.Deserialize(obj);
+            //s_Shared.m_SerializedObject = new SerializedObject(s_Shared.m_Object);
+
+            //return s_Shared;
         }
         public static float GetPropertyHeight(T obj)
         {

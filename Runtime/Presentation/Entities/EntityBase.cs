@@ -48,14 +48,14 @@ namespace Syadeu.Presentation.Entities
         public bool StaticBatching;
 
         [Description("AABB 의 Center")]
-        [SerializeField]
+        [SerializeField, PositionHandle(ScaleField = "Size")]
         [JsonProperty(Order = -798, PropertyName = "Center")]
         public float3 Center;
 
         [Description("AABB 의 Size")]
-        [SerializeField]
+        [SerializeField, ScaleHandle(PositionField = "Center")]
         [JsonProperty(Order = -797, PropertyName = "Size")]
-        public float3 Size;
+        public float3 Size = 1;
 
         [Space]
         [SerializeField]

@@ -19,5 +19,8 @@ using UnityEngine;
 namespace Syadeu.Collections
 {
     [Conditional("UNITY_EDITOR")]
-    public sealed class PositionHandleAttribute : PropertyAttribute { }
+    public sealed class PositionHandleAttribute : PropertyAttribute
+    {
+        public string ScaleField = string.Empty;
+    }
 }

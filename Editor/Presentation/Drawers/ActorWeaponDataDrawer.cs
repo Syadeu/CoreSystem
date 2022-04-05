@@ -104,17 +104,17 @@ namespace SyadeuEditor.Presentation
 
     }
 
-    [Obsolete("", true)]
-    public sealed class TestActorWeaponDataEditor : SerializedObjectEditor<ActorWeaponData>
-    {
-        private void OnEnable()
-        {
-            serializedObject.FindProperty("m_Damage");
-        }
+    //[Obsolete("", true)]
+    //public sealed class TestActorWeaponDataEditor : SerializedObjectEditor<ActorWeaponData>
+    //{
+    //    private void OnEnable()
+    //    {
+    //        serializedObject.FindProperty("m_Damage");
+    //    }
 
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-        }
-    }
+    //    public override void OnInspectorGUI()
+    //    {
+    //        base.OnInspectorGUI();
+    //    }
+    //}
 }

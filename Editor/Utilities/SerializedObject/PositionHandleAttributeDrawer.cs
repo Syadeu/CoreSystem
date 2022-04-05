@@ -26,6 +26,8 @@ namespace SyadeuEditor.Utilities
     [CustomPropertyDrawer(typeof(PositionHandleAttribute))]
     internal sealed class PositionHandleAttributeDrawer : Vector3AttributeDrawer
     {
+        new PositionHandleAttribute attribute => (PositionHandleAttribute)base.attribute;
+
         protected override string OpenedButtonText => "Pick";
         protected override string OpenedButtonTooltip => "Scene view 에서 오브젝트 위치를 수정합니다.";
         protected override string ClosedButtonText => "Close";
@@ -46,7 +48,10 @@ namespace SyadeuEditor.Utilities
         {
             if (!m_Opened)
             {
-                Popup.Instance.SetProperty(property);
+                var parent = PropertyDrawerHelper.GetParentOfProperty(property);
+                var scaleField = parent.FindPropertyRelative(attribute.ScaleField);
+
+                Popup.Instance.SetProperty(property, scaleField);
                 Popup.Instance.Open();
 
                 m_Opened = true;
@@ -61,7 +66,7 @@ namespace SyadeuEditor.Utilities
         private sealed class Popup : CLRSingleTone<Popup>
         {
             private SerializedProperty
-                m_Property,
+                m_Property, m_ScaleProperty,
                 m_X, m_Y, m_Z;
 
             public bool IsOpened { get; private set; } = false;
@@ -93,9 +98,10 @@ namespace SyadeuEditor.Utilities
                 SceneView.RepaintAll();
                 IsOpened = false;
             }
-            public void SetProperty(SerializedProperty property)
+            public void SetProperty(SerializedProperty property, SerializedProperty scaleProperty)
             {
                 m_Property = property;
+                m_ScaleProperty = scaleProperty;
 
                 m_X = m_Property.FindPropertyRelative("x");
                 m_Y = m_Property.FindPropertyRelative("y");
@@ -126,10 +132,12 @@ namespace SyadeuEditor.Utilities
                 Handles.EndGUI();
 
                 //const float size = 1, arrowSize = 2, centerOffset = .5f;
-                Vector3 position = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue);
+                Vector3 
+                    position = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue),
+                    scale = m_ScaleProperty.GetVector3();
 
-                Handles.DrawWireCube(position, Vector3.one * .5f);
                 position = Handles.DoPositionHandle(position, quaternion.identity);
+                Handles.DrawWireCube(position, scale);
 
                 m_X.floatValue = position.x;
                 m_Y.floatValue = position.y;

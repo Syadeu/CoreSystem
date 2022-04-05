@@ -20,13 +20,14 @@ namespace Syadeu.Collections
     [Conditional("UNITY_EDITOR")]
     public sealed class ScaleHandleAttribute : PropertyAttribute
     {
+        public enum GUIType
+        {
+            Cube,
+            Sphere
+        }
+
         public Vector3 Position;
         public string PositionField = string.Empty;
-
-        public ScaleHandleAttribute() { }
-        public ScaleHandleAttribute(string positionField)
-        {
-            PositionField = positionField;
-        }
+        public GUIType Type = GUIType.Cube;
     }
 }

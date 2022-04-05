@@ -30,23 +30,49 @@ namespace SyadeuEditor.Presentation
         {
             SerializedProperty arr = property.FindPropertyRelative("m_Array");
 
-            float height = 20 + 10;
+            float height = 28;
 
-            height += arr.arraySize * c_ElementHeight;
-            for (int i = 0; i < arr.arraySize; i++)
+            //if (arr.isExpanded)
             {
-                // Reference<AttributeBase>
-                SerializedProperty element = arr.GetArrayElementAtIndex(i);
-                Reference<AttributeBase> reference = SerializedPropertyHelper.ReadReference<AttributeBase>(element);
-
-                if (element.isExpanded)
+                height += arr.arraySize * (c_ElementHeight + 3);
+                for (int i = 0; i < arr.arraySize; i++)
                 {
-                    height += SerializedObject<AttributeBase>.GetPropertyHeight(reference);
-                    height += c_AttributeWarningHeight;
+                    SerializedProperty element = arr.GetArrayElementAtIndex(i);
+                    Reference<AttributeBase> reference = SerializedPropertyHelper.ReadReference<AttributeBase>(element);
+
+                    if (element.isExpanded)
+                    {
+                        //height += EditorGUI.GetPropertyHeight(element, true);
+                        height += SerializedObject<AttributeBase>.GetPropertyHeight(reference);
+                        height += c_AttributeWarningHeight;
+                    }
+                }
+
+                height += 12;
+                if (arr.arraySize == 0)
+                {
+                    height += PropertyDrawerHelper.GetPropertyHeight(1);
                 }
             }
+            //else
+            //{
+            //    height += 2;
+            //}
+            //height += arr.arraySize * c_ElementHeight;
+            //for (int i = 0; i < arr.arraySize; i++)
+            //{
+            //    // Reference<AttributeBase>
+            //    SerializedProperty element = arr.GetArrayElementAtIndex(i);
+            //    Reference<AttributeBase> reference = SerializedPropertyHelper.ReadReference<AttributeBase>(element);
 
-            height += 15;
+            //    if (element.isExpanded)
+            //    {
+            //        height += SerializedObject<AttributeBase>.GetPropertyHeight(reference);
+            //        height += c_AttributeWarningHeight;
+            //    }
+            //}
+
+            //height += 15;
             if (m_Height == null)
             {
                 m_Height = new AnimFloat(height);
