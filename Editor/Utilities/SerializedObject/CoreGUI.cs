@@ -8,8 +8,8 @@ namespace SyadeuEditor.Utilities
 {
     public sealed class CoreGUI : CLRSingleTone<CoreGUI>
     {
-        private static GUIStyle s_CenterLabelStyle = null;
-        private static GUIStyle s_RightLabelStyle = null;
+        private static GUIStyle 
+            s_CenterLabelStyle = null, s_RightLabelStyle = null, s_LeftLabelStyle = null;
         private static GUIStyle s_BoxButtonStyle = null;
         
         public static GUIStyle CenterLabelStyle
@@ -34,6 +34,20 @@ namespace SyadeuEditor.Utilities
                     s_RightLabelStyle.alignment = TextAnchor.MiddleRight;
                 }
                 return s_RightLabelStyle;
+            }
+        }
+        public static GUIStyle LeftLabelStyle
+        {
+            get
+            {
+                if (s_LeftLabelStyle == null)
+                {
+                    s_LeftLabelStyle = new GUIStyle(EditorStyles.label);
+                    s_LeftLabelStyle.alignment = TextAnchor.MiddleLeft;
+
+                    s_LeftLabelStyle.border = new RectOffset(5, 5, 5, 5);
+                }
+                return s_LeftLabelStyle;
             }
         }
         public static GUIStyle BoxButtonStyle
@@ -184,6 +198,12 @@ namespace SyadeuEditor.Utilities
             temp.text = EditorUtilities.String(text.text, size);
 
             return GUI.Button(rect, temp, GetLabelStyle(textAnchor));
+        }
+        public static bool LabelToggle(Rect rect, bool value, string text)
+        {
+            GUIContent temp = new GUIContent(text);
+
+            return GUI.Toggle(rect, value, temp, LeftLabelStyle);
         }
         public static bool LabelToggle(Rect rect, bool value, GUIContent text, int size, TextAnchor textAnchor)
         {

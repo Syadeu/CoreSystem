@@ -211,7 +211,9 @@ namespace SyadeuEditor.Presentation
                 }
                 else
                 {
-                    EditorGUI.LabelField(elementRects[1], element.displayName);
+                    element.isExpanded 
+                        = CoreGUI.LabelToggle(elementRects[1], element.isExpanded, element.displayName);
+                    //EditorGUI.LabelField(elementRects[1], element.displayName);
                 }
 
                 #region Buttons

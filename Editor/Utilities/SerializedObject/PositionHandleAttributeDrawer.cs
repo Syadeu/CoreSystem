@@ -128,6 +128,7 @@ namespace SyadeuEditor.Utilities
                 //const float size = 1, arrowSize = 2, centerOffset = .5f;
                 Vector3 position = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue);
 
+                Handles.DrawWireCube(position, Vector3.one * .5f);
                 position = Handles.DoPositionHandle(position, quaternion.identity);
 
                 m_X.floatValue = position.x;
