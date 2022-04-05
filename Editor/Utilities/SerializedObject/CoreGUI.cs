@@ -1,6 +1,7 @@
 ﻿using Syadeu.Collections;
 using System;
 using UnityEditor;
+using UnityEditor.AnimatedValues;
 using UnityEngine;
 
 namespace SyadeuEditor.Utilities
@@ -47,6 +48,60 @@ namespace SyadeuEditor.Utilities
             }
         }
 
+        #region Line
+        public static void SectorLine(int lines = 1)
+        {
+            Color old = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
+
+            GUILayout.Space(8);
+            GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
+            GUILayout.Space(2);
+
+            for (int i = 1; i < lines; i++)
+            {
+                GUILayout.Space(2);
+                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
+            }
+
+            GUI.backgroundColor = old;
+        }
+        public static void Line()
+        {
+            Rect rect = EditorGUILayout.GetControlRect(false, 1f);
+            rect.height = 1f;
+            rect = EditorGUI.IndentedRect(rect);
+            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
+        }
+        public static void Line(Rect rect)
+        {
+            rect.height = 1f;
+            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
+        }
+        public static void Line(Rect rect, AnimFloat alpha)
+        {
+            rect.height = 1f;
+            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, alpha.value));
+        }
+        public static void SectorLine(float width, int lines = 1)
+        {
+            Color old = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
+
+            GUILayout.Space(8);
+            GUILayout.Box(string.Empty, EditorStyleUtilities.SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
+            GUILayout.Space(2);
+
+            for (int i = 1; i < lines; i++)
+            {
+                GUILayout.Space(2);
+                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
+            }
+
+            GUI.backgroundColor = old;
+        }
+        #endregion
+
         #region Label
 
         public static void Label(GUIContent text, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
@@ -80,6 +135,15 @@ namespace SyadeuEditor.Utilities
         public static void Label(Rect rect, string text) => Label(rect, new GUIContent(text), TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text) => Label(rect, text, TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text, TextAnchor textAnchor) => EditorGUI.LabelField(rect, text, GetLabelStyle(textAnchor));
+        public static void Label(Rect rect, GUIContent text, AnimFloat alpha, TextAnchor textAnchor)
+        {
+            GUIStyle style = GetLabelStyle(textAnchor);
+            Color temp = style.normal.textColor;
+            temp.a = alpha.target;
+            style.normal.textColor = temp;
+
+            EditorGUI.LabelField(rect, text, style);
+        }
         public static void Label(Rect rect, GUIContent text, int size, TextAnchor textAnchor)
         {
             GUIContent temp = new GUIContent(text);
@@ -113,6 +177,7 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+
         public static bool LabelButton(Rect rect, GUIContent text, int size, TextAnchor textAnchor)
         {
             GUIContent temp = new GUIContent(text);

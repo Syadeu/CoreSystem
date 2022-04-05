@@ -18,6 +18,8 @@ namespace SyadeuEditor.Presentation
 
         Rect[] elementRects = new Rect[3];
 
+        private AnimFloat m_ElementAlpha = new AnimFloat(0);
+
         protected virtual bool EnableExpanded => true;
 
         #region User Overrides
@@ -28,7 +30,7 @@ namespace SyadeuEditor.Presentation
         }
         protected virtual float GetElementHeight(SerializedProperty element)
         {
-            float height = EditorGUI.GetPropertyHeight(element);
+            float height = EditorGUI.GetPropertyHeight(element, element.isExpanded ? true : false);
             return height;
         }
 
@@ -63,7 +65,7 @@ namespace SyadeuEditor.Presentation
         public override sealed float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty arr = GetArrayProperty(property);
-            float height = 26;
+            float height = 28;
 
             if (arr.isExpanded)
             {
@@ -111,8 +113,10 @@ namespace SyadeuEditor.Presentation
 
             if (!DrawHeader(ref rect, arr)) // 15
             {
+                m_ElementAlpha.target = 0;
                 return;
             }
+            m_ElementAlpha.target = 1;
 
             rect.Pop(5); // 5
 
@@ -124,19 +128,19 @@ namespace SyadeuEditor.Presentation
                 }
                 else
                 {
-                    EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
-                    CoreGUI.Label(rect.Pop(), new GUIContent("Empty"), TextAnchor.MiddleCenter);
+                    CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), m_ElementAlpha);
+                    CoreGUI.Label(rect.Pop(), new GUIContent("Empty"), m_ElementAlpha, TextAnchor.MiddleCenter);
                 }
             }
         }
 
         private bool DrawHeader(ref AutoRect rect, SerializedProperty property)
         {
-            Rect headerRect = rect.Pop(15);
+            Rect headerRect = rect.Pop(17);
             Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 40, 40, 40);
             AutoRect.AlignRect(ref headerRect, rects[0]);
 
-            property.isExpanded = CoreGUI.LabelToggle(headerRect, property.isExpanded, m_HeaderText, 15, TextAnchor.MiddleLeft);
+            property.isExpanded = CoreGUI.LabelToggle(EditorGUI.IndentedRect(headerRect), property.isExpanded, m_HeaderText, 15, TextAnchor.MiddleLeft);
 
             property.arraySize = EditorGUI.DelayedIntField(rects[0], property.arraySize);
 
@@ -158,8 +162,8 @@ namespace SyadeuEditor.Presentation
         {
             float[] elementRatio = new float[3] { 0.15f, 0.75f, 0.1f };
 
-            EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
-
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), m_ElementAlpha);
+            
             for (int i = 0; i < property.arraySize; i++)
             {
                 SerializedProperty element = property.GetArrayElementAtIndex(i);
@@ -168,8 +172,10 @@ namespace SyadeuEditor.Presentation
                 Rect elementRect = elementAutoRect.Pop(EditorGUI.GetPropertyHeight(element, false));
 
                 PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
-
                 AutoRect.DivideWithRatio(elementRect, elementRects, elementRatio);
+
+                int elementChildCount = element.ChildCount();
+                bool enableExpand = elementChildCount > 1 && EnableExpanded;
 
                 // Indexer 
                 {
@@ -182,19 +188,32 @@ namespace SyadeuEditor.Presentation
                     }
                 }
 
+                #region Rects
+
                 const float c_BttWidth = 20;
                 List<float> userButtonWidths = new List<float>();
                 GetUserButtonWidth(userButtonWidths);
                 userButtonWidths.Insert(0, c_BttWidth);
-                if (EnableExpanded)
+                if (enableExpand)
                 {
                     userButtonWidths.Insert(1, c_BttWidth);
                 }
 
                 Rect[] bttRects = AutoRect.DivideWithFixedWidthRight(elementRect, userButtonWidths.ToArray());
-
                 AutoRect.AlignRect(ref elementRects[1], bttRects[0]);
-                EditorGUI.LabelField(elementRects[1], element.displayName);
+
+                #endregion
+
+                if (elementChildCount == 1)
+                {
+                    EditorGUI.PropertyField(elementRects[1], element, GUIContent.none);
+                }
+                else
+                {
+                    EditorGUI.LabelField(elementRects[1], element.displayName);
+                }
+
+                #region Buttons
 
                 if (GUI.Button(bttRects[0], "-"))
                 {
@@ -203,7 +222,8 @@ namespace SyadeuEditor.Presentation
                     continue;
                 }
 
-                if (EnableExpanded)
+
+                if (enableExpand)
                 {
                     bool validateExpand = ValidateElementExpanded(property, element);
                     if (!validateExpand)
@@ -221,10 +241,12 @@ namespace SyadeuEditor.Presentation
                     }
                 }
 
-                for (int h = EnableExpanded ? 2 : 1; h < userButtonWidths.Count; h++)
+                for (int h = enableExpand ? 2 : 1; h < userButtonWidths.Count; h++)
                 {
                     UserButtonAction(bttRects[h], element);
                 }
+
+                #endregion
 
                 if (element.isExpanded)
                 {
@@ -234,6 +256,9 @@ namespace SyadeuEditor.Presentation
                     PropertyDrawerHelper.DrawRect(
                         EditorGUI.IndentedRect(elementAutoRect.Current),
                         Color.black);
+
+                    GUIStyle style = new GUIStyle(EditorStyleUtilities.Box);
+                    style.clipping = TextClipping.Clip;
 
                     elementAutoRect.Pop(5);
 

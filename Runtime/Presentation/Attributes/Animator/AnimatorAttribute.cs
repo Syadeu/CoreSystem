@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Attributes
         [Space, Header("Trigger Actions")]
         [UnityEngine.SerializeField]
         [JsonProperty(Order = 2, PropertyName = "AnimationTrigger")]
-        internal Reference<AnimationTriggerAction>[] m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
+        internal ArrayWrapper<Reference<AnimationTriggerAction>> m_AnimationTriggers = Array.Empty<Reference<AnimationTriggerAction>>();
 
         [JsonIgnore] public bool IsInitialized => Parameters != null;
         [JsonIgnore] public AnimatorComponent AnimatorComponent { get; internal set; }

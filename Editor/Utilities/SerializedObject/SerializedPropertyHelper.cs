@@ -472,6 +472,21 @@ namespace SyadeuEditor.Utilities
         {
             return PropertyDrawerHelper.GetParentOfProperty(t);
         }
+
+        public static int ChildCount(this SerializedProperty t)
+        {
+            var temp = t.Copy();
+            temp.Next(true);
+            int depth = temp.depth;
+
+            int count = 0;
+            do
+            {
+                count++;
+            } while (temp.Next(false) && temp.depth == depth);
+
+            return count;
+        }
     }
 
     //[CustomPropertyDrawer(typeof(List<>), true)]
