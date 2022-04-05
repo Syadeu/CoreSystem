@@ -28,6 +28,8 @@ namespace Syadeu.Collections
     [Serializable, JsonArray]
     public class ArrayWrapper<T> : ICloneable, IList<T>
     {
+        public static ArrayWrapper<T> Empty => Array.Empty<T>();
+
         [UnityEngine.SerializeField]
         [JsonProperty]
         public T[] m_Array = Array.Empty<T>();

@@ -216,6 +216,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
 
             return true;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool RemoveAtSwapBack<T>(this T[] array, int index)
         {
             if (index < 0) return false;
