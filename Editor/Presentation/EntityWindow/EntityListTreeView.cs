@@ -288,22 +288,23 @@ namespace SyadeuEditor.Presentation
             switch (args.dragAndDropPosition)
             {
                 case DragAndDropPosition.UponItem:
-                    if (args.parentItem != null &&
-                        args.parentItem is FolderTreeElement)
+                    if (args.parentItem != null 
+                        && !(args.parentItem is FolderTreeElement)
+                        )
                     {
                         return DragAndDropVisualMode.Move;
                     }
 
                     return DragAndDropVisualMode.Rejected;
-                case DragAndDropPosition.BetweenItems:
+                //case DragAndDropPosition.BetweenItems:
 
-                    return DragAndDropVisualMode.Move;
-                case DragAndDropPosition.OutsideItems:
+                //    return DragAndDropVisualMode.None;
+                //case DragAndDropPosition.OutsideItems:
 
 
-                    return DragAndDropVisualMode.Move;
+                //    return DragAndDropVisualMode.Move;
                 default:
-
+                    //Debug.Log($"{args.dragAndDropPosition}");
                     return DragAndDropVisualMode.None;
             }
         }

@@ -5,6 +5,7 @@ using Syadeu.Collections;
 using UnityEditor.AnimatedValues;
 using System.Reflection;
 using System.ComponentModel;
+using System;
 
 namespace SyadeuEditor.Presentation
 {
@@ -49,6 +50,13 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
+            Type targetType = property.GetSystemType();
+            DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
+            if (description != null)
+            {
+                m_Height.target += c_HelpBoxHeight;
+            }
+
             m_Height.target += 15;
 
             return m_Height.value;
@@ -61,6 +69,14 @@ namespace SyadeuEditor.Presentation
         }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
+            Type targetType = property.GetSystemType();
+            DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
+            if (description != null)
+            {
+                EditorGUI.HelpBox(rect.Pop(c_HelpBoxHeight),
+                    description.Description, MessageType.Info);
+            }
+
             SerializedProperty nameProp = GetNameProperty(property);
 
             string
