@@ -39,9 +39,9 @@ namespace Syadeu.Presentation.Map
         [UnityEngine.SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Center")] public float3 m_Center = float3.zero;
         [UnityEngine.SerializeField]
-        [JsonProperty(Order = 1, PropertyName = "Objects")] public EntityObject[] m_Objects = Array.Empty<EntityObject>();
+        [JsonProperty(Order = 1, PropertyName = "Objects")] public ArrayWrapper<EntityObject> m_Objects = Array.Empty<EntityObject>();
         [UnityEngine.SerializeField]
-        [JsonProperty(Order = 2, PropertyName = "RawObjects")] public RawObject[] m_RawObjects = Array.Empty<RawObject>();
+        [JsonProperty(Order = 2, PropertyName = "RawObjects")] public ArrayWrapper<RawObject> m_RawObjects = Array.Empty<RawObject>();
 
         protected override ICustomYieldAwaiter LoadAllAssets()
         {

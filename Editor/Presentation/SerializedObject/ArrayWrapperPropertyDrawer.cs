@@ -74,11 +74,15 @@ namespace SyadeuEditor.Presentation
                     height += GetElementHeight(element) + 3;
                 }
 
-                height += 15;
+                height += 12;
+                if (arr.arraySize == 0)
+                {
+                    height += PropertyDrawerHelper.GetPropertyHeight(1);
+                }
             }
             else
             {
-                height += 5;
+                height += 2;
             }
             
             if (m_Height == null)
@@ -101,7 +105,8 @@ namespace SyadeuEditor.Presentation
             SerializedProperty arr = GetArrayProperty(property);
 
             var blockRect = new Rect(rect.TotalRect);
-            //blockRect.height -= 5;
+            blockRect.y += 2;
+            blockRect.height -= 4;
             PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
 
             if (!DrawHeader(ref rect, arr)) // 15
@@ -113,14 +118,22 @@ namespace SyadeuEditor.Presentation
 
             using (new EditorGUI.IndentLevelScope(1))
             {
-                DrawElement(ref rect, arr); // 3 + 
+                if (arr.arraySize > 0)
+                {
+                    DrawElement(ref rect, arr); // 3 + 
+                }
+                else
+                {
+                    EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+                    CoreGUI.Label(rect.Pop(), new GUIContent("Empty"), TextAnchor.MiddleCenter);
+                }
             }
         }
 
         private bool DrawHeader(ref AutoRect rect, SerializedProperty property)
         {
             Rect headerRect = rect.Pop(15);
-            Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 50, 50, 50);
+            Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 40, 40, 40);
             AutoRect.AlignRect(ref headerRect, rects[0]);
 
             property.isExpanded = CoreGUI.LabelToggle(headerRect, property.isExpanded, m_HeaderText, 15, TextAnchor.MiddleLeft);
