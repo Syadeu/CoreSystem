@@ -40,12 +40,16 @@ namespace Syadeu.Presentation.Map
         public sealed class EntityObject : Entry
         {
             [UnityEngine.SerializeField]
-            [JsonProperty(Order = 0, PropertyName = "Object")] public Reference<EntityBase> m_Object;
+            [JsonProperty(Order = 0, PropertyName = "Object")] 
+            public Reference<EntityBase> m_Object;
             [UnityEngine.SerializeField]
-            [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
+            [JsonProperty(Order = 1, PropertyName = "Translation")] 
+            [PositionHandle]
+            public float3 m_Translation;
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [UnityEngine.SerializeField]
+            [ScaleHandle("m_Translation")]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
@@ -75,10 +79,12 @@ namespace Syadeu.Presentation.Map
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "Object")] public PrefabReference<GameObject> m_Object;
             [UnityEngine.SerializeField]
+            [PositionHandle]
             [JsonProperty(Order = 1, PropertyName = "Translation")] public float3 m_Translation;
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [UnityEngine.SerializeField]
+            [ScaleHandle("m_Translation")]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
