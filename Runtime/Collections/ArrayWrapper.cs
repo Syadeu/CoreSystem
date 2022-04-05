@@ -27,7 +27,6 @@ namespace Syadeu.Collections
 {
     [Serializable, JsonArray]
     public class ArrayWrapper<T> : ICloneable, IList<T>
-        where T : IEquatable<T>
     {
         [UnityEngine.SerializeField]
         [JsonProperty]
@@ -69,7 +68,10 @@ namespace Syadeu.Collections
             return obj;
         }
 
-        public int IndexOf(T item) => m_Array.IndexOf(item);
+        public int IndexOf(T item)
+        {
+            return Array.IndexOf<T>(m_Array, item);
+        }
 
         public void Insert(int index, T item)
         {
@@ -102,9 +104,13 @@ namespace Syadeu.Collections
 
         public bool Remove(T item)
         {
-            if (m_Array.RemoveForSwapBack(item))
+            int index = IndexOf(item);
+
+            if (0 <= index)
             {
+                m_Array.RemoveAtSwapBack(index);
                 Array.Resize(ref m_Array, m_Array.Length - 1);
+
                 return true;
             }
             return false;

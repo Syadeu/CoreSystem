@@ -100,6 +100,7 @@ namespace SyadeuEditor.Utilities
             EditorGUI.LabelField(rect, text1, text2, style);
         }
 
+
         public static GUIStyle GetLabelStyle(TextAnchor textAnchor)
         {
             GUIStyle style = new GUIStyle(EditorStyles.label)
@@ -112,7 +113,23 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+        public static bool LabelButton(Rect rect, GUIContent text, int size, TextAnchor textAnchor)
+        {
+            GUIContent temp = new GUIContent(text);
+            temp.text = EditorUtilities.String(text.text, size);
 
+            return GUI.Button(rect, temp, GetLabelStyle(textAnchor));
+        }
+        public static bool LabelToggle(Rect rect, bool value, GUIContent text, int size, TextAnchor textAnchor)
+        {
+            GUIContent temp = new GUIContent(text);
+            temp.text = EditorUtilities.String(text.text, size);
+
+            return GUI.Toggle(rect, value, temp, GetLabelStyle(textAnchor));
+        }
+
+        public static bool BoxButton(Rect rect, string content, Color color, Action onContextClick)
+            => BoxButton(rect, new GUIContent(content), color, onContextClick);
         public static bool BoxButton(Rect rect, GUIContent content, Color color, Action onContextClick)
         {
             int enableCullID = GUIUtility.GetControlID(FocusType.Passive, rect);

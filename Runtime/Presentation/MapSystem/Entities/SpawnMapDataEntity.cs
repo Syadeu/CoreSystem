@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Map
         }
 
         [JsonProperty(Order = 0, PropertyName = "Points")]
-        public Point[] m_Points = Array.Empty<Point>();
+        public ArrayWrapper<Point> m_Points = Array.Empty<Point>();
     }
     internal sealed class SpawnMapDataEntityProcessor : EntityProcessor<SpawnMapDataEntity>
     {

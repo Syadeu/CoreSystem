@@ -55,6 +55,14 @@ namespace SyadeuEditor.Utilities
             m_Rect.width -= pixel;
         }
 
+        public static Rect Indent(Rect rect, float pixel)
+        {
+            rect.x += pixel;
+            rect.width -= pixel;
+
+            return rect;
+        }
+
         public static Rect[] DivideWithRatio(Rect rect, params float[] ratio)
         {
             Rect[] rects = new Rect[ratio.Length];
