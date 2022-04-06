@@ -49,7 +49,7 @@ namespace Syadeu.Presentation.Map
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [UnityEngine.SerializeField]
-            [ScaleHandle("m_Translation")]
+            [ScaleHandle(PositionField = "m_Translation")]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
@@ -84,7 +84,7 @@ namespace Syadeu.Presentation.Map
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 2, PropertyName = "Rotation")] public quaternion m_Rotation = quaternion.identity;
             [UnityEngine.SerializeField]
-            [ScaleHandle("m_Translation")]
+            [ScaleHandle(PositionField = "m_Translation")]
             [JsonProperty(Order = 3, PropertyName = "Scale")] public float3 m_Scale;
 
             [Space]
