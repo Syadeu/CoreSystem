@@ -54,8 +54,8 @@ namespace Syadeu.Presentation.CodeGen
         {
             //throw new NotImplementedException();
 
-            var iter = TypeHelper
-                .GetTypesIter(t => t.GetCustomAttribute<GuidMarkerAttribute>() != null);
+            //var iter = TypeHelper
+            //    .GetTypesIter(t => t.GetCustomAttribute<GuidMarkerAttribute>() != null);
             //foreach (var type in iter)
             //{
             //    type.Module.
