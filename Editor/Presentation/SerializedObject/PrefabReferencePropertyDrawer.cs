@@ -14,34 +14,35 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(IPrefabReference), true)]
     public sealed class PrefabReferencePropertyDrawer : PropertyDrawer<IPrefabReference>
     {
-        //Editor m_Editor = null;
-        //private GUIContent name = null;
-        //private SerializedProperty 
-        //    m_IdxProperty, m_SubAssetNameProperty;
-        //private bool
-        //m_Cached = false,
-        //m_Open = false;
+        private static SerializedProperty GetIndexProperty(SerializedProperty property)
+        {
+            const string c_Name = "m_Idx";
+
+            return property.FindPropertyRelative(c_Name);
+        }
+        private static SerializedProperty GetSubAssetNameProperty(SerializedProperty property)
+        {
+            const string c_Name = "m_SubAssetName";
+
+            return property.FindPropertyRelative(c_Name);
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+        }
 
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            var idxProperty = property.FindPropertyRelative("m_Idx");
-            var subAssetNameProperty = property.FindPropertyRelative("m_SubAssetName");
-
-            //if (!m_Cached)
-            //{
-            //    name = new GUIContent(property.displayName);
-            //    m_IdxProperty = property.FindPropertyRelative("m_Idx");
-            //    m_SubAssetNameProperty = property.FindPropertyRelative("m_SubAssetName");
-
-            //    m_Cached = true;
-            //}
+            SerializedProperty 
+                idxProperty = GetIndexProperty(property),
+                subAssetNameProperty = GetSubAssetNameProperty(property);
 
             PrefabReference currentValue 
                 = SerializedPropertyHelper.ReadPrefabReference(idxProperty, subAssetNameProperty);
 
             GUIContent displayName = currentValue.GetDisplayName();
 
-            //Rect contextPos = EditorGUI.PrefixLabel(position, name);
             Rect propertyRect = rect.Pop();
             var propRects = AutoRect.DivideWithRatio(propertyRect, .2f, .8f);
 

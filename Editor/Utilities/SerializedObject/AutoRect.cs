@@ -5,6 +5,8 @@ namespace SyadeuEditor.Utilities
 {
     public struct AutoRect
     {
+        public static float SpaceHeight => EditorGUIUtility.singleLineHeight;
+
         private readonly Rect m_OriginalRect;
         private Rect m_Rect;
 

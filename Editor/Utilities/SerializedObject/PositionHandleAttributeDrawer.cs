@@ -37,6 +37,11 @@ namespace SyadeuEditor.Utilities
 
         protected override bool Opened => m_Opened;
 
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+        }
+
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             if (!Popup.Instance.IsOpened && m_Opened)
@@ -132,12 +137,15 @@ namespace SyadeuEditor.Utilities
                 Handles.EndGUI();
 
                 //const float size = 1, arrowSize = 2, centerOffset = .5f;
-                Vector3 
-                    position = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue),
-                    scale = m_ScaleProperty.GetVector3();
+                Vector3 position = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue);
+
+                if (m_ScaleProperty != null)
+                {
+                    Vector3 scale = m_ScaleProperty.GetVector3();
+                    Handles.DrawWireCube(position, scale);
+                }
 
                 position = Handles.DoPositionHandle(position, quaternion.identity);
-                Handles.DrawWireCube(position, scale);
 
                 m_X.floatValue = position.x;
                 m_Y.floatValue = position.y;

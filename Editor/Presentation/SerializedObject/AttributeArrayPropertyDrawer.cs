@@ -102,7 +102,15 @@ namespace SyadeuEditor.Presentation
 
             using (new EditorGUI.IndentLevelScope(1))
             {
-                DrawElement(ref rect, arr);
+                if (arr.arraySize > 0)
+                {
+                    DrawElement(ref rect, arr);
+                }
+                else
+                {
+                    CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+                    CoreGUI.Label(rect.Pop(), new GUIContent("Empty"), TextAnchor.MiddleCenter);
+                }
             }
         }
 

@@ -20,11 +20,16 @@ namespace SyadeuEditor.Presentation
 
         private static SerializedProperty GetHashProperty(SerializedProperty property)
         {
-
             return property.FindPropertyRelative("m_Hash");
         }
         private static Reference GetReference(SerializedProperty hashProperty) 
             => new Reference(SerializedPropertyHelper.ReadHash(hashProperty));
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            //return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+            return PropertyDrawerHelper.GetPropertyHeight(1);
+        }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {

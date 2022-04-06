@@ -12,7 +12,7 @@ namespace SyadeuEditor.Presentation
         {
             float height = 0;
 
-            var tempProp = GetHashProperty(property.Copy());
+            var tempProp = GetHashProperty(property);
             //if (tempProp.Next(false))
             //{
             //    count = tempProp.CountRemaining();
