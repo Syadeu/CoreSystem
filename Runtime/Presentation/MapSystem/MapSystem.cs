@@ -185,13 +185,24 @@ namespace Syadeu.Presentation.Map
     {
         private Dictionary<Hash, Entry> m_Entries = new Dictionary<Hash, Entry>();
 
+        private CoroutineSystem m_CoroutineSystem;
+
         protected override void OnInitialize()
         {
             SpawnedEntityComponentProcessor.s_Module = this;
+
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
         }
         protected override void OnDispose()
         {
             SpawnedEntityComponentProcessor.s_Module = null;
+
+            m_CoroutineSystem = null;
+        }
+
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
         }
 
         public void AddSpawnEntity(params SpawnMapDataEntity.Point[] points)
@@ -200,6 +211,8 @@ namespace Syadeu.Presentation.Map
             {
                 Entry entry = new Entry(points[i]);
                 m_Entries.Add(entry.Hash, entry);
+
+                entry.StartUpdate(m_CoroutineSystem);
             }
         }
         public void RemoveSpawnEntity(params SpawnMapDataEntity.Point[] points)
@@ -257,6 +270,8 @@ namespace Syadeu.Presentation.Map
                     entity.AddComponent<SpawnedEntityComponent>();
                     ref SpawnedEntityComponent com = ref entity.GetComponent<SpawnedEntityComponent>();
                     com.m_Hash = Hash;
+
+                    m_Instances.Add(entity);
                 }
             }
             public void Remove(InstanceID entity)
@@ -264,8 +279,48 @@ namespace Syadeu.Presentation.Map
                 m_Instances.Remove(entity);
             }
 
+            CoroutineHandler m_Handle;
+            public void StartUpdate(CoroutineSystem coroutineSystem)
+            {
+                m_Handle = coroutineSystem.StartCoroutine(new UpdateJob
+                {
+                    m_Entry = this
+                });
+            }
+            private sealed class UpdateJob : ICoroutineJob
+            {
+                public Entry m_Entry;
+                public UpdateLoop Loop => default;
+
+                public void Dispose()
+                {
+                    m_Entry = null;
+                }
+                public IEnumerator Execute()
+                {
+                    if (m_Entry.m_Point.m_EnableAutoSpawn)
+                    {
+                        Collections.Timer timer = Collections.Timer.Start();
+                        while (true)
+                        {
+                            if (timer.IsExceeded(m_Entry.m_Point.m_PerTime))
+                            {
+                                m_Entry.Spawn(1);
+
+                                timer = Collections.Timer.Start();
+                            }
+
+                            yield return null;
+                        }
+                    }
+                    yield break;
+                }
+            }
+
             public void Dispose()
             {
+                if (m_Handle.IsValid()) m_Handle.Stop();
+
                 for (int i = 0; i < m_Instances.Count; i++)
                 {
                     m_Instances[i].RemoveComponent<SpawnedEntityComponent>();

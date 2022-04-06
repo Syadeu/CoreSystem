@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Collections
@@ -39,6 +41,12 @@ namespace Syadeu.Collections
             {
                 return Time.time - m_StartTime;
             }
+        }
+
+        public bool IsExceeded(int3 time)
+        {
+            float secs = (time.x * 3600) + (time.y * 60) + time.z;
+            return secs < ElapsedTime;
         }
     }
 }
