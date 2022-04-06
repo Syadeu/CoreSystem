@@ -40,17 +40,17 @@ namespace Syadeu.Presentation.Map
             public string m_Name = "NewPoint";
 
             [Space]
-            [UnityEngine.SerializeField]
+            [SerializeField]
             [JsonProperty(Order = 0, PropertyName = "TargetEntity")]
             public Reference<EntityBase> m_TargetEntity = Reference<EntityBase>.Empty;
-            [UnityEngine.SerializeField]
-            [PositionHandle]
+
+            [SerializeField, PositionHandle(ScaleField = "m_Radius")]
             [JsonProperty(Order = 1, PropertyName = "Position")]
             public float3 m_Position = 0;
-            [ScaleHandle(PositionField = "m_Position")]
-            [UnityEngine.SerializeField]
-            [JsonProperty(Order = 2, PropertyName = "SphereOffset")]
-            public float3 m_SphereOffset = 0;
+
+            [SerializeField, ScaleHandle(PositionField = "m_Position")]
+            [JsonProperty(Order = 2, PropertyName = "Radius")]
+            public float3 m_Radius = 1;
 
             [Space]
             [UnityEngine.SerializeField]
@@ -58,7 +58,7 @@ namespace Syadeu.Presentation.Map
             public bool m_EnableAutoSpawn = false;
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 4, PropertyName = "PerTime")]
-            [Description(
+            [Tooltip(
                 "EnableAutoSpawn = true 일 경우에만 " +
                 "x = hour, y = mins, z = secs")]
             public int3 m_PerTime = new int3(0, 0, 30);

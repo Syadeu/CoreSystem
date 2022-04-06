@@ -149,11 +149,8 @@ namespace SyadeuEditor.Utilities
                         Handles.DrawWireCube(pos, scale);
                         break;
                     case ScaleHandleAttribute.GUIType.Sphere:
-                        if (Event.current.type == EventType.Repaint)
-                        {
-                            Handles.SphereHandleCap(0, pos, Quaternion.identity, HandleUtility.GetHandleSize(pos), EventType.Repaint);
-                        }
-                        
+                        Handles.DrawWireCube(pos, scale);
+
                         break;
                     default:
                         break;
