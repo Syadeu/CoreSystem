@@ -32,7 +32,7 @@ using Unity.Collections;
 
 namespace Syadeu.Mono
 {
-    [PreferBinarySerialization][GuidMarker] 
+    [PreferBinarySerialization] 
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]
