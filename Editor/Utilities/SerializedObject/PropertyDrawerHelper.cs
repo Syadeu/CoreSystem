@@ -51,15 +51,21 @@ namespace SyadeuEditor.Utilities
         {
             if (prop == null) return null;
 
-            string path = prop.propertyPath.Replace(".Array.data[", "[");
+            const char spliter = '.';
+            const string 
+                arrayContext = ".Array.data[",
+                arrayStart = "[",
+                arrayEnd = "]";
+
+            string path = prop.propertyPath.Replace(arrayContext, arrayStart);
             object obj = prop.serializedObject.targetObject;
-            string[] elements = path.Split('.');
+            string[] elements = path.Split(spliter);
             foreach (string element in elements)
             {
-                if (element.Contains("["))
+                if (element.Contains(arrayStart))
                 {
-                    string elementName = element.Substring(0, element.IndexOf("["));
-                    int index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", string.Empty).Replace("]", string.Empty));
+                    string elementName = element.Substring(0, element.IndexOf(arrayStart));
+                    int index = System.Convert.ToInt32(element.Substring(element.IndexOf(arrayStart)).Replace(arrayStart, string.Empty).Replace(arrayEnd, string.Empty));
                     obj = GetValue_Imp(obj, elementName, index);
                 }
                 else

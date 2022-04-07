@@ -3,6 +3,7 @@ using Syadeu.Presentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -459,6 +460,7 @@ namespace SyadeuEditor.Utilities
         {
             return PropertyDrawerHelper.GetTargetObjectOfProperty(t).GetType();
         }
+
         public static bool IsTypeOf<T>(this SerializedProperty t)
         {
             return TypeHelper.TypeOf<T>.Type.Name.Equals(t.type);
@@ -485,6 +487,152 @@ namespace SyadeuEditor.Utilities
             } while (temp.Next(false) && temp.depth > t.depth);
 
             return count;
+        }
+
+        #region Draw Method
+
+        private static Dictionary<Type, PropertyDrawer> s_CachedPropertyDrawers = new Dictionary<Type, PropertyDrawer>();
+        private static FieldInfo s_CachedPropertyTypeField, s_CachedPropertyUseChildField;
+        private static FieldInfo CachedPropertyTypeField
+        {
+            get
+            {
+                if (s_CachedPropertyTypeField == null)
+                {
+                    const string c_Name = "m_Type";
+
+                    Type drawerAttType = TypeHelper.TypeOf<CustomPropertyDrawer>.Type;
+                    s_CachedPropertyTypeField = drawerAttType.GetField(c_Name, BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+
+                return s_CachedPropertyTypeField;
+            }
+        }
+        private static FieldInfo CachedPropertyUseChildField
+        {
+            get
+            {
+                if (s_CachedPropertyUseChildField == null)
+                {
+                    const string c_Name = "m_UseForChildren";
+
+                    Type drawerAttType = TypeHelper.TypeOf<CustomPropertyDrawer>.Type;
+                    s_CachedPropertyUseChildField = drawerAttType.GetField(c_Name, BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+
+                return s_CachedPropertyUseChildField;
+            }
+        }
+
+        public static void Draw(this SerializedProperty t, Rect rect, GUIContent label, bool includeChildren)
+        {
+            PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
+
+            if (propertyDrawer == null)
+            {
+                EditorGUI.PropertyField(rect, t, label, includeChildren);
+                return;
+            }
+
+            propertyDrawer.OnGUI(rect, t, label);
+        }
+        public static bool HasCustomPropertyDrawer(this SerializedProperty t)
+        {
+            return GetPropertyDrawer(t) != null;
+        }
+        private static PropertyDrawer GetPropertyDrawer(SerializedProperty t)
+        {
+            Type propertyType = t.GetSystemType();
+
+            if (!s_CachedPropertyDrawers.TryGetValue(propertyType, out PropertyDrawer propertyDrawer))
+            {
+                Type foundDrawerType = null;
+                Type foundDrawerTargetType = null;
+
+                //$"{propertyType.Name} start".ToLog();
+                foreach (var drawerType in TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttributes<CustomPropertyDrawer>().Any()))
+                {
+                    foreach (var customPropertyDrawer in drawerType.GetCustomAttributes<CustomPropertyDrawer>())
+                    {
+                        Type targetType = (Type)CachedPropertyTypeField.GetValue(customPropertyDrawer);
+                        bool useChild = (bool)CachedPropertyUseChildField.GetValue(customPropertyDrawer);
+                        //$"target:{targetType.Name} usechild:{useChild}".ToLog();
+                        if (targetType.Equals(propertyType))
+                        {
+                            //$"target:{targetType.Name} {propertyType.Name}".ToLog();
+                            foundDrawerType = drawerType;
+
+                            break;
+                        }
+                        else if (useChild && (propertyType.IsSubclassOf(targetType) || targetType.IsAssignableFrom(propertyType)))
+                        {
+                            if (foundDrawerType != null)
+                            {
+                                // 만약 더 상위를 타겟으로 하고 있으면 교체
+                                if (foundDrawerTargetType.IsAssignableFrom(targetType))
+                                {
+                                    foundDrawerType = drawerType;
+                                    foundDrawerTargetType = targetType;
+                                }
+
+                                continue;
+                            }
+
+                            foundDrawerType = drawerType;
+                            foundDrawerTargetType = targetType;
+                        }
+                    }
+                }
+
+                if (foundDrawerType != null)
+                {
+                    propertyDrawer = (PropertyDrawer)Activator.CreateInstance(foundDrawerType);
+                }
+                s_CachedPropertyDrawers.Add(propertyType, propertyDrawer);
+            }
+
+            SetupPropertyDrawer(propertyDrawer, t);
+            return propertyDrawer;
+        }
+        private static void SetupPropertyDrawer(PropertyDrawer propertyDrawer, SerializedProperty property)
+        {
+            if (propertyDrawer == null) return;
+
+            FieldInfo fieldInfoField = TypeHelper.TypeOf<PropertyDrawer>.GetFieldInfo("m_FieldInfo");
+            fieldInfoField.SetValue(propertyDrawer, property.GetFieldInfo());
+        }
+
+        #endregion
+
+        public static FieldInfo GetFieldInfo(this SerializedProperty prop)
+        {
+            if (prop == null) return null;
+
+            string path = prop.propertyPath.Replace(".Array.data[", "[");
+            Type t = prop.serializedObject.targetObject.GetType();
+            FieldInfo currentField = null;
+            string[] elements = path.Split('.');
+
+            foreach (string element in elements)
+            {
+                Type currentType = currentField == null ? t : currentField.FieldType;
+                if (element.Contains("["))
+                {
+                    string elementName = element.Substring(0, element.IndexOf("["));
+                    //int index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", string.Empty).Replace("]", string.Empty));
+
+                    //obj = GetValue_Imp(obj, elementName, index);
+                    currentField = currentType.GetField(elementName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                }
+                else
+                {
+                    //obj = GetValue_Imp(obj, element);
+
+                    currentField = currentType.GetField(element, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                }
+            }
+
+            return currentField;
         }
     }
 
