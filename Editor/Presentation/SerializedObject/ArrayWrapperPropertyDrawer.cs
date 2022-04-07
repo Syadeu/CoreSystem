@@ -255,23 +255,24 @@ namespace SyadeuEditor.Presentation
                 if (element.isExpanded)
                 {
                     var child = element.Copy();
+                    PropertyDrawerHelper.DrawRect(
+                            EditorGUI.IndentedRect(elementAutoRect.Current),
+                            Color.black);
+
+                    elementAutoRect.Pop(2.5f);
+                    elementAutoRect.Indent(5);
+                    elementAutoRect.Indent();
+
                     if (element.HasCustomPropertyDrawer())
                     {
-                        element.Draw(elementAutoRect.Pop(EditorGUI.GetPropertyHeight(element)),
+                        element.Draw(ref elementAutoRect,
                             new GUIContent(element.displayName), true);
                     }
                     else
                     {
                         child.Next(true);
 
-                        PropertyDrawerHelper.DrawRect(
-                            EditorGUI.IndentedRect(elementAutoRect.Current),
-                            Color.black);
-
-                        elementAutoRect.Pop(5);
-
                         int depth = child.depth;
-                        elementAutoRect.Indent(5);
                         do
                         {
                             OnElementGUI(ref elementAutoRect, child);
@@ -280,7 +281,8 @@ namespace SyadeuEditor.Presentation
                     }
                 }
 
-                EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+                elementAutoRect.Indent(-5);
+                EditorUtilities.Line(rect.Pop(3));
             }
         }
     }

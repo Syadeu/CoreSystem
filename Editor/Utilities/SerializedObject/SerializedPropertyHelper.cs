@@ -536,6 +536,20 @@ namespace SyadeuEditor.Utilities
 
             propertyDrawer.OnGUI(rect, t, label);
         }
+        public static void Draw(this SerializedProperty t, ref AutoRect rect, GUIContent label, bool includeChildren)
+        {
+            PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
+
+            if (propertyDrawer == null)
+            {
+                EditorGUI.PropertyField(
+                    rect.Pop(EditorGUI.GetPropertyHeight(t))
+                    , t, label, includeChildren);
+                return;
+            }
+
+            propertyDrawer.OnGUI(rect.Pop(propertyDrawer.GetPropertyHeight(t, label)), t, label);
+        }
         public static bool HasCustomPropertyDrawer(this SerializedProperty t)
         {
             return GetPropertyDrawer(t) != null;
