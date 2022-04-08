@@ -53,7 +53,7 @@ namespace SyadeuEditor.Utilities
         {
             if (!m_Opened)
             {
-                var parent = PropertyDrawerHelper.GetParentOfProperty(property);
+                var parent = property.GetParent();
                 var scaleField = parent.FindPropertyRelative(attribute.ScaleField);
 
                 Popup.Instance.SetProperty(property, scaleField);

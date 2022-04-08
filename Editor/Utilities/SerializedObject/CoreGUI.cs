@@ -192,25 +192,14 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region Button
+
         public static bool LabelButton(Rect rect, GUIContent text, int size, TextAnchor textAnchor)
         {
             GUIContent temp = new GUIContent(text);
             temp.text = EditorUtilities.String(text.text, size);
 
             return GUI.Button(rect, temp, GetLabelStyle(textAnchor));
-        }
-        public static bool LabelToggle(Rect rect, bool value, string text)
-        {
-            GUIContent temp = new GUIContent(text);
-
-            return GUI.Toggle(rect, value, temp, LeftLabelStyle);
-        }
-        public static bool LabelToggle(Rect rect, bool value, GUIContent text, int size, TextAnchor textAnchor)
-        {
-            GUIContent temp = new GUIContent(text);
-            temp.text = EditorUtilities.String(text.text, size);
-
-            return GUI.Toggle(rect, value, temp, GetLabelStyle(textAnchor));
         }
 
         public static bool BoxButton(Rect rect, string content, Color color, Action onContextClick)
@@ -272,6 +261,24 @@ namespace SyadeuEditor.Utilities
 
             return clicked;
         }
+
+        #endregion
+
+        #region Toggle
+
+        public static bool LabelToggle(Rect rect, bool value, string text)
+        {
+            GUIContent temp = new GUIContent(text);
+
+            return GUI.Toggle(rect, value, temp, LeftLabelStyle);
+        }
+        public static bool LabelToggle(Rect rect, bool value, GUIContent text, int size, TextAnchor textAnchor)
+        {
+            GUIContent temp = new GUIContent(text);
+            temp.text = EditorUtilities.String(text.text, size);
+
+            return GUI.Toggle(rect, value, temp, GetLabelStyle(textAnchor));
+        }
         public static bool BoxToggleButton(
             Rect rect, bool value, GUIContent content, Color enableColor, Color disableColor)
         {
@@ -319,5 +326,6 @@ namespace SyadeuEditor.Utilities
             return value;
         }
 
+        #endregion
     }
 }

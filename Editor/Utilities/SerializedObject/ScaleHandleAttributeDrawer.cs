@@ -48,7 +48,7 @@ namespace SyadeuEditor.Utilities
         {
             if (!m_Opened)
             {
-                var parent = PropertyDrawerHelper.GetParentOfProperty(property);
+                var parent = property.GetParent();
                 var positionField = parent.FindPropertyRelative(attribute.PositionField);
 
                 Popup.Instance.SetProperty(attribute, property, positionField);
