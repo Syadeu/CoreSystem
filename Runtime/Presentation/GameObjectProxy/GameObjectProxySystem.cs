@@ -271,17 +271,26 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+                //IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+                RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
+                Rigidbody rigidbody = proxy.GetComponent<Rigidbody>();
+
                 //if (data->m_ParentIndex >= 0)
                 //{
 
                 //}
                 //else
+                if (rigidbody == null)
                 {
                     proxy.transform.position = data->m_Translation;
                     proxy.transform.rotation = data->m_Rotation;
-                    proxy.transform.localScale = data->m_Scale;
                 }
+                else
+                {
+                    rigidbody.position = data->m_Translation;
+                    rigidbody.rotation = data->m_Rotation;
+                }
+                proxy.transform.localScale = data->m_Scale;
             }
 
             UpdateConnectedTransforms(ev.transform);

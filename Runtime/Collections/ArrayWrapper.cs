@@ -101,7 +101,7 @@ namespace Syadeu.Collections
         public bool Contains(T item) => m_Array.Contains(item);
         public void CopyTo(T[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            Array.Copy(m_Array, arrayIndex, array, 0, m_Array.Length - arrayIndex);
         }
 
         public bool Remove(T item)
