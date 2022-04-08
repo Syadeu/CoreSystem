@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ namespace Syadeu.Collections
             }
         }
         [StructLayout(LayoutKind.Sequential)]
-        private struct AlignOfHelper<T> where T : struct
+        private struct AlignOfHelper<T>
         {
             public byte dummy;
             public T data;
@@ -149,6 +149,9 @@ namespace Syadeu.Collections
 
         private static readonly Assembly[] s_Assemblies = AppDomain.CurrentDomain.GetAssemblies();
         private static readonly Type[] s_AllTypes = s_Assemblies.Where(a => !a.IsDynamic).SelectMany(a => GetLoadableTypes(a)).ToArray();
+
+        private static readonly Type GenericListInterface = typeof(IList<>);
+        private static readonly Type GenericCollectionInterface = typeof(ICollection<>);
 
         public static Type[] GetTypes(Func<Type, bool> predictate) => s_AllTypes.Where(predictate).ToArray();
         public static IEnumerable<Type> GetTypesIter(Func<Type, bool> predictate)
@@ -184,12 +187,43 @@ namespace Syadeu.Collections
             }
         }
 
+        public static int SizeOf(Type type)
+        {
+            return UnsafeUtility.SizeOf(type);
+        }
+        public static int SizeOf<T>() where T : unmanaged
+        {
+            return UnsafeUtility.SizeOf<T>();
+        }
+        /// <summary>
+        /// <paramref name="t"/> 의 Alignment 를 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 만약 <paramref name="t"/> 가 ReferenceType 이라면 반환 값은 무조건 0 입니다.
+        /// </remarks>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static int AlignOf(Type t)
         {
-            Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
+            if (!UnsafeUtility.IsUnmanaged(t))
+            {
+                return 0;
+            }
 
+            Type temp = typeof(AlignOfHelper<>).MakeGenericType(t);
             return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(t);
         }
+        public static int AlignOf<T>()
+        {
+            if (!UnsafeUtility.IsUnmanaged(TypeOf<T>.Type))
+            {
+                return 0;
+            }
+
+            Type temp = TypeOf<AlignOfHelper<T>>.Type;
+            return UnsafeUtility.SizeOf(temp) - UnsafeUtility.SizeOf(TypeOf<T>.Type);
+        }
+
         public static bool IsZeroSizeStruct(Type t)
         {
             return t.IsValueType && !t.IsPrimitive &&
@@ -231,5 +265,186 @@ namespace Syadeu.Collections
 
             return null;
         }
+
+        #region Generics
+
+        /// <summary>
+        /// 타입 <paramref name="candidateType"/>이 상속받는 interface 
+        /// <paramref name="openGenericInterfaceType"/> 의 제네릭 타입 값을 가져옵니다.
+        /// </summary>
+        /// <param name="candidateType"></param>
+        /// <param name="openGenericInterfaceType">
+        /// <code>typeof(IList{})</code>
+        /// </param>
+        /// <returns></returns>
+        public static Type[] GetArgumentsOfInheritedOpenGenericInterface(Type candidateType, Type openGenericInterfaceType)
+        {
+            if (((object)openGenericInterfaceType == GenericListInterface || (object)openGenericInterfaceType == GenericCollectionInterface) && candidateType.IsArray)
+            {
+                return new Type[1]
+                {
+                    candidateType.GetElementType()
+                };
+            }
+
+            if ((object)candidateType == openGenericInterfaceType)
+            {
+                return candidateType.GetGenericArguments();
+            }
+
+            if (candidateType.IsGenericType && (object)candidateType.GetGenericTypeDefinition() == openGenericInterfaceType)
+            {
+                return candidateType.GetGenericArguments();
+            }
+
+            Type[] interfaces = candidateType.GetInterfaces();
+            foreach (Type type in interfaces)
+            {
+                if (type.IsGenericType)
+                {
+                    Type[] argumentsOfInheritedOpenGenericInterface = GetArgumentsOfInheritedOpenGenericInterface(type, openGenericInterfaceType);
+                    if (argumentsOfInheritedOpenGenericInterface != null)
+                    {
+                        return argumentsOfInheritedOpenGenericInterface;
+                    }
+                }
+            }
+
+            return null;
+        }
+        /// <summary>
+        /// <paramref name="type"/> 가 상속받는 인터페이스 중 <paramref name="openGenericInterfaceType"/> 을 제네릭 베이스로 갖는 모든 타입을 가져옵니다.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="openGenericInterfaceType"></param>
+        /// <returns></returns>
+        public static Type[] GetInterfacesWithOpenGenericInterface(Type type, Type openGenericInterfaceType)
+        {
+            List<Type> temp = new List<Type>();
+            foreach (var item in type.GetInterfaces())
+            {
+                if (InheritsFrom(item, openGenericInterfaceType))
+                {
+                    temp.Add(item);
+                }
+            }
+            return temp.ToArray();
+        }
+
+        //
+        // Summary:
+        //     Determines whether a type inherits or implements another type. Also include support
+        //     for open generic base types such as List<>.
+        //
+        // Parameters:
+        //   type:
+        public static bool InheritsFrom<TBase>(Type type)
+        {
+            return InheritsFrom(type, typeof(TBase));
+        }
+
+        //
+        // Summary:
+        //     Determines whether a type inherits or implements another type. Also include support
+        //     for open generic base types such as List<>.
+        //
+        // Parameters:
+        //   type:
+        //
+        //   baseType:
+        public static bool InheritsFrom(Type type, Type baseType)
+        {
+            if (baseType.IsAssignableFrom(type))
+            {
+                return true;
+            }
+
+            if (type.IsInterface && !baseType.IsInterface)
+            {
+                return false;
+            }
+
+            if (baseType.IsInterface)
+            {
+                return type.GetInterfaces().Contains(baseType);
+            }
+
+            Type type2 = type;
+            while ((object)type2 != null)
+            {
+                if ((object)type2 == baseType)
+                {
+                    return true;
+                }
+
+                if (baseType.IsGenericTypeDefinition && type2.IsGenericType && (object)type2.GetGenericTypeDefinition() == baseType)
+                {
+                    return true;
+                }
+
+                type2 = type2.BaseType;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the generic type definition of an open generic base type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
+        public static Type GetGenericBaseType(Type type, Type baseType)
+        {
+            return GetGenericBaseType(type, baseType, out _);
+        }
+        /// <summary>
+        /// Gets the generic type definition of an open generic base type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="baseType"></param>
+        /// <param name="depthCount"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public static Type GetGenericBaseType(Type type, Type baseType, out int depthCount)
+        {
+            if ((object)type == null)
+            {
+                throw new ArgumentNullException("type");
+            }
+
+            if ((object)baseType == null)
+            {
+                throw new ArgumentNullException("baseType");
+            }
+
+            if (!baseType.IsGenericType)
+            {
+                throw new ArgumentException("Type " + baseType.Name + " is not a generic type.");
+            }
+
+            if (!InheritsFrom(type, baseType))
+            {
+                throw new ArgumentException("Type " + type.Name + " does not inherit from " + baseType.Name + ".");
+            }
+
+            Type type2 = type;
+            depthCount = 0;
+            while ((object)type2 != null && (!type2.IsGenericType || (object)type2.GetGenericTypeDefinition() != baseType))
+            {
+                depthCount++;
+                type2 = type2.BaseType;
+            }
+
+            if ((object)type2 == null)
+            {
+                throw new ArgumentException(type.Name + " is assignable from " + baseType.Name + ", but base type was not found?");
+            }
+
+            return type2;
+        }
+
+        #endregion
     }
 }
