@@ -36,7 +36,8 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>,
-        ISystemEventScheduler
+        ISystemEventScheduler,
+        INotifySystemModule<AutoMoveActorModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -596,4 +597,35 @@ namespace Syadeu.Presentation.Actor
             ActorSystem.PostEvent<TEvent>(Entity<ActorEntity>.Empty, default);
         }
     }
+
+    public sealed class AutoMoveActorModule : PresentationSystemModule<ActorSystem>
+    {
+        public void Register()
+        {
+
+        }
+
+        public enum MoveHandle
+        {
+            RandomPosition,
+            Waypoint
+        }
+        public struct AutoMoveOptions
+        {
+            private InstanceID m_Entity;
+
+            private MoveHandle m_MoveHandle;
+            /*                                      */
+            // MoveHandle.RandomPosition
+            private bool
+                m_UseXAxis, m_UseYAxis, m_UseZAxis;
+            private float3
+                m_Minimum, m_Maximum;
+            /*                                      */
+            // MoveHandle.Waypoint
+            //private bool
+            //    m_
+        }
+    }
+    
 }
