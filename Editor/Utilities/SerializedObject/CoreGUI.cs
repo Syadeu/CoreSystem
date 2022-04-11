@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using System;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEngine;
@@ -327,5 +328,40 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+
+        public static float2 MinMaxSlider(Rect position, string label, ref float minValue, ref float maxValue, float minLimit, float maxLimit)
+        {
+            const float c_Width = 80;
+
+            position.width -= c_Width;
+            EditorGUI.MinMaxSlider(position, label, ref minValue, ref maxValue, minLimit, maxLimit);
+
+            var tempRect = position;
+            tempRect.x += position.width - 10f;
+            tempRect.width = (c_Width * .5f) + 5f;
+
+            minValue = EditorGUI.DelayedFloatField(tempRect, GUIContent.none, minValue, EditorStyles.textField);
+            tempRect.x += (c_Width * .5f) - 2.5f;
+            maxValue = EditorGUI.DelayedFloatField(tempRect, GUIContent.none, maxValue, EditorStyles.textField);
+
+            return new float2(minValue, maxValue);
+        }
+        public static float2 MinMaxSlider(Rect position, GUIContent label, ref float minValue, ref float maxValue, float minLimit, float maxLimit)
+        {
+            const float c_Width = 80;
+
+            position.width -= c_Width;
+            EditorGUI.MinMaxSlider(position, label, ref minValue, ref maxValue, minLimit, maxLimit);
+
+            var tempRect = position;
+            tempRect.x += position.width - 10f;
+            tempRect.width = (c_Width * .5f) + 5f;
+
+            minValue = EditorGUI.DelayedFloatField(tempRect, GUIContent.none, minValue, EditorStyles.textField);
+            tempRect.x += (c_Width * .5f) - 2.5f;
+            maxValue = EditorGUI.DelayedFloatField(tempRect, GUIContent.none, maxValue, EditorStyles.textField);
+
+            return new float2(minValue, maxValue);
+        }
     }
 }
