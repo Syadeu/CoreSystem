@@ -169,9 +169,19 @@ namespace Syadeu.Collections
             return t.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 null, CallingConventions.HasThis, args, null);
         }
+        
         public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
         {
             return type.GetField(name, bindingFlags);
+        }
+        public static FieldInfo GetFieldInfoRecursive(Type type, string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        {
+            var result = type.GetField(name, bindingFlags);
+            if (result == null && type.BaseType != null)
+            {
+                return GetFieldInfoRecursive(type.BaseType, name, bindingFlags);
+            }
+            return result;
         }
 
         private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)

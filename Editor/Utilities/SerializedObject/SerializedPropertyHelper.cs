@@ -742,19 +742,24 @@ namespace SyadeuEditor.Utilities
             foreach (string element in elements)
             {
                 Type currentType = currentField == null ? t : currentField.FieldType;
+                if (currentType.IsArray) currentType = currentType.GetElementType();
+
                 if (element.Contains("["))
                 {
                     string elementName = element.Substring(0, element.IndexOf("["));
-                    //int index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", string.Empty).Replace("]", string.Empty));
-
-                    //obj = GetValue_Imp(obj, elementName, index);
-                    currentField = currentType.GetField(elementName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    currentField = TypeHelper.GetFieldInfoRecursive(currentType, elementName);
+                    if (currentField == null)
+                    {
+                        throw new Exception($"from ({currentType.Name}) {elementName}");
+                    }
                 }
                 else
                 {
-                    //obj = GetValue_Imp(obj, element);
-
-                    currentField = currentType.GetField(element, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    currentField = TypeHelper.GetFieldInfoRecursive(currentType, element);
+                    if (currentField == null)
+                    {
+                        throw new Exception($"from ({currentType.Name}) {element}");
+                    }
                 }
             }
 
