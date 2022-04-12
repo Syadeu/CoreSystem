@@ -62,7 +62,7 @@ namespace SyadeuEditor.Presentation
             return property.FindPropertyRelative(c_Str);
         }
 
-        public override sealed float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override sealed float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty arr = GetArrayProperty(property);
             float height = 28;

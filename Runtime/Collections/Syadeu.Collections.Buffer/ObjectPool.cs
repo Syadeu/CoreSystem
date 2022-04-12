@@ -45,6 +45,17 @@ namespace Syadeu.Collections.Buffer
             m_Pool = new Stack<T>();
             m_CheckSum = 0;
         }
+        public ObjectPool(ObjectPool<T> parent)
+        {
+            m_Factory = parent.m_Factory;
+            m_OnGet = parent.m_OnGet;
+            m_OnReserve = parent.m_OnReserve;
+            m_OnRelease = parent.m_OnRelease;
+
+            m_Pool = new Stack<T>();
+
+            m_CheckSum = 0;
+        }
 
         public T Get()
         {

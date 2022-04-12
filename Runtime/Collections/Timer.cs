@@ -43,6 +43,10 @@ namespace Syadeu.Collections
             }
         }
 
+        public bool IsExceeded(float seconds)
+        {
+            return seconds < ElapsedTime;
+        }
         public bool IsExceeded(int3 time)
         {
             float secs = (time.x * 3600) + (time.y * 60) + time.z;

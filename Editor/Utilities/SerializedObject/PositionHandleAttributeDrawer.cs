@@ -37,9 +37,9 @@ namespace SyadeuEditor.Utilities
 
         protected override bool Opened => m_Opened;
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+            return base.PropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)

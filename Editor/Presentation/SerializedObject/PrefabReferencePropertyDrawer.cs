@@ -27,9 +27,9 @@ namespace SyadeuEditor.Presentation
             return property.FindPropertyRelative(c_Name);
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+            return base.PropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
         }
 
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
