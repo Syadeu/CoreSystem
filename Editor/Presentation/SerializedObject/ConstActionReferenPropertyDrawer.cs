@@ -15,6 +15,11 @@ namespace SyadeuEditor.Presentation
     {
         private Type m_TargetType;
 
+        private SerializedProperty GetArgumentsField(SerializedProperty property)
+        {
+            return property.FindPropertyRelative("m_Arguments");
+        }
+
         protected override void OnInitialize(SerializedProperty property)
         {
             Type[] generics = fieldInfo.FieldType.GetGenericArguments();
@@ -23,14 +28,23 @@ namespace SyadeuEditor.Presentation
 
 
         }
-        protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            base.BeforePropertyGUI(ref rect, property, label);
+            float height = PropertyDrawerHelper.GetPropertyHeight(1);
+
+            if (property.isExpanded)
+            {
+                height += 17f;
+
+                var argsField = GetArgumentsField(property);
+                height += EditorGUI.GetPropertyHeight(argsField, argsField.isExpanded);
+            }
+
+            return height;
         }
+
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            //base.OnPropertyGUI(ref rect, property, label);
-
             IConstActionReference currentValue = (IConstActionReference)property.GetTargetObject();
 
             string targetName;
@@ -56,10 +70,16 @@ namespace SyadeuEditor.Presentation
             {
             });
 
-            using (new EditorGUI.DisabledGroupScope(currentActionType == null ||
+            bool disabled = currentActionType == null ||
                     !ConstActionUtilities.HashMap.TryGetValue(currentActionType, out var info) ||
-                    (info.ArgumentFields.Length < 1 && description == null)))
+                    (info.ArgumentFields.Length < 1 && description == null);
+            using (new EditorGUI.DisabledGroupScope(disabled))
             {
+                if (disabled)
+                {
+                    property.isExpanded = false;
+                }
+
                 string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
                 property.isExpanded = CoreGUI.BoxToggleButton(
                     rects[1],
@@ -91,16 +111,20 @@ namespace SyadeuEditor.Presentation
                         //using (new EditorUtilities.BoxBlock(Color.black))
                         //{
                         //    EditorUtilities.StringRich("Arguments", 13);
+                        CoreGUI.Label(rect.Pop(13), new GUIContent("Arguments"), 13, TextAnchor.MiddleLeft);
+                        rect.Pop(2.5f);
                         //    EditorGUI.indentLevel++;
 
-                        //    for (int i = 0; i < infomation.ArgumentFields.Length; i++)
-                        //    {
-                        //        currentValue.Arguments[i] =
-                        //            EditorUtilities.AutoField(
-                        //                infomation.ArgumentFields[i],
-                        //                string.IsNullOrEmpty(infomation.JsonAttributes[i].PropertyName) ? infomation.ArgumentFields[i].Name : infomation.JsonAttributes[i].PropertyName,
-                        //                currentValue.Arguments[i]);
-                        //    }
+                        var argsField = GetArgumentsField(property);
+                        EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(argsField, argsField.isExpanded)), argsField);
+                        //for (int i = 0; i < infomation.ArgumentFields.Length; i++)
+                        //{
+                        //    currentValue.Arguments[i] =
+                        //        EditorUtilities.AutoField(
+                        //            infomation.ArgumentFields[i],
+                        //            string.IsNullOrEmpty(infomation.JsonAttributes[i].PropertyName) ? infomation.ArgumentFields[i].Name : infomation.JsonAttributes[i].PropertyName,
+                        //            currentValue.Arguments[i]);
+                        //}
 
                         //    EditorGUI.indentLevel--;
                         //}
