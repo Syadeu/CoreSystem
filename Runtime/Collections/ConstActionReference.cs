@@ -31,7 +31,7 @@ namespace Syadeu.Collections
         private string m_Guid;
         [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
-        private object[] m_Arguments;
+        private object[] m_Arguments = Array.Empty<object>();
 
         public Guid Guid => Guid.Parse(m_Guid);
         public object[] Arguments => m_Arguments;

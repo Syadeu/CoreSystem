@@ -42,6 +42,11 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = 2, PropertyName = "OnDestroy")]
         internal ArrayWrapper<Reference<TriggerAction>> m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
 
+        [Space]
+        [SerializeField]
+        [JsonProperty(Order = 3)]
+        internal ConstActionReference<int> m_test;
+
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
 

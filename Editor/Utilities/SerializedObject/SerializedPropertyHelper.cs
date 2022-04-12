@@ -123,6 +123,22 @@ namespace SyadeuEditor.Utilities
         //{
 
         //}
+        public static void SetConstActionReference(SerializedProperty property, Guid guid, params object[] args)
+        {
+            ConstActionReferenceSetGuid(property, guid);
+            ConstActionReferenceSetArguments(property, args);
+        }
+        public static void ConstActionReferenceSetGuid(SerializedProperty property, Guid guid)
+        {
+            var guidProp = property.FindPropertyRelative("m_Guid");
+            guidProp.stringValue = guid.ToString();
+        }
+        public static void ConstActionReferenceSetArguments(SerializedProperty property, params object[] args)
+        {
+            var argsProp = property.FindPropertyRelative("m_Arguments");
+
+            argsProp.ClearArray();
+        }
 
         #endregion
 
