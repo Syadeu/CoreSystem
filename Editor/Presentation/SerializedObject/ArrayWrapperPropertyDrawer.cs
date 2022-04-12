@@ -13,8 +13,7 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
     public class ArrayWrapperPropertyDrawer : PropertyDrawer<Array>
     {
-        private GUIContent m_HeaderText;
-        private AnimFloat m_Height;
+        private Dictionary<SerializedProperty, AnimFloat> m_Height = new Dictionary<SerializedProperty, AnimFloat>();
 
         Rect[] elementRects = new Rect[3];
 
@@ -42,15 +41,6 @@ namespace SyadeuEditor.Presentation
         protected virtual void OnElementGUI(ref AutoRect rect, SerializedProperty element)
         {
             EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(element)), element, true);
-        }
-
-        #endregion
-
-        #region Inits
-
-        protected override sealed void OnInitialize(SerializedProperty property, GUIContent label)
-        {
-            m_HeaderText = GetHeaderText(property, label);
         }
 
         #endregion
@@ -86,15 +76,16 @@ namespace SyadeuEditor.Presentation
             {
                 height += 2;
             }
-            
-            if (m_Height == null)
-            {
-                m_Height = new AnimFloat(height);
-                m_Height.speed = 5;
-            }
-            else m_Height.target = height;
 
-            return m_Height.value;
+            //if (!m_Height.ContainsKey(property))
+            //{
+            //    m_Height.Add(property, new AnimFloat(height));
+            //    m_Height[property].speed = 5;
+            //}
+            //else m_Height[property].target = height;
+
+            //return m_Height[property].value;
+            return height;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
@@ -113,7 +104,7 @@ namespace SyadeuEditor.Presentation
             PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
             rect.Pop(3);
 
-            if (!DrawHeader(ref rect, arr)) // 15
+            if (!DrawHeader(ref rect, arr, label)) // 15
             {
                 m_ElementAlpha.target = 0;
                 return;
@@ -136,13 +127,13 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        private bool DrawHeader(ref AutoRect rect, SerializedProperty property)
+        private bool DrawHeader(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             Rect headerRect = rect.Pop(17);
             Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 40, 40, 40);
             AutoRect.AlignRect(ref headerRect, rects[0]);
 
-            property.isExpanded = CoreGUI.LabelToggle(EditorGUI.IndentedRect(headerRect), property.isExpanded, m_HeaderText, 15, TextAnchor.MiddleLeft);
+            property.isExpanded = CoreGUI.LabelToggle(EditorGUI.IndentedRect(headerRect), property.isExpanded, GetHeaderText(property, label), 15, TextAnchor.MiddleLeft);
 
             property.arraySize = EditorGUI.DelayedIntField(rects[0], property.arraySize);
 

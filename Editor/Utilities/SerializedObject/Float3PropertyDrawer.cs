@@ -115,15 +115,4 @@ namespace SyadeuEditor.Utilities
             Draw(elementRect, property, label);
         }
     }
-
-    [CustomPropertyDrawer(typeof(Array), true)]
-    internal sealed class ArrayPropertyDrawer : PropertyDrawer<IList>
-    {
-        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
-        {
-            EditorGUI.LabelField(rect.Pop(), " test");
-
-            base.OnPropertyGUI(ref rect, property, label);
-        }
-    }
 }

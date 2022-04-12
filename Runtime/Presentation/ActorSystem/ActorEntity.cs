@@ -30,13 +30,17 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorEntity : EntityBase,
         INotifyComponent<ActorFactionComponent>
     {
-        [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
+        [SerializeField]
+        [JsonProperty(Order = 0, PropertyName = "Faction")]
+        private Reference<ActorFaction> m_Faction = Reference<ActorFaction>.Empty;
 
         [Space, Header("TriggerAction")]
+        [SerializeField]
         [JsonProperty(Order = 1, PropertyName = "OnCreated")]
-        internal Reference<TriggerAction>[] m_OnCreated = Array.Empty<Reference<TriggerAction>>();
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnCreated = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField]
         [JsonProperty(Order = 2, PropertyName = "OnDestroy")]
-        internal Reference<TriggerAction>[] m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;

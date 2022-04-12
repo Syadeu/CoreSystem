@@ -17,29 +17,33 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Syadeu.Collections
 {
     /// <inheritdoc cref="IConstActionReference"/>
     /// <typeparam name="TValue">이 액션이 수행했을 때 반환하는 값의 타입입니다.</typeparam>
+    [Serializable]
     public sealed class ConstActionReference<TValue> : IConstActionReference
     {
+        [SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Guid")]
-        private Guid m_Guid;
+        private string m_Guid;
+        [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
         private object[] m_Arguments;
 
-        public Guid Guid => m_Guid;
+        public Guid Guid => Guid.Parse(m_Guid);
         public object[] Arguments => m_Arguments;
 
         public ConstActionReference()
         {
-            m_Guid = Guid.Empty;
+            m_Guid = Guid.Empty.ToString();
             m_Arguments = Array.Empty<object>();
         }
         public ConstActionReference(Guid guid, IEnumerable<object> args)
         {
-            m_Guid = guid;
+            m_Guid = guid.ToString();
             if (args == null || !args.Any())
             {
                 m_Arguments = Array.Empty<object>();
@@ -51,24 +55,27 @@ namespace Syadeu.Collections
         public void SetArguments(params object[] args) => m_Arguments = args;
     }
     /// <inheritdoc cref="IConstActionReference"/>
+    [Serializable]
     public sealed class ConstActionReference : IConstActionReference
     {
+        [SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Guid")]
-        private Guid m_Guid;
+        private string m_Guid;
+        [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
         private object[] m_Arguments;
 
-        public Guid Guid => m_Guid;
+        public Guid Guid => Guid.Parse(m_Guid);
         public object[] Arguments => m_Arguments;
 
         public ConstActionReference()
         {
-            m_Guid = Guid.Empty;
+            m_Guid = Guid.Empty.ToString();
             m_Arguments = Array.Empty<object>();
         }
         public ConstActionReference(Guid guid, IEnumerable<object> args)
         {
-            m_Guid = guid;
+            m_Guid = guid.ToString();
             if (args == null || !args.Any())
             {
                 m_Arguments = Array.Empty<object>();

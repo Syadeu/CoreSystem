@@ -13,13 +13,9 @@ namespace SyadeuEditor.Presentation
             float height = 0;
 
             var tempProp = GetHashProperty(property);
-            //if (tempProp.Next(false))
-            //{
-            //    count = tempProp.CountRemaining();
-            //}
             while (tempProp.Next(false))
             {
-                height += EditorGUI.GetPropertyHeight(tempProp);
+                height += tempProp.GetPropertyHeight(new GUIContent(tempProp.displayName));
             }
 
             return base.PropertyHeight(property, label) + height;
@@ -32,7 +28,8 @@ namespace SyadeuEditor.Presentation
             var temp = GetHashProperty(property);
             while (temp.Next(false))
             {
-                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp, true);
+                temp.Draw(ref rect, new GUIContent(temp.displayName), true);
+                //EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp, true);
             }
         }
     }

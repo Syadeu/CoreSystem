@@ -117,6 +117,15 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region ConstActionReference
+
+        //public static ConstActionReference ReadConstActionReference(SerializedProperty property)
+        //{
+
+        //}
+
+        #endregion
+
         #region Unity.Collections
 
         public static void ApplyToProperty(this in FixedString128Bytes t, SerializedProperty property) => SetFixedString128Bytes(property, t);
@@ -636,6 +645,16 @@ namespace SyadeuEditor.Utilities
             }
         }
 
+        public static float GetPropertyHeight(this SerializedProperty t, GUIContent label)
+        {
+            PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
+            if (propertyDrawer != null)
+            {
+                return propertyDrawer.GetPropertyHeight(t, label);
+            }
+            return EditorGUI.GetPropertyHeight(t, label, true);
+        }
+
         public static void Draw(this SerializedProperty t, Rect rect, GUIContent label, bool includeChildren)
         {
             PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
@@ -654,9 +673,11 @@ namespace SyadeuEditor.Utilities
 
             if (propertyDrawer == null)
             {
+                Rect temp = rect.Pop(EditorGUI.GetPropertyHeight(t));
                 EditorGUI.PropertyField(
-                    rect.Pop(EditorGUI.GetPropertyHeight(t))
+                    temp
                     , t, label, includeChildren);
+                //EditorGUI.LabelField(temp, "not found");
                 return;
             }
 
@@ -675,14 +696,16 @@ namespace SyadeuEditor.Utilities
                 Type foundDrawerType = null;
                 Type foundDrawerTargetType = null;
 
-                //$"{propertyType.Name} start".ToLog();
+                //UnityEngine.Debug.Log($"{propertyType.Name} start");
                 foreach (var drawerType in TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttributes<CustomPropertyDrawer>().Any()))
                 {
                     foreach (var customPropertyDrawer in drawerType.GetCustomAttributes<CustomPropertyDrawer>())
                     {
                         Type targetType = (Type)CachedPropertyTypeField.GetValue(customPropertyDrawer);
                         bool useChild = (bool)CachedPropertyUseChildField.GetValue(customPropertyDrawer);
-                        //$"target:{targetType.Name} usechild:{useChild}".ToLog();
+                        //UnityEngine.Debug.Log(
+                        //    $"{propertyType.Name}:: target:{targetType.Name} " +
+                        //    $"usechild:{useChild} ? {TypeHelper.InheritsFrom(propertyType, targetType)}");
                         if (targetType.Equals(propertyType))
                         {
                             //$"target:{targetType.Name} {propertyType.Name}".ToLog();
@@ -690,12 +713,13 @@ namespace SyadeuEditor.Utilities
 
                             break;
                         }
-                        else if (useChild && (propertyType.IsSubclassOf(targetType) || targetType.IsAssignableFrom(propertyType)))
+                        else if (
+                            useChild && TypeHelper.InheritsFrom(propertyType, targetType))
                         {
                             if (foundDrawerType != null)
                             {
                                 // 만약 더 상위를 타겟으로 하고 있으면 교체
-                                if (foundDrawerTargetType.IsAssignableFrom(targetType))
+                                if (TypeHelper.InheritsFrom(foundDrawerTargetType, targetType))
                                 {
                                     foundDrawerType = drawerType;
                                     foundDrawerTargetType = targetType;
@@ -736,13 +760,23 @@ namespace SyadeuEditor.Utilities
 
             string path = prop.propertyPath.Replace(".Array.data[", "[");
             Type t = prop.serializedObject.targetObject.GetType();
+            object currentValue = prop.serializedObject.targetObject;
             FieldInfo currentField = null;
             string[] elements = path.Split('.');
 
             foreach (string element in elements)
             {
                 Type currentType = currentField == null ? t : currentField.FieldType;
-                if (currentType.IsArray) currentType = currentType.GetElementType();
+                if (currentField != null)
+                {
+                    currentValue = currentField.GetValue(currentValue);
+                }
+
+                if (currentType.Equals(TypeHelper.TypeOf<object>.Type))
+                {
+                    currentType = currentValue.GetType();
+                }
+                //if (currentType.IsArray) currentType = currentType.GetElementType();
 
                 if (element.Contains("["))
                 {
@@ -750,7 +784,7 @@ namespace SyadeuEditor.Utilities
                     currentField = TypeHelper.GetFieldInfoRecursive(currentType, elementName);
                     if (currentField == null)
                     {
-                        throw new Exception($"from ({currentType.Name}) {elementName}");
+                        throw new Exception($"1. from ({currentType.FullName}) {elementName}:{path}");
                     }
                 }
                 else
@@ -758,7 +792,7 @@ namespace SyadeuEditor.Utilities
                     currentField = TypeHelper.GetFieldInfoRecursive(currentType, element);
                     if (currentField == null)
                     {
-                        throw new Exception($"from ({currentType.Name}) {element}");
+                        throw new Exception($"2. from ({currentType.FullName}) :: {element}:{path}");
                     }
                 }
             }

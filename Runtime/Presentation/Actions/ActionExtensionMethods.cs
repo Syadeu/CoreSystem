@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Actions
             return result;
         }
 
-        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity) where T : TriggerAction
+        public static bool Execute<T>(this IList<Reference<T>> actions, Entity<IObject> entity) where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -122,7 +122,7 @@ namespace Syadeu.Presentation.Actions
             }
 
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this IList<Reference<T>> actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Actions
             bool 
                 isFailed = false,
                 isFalse = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -167,10 +167,10 @@ namespace Syadeu.Presentation.Actions
             predicate = !isFalse;
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceAction
+        public static bool Execute<T>(this IList<Reference<T>> actions) where T : InstanceAction
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -185,10 +185,10 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<ParamAction<T>>[] actions, T target)
+        public static bool Execute<T>(this IList<Reference<ParamAction<T>>> actions, T target)
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -203,10 +203,10 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>>[] actions, T t, TA ta)
+        public static bool Execute<T, TA>(this IList<Reference<ParamAction<T, TA>>> actions, T t, TA ta)
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -382,25 +382,25 @@ namespace Syadeu.Presentation.Actions
             }
         }
         //[Obsolete("Use FixedReferenceList64")]
-        public static void Schedule<T>(this Reference<T>[] actions)
+        public static void Schedule<T>(this IList<Reference<T>> actions)
             where T : InstanceAction
         {
-            if (actions == null || actions.Length == 0) return;
+            if (actions == null || actions.Count == 0) return;
 
             ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
         //[Obsolete("Use FixedReferenceList64")]
-        public static void Schedule<T>(this Reference<T>[] actions, Entity<IObject> entity)
+        public static void Schedule<T>(this IList<Reference<T>> actions, Entity<IObject> entity)
             where T : TriggerAction
         {
-            if (actions == null || actions.Length == 0) return;
+            if (actions == null || actions.Count == 0) return;
 
             ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 system.ScheduleTriggerAction<T>(actions[i], entity);
             }
