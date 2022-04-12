@@ -32,57 +32,17 @@ namespace SyadeuEditor.Utilities
     {
         private bool m_Initialized = false;
 
-        AnimFloat m_X, m_Y, m_Width, m_Height;
-
         public override sealed float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = PropertyHeight(property, label);
-            foreach (var att in fieldInfo.GetCustomAttributes())
-            {
-                if (att is SpaceAttribute space)
-                {
-                    height += space.height == 0 ? EditorGUIUtility.standardVerticalSpacing : space.height;
-                }
-            }
+            //foreach (var att in fieldInfo.GetCustomAttributes())
+            //{
+            //    if (att is SpaceAttribute space)
+            //    {
+            //        height += space.height == 0 ? EditorGUIUtility.standardVerticalSpacing : space.height;
+            //    }
+            //}
             return height;
-        }
-
-        private void SetPreviousPosition(Rect position)
-        {
-            if (m_X == null)
-            {
-                m_X = new AnimFloat(position.x);
-                m_X.speed = 4;
-            }
-            else m_X.target = position.x;
-
-            if (m_Y == null)
-            {
-                m_Y = new AnimFloat(position.y);
-                m_Y.speed = 4;
-            }
-            else m_Y.target = position.y;
-
-            if (m_Width == null)
-            {
-                m_Width = new AnimFloat(position.width);
-                m_Width.speed = 4;
-            }
-            else m_Width.target = position.width;
-
-            if (m_Height == null)
-            {
-                m_Height = new AnimFloat(position.height);
-                m_Height.speed = 4;
-            }
-            else m_Height.target = position.height;
-        }
-        private void GetPosition(ref Rect position)
-        {
-            position.x = m_X.value;
-            position.y = m_Y.value;
-            position.width = m_Width.value;
-            position.height = m_Height.value;
         }
 
         public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -93,8 +53,6 @@ namespace SyadeuEditor.Utilities
                 OnInitialize(property, label);
                 m_Initialized = true;
             }
-            //SetPreviousPosition(position);
-            //GetPosition(ref position);
 
             AutoRect rect = new AutoRect(position);
             BeforePropertyGUI(ref rect, property, label);
@@ -103,10 +61,10 @@ namespace SyadeuEditor.Utilities
             foreach (var att in fieldInfo.GetCustomAttributes())
             {
                 if (att is ReflectionSealedViewAttribute) notEditable = true;
-                else if (att is SpaceAttribute space)
-                {
-                    rect.Pop(space.height == 0 ? EditorGUIUtility.standardVerticalSpacing : space.height);
-                }
+                //else if (att is SpaceAttribute space)
+                //{
+                //    rect.Pop(space.height == 0 ? EditorGUIUtility.standardVerticalSpacing : space.height);
+                //}
             }
 
             using (new EditorGUI.DisabledGroupScope(notEditable))
