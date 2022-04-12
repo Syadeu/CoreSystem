@@ -26,7 +26,7 @@ namespace SyadeuEditor.Presentation
 
         Rect[] elementRects = new Rect[3];
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty arr = property.FindPropertyRelative("m_Array");
 

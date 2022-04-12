@@ -8,7 +8,7 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(ObjectBase), true)]
     internal sealed class DefaultObjectPropertyDrawer : CoreSystemObjectPropertyDrawer<ObjectBase>
     {
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = 0;
 
@@ -22,7 +22,7 @@ namespace SyadeuEditor.Presentation
                 height += EditorGUI.GetPropertyHeight(tempProp);
             }
 
-            return base.GetPropertyHeight(property, label) + height;
+            return base.PropertyHeight(property, label) + height;
         }
 
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)

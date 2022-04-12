@@ -8,9 +8,9 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(AnimatorAttribute))]
     public sealed class AnimatorPropertyDrawer : CoreSystemObjectPropertyDrawer<AnimatorAttribute>
     {
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = base.GetPropertyHeight(property, label) + PropertyDrawerHelper.GetPropertyHeight(2);
+            float height = base.PropertyHeight(property, label) + PropertyDrawerHelper.GetPropertyHeight(2);
 
             height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("m_AnimationTriggers"));
 

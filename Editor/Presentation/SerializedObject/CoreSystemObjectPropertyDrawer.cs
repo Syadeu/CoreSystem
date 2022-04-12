@@ -22,7 +22,7 @@ namespace SyadeuEditor.Presentation
         protected SerializedProperty GetNameProperty(SerializedProperty property) => property.FindPropertyRelative(c_NamePropertyStr);
         protected SerializedProperty GetHashProperty(SerializedProperty property) => property.FindPropertyRelative(c_HashPropertyStr);
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             if (m_Height == null)
             {
