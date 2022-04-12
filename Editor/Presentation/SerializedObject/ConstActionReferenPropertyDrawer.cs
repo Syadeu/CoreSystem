@@ -93,7 +93,7 @@ namespace SyadeuEditor.Presentation
                 {
                     if (description != null)
                     {
-                        EditorGUILayout.HelpBox(description.Description, MessageType.Info);
+                        //EditorGUI.HelpBox(description.Description, MessageType.Info);
                     }
 
                     var infomation = ConstActionUtilities.HashMap[currentActionType];
@@ -136,23 +136,16 @@ namespace SyadeuEditor.Presentation
             {
                 DrawSelectionWindow(fieldInfo.GetCustomAttribute<ConstActionOptionsAttribute>(), (t) =>
                 {
-                    //var ctor = TypeHelper.GetConstructorInfo(
-                    //    fieldInfo.FieldType, TypeHelper.TypeOf<Guid>.Type, TypeHelper.TypeOf<IEnumerable<object>>.Type);
-
-                    //object temp;
                     if (t == null)
                     {
-                        //temp = ctor.Invoke(new object[] { Guid.Empty, null });
                         SerializedPropertyHelper.SetConstActionReference(property, Guid.Empty);
                     }
                     else
                     {
-                        //temp = ctor.Invoke(new object[] { t.GUID, null });
                         SerializedPropertyHelper.SetConstActionReference(property, t.GUID);
                     }
 
-                    //fieldInfo.SetValue(property.GetParent().GetTargetObject(), temp);
-                    //Setter.Invoke((IConstActionReference)temp);
+                    
 
                 }, m_TargetType);
             }
