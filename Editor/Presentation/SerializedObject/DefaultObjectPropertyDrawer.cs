@@ -28,8 +28,8 @@ namespace SyadeuEditor.Presentation
             var temp = GetHashProperty(property);
             while (temp.Next(false))
             {
-                temp.Draw(ref rect, new GUIContent(temp.displayName), true);
-                //EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp, true);
+                //temp.Draw(ref rect, new GUIContent(temp.displayName), true);
+                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp, true);
             }
         }
     }
