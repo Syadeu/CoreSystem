@@ -106,9 +106,10 @@ namespace SyadeuEditor.Presentation
         {
             SerializedProperty arr = GetArrayProperty(property);
 
-            var blockRect = new Rect(rect.TotalRect);
-            blockRect.y += 3;
-            blockRect.height -= 4;
+            Rect blockRect = new Rect(rect.TotalRect);
+            blockRect.y = rect.Current.y;
+            blockRect.height = rect.Current.height;
+
             PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
             rect.Pop(3);
 
