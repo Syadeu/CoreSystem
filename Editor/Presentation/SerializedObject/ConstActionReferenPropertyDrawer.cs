@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace SyadeuEditor.Presentation
 {
-    [CustomPropertyDrawer(typeof(ConstActionReference<>), true)]
+    [CustomPropertyDrawer(typeof(IConstActionReference), true)]
     internal sealed class ConstActionReferenPropertyDrawer : PropertyDrawer<IConstActionReference>
     {
         private Type m_TargetType;

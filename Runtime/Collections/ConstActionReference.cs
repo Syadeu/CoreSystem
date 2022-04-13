@@ -72,7 +72,14 @@ namespace Syadeu.Collections
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
         private object[] m_Arguments;
 
-        public Guid Guid => Guid.Parse(m_Guid);
+        public Guid Guid
+        {
+            get
+            {
+                if (!Guid.TryParse(m_Guid, out var result)) return Guid.Empty;
+                return result;
+            }
+        }
         public object[] Arguments => m_Arguments;
 
         public ConstActionReference()

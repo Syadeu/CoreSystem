@@ -41,9 +41,9 @@ namespace Syadeu.Presentation.Actor
 
         [Space, Header("ConstAction")]
         [SerializeField, JsonProperty(Order = 4, PropertyName = "OnCreatedConst")]
-        internal ArrayWrapper<ConstActionReference<int>> m_OnCreatedConst = Array.Empty<ConstActionReference<int>>();
+        internal ArrayWrapper<ConstActionReference> m_OnCreatedConst = Array.Empty<ConstActionReference>();
         [SerializeField, JsonProperty(Order = 5, PropertyName = "OnDestroyConst")]
-        internal ArrayWrapper<ConstActionReference<int>> m_OnDestroyConst = Array.Empty<ConstActionReference<int>>();
+        internal ArrayWrapper<ConstActionReference> m_OnDestroyConst = Array.Empty<ConstActionReference>();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
@@ -103,12 +103,14 @@ namespace Syadeu.Presentation.Actor
             });
 
             actor.m_OnCreated.Execute(entity);
+            actor.m_OnCreatedConst.Execute(entity);
         }
         protected override void OnDestroy(ActorEntity actor)
         {
             Entity<IObject> entity = Entity<IObject>.GetEntityWithoutCheck(actor.Idx);
 
             actor.m_OnDestroy.Execute(entity);
+            actor.m_OnDestroyConst.Execute(entity);
         }
     }
 }
