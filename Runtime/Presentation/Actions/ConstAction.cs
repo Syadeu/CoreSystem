@@ -34,7 +34,9 @@ namespace Syadeu.Presentation.Actions
     /// 정의된 <see cref="ConstAction{TValue}"/> 는 <seealso cref="ConstActionReference{TValue}"/> 를 통해 
     /// 레퍼런스 될 수 있습니다.
     /// </remarks>
-    /// <typeparam name="TValue"></typeparam>
+    /// <typeparam name="TValue">
+    /// 의미있는 값을 반환하지 않는다면 int 를 사용하세요
+    /// </typeparam>
     [Serializable]
     public abstract class ConstAction<TValue> : IConstAction
     {

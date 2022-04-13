@@ -67,7 +67,7 @@ namespace Syadeu.Collections
     {
         [SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Guid")]
-        private string m_Guid;
+        private string m_Guid = String.Empty;
         [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
         private object[] m_Arguments;
