@@ -30,22 +30,20 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorEntity : EntityBase,
         INotifyComponent<ActorFactionComponent>
     {
-        [SerializeField]
-        [JsonProperty(Order = 0, PropertyName = "Faction")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Faction")]
         private Reference<ActorFaction> m_Faction = Reference<ActorFaction>.Empty;
 
         [Space, Header("TriggerAction")]
-        [SerializeField]
-        [JsonProperty(Order = 1, PropertyName = "OnCreated")]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "OnCreated")]
         internal ArrayWrapper<Reference<TriggerAction>> m_OnCreated = Array.Empty<Reference<TriggerAction>>();
-        [SerializeField]
-        [JsonProperty(Order = 2, PropertyName = "OnDestroy")]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "OnDestroy")]
         internal ArrayWrapper<Reference<TriggerAction>> m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
 
-        [Space]
-        [SerializeField]
-        [JsonProperty(Order = 3)]
-        internal ConstActionReference<int> m_test;
+        [Space, Header("ConstAction")]
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "OnCreatedConst")]
+        internal ArrayWrapper<ConstActionReference<int>> m_OnCreatedConst = Array.Empty<ConstActionReference<int>>();
+        [SerializeField, JsonProperty(Order = 5, PropertyName = "OnDestroyConst")]
+        internal ArrayWrapper<ConstActionReference<int>> m_OnDestroyConst = Array.Empty<ConstActionReference<int>>();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;

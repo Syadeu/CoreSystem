@@ -15,6 +15,10 @@ namespace SyadeuEditor.Presentation
     {
         private Type m_TargetType;
 
+        private SerializedProperty GetGuidField(SerializedProperty property)
+        {
+            return property.FindPropertyRelative("m_Guid");
+        }
         private SerializedProperty GetArgumentsField(SerializedProperty property)
         {
             return property.FindPropertyRelative("m_Arguments");
@@ -31,8 +35,9 @@ namespace SyadeuEditor.Presentation
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = PropertyDrawerHelper.GetPropertyHeight(1) + EditorGUIUtility.standardVerticalSpacing;
+            SerializedProperty guidField = GetGuidField(property);
 
-            if (property.isExpanded)
+            if (guidField.isExpanded)
             {
                 height += 17f;
 
@@ -92,6 +97,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
+            SerializedProperty guidField = GetGuidField(property);
             bool clicked = CoreGUI.BoxButton(middleRect, targetName, ColorPalettes.PastelDreams.Mint, () =>
             {
             });
@@ -103,19 +109,19 @@ namespace SyadeuEditor.Presentation
             {
                 if (disabled)
                 {
-                    property.isExpanded = false;
+                    guidField.isExpanded = false;
                 }
 
-                string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
-                property.isExpanded = CoreGUI.BoxToggleButton(
+                string str = guidField.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
+                guidField.isExpanded = CoreGUI.BoxToggleButton(
                     expandRect,
-                    property.isExpanded,
+                    guidField.isExpanded,
                     new GUIContent(str),
                     ColorPalettes.PastelDreams.TiffanyBlue,
                     ColorPalettes.PastelDreams.HotPink
                     );
 
-                if (property.isExpanded)
+                if (guidField.isExpanded)
                 {
                     if (description != null)
                     {
