@@ -329,6 +329,8 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region Min-Max Slider
+
         public static float2 MinMaxSlider(Rect position, string label, ref float minValue, ref float maxValue, float minLimit, float maxLimit)
         {
             const float c_Width = 80;
@@ -363,5 +365,24 @@ namespace SyadeuEditor.Utilities
 
             return new float2(minValue, maxValue);
         }
+
+        #endregion
+
+        #region Slider
+
+        public static float Slider(Rect position, string label, float value, float minLimit, float maxLimit)
+        {
+            value = EditorGUI.Slider(position, label, value, minLimit, maxLimit);
+
+            return value;
+        }
+        public static float Slider(Rect position, GUIContent label, float value, float minLimit, float maxLimit)
+        {
+            value = EditorGUI.Slider(position, label, value, minLimit, maxLimit);
+
+            return value;
+        }
+
+        #endregion
     }
 }

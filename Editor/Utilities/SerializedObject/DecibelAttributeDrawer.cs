@@ -18,16 +18,15 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.LowLevel;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
-    [CustomPropertyDrawer(typeof(MinMaxFloatField))]
-    internal sealed class MinMaxFloatFieldPropertyDrawer : PropertyDrawer<MinMaxFloatField>
+    [CustomPropertyDrawer(typeof(DecibelAttribute))]
+    internal sealed class DecibelAttributeDrawer : PropertyDrawer<DecibelAttribute>
     {
-        static class Helper
+        static class MinMaxFieldHelper
         {
             private const string
                 c_MinText = "m_Min", c_MaxText = "m_Max";
@@ -42,54 +41,43 @@ namespace SyadeuEditor.Utilities
             }
         }
 
+        const float minimum = -80, maximum = 0;
+
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            if (fieldInfo.GetCustomAttribute<DecibelAttribute>() != null)
+            if (fieldInfo.FieldType == TypeHelper.TypeOf<float>.Type)
             {
-                MinMaxFloatDecibelField(ref rect, property, label);
-                return;
+                FloatField(ref rect, property, label);
             }
-
-            SerializedProperty
-                minProp = Helper.GetMin(property),
-                maxProp = Helper.GetMax(property);
-
-            float
-                min = minProp.floatValue,
-                max = maxProp.floatValue;
-
-            var att = fieldInfo.GetCustomAttribute<RangeAttribute>();
-            float minimum, maximum;
-            if (att == null)
+            else if (fieldInfo.FieldType == TypeHelper.TypeOf<MinMaxFloatField>.Type)
             {
-                minimum = float.MinValue;
-                maximum = float.MaxValue;
+                MinMaxFloatField(ref rect, property, label);
             }
-            else
-            {
-                minimum = att.min;
-                maximum = att.max;
-            }
+        }
 
-            CoreGUI.MinMaxSlider(
+        private void FloatField(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            float value = TodB(property.floatValue);
+
+            EditorGUI.BeginChangeCheck();
+            value = CoreGUI.Slider(
                 rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1)),
                 label,
-                ref min,
-                ref max,
+                value,
                 minimum,
                 maximum
                 );
 
-            minProp.floatValue = min;
-            maxProp.floatValue = max;
+            if (EditorGUI.EndChangeCheck())
+            {
+                property.floatValue = BurstMathematics.FromdB(value);
+            }
         }
-
-        private void MinMaxFloatDecibelField(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        private void MinMaxFloatField(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            Rect pos = rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1));
             SerializedProperty
-                minProp = Helper.GetMin(property),
-                maxProp = Helper.GetMax(property);
+                minProp = MinMaxFieldHelper.GetMin(property),
+                maxProp = MinMaxFieldHelper.GetMax(property);
 
             float
                 min = BurstMathematics.TodB(minProp.floatValue, 1),
@@ -97,12 +85,12 @@ namespace SyadeuEditor.Utilities
 
             EditorGUI.BeginChangeCheck();
             CoreGUI.MinMaxSlider(
-                pos,
+                rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1)),
                 label,
                 ref min,
                 ref max,
-                -80,
-                0
+                minimum,
+                maximum
                 );
 
             if (EditorGUI.EndChangeCheck())

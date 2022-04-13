@@ -125,5 +125,82 @@ namespace Syadeu.Collections.LowLevel
 
             *result = temp;
         }
+
+        [BurstCompile]
+        private static void TodB(double* linear, double* output)
+        {
+            const double kMindB = -80;
+
+            if (*linear == 0) *output = kMindB;
+            else
+            {
+                *output = 20 * math.log10(*linear);
+            }
+        }
+        [BurstCompile]
+        private static void TodBRound(double* linear, double* output, int* digits)
+        {
+            const double kMindB = -80;
+
+            if (*linear == 0) *output = kMindB;
+            else
+            {
+                *output = 20 * math.log10(*linear);
+            }
+
+            *output = System.Math.Round(*output, *digits);
+        }
+        [BurstCompile]
+        private static void FromdB(double* dB, double* output)
+        {
+            *output = math.pow(10, *dB / 20);
+        }
+        [BurstCompile]
+        private static void FromdBRound(double* dB, double* output, int* digits)
+        {
+            *output = math.pow(10, *dB / 20);
+            *output = System.Math.Round(*output, *digits);
+        }
+
+        public static float TodB(float value)
+        {
+            double
+                linear = value,
+                output = 0;
+
+            TodB(&linear, &output);
+
+            return (float)output;
+        }
+        public static float TodB(float value, int digits)
+        {
+            double
+                linear = value,
+                output = 0;
+
+            TodBRound(&linear, &output, &digits);
+
+            return (float)output;
+        }
+        public static float FromdB(float dB)
+        {
+            double
+                decibel = dB,
+                output = 0;
+
+            FromdB(&decibel, &output);
+
+            return (float)output;
+        }
+        public static float FromdB(float dB, int digits)
+        {
+            double
+                decibel = dB,
+                output = 0;
+
+            FromdBRound(&decibel, &output, &digits);
+
+            return (float)output;
+        }
     }
 }
