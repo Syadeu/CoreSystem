@@ -40,16 +40,23 @@ namespace SyadeuEditor.Presentation
 
         protected virtual void OnElementGUI(ref AutoRect rect, SerializedProperty child)
         {
-            //if (child.ChildCount() > 1)
+            if (child.ChildCount() <= 1)
             {
                 float height = EditorGUI.GetPropertyHeight(child);
                 EditorGUI.PropertyField(rect.Pop(height), child);
             }
-            //else
-            //{
+            else
+            {
+                float height = EditorGUI.GetPropertyHeight(child, true);
+                EditorGUI.PropertyField(rect.Pop(height), child, true);
+                //var tempProp = child.Copy();
+                //tempProp.Next(true);
+                //do
+                //{
+                //    EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(tempProp)), tempProp);
+                //} while (tempProp.Next(false));
+            }
 
-            //}
-            
             //for (int i = 0; i < array.arraySize; i++)
             //{
             //    SerializedProperty element = array.GetArrayElementAtIndex(i);
@@ -57,7 +64,7 @@ namespace SyadeuEditor.Presentation
             //    height += GetElementHeight(element) + 3;
             //}
 
-            
+
         }
 
         #endregion
