@@ -290,8 +290,9 @@ namespace SyadeuEditor.Presentation
                             Color.black);
 
                     elementAutoRect.Pop(2.5f);
-                    elementAutoRect.Indent(5);
-                    elementAutoRect.Indent();
+                    //elementAutoRect.Indent(5);
+                    EditorGUI.indentLevel++;
+                    //elementAutoRect.Indent();
 
                     OnElementGUI(ref elementAutoRect, child);
                     //if (element.HasCustomPropertyDrawer())
@@ -311,7 +312,9 @@ namespace SyadeuEditor.Presentation
                     //    } while (child.Next(false) && child.depth == depth);
                     //}
 
-                    elementAutoRect.Indent(-5);
+                    EditorGUI.indentLevel--;
+                    //elementAutoRect.Indent();
+                    //elementAutoRect.Indent(-5);
                 }
             }
 

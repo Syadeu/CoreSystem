@@ -213,8 +213,8 @@ namespace SyadeuEditor.Presentation
                     {
                         Rect expandTotalRect = temp.Pop(c_MsgHeight);
 
-                        PropertyDrawerHelper.DrawRect(expandTotalRect, Color.black);
-                        EditorGUI.HelpBox(expandTotalRect, s_InvalidMsg, MessageType.Error);
+                        PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.red);
+                        EditorGUI.HelpBox(EditorGUI.IndentedRect(expandTotalRect), s_InvalidMsg, MessageType.Error);
                     }
                     else
                     {
@@ -226,9 +226,9 @@ namespace SyadeuEditor.Presentation
                             elementHeight = targetSerialObj.PropertyHeight,
                             totalHeight = c_MsgHeight + elementHeight;
                         expandTotalRect.height = totalHeight;
-                        PropertyDrawerHelper.DrawRect(expandTotalRect, Color.black);
+                        PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.white);
 
-                        EditorGUI.HelpBox(msgRect, s_ValidMsg, MessageType.Info);
+                        EditorGUI.HelpBox(EditorGUI.IndentedRect(msgRect), s_ValidMsg, MessageType.Info);
                         EditorGUI.PropertyField(temp.Pop(elementHeight), targetSerialObj);
                     }
                 }
