@@ -27,6 +27,7 @@ namespace Syadeu.Presentation.Actions
 {
     [DisplayName("Canvas/Actor/Set Overlay alpha")]
     [Guid("98965511-E2EB-4343-B0AB-32B6ADBE07F7")]
+    [Serializable]
     internal sealed class SetActorOverlayUIAlphaConstAction : ConstAction<int>
     {
         [JsonProperty(Order = 0, PropertyName = "Alpha")]

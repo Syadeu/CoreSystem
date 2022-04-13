@@ -30,14 +30,14 @@ namespace SyadeuEditor.Presentation
         }
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = PropertyDrawerHelper.GetPropertyHeight(1);
+            float height = PropertyDrawerHelper.GetPropertyHeight(1) + EditorGUIUtility.standardVerticalSpacing;
 
             if (property.isExpanded)
             {
                 height += 17f;
 
                 var argsField = GetArgumentsField(property);
-                height += EditorGUI.GetPropertyHeight(argsField, argsField.isExpanded);
+                height += PropertyDrawerHelper.GetPropertyHeight(argsField.arraySize);
             }
 
             return height;
@@ -63,10 +63,36 @@ namespace SyadeuEditor.Presentation
             }
             else targetName = "None";
 
-            Rect elementRect = rect.Pop();
-            var rects = AutoRect.DivideWithRatio(elementRect, .9f, .1f);
+            Rect 
+                elementRect = rect.Pop(),
+                middleRect, expandRect;
 
-            bool clicked = CoreGUI.BoxButton(rects[0], targetName, ColorPalettes.PastelDreams.Mint, () =>
+            if (!property.IsInArray())
+            {
+                var rects = AutoRect.DivideWithRatio(elementRect, .2f, .75f, .05f);
+                EditorGUI.LabelField(rects[0], label);
+                middleRect = rects[1];
+                expandRect = rects[2];
+            }
+            else
+            {
+                if (property.GetParent().CountInProperty() > 1)
+                {
+                    var rects = AutoRect.DivideWithRatio(elementRect, .2f, .75f, .05f);
+                    //EditorStyles.label.CalcMinMaxWidth()
+                    EditorGUI.LabelField(rects[0], label);
+                    middleRect = rects[1];
+                    expandRect = rects[2];
+                }
+                else
+                {
+                    var rects = AutoRect.DivideWithRatio(elementRect, .95f, .05f);
+                    middleRect = rects[0];
+                    expandRect = rects[1];
+                }
+            }
+
+            bool clicked = CoreGUI.BoxButton(middleRect, targetName, ColorPalettes.PastelDreams.Mint, () =>
             {
             });
 
@@ -82,7 +108,7 @@ namespace SyadeuEditor.Presentation
 
                 string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
                 property.isExpanded = CoreGUI.BoxToggleButton(
-                    rects[1],
+                    expandRect,
                     property.isExpanded,
                     new GUIContent(str),
                     ColorPalettes.PastelDreams.TiffanyBlue,
@@ -99,54 +125,52 @@ namespace SyadeuEditor.Presentation
                     var infomation = ConstActionUtilities.HashMap[currentActionType];
                     if (infomation.ArgumentFields.Length > 0)
                     {
-                        if (currentValue.Arguments.Length != infomation.ArgumentFields.Length)
-                        {
-                            currentValue.SetArguments(new object[infomation.ArgumentFields.Length]);
-                            for (int i = 0; i < currentValue.Arguments.Length; i++)
-                            {
-                                currentValue.Arguments[i] = TypeHelper.GetDefaultValue(infomation.ArgumentFields[i].FieldType);
-                            }
-                        }
-
-                        //using (new EditorUtilities.BoxBlock(Color.black))
-                        //{
-                        //    EditorUtilities.StringRich("Arguments", 13);
-                        CoreGUI.Label(rect.Pop(13), new GUIContent("Arguments"), 13, TextAnchor.MiddleLeft);
-                        rect.Pop(2.5f);
-                        //    EditorGUI.indentLevel++;
-
                         var argsField = GetArgumentsField(property);
-                        EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(argsField, argsField.isExpanded)), argsField);
-                        //for (int i = 0; i < infomation.ArgumentFields.Length; i++)
-                        //{
-                        //    currentValue.Arguments[i] =
-                        //        EditorUtilities.AutoField(
-                        //            infomation.ArgumentFields[i],
-                        //            string.IsNullOrEmpty(infomation.JsonAttributes[i].PropertyName) ? infomation.ArgumentFields[i].Name : infomation.JsonAttributes[i].PropertyName,
-                        //            currentValue.Arguments[i]);
-                        //}
 
-                        //    EditorGUI.indentLevel--;
-                        //}
+                        rect.Indent(10);
+                        Rect startArgRect = rect.Pop(15.5f),
+                            argBoxRect = startArgRect;
+                        argBoxRect.height += PropertyDrawerHelper.GetPropertyHeight(argsField.arraySize);
+                        PropertyDrawerHelper.DrawRect(AutoRect.Indent(argBoxRect, -10), Color.black);
+
+                        CoreGUI.Label(startArgRect, new GUIContent("Arguments"), 13, TextAnchor.MiddleLeft);
+
+                        for (int i = 0; i < argsField.arraySize; i++)
+                        {
+                            var argElement = argsField.GetArrayElementAtIndex(i);
+                            argElement.managedReferenceValue =
+                                CoreGUI.AutoField(
+                                    AutoRect.Indent(rect.Pop(), 10),
+                                    infomation.ArgumentFields[i].FieldType,
+                                    string.IsNullOrEmpty(infomation.JsonAttributes[i].PropertyName) ? infomation.ArgumentFields[i].Name : infomation.JsonAttributes[i].PropertyName,
+                                    currentValue.Arguments[i]);
+                        }
+                        rect.Indent(-10);
                     }
                 }
             }
 
             if (clicked)
             {
+                SerializedProperty cachedProperty = property.Copy();
                 DrawSelectionWindow(fieldInfo.GetCustomAttribute<ConstActionOptionsAttribute>(), (t) =>
                 {
                     if (t == null)
                     {
-                        SerializedPropertyHelper.SetConstActionReference(property, Guid.Empty);
+                        SerializedPropertyHelper.SetConstActionReference(cachedProperty, Guid.Empty);
                     }
                     else
                     {
-                        SerializedPropertyHelper.SetConstActionReference(property, t.GUID);
+                        var infomation = ConstActionUtilities.HashMap[t];
+                        object[] param = new object[infomation.ArgumentFields.Length];
+                        for (int i = 0; i < param.Length; i++)
+                        {
+                            param[i] = TypeHelper.GetDefaultValue(infomation.ArgumentFields[i].FieldType);
+                        }
+
+                        SerializedPropertyHelper.SetConstActionReference(cachedProperty, t.GUID, param);
                     }
-
-                    
-
+                    cachedProperty.isExpanded = false;
                 }, m_TargetType);
             }
         }

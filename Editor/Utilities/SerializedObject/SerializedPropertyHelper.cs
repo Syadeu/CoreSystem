@@ -119,10 +119,6 @@ namespace SyadeuEditor.Utilities
 
         #region ConstActionReference
 
-        //public static ConstActionReference ReadConstActionReference(SerializedProperty property)
-        //{
-
-        //}
         public static void SetConstActionReference(SerializedProperty property, Guid guid, params object[] args)
         {
             ConstActionReferenceSetGuid(property, guid);
@@ -138,6 +134,14 @@ namespace SyadeuEditor.Utilities
             var argsProp = property.FindPropertyRelative("m_Arguments");
 
             argsProp.ClearArray();
+            for (int i = 0; i < args.Length; i++)
+            {
+                argsProp.InsertArrayElementAtIndex(0);
+            }
+            for (int i = 0; i < args.Length; i++)
+            {
+                argsProp.GetArrayElementAtIndex(i).managedReferenceValue = args[i];
+            }
         }
 
         #endregion

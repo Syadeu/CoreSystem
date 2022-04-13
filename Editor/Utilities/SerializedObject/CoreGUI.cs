@@ -384,5 +384,35 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
+
+        public static object AutoField(Rect rect, Type type, string label, object value)
+        {
+            if (type == TypeHelper.TypeOf<int>.Type)
+            {
+                return EditorGUI.IntField(rect, label, Convert.ToInt32(value));
+            }
+            else if (type == TypeHelper.TypeOf<float>.Type)
+            {
+                return EditorGUI.FloatField(rect, label, Convert.ToSingle(value));
+            }
+            else if (type == TypeHelper.TypeOf<bool>.Type)
+            {
+                return EditorGUI.ToggleLeft(rect, label, Convert.ToBoolean(value));
+            }
+            else if (type == TypeHelper.TypeOf<string>.Type)
+            {
+                return EditorGUI.TextField(rect, label, Convert.ToString(value));
+            }
+            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
+            //{
+            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
+            //}
+            else if (type == TypeHelper.TypeOf<Vector3>.Type)
+            {
+                return EditorGUI.Vector3Field(rect, label, (Vector3)(value));
+            }
+
+            throw new NotImplementedException();
+        }
     }
 }
