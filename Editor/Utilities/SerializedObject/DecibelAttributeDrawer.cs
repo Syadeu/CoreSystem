@@ -57,7 +57,7 @@ namespace SyadeuEditor.Utilities
 
         private void FloatField(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            float value = TodB(property.floatValue);
+            float value = BurstMathematics.TodB(property.floatValue);
 
             EditorGUI.BeginChangeCheck();
             value = CoreGUI.Slider(
