@@ -14,13 +14,11 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
-using Syadeu.Collections;
-using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Actor
@@ -29,12 +27,12 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorFaction : DataObjectBase
     {
 #pragma warning disable IDE0044 // Add readonly modifier
-        [JsonProperty(Order = 0, PropertyName = "FactionType")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "FactionType")]
         internal FactionType m_FactionType = FactionType.Player;
 
-        [JsonProperty(Order = 1, PropertyName = "Allies")]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Allies")]
         internal Reference<ActorFaction>[] m_Allies = Array.Empty<Reference<ActorFaction>>();
-        [JsonProperty(Order = 2, PropertyName = "Enemies")]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "Enemies")]
         internal Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 

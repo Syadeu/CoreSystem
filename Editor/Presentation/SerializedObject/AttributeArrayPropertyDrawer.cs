@@ -11,7 +11,7 @@ using UnityEditor.AnimatedValues;
 
 namespace SyadeuEditor.Presentation
 {
-    [CustomPropertyDrawer(typeof(AttributeArray))]
+    //[CustomPropertyDrawer(typeof(AttributeArray))]
     public sealed class AttributeArrayPropertyDrawer : PropertyDrawer<AttributeArray>
     {
         private const float 
@@ -166,7 +166,7 @@ namespace SyadeuEditor.Presentation
                 }
 
                 const float c_BttWidth = 20;
-                Rect[] bttRects = AutoRect.DivideWithFixedWidthRight(elementRect, c_BttWidth, c_BttWidth, c_BttWidth);
+                Rect[] bttRects = AutoRect.DivideWithFixedWidthRight(elementRect, c_BttWidth);
 
                 AutoRect.AlignRect(ref elementRects[1], bttRects[0]);
                 EditorGUI.PropertyField(elementRects[1], element);
@@ -178,55 +178,55 @@ namespace SyadeuEditor.Presentation
                     continue;
                 }
                 
-                using (new EditorGUI.DisabledGroupScope(reference.IsEmpty() || !reference.IsValid()))
+                //using (new EditorGUI.DisabledGroupScope(reference.IsEmpty() || !reference.IsValid()))
                 {
-                    if (element.isExpanded && !reference.IsValid()) element.isExpanded = false;
+                    //if (element.isExpanded && !reference.IsValid()) element.isExpanded = false;
 
-                    element.isExpanded = GUI.Toggle(
-                        bttRects[1],
-                        element.isExpanded,
-                        element.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
-                        EditorStyleUtilities.BttStyle);
+                    //element.isExpanded = GUI.Toggle(
+                    //    bttRects[1],
+                    //    element.isExpanded,
+                    //    element.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
+                    //    EditorStyleUtilities.BttStyle);
                 }
 
-                if (GUI.Button(bttRects[2], "C"))
-                {
-                    AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(reference).Clone();
+                //if (GUI.Button(bttRects[2], "C"))
+                //{
+                //    AttributeBase cloneAtt = (AttributeBase)EntityDataList.Instance.GetObject(reference).Clone();
 
-                    cloneAtt.Hash = Hash.NewHash();
-                    cloneAtt.Name += "_Clone";
-                    EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
+                //    cloneAtt.Hash = Hash.NewHash();
+                //    cloneAtt.Name += "_Clone";
+                //    EntityDataList.Instance.m_Objects.Add(cloneAtt.Hash, cloneAtt);
 
-                    reference = new Reference<AttributeBase>(cloneAtt.Hash);
-                    SerializedPropertyHelper.SetReference(element, reference);
+                //    reference = new Reference<AttributeBase>(cloneAtt.Hash);
+                //    SerializedPropertyHelper.SetReference(element, reference);
 
-                    if (EntityWindow.IsOpened)
-                    {
-                        EntityWindow.Instance.Reload();
-                    }
-                }
+                //    if (EntityWindow.IsOpened)
+                //    {
+                //        EntityWindow.Instance.Reload();
+                //    }
+                //}
 
-                if (element.isExpanded)
-                {
-                    SerializedObject<AttributeBase> elementProperty = SerializedObject<AttributeBase>.GetSharedObject(reference);
+                //if (element.isExpanded)
+                //{
+                //    SerializedObject<AttributeBase> elementProperty = SerializedObject<AttributeBase>.GetSharedObject(reference);
 
-                    var helpboxRect = rect.Pop(c_AttributeWarningHeight);
-                    EditorGUI.HelpBox(EditorGUI.IndentedRect(helpboxRect), m_AttributeWarningText, MessageType.Info);
+                //    var helpboxRect = rect.Pop(c_AttributeWarningHeight);
+                //    EditorGUI.HelpBox(EditorGUI.IndentedRect(helpboxRect), m_AttributeWarningText, MessageType.Info);
 
-                    var elementChildRect = rect.Pop(elementProperty.PropertyHeight);
-                    PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(elementChildRect), Color.black);
+                //    var elementChildRect = rect.Pop(elementProperty.PropertyHeight);
+                //    PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(elementChildRect), Color.black);
 
-                    using (var change = new EditorGUI.ChangeCheckScope())
-                    {
-                        EditorGUI.PropertyField(elementChildRect, elementProperty, true);
+                //    using (var change = new EditorGUI.ChangeCheckScope())
+                //    {
+                //        EditorGUI.PropertyField(elementChildRect, elementProperty, true);
 
-                        if (change.changed)
-                        {
-                            elementProperty.ApplyModifiedProperties();
-                            elementProperty.Update();
-                        }
-                    }
-                }
+                //        if (change.changed)
+                //        {
+                //            elementProperty.ApplyModifiedProperties();
+                //            elementProperty.Update();
+                //        }
+                //    }
+                //}
 
                 EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
             }

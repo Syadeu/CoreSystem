@@ -24,14 +24,19 @@ namespace SyadeuEditor.Presentation
 
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
+            SerializedProperty
+                nameProp = GetNameProperty(property),
+                hashProp = GetHashProperty(property);
+            float height = 30 + EditorGUI.GetPropertyHeight(nameProp) + EditorGUI.GetPropertyHeight(hashProp);
+
             if (m_Height == null)
             {
-                m_Height = new AnimFloat(PropertyDrawerHelper.GetPropertyHeight(3));
+                m_Height = new AnimFloat(height);
             }
 
             if (property.isExpanded)
             {
-                m_Height.target = PropertyDrawerHelper.GetPropertyHeight(3);
+                m_Height.target = height;
             }
             else
             {
@@ -57,8 +62,6 @@ namespace SyadeuEditor.Presentation
                 m_Height.target += c_HelpBoxHeight;
             }
 
-            m_Height.target += 15;
-
             return m_Height.value;
         }
 
@@ -77,7 +80,9 @@ namespace SyadeuEditor.Presentation
                     description.Description, MessageType.Info);
             }
 
-            SerializedProperty nameProp = GetNameProperty(property);
+            SerializedProperty 
+                nameProp = GetNameProperty(property),
+                hashProp = GetHashProperty(property);
 
             string
                 nameStr = EditorUtilities.String(nameProp.stringValue + ": ", 20),
@@ -99,8 +104,8 @@ namespace SyadeuEditor.Presentation
             EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(5)));
             rect.Pop(5);
 
-            EditorGUI.PropertyField(rect.Pop(), nameProp);
-            EditorGUI.PropertyField(rect.Pop(), GetHashProperty(property));
+            EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(nameProp)), nameProp);
+            EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(hashProp)), hashProp);
         }
     }
 }

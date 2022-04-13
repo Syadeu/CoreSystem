@@ -13,7 +13,7 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
     public class ArrayWrapperPropertyDrawer : PropertyDrawer<Array>
     {
-        private Dictionary<SerializedProperty, AnimFloat> m_Height = new Dictionary<SerializedProperty, AnimFloat>();
+        private AnimFloat m_Height = null;
 
         Rect[] elementRects = new Rect[3];
 
@@ -40,7 +40,16 @@ namespace SyadeuEditor.Presentation
 
         protected virtual void OnElementGUI(ref AutoRect rect, SerializedProperty child)
         {
-            float height = EditorGUI.GetPropertyHeight(child);
+            //if (child.ChildCount() > 1)
+            {
+                float height = EditorGUI.GetPropertyHeight(child);
+                EditorGUI.PropertyField(rect.Pop(height), child);
+            }
+            //else
+            //{
+
+            //}
+            
             //for (int i = 0; i < array.arraySize; i++)
             //{
             //    SerializedProperty element = array.GetArrayElementAtIndex(i);
@@ -48,7 +57,7 @@ namespace SyadeuEditor.Presentation
             //    height += GetElementHeight(element) + 3;
             //}
 
-            EditorGUI.PropertyField(rect.Pop(height), child);
+            
         }
 
         #endregion
@@ -91,15 +100,16 @@ namespace SyadeuEditor.Presentation
                 height += 2;
             }
 
-            //if (!m_Height.ContainsKey(property))
-            //{
-            //    m_Height.Add(property, new AnimFloat(height));
-            //    m_Height[property].speed = 5;
-            //}
-            //else m_Height[property].target = height;
-
-            //return m_Height[property].value;
-            return height;
+            if (m_Height == null)
+            {
+                m_Height = new AnimFloat(height);
+                m_Height.speed = 5;
+            }
+            else
+            {
+                m_Height.target = height;
+            }
+            return m_Height.value;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
@@ -265,7 +275,7 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                if (element.isExpanded)
+                if (elementChildCount > 1 && element.isExpanded)
                 {
                     var child = element.Copy();
                     PropertyDrawerHelper.DrawRect(

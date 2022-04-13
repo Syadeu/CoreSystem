@@ -668,12 +668,12 @@ namespace SyadeuEditor.Utilities
 
         public static float GetPropertyHeight(this SerializedProperty t, GUIContent label)
         {
-            PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
-            if (propertyDrawer != null)
-            {
-                return propertyDrawer.GetPropertyHeight(t, label);
-            }
-            return EditorGUI.GetPropertyHeight(t, label, true);
+            //PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
+            //if (propertyDrawer != null)
+            //{
+            //    return propertyDrawer.GetPropertyHeight(t, label);
+            //}
+            return EditorGUI.GetPropertyHeight(t, label);
         }
 
         public static void Draw(this SerializedProperty t, Rect rect, GUIContent label, bool includeChildren)
