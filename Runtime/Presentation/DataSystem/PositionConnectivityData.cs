@@ -17,21 +17,30 @@
 #endif
 
 using Newtonsoft.Json;
-using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Entities;
+using Syadeu.Collections;
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Data
 {
-    public sealed class DialogueData : DataObjectBase
+    [DisplayName("Data: Position Connectivity")]
+    public sealed class PositionConnectivityData : DataObjectBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Dialogues")] 
-        public Reference<DialogueNodeData>[] m_Dialogues = Array.Empty<Reference<DialogueNodeData>>();
+        [Serializable]
+        public sealed class Data
+        {
+            [PositionHandle]
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "Position")]
+            public float3 m_Position;
+        }
 
-        //public DialogueHandler Start(Culture culture, params Entity<ActorEntity>[] entries)
-        //{
-        //    return new DialogueHandler(culture, entries);
-        //}
+        [Space]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Circuler")]
+        private bool m_Circuler = true;
+
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Connectivity")]
+        private Connectivity<Data> m_Connectivity = new Connectivity<Data>();
     }
 }

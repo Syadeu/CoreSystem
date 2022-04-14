@@ -17,21 +17,19 @@
 #endif
 
 using Newtonsoft.Json;
-using Syadeu.Presentation.Actor;
-using Syadeu.Presentation.Entities;
 using System;
-using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine;
 
-namespace Syadeu.Presentation.Data
+namespace Syadeu.Collections
 {
-    public sealed class DialogueData : DataObjectBase
+    [Serializable]
+    public sealed class Connectivity<TUserData>
     {
-        [JsonProperty(Order = 0, PropertyName = "Dialogues")] 
-        public Reference<DialogueNodeData>[] m_Dialogues = Array.Empty<Reference<DialogueNodeData>>();
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Nodes")]
+        private ArrayWrapper<Connectivity<TUserData>> m_Nodes = ArrayWrapper<Connectivity<TUserData>>.Empty;
 
-        //public DialogueHandler Start(Culture culture, params Entity<ActorEntity>[] entries)
-        //{
-        //    return new DialogueHandler(culture, entries);
-        //}
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "UserData")]
+        private TUserData m_UserData;
     }
 }

@@ -15,7 +15,7 @@ namespace SyadeuEditor.Presentation
     public sealed class PrefabReferencePropertyDrawer : PropertyDrawer<IPrefabReference>
     {
         private bool m_Changed = false;
-        private ReferenceAsset m_ChangedTarget;
+        //private ReferenceAsset m_ChangedTarget;
 
         private static SerializedProperty GetIndexProperty(SerializedProperty property)
         {
@@ -30,6 +30,10 @@ namespace SyadeuEditor.Presentation
             return property.FindPropertyRelative(c_Name);
         }
 
+        public override bool CanCacheInspectorGUI(SerializedProperty property)
+        {
+            return false;
+        }
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             return base.PropertyHeight(property, label) + 10;
@@ -39,14 +43,12 @@ namespace SyadeuEditor.Presentation
         {
             if (m_Changed)
             {
-                SerializedPropertyHelper.SetPrefabReference(
-                    GetIndexProperty(property), GetSubAssetNameProperty(property),
-                    m_ChangedTarget.index, m_ChangedTarget.subAssetName
-                    );
+                //SerializedPropertyHelper.SetPrefabReference(
+                //    GetIndexProperty(property), GetSubAssetNameProperty(property),
+                //    m_ChangedTarget.index, m_ChangedTarget.subAssetName
+                //    );
 
                 GUI.changed = true;
-                //property.serializedObject.UpdateIfRequiredOrScript();
-
                 m_Changed = false;
             }
         }
@@ -108,7 +110,7 @@ namespace SyadeuEditor.Presentation
 
             #endregion
 
-            bool clicked = CoreGUI.BoxButton(buttonRect, displayName, ColorPalettes.PastelDreams.Mint, () =>
+            bool clicked = CoreGUI.BoxButton(EditorGUI.IndentedRect(buttonRect), displayName, ColorPalettes.PastelDreams.Mint, () =>
             {
                 GenericMenu menu = new GenericMenu();
 
@@ -164,6 +166,16 @@ namespace SyadeuEditor.Presentation
                 popupRect.position = Event.current.mousePosition;
 
                 Type type = fieldInfo.FieldType;
+#pragma warning disable SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
+                if (type.IsArray)
+                {
+                    type = type.GetElementType();
+                }
+                //else if (TypeHelper.InheritsFrom(type, typeof(IList<>)))
+                //{
+                //    type = type.GetGenericArguments()[0];
+                //}
+#pragma warning restore SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
                 List<ReferenceAsset> list;
 
                 if (type.GenericTypeArguments.Length > 0)
@@ -227,14 +239,14 @@ namespace SyadeuEditor.Presentation
                 var popup = SelectorPopup<ReferenceAsset, ReferenceAsset>.GetWindow(
                     list, (prefabIdx) =>
                     {
-                        //SerializedPropertyHelper.SetPrefabReference(
-                        //    idxProperty, subAssetNameProperty,
-                        //    prefabIdx.index, prefabIdx.subAssetName
-                        //    );
+                        SerializedPropertyHelper.SetPrefabReference(
+                            idxProperty, subAssetNameProperty,
+                            prefabIdx.index, prefabIdx.subAssetName
+                            );
 
-                        //idxProperty.serializedObject.ApplyModifiedProperties();
+                        idxProperty.serializedObject.ApplyModifiedProperties();
 
-                        m_ChangedTarget = prefabIdx;
+                        //m_ChangedTarget = prefabIdx;
                         m_Changed = true;
                     },
                     (objSet) =>
