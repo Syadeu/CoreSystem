@@ -12,27 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Newtonsoft.Json;
-using Syadeu.Collections;
-using Syadeu.Presentation.Attributes;
-using Syadeu.Presentation.Entities;
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [System.ComponentModel.DisplayName("TriggerAction: Set Animator Integer")]
-    public sealed class AnimatorSetIntegerAction : AnimatorParameterActionBase
+    [DisplayName("System/Exit Application")]
+    [Guid("4A8844A8-C863-4E12-B617-0081EF50F980")]
+    internal sealed class ExitApplicationConstAction : ConstAction<int>
     {
-        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Value")] 
-        private int m_Value;
-
-        protected override void OnExecute(Entity<IObject> entity)
+        protected override int Execute()
         {
-            if (!IsExecutable(entity, out AnimatorAttribute animator))
-            {
-                return;
-            }
-
-            animator.SetInteger(KeyHash, m_Value);
+            Application.Quit();
+            return 0;
         }
     }
 }

@@ -22,7 +22,8 @@ namespace Syadeu.Presentation.Actions
     [System.ComponentModel.DisplayName("TriggerAction: Set Animator Boolen")]
     public sealed class AnimatorSetBoolAction : AnimatorParameterActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Value")] private bool m_Value;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Value")] 
+        private bool m_Value;
 
         protected override void OnExecute(Entity<IObject> entity)
         {

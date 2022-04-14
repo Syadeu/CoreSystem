@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Actions
     public sealed class RaycastAllAtMousePosition : InstanceAction
     {
         [Header("TriggerActions")]
-        [JsonProperty(Order = 0, PropertyName = "OnHit")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "OnHit")]
         private Reference<TriggerAction>[] m_OnHit = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] private RenderSystem m_RenderSystem;

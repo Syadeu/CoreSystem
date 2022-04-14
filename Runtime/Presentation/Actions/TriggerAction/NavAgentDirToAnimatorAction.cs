@@ -27,12 +27,12 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Match Animator to NavAgent")]
     public sealed class NavAgentDirToAnimatorAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "HorizontalKey")] private string m_HorizontalKey = string.Empty;
-        [JsonProperty(Order = 1, PropertyName = "VerticalKey")] private string m_VerticalKey = string.Empty;
-        [JsonProperty(Order = 2, PropertyName = "SpeedKey")] private string m_SpeedKey = string.Empty;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "HorizontalKey")] private string m_HorizontalKey = string.Empty;
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "VerticalKey")] private string m_VerticalKey = string.Empty;
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "SpeedKey")] private string m_SpeedKey = string.Empty;
 
         [Space]
-        [JsonProperty(Order = 3, PropertyName = "AnimationSpeed")] private float m_AnimationSpeed = 2;
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "AnimationSpeed")] private float m_AnimationSpeed = 2;
 
         [JsonIgnore] private int m_Horizontal;
         [JsonIgnore] private int m_Vertical;

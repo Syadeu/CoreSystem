@@ -44,33 +44,33 @@ namespace Syadeu.Presentation.Actions
         )]
     public sealed class PlayPlayableDirectorAction : TriggerAction, IEventSequence
     {
-        [JsonProperty(Order = 0)] private Reference<TimelineData> m_Data;
-        [JsonProperty(Order = 1, PropertyName = "UpdateMode")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0)] private Reference<TimelineData> m_Data;
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "UpdateMode")]
         private DirectorUpdateMode m_UpdateMode = DirectorUpdateMode.GameTime;
-        [JsonProperty(Order = 2, PropertyName = "StartDelay")] private float m_StartDelay = 0;
-        [JsonProperty(Order = 3, PropertyName = "EndDelay")] private float m_EndDelay = 0;
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "StartDelay")] private float m_StartDelay = 0;
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "EndDelay")] private float m_EndDelay = 0;
 
         [Space, Header("PredicateActions: Conditional")]
         [Tooltip("False를 반환하면 이 Timeline 을 실행하지 않습니다.")]
-        [JsonProperty(Order = 4, PropertyName = "Conditional")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 4, PropertyName = "Conditional")]
         private Reference<TriggerPredicateAction>[] m_Conditional = Array.Empty<Reference<TriggerPredicateAction>>();
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 5, PropertyName = "OnStart")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 5, PropertyName = "OnStart")]
         private Reference<TriggerAction>[] m_OnStart = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnEnd")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 6, PropertyName = "OnEnd")]
         private Reference<TriggerAction>[] m_OnEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space, Header("Actions")]
-        [JsonProperty(Order = 7, PropertyName = "OnStartAction")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 7, PropertyName = "OnStartAction")]
         private Reference<InstanceAction>[] m_OnStartAction = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 8, PropertyName = "OnEndActions")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 8, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndAction = Array.Empty<Reference<InstanceAction>>();
 
         [Space, Header("Sequence")]
-        [JsonProperty(Order = 9, PropertyName = "AfterDelay")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 9, PropertyName = "AfterDelay")]
         private float m_AfterDelay = 0;
-        [JsonProperty(Order = 10, PropertyName = "DestroyTimelineAfterFinished")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 10, PropertyName = "DestroyTimelineAfterFinished")]
         private bool m_DestroyTimelineAfterFinished = true;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;

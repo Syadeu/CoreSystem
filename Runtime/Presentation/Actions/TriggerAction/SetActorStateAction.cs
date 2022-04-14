@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Set Actor State")]
     public sealed class SetActorStateAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "State")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "State")]
         private ActorStateAttribute.StateInfo m_State = ActorStateAttribute.StateInfo.Idle;
 
         protected override void OnExecute(Entity<IObject> entity)

@@ -98,7 +98,7 @@ namespace SyadeuEditor.Presentation
             }
 
             SerializedProperty guidField = GetGuidField(property);
-            bool clicked = CoreGUI.BoxButton(middleRect, targetName, ColorPalettes.PastelDreams.Mint, () =>
+            bool clicked = CoreGUI.BoxButton(EditorGUI.IndentedRect(middleRect), targetName, ColorPalettes.PastelDreams.Mint, () =>
             {
             });
 
@@ -137,7 +137,7 @@ namespace SyadeuEditor.Presentation
                         Rect startArgRect = rect.Pop(15.5f),
                             argBoxRect = startArgRect;
                         argBoxRect.height += PropertyDrawerHelper.GetPropertyHeight(argsField.arraySize);
-                        PropertyDrawerHelper.DrawRect(AutoRect.Indent(argBoxRect, -10), Color.black);
+                        PropertyDrawerHelper.DrawRect(AutoRect.Indent(EditorGUI.IndentedRect(argBoxRect), -10), Color.black);
 
                         CoreGUI.Label(startArgRect, new GUIContent("Arguments"), 13, TextAnchor.MiddleLeft);
 

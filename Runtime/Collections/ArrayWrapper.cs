@@ -26,7 +26,7 @@ using System.Linq;
 namespace Syadeu.Collections
 {
     [Serializable, JsonArray]
-    public class ArrayWrapper<T> : ICloneable, IList<T>
+    public class ArrayWrapper<T> : ICloneable, IList<T>, IReadOnlyList<T>
     {
         public static ArrayWrapper<T> Empty => Array.Empty<T>();
 
@@ -42,7 +42,7 @@ namespace Syadeu.Collections
 
         public int Length => m_Array.Length;
         public bool IsFixedSize => false;
-        public bool IsReadOnly => false;
+        bool ICollection<T>.IsReadOnly => false;
 
         public int Count => Length;
         public bool IsSynchronized => true;

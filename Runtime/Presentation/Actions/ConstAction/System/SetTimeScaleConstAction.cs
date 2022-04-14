@@ -12,19 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
+
 using Newtonsoft.Json;
-using Syadeu.Collections;
-using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Events;
 using System.Collections;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("InstanceAction: Set Time Scale")]
-    public sealed class SetTimeScaleAction : InstanceAction, IEventSequence
+    [DisplayName("System/Set Time Scale")]
+    [Guid("B77B77A7-5B87-4672-B648-9F32CFCBC477")]
+    internal sealed class SetTimeScaleConstAction : ConstAction<int>
     {
         [JsonProperty(Order = 0, PropertyName = "TargetScale")]
         private float m_TargetScale = 1;
@@ -47,31 +51,28 @@ namespace Syadeu.Presentation.Actions
 
         [JsonIgnore] private bool m_KeepWait = false;
 
-        [JsonIgnore] public bool KeepWait => m_KeepWait;
-        [JsonIgnore] public float AfterDelay => m_AfterDelay;
-
-        protected override void OnExecute()
+        protected override int Execute()
         {
             if (m_UpdateType == Update.Instant)
             {
                 Time.timeScale = m_TargetScale;
-                return;
+                return 0;
             }
 
             m_KeepWait = true;
             UpdateJob job = new UpdateJob()
             {
-                m_Caller = Idx.GetEntity<SetTimeScaleAction>(),
                 m_TargetTimeScale = m_TargetScale,
                 m_TargetUpdateTime = m_TargetUpdateTime
             };
 
             PresentationSystem<DefaultPresentationGroup, CoroutineSystem>.System.StartCoroutine(job);
+
+            return 0;
         }
 
         private struct UpdateJob : ICoroutineJob
         {
-            public Entity<SetTimeScaleAction> m_Caller;
             public float m_TargetUpdateTime, m_TargetTimeScale;
 
             public UpdateLoop Loop => UpdateLoop.Default;
@@ -79,7 +80,6 @@ namespace Syadeu.Presentation.Actions
             public void Dispose()
             {
                 Time.timeScale = m_TargetTimeScale;
-                m_Caller.Target.m_KeepWait = false;
             }
             public IEnumerator Execute()
             {

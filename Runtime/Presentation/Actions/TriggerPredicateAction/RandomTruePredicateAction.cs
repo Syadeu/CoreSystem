@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.Actions
     [Description("지정한 확률로 True 를 반환합니다.")]
     public sealed class RandomTruePredicateAction : TriggerPredicateAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Persentage")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Persentage")]
         [Tooltip("확률은 0 ~ 100 까지입니다.")]
         private float m_Persentage = 50;
 

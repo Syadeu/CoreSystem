@@ -28,9 +28,9 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Set Actor Weapon")]
     public sealed class SetActorWeaponAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Holster")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Holster")]
         private bool m_Holster;
-        [JsonProperty(Order = 1, PropertyName = "Aiming")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "Aiming")]
         private bool m_Aiming;
 
         protected override void OnExecute(Entity<IObject> entity)

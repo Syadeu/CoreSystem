@@ -22,7 +22,8 @@ namespace Syadeu.Presentation.Actions
     [System.ComponentModel.DisplayName("TriggerAction: Set Animator Float")]
     public sealed class AnimatorSetFloatAction : AnimatorParameterActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Value")] private float m_Value;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Value")] 
+        private float m_Value;
 
         protected override void OnExecute(Entity<IObject> entity)
         {

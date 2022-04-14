@@ -22,7 +22,8 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class AnimatorParameterActionBase : TriggerAction
     {
-        [JsonProperty(Order = -1, PropertyName = "TriggerKey")] protected string m_TriggerKey = string.Empty;
+        [UnityEngine.SerializeField, JsonProperty(Order = -1, PropertyName = "TriggerKey")] 
+        protected string m_TriggerKey = string.Empty;
 
         [JsonIgnore] private int m_KeyHash;
         [JsonIgnore] protected int KeyHash => m_KeyHash;

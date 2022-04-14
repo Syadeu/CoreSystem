@@ -33,19 +33,19 @@ namespace Syadeu.Presentation.Actions
     {
         [JsonProperty(Order = 0, PropertyName = "Data")]
         private Reference<EntityAnimationClipEventData> m_Data;
-        [JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
-        [JsonProperty(Order = 2, PropertyName = "EndDelay")] private float m_EndDelay = 0;
+        [UnityEngine.SerializeField,JsonProperty(Order = 1, PropertyName = "StartDelay")] private float m_StartDelay = 0;
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "EndDelay")] private float m_EndDelay = 0;
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 3, PropertyName = "OnStart")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "OnStart")]
         private Reference<TriggerAction>[] m_OnStart = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 4, PropertyName = "OnEnd")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 4, PropertyName = "OnEnd")]
         private Reference<TriggerAction>[] m_OnEnd = Array.Empty<Reference<TriggerAction>>();
 
         [Space, Header("Actions")]
-        [JsonProperty(Order = 5, PropertyName = "OnStartActions")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 5, PropertyName = "OnStartActions")]
         private Reference<InstanceAction>[] m_OnStartActions = Array.Empty<Reference<InstanceAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnEndActions")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 6, PropertyName = "OnEndActions")]
         private Reference<InstanceAction>[] m_OnEndActions = Array.Empty<Reference<InstanceAction>>();
 
         [JsonIgnore] private Entity<IObject> Executer { get; set; } = Entity<IObject>.Empty;

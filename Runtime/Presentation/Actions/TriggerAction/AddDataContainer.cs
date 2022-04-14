@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.Actions
         "Type 은 Entity<IObject> 로 등록됩니다.")]
     public sealed class AddDataContainer : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Key")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Key")]
         private string m_Key = string.Empty;
 
         [JsonIgnore] private DataContainerSystem m_DataContainer;

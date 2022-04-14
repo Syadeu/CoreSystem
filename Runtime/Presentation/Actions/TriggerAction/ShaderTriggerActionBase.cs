@@ -17,6 +17,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Render;
 using System;
 
@@ -24,8 +25,8 @@ namespace Syadeu.Presentation.Actions
 {
     public abstract class ShaderTriggerActionBase : TriggerAction
     {
-        [JsonProperty(Order = -10, PropertyName = "ShaderData")]
-        private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = -10, PropertyName = "ShaderData")]
+        private ArrayWrapper<Reference<ShaderConstantData>> m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
         
 
         [JsonIgnore]

@@ -30,18 +30,19 @@ namespace Syadeu.Presentation.Actions
     [Serializable]
     public sealed class LogicTriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
-
-        [JsonProperty(Order = 1, PropertyName = "If")]
-        private Reference<TriggerPredicateAction>[] m_If = Array.Empty<Reference<TriggerPredicateAction>>();
-        [JsonProperty(Order = 2, PropertyName = "If Target")]
-        private Reference<TriggerPredicateAction>[] m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Name")] private string m_Name = string.Empty;
 
         [Space]
-        [JsonProperty(Order = 3, PropertyName = "Do")]
-        private Reference<TriggerAction>[] m_Do = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 4, PropertyName = "Do Target")]
-        private Reference<TriggerAction>[] m_DoTarget = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "If")]
+        private ArrayWrapper<Reference<TriggerPredicateAction>> m_If = Array.Empty<Reference<TriggerPredicateAction>>();
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "If Target")]
+        private ArrayWrapper<Reference<TriggerPredicateAction>> m_IfTarget = Array.Empty<Reference<TriggerPredicateAction>>();
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "Do")]
+        private ArrayWrapper<Reference<TriggerAction>> m_Do = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "Do Target")]
+        private ArrayWrapper<Reference<TriggerAction>> m_DoTarget = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] public string Name => m_Name;
 

@@ -29,7 +29,7 @@ namespace SyadeuEditor.Presentation
             while (temp.Next(false))
             {
                 //temp.Draw(ref rect, new GUIContent(temp.displayName), true);
-                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp);
+                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(temp)), temp, temp.isExpanded);
             }
         }
     }

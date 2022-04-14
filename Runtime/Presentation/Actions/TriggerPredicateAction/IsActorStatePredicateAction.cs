@@ -25,15 +25,15 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("PredicateAction: Is Actor State ?")]
     public sealed class IsActorStatePredicateAction : TriggerPredicateAction
     {
-        [JsonProperty(Order = 0, PropertyName = "ExpectedValue")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "ExpectedValue")]
         private ActorStateAttribute.StateInfo m_ExpectedValue = ActorStateAttribute.StateInfo.None;
 
         [Header("TriggerActions")]
-        [JsonProperty(Order = 1, PropertyName = "OnMatch")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "OnMatch")]
         private Reference<TriggerAction>[] m_OnMatch = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Actions")]
-        [JsonProperty(Order = 2, PropertyName = "OnMatchAction")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "OnMatchAction")]
         private Reference<InstanceAction>[] m_OnMatchAction = Array.Empty<Reference<InstanceAction>>();
 
         protected override bool OnExecute(Entity<IObject> entity)
