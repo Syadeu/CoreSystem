@@ -6,6 +6,7 @@ using Syadeu.Mono.Console;
 using UnityEngine;
 using UnityEditor;
 using Syadeu.Mono;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
@@ -48,7 +49,7 @@ namespace SyadeuEditor
                     EditorUtility.SetDirty(CoreSystemSettings.Instance);
                 }
             }
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUI.BeginChangeCheck();
             Arguments();
@@ -88,7 +89,7 @@ namespace SyadeuEditor
             ShowTypeHelpBox(m_Def.m_Settings);
             m_Def.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Def.m_Settings);
 
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
             //EditorGUILayout.HelpBox("ÀÌ ¸í·É¾î·Î ½ÇÇàÇÒ ¼ö ÀÖ´Â º¯¼öµéÀÔ´Ï´Ù", MessageType.Info);
 

@@ -67,16 +67,13 @@ namespace SyadeuEditor.Presentation
                         GUILayout.Label(Name, GUILayout.Width(Screen.width * .25f));
                     }
 
-                    clicked = EditorUtilities.BoxButton(targetName, ColorPalettes.PastelDreams.Mint, () =>
-                    {
-                    });
+                    clicked = CoreGUI.BoxButton(targetName, ColorPalettes.PastelDreams.Mint);
 
                     using (new EditorGUI.DisabledGroupScope(currentActionType == null ||
                             !ConstActionUtilities.HashMap.TryGetValue(currentActionType, out var info) ||
                             (info.ArgumentFields.Length < 1 && description == null)))
                     {
-                        m_Open = EditorUtilities.BoxToggleButton(
-                            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
+                        m_Open = CoreGUI.BoxToggleButton(
                             m_Open,
                             ColorPalettes.PastelDreams.TiffanyBlue,
                             ColorPalettes.PastelDreams.HotPink,

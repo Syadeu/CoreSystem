@@ -101,7 +101,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(5)));
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(5)));
             rect.Pop(5);
 
             EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(nameProp)), nameProp);

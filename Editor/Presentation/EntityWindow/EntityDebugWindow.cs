@@ -130,7 +130,7 @@ namespace SyadeuEditor.Presentation
 
                 EditorUtilities.StringRich(m_SelectedName, 20);
                 EditorGUILayout.Space(3);
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 DrawDefaultInfomation(obj);
 
@@ -139,7 +139,7 @@ namespace SyadeuEditor.Presentation
                     DrawEntity(entityDataBase);
                 }
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 for (int i = 0; i < m_SelectedMembers.Length; i++)
                 {
@@ -194,7 +194,7 @@ namespace SyadeuEditor.Presentation
                     entityBase.Size
                         = EditorGUILayout.Vector3Field("Size", entityBase.Size);
                 }
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     EditorUtilities.StringRich("Transform", 15);

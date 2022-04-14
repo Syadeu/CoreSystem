@@ -322,7 +322,7 @@ namespace SyadeuEditor.Presentation.Map
                     }
                 }
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 using (new EditorUtilities.BoxBlock(Color.gray))
                 {

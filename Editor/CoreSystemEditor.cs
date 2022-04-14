@@ -2,6 +2,7 @@
 using Syadeu.Entities;
 using Syadeu.Mono;
 using SyadeuEditor.Tree;
+using SyadeuEditor.Utilities;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
 #endif
@@ -192,7 +193,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("CoreSystem");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUILayout.Space();
             //EditorGUILayout.PropertyField(m_DisplayLogChannel);
@@ -227,7 +228,7 @@ namespace SyadeuEditor
             m_ManagerView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorUtilities.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;

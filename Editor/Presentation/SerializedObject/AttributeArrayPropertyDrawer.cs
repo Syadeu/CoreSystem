@@ -142,7 +142,7 @@ namespace SyadeuEditor.Presentation
             //Rect[] elementRects = new Rect[3];
             float[] elementRatio = new float[3] { 0.15f, 0.75f, 0.1f };
 
-            EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
 
             for (int i = 0; i < property.arraySize; i++)
             {
@@ -228,7 +228,7 @@ namespace SyadeuEditor.Presentation
                 //    }
                 //}
 
-                EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+                CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
             }
         }
     }

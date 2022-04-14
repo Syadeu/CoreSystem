@@ -130,8 +130,7 @@ namespace SyadeuEditor.Presentation
                     using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid() || currentValue.IsNone()))
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        m_Open = EditorUtilities.BoxToggleButton(
-                            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString, 
+                        m_Open = CoreGUI.BoxToggleButton(
                             m_Open,
                             ColorPalettes.PastelDreams.TiffanyBlue,
                             ColorPalettes.PastelDreams.HotPink,
@@ -212,7 +211,7 @@ namespace SyadeuEditor.Presentation
                 {
                     GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
                 }
-                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                clicked = CoreGUI.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
                 {
                     GenericMenu menu = new GenericMenu();
 

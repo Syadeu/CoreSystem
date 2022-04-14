@@ -142,7 +142,7 @@ namespace SyadeuEditor.Presentation
         {
             EditorUtilities.StringRich(Name + EditorUtilities.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);
-            EditorUtilities.Line();
+            CoreGUI.Line();
         }
         protected void DrawField(ObjectDrawerBase drawer)
         {

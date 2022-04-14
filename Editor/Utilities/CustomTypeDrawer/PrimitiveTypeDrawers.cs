@@ -459,7 +459,7 @@ namespace SyadeuEditor.Utilities
                                     }
                                 }
 
-                                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
+                                if (i + 1 < m_ElementDrawers.Count) CoreGUI.Line();
                             }
                             EditorGUI.indentLevel--;
                         }
@@ -601,7 +601,7 @@ namespace SyadeuEditor.Utilities
                     }
                 }
 
-                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
+                if (i + 1 < m_ElementDrawers.Count) CoreGUI.Line();
             }
             EditorGUI.indentLevel--;
         }

@@ -80,7 +80,7 @@ namespace SyadeuEditor.Presentation.Map
                 EditorUtilities.StringHeader("Map System", 20, true);
             }
             GUILayout.Space(4);
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             //EditorGUI.BeginChangeCheck();
             //m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
@@ -128,7 +128,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             #endregion
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             m_MapDataLoader.OnGUI();
 

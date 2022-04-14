@@ -271,7 +271,7 @@ namespace SyadeuEditor.Presentation
                 headerString,
                 EditorStyleUtilities.HeaderStyle);
             HeaderLinePos.width = Screen.width;
-            EditorUtilities.Line(HeaderLinePos);
+            CoreGUI.Line(HeaderLinePos);
 
             if (Application.isPlaying && !(CurrentWindow is EntityDebugWindow))
             {

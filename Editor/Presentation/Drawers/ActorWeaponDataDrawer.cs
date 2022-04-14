@@ -84,7 +84,7 @@ namespace SyadeuEditor.Presentation
 
             for (int i = 0; i < fXBounds.Length; i++)
             {
-                using (new EditorUtilities.BoxBlock(Color.white))
+                using (new CoreGUI.BoxBlock(Color.white))
                 {
                     using (new EditorGUI.DisabledGroupScope(m_PreviewScene == null || !m_PreviewScene.IsOpened))
                     {

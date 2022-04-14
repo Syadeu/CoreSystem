@@ -37,7 +37,7 @@ namespace SyadeuEditor.Utilities
             }
             else if (attribute is HeaderAttribute header)
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 EditorUtilities.StringRich(header.header, 15);
             }
         }

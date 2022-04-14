@@ -4,6 +4,7 @@ using Syadeu.Entities;
 
 using UnityEngine;
 using UnityEditor;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
@@ -226,7 +227,7 @@ namespace SyadeuEditor
                 }
 
                 //UI.EditorGUIUtility.DrawSeparator(1, separatorColor);
-                EditorUtilities.SectorLine();
+                CoreGUI.SectorLine();
                 GUILayout.Space(2);
             }
 

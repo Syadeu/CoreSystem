@@ -150,7 +150,7 @@ namespace SyadeuEditor.Presentation
                         EditorGUI.indentLevel--;
                     }
 
-                    if (i + 1 < m_InvalidIndices.Count) EditorUtilities.Line();
+                    if (i + 1 < m_InvalidIndices.Count) CoreGUI.Line();
                 }
                 EditorGUI.indentLevel--;
             }
@@ -158,12 +158,12 @@ namespace SyadeuEditor.Presentation
         protected override void DrawGUI()
         {
             DrawHeader();
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             if (m_InvalidIndices.Count > 0)
             {
                 DrawInvalids();
-                EditorUtilities.Line();
+                CoreGUI.Line();
             }
 
             for (int i = 0; i < Drawers.Length; i++)
@@ -227,7 +227,7 @@ namespace SyadeuEditor.Presentation
         protected override void DrawGUI()
         {
             DrawHeader();
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -251,7 +251,7 @@ namespace SyadeuEditor.Presentation
             
             if (m_Atlas != null)
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 //Rect last = GUILayoutUtility.GetLastRect();
                 //EditorGUI.DrawPreviewTexture(
                 //    GUILayoutUtility.GetRect(last.width, 200),
@@ -260,7 +260,7 @@ namespace SyadeuEditor.Presentation
                 //    );
                 GUILayout.Box(new GUIContent(m_Atlas.texture));
                 EditorGUILayout.LabelField("draw");
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 //EditorUtilities.ObjectPreview(null, m_Atlas.Texture);
             }
             else EditorGUILayout.LabelField("not draw");

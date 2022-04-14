@@ -92,12 +92,12 @@ namespace SyadeuEditor
             GUILayout.Space(20);
             EditorUtilities.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
-            EditorUtilities.Line();
+            CoreGUI.Line();
             GUILayout.Space(10);
 
             DrawToolbar();
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             using (new EditorUtilities.BoxBlock(Color.black))
             {
@@ -328,7 +328,7 @@ namespace SyadeuEditor
                 DrawConstraint(ref m_DefinedCollectionsChecks, UNITY_COLLECTIONS_CHECKS);
 
                 EditorGUILayout.Space();
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("CoreSystem Constraints", 13);
 
@@ -336,7 +336,7 @@ namespace SyadeuEditor
                 DrawConstraint(ref m_DefinedTurnBasedSystem, CORESYSTEM_TURNBASESYSTEM);
 
                 EditorGUILayout.Space();
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("Third Party Constraints", 13);
                 
@@ -433,7 +433,7 @@ namespace SyadeuEditor
                 }
                 else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("Layers", 13);
                 if (m_MissingLayers.Count > 0)
@@ -532,7 +532,7 @@ namespace SyadeuEditor
                     m_CoreSystemSettings.m_EnableLua =
                         EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
                 }
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorGUI.indentLevel--;
             }
@@ -563,7 +563,7 @@ namespace SyadeuEditor
                         }
                     }
 
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
 
                     if (m_UnityAudioDisableAudio.boolValue)
                     {
@@ -598,7 +598,7 @@ namespace SyadeuEditor
                     m_UnityAudioDopplerFactor.floatValue
                         = EditorGUILayout.Slider("Doppler Factor", m_UnityAudioDopplerFactor.floatValue, 0, 1);
 
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
 
                     m_UnityAudioRealVoiceCount.intValue
                         = EditorGUILayout.IntField("Max Real Voices", m_UnityAudioRealVoiceCount.intValue);
@@ -720,7 +720,7 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
                     using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
@@ -759,7 +759,7 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
                     using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
@@ -824,7 +824,7 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
                     using (new EditorUtilities.BoxBlock(Color.black))
                     {
                         m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);

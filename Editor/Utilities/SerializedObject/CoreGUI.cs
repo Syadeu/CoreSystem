@@ -68,6 +68,7 @@ namespace SyadeuEditor.Utilities
         #endregion
 
         #region Line
+
         public static void SectorLine(int lines = 1)
         {
             Color old = GUI.backgroundColor;
@@ -119,6 +120,7 @@ namespace SyadeuEditor.Utilities
 
             GUI.backgroundColor = old;
         }
+
         #endregion
 
         #region Label
@@ -207,8 +209,16 @@ namespace SyadeuEditor.Utilities
             return GUI.Button(rect, temp, GetLabelStyle(textAnchor));
         }
 
-        public static bool BoxButton(Rect rect, string content, Color color, Action onContextClick)
-            => BoxButton(rect, new GUIContent(content), color, onContextClick);
+        public static bool BoxButton(string content, Color color, params GUILayoutOption[] options) => BoxButton(content, color, null, options);
+        public static bool BoxButton(string content, Color color, Action onContextClick, params GUILayoutOption[] options)
+        {
+            GUIContent label = new GUIContent(content);
+            Rect rect = GUILayoutUtility.GetRect(label, BoxButtonStyle, options);
+
+            return BoxButton(rect, label, color, onContextClick);
+        }
+        public static bool BoxButton(Rect rect, string content, Color color) => BoxButton(rect, new GUIContent(content), color, null);
+        public static bool BoxButton(Rect rect, string content, Color color, Action onContextClick) => BoxButton(rect, new GUIContent(content), color, onContextClick);
         public static bool BoxButton(Rect rect, GUIContent content, Color color, Action onContextClick)
         {
             int enableCullID = GUIUtility.GetControlID(FocusType.Passive, rect);
@@ -221,7 +231,7 @@ namespace SyadeuEditor.Utilities
 
                     Color origin = GUI.color;
                     GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .7f : 0);
-                    EditorStyles.toolbarButton.Draw(rect,
+                    BoxButtonStyle.Draw(rect,
                         isHover, isActive: true, on: true, false);
                     GUI.color = origin;
 
@@ -271,6 +281,13 @@ namespace SyadeuEditor.Utilities
 
         #region Toggle
 
+        static class ToggleHelper
+        {
+            public static GUIContent
+                FoldoutOpenedContent = new GUIContent(EditorStyleUtilities.FoldoutOpendString),
+                FoldoutClosedContent = new GUIContent(EditorStyleUtilities.FoldoutClosedString);
+        }
+        
         public static bool LabelToggle(Rect rect, bool value, string text)
         {
             GUIContent temp = new GUIContent(text);
@@ -284,6 +301,33 @@ namespace SyadeuEditor.Utilities
 
             return GUI.Toggle(rect, value, temp, GetLabelStyle(textAnchor));
         }
+
+        public static bool BoxToggleButton(
+            bool value, string content, Color enableColor, Color disableColor, params GUILayoutOption[] options)
+        {
+            GUIContent label = new GUIContent(content);
+            Rect rect = GUILayoutUtility.GetRect(label, BoxButtonStyle, options);
+
+            return BoxToggleButton(rect, value, label, enableColor, disableColor);
+        }
+        public static bool BoxToggleButton(
+            bool value, Color enableColor, Color disableColor, params GUILayoutOption[] options)
+        {
+            Rect rect = GUILayoutUtility.GetRect(
+                value ? ToggleHelper.FoldoutOpenedContent : ToggleHelper.FoldoutClosedContent, 
+                BoxButtonStyle, options);
+
+            return BoxToggleButton(rect, value, enableColor, disableColor);
+        }
+        public static bool BoxToggleButton(
+            bool value, GUIContent content, Color enableColor, Color disableColor, params GUILayoutOption[] options)
+        {
+            Rect rect = GUILayoutUtility.GetRect(content, BoxButtonStyle, options);
+            return BoxToggleButton(rect, value, content, enableColor, disableColor);
+        }
+        public static bool BoxToggleButton(
+            Rect rect, bool value, Color enableColor, Color disableColor)
+            => BoxToggleButton(rect, value, value ? ToggleHelper.FoldoutOpenedContent : ToggleHelper.FoldoutClosedContent, enableColor, disableColor);
         public static bool BoxToggleButton(
             Rect rect, bool value, GUIContent content, Color enableColor, Color disableColor)
         {
@@ -390,6 +434,41 @@ namespace SyadeuEditor.Utilities
         #endregion
 
         #region Draw
+
+        public sealed class BoxBlock : IDisposable
+        {
+            Color m_PrevColor;
+            int m_PrevIndent;
+
+            GUILayout.HorizontalScope m_HorizontalScope;
+            GUILayout.VerticalScope m_VerticalScope;
+
+            public BoxBlock(Color color, params GUILayoutOption[] options)
+            {
+                m_PrevColor = GUI.backgroundColor;
+                m_PrevIndent = EditorGUI.indentLevel;
+
+                EditorGUI.indentLevel = 0;
+
+                m_HorizontalScope = new GUILayout.HorizontalScope();
+                GUILayout.Space(m_PrevIndent * 15);
+                GUI.backgroundColor = color;
+
+                m_VerticalScope = new GUILayout.VerticalScope(EditorStyleUtilities.Box, options);
+                GUI.backgroundColor = m_PrevColor;
+            }
+            public void Dispose()
+            {
+                m_VerticalScope.Dispose();
+                m_HorizontalScope.Dispose();
+
+                m_VerticalScope = null;
+                m_HorizontalScope = null;
+
+                EditorGUI.indentLevel = m_PrevIndent;
+                GUI.backgroundColor = m_PrevColor;
+            }
+        }
 
         public static void DrawBlock(Rect rect, Color color)
         {

@@ -23,7 +23,7 @@ namespace SyadeuEditor.Presentation
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("Recycle Object");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(onCreation, new GUIContent("인스턴스 생성 시 한번만 호출할 함수"));
@@ -35,7 +35,7 @@ namespace SyadeuEditor.Presentation
 
             if (!Application.isPlaying) return;
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             if (!Target.entity.IsValid())
             {

@@ -329,7 +329,7 @@ namespace SyadeuEditor.Utilities
                 }
             }
 
-            EditorUtilities.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
         }
     }
 }

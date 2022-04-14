@@ -38,9 +38,7 @@ namespace SyadeuEditor.Presentation
                 {
                     GUILayout.Label(Name, GUILayout.Width(Screen.width * .25f));
 
-                    clicked = EditorUtilities.BoxButton(targetName, ColorPalettes.PastelDreams.Mint, () =>
-                    {
-                    });
+                    clicked = CoreGUI.BoxButton(targetName, ColorPalettes.PastelDreams.Mint);
                 }
             }
 

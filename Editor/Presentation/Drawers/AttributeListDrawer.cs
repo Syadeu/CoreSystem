@@ -173,7 +173,7 @@ namespace SyadeuEditor.Presentation
                             }
                         }
 
-                        EditorUtilities.Line();
+                        CoreGUI.Line();
                     }
                 }
             }

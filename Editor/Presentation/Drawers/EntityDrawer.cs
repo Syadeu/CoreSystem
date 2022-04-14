@@ -118,22 +118,22 @@ namespace SyadeuEditor.Presentation
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                entity.SetCulling(EditorUtilities.BoxToggleButton(
-                    entity.EnableCull ? "Disable Cull" : "Enable Cull",
+                entity.SetCulling(CoreGUI.BoxToggleButton(
                     entity.EnableCull,
+                    entity.EnableCull ? "Disable Cull" : "Enable Cull",
                     ColorPalettes.PastelDreams.TiffanyBlue,
                     ColorPalettes.PastelDreams.HotPink
                     ));
-                entity.StaticBatching = EditorUtilities.BoxToggleButton(
-                    "Static Batching",
+                entity.StaticBatching = CoreGUI.BoxToggleButton(
                     entity.StaticBatching,
+                    "Static Batching",
                     ColorPalettes.PastelDreams.TiffanyBlue,
                     ColorPalettes.PastelDreams.HotPink,
 
                     GUILayout.Width(150)
                     );
             }
-            EditorUtilities.Line();
+            CoreGUI.Line();
             using (var change = new EditorGUI.ChangeCheckScope())
             {
                 baseDrawer.DrawField(prefabReferenceDrawer);
@@ -160,7 +160,7 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
             using (new EditorUtilities.BoxBlock(Color.black))
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -207,7 +207,7 @@ namespace SyadeuEditor.Presentation
 
             EditorUtilities.StringRich(Name + EditorUtilities.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             DrawDescription();
 
@@ -227,7 +227,7 @@ namespace SyadeuEditor.Presentation
                     DrawModel(entity);
                 }
             }
-            EditorUtilities.Line();
+            CoreGUI.Line();
             using (new EditorUtilities.BoxBlock(Color.black))
             {
                 attributeListDrawer.OnGUI();
@@ -257,7 +257,7 @@ namespace SyadeuEditor.Presentation
         protected override void DrawGUI()
         {
             DrawHeader();
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             for (int i = 0; i < Drawers.Length; i++)
             {

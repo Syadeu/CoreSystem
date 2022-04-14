@@ -262,7 +262,7 @@ namespace SyadeuEditor.Presentation
 
             bool clicked;
             {
-                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                clicked = CoreGUI.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
                 {
                     GenericMenu menu = new GenericMenu();
 

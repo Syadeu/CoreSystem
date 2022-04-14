@@ -210,7 +210,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
 
             for (int i = 0; i < other.m_Scripts?.Count; i++)
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 EditorGUILayout.BeginHorizontal();
                 EditorUtilities.StringRich(string.IsNullOrEmpty(other.m_Scripts[i].m_FunctionName) ? $"{i}" : other.m_Scripts[i].m_FunctionName, 12);
                 if (GUILayout.Button("-", GUILayout.Width(20)))
