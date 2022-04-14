@@ -48,6 +48,12 @@ namespace Syadeu.Presentation.Map
             obj.m_CreatedEntities = new Entity<DataObjectBase>[obj.m_DataObjects.Length];
             for (int i = 0; i < obj.m_DataObjects.Length; i++)
             {
+                if (obj.m_DataObjects[i].IsEmpty())
+                {
+                    CoreSystem.Logger.LogError(Channel.Presentation,
+                        $"Cannot be none.");
+                }
+
                 obj.m_CreatedEntities[i] = obj.m_DataObjects[i].CreateEntity();
             }
         }

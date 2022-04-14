@@ -32,20 +32,17 @@ namespace Syadeu.Presentation.Map
     public sealed class SceneDataEntity : EntityDataBase, INotifySceneAsset,
         INotifyComponent<SceneDataComponent>
     {
-        [UnityEngine.SerializeField]
-        [JsonProperty(Order = 0, PropertyName = "TerrainData")]
-        internal Reference<TerrainData>[] m_TerrainData = Array.Empty<Reference<TerrainData>>();
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "TerrainData")]
+        internal ArrayWrapper<Reference<TerrainData>> m_TerrainData = Array.Empty<Reference<TerrainData>>();
         
         [Space]
 #pragma warning disable IDE0044 // Add readonly modifier
-        [UnityEngine.SerializeField]
         [Tooltip("SceneIndex 의 씬이 로드될때 자동으로 데이터를 생성하나요?")]
-        [JsonProperty(Order = 1, PropertyName = "BindScene")] internal bool m_BindScene;
-        [UnityEngine.SerializeField]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "BindScene")] internal bool m_BindScene;
         [Tooltip("SceneList.Scenes 의 Index")]
-        [JsonProperty(Order = 2, PropertyName = "SceneIndex")] private int m_SceneIndex;
-        [UnityEngine.SerializeField]
-        [JsonProperty(Order = 3, PropertyName = "MapData")] private Reference<MapDataEntityBase>[] m_MapData = Array.Empty<Reference<MapDataEntityBase>>();
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "SceneIndex")] private int m_SceneIndex;
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "MapData")] 
+        private ArrayWrapper<Reference<MapDataEntityBase>> m_MapData = Array.Empty<Reference<MapDataEntityBase>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public IReadOnlyList<Reference<MapDataEntityBase>> MapData => m_MapData;
