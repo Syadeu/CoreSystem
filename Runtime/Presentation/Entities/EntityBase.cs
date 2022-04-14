@@ -39,12 +39,10 @@ namespace Syadeu.Presentation.Entities
         /// <summary>
         /// 이 엔티티의 Raw 프리팹 주소입니다.
         /// </summary>
-        [SerializeField]
-        [JsonProperty(Order = -800, PropertyName = "Prefab")] 
+        [SerializeField, JsonProperty(Order = -800, PropertyName = "Prefab")] 
         public PrefabReference<GameObject> Prefab = PrefabReference<GameObject>.None;
 
-        [SerializeField]
-        [JsonProperty(Order = -799, PropertyName = "StaticBatching")]
+        [SerializeField, JsonProperty(Order = -799, PropertyName = "StaticBatching")]
         public bool StaticBatching;
 
         [Description("AABB 의 Center")]
@@ -58,8 +56,7 @@ namespace Syadeu.Presentation.Entities
         public float3 Size = 1;
 
         [Space]
-        [SerializeField]
-        [JsonProperty(Order = -796, PropertyName = "EnableCull")] 
+        [SerializeField, JsonProperty(Order = -796, PropertyName = "EnableCull")] 
         private bool m_EnableCull = true;
 
         [JsonIgnore] public virtual bool EnableCull => m_EnableCull;

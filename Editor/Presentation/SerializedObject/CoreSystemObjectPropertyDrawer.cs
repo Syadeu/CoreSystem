@@ -24,6 +24,10 @@ namespace SyadeuEditor.Presentation
 
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
+            return DefaultHeight(property, label);
+        }
+        protected float DefaultHeight(SerializedProperty property, GUIContent label)
+        {
             SerializedProperty
                 nameProp = GetNameProperty(property),
                 hashProp = GetHashProperty(property);
@@ -72,6 +76,10 @@ namespace SyadeuEditor.Presentation
         }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
+            DrawDefault(ref rect, property, label);
+        }
+        protected void DrawDefault(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
             Type targetType = property.GetSystemType();
             DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
             if (description != null)
@@ -80,7 +88,7 @@ namespace SyadeuEditor.Presentation
                     description.Description, MessageType.Info);
             }
 
-            SerializedProperty 
+            SerializedProperty
                 nameProp = GetNameProperty(property),
                 hashProp = GetHashProperty(property);
 
@@ -106,6 +114,38 @@ namespace SyadeuEditor.Presentation
 
             EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(nameProp)), nameProp);
             EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(hashProp)), hashProp);
+        }
+
+        /// <summary>
+        /// <paramref name="property"/> 를 제외한 나머지
+        /// </summary>
+        /// <param name="property"></param>
+        /// <returns></returns>
+        protected float GetHeightFrom(SerializedProperty property)
+        {
+            float height = 0;
+            SerializedProperty tempProp = property.Copy();
+            while (tempProp.Next(false))
+            {
+                height += tempProp.GetPropertyHeight(new GUIContent(tempProp.displayName));
+            }
+
+            return height;
+        }
+        /// <summary>
+        /// <paramref name="property"/> 를 제외한 나머지
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="property"></param>
+        protected void DrawFrom(ref AutoRect rect, SerializedProperty property)
+        {
+            var temp = property.Copy();
+            while (temp.Next(false))
+            {
+                EditorGUI.PropertyField(
+                    rect.Pop(EditorGUI.GetPropertyHeight(temp)),
+                    temp);
+            }
         }
     }
 }

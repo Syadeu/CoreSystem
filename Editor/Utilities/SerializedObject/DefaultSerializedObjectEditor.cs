@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
-    public sealed class DefaultSerializedObjectEditor : SerializedObjectEditor<System.Object>
+    internal sealed class DefaultSerializedObjectEditor : SerializedObjectEditor<System.Object>
     {
         public override void OnInspectorGUI()
         {

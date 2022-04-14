@@ -130,6 +130,33 @@ namespace SyadeuEditor.Utilities
             EditorGUI.LabelField(rect, text1, text2, style);
         }
 
+        public static void Label(Rect rect, GUIContent text, StringColor color)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, color);
+
+            EditorGUI.LabelField(rect, content, style);
+        }
+        public static void Label(Rect rect, GUIContent text, int size)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, size);
+
+            EditorGUI.LabelField(rect, content, style);
+        }
+        public static void Label(Rect rect, GUIContent text, StringColor color, int size)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, color, size);
+
+            EditorGUI.LabelField(rect, content, style);
+        }
         public static void Label(Rect rect, string text) => Label(rect, new GUIContent(text), TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text) => Label(rect, text, TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text, TextAnchor textAnchor) => EditorGUI.LabelField(rect, text, GetLabelStyle(textAnchor));

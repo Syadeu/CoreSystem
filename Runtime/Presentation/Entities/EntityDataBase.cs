@@ -37,8 +37,7 @@ namespace Syadeu.Presentation.Entities
     public abstract class EntityDataBase : ObjectBase, IEntityData
     {
         /// <summary><inheritdoc cref="m_Attributes"/></summary>
-        [UnityEngine.SerializeField]
-        [JsonProperty(Order = -900, PropertyName = "Attributes")]
+        [UnityEngine.SerializeField, JsonProperty(Order = -900, PropertyName = "Attributes")]
         private AttributeArray m_AttributeList = new AttributeArray();
         //private Reference<AttributeBase>[] m_AttributeList = Array.Empty<Reference<AttributeBase>>();
 

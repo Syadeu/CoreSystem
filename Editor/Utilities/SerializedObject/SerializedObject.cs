@@ -37,16 +37,6 @@ namespace SyadeuEditor.Utilities
             }
 
             return s;
-
-            //if (s_Shared.m_Object != null)
-            //{
-            //    UnityEngine.Object.DestroyImmediate(s_Shared.m_Object);
-            //}
-
-            //s_Shared.m_Object = SerializeScriptableObject.Deserialize(obj);
-            //s_Shared.m_SerializedObject = new SerializedObject(s_Shared.m_Object);
-
-            //return s_Shared;
         }
         public static float GetPropertyHeight(T obj)
         {
@@ -78,14 +68,7 @@ namespace SyadeuEditor.Utilities
                     m_PropertyHeight = new AnimFloat(target);
                 }
 
-                //if (SerializedProperty.isExpanded)
-                {
-                    m_PropertyHeight.target = target;
-                }
-                //else
-                //{
-                //    m_PropertyHeight.target = EditorGUI.GetPropertyHeight(this, false);
-                //}
+                m_PropertyHeight.target = target;
 
                 return m_PropertyHeight.value;
             }
