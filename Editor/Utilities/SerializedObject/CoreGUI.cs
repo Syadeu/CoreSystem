@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
@@ -11,48 +12,9 @@ namespace SyadeuEditor.Utilities
     {
         #region GUI Styles
 
-        private static GUIStyle 
-            s_CenterLabelStyle = null, s_RightLabelStyle = null, s_LeftLabelStyle = null;
         private static GUIStyle s_BoxButtonStyle = null;
-        
-        public static GUIStyle CenterLabelStyle
-        {
-            get
-            {
-                if (s_CenterLabelStyle == null)
-                {
-                    s_CenterLabelStyle = new GUIStyle(EditorStyles.label);
-                    s_CenterLabelStyle.alignment = TextAnchor.MiddleCenter;
-                }
-                return s_CenterLabelStyle;
-            }
-        }
-        public static GUIStyle RightLabelStyle
-        {
-            get
-            {
-                if (s_RightLabelStyle == null)
-                {
-                    s_RightLabelStyle = new GUIStyle(EditorStyles.label);
-                    s_RightLabelStyle.alignment = TextAnchor.MiddleRight;
-                }
-                return s_RightLabelStyle;
-            }
-        }
-        public static GUIStyle LeftLabelStyle
-        {
-            get
-            {
-                if (s_LeftLabelStyle == null)
-                {
-                    s_LeftLabelStyle = new GUIStyle(EditorStyles.label);
-                    s_LeftLabelStyle.alignment = TextAnchor.MiddleLeft;
+        private static readonly Dictionary<TextAnchor, GUIStyle> s_CachedLabelStyles = new Dictionary<TextAnchor, GUIStyle>();
 
-                    s_LeftLabelStyle.border = new RectOffset(5, 5, 5, 5);
-                }
-                return s_LeftLabelStyle;
-            }
-        }
         public static GUIStyle BoxButtonStyle
         {
             get
@@ -125,28 +87,43 @@ namespace SyadeuEditor.Utilities
 
         #region Label
 
+        public static void Label(GUIContent text, StringColor color)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, color);
+
+            EditorGUILayout.LabelField(content, style);
+        }
+        public static void Label(GUIContent text, int size)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, size);
+
+            EditorGUILayout.LabelField(content, style);
+        }
+        public static void Label(GUIContent text, StringColor color, int size)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(content.text, color, size);
+
+            EditorGUILayout.LabelField(content, style);
+        }
         public static void Label(GUIContent text, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
-            GUIStyle style;
-            if (textAnchor != TextAnchor.MiddleLeft)
-            {
-                style = new GUIStyle(EditorStyles.label);
-                style.alignment = textAnchor;
-            }
-            else style = EditorStyles.label;
+            GUIStyle style = GetLabelStyle(textAnchor);
 
             Rect rect = GUILayoutUtility.GetRect(text, style, options);
             EditorGUI.LabelField(rect, text, style);
         }
         public static void Label(GUIContent text1, GUIContent text2, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
-            GUIStyle style;
-            if (textAnchor != TextAnchor.MiddleLeft)
-            {
-                style = new GUIStyle(EditorStyles.label);
-                style.alignment = textAnchor;
-            }
-            else style = EditorStyles.label;
+            GUIStyle style = GetLabelStyle(textAnchor);
 
             Rect rect = GUILayoutUtility.GetRect(text2, style, options);
             
@@ -174,25 +151,22 @@ namespace SyadeuEditor.Utilities
         }
         public static void Label(Rect rect, GUIContent text1, GUIContent text2, TextAnchor textAnchor)
         {
-            GUIStyle style;
-            if (textAnchor != TextAnchor.MiddleLeft)
-            {
-                style = new GUIStyle(EditorStyles.label);
-                style.alignment = textAnchor;
-            }
-            else style = EditorStyles.label;
+            GUIStyle style = GetLabelStyle(textAnchor);
 
             EditorGUI.LabelField(rect, text1, text2, style);
         }
 
-
         public static GUIStyle GetLabelStyle(TextAnchor textAnchor)
         {
-            GUIStyle style = new GUIStyle(EditorStyles.label)
+            if (!s_CachedLabelStyles.TryGetValue(textAnchor, out var style))
             {
-                alignment = textAnchor,
-                richText = true
-            };
+                style = new GUIStyle(EditorStyles.label)
+                {
+                    alignment = textAnchor,
+                    richText = true
+                };
+                s_CachedLabelStyles.Add(textAnchor, style);
+            }
 
             return style;
         }
@@ -235,7 +209,7 @@ namespace SyadeuEditor.Utilities
                         isHover, isActive: true, on: true, false);
                     GUI.color = origin;
 
-                    CenterLabelStyle.Draw(rect, content, enableCullID);
+                    GetLabelStyle(TextAnchor.MiddleCenter).Draw(rect, content, enableCullID);
                     break;
                 case EventType.ContextClick:
                     if (!GUI.enabled || !rect.Contains(Event.current.mousePosition)) break;
@@ -292,7 +266,7 @@ namespace SyadeuEditor.Utilities
         {
             GUIContent temp = new GUIContent(text);
 
-            return GUI.Toggle(rect, value, temp, LeftLabelStyle);
+            return GUI.Toggle(rect, value, temp, GetLabelStyle(TextAnchor.MiddleLeft));
         }
         public static bool LabelToggle(Rect rect, bool value, GUIContent text, int size, TextAnchor textAnchor)
         {
@@ -347,7 +321,7 @@ namespace SyadeuEditor.Utilities
 
                     var temp = new GUIStyle(EditorStyles.label);
                     temp.alignment = TextAnchor.MiddleCenter;
-                    CenterLabelStyle.Draw(rect, content, enableCullID);
+                    GetLabelStyle(TextAnchor.MiddleCenter).Draw(rect, content, enableCullID);
                     break;
                 case EventType.MouseDown:
                     if (!GUI.enabled) break;
