@@ -14,7 +14,8 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(IPrefabReference), true)]
     public sealed class PrefabReferencePropertyDrawer : PropertyDrawer<IPrefabReference>
     {
-        Editor editor = null;
+        private bool m_Changed = false;
+        private ReferenceAsset m_ChangedTarget;
 
         private static SerializedProperty GetIndexProperty(SerializedProperty property)
         {
@@ -34,6 +35,21 @@ namespace SyadeuEditor.Presentation
             return base.PropertyHeight(property, label) + 10;
         }
 
+        protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            if (m_Changed)
+            {
+                SerializedPropertyHelper.SetPrefabReference(
+                    GetIndexProperty(property), GetSubAssetNameProperty(property),
+                    m_ChangedTarget.index, m_ChangedTarget.subAssetName
+                    );
+
+                GUI.changed = true;
+                //property.serializedObject.UpdateIfRequiredOrScript();
+
+                m_Changed = false;
+            }
+        }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             rect.Pop(5f);
@@ -211,12 +227,15 @@ namespace SyadeuEditor.Presentation
                 var popup = SelectorPopup<ReferenceAsset, ReferenceAsset>.GetWindow(
                     list, (prefabIdx) =>
                     {
-                        SerializedPropertyHelper.SetPrefabReference(
-                            idxProperty, subAssetNameProperty,
-                            prefabIdx.index, prefabIdx.subAssetName
-                            );
+                        //SerializedPropertyHelper.SetPrefabReference(
+                        //    idxProperty, subAssetNameProperty,
+                        //    prefabIdx.index, prefabIdx.subAssetName
+                        //    );
 
-                        idxProperty.serializedObject.ApplyModifiedProperties();
+                        //idxProperty.serializedObject.ApplyModifiedProperties();
+
+                        m_ChangedTarget = prefabIdx;
+                        m_Changed = true;
                     },
                     (objSet) =>
                     {

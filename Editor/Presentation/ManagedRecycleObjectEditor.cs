@@ -43,8 +43,10 @@ namespace SyadeuEditor.Presentation
                 return;
             }
 
-            var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Target.entity.Target);
-            drawer.OnGUI();
+            var property = SerializedObject<ObjectBase>.GetSharedObject((ObjectBase)Target.entity.Target);
+            EditorGUILayout.PropertyField(property);
+            //var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Target.entity.Target);
+            //drawer.OnGUI();
         }
 
         private void OnSceneGUI()
