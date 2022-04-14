@@ -112,7 +112,7 @@ namespace SyadeuEditor.Presentation
 
                     EditorGUI.indentLevel++;
 
-                    using (new EditorUtilities.BoxBlock(color3))
+                    using (new CoreGUI.BoxBlock(color3))
                     {
                         if (!currentValue.IsValid())
                         {

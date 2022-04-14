@@ -422,7 +422,7 @@ namespace SyadeuEditor.Presentation
 
             public void OnGUI()
             {
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     DrawTools();

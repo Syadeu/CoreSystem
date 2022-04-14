@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEditor;
 using Syadeu.Mono;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections;
 
 namespace SyadeuEditor
 {

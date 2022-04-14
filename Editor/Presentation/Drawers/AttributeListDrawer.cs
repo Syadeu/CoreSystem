@@ -69,7 +69,7 @@ namespace SyadeuEditor.Presentation
 
             int contextTarget = -1;
             bool showSelectContext = false;
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 for (int i = 0; i < currentValue.Length; i++)
                 {
@@ -154,7 +154,7 @@ namespace SyadeuEditor.Presentation
                         Color color3 = Color.red;
                         color3.a = .7f;
 
-                        using (new EditorUtilities.BoxBlock(color3))
+                        using (new CoreGUI.BoxBlock(color3))
                         {
                             if (!currentValue[i].IsValid())
                             {

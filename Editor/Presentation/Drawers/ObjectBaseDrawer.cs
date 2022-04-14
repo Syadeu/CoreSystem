@@ -112,7 +112,7 @@ namespace SyadeuEditor.Presentation
         {
             const string c_ObsoleteMsg = "This type marked as deprecated.\n{0}";
 
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 if (m_Obsolete != null)
                 {

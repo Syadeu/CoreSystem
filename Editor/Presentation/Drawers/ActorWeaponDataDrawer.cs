@@ -40,7 +40,7 @@ namespace SyadeuEditor.Presentation
 
                 if (Drawers[i].Name.Equals("FXBounds"))
                 {
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawFXBounds();
                     }

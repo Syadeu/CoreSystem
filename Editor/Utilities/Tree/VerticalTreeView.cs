@@ -66,7 +66,7 @@ namespace SyadeuEditor.Tree
         {
             const string notFound = "Not Found";
 
-            using (new EditorUtilities.BoxBlock(Color.white))
+            using (new CoreGUI.BoxBlock(Color.white))
             {
                 CoreGUI.Line();
                 BeforeDraw();
@@ -102,7 +102,7 @@ namespace SyadeuEditor.Tree
                 {
                     if (m_Elements[i].HideElementInTree) continue;
 
-                    using (new EditorUtilities.BoxBlock(nextColor))
+                    using (new CoreGUI.BoxBlock(nextColor))
                     {
                         DrawChild(m_Elements[i]);
                     }

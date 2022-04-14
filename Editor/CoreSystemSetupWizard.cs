@@ -99,7 +99,7 @@ namespace SyadeuEditor
 
             CoreGUI.Line();
 
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 m_SelectedToolbar.OnGUI();
             }
@@ -129,7 +129,7 @@ namespace SyadeuEditor
         }
         private void DrawToolbarButton(int i, string name, bool enable)
         {
-            using (new EditorUtilities.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
+            using (new CoreGUI.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
             {
                 EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
                 if (GUILayout.Button(name, titleStyle))
@@ -282,23 +282,23 @@ namespace SyadeuEditor
             {
                 using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawContraints();
                     }
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawTagManager();
                     }
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawSettings();
                     }
 
                     using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawUnityAudio();
                     }
@@ -512,7 +512,7 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel++;
 
-                using (new EditorUtilities.BoxBlock(Color.white))
+                using (new CoreGUI.BoxBlock(Color.white))
                 {
                     EditorUtilities.StringRich("Global Settings", 13);
                     EditorGUILayout.Space();
@@ -550,7 +550,7 @@ namespace SyadeuEditor
                 if (!m_OpenUnityAudio) return;
 
                 EditorGUI.indentLevel++;
-                using (new EditorUtilities.BoxBlock(Color.white))
+                using (new CoreGUI.BoxBlock(Color.white))
                 {
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
@@ -682,7 +682,7 @@ namespace SyadeuEditor
 
                     #region Scenes Selector
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath);
@@ -721,7 +721,7 @@ namespace SyadeuEditor
                         }
                     }
                     CoreGUI.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath);
@@ -760,7 +760,7 @@ namespace SyadeuEditor
                         }
                     }
                     CoreGUI.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath);
@@ -825,7 +825,7 @@ namespace SyadeuEditor
                         }
                     }
                     CoreGUI.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
 
@@ -984,7 +984,7 @@ namespace SyadeuEditor
 
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     if (!Predicate())
                     {
@@ -996,7 +996,7 @@ namespace SyadeuEditor
                     }
                 }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     if (m_InvalidIndices.Count > 0)
                     {
@@ -1150,7 +1150,7 @@ namespace SyadeuEditor
                     }
                 }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     EditorUtilities.StringRich("Nominal", true);
                 }

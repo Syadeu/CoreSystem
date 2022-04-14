@@ -4,6 +4,7 @@ using Syadeu.Mono.Console;
 using UnityEngine;
 using UnityEditor;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections;
 
 namespace SyadeuEditor
 {

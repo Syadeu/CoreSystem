@@ -101,7 +101,7 @@ namespace SyadeuEditor.Presentation
                             }
                         }
 
-                        using (new EditorUtilities.BoxBlock(Color.black))
+                        using (new CoreGUI.BoxBlock(Color.black))
                         {
                             EditorUtilities.StringRich("Arguments", 13);
                             EditorGUI.indentLevel++;
@@ -109,8 +109,8 @@ namespace SyadeuEditor.Presentation
                             for (int i = 0; i < info.ArgumentFields.Length; i++)
                             {
                                 currentValue.Arguments[i] =
-                                    EditorUtilities.AutoField(
-                                        info.ArgumentFields[i],
+                                    CoreGUI.AutoField(
+                                        info.ArgumentFields[i].FieldType,
                                         string.IsNullOrEmpty(info.JsonAttributes[i].PropertyName) ? info.ArgumentFields[i].Name : info.JsonAttributes[i].PropertyName,
                                         currentValue.Arguments[i]);
                             }

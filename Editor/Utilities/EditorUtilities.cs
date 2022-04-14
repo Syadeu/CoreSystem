@@ -27,32 +27,6 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    /// <inheritdoc path="https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html"/>
-    public enum StringColor
-    {
-        black,
-        blue,
-        brown,
-        cyan,
-        darkblue,
-        fuchsia,
-        green,
-        grey,
-        lightblue,
-        lime,
-        magenta,
-        maroon,
-        navy,
-        olive,
-        orange,
-        purple,
-        red,
-        silver,
-        teal,
-        white,
-        yellow
-    }
-
     public static class EditorUtilities
     {
         #region Init
@@ -173,71 +147,6 @@ namespace SyadeuEditor
         }
 
         #endregion
-
-        public static object AutoField(FieldInfo fieldInfo, string label, object value, params GUILayoutOption[] options)
-        {
-            if (fieldInfo.FieldType == TypeHelper.TypeOf<int>.Type)
-            {
-                return EditorGUILayout.IntField(label, Convert.ToInt32(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<float>.Type)
-            {
-                return EditorGUILayout.FloatField(label, Convert.ToSingle(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<bool>.Type)
-            {
-                return EditorGUILayout.ToggleLeft(label, Convert.ToBoolean(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<string>.Type)
-            {
-                return EditorGUILayout.TextField(label, Convert.ToString(value), options);
-            }
-            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
-            //{
-            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
-            //}
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<Vector3>.Type)
-            {
-                return EditorGUILayout.Vector3Field(label, (Vector3)(value), options);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        public sealed class BoxBlock : IDisposable
-        {
-            Color m_PrevColor;
-            int m_PrevIndent;
-
-            GUILayout.HorizontalScope m_HorizontalScope;
-            GUILayout.VerticalScope m_VerticalScope;
-
-            public BoxBlock(Color color, params GUILayoutOption[] options)
-            {
-                m_PrevColor = GUI.backgroundColor;
-                m_PrevIndent = EditorGUI.indentLevel;
-
-                EditorGUI.indentLevel = 0;
-
-                m_HorizontalScope = new GUILayout.HorizontalScope();
-                GUILayout.Space(m_PrevIndent * 15);
-                GUI.backgroundColor = color;
-
-                m_VerticalScope = new GUILayout.VerticalScope(EditorStyleUtilities.Box, options);
-                GUI.backgroundColor = m_PrevColor;
-            }
-            public void Dispose()
-            {
-                m_VerticalScope.Dispose();
-                m_HorizontalScope.Dispose();
-
-                m_VerticalScope = null;
-                m_HorizontalScope = null;
-
-                EditorGUI.indentLevel = m_PrevIndent;
-                GUI.backgroundColor = m_PrevColor;
-            }
-        }
 
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, UnityEngine.Object obj)

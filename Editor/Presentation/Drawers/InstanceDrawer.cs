@@ -32,7 +32,7 @@ namespace SyadeuEditor.Presentation
 
         public override IInstance Draw(IInstance currentValue)
         {
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 DrawField();
             }

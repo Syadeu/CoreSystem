@@ -493,6 +493,36 @@ namespace SyadeuEditor.Utilities
             float height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             return height * lineCount;
         }
+
+        public static object AutoField(Type type, string label, object value, params GUILayoutOption[] options)
+        {
+            if (type == TypeHelper.TypeOf<int>.Type)
+            {
+                return EditorGUILayout.IntField(label, Convert.ToInt32(value), options);
+            }
+            else if (type == TypeHelper.TypeOf<float>.Type)
+            {
+                return EditorGUILayout.FloatField(label, Convert.ToSingle(value), options);
+            }
+            else if (type == TypeHelper.TypeOf<bool>.Type)
+            {
+                return EditorGUILayout.ToggleLeft(label, Convert.ToBoolean(value), options);
+            }
+            else if (type == TypeHelper.TypeOf<string>.Type)
+            {
+                return EditorGUILayout.TextField(label, Convert.ToString(value), options);
+            }
+            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
+            //{
+            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
+            //}
+            else if (type == TypeHelper.TypeOf<Vector3>.Type)
+            {
+                return EditorGUILayout.Vector3Field(label, (Vector3)(value), options);
+            }
+
+            throw new NotImplementedException();
+        }
         public static object AutoField(Rect rect, Type type, string label, object value)
         {
             if (type == TypeHelper.TypeOf<int>.Type)

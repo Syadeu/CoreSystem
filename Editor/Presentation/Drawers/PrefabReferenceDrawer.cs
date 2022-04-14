@@ -152,7 +152,7 @@ namespace SyadeuEditor.Presentation
 
                 if (!m_Open) return currentValue;
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     using (new EditorGUI.DisabledGroupScope(true))
                     {

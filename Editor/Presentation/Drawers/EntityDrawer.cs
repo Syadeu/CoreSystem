@@ -161,7 +161,7 @@ namespace SyadeuEditor.Presentation
             }
 
             CoreGUI.Line();
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -222,13 +222,13 @@ namespace SyadeuEditor.Presentation
 
             if (Target is EntityBase entity)
             {
-                using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                using (new CoreGUI.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     DrawModel(entity);
                 }
             }
             CoreGUI.Line();
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 attributeListDrawer.OnGUI();
             }

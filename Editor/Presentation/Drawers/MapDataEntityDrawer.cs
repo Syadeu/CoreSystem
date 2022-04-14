@@ -72,7 +72,7 @@ namespace SyadeuEditor.Presentation
         }
         private void DrawInvalids()
         {
-            using (new EditorUtilities.BoxBlock(ColorPalettes.TriadicColor.Three))
+            using (new CoreGUI.BoxBlock(ColorPalettes.TriadicColor.Three))
             {
                 m_OpenInvalidList = EditorUtilities.Foldout(m_OpenInvalidList, "Invalid Objects Founded", 13);
                 if (GUILayout.Button("Remove All"))

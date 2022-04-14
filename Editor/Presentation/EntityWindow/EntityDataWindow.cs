@@ -123,7 +123,7 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(pos.width - 15)))
+                using (new CoreGUI.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(pos.width - 15)))
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
                     if (Selected != null)

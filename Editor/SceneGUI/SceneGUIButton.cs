@@ -1,4 +1,5 @@
-﻿using SyadeuEditor.Utilities;
+﻿using Syadeu.Collections;
+using SyadeuEditor.Utilities;
 using UnityEditor;
 using UnityEngine;
 

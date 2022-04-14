@@ -5,6 +5,7 @@ using System.Reflection;
 
 using Syadeu;
 using Syadeu.Collections;
+using SyadeuEditor.Utilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -45,7 +46,7 @@ namespace SyadeuEditor
 
             //Color originColor = GUI.backgroundColor;
             //GUI.backgroundColor = Color.cyan;
-            using (new EditorUtilities.BoxBlock(Color.cyan))
+            using (new CoreGUI.BoxBlock(Color.cyan))
             {
                 //GUI.backgroundColor = originColor;
                 #region Header
