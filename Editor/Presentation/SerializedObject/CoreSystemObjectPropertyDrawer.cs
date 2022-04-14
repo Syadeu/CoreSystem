@@ -40,7 +40,7 @@ namespace SyadeuEditor.Presentation
             }
             else
             {
-                m_Height.target = PropertyDrawerHelper.GetPropertyHeight(1);
+                m_Height.target = CoreGUI.GetLineHeight(1);
             }
 
             foreach (var item in fieldInfo.GetCustomAttributes())

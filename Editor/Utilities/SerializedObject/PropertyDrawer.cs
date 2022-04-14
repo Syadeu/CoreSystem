@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,6 +29,10 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    /// <summary><inheritdoc cref="PropertyDrawer"/></summary>
+    /// <remarks>
+    /// </remarks>
+    /// <typeparam name="T"></typeparam>
     public abstract class PropertyDrawer<T> : PropertyDrawer
     {
         private bool m_Initialized = false;
@@ -44,7 +49,6 @@ namespace SyadeuEditor.Utilities
             //}
             return height;
         }
-
         public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             if (!m_Initialized)
@@ -74,18 +78,50 @@ namespace SyadeuEditor.Utilities
             }
         }
 
+        /// <summary>
+        /// 이 Propery 의 높이를 결정합니다.
+        /// </summary>
+        /// <param name="property"></param>
+        /// <param name="label"></param>
+        /// <returns></returns>
         protected virtual float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             return base.GetPropertyHeight(property, label);
         }
+        /// <summary>
+        /// 이 <see cref="PropertyDrawer"/>(<typeparamref name="T"/>) 의 인스턴스 객체가 한번만 실행하는 함수입니다.
+        /// </summary>
+        /// <param name="property"></param>
         protected virtual void OnInitialize(SerializedProperty property) { }
+        /// <summary><inheritdoc cref="OnInitialize(SerializedProperty)"/></summary>
+        /// <param name="property"></param>
+        /// <param name="label"></param>
         protected virtual void OnInitialize(SerializedProperty property, GUIContent label) { }
 
+        /// <summary>
+        /// <see cref="EditorGUI.PropertyScope"/> 진입 전 실행되는 함수입니다.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="property"></param>
+        /// <param name="label"></param>
         protected virtual void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
+        /// <summary>
+        /// <see cref="EditorGUI.PropertyScope"/> 내에서 실행되는 함수입니다.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="property"></param>
+        /// <param name="label"></param>
         protected virtual void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
 
         #region Cache
 
+        /// <summary>
+        /// <see cref="EditorPrefs"/> 를 통해 상수(<paramref name="obj"/>)를 <paramref name="name"/> 의 키 값으로 저장합니다.
+        /// </summary>
+        /// <typeparam name="TObject"></typeparam>
+        /// <param name="property"></param>
+        /// <param name="name"></param>
+        /// <param name="obj"></param>
         protected void SaveCache<TObject>(SerializedProperty property, string name, TObject obj)
         {
             Hash hash = Hash.NewHash(property.propertyPath);
@@ -105,6 +141,7 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        [Obsolete]
         protected List<Rect> GetValueRect(Rect rawRect, GUIStyle style, params string[] names)
         {
             List<Rect> rects = EditorGUIUtility.GetFlowLayoutedRects(rawRect, style, EditorGUIUtility.standardVerticalSpacing, EditorGUIUtility.standardVerticalSpacing, names.ToList());
@@ -112,6 +149,10 @@ namespace SyadeuEditor.Utilities
             return rects;
         }
 
+        /// <summary>
+        /// <paramref name="BaseObject"/> 가 그려지고 있는 <see cref="Editor"/> 를 다시 그리도록 요청합니다.
+        /// </summary>
+        /// <param name="BaseObject"></param>
         public static void RepaintInspector(SerializedObject BaseObject)
         {
             foreach (var item in ActiveEditorTracker.sharedTracker.activeEditors)

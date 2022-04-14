@@ -25,7 +25,7 @@ namespace SyadeuEditor.Presentation
 
             height += AutoRect.SpaceHeight;
             height += EditorGUI.GetPropertyHeight(GetRawDataProperty(property));
-            height += PropertyDrawerHelper.GetPropertyHeight(1);
+            height += CoreGUI.GetLineHeight(1);
 
             return height;
         }

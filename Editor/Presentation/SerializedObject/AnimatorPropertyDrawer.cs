@@ -10,7 +10,7 @@ namespace SyadeuEditor.Presentation
     {
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = base.PropertyHeight(property, label) + PropertyDrawerHelper.GetPropertyHeight(2);
+            float height = base.PropertyHeight(property, label) + CoreGUI.GetLineHeight(2);
 
             height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("m_AnimationTriggers"));
 

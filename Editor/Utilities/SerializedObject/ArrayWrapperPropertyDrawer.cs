@@ -1,14 +1,25 @@
-﻿using UnityEngine;
+﻿// Copyright 2022 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using UnityEngine;
 using UnityEditor;
-using SyadeuEditor.Utilities;
 using System;
 using UnityEditor.AnimatedValues;
-using System.Collections;
-using NUnit.Framework;
 using System.Collections.Generic;
 using Syadeu.Collections;
 
-namespace SyadeuEditor.Presentation
+namespace SyadeuEditor.Utilities
 {
     [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
     public class ArrayWrapperPropertyDrawer : PropertyDrawer<Array>
@@ -89,7 +100,7 @@ namespace SyadeuEditor.Presentation
                 //height += EditorGUI.GetPropertyHeight(arr, false);
                 if (arr.arraySize == 0)
                 {
-                    height += PropertyDrawerHelper.GetPropertyHeight(1);
+                    height += CoreGUI.GetLineHeight(1);
                 }
                 else
                 {
@@ -97,7 +108,7 @@ namespace SyadeuEditor.Presentation
                     {
                         SerializedProperty element = arr.GetArrayElementAtIndex(i);
 
-                        if (element.isExpanded) height += PropertyDrawerHelper.GetPropertyHeight(1);
+                        if (element.isExpanded) height += CoreGUI.GetLineHeight(1);
                         height += GetElementHeight(element) + 3;
                     }
                 }
@@ -132,7 +143,7 @@ namespace SyadeuEditor.Presentation
             blockRect.y = rect.Current.y;
             blockRect.height = rect.Current.height;
 
-            PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
+            CoreGUI.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
             rect.Pop(3);
 
             if (!DrawHeader(ref rect, property, arr, label)) // 15
@@ -196,14 +207,14 @@ namespace SyadeuEditor.Presentation
             {
                 SerializedProperty element = property.GetArrayElementAtIndex(i);
                 float elementTotalHeight = GetElementHeight(element);
-                if (element.isExpanded) elementTotalHeight += PropertyDrawerHelper.GetPropertyHeight(1);
+                if (element.isExpanded) elementTotalHeight += CoreGUI.GetLineHeight(1);
 
                 AutoRect elementAutoRect = new AutoRect(rect.Pop(elementTotalHeight));
                 //Rect elementRect = elementAutoRect.Pop(EditorGUI.GetPropertyHeight(element, false));
                 Rect elementRect = elementAutoRect.Pop(
                     EditorStyles.textField.CalcHeight(new GUIContent(element.displayName), rect.Current.width));
 
-                PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
+                CoreGUI.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
                 AutoRect.DivideWithRatio(elementRect, elementRects, elementRatio);
 
                 int elementChildCount = element.ChildCount();
@@ -285,7 +296,7 @@ namespace SyadeuEditor.Presentation
                 if (elementChildCount > 1 && element.isExpanded)
                 {
                     var child = element.Copy();
-                    PropertyDrawerHelper.DrawRect(
+                    CoreGUI.DrawRect(
                             EditorGUI.IndentedRect(elementAutoRect.Current),
                             Color.black);
 

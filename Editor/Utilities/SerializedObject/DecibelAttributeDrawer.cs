@@ -61,7 +61,7 @@ namespace SyadeuEditor.Utilities
 
             EditorGUI.BeginChangeCheck();
             value = CoreGUI.Slider(
-                rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1)),
+                rect.Pop(),
                 label,
                 value,
                 minimum,
@@ -85,7 +85,7 @@ namespace SyadeuEditor.Utilities
 
             EditorGUI.BeginChangeCheck();
             CoreGUI.MinMaxSlider(
-                rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1)),
+                rect.Pop(),
                 label,
                 ref min,
                 ref max,

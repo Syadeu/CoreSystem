@@ -72,7 +72,7 @@ namespace SyadeuEditor.Utilities
             }
 
             CoreGUI.MinMaxSlider(
-                rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1)),
+                rect.Pop(),
                 label,
                 ref min,
                 ref max,
@@ -86,7 +86,7 @@ namespace SyadeuEditor.Utilities
 
         private void MinMaxFloatDecibelField(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            Rect pos = rect.Pop(PropertyDrawerHelper.GetPropertyHeight(1));
+            Rect pos = rect.Pop();
             SerializedProperty
                 minProp = Helper.GetMin(property),
                 maxProp = Helper.GetMax(property);

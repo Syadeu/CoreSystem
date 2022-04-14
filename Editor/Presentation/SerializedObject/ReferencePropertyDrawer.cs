@@ -35,10 +35,10 @@ namespace SyadeuEditor.Presentation
             //return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
             if (!property.isExpanded)
             {
-                return PropertyDrawerHelper.GetPropertyHeight(1);
+                return CoreGUI.GetLineHeight(1);
             }
 
-            float height = PropertyDrawerHelper.GetPropertyHeight(1);
+            float height = CoreGUI.GetLineHeight(1);
             height += c_MsgHeight;
 
             SerializedProperty hashProp = GetHashProperty(property);
@@ -213,7 +213,7 @@ namespace SyadeuEditor.Presentation
                     {
                         Rect expandTotalRect = temp.Pop(c_MsgHeight);
 
-                        PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.red);
+                        CoreGUI.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.red);
                         EditorGUI.HelpBox(EditorGUI.IndentedRect(expandTotalRect), s_InvalidMsg, MessageType.Error);
                     }
                     else
@@ -226,7 +226,7 @@ namespace SyadeuEditor.Presentation
                             elementHeight = targetSerialObj.PropertyHeight,
                             totalHeight = c_MsgHeight + elementHeight;
                         expandTotalRect.height = totalHeight;
-                        PropertyDrawerHelper.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.white);
+                        CoreGUI.DrawRect(EditorGUI.IndentedRect(expandTotalRect), Color.white);
 
                         EditorGUI.HelpBox(EditorGUI.IndentedRect(msgRect), s_ValidMsg, MessageType.Info);
                         EditorGUI.PropertyField(temp.Pop(elementHeight), targetSerialObj);

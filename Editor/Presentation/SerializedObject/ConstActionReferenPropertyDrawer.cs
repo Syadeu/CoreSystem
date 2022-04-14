@@ -34,7 +34,7 @@ namespace SyadeuEditor.Presentation
         }
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = PropertyDrawerHelper.GetPropertyHeight(1) + EditorGUIUtility.standardVerticalSpacing;
+            float height = CoreGUI.GetLineHeight(1) + EditorGUIUtility.standardVerticalSpacing;
             SerializedProperty guidField = GetGuidField(property);
 
             if (guidField.isExpanded)
@@ -42,7 +42,7 @@ namespace SyadeuEditor.Presentation
                 height += 17f;
 
                 var argsField = GetArgumentsField(property);
-                height += PropertyDrawerHelper.GetPropertyHeight(argsField.arraySize);
+                height += CoreGUI.GetLineHeight(argsField.arraySize);
             }
 
             return height;
@@ -136,8 +136,8 @@ namespace SyadeuEditor.Presentation
                         rect.Indent(10);
                         Rect startArgRect = rect.Pop(15.5f),
                             argBoxRect = startArgRect;
-                        argBoxRect.height += PropertyDrawerHelper.GetPropertyHeight(argsField.arraySize);
-                        PropertyDrawerHelper.DrawRect(AutoRect.Indent(EditorGUI.IndentedRect(argBoxRect), -10), Color.black);
+                        argBoxRect.height += CoreGUI.GetLineHeight(argsField.arraySize);
+                        CoreGUI.DrawRect(AutoRect.Indent(EditorGUI.IndentedRect(argBoxRect), -10), Color.black);
 
                         CoreGUI.Label(startArgRect, new GUIContent("Arguments"), 13, TextAnchor.MiddleLeft);
 

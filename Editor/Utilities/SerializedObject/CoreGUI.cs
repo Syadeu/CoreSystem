@@ -9,6 +9,8 @@ namespace SyadeuEditor.Utilities
 {
     public sealed class CoreGUI : CLRSingleTone<CoreGUI>
     {
+        #region GUI Styles
+
         private static GUIStyle 
             s_CenterLabelStyle = null, s_RightLabelStyle = null, s_LeftLabelStyle = null;
         private static GUIStyle s_BoxButtonStyle = null;
@@ -62,6 +64,8 @@ namespace SyadeuEditor.Utilities
                 return s_BoxButtonStyle;
             }
         }
+
+        #endregion
 
         #region Line
         public static void SectorLine(int lines = 1)
@@ -385,6 +389,31 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region Draw
+
+        public static void DrawBlock(Rect rect, Color color)
+        {
+            color.a = .25f;
+
+            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+            EditorGUI.DrawRect(rect, color);
+        }
+        public static void DrawRect(Rect rect, Color color)
+        {
+            color.a = .25f;
+
+            EditorGUI.DrawRect(rect, color);
+        }
+
+        #endregion
+
+        #region Utils
+
+        public static float GetLineHeight(int lineCount)
+        {
+            float height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+            return height * lineCount;
+        }
         public static object AutoField(Rect rect, Type type, string label, object value)
         {
             if (type == TypeHelper.TypeOf<int>.Type)
@@ -414,5 +443,7 @@ namespace SyadeuEditor.Utilities
 
             throw new NotImplementedException();
         }
+
+        #endregion
     }
 }

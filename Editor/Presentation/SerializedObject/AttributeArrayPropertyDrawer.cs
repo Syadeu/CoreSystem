@@ -51,7 +51,7 @@ namespace SyadeuEditor.Presentation
                 height += 12;
                 if (arr.arraySize == 0)
                 {
-                    height += PropertyDrawerHelper.GetPropertyHeight(1);
+                    height += CoreGUI.GetLineHeight(1);
                 }
             }
             //else
@@ -94,7 +94,7 @@ namespace SyadeuEditor.Presentation
 
             var blockRect = new Rect(rect.TotalRect);
             blockRect.height -= 5;
-            PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
+            CoreGUI.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
 
             DrawHeader(ref rect, arr);
 
@@ -150,7 +150,7 @@ namespace SyadeuEditor.Presentation
                 Reference<AttributeBase> reference = SerializedPropertyHelper.ReadReference<AttributeBase>(element);
 
                 Rect elementRect = rect.Pop(c_ElementHeight);
-                PropertyDrawerHelper.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
+                CoreGUI.DrawBlock(EditorGUI.IndentedRect(elementRect), Color.gray);
 
                 AutoRect.DivideWithRatio(elementRect, elementRects, elementRatio);
 

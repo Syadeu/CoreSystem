@@ -821,13 +821,4 @@ namespace SyadeuEditor.Utilities
             return currentField;
         }
     }
-
-    //[CustomPropertyDrawer(typeof(List<>), true)]
-    //internal sealed class SerializedArrayDrawer : PropertyDrawer<Array>
-    //{
-    //    protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
-    //    {
-    //        EditorGUI.LabelField(rect.Pop(), "test");
-    //    }
-    //}
 }
