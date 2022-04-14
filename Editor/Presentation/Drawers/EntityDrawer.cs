@@ -93,21 +93,21 @@ namespace SyadeuEditor.Presentation
             attributeListDrawer = new AttributeListDrawer(objectBase,
                 TypeHelper.TypeOf<EntityDataBase>.Type.GetField("m_AttributeList", BindingFlags.NonPublic | BindingFlags.Instance));
         }
-        static bool CheckRendererAssets(Renderer[] renderers)
-        {
-            foreach (var renderer in renderers)
-            {
-                for (int i = 0; i < renderer.materials.Length; i++)
-                {
-                    var setting = PrefabList.Instance.GetSettingWithObject(renderer.materials[i]);
-                    if (setting != null)
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+        //static bool CheckRendererAssets(Renderer[] renderers)
+        //{
+        //    foreach (var renderer in renderers)
+        //    {
+        //        for (int i = 0; i < renderer.materials.Length; i++)
+        //        {
+        //            var setting = PrefabList.Instance.GetSettingWithObject(renderer.materials[i]);
+        //            if (setting != null)
+        //            {
+        //                return false;
+        //            }
+        //        }
+        //    }
+        //    return true;
+        //}
         public static void DrawModel(EntityBase entity, bool disabled = false)
         {
             EntityDrawer baseDrawer = (EntityDrawer)GetDrawer(entity);

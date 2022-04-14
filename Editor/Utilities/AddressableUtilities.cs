@@ -18,7 +18,8 @@ namespace SyadeuEditor.Utilities
         {
             AddressableAssetEntry entry = AddressableAssetSettingsDefaultObject.GetSettings(true).FindAssetEntry(t.AssetGUID);
             var list = new List<AddressableAssetEntry>();
-            entry.GatherAllAssets(list, false, true, true);
+            
+            if (entry != null) entry.GatherAllAssets(list, false, true, true);
 
             return list;
         }
