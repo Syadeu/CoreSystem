@@ -215,6 +215,8 @@ namespace SyadeuEditor.Utilities
 
         public static FixedBytes126 ReadFixedBytes126(SerializedProperty property)
         {
+            const string c_Str = "offset0000";
+
             SerializedProperty item = property.FindPropertyRelative("offset0000");
             FixedBytes126 result = new FixedBytes126();
             result.offset0000 = ReadFixedBytes16(item);
@@ -283,6 +285,8 @@ namespace SyadeuEditor.Utilities
         }
         public static void SetFixedBytes126(SerializedProperty property, FixedBytes126 bytes)
         {
+            const string c_Str = "offset0000";
+
             SerializedProperty item = property.FindPropertyRelative("offset0000");
             SetFixedBytes16(item, bytes.offset0000);
 
@@ -349,7 +353,9 @@ namespace SyadeuEditor.Utilities
 
         public static FixedBytes16 ReadFixedBytes16(SerializedProperty property)
         {
-            SerializedProperty item = property.FindPropertyRelative("byte0000");
+            const string c_Str = "byte0000";
+
+            SerializedProperty item = property.FindPropertyRelative(c_Str);
             FixedBytes16 result = new FixedBytes16();
             result.byte0000 = (byte)item.intValue;
 
