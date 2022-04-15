@@ -1,5 +1,6 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Presentation;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,10 +9,8 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    internal sealed class ReferenceSearchProvider : ScriptableObject, ISearchWindowProvider
+    internal sealed class ReferenceSearchProvider : SearchProviderBase
     {
-        private const string c_Space = "      ";
-
         private Type m_TargetType;
         private Action<Hash> m_OnClick;
         private Predicate<ObjectBase> m_Predicate;
@@ -23,7 +22,7 @@ namespace SyadeuEditor.Presentation
             m_Predicate = predicate;
         }
 
-        public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
+        public override List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
         {
             List<SearchTreeEntry> list = new List<SearchTreeEntry>();
             List<Type> types = new List<Type>();
@@ -39,7 +38,7 @@ namespace SyadeuEditor.Presentation
                     int index = ConstructGroups(types, list, entityType);
 
                     SearchTreeEntry entry = new SearchTreeEntry(
-                        new UnityEngine.GUIContent(c_Space + obj.Name));
+                        new UnityEngine.GUIContent(EntrySpace + obj.Name));
                     entry.userData = obj.Hash;
                     entry.level = list[index].level + 1;
 
@@ -60,7 +59,7 @@ namespace SyadeuEditor.Presentation
                     int index = ConstructGroups(types, list, entityType);
 
                     SearchTreeEntry entry = new SearchTreeEntry(
-                        new UnityEngine.GUIContent(c_Space + obj.Name));
+                        new UnityEngine.GUIContent(EntrySpace + obj.Name));
                     entry.userData = obj.Hash;
                     entry.level = list[index].level + 1;
 
@@ -70,7 +69,7 @@ namespace SyadeuEditor.Presentation
             }
 
             list.Insert(0, new SearchTreeGroupEntry(new UnityEngine.GUIContent("References")));
-            list.Insert(1, new SearchTreeEntry(new UnityEngine.GUIContent(c_Space + "None"))
+            list.Insert(1, new SearchTreeEntry(new UnityEngine.GUIContent(EntrySpace + "None"))
             {
                 userData = Hash.Empty,
                 level = 1,
@@ -78,7 +77,7 @@ namespace SyadeuEditor.Presentation
 
             return list;
         }
-        public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
+        public override bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
         {
             if (SearchTreeEntry is SearchTreeGroupEntry) return true;
 
