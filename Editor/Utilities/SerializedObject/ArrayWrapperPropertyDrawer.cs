@@ -24,12 +24,10 @@ namespace SyadeuEditor.Utilities
     [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
     public class ArrayWrapperPropertyDrawer : PropertyDrawer<Array>
     {
-        private AnimFloat m_Height = null;
-
         Rect[] elementRects = new Rect[3];
-
         private AnimFloat m_ElementAlpha = new AnimFloat(0);
 
+        protected override bool EnableHeightAnimation => true;
         protected virtual bool EnableExpanded => true;
 
         #region User Overrides
@@ -60,22 +58,7 @@ namespace SyadeuEditor.Utilities
             {
                 float height = EditorGUI.GetPropertyHeight(child, true);
                 EditorGUI.PropertyField(rect.Pop(height), child, true);
-                //var tempProp = child.Copy();
-                //tempProp.Next(true);
-                //do
-                //{
-                //    EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(tempProp)), tempProp);
-                //} while (tempProp.Next(false));
             }
-
-            //for (int i = 0; i < array.arraySize; i++)
-            //{
-            //    SerializedProperty element = array.GetArrayElementAtIndex(i);
-
-            //    height += GetElementHeight(element) + 3;
-            //}
-
-
         }
 
         #endregion
@@ -118,16 +101,7 @@ namespace SyadeuEditor.Utilities
                 height += 2;
             }
 
-            if (m_Height == null)
-            {
-                m_Height = new AnimFloat(height);
-                m_Height.speed = 5;
-            }
-            else
-            {
-                m_Height.target = height;
-            }
-            return m_Height.value;
+            return height;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)

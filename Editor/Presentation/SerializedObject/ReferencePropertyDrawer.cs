@@ -1,10 +1,12 @@
 ﻿using Syadeu.Collections;
 using Syadeu.Internal;
 using Syadeu.Presentation;
+using Syadeu.Presentation.Attributes;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -239,8 +241,14 @@ namespace SyadeuEditor.Presentation
                 Rect rect = GUILayoutUtility.GetRect(150, 300);
                 rect.position = Event.current.mousePosition;
 
-                ObjectBase[] actionBases;
-                var iter = EntityDataList.Instance.GetData<ObjectBase>()
+                ObjectBase[] objectBases = Array.Empty<ObjectBase>();
+
+                EntityAcceptOnlyAttribute entityAcceptOnly = GetEntityAcceptOnly(property, out Type entityType);
+                if (entityAcceptOnly == null || (
+                    entityAcceptOnly.AttributeTypes == null ||
+                    entityAcceptOnly.AttributeTypes.Length == 0))
+                {
+                    var iter = EntityDataList.Instance.GetData<ObjectBase>()
                         .Where(other =>
                         {
                             if (other.GetType().Equals(m_TargetType) ||
@@ -250,17 +258,36 @@ namespace SyadeuEditor.Presentation
                             }
                             return false;
                         });
-                if (iter.Any())
-                {
-                    actionBases = iter.ToArray();
+                    if (iter.Any())
+                    {
+                        objectBases = iter.ToArray();
+                    }
                 }
                 else
                 {
-                    actionBases = Array.Empty<ObjectBase>();
-                }
+                    var iter = EntityDataList.Instance.GetData<AttributeBase>()
+                        .Where(other =>
+                        {
+                            Type attType = other.GetType();
+                            //bool attCheck = false;
 
+                            if (!IsEntityAccepts(entityAcceptOnly, attType)) return false;
+
+                            AttributeAcceptOnlyAttribute requireEntity = attType.GetCustomAttribute<AttributeAcceptOnlyAttribute>();
+                            if (requireEntity == null) return true;
+                            else if (!IsAttributeAccepts(requireEntity, entityType)) return false;
+
+                            return true;
+
+                        });
+                    if (iter.Any())
+                    {
+                        objectBases = iter.ToArray();
+                    }
+                }
+                
                 PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: actionBases,
+                        list: objectBases,
                         setter: (hash) =>
                         {
                             SerializedPropertyHelper.SetHash(GetHashProperty(property), hash);
@@ -274,6 +301,61 @@ namespace SyadeuEditor.Presentation
                         (other) => other.Name
                         ));
             }
+        }
+
+        static bool IsEntityAccepts(EntityAcceptOnlyAttribute entityAcceptOnly, Type attributeType)
+        {
+            for (int i = 0; i < entityAcceptOnly.AttributeTypes.Length; i++)
+            {
+                if (TypeHelper.InheritsFrom(attributeType, entityAcceptOnly.AttributeTypes[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        static bool IsAttributeAccepts(AttributeAcceptOnlyAttribute attributeAcceptOnly, Type entityType)
+        {
+            if (attributeAcceptOnly.Types == null || attributeAcceptOnly.Types.Length == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < attributeAcceptOnly.Types.Length; i++)
+            {
+                if (TypeHelper.InheritsFrom(entityType, attributeAcceptOnly.Types[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        static EntityAcceptOnlyAttribute GetEntityAcceptOnly(SerializedProperty property, out Type entityType)
+        {
+            if (!property.IsInArray())
+            {
+                entityType = null;
+                return null;
+            }
+
+            SerializedProperty array = property.GetParentArrayOfProperty(out _).GetParent();
+            Type arrayType = array.GetSystemType();
+            if (!arrayType.Equals(TypeHelper.TypeOf<AttributeArray>.Type))
+            {
+                entityType = null;
+                //Debug.Log($"{arrayType.Name} not attarry at {array.GetParent().GetSystemType().Name}");
+                return null;
+            }
+
+            // entity type
+            entityType = array.GetParent().GetSystemType();
+            if (!TypeHelper.InheritsFrom<ObjectBase>(entityType))
+            {
+                //Debug.Log($"{entityType.FullName} not objbase, arr:{array.GetSystemType().Name}");
+                return null;
+            }
+
+            return entityType.GetCustomAttribute<EntityAcceptOnlyAttribute>();
         }
 
         static void DrawSelectionWindow(Action<Hash> setter, Type targetType)

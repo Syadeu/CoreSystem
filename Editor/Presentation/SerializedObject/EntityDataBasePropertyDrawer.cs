@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SyadeuEditor.Presentation
 {
     [CustomPropertyDrawer(typeof(EntityDataBase), true)]
-    public class EntityDataBasePropertyDrawer : CoreSystemObjectPropertyDrawer<EntityDataBase>
+    public class EntityDataBasePropertyDrawer : ObjectBasePropertyDrawer
     {
         static class Helper
         {

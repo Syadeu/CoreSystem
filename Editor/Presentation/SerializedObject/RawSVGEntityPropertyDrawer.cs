@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SyadeuEditor.Presentation
 {
     //[CustomPropertyDrawer(typeof(RawSVGEntity))]
-    internal sealed class RawSVGEntityPropertyDrawer : CoreSystemObjectPropertyDrawer<RawSVGEntity>
+    internal sealed class RawSVGEntityPropertyDrawer : ObjectBasePropertyDrawer
     {
         #region GetProperty
 

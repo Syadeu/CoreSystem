@@ -6,56 +6,53 @@ using UnityEditor.AnimatedValues;
 using System.Reflection;
 using System.ComponentModel;
 using System;
+using Syadeu.Presentation;
 
 namespace SyadeuEditor.Presentation
 {
-    public abstract class CoreSystemObjectPropertyDrawer<T> : PropertyDrawer<T>
-        where T : class, IObject
+    [CustomPropertyDrawer(typeof(ObjectBase), true)]
+    public class ObjectBasePropertyDrawer : PropertyDrawer<ObjectBase>
     {
         private const string
             c_NamePropertyStr = "Name",
             c_HashPropertyStr = "Hash";
 
         private const float c_HelpBoxHeight = 35;
-        private AnimFloat m_Height;
+
+        protected override bool EnableHeightAnimation => true;
 
         protected SerializedProperty GetNameProperty(SerializedProperty property) => property.FindPropertyRelative(c_NamePropertyStr);
         protected SerializedProperty GetHashProperty(SerializedProperty property) => property.FindPropertyRelative(c_HashPropertyStr);
 
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return DefaultHeight(property, label);
+            return DefaultHeight(property, label) + GetHeightFrom(GetHashProperty(property));
         }
         protected float DefaultHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty
                 nameProp = GetNameProperty(property),
                 hashProp = GetHashProperty(property);
-            float height = 30 + EditorGUI.GetPropertyHeight(nameProp) + EditorGUI.GetPropertyHeight(hashProp);
-
-            if (m_Height == null)
-            {
-                m_Height = new AnimFloat(height);
-            }
+            float height;
 
             if (property.isExpanded)
             {
-                m_Height.target = height;
+                height = 30 + EditorGUI.GetPropertyHeight(nameProp) + EditorGUI.GetPropertyHeight(hashProp);
             }
             else
             {
-                m_Height.target = CoreGUI.GetLineHeight(1);
+                height = CoreGUI.GetLineHeight(1);
             }
 
             foreach (var item in fieldInfo.GetCustomAttributes())
             {
                 if (item is DescriptionAttribute desc)
                 {
-                    m_Height.target += c_HelpBoxHeight;
+                    height += c_HelpBoxHeight;
                 }
                 else if (item is TooltipAttribute tooltip)
                 {
-                    m_Height.target += c_HelpBoxHeight;
+                    height += c_HelpBoxHeight;
                 }
             }
 
@@ -63,10 +60,10 @@ namespace SyadeuEditor.Presentation
             DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
             if (description != null)
             {
-                m_Height.target += c_HelpBoxHeight;
+                height += c_HelpBoxHeight;
             }
 
-            return m_Height.value;
+            return height;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
@@ -77,6 +74,7 @@ namespace SyadeuEditor.Presentation
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             DrawDefault(ref rect, property, label);
+            DrawFrom(ref rect, GetHashProperty(property));
         }
         protected void DrawDefault(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
@@ -144,7 +142,8 @@ namespace SyadeuEditor.Presentation
             {
                 EditorGUI.PropertyField(
                     rect.Pop(EditorGUI.GetPropertyHeight(temp)),
-                    temp);
+                    temp,
+                    temp.isExpanded);
             }
         }
     }

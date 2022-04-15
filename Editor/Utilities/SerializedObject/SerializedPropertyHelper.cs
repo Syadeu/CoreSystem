@@ -494,7 +494,10 @@ namespace SyadeuEditor.Utilities
         public static Type GetSystemType(this SerializedProperty t)
         {
             return t.GetTargetObject()?.GetType();
-            //return t.GetFieldInfo().FieldType;
+        }
+        public static Type GetFieldTypeType(this SerializedProperty t)
+        {
+            return t.GetFieldInfo().FieldType;
         }
 
         public static bool IsTypeOf<T>(this SerializedProperty t)

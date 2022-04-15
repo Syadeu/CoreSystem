@@ -35,18 +35,28 @@ namespace SyadeuEditor.Utilities
     /// <typeparam name="T"></typeparam>
     public abstract class PropertyDrawer<T> : PropertyDrawer
     {
+        protected virtual bool EnableHeightAnimation => false;
+
         private bool m_Initialized = false;
+        private AnimFloat m_Height;
 
         public override sealed float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = PropertyHeight(property, label);
-            //foreach (var att in fieldInfo.GetCustomAttributes())
-            //{
-            //    if (att is SpaceAttribute space)
-            //    {
-            //        height += space.height == 0 ? EditorGUIUtility.standardVerticalSpacing : space.height;
-            //    }
-            //}
+            
+            if (EnableHeightAnimation)
+            {
+                if (m_Height == null)
+                {
+                    m_Height = new AnimFloat(height);
+                    m_Height.speed = 5;
+                }
+
+                m_Height.target = height;
+
+                return m_Height.value;
+            }
+
             return height;
         }
         public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
