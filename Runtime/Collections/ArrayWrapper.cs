@@ -30,17 +30,16 @@ namespace Syadeu.Collections
     {
         public static ArrayWrapper<T> Empty => Array.Empty<T>();
 
-        [UnityEngine.SerializeField]
-        [JsonProperty]
-        public T[] m_Array = Array.Empty<T>();
+        [UnityEngine.SerializeField, JsonProperty]
+        protected T[] p_Array = Array.Empty<T>();
 
         public T this[int index]
         {
-            get => m_Array[index];
-            set => m_Array[index] = value;
+            get => p_Array[index];
+            set => p_Array[index] = value;
         }
 
-        public int Length => m_Array.Length;
+        public int Length => p_Array.Length;
         public bool IsFixedSize => false;
         bool ICollection<T>.IsReadOnly => false;
 
@@ -50,29 +49,29 @@ namespace Syadeu.Collections
 
         T IList<T>.this[int index]
         {
-            get => m_Array[index];
-            set => m_Array[index] = value;
+            get => p_Array[index];
+            set => p_Array[index] = value;
         }
 
         public ArrayWrapper() { }
         [JsonConstructor]
         public ArrayWrapper(IEnumerable<T> attributes)
         {
-            m_Array = attributes.ToArray();
+            p_Array = attributes.ToArray();
         }
 
         public object Clone()
         {
             ArrayWrapper<T> obj = (ArrayWrapper<T>)MemberwiseClone();
 
-            obj.m_Array = (T[])m_Array.Clone();
+            obj.p_Array = (T[])p_Array.Clone();
 
             return obj;
         }
 
         public int IndexOf(T item)
         {
-            return Array.IndexOf<T>(m_Array, item);
+            return Array.IndexOf<T>(p_Array, item);
         }
 
         public void Insert(int index, T item)
@@ -82,26 +81,26 @@ namespace Syadeu.Collections
 
         public void RemoveAt(int index)
         {
-            if (m_Array.RemoveAtSwapBack(index))
+            if (p_Array.RemoveAtSwapBack(index))
             {
-                Array.Resize(ref m_Array, m_Array.Length - 1);
+                Array.Resize(ref p_Array, p_Array.Length - 1);
             }
         }
         public void Add(T item)
         {
-            Array.Resize(ref m_Array, m_Array.Length + 1);
-            m_Array[m_Array.Length - 1] = item;
+            Array.Resize(ref p_Array, p_Array.Length + 1);
+            p_Array[p_Array.Length - 1] = item;
         }
 
         public void Clear()
         {
-            m_Array = Array.Empty<T>();
+            p_Array = Array.Empty<T>();
         }
 
-        public bool Contains(T item) => m_Array.Contains(item);
+        public bool Contains(T item) => p_Array.Contains(item);
         public void CopyTo(T[] array, int arrayIndex)
         {
-            Array.Copy(m_Array, arrayIndex, array, 0, m_Array.Length - arrayIndex);
+            Array.Copy(p_Array, arrayIndex, array, 0, p_Array.Length - arrayIndex);
         }
 
         public bool Remove(T item)
@@ -110,18 +109,18 @@ namespace Syadeu.Collections
 
             if (0 <= index)
             {
-                m_Array.RemoveAtSwapBack(index);
-                Array.Resize(ref m_Array, m_Array.Length - 1);
+                p_Array.RemoveAtSwapBack(index);
+                Array.Resize(ref p_Array, p_Array.Length - 1);
 
                 return true;
             }
             return false;
         }
 
-        public IEnumerator<T> GetEnumerator() => ((IList<T>)m_Array).GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => m_Array.GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => ((IList<T>)p_Array).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => p_Array.GetEnumerator();
 
-        public static implicit operator T[](ArrayWrapper<T> t) => t.m_Array;
+        public static implicit operator T[](ArrayWrapper<T> t) => t.p_Array;
         public static implicit operator ArrayWrapper<T>(T[] t) => new ArrayWrapper<T>(t); 
     }
 }

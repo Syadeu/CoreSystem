@@ -21,14 +21,14 @@ using Syadeu.Collections;
 
 namespace SyadeuEditor.Utilities
 {
-    [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
-    public class ArrayWrapperPropertyDrawer : PropertyDrawer<Array>
+    public abstract class ArrayWrapperPropertyDrawerBase : PropertyDrawer<Array>
     {
         Rect[] elementRects = new Rect[3];
         private AnimFloat m_ElementAlpha = new AnimFloat(0);
 
         protected override bool EnableHeightAnimation => true;
         protected virtual bool EnableExpanded => true;
+        protected virtual bool OverrideSingleLineElementGUI => false;
 
         #region User Overrides
 
@@ -65,7 +65,7 @@ namespace SyadeuEditor.Utilities
 
         protected static SerializedProperty GetArrayProperty(SerializedProperty property)
         {
-            const string c_Str = "m_Array";
+            const string c_Str = "p_Array";
 
             return property.FindPropertyRelative(c_Str);
         }
@@ -221,7 +221,7 @@ namespace SyadeuEditor.Utilities
 
                 #endregion
 
-                if (elementChildCount == 1)
+                if (OverrideSingleLineElementGUI || elementChildCount == 1)
                 {
                     EditorGUI.PropertyField(elementRects[1], element, GUIContent.none);
                 }
@@ -275,35 +275,18 @@ namespace SyadeuEditor.Utilities
                             Color.black);
 
                     elementAutoRect.Pop(2.5f);
-                    //elementAutoRect.Indent(5);
                     EditorGUI.indentLevel++;
-                    //elementAutoRect.Indent();
 
                     OnElementGUI(ref elementAutoRect, child);
-                    //if (element.HasCustomPropertyDrawer())
-                    //{
-                    //    element.Draw(ref elementAutoRect,
-                    //        new GUIContent(element.displayName), true);
-                    //}
-                    //else
-                    //{
-                    //    child.Next(true);
-
-                    //    int depth = child.depth;
-                    //    do
-                    //    {
-                    //        OnElementGUI(ref elementAutoRect, child);
-
-                    //    } while (child.Next(false) && child.depth == depth);
-                    //}
 
                     EditorGUI.indentLevel--;
-                    //elementAutoRect.Indent();
-                    //elementAutoRect.Indent(-5);
                 }
             }
 
             CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
         }
     }
+
+    [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
+    public sealed class ArrayWrapperPropertyDrawer : ArrayWrapperPropertyDrawerBase { }
 }

@@ -12,7 +12,7 @@ using UnityEditor.AnimatedValues;
 namespace SyadeuEditor.Presentation
 {
     [CustomPropertyDrawer(typeof(AttributeArray))]
-    internal sealed class AttributeArrayPropertyDrawer : ArrayWrapperPropertyDrawer
+    internal sealed class AttributeArrayPropertyDrawer : ArrayWrapperPropertyDrawerBase
     {
         protected override void OnElementGUI(ref AutoRect rect, SerializedProperty child)
         {

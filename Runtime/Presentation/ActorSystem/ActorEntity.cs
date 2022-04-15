@@ -41,9 +41,9 @@ namespace Syadeu.Presentation.Actor
 
         [Space, Header("ConstAction")]
         [SerializeField, JsonProperty(Order = 4, PropertyName = "OnCreatedConst")]
-        internal ArrayWrapper<ConstActionReference> m_OnCreatedConst = Array.Empty<ConstActionReference>();
+        internal ConstActionReferenceArray m_OnCreatedConst = Array.Empty<ConstActionReference>();
         [SerializeField, JsonProperty(Order = 5, PropertyName = "OnDestroyConst")]
-        internal ArrayWrapper<ConstActionReference> m_OnDestroyConst = Array.Empty<ConstActionReference>();
+        internal ConstActionReferenceArray m_OnDestroyConst = Array.Empty<ConstActionReference>();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;

@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using System;
 using System.Collections;
@@ -26,14 +27,11 @@ namespace Syadeu.Presentation
     [Serializable, JsonArray]
     public sealed class AttributeArray : ArrayWrapper<Reference<AttributeBase>>
     {
-        public AttributeArray() { }
+        public AttributeArray() : base() { }
         [JsonConstructor]
-        public AttributeArray(IEnumerable<Reference<AttributeBase>> attributes)
-        {
-            m_Array = attributes.ToArray();
-        }
+        public AttributeArray(IEnumerable<Reference<AttributeBase>> attributes) : base(attributes) { }
 
-        public static implicit operator Reference<AttributeBase>[](AttributeArray t) => t.m_Array;
+        public static implicit operator Reference<AttributeBase>[](AttributeArray t) => t.p_Array;
         public static implicit operator AttributeArray(Reference<AttributeBase>[] t)=> new AttributeArray(t);
     }
 }
