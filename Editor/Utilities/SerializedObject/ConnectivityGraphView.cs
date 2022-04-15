@@ -110,7 +110,7 @@ namespace SyadeuEditor.Utilities
         {
             internal Node(Helper helper, object userData)
             {
-                mainContainer.Add(new Label("test"));
+                //mainContainer.Add(new Label("test"));
 
                 this.userData = userData;
                 //if (helper.IsSerializedProperty)
@@ -193,7 +193,16 @@ namespace SyadeuEditor.Utilities
         {
             Node node = PrivateCreateNode(name, pos, userData);
 
-            node.AddPort($"Input ({TypeHelper.ToString(m_Helper.ConnectivityType)})", Direction.Input, Port.Capacity.Single, m_Helper.ConnectivityType);
+            //node.mainContainer.Add(new Label("main"));
+            //node.topContainer.Add(new Label("top"));
+            //node.container.Add(new Label("top"));
+            //node.contentContainer.Add(new Label("content"));
+
+            var port = node.AddPort($"Input ({TypeHelper.ToString(m_Helper.ConnectivityType)})", Direction.Input, Port.Capacity.Single, m_Helper.ConnectivityType);
+
+            port.contentContainer.Add(new Label("content"));
+
+            
 
             return node;
         }
@@ -266,6 +275,8 @@ namespace SyadeuEditor.Utilities
 
             rootVisualElement.Add(m_GraphView);
             Toolbar();
+            MiniMap();
+            BlackBoard();
 
             m_Initialized = true;
         }
@@ -276,6 +287,8 @@ namespace SyadeuEditor.Utilities
 
             rootVisualElement.Add(m_GraphView);
             Toolbar();
+            MiniMap();
+            BlackBoard();
 
             m_Initialized = true;
         }
@@ -307,6 +320,27 @@ namespace SyadeuEditor.Utilities
 
             rootVisualElement.Add(toolbar);
         }
+        private void MiniMap()
+        {
+            var miniMap = new MiniMap() { anchored = true };
+
+            var cords = m_GraphView.contentViewContainer.WorldToLocal(new Vector2(this.maxSize.x - 10, 30));
+
+            miniMap.SetPosition(new Rect(cords.x, cords.y, 200, 140));
+            m_GraphView.Add(miniMap);
+        }
+        private void BlackBoard()
+        {
+            var blackboard = new Blackboard(m_GraphView);
+
+            blackboard.Add(new BlackboardSection { title = "Exposed Properties" });
+
+
+            var cords = m_GraphView.contentViewContainer.WorldToLocal(new Vector2(10, 30));
+            blackboard.SetPosition(new Rect(cords.x, cords.y, 200, 140));
+            m_GraphView.Add(blackboard);
+        }
+
         private void OnNodeCreateButton()
         {
             var node = m_GraphView.CreateNode("Node", Event.current.mousePosition, null);
