@@ -275,21 +275,23 @@ namespace Syadeu.Presentation.Proxy
                 RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
                 Rigidbody rigidbody = proxy.GetComponent<Rigidbody>();
 
+                proxy.transform.position = data->m_Translation;
+                proxy.transform.rotation = data->m_Rotation;
                 //if (data->m_ParentIndex >= 0)
                 //{
 
                 //}
                 //else
-                if (rigidbody == null)
-                {
-                    proxy.transform.position = data->m_Translation;
-                    proxy.transform.rotation = data->m_Rotation;
-                }
-                else
+                if (rigidbody != null)
                 {
                     rigidbody.position = data->m_Translation;
                     rigidbody.rotation = data->m_Rotation;
                 }
+                //else
+                //{
+                //    rigidbody.position = data->m_Translation;
+                //    rigidbody.rotation = data->m_Rotation;
+                //}
                 proxy.transform.localScale = data->m_Scale;
             }
 

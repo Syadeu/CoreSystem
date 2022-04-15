@@ -115,12 +115,12 @@ namespace Syadeu.Presentation.Grid
         {
             if (!m_DrawGrid) return;
 
-            using (Shapes.Draw.Command(arg2))
-            {
-                //DrawGridGL(System.Grid, .05f);
-                //DrawOcc(arg2);
-                DrawIndices(arg2);
-            }
+            //using (Shapes.Draw.Command(arg2))
+            //{
+            //    //DrawGridGL(System.Grid, .05f);
+            //    //DrawOcc(arg2);
+            //    DrawIndices(arg2);
+            //}
         }
         private void M_SceneSystem_OnSceneLoadCall()
         {
