@@ -416,6 +416,41 @@ namespace SyadeuEditor.Utilities
             return new float2(minValue, maxValue);
         }
 
+        public static void MinMaxSlider(Rect position, string label, SerializedProperty minValue, SerializedProperty maxValue, float minLimit, float maxLimit)
+        {
+            position.width -= 50;
+            float tempMin = minValue.floatValue, tempMax = maxValue.floatValue;
+            EditorGUI.MinMaxSlider(position, label, ref tempMin, ref tempMax, minLimit, maxLimit);
+
+            var tempRect = position;
+            tempRect.x += position.width + .75f;
+            tempRect.width = 25 - 1.5f;
+
+            minValue.floatValue = tempMin;
+            maxValue.floatValue = tempMax;
+
+            EditorGUI.PropertyField(tempRect, minValue, GUIContent.none, true);
+            tempRect.x += 1.5f + 25;
+            EditorGUI.PropertyField(tempRect, maxValue, GUIContent.none, true);
+        }
+        public static void MinMaxSlider(Rect position, GUIContent label, SerializedProperty minValue, SerializedProperty maxValue, float minLimit, float maxLimit)
+        {
+            position.width -= 50;
+            float tempMin = minValue.floatValue, tempMax = maxValue.floatValue;
+            EditorGUI.MinMaxSlider(position, label, ref tempMin, ref tempMax, minLimit, maxLimit);
+
+            var tempRect = position;
+            tempRect.x += position.width + .75f;
+            tempRect.width = 25 - 1.5f;
+
+            minValue.floatValue = tempMin;
+            maxValue.floatValue = tempMax;
+
+            EditorGUI.PropertyField(tempRect, minValue, GUIContent.none, true);
+            tempRect.x += 1.5f + 25;
+            EditorGUI.PropertyField(tempRect, maxValue, GUIContent.none, true);
+        }
+
         #endregion
 
         #region Slider
