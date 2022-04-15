@@ -8,6 +8,7 @@ using System.Collections;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace SyadeuEditor.Presentation
@@ -238,8 +239,8 @@ namespace SyadeuEditor.Presentation
 
             if (clicked)
             {
-                Rect rect = GUILayoutUtility.GetRect(150, 300);
-                rect.position = Event.current.mousePosition;
+                Vector2 pos = Event.current.mousePosition;
+                pos = GUIUtility.GUIToScreenPoint(pos);
 
                 ObjectBase[] objectBases = Array.Empty<ObjectBase>();
 
@@ -248,28 +249,31 @@ namespace SyadeuEditor.Presentation
                     entityAcceptOnly.AttributeTypes == null ||
                     entityAcceptOnly.AttributeTypes.Length == 0))
                 {
-                    var iter = EntityDataList.Instance.GetData<ObjectBase>()
-                        .Where(other =>
+                    SearchWindow.Open(new SearchWindowContext(pos),
+                        new ReferenceSearchProvider(targetType,
+                        onClick: (t) =>
                         {
-                            if (other.GetType().Equals(m_TargetType) ||
-                                m_TargetType.IsAssignableFrom(other.GetType()))
-                            {
-                                return true;
-                            }
-                            return false;
-                        });
-                    if (iter.Any())
-                    {
-                        objectBases = iter.ToArray();
-                    }
+                            SerializedPropertyHelper.SetHash(GetHashProperty(property), t);
+                            property.serializedObject.ApplyModifiedProperties();
+                        },
+                        predicate: (t) =>
+                        {
+                            return true;
+                        }
+                        ));
                 }
                 else
                 {
-                    var iter = EntityDataList.Instance.GetData<AttributeBase>()
-                        .Where(other =>
+                    SearchWindow.Open(new SearchWindowContext(pos),
+                        new ReferenceSearchProvider(targetType,
+                        onClick: (t) =>
                         {
-                            Type attType = other.GetType();
-                            //bool attCheck = false;
+                            SerializedPropertyHelper.SetHash(GetHashProperty(property), t);
+                            property.serializedObject.ApplyModifiedProperties();
+                        },
+                        predicate: (t) =>
+                        {
+                            Type attType = t.GetType();
 
                             if (!IsEntityAccepts(entityAcceptOnly, attType)) return false;
 
@@ -278,28 +282,9 @@ namespace SyadeuEditor.Presentation
                             else if (!IsAttributeAccepts(requireEntity, entityType)) return false;
 
                             return true;
-
-                        });
-                    if (iter.Any())
-                    {
-                        objectBases = iter.ToArray();
-                    }
-                }
-                
-                PopupWindow.Show(rect, SelectorPopup<Hash, ObjectBase>.GetWindow(
-                        list: objectBases,
-                        setter: (hash) =>
-                        {
-                            SerializedPropertyHelper.SetHash(GetHashProperty(property), hash);
-                            property.serializedObject.ApplyModifiedProperties();
-                        },
-                        getter: (att) =>
-                        {
-                            return att.Hash;
-                        },
-                        noneValue: Hash.Empty,
-                        (other) => other.Name
+                        }
                         ));
+                }
             }
         }
 

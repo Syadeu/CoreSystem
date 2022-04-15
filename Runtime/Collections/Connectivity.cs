@@ -24,12 +24,25 @@ using UnityEngine;
 namespace Syadeu.Collections
 {
     [Serializable]
-    public sealed class Connectivity<TUserData>
+    public sealed class Connectivity<TUserData> : IConnectivity
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Nodes")]
         private ArrayWrapper<Connectivity<TUserData>> m_Nodes = ArrayWrapper<Connectivity<TUserData>>.Empty;
 
         [SerializeField, JsonProperty(Order = 1, PropertyName = "UserData")]
         private TUserData m_UserData;
+
+        IConnectivity[] IConnectivity.Nodes => m_Nodes;
+        object IConnectivity.UserData => m_UserData;
+        Type IConnectivity.UserDataType => typeof(TUserData);
+    }
+
+    public interface IConnectivity
+    {
+        [JsonIgnore]
+        IConnectivity[] Nodes { get; }
+        [JsonIgnore]
+        object UserData { get; }
+        Type UserDataType { get; }
     }
 }

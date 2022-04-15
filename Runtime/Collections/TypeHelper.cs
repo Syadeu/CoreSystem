@@ -245,6 +245,7 @@ namespace Syadeu.Collections
             const string c_TStart = "<";
             const string c_TEnd = ">";
             const string c_Pattern = ", {0}";
+            const string c_T = "T";
 
             if (type == null)
             {
@@ -252,17 +253,25 @@ namespace Syadeu.Collections
             }
 
             string output = type.Name;
-            if (type.GenericTypeArguments.Length != 0)
+            if (type.IsGenericType)
             {
                 output = output.Substring(0, output.Length - 2);
 
                 output += c_TStart;
-                output += ToString(type.GenericTypeArguments[0]);
-                for (int i = 1; i < type.GenericTypeArguments.Length; i++)
+                if (type.GenericTypeArguments.Length > 0)
                 {
-                    string temp = ToString(type.GenericTypeArguments[i]);
-                    output += string.Format(c_Pattern, temp);
+                    output += ToString(type.GenericTypeArguments[0]);
+                    for (int i = 1; i < type.GenericTypeArguments.Length; i++)
+                    {
+                        string temp = ToString(type.GenericTypeArguments[i]);
+                        output += string.Format(c_Pattern, temp);
+                    }
                 }
+                else
+                {
+                    output += c_T;
+                }
+
                 output += c_TEnd;
             }
             return output;
@@ -274,6 +283,24 @@ namespace Syadeu.Collections
             else if (type.Equals(TypeOf<string>.Type)) return string.Empty;
 
             return null;
+        }
+
+        public static int GetDepthFrom(Type type, Type from)
+        {
+            if (!InheritsFrom(type, from))
+            {
+                throw new Exception();
+            }
+
+            int depth = 0;
+            Type currentType = type;
+            while (!currentType.Equals(from))
+            {
+                currentType = currentType.BaseType;
+                depth++;
+            }
+
+            return depth;
         }
 
         #region Generics

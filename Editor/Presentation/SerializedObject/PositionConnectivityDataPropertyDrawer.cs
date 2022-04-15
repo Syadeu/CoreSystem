@@ -37,34 +37,6 @@ namespace SyadeuEditor.Presentation
             return property.FindPropertyRelative(c_Str);
         }
 
-        private sealed class TestView : GraphView
-        {
-            public TestView()
-            {
-                this.AddManipulator(new ContentDragger());
-                this.AddManipulator(new SelectionDragger());
-                this.AddManipulator(new RectangleSelector());
-
-                AddElement(CreateEntryNode());
-            }
-
-            private Node CreateEntryNode()
-            {
-                TestNode node = new TestNode()
-                {
-                    title = "main",
-                };
-                node.SetPosition(new Rect(100, 200, 100, 150));
-
-                return node;
-            }
-        }
-        private sealed class TestNode : Node
-        {
-
-        }
-
-        
 
         #region Overrides
 
@@ -99,7 +71,7 @@ namespace SyadeuEditor.Presentation
         {
             float height = 0;
 
-            height += 100;
+            //height += 100;
 
             return height;
         }
@@ -116,39 +88,8 @@ namespace SyadeuEditor.Presentation
             //m_GraphView.StretchToParentWidth();
             if (Button(ref rect, "test"))
             {
-                GraphViewWindow.Open();
-            }
-
-            //GUI.Window(0, rect.Pop(100), GetGraph, "");
-        }
-
-        static void GetGraph(int unusedWindowID)
-        {
-            //GUI.DragWindow();
-        }
-
-        private sealed class GraphViewWindow : EditorWindow
-        {
-            private TestView m_GraphView;
-
-            public static void Open()
-            {
-                var window = EditorWindow.GetWindow<GraphViewWindow>(
-                    //TypeHelper.TypeOf<EntityWindow>.Type
-                    );
-                GetWindow<EntityWindow>().DockWindow(window, Docker.DockPosition.Bottom);
-            }
-
-            private void OnEnable()
-            {
-                m_GraphView = new TestView();
-                m_GraphView.StretchToParentSize();
-
-                rootVisualElement.Add(m_GraphView);
-            }
-            private void OnDisable()
-            {
-                rootVisualElement.Remove(m_GraphView);
+                ConnectivityGraphViewWindow.Open(connectivityProp);
+                //ConnectivityGraphViewWindow.Open<EntityWindow>(connectivityProp, Docker.DockPosition.Bottom);
             }
         }
     }
