@@ -11,6 +11,22 @@ namespace SyadeuEditor.Utilities
 {
     public sealed class CoreGUI : CLRSingleTone<CoreGUI>
     {
+        private Texture2D m_EmptyIcon;
+        public static Texture2D EmptyIcon
+        {
+            get
+            {
+                if (Instance.m_EmptyIcon == null)
+                {
+                    Texture2D temp = new Texture2D(1, 1);
+                    temp.SetPixel(0, 0, new Color(0, 0, 0, 0));
+
+                    Instance.m_EmptyIcon = temp;
+                }
+                return Instance.m_EmptyIcon;
+            }
+        }
+
         #region GUI Styles
 
         private static GUIStyle s_BoxButtonStyle = null;

@@ -28,8 +28,6 @@ namespace SyadeuEditor.Utilities
     /// </summary>
     public abstract class SearchProviderBase : ScriptableObject, ISearchWindowProvider
     {
-        public const string EntrySpace = "      ";
-
         public abstract List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context);
         public abstract bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context);
     }

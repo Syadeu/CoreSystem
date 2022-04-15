@@ -10,7 +10,7 @@ namespace SyadeuEditor.Presentation
     {
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = 0;
+            float height = GetHeightFrom(GetHashProperty(property));
 
             return DefaultHeight(property, label) + height;
         }

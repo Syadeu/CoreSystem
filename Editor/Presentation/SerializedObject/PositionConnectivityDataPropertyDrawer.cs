@@ -21,13 +21,13 @@ namespace SyadeuEditor.Presentation
             }
             public static SerializedProperty GetNodeArrayProperty(SerializedProperty connectivity)
             {
-                const string c_Str = "m_Nodes", c_Arr = "p_Array";
-                return connectivity.FindPropertyRelative(c_Str).FindPropertyRelative(c_Arr);
+                const string c_Str = "m_Nodes";
+                return connectivity.FindPropertyRelative(c_Str);
             }
-            public static SerializedProperty GetUserData(SerializedProperty connectivity)
+            public static SerializedProperty GetUserData(SerializedProperty node)
             {
                 const string c_Str = "m_UserData";
-                return connectivity.FindPropertyRelative(c_Str);
+                return node.FindPropertyRelative(c_Str);
             }
         }
 

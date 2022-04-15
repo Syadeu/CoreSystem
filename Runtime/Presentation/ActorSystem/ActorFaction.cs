@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
+using Syadeu.Collections;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Entities;
 using System;
@@ -31,9 +32,9 @@ namespace Syadeu.Presentation.Actor
         internal FactionType m_FactionType = FactionType.Player;
 
         [SerializeField, JsonProperty(Order = 1, PropertyName = "Allies")]
-        internal Reference<ActorFaction>[] m_Allies = Array.Empty<Reference<ActorFaction>>();
+        internal ArrayWrapper<Reference<ActorFaction>> m_Allies = Array.Empty<Reference<ActorFaction>>();
         [SerializeField, JsonProperty(Order = 2, PropertyName = "Enemies")]
-        internal Reference<ActorFaction>[] m_Enemies = Array.Empty<Reference<ActorFaction>>();
+        internal ArrayWrapper<Reference<ActorFaction>> m_Enemies = Array.Empty<Reference<ActorFaction>>();
 #pragma warning restore IDE0044 // Add readonly modifier
 
         [JsonIgnore] public FactionType FactionType => m_FactionType;

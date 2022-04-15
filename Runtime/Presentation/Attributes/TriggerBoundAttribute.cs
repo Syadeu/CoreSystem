@@ -44,7 +44,8 @@ namespace Syadeu.Presentation.Attributes
 
         [Header("Trigger Applies")]
         [Tooltip("만약 아무것도 없으면 타입 전부를 트리거합니다.")]
-        [JsonProperty(Order = 0, PropertyName = "TriggerOnly")] public Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
+        [JsonProperty(Order = 0, PropertyName = "TriggerOnly")] 
+        public ArrayWrapper<Reference<EntityBase>> m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
         [JsonProperty(Order = 1, PropertyName = "Inverse")] public bool m_Inverse;
 
         [Header("AABB Collision")]
@@ -55,9 +56,9 @@ namespace Syadeu.Presentation.Attributes
 
         [Header("TriggerActions")]
         [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
-        public Reference<TriggerAction>[] m_OnTriggerEnter = Array.Empty<Reference<TriggerAction>>();
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerEnter = Array.Empty<Reference<TriggerAction>>();
         [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
-        public Reference<TriggerAction>[] m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Layer")]
         [Tooltip("Entity 의 Raycasting Layer 를 지정할 수 있습니다.")]

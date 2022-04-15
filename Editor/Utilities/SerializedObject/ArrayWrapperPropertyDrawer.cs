@@ -222,7 +222,11 @@ namespace SyadeuEditor.Utilities
 
                 #endregion
 
-                if (OverrideSingleLineElementGUI || elementChildCount == 1)
+                if (OverrideSingleLineElementGUI)
+                {
+                    EditorGUI.PropertyField(elementRects[1], element, true);
+                }
+                else if (elementChildCount == 1)
                 {
                     EditorGUI.PropertyField(elementRects[1], element, GUIContent.none);
                 }
@@ -268,7 +272,7 @@ namespace SyadeuEditor.Utilities
 
                 #endregion
 
-                if (elementChildCount > 1 && element.isExpanded)
+                if (!OverrideSingleLineElementGUI &&  elementChildCount > 1 && element.isExpanded)
                 {
                     var child = element.Copy();
                     CoreGUI.DrawRect(
@@ -289,5 +293,8 @@ namespace SyadeuEditor.Utilities
     }
 
     [CustomPropertyDrawer(typeof(ArrayWrapper<>))]
-    public sealed class ArrayWrapperPropertyDrawer : ArrayWrapperPropertyDrawerBase { }
+    public sealed class ArrayWrapperPropertyDrawer : ArrayWrapperPropertyDrawerBase
+    {
+        protected override bool OverrideSingleLineElementGUI => true;
+    }
 }

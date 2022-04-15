@@ -38,93 +38,96 @@ namespace SyadeuEditor.Utilities
 
         internal class Helper
         {
-            private IConnectivity m_Connectivity;
+            //private IConnectivity m_Connectivity;
             private SerializedProperty m_Property;
-            private readonly bool m_IsConstructedWithProperty;
+            //private readonly bool m_IsConstructedWithProperty;
 
-            public Helper(IConnectivity connectivity)
-            {
-                m_Connectivity = connectivity;
-                m_IsConstructedWithProperty = false;
-            }
+            //public Helper(IConnectivity connectivity)
+            //{
+            //    m_Connectivity = connectivity;
+            //    m_IsConstructedWithProperty = false;
+            //}
             public Helper(SerializedProperty serializedProperty)
             {
                 m_Property = serializedProperty;
-                m_IsConstructedWithProperty = true;
+                //m_IsConstructedWithProperty = true;
             }
 
-            public bool IsSerializedProperty => m_IsConstructedWithProperty;
+            //public bool IsSerializedProperty => m_IsConstructedWithProperty;
             public Type ConnectivityType
             {
                 get
                 {
-                    if (m_IsConstructedWithProperty)
+                    //if (m_IsConstructedWithProperty)
                     {
                         return m_Property.GetSystemType();
                     }
-                    return m_Connectivity.GetType();
+                    //return m_Connectivity.GetType();
                 }
             }
             public Type UserDataType
             {
                 get
                 {
-                    if (m_IsConstructedWithProperty)
+                    //if (m_IsConstructedWithProperty)
                     {
                         return m_Property.FindPropertyRelative("m_UserData").GetFieldTypeType();
                     }
-                    return m_Connectivity.UserDataType;
+                    //return m_Connectivity.UserDataType;
                 }
             }
         }
-
-        private readonly Helper m_Helper;
-
-        private ConnectivityGraphView() { }
-        public ConnectivityGraphView(IConnectivity connectivity)
-        {
-            m_Helper = new Helper(connectivity);
-
-            this.AddManipulator(new ContentDragger());
-            this.AddManipulator(new SelectionDragger());
-            this.AddManipulator(new RectangleSelector());
-
-            var entryNode = PrivateCreateNode("Entry", Vector2.zero, connectivity.UserData);
-        }
-        public ConnectivityGraphView(SerializedProperty connectivity)
-        {
-            m_Helper = new Helper(connectivity);
-
-            this.AddManipulator(new ContentDragger());
-            this.AddManipulator(new SelectionDragger());
-            this.AddManipulator(new RectangleSelector());
-
-            var grid = new GridBackground();
-            Insert(0, grid);
-            grid.StretchToParentSize();
-
-            var entryNode = PrivateCreateNode("Entry", Vector2.zero, connectivity.FindPropertyRelative("m_UserData").Copy());
-        }
-
         public class Node : UnityEditor.Experimental.GraphView.Node
         {
+            private readonly Helper m_Helper;
+
             internal Node(Helper helper, object userData)
             {
-                //mainContainer.Add(new Label("test"));
-
+                m_Helper = helper;
                 this.userData = userData;
-                //if (helper.IsSerializedProperty)
-                //{
-                //    PropertyField propertyField = new PropertyField((SerializedProperty)userData, "asdasd");
-                //    inputContainer.Add(propertyField);
 
-                //    mainContainer.Add(new Label("test"));
-                //}
+                Button choiceBtt = new Button(AddChoicePort);
+                choiceBtt.text = "New";
+                Button delBtt = new Button(RemovePort);
+                delBtt.text = "Delete";
+
+                titleContainer.Add(choiceBtt);
+                titleContainer.Add(delBtt);
+
+                //if (m_Helper.IsSerializedProperty)
+                {
+                    contentContainer.Add(new IMGUIContainer(OnSerializedPropertyGUI));
+                }
                 //else
                 //{
-
+                //    contentContainer.Add(new IMGUIContainer(OnObjectGUI));
                 //}
             }
+
+            private void AddChoicePort()
+            {
+                var port = AddOutput();
+                var deleteButton = new Button(() => RemovePort(port))
+                {
+                    text = "X"
+                };
+                port.contentContainer.Add(deleteButton);
+            }
+
+            private void OnSerializedPropertyGUI()
+            {
+                if (userData == null)
+                {
+                    EditorGUILayout.HelpBox("UserData is null", MessageType.Error);
+                    return;
+                }
+
+                EditorGUILayout.PropertyField((SerializedProperty)userData);
+            }
+            //private void OnObjectGUI()
+            //{
+            //    throw new NotImplementedException();
+            //}
 
             public Port AddPort(
                 string name, Direction direction, Port.Capacity capacity, Type targeType, Orientation orientation = Orientation.Horizontal)
@@ -143,6 +146,88 @@ namespace SyadeuEditor.Utilities
 
                 return port;
             }
+            public void RemovePort()
+            {
+                if (outputContainer.childCount == 0) return;
+
+                outputContainer.RemoveAt(outputContainer.childCount - 1);
+
+                RefreshExpandedState();
+                RefreshPorts();
+            }
+            public void RemovePort(Port port)
+            {
+                if (outputContainer.childCount == 0) return;
+
+                outputContainer.Remove(port);
+
+                RefreshExpandedState();
+                RefreshPorts();
+            }
+
+            public Port AddOutput()
+            {
+                var outputPortCount = outputContainer.Query("connector").ToList().Count;
+
+                var port = AddPort(
+                    $"{outputPortCount} Next ({TypeHelper.ToString(m_Helper.ConnectivityType)})",
+                    Direction.Output, Port.Capacity.Single, m_Helper.ConnectivityType);
+
+                return port;
+            }
+            public Port AddInput()
+            {
+                var port = AddPort(
+                    $"Input ({TypeHelper.ToString(m_Helper.ConnectivityType)})",
+                    Direction.Input,
+                    Port.Capacity.Single,
+                    m_Helper.ConnectivityType);
+
+                return port;
+            }
+        }
+
+        private readonly Helper m_Helper;
+        private readonly Node m_EntryNode;
+
+        protected override bool canDeleteSelection
+        {
+            get
+            {
+                if (selection.Contains(m_EntryNode))
+                {
+                    return false;
+                }
+
+                return base.canDeleteSelection;
+            }
+        }
+
+        private ConnectivityGraphView() { }
+        public ConnectivityGraphView(SerializedProperty connectivity)
+        {
+            m_Helper = new Helper(connectivity);
+
+            SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
+
+            this.AddManipulator(new ContentDragger());
+            this.AddManipulator(new SelectionDragger());
+            this.AddManipulator(new RectangleSelector());
+
+            var grid = new GridBackground();
+            Insert(0, grid);
+            grid.StretchToParentSize();
+
+            SerializedProperty nodesProp = connectivity.FindPropertyRelative("m_Nodes");
+            if (nodesProp.arraySize == 0)
+            {
+                nodesProp.InsertArrayElementAtIndex(0);
+            }
+            SerializedProperty userDataProp = nodesProp.GetArrayElementAtIndex(0).FindPropertyRelative("m_UserData");
+
+            m_EntryNode = PrivateCreateNode("Entry", Vector2.zero, userDataProp.Copy());
+
+            
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -179,12 +264,7 @@ namespace SyadeuEditor.Utilities
             {
                 title = name
             };
-            var port = node.AddPort($"Next ({TypeHelper.ToString(m_Helper.ConnectivityType)})", Direction.Output, Port.Capacity.Single, m_Helper.ConnectivityType);
-
-            port.Add(new PropertyField((SerializedProperty)userData));
-
             AddElement(node);
-
             node.SetPosition(new Rect(pos, DefaultNodeSize));
 
             return node;
@@ -193,16 +273,13 @@ namespace SyadeuEditor.Utilities
         {
             Node node = PrivateCreateNode(name, pos, userData);
 
-            //node.mainContainer.Add(new Label("main"));
-            //node.topContainer.Add(new Label("top"));
-            //node.container.Add(new Label("top"));
-            //node.contentContainer.Add(new Label("content"));
+            var port = node.AddPort(
+                $"Input ({TypeHelper.ToString(m_Helper.ConnectivityType)})", 
+                Direction.Input, 
+                Port.Capacity.Single, 
+                m_Helper.ConnectivityType);
 
-            var port = node.AddPort($"Input ({TypeHelper.ToString(m_Helper.ConnectivityType)})", Direction.Input, Port.Capacity.Single, m_Helper.ConnectivityType);
-
-            port.contentContainer.Add(new Label("content"));
-
-            
+            node.StretchToParentSize();
 
             return node;
         }
@@ -213,21 +290,21 @@ namespace SyadeuEditor.Utilities
         #region Static 
 
         private static ConnectivityGraphViewWindow s_Window = null;
-        public static ConnectivityGraphViewWindow Open(IConnectivity connectivity)
-        {
-            if (s_Window == null)
-            {
-                s_Window = GetWindow<ConnectivityGraphViewWindow>();
+        //public static ConnectivityGraphViewWindow Open(IConnectivity connectivity)
+        //{
+        //    if (s_Window == null)
+        //    {
+        //        s_Window = GetWindow<ConnectivityGraphViewWindow>();
 
-                if (s_Window.EnableAutoDock)
-                {
-                    GetWindow(s_Window.AutoDockTarget).DockWindow(s_Window, s_Window.AutoDockPosition);
-                }
+        //        if (s_Window.EnableAutoDock)
+        //        {
+        //            GetWindow(s_Window.AutoDockTarget).DockWindow(s_Window, s_Window.AutoDockPosition);
+        //        }
 
-                s_Window.Initialize(connectivity);
-            }
-            return s_Window;
-        }
+        //        s_Window.Initialize(connectivity);
+        //    }
+        //    return s_Window;
+        //}
         public static ConnectivityGraphViewWindow Open(SerializedProperty connectivity)
         {
             if (s_Window == null)
@@ -268,18 +345,18 @@ namespace SyadeuEditor.Utilities
 
         #region Initialize
 
-        private void Initialize(IConnectivity connectivity)
-        {
-            m_GraphView = new ConnectivityGraphView(connectivity);
-            m_GraphView.StretchToParentSize();
+        //private void Initialize(IConnectivity connectivity)
+        //{
+        //    m_GraphView = new ConnectivityGraphView(connectivity);
+        //    m_GraphView.StretchToParentSize();
 
-            rootVisualElement.Add(m_GraphView);
-            Toolbar();
-            MiniMap();
-            BlackBoard();
+        //    rootVisualElement.Add(m_GraphView);
+        //    Toolbar();
+        //    MiniMap();
+        //    BlackBoard();
 
-            m_Initialized = true;
-        }
+        //    m_Initialized = true;
+        //}
         private void Initialize(SerializedProperty connectivity)
         {
             m_GraphView = new ConnectivityGraphView(connectivity);
@@ -334,16 +411,24 @@ namespace SyadeuEditor.Utilities
             var blackboard = new Blackboard(m_GraphView);
 
             blackboard.Add(new BlackboardSection { title = "Exposed Properties" });
-
+            //blackboard.addItemRequested = _blackboard =>
+            //{
+            //    m_GraphView.add
+            //};
+            blackboard.Add(new IMGUIContainer(OnBlackBoardGUI));
 
             var cords = m_GraphView.contentViewContainer.WorldToLocal(new Vector2(10, 30));
-            blackboard.SetPosition(new Rect(cords.x, cords.y, 200, 140));
+            blackboard.SetPosition(new Rect(cords.x, cords.y, 200, 300));
             m_GraphView.Add(blackboard);
         }
 
         private void OnNodeCreateButton()
         {
             var node = m_GraphView.CreateNode("Node", Event.current.mousePosition, null);
+        }
+        private void OnBlackBoardGUI()
+        {
+            EditorGUILayout.LabelField("testest label");
         }
     }
 }

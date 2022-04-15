@@ -38,7 +38,7 @@ namespace SyadeuEditor.Presentation
                     int index = ConstructGroups(types, list, entityType);
 
                     SearchTreeEntry entry = new SearchTreeEntry(
-                        new UnityEngine.GUIContent(EntrySpace + obj.Name));
+                        new UnityEngine.GUIContent(obj.Name, CoreGUI.EmptyIcon));
                     entry.userData = obj.Hash;
                     entry.level = list[index].level + 1;
 
@@ -59,7 +59,7 @@ namespace SyadeuEditor.Presentation
                     int index = ConstructGroups(types, list, entityType);
 
                     SearchTreeEntry entry = new SearchTreeEntry(
-                        new UnityEngine.GUIContent(EntrySpace + obj.Name));
+                        new UnityEngine.GUIContent(obj.Name, CoreGUI.EmptyIcon));
                     entry.userData = obj.Hash;
                     entry.level = list[index].level + 1;
 
@@ -68,8 +68,8 @@ namespace SyadeuEditor.Presentation
                 }
             }
 
-            list.Insert(0, new SearchTreeGroupEntry(new UnityEngine.GUIContent("References")));
-            list.Insert(1, new SearchTreeEntry(new UnityEngine.GUIContent(EntrySpace + "None"))
+            list.Insert(0, new SearchTreeGroupEntry(new GUIContent("References")));
+            list.Insert(1, new SearchTreeEntry(new GUIContent("None", CoreGUI.EmptyIcon))
             {
                 userData = Hash.Empty,
                 level = 1,
