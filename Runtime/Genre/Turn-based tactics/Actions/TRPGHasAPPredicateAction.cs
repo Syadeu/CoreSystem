@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGHasAPPredicateAction : TriggerPredicateAction
     {
-        [JsonProperty(Order = 0, PropertyName = "DesireActionPoint")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "DesireActionPoint")]
         private int m_DesireActionPoint = 0;
 
         protected override bool OnExecute(Entity<IObject> entity)

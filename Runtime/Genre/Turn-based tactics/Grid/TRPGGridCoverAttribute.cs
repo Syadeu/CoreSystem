@@ -36,12 +36,12 @@ namespace Syadeu.Presentation.TurnTable
         public sealed class DimensionInfo
         {
             [ReflectionSealedView]
-            [JsonProperty(Order = 0, PropertyName = "Direction")]
+            [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Direction")]
             public Direction m_Direction = Direction.NONE;
             [UnityEngine.Tooltip(
                 "오브젝트를 중심으로 얼마만큼 떨어져도 엄폐가능 타일로 표시할지 결정한다. " +
                 "기본값은 1, 0보다 작을 수 없고, 0일 경우에는 이 방면으로는 엄폐가 불가능함을 암시적 선언")]
-            [JsonProperty(Order = 1, PropertyName = "ForwardLength")]
+            [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "ForwardLength")]
             public int m_ForwardLength = 1;
 
             public DimensionInfo(Direction dir, int fLength)
@@ -53,9 +53,9 @@ namespace Syadeu.Presentation.TurnTable
 
         [Description(
             "true 일 경우, 파괴 불가능한 오브젝트로 선언되며, 어떠한 환경요소에도 영향받지 않는다.")]
-        [JsonProperty(Order = 0, PropertyName = "Immutable")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Immutable")]
         internal bool m_Immutable = false;
-        [JsonProperty(Order = 1, PropertyName = "DimensionInfomations")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "DimensionInfomations")]
         internal DimensionInfo[] m_DimensionInfomations = new DimensionInfo[4]
         {
             new DimensionInfo((Direction)(1 << 2), 1),

@@ -30,11 +30,11 @@ namespace Syadeu.Presentation.Actions
 
         [Header("TriggerActions")]
         [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "OnMatch")]
-        private Reference<TriggerAction>[] m_OnMatch = Array.Empty<Reference<TriggerAction>>();
+        private ArrayWrapper<Reference<TriggerAction>> m_OnMatch = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Actions")]
         [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "OnMatchAction")]
-        private Reference<InstanceAction>[] m_OnMatchAction = Array.Empty<Reference<InstanceAction>>();
+        private ArrayWrapper<Reference<InstanceAction>> m_OnMatchAction = Array.Empty<Reference<InstanceAction>>();
 
         protected override bool OnExecute(Entity<IObject> entity)
         {

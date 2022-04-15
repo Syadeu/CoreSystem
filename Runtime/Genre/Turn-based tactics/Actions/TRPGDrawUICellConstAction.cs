@@ -14,7 +14,7 @@ namespace Syadeu.Presentation.TurnTable
     [Guid("D0E18103-0E86-4ECC-BAC2-847EEDD343F4")]
     internal sealed class TRPGDrawUICellConstAction : ConstTriggerAction<int>
     {
-        [JsonProperty(Order = 0, PropertyName = "Enable")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Enable")]
         public bool m_Enable = false;
 
         protected override int Execute(InstanceID entity)

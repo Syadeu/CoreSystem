@@ -37,18 +37,18 @@ namespace Syadeu.Presentation.TurnTable
         INotifyComponent<TurnPlayerComponent>
     {
         [Header("Generals")]
-        [JsonProperty(Order = 0, PropertyName = "ActivateOnCreate")] internal bool m_ActivateOnCreate = true;
-        [JsonProperty(Order = 1, PropertyName = "TurnSpeed")] internal float m_TurnSpeed = 0;
-        [JsonProperty(Order = 2, PropertyName = "MaxActionPoint")] internal int m_MaxActionPoint = 6;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "ActivateOnCreate")] internal bool m_ActivateOnCreate = true;
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "TurnSpeed")] internal float m_TurnSpeed = 0;
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "MaxActionPoint")] internal int m_MaxActionPoint = 6;
 
         [Space]
         [Header("Actions")]
-        [JsonProperty(Order = 3, PropertyName = "OnStartTurn")]
-        internal Reference<TriggerAction>[] m_OnStartTurnActions = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 4, PropertyName = "OnEndTurn")]
-        internal Reference<TriggerAction>[] m_OnEndTurnActions = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 5, PropertyName = "OnResetTurn")]
-        internal Reference<TriggerAction>[] m_OnResetTurnActions = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "OnStartTurn")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnStartTurnActions = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 4, PropertyName = "OnEndTurn")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnEndTurnActions = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 5, PropertyName = "OnResetTurn")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnResetTurnActions = Array.Empty<Reference<TriggerAction>>();
     }
     [Preserve]
     internal sealed class TurnPlayerProcessor : AttributeProcessor<TurnPlayerAttribute>
