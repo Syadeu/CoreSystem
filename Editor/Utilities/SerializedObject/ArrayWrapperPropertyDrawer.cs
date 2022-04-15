@@ -193,6 +193,7 @@ namespace SyadeuEditor.Utilities
 
                 int elementChildCount = element.ChildCount();
                 bool enableExpand = elementChildCount > 1 && EnableExpanded;
+                if (!EnableExpanded) element.isExpanded = false;
 
                 // Indexer 
                 {
@@ -287,6 +288,6 @@ namespace SyadeuEditor.Utilities
         }
     }
 
-    [CustomPropertyDrawer(typeof(ArrayWrapper<>), true)]
+    [CustomPropertyDrawer(typeof(ArrayWrapper<>))]
     public sealed class ArrayWrapperPropertyDrawer : ArrayWrapperPropertyDrawerBase { }
 }

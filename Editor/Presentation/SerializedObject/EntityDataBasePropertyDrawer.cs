@@ -30,6 +30,14 @@ namespace SyadeuEditor.Presentation
 
             return DefaultHeight(property, label) + height;
         }
+        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            DrawDefault(ref rect, property, label);
+            
+            DrawEntityDataBase(ref rect, property, label);
+            DrawFrom(ref rect, GetAttributesProperty(property));
+        }
+
         protected float EntityDataBaseHeight(SerializedProperty property, GUIContent label)
         {
             float height = 0;
@@ -41,15 +49,6 @@ namespace SyadeuEditor.Presentation
 
             return height;
         }
-
-        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
-        {
-            DrawDefault(ref rect, property, label);
-            
-            DrawEntityDataBase(ref rect, property, label);
-            DrawFrom(ref rect, GetAttributesProperty(property));
-        }
-
         protected void DrawEntityDataBase(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             SerializedProperty attributeProperty = GetAttributesProperty(property);

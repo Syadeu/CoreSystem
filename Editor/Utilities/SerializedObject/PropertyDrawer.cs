@@ -36,20 +36,25 @@ namespace SyadeuEditor.Utilities
     public abstract class PropertyDrawer<T> : PropertyDrawer
     {
         protected virtual bool EnableHeightAnimation => false;
+        protected virtual float HeightAnimationSpeed => 8;
 
         private bool m_Initialized = false;
+
+        private float m_AutoHeight = 0;
         private AnimFloat m_Height;
 
         public override sealed float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = PropertyHeight(property, label);
-            
+
+            height += m_AutoHeight;
+
             if (EnableHeightAnimation)
             {
                 if (m_Height == null)
                 {
                     m_Height = new AnimFloat(height);
-                    m_Height.speed = 5;
+                    m_Height.speed = HeightAnimationSpeed;
                 }
 
                 m_Height.target = height;
@@ -69,6 +74,11 @@ namespace SyadeuEditor.Utilities
             }
 
             AutoRect rect = new AutoRect(position);
+            if (Event.current.type == EventType.Layout)
+            {
+                m_AutoHeight = 0;
+            }
+
             BeforePropertyGUI(ref rect, property, label);
 
             bool notEditable = false;
@@ -123,6 +133,74 @@ namespace SyadeuEditor.Utilities
         /// <param name="label"></param>
         protected virtual void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label) { }
 
+        #region GUI
+
+        protected void Line(ref AutoRect rect)
+        {
+            m_AutoHeight += 6;
+
+            rect.Pop(3);
+            CoreGUI.Line(rect.Pop(3));
+        }
+
+        protected void Label(ref AutoRect rect, string content)
+        {
+            m_AutoHeight += CoreGUI.GetLineHeight(1);
+
+            CoreGUI.Label(rect.Pop(CoreGUI.GetLineHeight(1)), content);
+        }
+
+        #region PropertyField
+
+        protected void PropertyField(ref AutoRect rect, SerializedProperty property)
+        {
+            float height = EditorGUI.GetPropertyHeight(property);
+            m_AutoHeight += height;
+
+            EditorGUI.PropertyField(rect.Pop(height), property);
+        }
+        protected void PropertyField(ref AutoRect rect, SerializedProperty property, bool includeChildren)
+        {
+            float height = EditorGUI.GetPropertyHeight(property, includeChildren);
+            m_AutoHeight += height;
+
+            EditorGUI.PropertyField(rect.Pop(height), property, includeChildren);
+        }
+        protected void PropertyField(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            float height = EditorGUI.GetPropertyHeight(property, label);
+            m_AutoHeight += height;
+
+            EditorGUI.PropertyField(rect.Pop(height), property, label);
+        }
+        protected void PropertyField(ref AutoRect rect, SerializedProperty property, GUIContent label, bool includeChildren)
+        {
+            float height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
+            m_AutoHeight += height;
+
+            EditorGUI.PropertyField(rect.Pop(height), property, label, includeChildren);
+        }
+
+        #endregion
+
+        protected bool Button(ref AutoRect rect, string text)
+        {
+            float height = CoreGUI.GetLineHeight(1);
+            m_AutoHeight += height;
+
+            Rect pos = rect.Pop(height);
+            return GUI.Button(pos, text);
+        }
+        protected bool Button(ref AutoRect rect, string text, float height)
+        {
+            m_AutoHeight += height;
+
+            Rect pos = rect.Pop(height);
+            return GUI.Button(pos, text);
+        }
+
+        #endregion
+
         #region Cache
 
         /// <summary>
@@ -151,6 +229,8 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region Utils
+
         [Obsolete]
         protected List<Rect> GetValueRect(Rect rawRect, GUIStyle style, params string[] names)
         {
@@ -169,5 +249,7 @@ namespace SyadeuEditor.Utilities
                 if (item.serializedObject == BaseObject)
                 { item.Repaint(); return; }
         }
+
+        #endregion
     }
 }
