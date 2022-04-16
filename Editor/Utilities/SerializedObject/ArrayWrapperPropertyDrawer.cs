@@ -73,14 +73,11 @@ namespace SyadeuEditor.Utilities
         protected override sealed float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty arr = GetArrayProperty(property);
-            float height = 28;
+            float height = 9;
 
             // 이 어레이 펼침
             if (property.isExpanded)
             {
-                height += 12;
-
-                //height += EditorGUI.GetPropertyHeight(arr, false);
                 if (arr.arraySize == 0)
                 {
                     height += CoreGUI.GetLineHeight(1);
@@ -92,13 +89,9 @@ namespace SyadeuEditor.Utilities
                         SerializedProperty element = arr.GetArrayElementAtIndex(i);
 
                         if (element.isExpanded) height += CoreGUI.GetLineHeight(1);
-                        height += GetElementHeight(element) + 3;
+                        height += GetElementHeight(element);
                     }
                 }
-            }
-            else
-            {
-                height += 2;
             }
 
             return height;
@@ -118,7 +111,8 @@ namespace SyadeuEditor.Utilities
             blockRect.height = rect.Current.height;
 
             CoreGUI.DrawBlock(EditorGUI.IndentedRect(blockRect), Color.black);
-            rect.Pop(3);
+            Space(ref rect, 3);
+            //rect.Pop(3);
 
             if (!DrawHeader(ref rect, property, arr, label)) // 15
             {
@@ -127,7 +121,8 @@ namespace SyadeuEditor.Utilities
             }
             m_ElementAlpha.target = 1;
 
-            rect.Pop(5); // 5
+            //rect.Pop(5); // 5
+            Space(ref rect, 5);
 
             using (new EditorGUI.IndentLevelScope(1))
             {
@@ -137,7 +132,8 @@ namespace SyadeuEditor.Utilities
                 }
                 else
                 {
-                    CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), m_ElementAlpha);
+                    Line(ref rect, m_ElementAlpha);
+
                     CoreGUI.Label(rect.Pop(), new GUIContent("Empty"), m_ElementAlpha, TextAnchor.MiddleCenter);
                 }
             }
@@ -145,15 +141,15 @@ namespace SyadeuEditor.Utilities
 
         private bool DrawHeader(ref AutoRect rect, SerializedProperty property, SerializedProperty array, GUIContent label)
         {
-            Rect headerRect = rect.Pop(17);
+            //Rect headerRect = rect.Pop(17);
+            property.isExpanded 
+                = LabelToggle(
+                    ref rect,
+                    property.isExpanded, 
+                    GetHeaderText(array, label), 15, TextAnchor.MiddleLeft,
+                    out var headerRect);
             Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 40, 40, 40);
             AutoRect.AlignRect(ref headerRect, rects[0]);
-
-            property.isExpanded 
-                = CoreGUI.LabelToggle(
-                    EditorGUI.IndentedRect(headerRect),
-                    property.isExpanded, 
-                    GetHeaderText(array, label), 15, TextAnchor.MiddleLeft);
 
             array.arraySize = EditorGUI.DelayedIntField(rects[0], array.arraySize);
 
@@ -175,7 +171,7 @@ namespace SyadeuEditor.Utilities
         {
             float[] elementRatio = new float[3] { 0.15f, 0.75f, 0.1f };
 
-            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), m_ElementAlpha);
+            Line(ref rect, m_ElementAlpha);
             
             for (int i = 0; i < property.arraySize; i++)
             {

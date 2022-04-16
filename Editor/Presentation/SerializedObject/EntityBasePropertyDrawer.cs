@@ -98,7 +98,8 @@ namespace SyadeuEditor.Presentation
             {
                 AutoRect modelAutoRect = new AutoRect(
                     rect.Pop(
-                    15 + 6 + CoreGUI.GetLineHeight(1) + EditorGUI.GetPropertyHeight(prefabProp) + 6
+                    15 + 6 + CoreGUI.GetLineHeight(1) + EditorGUI.GetPropertyHeight(prefabProp) + 6 +
+                    EditorGUI.GetPropertyHeight(centerProp) + EditorGUI.GetPropertyHeight(sizeProp)
                     ));
                 modelAutoRect.Pop(3);
                 modelAutoRect.Indent(3);
@@ -107,6 +108,8 @@ namespace SyadeuEditor.Presentation
                 modelAutoRect.Pop(6);
 
                 CoreGUI.DrawRect(EditorGUI.IndentedRect(modelAutoRect.TotalRect), Color.black);
+                EditorGUI.indentLevel++;
+
                 // Enable Cull / Static Batching
                 {
                     Rect boxRect = modelAutoRect.Pop(CoreGUI.GetLineHeight(1));
@@ -138,15 +141,20 @@ namespace SyadeuEditor.Presentation
                         prefabProp
                         );
                 }
+
+                // Center / Size
+                {
+                    EditorGUI.PropertyField(
+                        modelAutoRect.Pop(EditorGUI.GetPropertyHeight(centerProp)), centerProp);
+                    EditorGUI.PropertyField(
+                        modelAutoRect.Pop(EditorGUI.GetPropertyHeight(sizeProp)), sizeProp);
+                }
+
+                EditorGUI.indentLevel--;
             }
             
             /*                                                                                      */
-            // Center / Size
-            {
-                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(centerProp)), centerProp);
-                EditorGUI.PropertyField(rect.Pop(EditorGUI.GetPropertyHeight(sizeProp)), sizeProp);
-            }
-
+            
             rect.Pop(3);
             CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
         }

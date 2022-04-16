@@ -33,15 +33,22 @@ namespace SyadeuEditor.Presentation
             SerializedProperty
                 nameProp = GetNameProperty(property),
                 hashProp = GetHashProperty(property);
-            float height;
+            float height = 0;
+
+            Type targetType = property.GetSystemType();
+            DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
+            if (description != null)
+            {
+                height += c_HelpBoxHeight + 10;
+            }
 
             if (property.isExpanded)
             {
-                height = 30 + EditorGUI.GetPropertyHeight(nameProp) + EditorGUI.GetPropertyHeight(hashProp);
+                height += 30 + EditorGUI.GetPropertyHeight(nameProp) + EditorGUI.GetPropertyHeight(hashProp);
             }
             else
             {
-                height = CoreGUI.GetLineHeight(1);
+                height += CoreGUI.GetLineHeight(1);
             }
 
             foreach (var item in fieldInfo.GetCustomAttributes())
@@ -54,13 +61,6 @@ namespace SyadeuEditor.Presentation
                 {
                     height += c_HelpBoxHeight;
                 }
-            }
-
-            Type targetType = property.GetSystemType();
-            DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
-            if (description != null)
-            {
-                height += c_HelpBoxHeight;
             }
 
             return height;
@@ -82,8 +82,9 @@ namespace SyadeuEditor.Presentation
             DescriptionAttribute description = targetType.GetCustomAttribute<DescriptionAttribute>();
             if (description != null)
             {
-                EditorGUI.HelpBox(rect.Pop(c_HelpBoxHeight),
+                EditorGUI.HelpBox(EditorGUI.IndentedRect(rect.Pop(c_HelpBoxHeight)),
                     description.Description, MessageType.Info);
+                rect.Pop(10);
             }
 
             SerializedProperty

@@ -140,7 +140,20 @@ namespace SyadeuEditor.Utilities
             m_AutoHeight += 6;
 
             rect.Pop(3);
-            CoreGUI.Line(rect.Pop(3));
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+        }
+        protected void Line(ref AutoRect rect, AnimFloat alpha)
+        {
+            m_AutoHeight += 6;
+
+            rect.Pop(3);
+            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), alpha);
+        }
+        protected void Space(ref AutoRect rect, float pixel)
+        {
+            m_AutoHeight += pixel;
+
+            rect.Pop(pixel);
         }
 
         protected void Label(ref AutoRect rect, string content)
@@ -197,6 +210,25 @@ namespace SyadeuEditor.Utilities
 
             Rect pos = rect.Pop(height);
             return GUI.Button(pos, text);
+        }
+
+        protected bool LabelToggle(ref AutoRect rect, bool value, GUIContent content, int size, TextAnchor textAnchor)
+        {
+            GUIStyle style = CoreGUI.GetLabelStyle(textAnchor);
+            float width = EditorGUI.IndentedRect(rect.Current).width;
+
+            Rect pos = rect.Pop(style.CalcHeight(content, width));
+            m_AutoHeight += pos.height;
+            return CoreGUI.LabelToggle(pos, value, content, size, textAnchor);
+        }
+        protected bool LabelToggle(ref AutoRect rect, bool value, GUIContent content, int size, TextAnchor textAnchor, out Rect pos)
+        {
+            GUIStyle style = CoreGUI.GetLabelStyle(textAnchor);
+            float width = EditorGUI.IndentedRect(rect.Current).width;
+
+            pos = rect.Pop(style.CalcHeight(content, width));
+            m_AutoHeight += pos.height;
+            return CoreGUI.LabelToggle(pos, value, content, size, textAnchor);
         }
 
         #endregion

@@ -343,7 +343,18 @@ namespace SyadeuEditor
                 DrawConstraint(ref m_DefinedFMOD, CORESYSTEM_FMOD);
                 DrawConstraint(ref m_DefinedDotween, CORESYSTEM_DOTWEEN);
                 DrawConstraint(ref m_DefinedMotionMatching, CORESYSTEM_MOTIONMATCHING);
-                DrawConstraint(ref m_DefinedShapes, CORESYSTEM_SHAPES);
+
+                bool enableShapes;
+#if SHAPES_HDRP
+                enableShapes = true;
+#else
+                enableShapes = false;
+#endif
+                using (new EditorGUI.DisabledGroupScope(enableShapes))
+                {
+                    DrawConstraint(ref m_DefinedShapes, CORESYSTEM_SHAPES);
+                }
+                
                 DrawConstraint(ref m_DefinedBehaviorTree, CORESYSTEM_BEHAVIORTREE);
 
                 EditorGUI.indentLevel--;

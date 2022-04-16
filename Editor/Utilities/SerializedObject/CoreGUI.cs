@@ -38,7 +38,7 @@ namespace SyadeuEditor.Utilities
             {
                 if (s_BoxButtonStyle == null)
                 {
-                    s_BoxButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
+                    s_BoxButtonStyle = new GUIStyle("button");
                 }
                 return s_BoxButtonStyle;
             }
@@ -248,7 +248,7 @@ namespace SyadeuEditor.Utilities
                     bool isHover = rect.Contains(Event.current.mousePosition);
 
                     Color origin = GUI.color;
-                    GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .7f : 0);
+                    GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .6f : 0);
                     BoxButtonStyle.Draw(rect,
                         isHover, isActive: true, on: true, false);
                     GUI.color = origin;
