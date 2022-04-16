@@ -14,7 +14,9 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Data;
+using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -41,6 +43,23 @@ namespace Syadeu.Presentation.Render
         internal bool m_BindInputSystem = false;
         [SerializeField, JsonProperty(Order = 5, PropertyName = "InputAction")]
         internal InputAction m_InputAction;
+
+        [SerializeField, JsonProperty(Order = 6, PropertyName = "EnableIf")]
+        internal ConstActionReferenceArray<bool> m_EnableIf = Array.Empty<ConstActionReference<bool>>();
+#endif
+
+        [JsonIgnore, NonSerialized]
+        internal UIDocument m_UIDocument = null;
+
+#if ENABLE_INPUT_SYSTEM
+        internal void M_InputAction_performed(InputAction.CallbackContext obj)
+        {
+            if (!m_EnableIf.True()) return;
+
+            bool current = m_UIDocument.rootVisualElement.visible;
+
+            m_UIDocument.rootVisualElement.visible = !current;
+        }
 #endif
     }
     internal sealed class UIDocumentConstantDataProcessor : EntityProcessor<UIDocumentConstantData>
@@ -51,8 +70,21 @@ namespace Syadeu.Presentation.Render
 
             if (obj.m_CreateOnLoad)
             {
-                ScreenCanvasSystem.CreateVisualElement(obj.m_PanelSettings, obj.m_UXMLAsset);
+                obj.m_UIDocument = ScreenCanvasSystem.CreateVisualElement(obj.m_PanelSettings, obj.m_UXMLAsset, obj.m_CreateWithOpen);
             }
+
+#if ENABLE_INPUT_SYSTEM
+            if (obj.m_BindInputSystem)
+            {
+                obj.m_InputAction.performed += obj.M_InputAction_performed;
+                obj.m_InputAction.Enable();
+            }
+#endif
+        }
+
+        protected override void OnDestroy(UIDocumentConstantData obj)
+        {
+            base.OnDestroy(obj);
         }
     }
 }

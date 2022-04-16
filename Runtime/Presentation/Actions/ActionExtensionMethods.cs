@@ -498,6 +498,34 @@ namespace Syadeu.Presentation.Actions
         {
             return (TValue)Execute((IConstActionReference)action);
         }
+
+        /// <summary>
+        /// 전부 참을 반환해야 <see langword="true"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool True(this ConstActionReferenceArray<bool> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                if (!action[i].Execute()) return false;
+            }
+            return true;
+        }
+        /// <summary>
+        /// 전부 거짓을 반환해야 <see langword="true"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool False(this ConstActionReferenceArray<bool> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                if (action[i].Execute()) return false;
+            }
+            return true;
+        }
+
         public static TValue Execute<TValue>(this ConstActionReference<TValue> action, InstanceID entity)
         {
             return (TValue)Execute((IConstActionReference)action, entity);

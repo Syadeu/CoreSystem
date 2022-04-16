@@ -57,7 +57,11 @@ namespace Syadeu.Collections
         [JsonConstructor]
         public ArrayWrapper(IEnumerable<T> attributes)
         {
-            p_Array = attributes.ToArray();
+            if (attributes.Any())
+            {
+                p_Array = attributes.ToArray();
+            }
+            else p_Array = Array.Empty<T>();
         }
 
         public object Clone()

@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 #endif
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
-            
+
             if (turnPlayer.ActionPoint + m_AddActionPoint < 0)
             {
                 turnPlayer.ActionPoint = 0;

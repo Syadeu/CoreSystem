@@ -22,6 +22,8 @@ namespace Syadeu.Presentation
     [Serializable, JsonArray]
     public sealed class ConstActionReferenceArray : ArrayWrapper<ConstActionReference>, IConstActionReferenceArray
     {
+        public static new ConstActionReferenceArray Empty => Array.Empty<ConstActionReference>();
+
         public ConstActionReferenceArray() : base() { }
         public ConstActionReferenceArray(IEnumerable<ConstActionReference> constActions) : base(constActions) { }
 
@@ -31,6 +33,8 @@ namespace Syadeu.Presentation
     [Serializable, JsonArray]
     public sealed class ConstActionReferenceArray<TValue> : ArrayWrapper<ConstActionReference<TValue>>, IConstActionReferenceArray
     {
+        public static new ConstActionReferenceArray<TValue> Empty => Array.Empty<ConstActionReference<TValue>>();
+
         public ConstActionReferenceArray() { }
         [JsonConstructor]
         public ConstActionReferenceArray(IEnumerable<ConstActionReference<TValue>> constActions) : base(constActions) { }

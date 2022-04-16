@@ -11,7 +11,7 @@ using System.Collections.Generic;
 namespace SyadeuEditor.Presentation
 {
     [CustomPropertyDrawer(typeof(IConstActionReference), true)]
-    internal sealed class ConstActionReferenPropertyDrawer : PropertyDrawer<IConstActionReference>
+    internal sealed class ConstActionReferencePropertyDrawer : PropertyDrawer<IConstActionReference>
     {
         private Type m_TargetType;
 
@@ -61,7 +61,14 @@ namespace SyadeuEditor.Presentation
                 if (iter.Any())
                 {
                     currentActionType = iter.First();
-                    targetName = TypeHelper.ToString(currentActionType);
+
+                    DisplayNameAttribute nameAtt = currentActionType.GetCustomAttribute<DisplayNameAttribute>();
+                    if (nameAtt != null)
+                    {
+                        targetName = nameAtt.DisplayName.Split('/').Last();
+                    }
+                    else targetName = TypeHelper.ToString(currentActionType);
+
                     description = currentActionType.GetCustomAttribute<DescriptionAttribute>();
                 }
                 else targetName = "None";

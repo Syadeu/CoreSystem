@@ -1,6 +1,7 @@
 ﻿using Syadeu.Collections;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
@@ -602,8 +603,19 @@ namespace SyadeuEditor.Utilities
             {
                 return EditorGUI.Vector3Field(rect, label, (Vector3)(value));
             }
+            else if (type.IsEnum)
+            {
+                if (type.GetCustomAttribute<FlagsAttribute>() != null)
+                {
+                    return EditorGUI.EnumFlagsField(rect, label, (Enum)value);
+                }
+                else
+                {
+                    return EditorGUI.EnumPopup(rect, label, (Enum)value);
+                }
+            }
 
-            throw new NotImplementedException();
+            throw new NotImplementedException($"{type.Name}");
         }
 
         #endregion
