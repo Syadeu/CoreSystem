@@ -44,8 +44,13 @@ namespace Syadeu.Presentation.Render
         [SerializeField, JsonProperty(Order = 5, PropertyName = "InputAction")]
         internal InputAction m_InputAction;
 
+        [Space]
         [SerializeField, JsonProperty(Order = 6, PropertyName = "EnableIf")]
         internal ConstActionReferenceArray<bool> m_EnableIf = Array.Empty<ConstActionReference<bool>>();
+        [SerializeField, JsonProperty(Order = 6, PropertyName = "OnOpenedConstAction")]
+        internal ConstActionReferenceArray m_OnOpenedConstAction = Array.Empty<ConstActionReference>();
+        [SerializeField, JsonProperty(Order = 6, PropertyName = "OnClosedConstAction")]
+        internal ConstActionReferenceArray m_OnClosedConstAction = Array.Empty<ConstActionReference>();
 #endif
 
         [JsonIgnore, NonSerialized]
@@ -56,9 +61,13 @@ namespace Syadeu.Presentation.Render
         {
             if (!m_EnableIf.True()) return;
 
-            bool current = m_UIDocument.rootVisualElement.visible;
+            bool current = m_UIDocument.rootVisualElement.enabledInHierarchy;
 
             m_UIDocument.rootVisualElement.visible = !current;
+            m_UIDocument.rootVisualElement.SetEnabled(!current);
+
+            if (!current) m_OnOpenedConstAction.Execute();
+            else m_OnClosedConstAction.Execute();
         }
 #endif
     }

@@ -20,6 +20,7 @@ using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -28,6 +29,7 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorWeaponItemAttribute : ActorItemAttribute,
         INotifyComponent<ActorWeaponItemComponent>
     {
+        [Serializable]
         public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>
         {
             [JsonProperty(Order = 1, PropertyName = "UseBone")]
@@ -42,13 +44,13 @@ namespace Syadeu.Presentation.Actor
             public float3 m_WeaponRotOffset = float3.zero;
         }
 
-        [JsonProperty(Order = -499, PropertyName = "Damage")]
+        [SerializeField, JsonProperty(Order = -499, PropertyName = "Damage")]
         private float m_Damage;
 
         [Space, Header("Weapon Position")]
-        [JsonProperty(Order = -400, PropertyName = "HolsterPosition")]
+        [SerializeField, JsonProperty(Order = -400, PropertyName = "HolsterPosition")]
         internal WeaponPositionProperty m_HolsterPosition = new WeaponPositionProperty();
-        [JsonProperty(Order = -399, PropertyName = "DrawPosition")]
+        [SerializeField, JsonProperty(Order = -399, PropertyName = "DrawPosition")]
         internal WeaponPositionProperty m_DrawPosition = new WeaponPositionProperty();
 
         [JsonIgnore] public float Damage => m_Damage;

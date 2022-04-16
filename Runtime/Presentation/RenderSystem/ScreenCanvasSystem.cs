@@ -196,7 +196,7 @@ namespace Syadeu.Presentation.Render
         }
 
         public static UIDocument CreateVisualElement(
-            PrefabReference<PanelSettings> settings, PrefabReference<VisualTreeAsset> asset, bool visible)
+            PrefabReference<PanelSettings> settings, PrefabReference<VisualTreeAsset> asset, bool enable)
         {
 #if DEBUG_MODE
             const string c_NameFormat = "UIDocument({0})";
@@ -217,7 +217,8 @@ namespace Syadeu.Presentation.Render
 #if DEBUG_MODE
                 obj.name = string.Format(c_NameFormat, temp.visualTreeAsset.name);
 #endif
-                temp.rootVisualElement.visible = visible;
+                temp.rootVisualElement.visible = enable;
+                temp.rootVisualElement.SetEnabled(enable);
             };
 
             return temp;
