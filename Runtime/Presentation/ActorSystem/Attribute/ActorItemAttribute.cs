@@ -31,23 +31,8 @@ namespace Syadeu.Presentation.Actor
     /// <see cref="ActorEntity"/> 의 <see cref="ActorInventoryProvider"/> 에서 사용되는 모든 아이템입니다.
     /// </summary>
     [DisplayName("Attribute: Actor Item")]
-    public class ActorItemAttribute : AttributeBase, IActorItemAttribute, INotifyComponent<ActorItemComponent>
+    public sealed class ActorItemAttribute : ActorItemAttributeBase, INotifyComponent<ActorItemComponent>
     {
-        [Serializable]
-        public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
-        {
-            [JsonProperty(Order = 0, PropertyName = "IconImage")]
-            public ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
-        }
-
-        [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
-        private Reference<ActorItemType> m_ItemType = Reference<ActorItemType>.Empty;
-
-        [Space]
-        [SerializeField, JsonProperty(Order = -499, PropertyName = "GraphicsInformation")]
-        private GraphicsInformation m_GeneralInfo = new GraphicsInformation();
-
-        [JsonIgnore] public Reference<ActorItemType> ItemType => m_ItemType;
     }
     internal sealed class ActorItemAttributeProcessor : AttributeProcessor<ActorItemAttribute>
     {
@@ -59,5 +44,35 @@ namespace Syadeu.Presentation.Actor
     public struct ActorItemComponent : IEntityComponent
     {
         public bool m_Equipable;
+    }
+
+    public abstract class ActorItemAttributeBase : AttributeBase, IActorItemAttribute
+    {
+        [Serializable]
+        public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
+        {
+            [JsonProperty(Order = 0, PropertyName = "IconImage")]
+            public ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
+        }
+        [Serializable]
+        public sealed class GeneralInfomation : PropertyBlock<GeneralInfomation>
+        {
+            [Tooltip("아이템의 무게")]
+            [JsonProperty(Order = 0, PropertyName = "Weight")]
+            public float m_Weight = 0;
+
+            [Tooltip("가방내 아이템 크기")]
+            [JsonProperty(Order = 1, PropertyName = "ItemSpace")]
+            public LinkedBlock m_ItemSpace = new LinkedBlock();
+        }
+
+        [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
+        protected Reference<ActorItemType> p_ItemType = Reference<ActorItemType>.Empty;
+
+        [Space]
+        [SerializeField, JsonProperty(Order = -499, PropertyName = "GraphicsInformation")]
+        protected GraphicsInformation p_GeneralInfo = new GraphicsInformation();
+
+        [JsonIgnore] public Reference<ActorItemType> ItemType => p_ItemType;
     }
 }

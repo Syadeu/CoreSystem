@@ -20,6 +20,7 @@ using Newtonsoft.Json;
 using Syadeu.Presentation.Data;
 using Syadeu.Collections;
 using System.ComponentModel;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -29,9 +30,10 @@ namespace Syadeu.Presentation.Actor
         [Description(
             "얼마나 겹쳐질 수 있는지 결정합니다. " +
             "1보다 작을 수 없습니다.")]
-        [JsonProperty(Order = 0, PropertyName = "MaximumCount")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "MaximumCount")]
+        [Range(0, 999)]
         private int m_MaximumMultipleCount = 1;
-        [JsonProperty(Order = 1, PropertyName = "Equipable")]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Equipable")]
         private HumanBody m_Equipable = HumanBody.None;
 
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;

@@ -21,12 +21,14 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using System;
+using System.ComponentModel;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorWeaponItemAttribute : ActorItemAttribute,
+    [DisplayName("Attribute: Actor Weapon Item")]
+    public sealed class ActorWeaponItemAttribute : ActorItemAttributeBase, IActorItemAttribute,
         INotifyComponent<ActorWeaponItemComponent>
     {
         [Serializable]
