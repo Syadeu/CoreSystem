@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Seung Ha Kim
+﻿// Copyright 2021 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Syadeu.Presentation.Render
+using Newtonsoft.Json;
+using System;
+
+namespace Syadeu.Collections.Converters
 {
-    public interface IPlayable
+    /// <summary>
+    /// <see cref="JsonConverter{T}"/> 를 시스템에 등록합니다.
+    /// </summary>
+    public sealed class CustomJsonConverterAttribute : Attribute
     {
-        void Play();
     }
 }

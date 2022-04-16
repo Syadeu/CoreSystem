@@ -25,7 +25,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorWeaponItemAttribute : AttributeBase, IActorItemAttribute,
+    public sealed class ActorWeaponItemAttribute : ActorItemAttribute,
         INotifyComponent<ActorWeaponItemComponent>
     {
         public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>
@@ -42,8 +42,6 @@ namespace Syadeu.Presentation.Actor
             public float3 m_WeaponRotOffset = float3.zero;
         }
 
-        [JsonProperty(Order = -500, PropertyName = "ItemType")]
-        private Reference<ActorItemType> m_ItemType = Reference<ActorItemType>.Empty;
         [JsonProperty(Order = -499, PropertyName = "Damage")]
         private float m_Damage;
 
@@ -53,7 +51,6 @@ namespace Syadeu.Presentation.Actor
         [JsonProperty(Order = -399, PropertyName = "DrawPosition")]
         internal WeaponPositionProperty m_DrawPosition = new WeaponPositionProperty();
 
-        [JsonIgnore] public Reference<ActorItemType> ItemType => m_ItemType;
         [JsonIgnore] public float Damage => m_Damage;
     }
     public struct ActorWeaponItemComponent : IEntityComponent

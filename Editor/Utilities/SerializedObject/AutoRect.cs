@@ -131,8 +131,14 @@ namespace SyadeuEditor.Utilities
         {
             Rect[] array = new Rect[width.Length];
 
+            float widthSum = 0;
+            for (int i = 0; i < width.Length; i++)
+            {
+                widthSum += width[i];
+            }
+
             array[0] = rect;
-            array[0].x = rect.x + rect.width - (width[0] * array.Length);
+            array[0].x = rect.x + rect.width - widthSum;
             array[0].width = width[0];
 
             float nextX = array[0].x + width[0];

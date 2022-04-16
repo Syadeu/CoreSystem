@@ -21,6 +21,7 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
+using System;
 using System.ComponentModel;
 using UnityEngine;
 
@@ -30,19 +31,20 @@ namespace Syadeu.Presentation.Actor
     /// <see cref="ActorEntity"/> 의 <see cref="ActorInventoryProvider"/> 에서 사용되는 모든 아이템입니다.
     /// </summary>
     [DisplayName("Attribute: Actor Item")]
-    public sealed class ActorItemAttribute : AttributeBase, IActorItemAttribute, INotifyComponent<ActorItemComponent>
+    public class ActorItemAttribute : AttributeBase, IActorItemAttribute, INotifyComponent<ActorItemComponent>
     {
+        [Serializable]
         public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
         {
             [JsonProperty(Order = 0, PropertyName = "IconImage")]
-            public PrefabReference<Sprite> m_IconImage = PrefabReference<Sprite>.None;
+            public ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
         }
 
-        [JsonProperty(Order = -499, PropertyName = "ItemType")]
+        [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
         private Reference<ActorItemType> m_ItemType = Reference<ActorItemType>.Empty;
 
         [Space]
-        [JsonProperty(Order = -498, PropertyName = "GraphicsInformation")]
+        [SerializeField, JsonProperty(Order = -499, PropertyName = "GraphicsInformation")]
         private GraphicsInformation m_GeneralInfo = new GraphicsInformation();
 
         [JsonIgnore] public Reference<ActorItemType> ItemType => m_ItemType;

@@ -38,7 +38,7 @@ namespace SyadeuEditor.Utilities
         }
         protected virtual float GetElementHeight(SerializedProperty element)
         {
-            float height = EditorGUI.GetPropertyHeight(element);
+            float height = EditorGUI.GetPropertyHeight(element, element.isExpanded);
             return height;
         }
 
@@ -141,25 +141,31 @@ namespace SyadeuEditor.Utilities
 
         private bool DrawHeader(ref AutoRect rect, SerializedProperty property, SerializedProperty array, GUIContent label)
         {
-            //Rect headerRect = rect.Pop(17);
-            property.isExpanded 
-                = LabelToggle(
-                    ref rect,
-                    property.isExpanded, 
-                    GetHeaderText(array, label), 15, TextAnchor.MiddleLeft,
-                    out var headerRect);
+            const string c_Plus = "+", c_Minus = "-";
+
+            GUIContent headerText = GetHeaderText(array, label);
+            float height = GetLabelToggleHeight(in rect, headerText, 15, TextAnchor.MiddleLeft);
+            Rect headerRect = EditorGUI.IndentedRect(rect.Pop(height));
+            AddAutoHeight(height);
+
             Rect[] rects = AutoRect.DivideWithFixedWidthRight(headerRect, 40, 40, 40);
             AutoRect.AlignRect(ref headerRect, rects[0]);
 
+            property.isExpanded 
+                = CoreGUI.LabelToggle(
+                    headerRect,
+                    property.isExpanded,
+                    headerText, 15, TextAnchor.MiddleLeft);
+
             array.arraySize = EditorGUI.DelayedIntField(rects[0], array.arraySize);
 
-            if (GUI.Button(rects[1], "+"))
+            if (GUI.Button(rects[1], c_Plus))
             {
                 array.InsertArrayElementAtIndex(array.arraySize);
             }
             using (new EditorGUI.DisabledGroupScope(array.arraySize == 0))
             {
-                if (GUI.Button(rects[2], "-"))
+                if (GUI.Button(rects[2], c_Minus))
                 {
                     array.DeleteArrayElementAtIndex(array.arraySize - 1);
                 }
@@ -220,7 +226,7 @@ namespace SyadeuEditor.Utilities
 
                 if (OverrideSingleLineElementGUI)
                 {
-                    EditorGUI.PropertyField(elementRects[1], element, true);
+                    EditorGUI.PropertyField(elementRects[1], element, new GUIContent(element.displayName), element.isExpanded);
                 }
                 else if (elementChildCount == 1)
                 {
@@ -284,7 +290,8 @@ namespace SyadeuEditor.Utilities
                 }
             }
 
-            CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+            //CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
+            Line(ref rect);
         }
     }
 

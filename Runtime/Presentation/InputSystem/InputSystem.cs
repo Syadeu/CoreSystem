@@ -192,6 +192,16 @@ namespace Syadeu.Presentation.Input
             m_CreatedInputActions.Add(action);
             return action;
         }
+        /// <summary>
+        /// 키보드 액션을 생성하여 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 사용자는 사용하기 위해 <see cref="InputAction.Enable"/> 을 호출해야합니다. 
+        /// 사용이 모두 끝났으면 <see cref="RemoveBinding(InputAction)"/> 을 통해 반드시 제거해야합니다.
+        /// </remarks>
+        /// <param name="keyCode"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public InputAction GetKeyboardBinding(Key keyCode, InputActionType type)
         {
             InputAction action = new InputAction(binding:

@@ -15,7 +15,6 @@ namespace SyadeuEditor.Presentation
     public sealed class PrefabReferencePropertyDrawer : PropertyDrawer<IPrefabReference>
     {
         private bool m_Changed = false;
-        //private ReferenceAsset m_ChangedTarget;
 
         private static SerializedProperty GetIndexProperty(SerializedProperty property)
         {
@@ -36,26 +35,19 @@ namespace SyadeuEditor.Presentation
         }
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return base.PropertyHeight(property, label) + 10;
+            return CoreGUI.GetLineHeight(1);
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             if (m_Changed)
             {
-                //SerializedPropertyHelper.SetPrefabReference(
-                //    GetIndexProperty(property), GetSubAssetNameProperty(property),
-                //    m_ChangedTarget.index, m_ChangedTarget.subAssetName
-                //    );
-
                 GUI.changed = true;
                 m_Changed = false;
             }
         }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            rect.Pop(5f);
-
             #region Setup
 
             SerializedProperty
@@ -73,7 +65,7 @@ namespace SyadeuEditor.Presentation
             #region Rect Setup
             
             Rect 
-                propertyRect = rect.Pop(),
+                propertyRect = EditorGUI.IndentedRect(rect.Pop()),
                 buttonRect, expandRect;
 
             if (!property.IsInArray())
@@ -110,7 +102,7 @@ namespace SyadeuEditor.Presentation
 
             #endregion
 
-            bool clicked = CoreGUI.BoxButton(EditorGUI.IndentedRect(buttonRect), displayName, ColorPalettes.PastelDreams.Mint, () =>
+            bool clicked = CoreGUI.BoxButton(buttonRect, displayName, ColorPalettes.PastelDreams.Mint, () =>
             {
                 GenericMenu menu = new GenericMenu();
 
@@ -135,29 +127,29 @@ namespace SyadeuEditor.Presentation
                 menu.ShowAsContext();
             });
 
-            //bool disable = currentValue.IsNone() || !currentValue.IsValid();
-            //using (new EditorGUI.DisabledGroupScope(disable))
-            //{
-            //    string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
-            //    property.isExpanded = CoreGUI.BoxToggleButton(
-            //        expandRect,
-            //        property.isExpanded,
-            //        new GUIContent(str),
-            //        ColorPalettes.PastelDreams.TiffanyBlue,
-            //        ColorPalettes.PastelDreams.HotPink
-            //        );
+            bool disable = currentValue.IsNone() || !currentValue.IsValid();
+            using (new EditorGUI.DisabledGroupScope(disable))
+            {
+                string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
+                property.isExpanded = CoreGUI.BoxToggleButton(
+                    expandRect,
+                    property.isExpanded,
+                    new GUIContent(str),
+                    ColorPalettes.PastelDreams.TiffanyBlue,
+                    ColorPalettes.PastelDreams.HotPink
+                    );
 
-            //    if (property.isExpanded)
-            //    {
-            //        Editor.CreateCachedEditor(currentValue.GetEditorAsset(), null, ref editor);
+                //if (property.isExpanded)
+                //{
+                //    Editor.CreateCachedEditor(currentValue.GetEditorAsset(), null, ref editor);
 
-            //        using (new EditorGUI.DisabledGroupScope(true))
-            //        {
-            //            editor.DrawHeader();
-            //            editor.OnInspectorGUI();
-            //        }
-            //    }
-            //}
+                //    using (new EditorGUI.DisabledGroupScope(true))
+                //    {
+                //        editor.DrawHeader();
+                //        editor.OnInspectorGUI();
+                //    }
+                //}
+            }
 
             //if (GUI.Button(propRects[1], displayName, EditorStyleUtilities.SelectorStyle))
             if (clicked)

@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
+using Newtonsoft.Json;
 
-#if UNITY_EDITOR
-#endif
-
-namespace Syadeu.Collections
+namespace Syadeu.Collections.Converters
 {
-    public sealed class CustomJsonConverterAttribute : Attribute
+    public static class JsonConverterExtensions
     {
-        public CustomJsonConverterAttribute()
+        public static void WriteProperty<T>(this JsonWriter t, string name, T value)
         {
+            t.WritePropertyName(name);
+            t.WriteValue(value);
         }
     }
 }

@@ -32,11 +32,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Scripting;
+using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
 namespace Syadeu.Presentation.TurnTable
 {
-    public sealed class TRPGSelectionSystem : PresentationSystemEntity<TRPGSelectionSystem>
+    public sealed class TRPGSelectionSystem : PresentationSystemEntity<TRPGSelectionSystem>,
+        INotifySystemModule<DisplaySelectionInventoryModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -456,6 +459,91 @@ namespace Syadeu.Presentation.TurnTable
                 other.PathlineFadeModifier = 0;
                 other.SelectionFadeModifier = 0;
             }
+        }
+    }
+
+    /// <summary>
+    /// <see cref="TRPGSelectionSystem"/> 을 통해 선택된 타겟의 인벤토리 UI 를 표시하는 모듈입니다.
+    /// </summary>
+    public sealed class DisplaySelectionInventoryModule : PresentationSystemModule<TRPGSelectionSystem>
+    {
+        private InputAction m_IKey;
+
+        private InputSystem m_InputSystem;
+
+        public bool OpenInWorldSpace { get; set; } = true;
+
+        #region Presentation Methods
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+        }
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
+        }
+        protected override void OnDispose()
+        {
+            m_InputSystem = null;
+        }
+
+        protected override void OnStartPresentation()
+        {
+            m_IKey = m_InputSystem.GetKeyboardBinding(Key.I, InputActionType.Button);
+
+            m_IKey.performed += OnInventoryKeyPressed;
+
+            m_IKey.Enable();
+        }
+
+        private void OnInventoryKeyPressed(InputAction.CallbackContext obj)
+        {
+            Open(System.CurrentSelection);
+        }
+
+        #endregion
+
+        public void Open(InstanceID entity)
+        {
+            if (!PrivateValidate(entity))
+            {
+                "validate falied".ToLogError();
+                return;
+            }
+
+            if (OpenInWorldSpace)
+            {
+                PrivateOpenInWorldSpace(entity);
+                return;
+            }
+
+            "not implemented".ToLogError();
+        }
+        private bool PrivateValidate(InstanceID entity)
+        {
+            if (!entity.IsValid())
+            {
+                "current selection is none".ToLog();
+                return false;
+            }
+            else if (!entity.IsActorEntity())
+            {
+                return false;
+            }
+            else if (!entity.HasComponent<ActorInventoryComponent>())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private void PrivateOpenInWorldSpace(InstanceID entity)
+        {
+            ProxyTransform tr = entity.GetTransform();
+
+
         }
     }
 }

@@ -136,11 +136,24 @@ namespace Syadeu.Presentation
         /// <param name="name"></param>
         /// <param name="isStatic"></param>
         /// <returns></returns>
-        protected UnityEngine.GameObject CreateGameObject(string name, bool isStatic)
+        protected static UnityEngine.GameObject CreateGameObject(string name, bool isStatic)
         {
             CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
 
             UnityEngine.GameObject obj = new UnityEngine.GameObject(name);
+
+            if (isStatic)
+            {
+                DontDestroyOnLoad(obj);
+            }
+
+            return obj;
+        }
+        protected static UnityEngine.GameObject CreateGameObject( bool isStatic)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(DontDestroyOnLoad), Syadeu.Internal.ThreadInfo.Unity);
+
+            UnityEngine.GameObject obj = new UnityEngine.GameObject();
 
             if (isStatic)
             {

@@ -25,6 +25,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 namespace Syadeu.Presentation.Render
 {
@@ -37,6 +38,8 @@ namespace Syadeu.Presentation.Render
 
         private Canvas m_Canvas;
         private GraphicRaycaster m_CanvasRaycaster;
+
+        private UIDocument m_UIDocument;
 
         private SceneSystem m_SceneSystem;
         private RenderSystem m_RenderSystem;
@@ -118,7 +121,7 @@ namespace Syadeu.Presentation.Render
             m_GameObjectSystem = other;
         }
 
-        #endregion
+#endregion
 
         protected override PresentationResult OnStartPresentation()
         {
@@ -181,8 +184,7 @@ namespace Syadeu.Presentation.Render
         //    //Shapes.Draw.Pop();
         //}
 
-        #endregion
-
+#endregion
 
         public GameObject CreateUIObject(string name)
         {
@@ -191,6 +193,33 @@ namespace Syadeu.Presentation.Render
             obj.transform.position = Vector3.zero;
 
             return obj;
+        }
+
+        public static UIDocument CreateVisualElement(
+            PrefabReference<PanelSettings> settings, PrefabReference<VisualTreeAsset> asset)
+        {
+#if DEBUG_MODE
+            const string c_NameFormat = "UIDocument({0})";
+#endif
+            GameObject obj = CreateGameObject(true);
+            var temp = obj.AddComponent<UIDocument>();
+
+            var settingHandler = settings.LoadAssetUntypedAsync();
+            settingHandler.Completed += t =>
+            {
+                temp.panelSettings = (PanelSettings)t.Result;
+            };
+
+            var assetHandler = asset.LoadAssetUntypedAsync();
+            assetHandler.Completed += t =>
+            {
+                temp.visualTreeAsset = (VisualTreeAsset)t.Result;
+#if DEBUG_MODE
+                obj.name = string.Format(c_NameFormat, temp.visualTreeAsset.name);
+#endif
+            };
+
+            return temp;
         }
     }
 }

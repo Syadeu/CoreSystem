@@ -135,30 +135,43 @@ namespace SyadeuEditor.Utilities
 
         #region GUI
 
+        protected void AddAutoHeight(float height)
+        {
+            if (Event.current.type == EventType.Layout)
+            {
+                m_AutoHeight += height;
+            }
+        }
+
+        #region Line
+
         protected void Line(ref AutoRect rect)
         {
-            m_AutoHeight += 6;
+            AddAutoHeight(6);
 
             rect.Pop(3);
             CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)));
         }
         protected void Line(ref AutoRect rect, AnimFloat alpha)
         {
-            m_AutoHeight += 6;
+            AddAutoHeight(6);
 
             rect.Pop(3);
             CoreGUI.Line(EditorGUI.IndentedRect(rect.Pop(3)), alpha);
         }
+
+        #endregion
+
         protected void Space(ref AutoRect rect, float pixel)
         {
-            m_AutoHeight += pixel;
+            AddAutoHeight(pixel);
 
             rect.Pop(pixel);
         }
 
         protected void Label(ref AutoRect rect, string content)
         {
-            m_AutoHeight += CoreGUI.GetLineHeight(1);
+            AddAutoHeight(CoreGUI.GetLineHeight(1));
 
             CoreGUI.Label(rect.Pop(CoreGUI.GetLineHeight(1)), content);
         }
@@ -168,68 +181,82 @@ namespace SyadeuEditor.Utilities
         protected void PropertyField(ref AutoRect rect, SerializedProperty property)
         {
             float height = EditorGUI.GetPropertyHeight(property);
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             EditorGUI.PropertyField(rect.Pop(height), property);
         }
         protected void PropertyField(ref AutoRect rect, SerializedProperty property, bool includeChildren)
         {
             float height = EditorGUI.GetPropertyHeight(property, includeChildren);
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             EditorGUI.PropertyField(rect.Pop(height), property, includeChildren);
         }
         protected void PropertyField(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             float height = EditorGUI.GetPropertyHeight(property, label);
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             EditorGUI.PropertyField(rect.Pop(height), property, label);
         }
         protected void PropertyField(ref AutoRect rect, SerializedProperty property, GUIContent label, bool includeChildren)
         {
             float height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             EditorGUI.PropertyField(rect.Pop(height), property, label, includeChildren);
         }
 
         #endregion
 
+        #region Button
+
         protected bool Button(ref AutoRect rect, string text)
         {
             float height = CoreGUI.GetLineHeight(1);
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             Rect pos = rect.Pop(height);
             return GUI.Button(pos, text);
         }
         protected bool Button(ref AutoRect rect, string text, float height)
         {
-            m_AutoHeight += height;
+            AddAutoHeight(height);
 
             Rect pos = rect.Pop(height);
             return GUI.Button(pos, text);
         }
 
+        #endregion
+
+        #region Toggle
+
         protected bool LabelToggle(ref AutoRect rect, bool value, GUIContent content, int size, TextAnchor textAnchor)
         {
-            GUIStyle style = CoreGUI.GetLabelStyle(textAnchor);
-            float width = EditorGUI.IndentedRect(rect.Current).width;
+            Rect pos = rect.Pop(GetLabelToggleHeight(in rect, content, size, textAnchor));
+            AddAutoHeight(pos.height);
 
-            Rect pos = rect.Pop(style.CalcHeight(content, width));
-            m_AutoHeight += pos.height;
-            return CoreGUI.LabelToggle(pos, value, content, size, textAnchor);
+            return CoreGUI.LabelToggle(EditorGUI.IndentedRect(pos), value, content, size, textAnchor);
         }
         protected bool LabelToggle(ref AutoRect rect, bool value, GUIContent content, int size, TextAnchor textAnchor, out Rect pos)
         {
+            pos = rect.Pop(GetLabelToggleHeight(in rect, content, size, textAnchor));
+            AddAutoHeight(pos.height);
+
+            return CoreGUI.LabelToggle(EditorGUI.IndentedRect(pos), value, content, size, textAnchor);
+        }
+        protected float GetLabelToggleHeight(in AutoRect rect, GUIContent content, int size, TextAnchor textAnchor)
+        {
             GUIStyle style = CoreGUI.GetLabelStyle(textAnchor);
             float width = EditorGUI.IndentedRect(rect.Current).width;
 
-            pos = rect.Pop(style.CalcHeight(content, width));
-            m_AutoHeight += pos.height;
-            return CoreGUI.LabelToggle(pos, value, content, size, textAnchor);
+            GUIContent temp = new GUIContent(content);
+            temp.text = HTMLString.String(content.text, size);
+
+            return style.CalcHeight(temp, width);
         }
+
+        #endregion
 
         #endregion
 
