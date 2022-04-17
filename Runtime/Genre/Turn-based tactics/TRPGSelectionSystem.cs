@@ -39,6 +39,7 @@ using InputSystem = Syadeu.Presentation.Input.InputSystem;
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGSelectionSystem : PresentationSystemEntity<TRPGSelectionSystem>,
+        INotifySystemModule<OverlaySelectionEntityModule>,
         INotifySystemModule<DisplaySelectionInventoryModule>
     {
         public override bool EnableBeforePresentation => false;
@@ -52,7 +53,7 @@ namespace Syadeu.Presentation.TurnTable
 
         public Entity<IEntity> CurrentSelection => m_SelectedEntities.Count > 0 ? m_SelectedEntities[0].Entity : Entity<IEntity>.Empty;
 
-        private UnityEngine.InputSystem.InputAction
+        private InputAction
             m_LeftMouseButtonAction,
             m_RightMouseButtonAction;
 
@@ -87,6 +88,21 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnShutDown()
         {
+            // Input Action
+            {
+                m_LeftMouseButtonAction.Disable();
+                m_RightMouseButtonAction.Disable();
+
+                m_LeftMouseButtonAction.performed -= m_LeftMouseButtonActionWrapper.Invoke;
+                m_RightMouseButtonAction.performed -= m_RightMouseButtonActionWrapper.Invoke;
+
+                m_InputSystem.RemoveBinding(m_LeftMouseButtonAction);
+                m_InputSystem.RemoveBinding(m_RightMouseButtonAction);
+
+                m_RightMouseButtonActionWrapper.Reserve();
+                m_RightMouseButtonActionWrapper.Reserve();
+            }
+
             m_RenderSystem.OnRenderShapes -= M_RenderSystem_OnRenderShapes;
 
             for (int i = 0; i < m_SelectedEntities.Count; i++)
@@ -136,7 +152,7 @@ namespace Syadeu.Presentation.TurnTable
                 UnityEngine.InputSystem.LowLevel.MouseButton.Left,
                 UnityEngine.InputSystem.InputActionType.Button);
             {
-                m_LeftMouseButtonActionWrapper = ActionWrapper<UnityEngine.InputSystem.InputAction.CallbackContext>.GetWrapper();
+                m_LeftMouseButtonActionWrapper = ActionWrapper<InputAction.CallbackContext>.GetWrapper();
                 m_LeftMouseButtonActionWrapper.SetAction(M_LeftMouseButtonAction_performed);
                 m_LeftMouseButtonActionWrapper.SetProfiler($"{nameof(TRPGSelectionSystem)}.M_LeftMouseButtonAction_performed");
 
@@ -149,7 +165,7 @@ namespace Syadeu.Presentation.TurnTable
                 );
 
             {
-                m_RightMouseButtonActionWrapper = ActionWrapper<UnityEngine.InputSystem.InputAction.CallbackContext>.GetWrapper();
+                m_RightMouseButtonActionWrapper = ActionWrapper<InputAction.CallbackContext>.GetWrapper();
                 m_RightMouseButtonActionWrapper.SetAction(M_RightMouseButtonAction_performed);
                 m_RightMouseButtonActionWrapper.SetProfiler($"{nameof(TRPGSelectionSystem)}.M_RightMouseButtonAction_performed");
 
@@ -414,6 +430,8 @@ namespace Syadeu.Presentation.TurnTable
             m_SelectionPool.Reserve(selection);
         }
 
+        #region Inner Classes
+
         [BurstCompatible]
         private struct ActorPointMovePredicate : IExecutable<Entity<ActorEntity>>
         {
@@ -462,6 +480,63 @@ namespace Syadeu.Presentation.TurnTable
                 other.SelectionFadeModifier = 0;
             }
         }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// <see cref="TRPGSelectionSystem"/> 에서 마우스 오버레이된 entity의 ui 를 표시하는 모듈입니다.
+    /// </summary>
+    public sealed class OverlaySelectionEntityModule : PresentationSystemModule<TRPGSelectionSystem>
+    {
+        private InputSystem m_InputSystem;
+        private EntityRaycastSystem m_RaycastSystem;
+
+        public Entity<IEntity> OverlayEntity { get; private set; }
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+        }
+        protected override void OnShutDown()
+        {
+            m_InputSystem.OnMousePositionChanged -= M_InputSystem_OnMousePositionChanged;
+        }
+        protected override void OnDispose()
+        {
+            m_InputSystem = null;
+            m_RaycastSystem = null;
+        }
+
+        #region Binds
+
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
+
+            m_InputSystem.OnMousePositionChanged += M_InputSystem_OnMousePositionChanged;
+        }
+        private void Bind(EntityRaycastSystem other)
+        {
+            m_RaycastSystem = other;
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void M_InputSystem_OnMousePositionChanged(Vector2 mousePosition)
+        {
+            if (!m_RaycastSystem.Raycast(m_InputSystem.CursorRay, out RaycastInfo info))
+            {
+                OverlayEntity = Entity<IEntity>.Empty;
+                return;
+            }
+
+            OverlayEntity = info.entity;
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -481,13 +556,14 @@ namespace Syadeu.Presentation.TurnTable
         {
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
         }
-        private void Bind(InputSystem other)
-        {
-            m_InputSystem = other;
-        }
         protected override void OnDispose()
         {
             m_InputSystem = null;
+        }
+
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
         }
 
         protected override void OnStartPresentation()

@@ -99,7 +99,7 @@ namespace Syadeu.Presentation
         }
 
         /// <summary>
-        /// 레이캐스트를 실행합니다.
+        /// 레이캐스트를 실행합니다. TODO : 최적화
         /// </summary>
         /// <remarks>
         /// <see cref="TriggerBoundAttribute"/>가 있는 <see cref="Entity{T}"/>만 검출합니다. 
