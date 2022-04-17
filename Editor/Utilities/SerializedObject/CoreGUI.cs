@@ -348,6 +348,9 @@ namespace SyadeuEditor.Utilities
             Rect rect, bool value, Color enableColor, Color disableColor)
             => BoxToggleButton(rect, value, value ? ToggleHelper.FoldoutOpenedContent : ToggleHelper.FoldoutClosedContent, enableColor, disableColor);
         public static bool BoxToggleButton(
+            Rect rect, bool value, string text, Color enableColor, Color disableColor)
+            => BoxToggleButton(rect, value, new GUIContent(text), enableColor, disableColor);
+        public static bool BoxToggleButton(
             Rect rect, bool value, GUIContent content, Color enableColor, Color disableColor)
         {
             int enableCullID = GUIUtility.GetControlID(FocusType.Passive, rect);

@@ -217,14 +217,14 @@ namespace SyadeuEditor.Utilities
             AddAutoHeight(height);
 
             Rect pos = rect.Pop(height);
-            return GUI.Button(pos, text);
+            return GUI.Button(EditorGUI.IndentedRect(pos), text);
         }
         protected bool Button(ref AutoRect rect, string text, float height)
         {
             AddAutoHeight(height);
 
             Rect pos = rect.Pop(height);
-            return GUI.Button(pos, text);
+            return GUI.Button(EditorGUI.IndentedRect(pos), text);
         }
 
         #endregion

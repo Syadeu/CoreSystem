@@ -71,7 +71,11 @@ namespace Syadeu.Presentation.Actor
 
         [Space]
         [SerializeField, JsonProperty(Order = -499, PropertyName = "GraphicsInformation")]
-        protected GraphicsInformation p_GeneralInfo = new GraphicsInformation();
+        protected GraphicsInformation p_GraphicsInfo = new GraphicsInformation();
+
+        [Space]
+        [SerializeField, JsonProperty(Order = -498, PropertyName = "GeneralInfomation")]
+        protected GeneralInfomation p_GeneralInfo = new GeneralInfomation();
 
         [JsonIgnore] public Reference<ActorItemType> ItemType => p_ItemType;
     }

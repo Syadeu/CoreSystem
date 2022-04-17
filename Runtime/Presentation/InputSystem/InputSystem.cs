@@ -41,6 +41,7 @@ namespace Syadeu.Presentation.Input
         public override bool EnableAfterPresentation => false;
 
         private bool m_EnableInput = false;
+        private InputAction m_MousePositionInputAction;
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
 
         private Vector2 m_PrecalculatedCursorPosition;
@@ -78,14 +79,34 @@ namespace Syadeu.Presentation.Input
             }
         }
 
+        public event Action<Vector2> OnMousePositionChanged;
+
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             ConsoleWindow.OnWindowOpened += ConsoleWindow_OnWindowOpened;
+
+            m_MousePositionInputAction = new InputAction(
+                "Mouse Position", InputActionType.Value,
+                binding: "<Mouse>/position",
+                expectedControlType: "Vector2");
+            m_MousePositionInputAction.performed += OnMousePositionChangedHandler;
+            m_MousePositionInputAction.Enable();
 
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
+
+        private void OnMousePositionChangedHandler(InputAction.CallbackContext obj)
+        {
+            m_PrecalculatedCursorPosition = obj.ReadValue<Vector2>();
+            m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
+
+            OnMousePositionChanged?.Invoke(m_PrecalculatedCursorPosition);
+        }
+
         private void ConsoleWindow_OnWindowOpened(bool opened)
         {
             EnableInput = !opened;
@@ -116,12 +137,12 @@ namespace Syadeu.Presentation.Input
         }
         protected override PresentationResult BeforePresentation()
         {
-            m_PrecalculatedCursorPosition = Mouse.current.position.ReadValue();
-            m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
             m_PrecalculatedCursorPreseedInThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
 
             return base.BeforePresentation();
         }
+
+        #endregion
 
         public InputAction GetMouseButtonBinding(MouseButton mouseButton, InputActionType type)
         {

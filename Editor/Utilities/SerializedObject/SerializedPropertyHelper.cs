@@ -497,7 +497,13 @@ namespace SyadeuEditor.Utilities
         }
         public static Type GetFieldTypeType(this SerializedProperty t)
         {
-            return t.GetFieldInfo().FieldType;
+            var fieldInfo = t.GetFieldInfo();
+            if (t.IsInArray())
+            {
+                return fieldInfo.FieldType.GetElementType();
+            }
+
+            return fieldInfo.FieldType;
         }
 
         public static bool IsTypeOf<T>(this SerializedProperty t)

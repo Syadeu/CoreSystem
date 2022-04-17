@@ -90,6 +90,23 @@ namespace SyadeuEditor.Utilities
             return rect;
         }
 
+        public static Rect[] Divide(Rect rect, int count)
+        {
+            float perRectWidth = rect.width / count;
+
+            Rect[] rects = new Rect[count];
+            var temp = rect;
+            for (int i = 0; i < count; i++)
+            {
+                rects[i] = new Rect(temp);
+                rects[i].width = perRectWidth;
+
+                temp.x += rects[i].width;
+            }
+
+            return rects;
+        }
+
         public static Rect[] DivideWithRatio(Rect rect, params float[] ratio)
         {
             Rect[] rects = new Rect[ratio.Length];

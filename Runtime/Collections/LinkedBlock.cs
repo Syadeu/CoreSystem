@@ -12,13 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Collections
 {
     [Serializable]
     public sealed class LinkedBlock
     {
+        [Serializable]
+        public sealed class Column
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "Positions")]
+            public bool[] m_Positions = Array.Empty<bool>();
+        }
 
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Columns")]
+        private Column[] m_Columns = Array.Empty<Column>();
+
+        [JsonIgnore] public IReadOnlyList<Column> Columns => m_Columns;
+        [JsonIgnore] public int Length => m_Columns.Length;
     }
 }

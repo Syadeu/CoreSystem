@@ -205,7 +205,10 @@ namespace SyadeuEditor.Presentation
                         EntityDataList.Instance.SaveData(clone);
                     }
 
-                    current = (IFixedReference)TypeHelper.GetConstructorInfo(fieldInfo.FieldType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+                    Type fieldType = property.GetFieldTypeType();
+                    Debug.Log($"{TypeHelper.ToString(fieldType)}");
+
+                    current = (IFixedReference)TypeHelper.GetConstructorInfo(property.GetFieldTypeType(), TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
                         new object[] { clone });
                     SerializedPropertyHelper.SetHash(GetHashProperty(property), clone.Hash);
                 }

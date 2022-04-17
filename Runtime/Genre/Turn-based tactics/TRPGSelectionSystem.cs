@@ -130,6 +130,8 @@ namespace Syadeu.Presentation.TurnTable
         {
             m_InputSystem = other;
 
+            //m_InputSystem.MousePosition
+
             m_LeftMouseButtonAction = m_InputSystem.GetMouseButtonBinding(
                 UnityEngine.InputSystem.LowLevel.MouseButton.Left,
                 UnityEngine.InputSystem.InputActionType.Button);
