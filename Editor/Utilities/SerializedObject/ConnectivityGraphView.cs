@@ -337,7 +337,7 @@ namespace SyadeuEditor.Utilities
         #endregion
 
         protected virtual bool EnableAutoDock => false;
-        protected virtual Type AutoDockTarget { get; } 
+        protected virtual Type AutoDockTarget { get; }
         protected virtual Docker.DockPosition AutoDockPosition { get; }
 
         private bool m_Initialized = false;

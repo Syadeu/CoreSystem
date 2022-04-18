@@ -10,7 +10,8 @@
         "Unity.Jobs",
         "Unity.ResourceManager",
         "UnityEngine.UIElementsModule",
-        "UnityEngine.UIElementsInputSystemModule"
+        "UnityEngine.UIElementsInputSystemModule",
+        "com.alelievr.NodeGraphProcessor.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

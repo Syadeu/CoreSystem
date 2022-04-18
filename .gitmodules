@@ -1,0 +1,3 @@
+[submodule "ThirdParty/NodeGraphProcessor"]
+	path = ThirdParty/NodeGraphProcessor
+	url = https://github.com/Syadeu/NodeGraphProcessor.git
