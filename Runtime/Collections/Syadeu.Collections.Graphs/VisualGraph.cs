@@ -9,11 +9,4 @@ namespace Syadeu.Collections.Graphs
     public class VisualGraph : BaseGraph
     {
     }
-
-    public class TestStackNode : BaseStackNode
-    {
-        public TestStackNode(Vector2 position, string title = "Stack", bool acceptDrop = true, bool acceptNewNode = true) : base(position, title, acceptDrop, acceptNewNode)
-        {
-        }
-    }
 }
