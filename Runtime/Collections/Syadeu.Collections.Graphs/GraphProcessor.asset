@@ -38,8 +38,8 @@ MonoBehaviour:
         computeOrder: 0
         position:
           serializedVersion: 2
-          x: 163.00005
-          y: 174.55005
+          x: -36.999985
+          y: 117.5
           width: 200
           height: 95
         expanded: 1
@@ -93,4 +93,5 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
+        text: 
         logType: 3
