@@ -34,8 +34,8 @@ namespace Syadeu.Collections.Graphs
                 writer.WriteProperty("inputFieldName", edge.inputFieldName);
                 writer.WriteProperty("outputFieldName", edge.outputFieldName);
 
-                writer.WriteProperty("inputPortId", edge.inputPort?.portData.identifier);
-                writer.WriteProperty("outputPortId", edge.outputPort?.portData.identifier);
+                writer.WriteProperty("inputPortIdentifier", edge.inputPort?.portData.identifier);
+                writer.WriteProperty("outputPortIdentifier", edge.outputPort?.portData.identifier);
             }
             writer.WriteEndObject();
         }

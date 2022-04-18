@@ -56,7 +56,17 @@ namespace Syadeu.Collections.Converters
         }
         public static void AutoWriteForThisType(this JsonWriter wr, Type objectType, object value)
         {
-            var fieldIter = objectType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(t => t.GetCustomAttribute<JsonPropertyAttribute>() != null);
+            var fieldIter = objectType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(t =>
+            {
+                if (t.IsPrivate)
+                {
+                    if (t.GetCustomAttribute<JsonPropertyAttribute>() == null ||
+                        t.GetCustomAttribute<SerializeField>() == null) return false;
+                }
+
+                if (t.GetCustomAttribute<NonSerializedAttribute>() != null) return false;
+                return true;
+            });
             FieldInfo[] fields = Array.Empty<FieldInfo>();
             if (fieldIter.Any())
             {
@@ -68,8 +78,15 @@ namespace Syadeu.Collections.Converters
             {
                 JsonPropertyAttribute property = fields[i].GetCustomAttribute<JsonPropertyAttribute>();
 
-                wr.WritePropertyName(property.PropertyName);
-                wr.WriteValue(fields[i].GetValue(value));
+                if (property != null)
+                {
+                    wr.WritePropertyName(property.PropertyName);
+                    wr.WriteValue(fields[i].GetValue(value));
+                }
+                else
+                {
+                    wr.WriteProperty(fields[i].Name, fields[i].GetValue(value));
+                }
             }
         }
     }

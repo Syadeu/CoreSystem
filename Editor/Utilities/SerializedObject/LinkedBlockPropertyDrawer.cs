@@ -35,7 +35,7 @@ namespace SyadeuEditor.Utilities
 
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = 0;
+            float height = CoreGUI.GetLineHeight(1);
 
             //var positionProp = GetPositionsField(property);
             //height += positionProp.arraySize * LineHeight;
@@ -52,7 +52,7 @@ namespace SyadeuEditor.Utilities
         {
             Rect block = rect.TotalRect;
             block.height -= 3;
-            CoreGUI.DrawBlock(block, Color.black);
+            CoreGUI.DrawBlock(EditorGUI.IndentedRect(block), Color.black);
 
             property.isExpanded = LabelToggle(
                 ref rect, property.isExpanded, label, 15, TextAnchor.MiddleLeft);

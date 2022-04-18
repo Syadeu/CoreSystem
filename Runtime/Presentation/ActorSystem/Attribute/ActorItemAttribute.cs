@@ -18,6 +18,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Graphs;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -64,6 +65,9 @@ namespace Syadeu.Presentation.Actor
             [Tooltip("가방내 아이템 크기")]
             [JsonProperty(Order = 1, PropertyName = "ItemSpace")]
             public LinkedBlock m_ItemSpace = new LinkedBlock();
+
+            [JsonProperty(Order = 2)]
+            public VisualGraphField m_Behaviour = new VisualGraphField();
         }
 
         [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
