@@ -10,6 +10,7 @@ namespace Syadeu.Collections.Graphs
     {
 		[Input("In", true)]
 		public IEnumerable<string> input;
+		[SerializeField]
 		public string text = string.Empty;
 
 		[Setting("Log Type")]

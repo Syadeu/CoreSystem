@@ -17,10 +17,12 @@
 #endif
 
 using GraphProcessor;
+using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Collections.Graphs;
 using System;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -54,9 +56,37 @@ namespace SyadeuEditor.Utilities
             titleContent = new GUIContent("Default Graph");
 
             // Here you can use the default BaseGraphView or a custom one (see section below)
-            var graphView = new BaseGraphView(this);
+            var graphView = new VisualGraphView(this);
+
+            GridBackground background = new GridBackground();
+            graphView.Insert(0 , background);
+            background.StretchToParentSize();
+
+            graphView.Add(new MiniMapView(graphView));
 
             rootView.Add(graphView);
+        }
+    }
+    public class VisualGraphView : BaseGraphView
+    {
+        public VisualGraphView(EditorWindow window) : base(window)
+        {
+        }
+
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            evt.menu.AppendSeparator();
+
+            evt.menu.AppendAction("To Json",
+                e =>
+                {
+                    //Debug.Log($"{JsonConvert.SerializeObject(this.graph)}");
+
+                },
+                status: DropdownMenuAction.Status.Normal);
+            evt.menu.AppendSeparator();
+
+            base.BuildContextualMenu(evt);
         }
     }
 }

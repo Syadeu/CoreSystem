@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections.Graphs
 {
-    [System.Serializable, NodeMenuItem("Custom/Game Object")]
+    [System.Serializable, NodeMenuItem("Unity/Game Object")]
     public class GameObjectNode : BaseNode, ICreateNodeFrom<GameObject>
     {
         [Output(name = "Out"), SerializeField]
