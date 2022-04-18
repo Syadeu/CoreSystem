@@ -73,6 +73,7 @@ namespace SyadeuEditor.Utilities
         {
         }
 
+        
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             evt.menu.AppendSeparator();
@@ -81,12 +82,28 @@ namespace SyadeuEditor.Utilities
                 e =>
                 {
                     //Debug.Log($"{JsonConvert.SerializeObject(this.graph)}");
+                    //string json = JsonConvert.SerializeObject(new FloatNode());
+                    string json = JsonConvert.SerializeObject(graph);
 
+                    Debug.Log(json);
+
+                    VisualGraph temp = JsonConvert.DeserializeObject<VisualGraph>(json);
                 },
                 status: DropdownMenuAction.Status.Normal);
             evt.menu.AppendSeparator();
 
+            BuildStackNodeContextualMenu(evt);
+
             base.BuildContextualMenu(evt);
+        }
+        /// <summary>
+        /// Add the New Stack entry to the context menu
+        /// </summary>
+        /// <param name="evt"></param>
+        protected void BuildStackNodeContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            Vector2 position = (evt.currentTarget as VisualElement).ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
+            evt.menu.AppendAction("Create Stack", (e) => AddStackNode(new BaseStackNode(position)), DropdownMenuAction.AlwaysEnabled);
         }
     }
 }

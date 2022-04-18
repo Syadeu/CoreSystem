@@ -15,29 +15,39 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Collections.Converters
 {
-    [Preserve]
-    internal sealed class Float3JsonConverter : JsonConverter<float3>
+    [Preserve, CustomJsonConverter]
+    internal sealed class RectJsonConverter : JsonConverter<Rect>
     {
         public override bool CanRead => true;
         public override bool CanWrite => true;
 
-        public override float3 ReadJson(JsonReader reader, Type objectType, float3 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override Rect ReadJson(JsonReader reader, Type objectType, Rect existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            JArray jo = (JArray)JToken.Load(reader);
-            return new float3(jo[0].Value<float>(), jo[1].Value<float>(), jo[2].Value<float>());
+            JArray jo = JArray.Load(reader);
+
+            float
+                x = jo[0].Value<float>(),
+                y = jo[1].Value<float>(),
+                w = jo[2].Value<float>(),
+                h = jo[3].Value<float>();
+
+            return new Rect(x, y, w, h);
         }
 
-        public override void WriteJson(JsonWriter writer, float3 value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, Rect value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
-            writer.WriteValue(value.x);
-            writer.WriteValue(value.y);
-            writer.WriteValue(value.z);
+            {
+                writer.WriteValue(value.x);
+                writer.WriteValue(value.y);
+                writer.WriteValue(value.width);
+                writer.WriteValue(value.height);
+            }
             writer.WriteEndArray();
         }
     }
