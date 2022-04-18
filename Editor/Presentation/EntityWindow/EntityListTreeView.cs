@@ -229,6 +229,27 @@ namespace SyadeuEditor.Presentation
             }
             else if (item is ObjectTreeElement obj)
             {
+                Type entityType = obj.Target.GetType();
+
+                menu.AddItem(new GUIContent("Edit Script"), false, () =>
+                {
+                    EntityProvider.OpenScript(entityType);
+                });
+                var editDrawerScriptContent = new GUIContent("Edit Drawer Script");
+                if (EntityProvider.HasDrawerScript(entityType))
+                {
+                    menu.AddItem(editDrawerScriptContent, false, () =>
+                    {
+                        EntityProvider.OpenDrawerScript(entityType);
+                    });
+                }
+                else
+                {
+                    menu.AddDisabledItem(editDrawerScriptContent);
+                }
+
+                menu.AddSeparator(string.Empty);
+
                 menu.AddItem(new GUIContent("Duplicate"), false, () =>
                 {
                     ObjectBase clone = (ObjectBase)obj.Target.Clone();

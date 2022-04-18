@@ -12,9 +12,9 @@ namespace SyadeuEditor.Presentation
 {
     public static class EntityProvider
     {
-        private static readonly Dictionary<Type, MonoScript> m_ScriptCache = new Dictionary<Type, MonoScript>();
-        private static readonly Dictionary<Type, MonoScript> m_DrawerScriptCache = new Dictionary<Type, MonoScript>();
-        private static readonly Dictionary<Type, Type> m_DrawerPerType = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, MonoScript> s_ScriptCache = new Dictionary<Type, MonoScript>();
+        private static readonly Dictionary<Type, MonoScript> s_DrawerScriptCache = new Dictionary<Type, MonoScript>();
+        private static readonly Dictionary<Type, Type> s_DrawerPerType = new Dictionary<Type, Type>();
 
         private static FieldInfo s_CachedPropertyTypeField, s_CachedPropertyUseChildField;
         private static FieldInfo CachedPropertyTypeField
@@ -73,7 +73,7 @@ namespace SyadeuEditor.Presentation
             MonoScript script = ScriptUtilities.FindScriptFromClassName(type.Name);
             if (script == null) return;
 
-            m_ScriptCache.Add(type, script);
+            s_ScriptCache.Add(type, script);
         }
         private static void AddEntityDrawerScriptAsset(Type type)
         {
@@ -91,8 +91,8 @@ namespace SyadeuEditor.Presentation
                 if (script == null)
                     script = ScriptUtilities.FindScriptFromClassName(type.Name + "PropertyDrawer");
 
-                m_DrawerPerType[entityType] = type;
-                m_DrawerScriptCache[type] = script;
+                s_DrawerPerType[entityType] = type;
+                s_DrawerScriptCache[type] = script;
                 
                 //if (!m_DrawerPerType.TryGetValue(entityType, out Type existingDrawerType))
                 //{
@@ -104,21 +104,22 @@ namespace SyadeuEditor.Presentation
             }
         }
 
+        public static bool HasDrawerScript(Type t)
+        {
+            return s_DrawerPerType.ContainsKey(t);
+        }
+
         public static void OpenScript(Type type)
         {
-            if (!m_ScriptCache.TryGetValue(type, out var script)) return;
+            if (!s_ScriptCache.TryGetValue(type, out var script)) return;
 
             AssetDatabase.OpenAsset(script.GetInstanceID(), 0, 0);
         }
-        public static void OpenDrawerScriptWithEntity(Type type)
-        {
-            if (!m_DrawerPerType.TryGetValue(type, out var drawerType)) return;
-
-            OpenDrawerScript(drawerType);
-        }
         public static void OpenDrawerScript(Type type)
         {
-            if (!m_DrawerScriptCache.TryGetValue(type, out var script)) return;
+            if (!s_DrawerPerType.TryGetValue(type, out var drawerType)) return;
+            
+            if (!s_DrawerScriptCache.TryGetValue(drawerType, out var script)) return;
 
             AssetDatabase.OpenAsset(script.GetInstanceID(), 0, 0);
         }
