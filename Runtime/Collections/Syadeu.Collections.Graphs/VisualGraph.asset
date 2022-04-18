@@ -13,8 +13,28 @@ MonoBehaviour:
   m_Name: VisualGraph
   m_EditorClassIdentifier: 
   serializedNodes: []
-  nodes: []
-  edges: []
+  nodes:
+  - id: 0
+  - id: 1
+  - id: 2
+  - id: 3
+  edges:
+  - GUID: 5498a7e2-97d2-4bd6-8beb-609c3025eaae
+    owner: {fileID: 11400000}
+    inputNodeGUID: fccaed52-1a57-4625-b3fb-f9319a3f6c3f
+    outputNodeGUID: f08f4921-9b8a-4bd1-8603-cdca3915f231
+    inputFieldName: inputs
+    outputFieldName: output
+    inputPortIdentifier: 
+    outputPortIdentifier: 
+  - GUID: a262bc70-e40f-478f-a9b3-13b1609fa100
+    owner: {fileID: 11400000}
+    inputNodeGUID: fccaed52-1a57-4625-b3fb-f9319a3f6c3f
+    outputNodeGUID: 72ca72fe-2404-4df3-b58a-bcbcb36f53ca
+    inputFieldName: inputs
+    outputFieldName: output
+    inputPortIdentifier: 
+    outputPortIdentifier: 
   groups: []
   stackNodes: []
   pinnedElements: []
@@ -22,7 +42,74 @@ MonoBehaviour:
   serializedParameterList: []
   stickyNotes: []
   nodeInspectorReference: {fileID: 0}
-  position: {x: 0, y: 0, z: 0}
+  position: {x: -262, y: 51, z: 0}
   scale: {x: 1, y: 1, z: 1}
   references:
     version: 1
+    00000000:
+      type: {class: FloatNode, ns: Syadeu.Collections.Graphs, asm: Syadeu.Collections}
+      data:
+        nodeCustomName: 
+        GUID: 72ca72fe-2404-4df3-b58a-bcbcb36f53ca
+        computeOrder: 0
+        position:
+          serializedVersion: 2
+          x: 226
+          y: 261
+          width: 102
+          height: 99
+        expanded: 0
+        debug: 0
+        nodeLock: 0
+        output: 0
+        input: 5
+    00000001:
+      type: {class: FloatNode, ns: Syadeu.Collections.Graphs, asm: Syadeu.Collections}
+      data:
+        nodeCustomName: 
+        GUID: f08f4921-9b8a-4bd1-8603-cdca3915f231
+        computeOrder: 1
+        position:
+          serializedVersion: 2
+          x: 226
+          y: 130
+          width: 102
+          height: 99
+        expanded: 0
+        debug: 0
+        nodeLock: 0
+        output: 0
+        input: 5
+    00000002:
+      type: {class: Vector3Node, ns: Syadeu.Collections.Graphs, asm: Syadeu.Collections}
+      data:
+        nodeCustomName: 
+        GUID: 733f8188-6bbe-4456-b117-ec25583d2f45
+        computeOrder: 2
+        position:
+          serializedVersion: 2
+          x: 801.2
+          y: 191.5
+          width: 102
+          height: 75
+        expanded: 0
+        debug: 0
+        nodeLock: 0
+        output: {x: 0, y: 0, z: 0}
+        input: {x: 0, y: 0, z: 0}
+    00000003:
+      type: {class: MultiAddNode, ns: Syadeu.Collections.Graphs, asm: Syadeu.Collections}
+      data:
+        nodeCustomName: 
+        GUID: fccaed52-1a57-4625-b3fb-f9319a3f6c3f
+        computeOrder: 3
+        position:
+          serializedVersion: 2
+          x: 539
+          y: 100
+          width: 118
+          height: 99
+        expanded: 1
+        debug: 0
+        nodeLock: 0
+        output: 0
