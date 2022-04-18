@@ -52,22 +52,28 @@ namespace Syadeu.Presentation.Actor
         [Serializable]
         public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
         {
-            [JsonProperty(Order = 0, PropertyName = "IconImage")]
-            public ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "IconImage")]
+            private ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
+
+            [JsonIgnore] public ArrayWrapper<PrefabReference<Sprite>> IconImage => m_IconImage;
         }
         [Serializable]
         public sealed class GeneralInfomation : PropertyBlock<GeneralInfomation>
         {
             [Tooltip("아이템의 무게")]
-            [JsonProperty(Order = 0, PropertyName = "Weight")]
-            public float m_Weight = 0;
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "Weight")]
+            private float m_Weight = 0;
 
             [Tooltip("가방내 아이템 크기")]
-            [JsonProperty(Order = 1, PropertyName = "ItemSpace")]
-            public LinkedBlock m_ItemSpace = new LinkedBlock();
+            [SerializeField, JsonProperty(Order = 1, PropertyName = "ItemSpace")]
+            private LinkedBlock m_ItemSpace = new LinkedBlock();
 
-            [JsonProperty(Order = 2)]
-            public VisualGraphField m_Behaviour = new VisualGraphField();
+            [SerializeField, JsonProperty(Order = 2)]
+            private VisualGraphField m_Behavior = new VisualGraphField();
+
+            [JsonIgnore] public float Weight => m_Weight;
+            [JsonIgnore] public LinkedBlock ItemSpace => m_ItemSpace;
+            [JsonIgnore] public VisualGraphField Behavior => m_Behavior;
         }
 
         [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
@@ -82,5 +88,7 @@ namespace Syadeu.Presentation.Actor
         protected GeneralInfomation p_GeneralInfo = new GeneralInfomation();
 
         [JsonIgnore] public Reference<ActorItemType> ItemType => p_ItemType;
+        [JsonIgnore] public GraphicsInformation GraphicsInfo => p_GraphicsInfo;
+        [JsonIgnore] public GeneralInfomation GeneralInfo => p_GeneralInfo;
     }
 }

@@ -18,6 +18,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Graphs;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using System;
@@ -96,6 +97,18 @@ namespace Syadeu.Presentation.Actor
                 m_WeaponPosOffset = att.m_DrawPosition.m_WeaponPosOffset,
                 m_WeaponRotOffset = att.m_DrawPosition.m_WeaponRotOffset
             };
+        }
+    }
+
+    public static class ActorItemHelper
+    {
+        private static VisualGraphLogicProcessor s_LogicProcessor = new VisualGraphLogicProcessor();
+
+        public static void ProcessBehavior(
+            ActorItemAttributeBase attributeBase, VisualGraphField visualGraph)
+        {
+            visualGraph.Process();
+            //visualGraph.VisualGraph;
         }
     }
 }
