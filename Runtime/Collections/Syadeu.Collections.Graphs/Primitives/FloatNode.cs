@@ -9,7 +9,7 @@ namespace Syadeu.Collections.Graphs
         [Output("Out")]
         public float output;
 
-        [Input("In")]
+        [SerializeField, Input("In")]
         public float input;
 
         public override string name => "Float";

@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Syadeu.Collections.Graphs
 {
+    [System.Serializable, NodeMenuItem("Primitives/Int")]
     public class IntNode : BaseNode
     {
         [Output("Out")]

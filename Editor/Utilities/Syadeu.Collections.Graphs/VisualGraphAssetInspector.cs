@@ -17,12 +17,13 @@
 #endif
 
 using GraphProcessor;
+using Syadeu.Collections.Graphs;
 using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace SyadeuEditor.Utilities
 {
-    [CustomEditor(typeof(BaseGraph), true)]
+    [CustomEditor(typeof(VisualGraph), true)]
     public class VisualGraphAssetInspector : GraphInspector
     {
         // protected override void CreateInspector()
