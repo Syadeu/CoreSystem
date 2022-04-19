@@ -182,6 +182,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnDispose()
         {
+            TRPGSettings.Instance.m_CoverableSprite.UnloadAsset();
+
             m_GridTempCoverables.Dispose();
             m_GridTempMoveables.Dispose();
             m_GridTempOutcoasts.Dispose();
