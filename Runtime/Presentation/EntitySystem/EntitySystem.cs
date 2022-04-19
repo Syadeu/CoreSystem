@@ -291,7 +291,7 @@ namespace Syadeu.Presentation
             InstanceID entityHash = transformModule.GetEntity(in tr);
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
-            monoObj.m_Entity = Entity<IEntity>.GetEntityWithoutCheck(in entityHash);
+            monoObj.entity = Entity<IEntity>.GetEntityWithoutCheck(in entityHash);
             EntityProcessorModule.ProcessEntityOnProxyCreated(GetModule<EntityProcessorModule>(), entity, monoObj);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
@@ -323,7 +323,7 @@ namespace Syadeu.Presentation
             IEntity entity = (IEntity)objectBase;
 
             EntityProcessorModule.ProcessEntityOnProxyRemoved(GetModule<EntityProcessorModule>(), entity, monoObj);
-            monoObj.m_Entity = Entity<IEntity>.Empty;
+            monoObj.entity = Entity<IEntity>.Empty;
         }
         
         private void Bind(Events.EventSystem other)

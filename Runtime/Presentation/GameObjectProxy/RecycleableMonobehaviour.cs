@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Proxy
         private GameObject m_GameObject;
         private Rigidbody m_Rigidbody;
         private Transform m_Transform;
-        internal Entity<IEntity> m_Entity;
+        private Entity<IEntity> m_Entity;
 
         private readonly Dictionary<IComponentID, List<Component>> m_Components = new Dictionary<IComponentID, List<Component>>();
 
@@ -59,6 +59,9 @@ namespace Syadeu.Presentation.Proxy
 
         public event Action<Entity<IEntity>> OnVisible;
         public event Action<Entity<IEntity>> OnInvisible;
+
+        public event Action<Entity<IEntity>> OnEntityRegistered;
+        public event Action<Entity<IEntity>> OnEntityUnregistered;
 
         #region Properties
 
@@ -71,7 +74,23 @@ namespace Syadeu.Presentation.Proxy
         /// <see cref="GameObjectProxySystem"/> 에서 파싱한 <see cref="Transform"/> 입니다.
         /// </summary>
         public new Transform transform => m_Transform;
-        public Entity<IEntity> entity => m_Entity;
+        public Entity<IEntity> entity
+        {
+            get => m_Entity;
+            internal set
+            {
+                if (value.IsEmpty())
+                {
+                    OnEntityUnregistered?.Invoke(m_Entity);
+                    m_Entity = value;
+                }
+                else
+                {
+                    m_Entity = value;
+                    OnEntityRegistered?.Invoke(value);
+                }
+            }
+        }
 #pragma warning restore IDE1006 // Naming Styles
 
         public virtual bool InitializeOnCall => true;
@@ -130,8 +149,6 @@ namespace Syadeu.Presentation.Proxy
             OnInitialize();
             //gameObject.SetActive(true);
 
-            PresentationReceiverOnInitialize();
-
             if (m_Rigidbody != null)
             {
                 CoreSystem.Instance.OnFixedUpdate += OnFixedUpdate;
@@ -147,9 +164,7 @@ namespace Syadeu.Presentation.Proxy
             CoreSystem.Instance.OnFixedUpdate -= OnFixedUpdate;
 
             OnTerminate();
-            PresentationReceiverOnTerminate();
 
-            m_Entity = Entity<IEntity>.Empty;
             OnParticleStopped = null;
             Activated = false;
         }
@@ -331,6 +346,12 @@ namespace Syadeu.Presentation.Proxy
         private void SetupPresentationReceiverCallbacks()
         {
             m_PresentationReceivers = GetComponentsInChildren<IPresentationReceiver>(true);
+
+            for (int i = 0; i < m_PresentationReceivers.Length; i++)
+            {
+                OnEntityRegistered += m_PresentationReceivers[i].OnIntialize;
+                OnEntityUnregistered += m_PresentationReceivers[i].OnTerminate;
+            }
         }
         private void PresentationReceiverOnCreated()
         {
@@ -339,34 +360,6 @@ namespace Syadeu.Presentation.Proxy
                 for (int i = 0; i < m_PresentationReceivers.Length; i++)
                 {
                     m_PresentationReceivers[i].OnCreated();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-        }
-        private void PresentationReceiverOnInitialize()
-        {
-            try
-            {
-                for (int i = 0; i < m_PresentationReceivers.Length; i++)
-                {
-                    m_PresentationReceivers[i].OnIntialize();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-        }
-        private void PresentationReceiverOnTerminate()
-        {
-            try
-            {
-                for (int i = 0; i < m_PresentationReceivers.Length; i++)
-                {
-                    m_PresentationReceivers[i].OnTerminate();
                 }
             }
             catch (Exception ex)

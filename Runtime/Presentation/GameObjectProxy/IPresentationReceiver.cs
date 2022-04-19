@@ -16,6 +16,9 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Presentation.Entities;
+
 namespace Syadeu.Presentation.Proxy
 {
     public interface IPresentationReceiver
@@ -27,10 +30,10 @@ namespace Syadeu.Presentation.Proxy
         /// <summary>
         /// <inheritdoc cref="RecycleableMonobehaviour.OnInitialize"/>
         /// </summary>
-        void OnIntialize();
+        void OnIntialize(Entity<IEntity> entity);
         /// <summary>
         /// <inheritdoc cref="RecycleableMonobehaviour.OnTerminate"/>
         /// </summary>
-        void OnTerminate();
+        void OnTerminate(Entity<IEntity> entity);
     }
 }

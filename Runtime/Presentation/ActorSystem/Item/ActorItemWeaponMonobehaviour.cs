@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Actor
             {
             }
 
-            public void Fire(ActorItemWeaponMonobehaviour weapon)
+            public void Fire()
             {
                 var fx = m_MuzzleFlash.CreateEntity(m_FirePosition);
             }
@@ -55,13 +55,20 @@ namespace Syadeu.Presentation.Actor
         [SerializeField]
         private FireProperty m_FireProperty = new FireProperty();
 
+        private RecycleableMonobehaviour m_Main;
+
+        private void Awake()
+        {
+            m_Main = GetComponent<RecycleableMonobehaviour>();
+        }
+
         public void OnCreated()
         {
         }
-        public void OnIntialize()
+        public void OnIntialize(Entity<IEntity> entity)
         {
         }
-        public void OnTerminate()
+        public void OnTerminate(Entity<IEntity> entity)
         {
         }
     }
