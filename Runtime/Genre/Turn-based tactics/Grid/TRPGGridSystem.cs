@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.TurnTable
             //            }
             #endregion
 
-            TRPGSettings.Instance.m_CoverableSprite.LoadAsset();
+            TRPGSettings.Instance.m_CoverableSprite.Load();
 
             m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
             m_GridTempMoveables = new NativeList<GridIndex>(512, Allocator.Persistent);
