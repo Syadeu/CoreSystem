@@ -136,7 +136,7 @@ namespace Syadeu.Presentation.Entities
         protected override void OnCreated(FXEntity entity)
         {
             ref FXComponent com = ref entity.GetComponent<FXComponent>();
-            //entity.GetTransform().enableCull = false;
+            entity.GetTransform().enableCull = false;
             com.m_PlayQueued = true;
         }
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)

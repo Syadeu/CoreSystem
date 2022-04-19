@@ -26,6 +26,7 @@ using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
@@ -41,47 +42,138 @@ namespace Syadeu.Presentation.Proxy
     /// <typeparam name="T"></typeparam>    
     public abstract class RecycleableMonobehaviour : MonoBehaviour, IProxyMonobehaviour, INotificationReceiver
     {
-        public delegate bool TerminateCondition();
         /// <summary>
-        /// <see cref="Presentation.GameObjectProxySystem.m_Instances"/> value 리스트의 인덱스입니다.
+        /// <see cref="GameObjectProxySystem.m_Instances"/> value 리스트의 인덱스입니다.
         /// </summary>
         internal int m_Idx = -1;
 
         private GameObject m_GameObject;
+        private Rigidbody m_Rigidbody;
         private Transform m_Transform;
         internal Entity<IEntity> m_Entity;
+
         private readonly Dictionary<IComponentID, List<Component>> m_Components = new Dictionary<IComponentID, List<Component>>();
+
+        private IProxyComponent[] m_ProxyComponents;
+        private IPresentationReceiver[] m_PresentationReceivers;
 
         public event Action<Entity<IEntity>> OnVisible;
         public event Action<Entity<IEntity>> OnInvisible;
 
+        #region Properties
+
 #pragma warning disable IDE1006 // Naming Styles
         /// <summary>
-        /// <see cref="Presentation.GameObjectProxySystem"/> 에서 파싱한 <see cref="GameObject"/> 입니다.
+        /// <see cref="GameObjectProxySystem"/> 에서 파싱한 <see cref="GameObject"/> 입니다.
         /// </summary>
         public new GameObject gameObject => m_GameObject;
         /// <summary>
-        /// <see cref="Presentation.GameObjectProxySystem"/> 에서 파싱한 <see cref="Transform"/> 입니다.
+        /// <see cref="GameObjectProxySystem"/> 에서 파싱한 <see cref="Transform"/> 입니다.
         /// </summary>
         public new Transform transform => m_Transform;
         public Entity<IEntity> entity => m_Entity;
 #pragma warning restore IDE1006 // Naming Styles
-        public virtual bool InitializeOnCall => true;
 
+        public virtual bool InitializeOnCall => true;
         /// <summary>
-        /// 이 모노 프록시 객체가 <see cref="Presentation.GameObjectProxySystem"/>에서 사용 중인지 반환합니다.
+        /// 이 모노 프록시 객체가 <see cref="GameObjectProxySystem"/>에서 사용 중인지 반환합니다.
         /// </summary>
         public bool Activated { get; private set; } = false;
 
-        public void Initialize()
+        #endregion
+
+        #region Internals
+
+        internal void InternalOnCreated()
+        {
+            m_GameObject = base.gameObject;
+            m_Transform = base.transform;
+            m_Rigidbody = GetComponent<Rigidbody>();
+
+            Component[] components = GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true);
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] == null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"{name} has missing component. Fix it!");
+
+                    continue;
+                }
+
+                Type t = components[i].GetType();
+                IComponentID id = ComponentID.GetID(t);
+
+                if (!m_Components.TryGetValue(id, out List<Component> list))
+                {
+                    list = new List<Component>();
+                    m_Components.Add(id, list);
+                }
+                list.Add(components[i]);
+            }
+
+            IProxyComponent[] proxyComponents = base.GetComponentsInChildren<IProxyComponent>(true);
+            for (int i = 0; i < proxyComponents.Length; i++)
+            {
+                proxyComponents[i].OnProxyCreated(this);
+            }
+            SetupPresentationReceiverCallbacks();
+
+            OnCreated();
+            PresentationReceiverOnCreated();
+        }
+        internal void InternalInitialize()
         {
             if (Activated) throw new CoreSystemException(CoreSystemExceptionFlag.RecycleObject,
                 "이미 초기화 된 재사용 오브젝트를 또 초기화하려합니다.");
 
             OnInitialize();
             //gameObject.SetActive(true);
+
+            PresentationReceiverOnInitialize();
+
+            if (m_Rigidbody != null)
+            {
+                CoreSystem.Instance.OnFixedUpdate += OnFixedUpdate;
+            }
+
             Activated = true;
         }
+        internal void InternalTerminate()
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(RecycleableMonobehaviour.InternalTerminate), ThreadInfo.Unity);
+            if (!Activated) throw new Exception("not initialized");
+
+            CoreSystem.Instance.OnFixedUpdate -= OnFixedUpdate;
+
+            OnTerminate();
+            PresentationReceiverOnTerminate();
+
+            m_Entity = Entity<IEntity>.Empty;
+            OnParticleStopped = null;
+            Activated = false;
+        }
+
+        private void OnFixedUpdate()
+        {
+            if (!entity.IsValid()) return;
+
+            //Transform thisTr = transform;
+            ProxyTransform tr = entity.transform;
+            tr.position = m_Rigidbody.position;
+            tr.rotation = m_Rigidbody.rotation;
+        }
+
+        internal void InternalOnVisible()
+        {
+            OnVisible?.Invoke(m_Entity);
+        }
+        internal void InternalOnInvisible()
+        {
+            OnInvisible?.Invoke(m_Entity);
+        }
+
+        #endregion
 
         #region Component Methods
 
@@ -191,80 +283,7 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-        internal void InternalOnCreated()
-        {
-            m_GameObject = base.gameObject;
-            m_Transform = base.transform;
-
-            Component[] components = GetComponentsInChildren(TypeHelper.TypeOf<Component>.Type, true);
-            for (int i = 0; i < components.Length; i++)
-            {
-                if (components[i] == null)
-                {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
-                        $"{name} has missing component. Fix it!");
-
-                    continue;
-                }
-
-                Type t = components[i].GetType();
-                IComponentID id = ComponentID.GetID(t);
-
-                if (!m_Components.TryGetValue(id, out List<Component> list))
-                {
-                    list = new List<Component>();
-                    m_Components.Add(id, list);
-                }
-                list.Add(components[i]);
-            }
-
-            IProxyComponent[] proxyComponents = base.GetComponentsInChildren<IProxyComponent>(true);
-            for (int i = 0; i < proxyComponents.Length; i++)
-            {
-                proxyComponents[i].OnProxyCreated(this);
-            }
-
-            //MeshFilter[] meshes = GetComponentsInChildren<MeshFilter>(true);
-            //for (int i = 0; i < meshes.Length; i++)
-            //{
-            //    var mesh = meshes[i].sharedMesh;
-            //    mesh.vertices
-            //}
-
-            OnCreated();
-        }
-        internal void InternalOnVisible()
-        {
-            OnVisible?.Invoke(m_Entity);
-        }
-        internal void InternalOnInvisible()
-        {
-            OnInvisible?.Invoke(m_Entity);
-        }
-
-        /// <summary>
-        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
-        /// </summary>
-        protected virtual void OnCreated() { }
-        /// <summary>
-        /// <see cref="Presentation.GameObjectProxySystem"/>에서 이 프록시 모노 객체를 재사용을 위해 실행되는 초기화 함수입니다.
-        /// </summary>
-        protected virtual void OnInitialize() { }
-        protected virtual void OnTerminate() { }
-
-        internal void Terminate()
-        {
-            CoreSystem.Logger.ThreadBlock(nameof(RecycleableMonobehaviour.Terminate), ThreadInfo.Unity);
-            if (!Activated) throw new Exception("not initialized");
-
-            OnTerminate();
-
-            m_Entity = Entity<IEntity>.Empty;
-            OnParticleStopped = null;
-            Activated = false;
-        }
-
-        public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
+        #region Callbacks
 
         void INotificationReceiver.OnNotify(Playable origin, INotification notification, object context)
         {
@@ -306,5 +325,92 @@ namespace Syadeu.Presentation.Proxy
         }
 
         #endregion
+
+        #region IPresentationReceiver
+
+        private void SetupPresentationReceiverCallbacks()
+        {
+            m_PresentationReceivers = GetComponentsInChildren<IPresentationReceiver>(true);
+        }
+        private void PresentationReceiverOnCreated()
+        {
+            try
+            {
+                for (int i = 0; i < m_PresentationReceivers.Length; i++)
+                {
+                    m_PresentationReceivers[i].OnCreated();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+        private void PresentationReceiverOnInitialize()
+        {
+            try
+            {
+                for (int i = 0; i < m_PresentationReceivers.Length; i++)
+                {
+                    m_PresentationReceivers[i].OnIntialize();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+        private void PresentationReceiverOnTerminate()
+        {
+            try
+            {
+                for (int i = 0; i < m_PresentationReceivers.Length; i++)
+                {
+                    m_PresentationReceivers[i].OnTerminate();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+
+        #endregion
+
+        internal void ProcessMessageContext(MessageContext ctx)
+        {
+            SendMessage(ctx.methodName, ctx.options);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
+        /// </summary>
+        protected virtual void OnCreated() { }
+        /// <summary>
+        /// <see cref="GameObjectProxySystem"/>에서 이 프록시 모노 객체를 재사용을 위해 실행되는 초기화 함수입니다.
+        /// </summary>
+        protected virtual void OnInitialize() { }
+        protected virtual void OnTerminate() { }
+
+        public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
+    }
+
+    [BurstCompatible]
+    public struct MessageContext
+    {
+        private FixedString512Bytes m_MethodName;
+        private SendMessageOptions m_Options;
+
+        public string methodName => m_MethodName.ToString();
+        public SendMessageOptions options => m_Options;
+
+        [NotBurstCompatible]
+        public MessageContext(string methodName, SendMessageOptions options = SendMessageOptions.RequireReceiver)
+        {
+            m_MethodName = methodName;
+            m_Options = options;
+        }
     }
 }

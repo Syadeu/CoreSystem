@@ -23,7 +23,6 @@ using System.Diagnostics;
 namespace Syadeu.Collections.Buffer
 {
     public sealed class ObjectPool<T> : IDisposable
-        where T : class
     {
         private Func<T> m_Factory;
         private Action<T>
@@ -63,7 +62,7 @@ namespace Syadeu.Collections.Buffer
             if (m_Disposed)
             {
                 UnityEngine.Debug.LogError("This ObjectPool is disposed.");
-                return null;
+                return (T)TypeHelper.GetDefaultValue(TypeHelper.TypeOf<T>.Type);
             }
 #endif
             T t;

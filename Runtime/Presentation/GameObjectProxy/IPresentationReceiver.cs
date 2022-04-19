@@ -12,16 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics;
-using System.Reflection;
-using UnityEngine;
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
 
-namespace Syadeu.Collections
+namespace Syadeu.Presentation.Proxy
 {
-    [Conditional("UNITY_EDITOR")]
-    public sealed class PositionHandleAttribute : PropertyAttribute
+    public interface IPresentationReceiver
     {
-        public string ScaleField = string.Empty;
-        public string RotationField = string.Empty;
+        /// <summary>
+        /// <inheritdoc cref="RecycleableMonobehaviour.OnCreated"/>
+        /// </summary>
+        void OnCreated();
+        /// <summary>
+        /// <inheritdoc cref="RecycleableMonobehaviour.OnInitialize"/>
+        /// </summary>
+        void OnIntialize();
+        /// <summary>
+        /// <inheritdoc cref="RecycleableMonobehaviour.OnTerminate"/>
+        /// </summary>
+        void OnTerminate();
     }
 }

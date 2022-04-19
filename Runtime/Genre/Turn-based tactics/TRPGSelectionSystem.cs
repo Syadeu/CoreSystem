@@ -497,6 +497,7 @@ namespace Syadeu.Presentation.TurnTable
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
         }
         protected override void OnShutDown()
         {
@@ -513,8 +514,6 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
-
-            m_InputSystem.OnMousePositionChanged += M_InputSystem_OnMousePositionChanged;
         }
         private void Bind(EntityRaycastSystem other)
         {
@@ -522,6 +521,11 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
+
+        protected override void OnStartPresentation()
+        {
+            m_InputSystem.OnMousePositionChanged += M_InputSystem_OnMousePositionChanged;
+        }
 
         #region Event Handlers
 

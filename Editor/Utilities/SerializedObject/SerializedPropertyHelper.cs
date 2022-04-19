@@ -490,6 +490,16 @@ namespace SyadeuEditor.Utilities
 
             throw new NotImplementedException();
         }
+        public static Vector4 GetVector4(this SerializedProperty t)
+        {
+            SerializedProperty
+                x = t.FindPropertyRelative("x"),
+                y = t.FindPropertyRelative("y"),
+                z = t.FindPropertyRelative("z"),
+                w = t.FindPropertyRelative("w");
+
+            return new Vector4(x.floatValue, y.floatValue, z.floatValue, w.floatValue);
+        }
 
         public static Type GetSystemType(this SerializedProperty t)
         {

@@ -13,15 +13,13 @@
 // limitations under the License.
 
 using System.Diagnostics;
-using System.Reflection;
 using UnityEngine;
 
 namespace Syadeu.Collections
 {
     [Conditional("UNITY_EDITOR")]
-    public sealed class PositionHandleAttribute : PropertyAttribute
+    public sealed class RotationHandleAttribute : PropertyAttribute
     {
-        public string ScaleField = string.Empty;
-        public string RotationField = string.Empty;
+        public string PositionField = string.Empty;
     }
 }

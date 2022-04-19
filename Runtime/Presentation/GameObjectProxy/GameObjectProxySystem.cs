@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer;
 using Syadeu.Collections.Proxy;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -41,7 +42,8 @@ namespace Syadeu.Presentation.Proxy
     /// <summary>
     /// ** 주의: 어떠한 상황에서든 이 시스템에 직접 접근하는 것은 권장되지 않습니다. **<br/>
     /// </summary>
-    internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>
+    internal sealed class GameObjectProxySystem : PresentationSystemEntity<GameObjectProxySystem>,
+        INotifySystemModule<ProxyMessageModule>
     {
         public static readonly Vector3 INIT_POSITION = new Vector3(-9999, -9999, -9999);
         private const int c_InitialMemorySize = 1024;
@@ -81,7 +83,7 @@ namespace Syadeu.Presentation.Proxy
         private NativeList<ClusterGroup<ProxyTransformData>> 
                 m_SortedCluster;
 
-        private NativeReference<int> m_ProxyClusterCounter;
+        private Unity.Collections.NativeReference<int> m_ProxyClusterCounter;
 
         private NativeList<int> m_VisibleTransforms;
 #pragma warning restore IDE0090 // Use 'new(...)'
@@ -133,7 +135,7 @@ namespace Syadeu.Presentation.Proxy
             m_ClusterIDRequests = new NativeQueue<ClusterIDRequest>(Allocator.Persistent);
 
             m_SortedCluster = new NativeList<ClusterGroup<ProxyTransformData>>(1024, Allocator.Persistent);
-            m_ProxyClusterCounter = new NativeReference<int>(0, AllocatorManager.Persistent);
+            m_ProxyClusterCounter = new Unity.Collections.NativeReference<int>(0, AllocatorManager.Persistent);
 
             m_VisibleTransforms = new NativeList<int>(512, AllocatorManager.Persistent);
 
@@ -271,28 +273,19 @@ namespace Syadeu.Presentation.Proxy
                     return;
                 }
 
-                //IProxyMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
                 RecycleableMonobehaviour proxy = m_Instances[proxyIndex.x][proxyIndex.y];
                 Rigidbody rigidbody = proxy.GetComponent<Rigidbody>();
 
-                proxy.transform.position = data->m_Translation;
-                proxy.transform.rotation = data->m_Rotation;
-                //if (data->m_ParentIndex >= 0)
-                //{
+                Transform transform = proxy.transform;
+                transform.position = data->m_Translation;
+                transform.rotation = data->m_Rotation;
+                transform.localScale = data->m_Scale;
 
-                //}
-                //else
-                if (rigidbody != null)
-                {
-                    rigidbody.position = data->m_Translation;
-                    rigidbody.rotation = data->m_Rotation;
-                }
-                //else
+                //if (rigidbody != null)
                 //{
                 //    rigidbody.position = data->m_Translation;
                 //    rigidbody.rotation = data->m_Rotation;
                 //}
-                proxy.transform.localScale = data->m_Scale;
             }
 
             UpdateConnectedTransforms(ev.transform);
@@ -1092,7 +1085,7 @@ namespace Syadeu.Presentation.Proxy
                 {
                     if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
-                        if (other.InitializeOnCall) other.Terminate();
+                        if (other.InitializeOnCall) other.InternalTerminate();
                         other.transform.position = INIT_POSITION;
 
                         if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
@@ -1130,7 +1123,7 @@ namespace Syadeu.Presentation.Proxy
                 other.transform.rotation = data->m_Rotation;
                 other.transform.localScale = data->m_Scale;
 
-                if (other.InitializeOnCall) other.Initialize();
+                if (other.InitializeOnCall) other.InternalInitialize();
 
                 OnDataObjectProxyCreated?.Invoke(m_ProxyData.GetTransform(data->m_Index), other);
                 CoreSystem.Logger.Log(Channel.Proxy, true,
@@ -1176,7 +1169,7 @@ namespace Syadeu.Presentation.Proxy
 
             data->m_ProxyIndex = (ProxyTransform.ProxyNull);
 
-            if (proxy.Activated) proxy.Terminate();
+            if (proxy.Activated) proxy.InternalTerminate();
 
             if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool))
             {
@@ -1251,7 +1244,7 @@ namespace Syadeu.Presentation.Proxy
                         instances.Add(obj);
 
                         obj.InternalOnCreated();
-                        if (obj.InitializeOnCall) obj.Initialize();
+                        if (obj.InitializeOnCall) obj.InternalInitialize();
                         onCompleted?.Invoke(obj);
 
                         PoolContainer<PrefabRequester>.Enqueue(this);
@@ -1324,7 +1317,7 @@ namespace Syadeu.Presentation.Proxy
                 instances.Add(recycleable);
 
                 recycleable.InternalOnCreated();
-                if (recycleable.InitializeOnCall) recycleable.Initialize();
+                if (recycleable.InitializeOnCall) recycleable.InternalInitialize();
                 m_OnCompleted?.Invoke(recycleable);
 
                 //if (m_StaticBatching)
@@ -1399,5 +1392,136 @@ namespace Syadeu.Presentation.Proxy
         }
 
         #endregion
+    }
+
+    internal sealed class ProxyMessageModule : PresentationSystemModule<GameObjectProxySystem>
+    {
+        private Dictionary<ProxyTransform, Entry> m_Entries;
+        private List<ProxyTransform> m_WaitTransforms;
+        private ObjectPool<NativeQueue<MessageContext>> m_QueuePool;
+        private uint m_TickCounter;
+
+        private static NativeQueue<MessageContext> QueueFactory()
+        {
+            return new NativeQueue<MessageContext>(AllocatorManager.Persistent);
+        }
+        private static void QueueReserve(NativeQueue<MessageContext> queue)
+        {
+            queue.Clear();
+        }
+        private static void QueueRelease(NativeQueue<MessageContext> queue)
+        {
+            queue.Dispose();
+        }
+
+        protected override void OnInitialize()
+        {
+            m_QueuePool = new ObjectPool<NativeQueue<MessageContext>>(
+                QueueFactory,
+                null,
+                QueueReserve,
+                QueueRelease
+                );
+            m_Entries = new Dictionary<ProxyTransform, Entry>();
+            m_WaitTransforms = new List<ProxyTransform>();
+
+            ProxyTransformExtensions.s_MessageModule = this;
+        }
+        protected override void OnDispose()
+        {
+            ProxyTransformExtensions.s_MessageModule = null;
+
+            foreach (var item in m_Entries.Values)
+            {
+                m_QueuePool.Reserve(item.queue);
+            }
+            m_Entries.Clear();
+            m_WaitTransforms.Clear();
+
+            m_QueuePool.Dispose();
+        }
+
+        private struct Entry
+        {
+            public ProxyTransform transform;
+            public NativeQueue<MessageContext> queue;
+
+            public uint tick;
+        }
+
+        protected override void OnPresentation()
+        {
+            for (int i = m_WaitTransforms.Count - 1; i >= 0; i--)
+            {
+                ProxyTransform tr = m_WaitTransforms[i];
+                Entry entry = m_Entries[tr];
+                if (!tr.hasProxy)
+                {
+                    continue;
+                }
+
+                m_Entries.Remove(tr);
+
+                int count = entry.queue.Count;
+                RecycleableMonobehaviour proxy = tr.proxy;
+                for (int h = 0; h < count; h++)
+                {
+                    MessageContext ctx = entry.queue.Dequeue();
+                    proxy.ProcessMessageContext(ctx);
+                }
+
+                m_QueuePool.Reserve(entry.queue);
+                m_WaitTransforms.RemoveAt(i);
+            }
+
+            m_TickCounter = unchecked(m_TickCounter + 1);
+        }
+
+        public void SendMessage(ProxyTransform transform, MessageContext ctx)
+        {
+            if (transform.hasProxy)
+            {
+                transform.proxy.ProcessMessageContext(ctx);
+                return;
+            }
+
+            if (!m_Entries.TryGetValue(transform, out Entry entry))
+            {
+                var queue = m_QueuePool.Get();
+                queue.Enqueue(ctx);
+
+                entry = new Entry
+                {
+                    transform = transform,
+                    queue = queue,
+
+                    tick = m_TickCounter
+                };
+
+                m_Entries.Add(transform, entry);
+                m_WaitTransforms.Add(transform);
+                return;
+            }
+
+            entry.queue.Enqueue(ctx);
+        }
+    }
+
+    public static class ProxyTransformExtensions
+    {
+        internal static ProxyMessageModule s_MessageModule;
+
+        public static void SendMessage(this ProxyTransform t, MessageContext ctx)
+        {
+            s_MessageModule.SendMessage(t, ctx);
+        }
+        public static void SendMessage(this ProxyTransform t, string methodName)
+        {
+            s_MessageModule.SendMessage(t, new MessageContext(methodName));
+        }
+        public static void SendMessage(this ProxyTransform t, string methodName, SendMessageOptions options = SendMessageOptions.RequireReceiver)
+        {
+            s_MessageModule.SendMessage(t, new MessageContext(methodName, options));
+        }
     }
 }

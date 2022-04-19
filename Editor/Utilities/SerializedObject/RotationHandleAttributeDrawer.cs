@@ -19,23 +19,27 @@
 using UnityEngine;
 using UnityEditor;
 using Syadeu.Collections;
-using Unity.Mathematics;
 
 namespace SyadeuEditor.Utilities
 {
-    [CustomPropertyDrawer(typeof(ScaleHandleAttribute))]
-    internal sealed class ScaleHandleAttributeDrawer : VectorAttributeDrawer
+    [CustomPropertyDrawer(typeof(RotationHandleAttribute))]
+    internal sealed class RotationHandleAttributeDrawer : VectorAttributeDrawer
     {
-        new ScaleHandleAttribute attribute => (ScaleHandleAttribute)base.attribute;
+        new RotationHandleAttribute attribute => (RotationHandleAttribute)base.attribute;
 
         protected override string OpenedButtonText => "Pick";
-        protected override string OpenedButtonTooltip => "Scene view 에서 오브젝트 스케일을 수정합니다.";
+        protected override string OpenedButtonTooltip => "Scene view 에서 오브젝트 위치를 수정합니다.";
         protected override string ClosedButtonText => "Close";
-        protected override string ClosedButtonTooltip => "Scene view 에서 오브젝트 스케일을 수정합니다.";
+        protected override string ClosedButtonTooltip => "Scene view 에서 오브젝트 위치를 수정합니다.";
 
         private bool m_Opened = false;
 
         protected override bool Opened => m_Opened;
+
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return base.PropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+        }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
@@ -49,9 +53,13 @@ namespace SyadeuEditor.Utilities
             if (!m_Opened)
             {
                 var parent = property.GetParent();
-                var positionField = parent.FindPropertyRelative(attribute.PositionField);
+                SerializedProperty positionField = null;
+                if (!attribute.PositionField.IsNullOrEmpty())
+                {
+                    positionField = parent.FindPropertyRelative(attribute.PositionField);
+                }
 
-                Popup.Instance.SetProperty(attribute, property, positionField);
+                Popup.Instance.SetProperty(property, positionField);
                 Popup.Instance.Open();
 
                 m_Opened = true;
@@ -67,8 +75,7 @@ namespace SyadeuEditor.Utilities
         {
             private SerializedProperty
                 m_Property, m_PositionProperty,
-                m_X, m_Y, m_Z;
-            private ScaleHandleAttribute m_Attribute;
+                m_X, m_Y, m_Z, m_W;
 
             public bool IsOpened { get; private set; } = false;
 
@@ -99,15 +106,15 @@ namespace SyadeuEditor.Utilities
                 SceneView.RepaintAll();
                 IsOpened = false;
             }
-            public void SetProperty(ScaleHandleAttribute attribute, SerializedProperty property, SerializedProperty positionProp)
+            public void SetProperty(SerializedProperty property, SerializedProperty positionProperty)
             {
-                m_Attribute = attribute;
                 m_Property = property;
-                m_PositionProperty = positionProp;
+                m_PositionProperty = positionProperty;
 
                 m_X = m_Property.FindPropertyRelative("x");
                 m_Y = m_Property.FindPropertyRelative("y");
                 m_Z = m_Property.FindPropertyRelative("z");
+                m_W = m_Property.FindPropertyRelative("w");
             }
 
             private void OnSceneGUI(SceneView sceneView)
@@ -134,37 +141,40 @@ namespace SyadeuEditor.Utilities
                 Handles.EndGUI();
 
                 //const float size = 1, arrowSize = 2, centerOffset = .5f;
-                Vector3 scale = new Vector3(m_X.floatValue, m_Y.floatValue, m_Z.floatValue);
-                if (scale.Equals(Vector3.zero))
+                Quaternion rotation;
+                Vector4 temp = new Vector4(m_X.floatValue, m_Y.floatValue, m_Z.floatValue, m_W.floatValue);
+                if (temp.Equals(Vector4.zero))
                 {
-                    scale = (float3)Mathf.Epsilon;
+                    rotation = Quaternion.identity;
+                }
+                else
+                {
+                    rotation = new Quaternion(m_X.floatValue, m_Y.floatValue, m_Z.floatValue, m_W.floatValue);
+                }
+                
+                Vector3 position = Vector3.zero;
+
+                if (m_PositionProperty != null)
+                {
+                    position = m_PositionProperty.GetVector3();
+                    //Vector3 scale = m_PositionProperty.GetVector3();
+                    //Handles.DrawWireCube(position, scale);
                 }
 
-                Vector3 pos = m_PositionProperty.GetVector3();
-                scale = Handles.DoScaleHandle(scale, pos, quaternion.identity, 1);
+                rotation = Handles.DoRotationHandle(rotation, position);
 
-                switch (m_Attribute.Type)
-                {
-                    case ScaleHandleAttribute.GUIType.Cube:
-                        Handles.DrawWireCube(pos, scale);
-                        break;
-                    case ScaleHandleAttribute.GUIType.Sphere:
-                        Handles.DrawWireCube(pos, scale);
-
-                        break;
-                    default:
-                        break;
-                }
-
-                m_X.floatValue = scale.x;
-                m_Y.floatValue = scale.y;
-                m_Z.floatValue = scale.z;
+                m_X.floatValue = rotation.x;
+                m_Y.floatValue = rotation.y;
+                m_Z.floatValue = rotation.z;
+                m_W.floatValue = rotation.w;
 
                 // https://gamedev.stackexchange.com/questions/149514/use-unity-handles-for-interaction-in-the-scene-view
 
+                m_Property.serializedObject.ApplyModifiedProperties();
                 //Debug.Log($"{Event.current.mousePosition}");
             }
             //
         }
+        //
     }
 }

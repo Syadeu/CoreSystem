@@ -25,8 +25,6 @@ namespace Syadeu.Collections.Proxy
 
         bool Activated { get; }
 
-        void Initialize();
-
         T GetOrAddComponent<T>() where T : UnityEngine.Component;
         T GetComponent<T>() where T : UnityEngine.Component;
         T[] GetComponents<T>() where T : UnityEngine.Component;

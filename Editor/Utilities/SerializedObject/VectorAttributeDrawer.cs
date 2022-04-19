@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
-    internal abstract class Vector3AttributeDrawer : PropertyDrawer<Vector3>
+    internal abstract class VectorAttributeDrawer : PropertyDrawer<Vector4>
     {
         #region Button Text
 
@@ -56,6 +56,12 @@ namespace SyadeuEditor.Utilities
                     EditorGUI.PropertyField(rects[0], property, label);
                 }
                 else if (property.propertyType == SerializedPropertyType.Vector3Int)
+                {
+                    var rects = AutoRect.DivideWithRatio(rect.Pop(), .9f, .1f);
+                    bttRect = rects[1];
+                    EditorGUI.PropertyField(rects[0], property, label);
+                }
+                else if (property.propertyType == SerializedPropertyType.Vector4)
                 {
                     var rects = AutoRect.DivideWithRatio(rect.Pop(), .9f, .1f);
                     bttRect = rects[1];

@@ -1262,7 +1262,6 @@ namespace Syadeu.Presentation
             UnityEngine.Debug.Log("thread out");
         }
 
-
         // TODO: Debug, Profiling 을 위해 따로 Wrapping
         //private void AddPreUpdate(Action action)
         //{
