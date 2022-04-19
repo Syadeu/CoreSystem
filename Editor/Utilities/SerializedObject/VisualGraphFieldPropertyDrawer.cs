@@ -54,9 +54,13 @@ namespace SyadeuEditor.Utilities
             {
                 if (prop.objectReferenceValue == null)
                 {
+                    Undo.RecordObject(prop.serializedObject.targetObject, "Create Default Graph");
+
                     if (Button(ref rect, "Create Default Graph"))
                     {
-                        prop.objectReferenceValue = ScriptableObject.CreateInstance<VisualGraph>();
+                        ScriptableObject obj
+                            = VisualGraphAssetCallbacks.CreateGraphAsset(prop.GetFieldInfo().FieldType, false);
+                        prop.objectReferenceValue = obj;
                     }
 
                     if (Button(ref rect, "Create Graph"))
@@ -66,9 +70,15 @@ namespace SyadeuEditor.Utilities
                 }
                 else
                 {
+                    if (Button(ref rect, "Remove"))
+                    {
+                        UnityEngine.Object.DestroyImmediate(prop.objectReferenceValue);
+                        prop.objectReferenceValue = null;
+                    }
                     if (Button(ref rect, "Open graph window"))
                     {
-                        EditorWindow.GetWindow<VisualGraphWindow>().InitializeGraph(prop.objectReferenceValue as VisualGraph);
+                        //EditorWindow.GetWindow<VisualGraphWindow>().InitializeGraph(prop.objectReferenceValue as VisualGraph);
+                        VisualGraphAssetCallbacks.OpenGraphAsset(prop.objectReferenceValue as VisualGraph);
                     }
                 }
             }

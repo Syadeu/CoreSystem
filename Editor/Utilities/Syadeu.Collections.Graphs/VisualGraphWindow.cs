@@ -17,11 +17,8 @@
 #endif
 
 using GraphProcessor;
-using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Collections.Graphs;
 using System;
-using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,80 +27,50 @@ namespace SyadeuEditor.Utilities
 {
     public class VisualGraphWindow : BaseGraphWindow
     {
-        BaseGraph tmpGraph;
-
-        //[MenuItem("Window/01 test")]
-        //public static VisualGraphWindow Open()
-        //{
-        //    var window = GetWindow<VisualGraphWindow>();
-
-        //    window.tmpGraph = ScriptableObject.CreateInstance<BaseGraph>();
-        //    window.tmpGraph.hideFlags = HideFlags.HideAndDontSave;
-        //    window.InitializeGraph(window.tmpGraph);
-
-        //    window.Show();
-
-        //    return window;
-        //}
         protected override void OnDestroy() 
         {
             graphView?.Dispose();
-            DestroyImmediate(tmpGraph);
         }
         protected override void InitializeWindow(BaseGraph graph)
         {
             // Set the window title
-            titleContent = new GUIContent("Default Graph");
+            titleContent = new GUIContent("Visual Logic Graph");
 
             // Here you can use the default BaseGraphView or a custom one (see section below)
-            var graphView = new VisualGraphView(this);
+            var visualGraphView = new VisualGraphView(this);
 
             GridBackground background = new GridBackground();
-            graphView.Insert(0 , background);
+            visualGraphView.Insert(0, background);
             background.StretchToParentSize();
 
-            graphView.Add(new MiniMapView(graphView));
+            SetupExposedParameter(visualGraphView, graph);
+            //SetupMinimap(visualGraphView);
 
-            rootView.Add(graphView);
-        }
-    }
-    public class VisualGraphView : BaseGraphView
-    {
-        public VisualGraphView(EditorWindow window) : base(window)
-        {
+            rootView.Add(visualGraphView);
+            graphView = visualGraphView;
         }
 
-        
-        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        protected void SetupExposedParameter(VisualGraphView graphView, BaseGraph graph)
         {
-            evt.menu.AppendSeparator();
+            ExposedParameterView view = new ExposedParameterView();
+            view.title = "Exposed Properties";
 
-            evt.menu.AppendAction("To Json",
-                e =>
-                {
-                    //Debug.Log($"{JsonConvert.SerializeObject(this.graph)}");
-                    //string json = JsonConvert.SerializeObject(new FloatNode());
-                    string json = JsonConvert.SerializeObject(graph);
+            for (int i = 0; i < graph.exposedParameters.Count; i++)
+            {
+                ExposedParameter parameter = graph.exposedParameters[i];
+                ExposedParameterFieldView field = new ExposedParameterFieldView(graphView, parameter);
+                
+                view.Add(field);
+            }
 
-                    Debug.Log(json);
-
-                    VisualGraph temp = JsonConvert.DeserializeObject<VisualGraph>(json);
-                },
-                status: DropdownMenuAction.Status.Normal);
-            evt.menu.AppendSeparator();
-
-            BuildStackNodeContextualMenu(evt);
-
-            base.BuildContextualMenu(evt);
+            graphView.Add(view);
         }
-        /// <summary>
-        /// Add the New Stack entry to the context menu
-        /// </summary>
-        /// <param name="evt"></param>
-        protected void BuildStackNodeContextualMenu(ContextualMenuPopulateEvent evt)
+        protected void SetupMinimap(VisualGraphView graphView)
         {
-            Vector2 position = (evt.currentTarget as VisualElement).ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
-            evt.menu.AppendAction("Create Stack", (e) => AddStackNode(new BaseStackNode(position)), DropdownMenuAction.AlwaysEnabled);
+            MiniMapView minimap = new MiniMapView(graphView);
+            //Vector2 cords = graphView.contentViewContainer.WorldToLocal(new Vector2(10, 30));
+            //minimap.SetPosition(new Rect(cords.x, cords.y, 200, 300));
+            graphView.Add(minimap);
         }
     }
 }

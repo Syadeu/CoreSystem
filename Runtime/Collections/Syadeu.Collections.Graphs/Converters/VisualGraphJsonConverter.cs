@@ -23,11 +23,15 @@ namespace Syadeu.Collections.Graphs
 
             public void Initialize(JObject edge)
             {
-                guid = edge["guid"].ToString();
+                const string 
+                    c_Guid = "guid", 
+                    c_InputNodeGuid = "inputNodeGuid", c_OutputNodeGuid = "outputNodeGuid";
 
-                inputNodeGUID = edge["inputNodeGuid"].ToString();
+                guid = edge[c_Guid].ToString();
+
+                inputNodeGUID = edge[c_InputNodeGuid].ToString();
                 if (inputNodeGUID == null) inputNodeGUID = string.Empty;
-                outputNodeGUID = edge["outputNodeGuid"].ToString();
+                outputNodeGUID = edge[c_OutputNodeGuid].ToString();
                 if (outputNodeGUID == null) outputNodeGUID = string.Empty;
 
                 inputFieldName = edge["inputFieldName"].ToString();
@@ -51,11 +55,16 @@ namespace Syadeu.Collections.Graphs
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, Newtonsoft.Json.JsonSerializer serializer)
         {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                return null;
+            }
+
             JObject jo = JObject.Load(reader);
             Type type = Type.GetType(jo["type"].ToString());
 
             Dictionary<Guid, BaseNode> nodeHashMap = new Dictionary<Guid, BaseNode>();
-            VisualGraph graph = (VisualGraph)Activator.CreateInstance(type);
+            VisualGraph graph = (VisualGraph)ScriptableObject.CreateInstance(type);
             graph.nodes = jo["nodes"].ToObject<List<BaseNode>>(serializer);
             for (int i = 0; i < graph.nodes.Count; i++)
             {
@@ -86,6 +95,7 @@ namespace Syadeu.Collections.Graphs
             graph.stackNodes = jo["stackNodes"].ToObject<List<BaseStackNode>>(serializer);
             graph.pinnedElements = jo["pinnedElements"].ToObject<List<PinnedElement>>(serializer);
             graph.exposedParameters = jo["exposedParameters"].ToObject<List<ExposedParameter>>(serializer);
+
             graph.stickyNotes = jo["stickyNotes"].ToObject<List<StickyNote>>(serializer);
             graph.position = jo["position"].ToObject<Vector3>(serializer);
             graph.scale = jo["scale"].ToObject<Vector3>(serializer);
