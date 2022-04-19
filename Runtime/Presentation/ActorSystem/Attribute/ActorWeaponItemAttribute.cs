@@ -100,15 +100,15 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
-    public static class ActorItemHelper
-    {
-        private static VisualGraphLogicProcessor s_LogicProcessor = new VisualGraphLogicProcessor();
+    //public static class ActorItemHelper
+    //{
+    //    private static VisualGraphLogicProcessor s_LogicProcessor = new VisualGraphLogicProcessor();
 
-        public static void ProcessBehavior(
-            ActorItemAttributeBase attributeBase, VisualGraphField visualGraph)
-        {
-            visualGraph.Process();
-            //visualGraph.VisualGraph;
-        }
-    }
+    //    public static void ProcessBehavior(
+    //        ActorItemAttributeBase attributeBase, VisualGraphField visualGraph)
+    //    {
+    //        visualGraph.Process();
+    //        //visualGraph.VisualGraph;
+    //    }
+    //}
 }

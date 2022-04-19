@@ -20,17 +20,12 @@ namespace Syadeu.Collections.Graphs
     /// <summary>
     /// require <see cref="EntryNode"/>
     /// </summary>
-    public class VisualGraphLogicProcessor : BaseGraphProcessor
+    public class VisualGraphLogicProcessor : VisualGraphProcessor
     {
         private EntryNode[] m_EntryNodes;
 
-        public VisualGraphLogicProcessor() : base(null) { }
         public VisualGraphLogicProcessor(VisualGraph graph) : base(graph)
         {
-        }
-        public void Initialize(VisualGraphField graph)
-        {
-            this.graph = graph.VisualGraph;
         }
 
         public override void Run()
