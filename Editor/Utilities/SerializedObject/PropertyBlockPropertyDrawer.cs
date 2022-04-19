@@ -36,11 +36,13 @@ namespace SyadeuEditor.Utilities
         {
             Rect block = rect.TotalRect;
             block.height -= 3;
-            
+            GUIContent content = new GUIContent(label);
+            content.text = ObjectNames.NicifyVariableName(property.displayName);
+
             CoreGUI.DrawBlock(EditorGUI.IndentedRect(block), Color.black);
 
             property.isExpanded = LabelToggle(
-                ref rect, property.isExpanded, label, 15, TextAnchor.MiddleLeft);
+                ref rect, property.isExpanded, content, 15, TextAnchor.MiddleLeft);
 
             if (!property.isExpanded) return;
 
