@@ -370,9 +370,9 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
-        internal void ProcessMessageContext(MessageContext ctx)
+        internal void ProcessMessageContext(MessageContext ctx, object obj)
         {
-            SendMessage(ctx.methodName, ctx.options);
+            SendMessage(ctx.methodName, obj, ctx.options);
         }
 
         #endregion
@@ -394,16 +394,43 @@ namespace Syadeu.Presentation.Proxy
     public struct MessageContext
     {
         private FixedString512Bytes m_MethodName;
+        private int m_UserData;
         private SendMessageOptions m_Options;
 
-        public string methodName => m_MethodName.ToString();
-        public SendMessageOptions options => m_Options;
+        public string methodName
+        {
+            get => m_MethodName.ToString();
+            set => m_MethodName = value;
+        }
+        public int UserData
+        {
+            get => m_UserData;
+            set => m_UserData = value;
+        }
+        public SendMessageOptions options
+        {
+            get => m_Options;
+            set => m_Options = value;
+        }
 
         [NotBurstCompatible]
         public MessageContext(string methodName, SendMessageOptions options = SendMessageOptions.RequireReceiver)
         {
             m_MethodName = methodName;
+            m_UserData = 0;
             m_Options = options;
+        }
+        [NotBurstCompatible]
+        public MessageContext(string methodName, int userData, SendMessageOptions options = SendMessageOptions.RequireReceiver)
+        {
+            m_MethodName = methodName;
+            m_UserData = userData;
+            m_Options = options;
+        }
+
+        public override int GetHashCode()
+        {
+            return unchecked(m_MethodName.GetHashCode() ^ (int)m_Options);
         }
     }
 }

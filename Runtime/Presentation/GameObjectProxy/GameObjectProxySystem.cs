@@ -1051,6 +1051,14 @@ namespace Syadeu.Presentation.Proxy
                 var renderers = obj.GetComponentsInChildren<Renderer>(false);
                 InstancedModel[] models = new InstancedModel[renderers.Length];
 
+                if (obj.GetComponentInChildren<Rigidbody>() != null)
+                {
+                    CoreSystem.Logger.LogError(Channel.Proxy,
+                        $"Currently gpu instancing system is not support physics object. Proceed to non gpu instancing");
+
+                    goto NON_GPUINSTANCED;
+                }
+
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     MeshFilter meshFilter = renderers[i].GetComponent<MeshFilter>();
@@ -1076,7 +1084,7 @@ namespace Syadeu.Presentation.Proxy
 
                 return;
             }
-
+            NON_GPUINSTANCED:
             if (!m_TerminatedProxies.TryGetValue(prefab, out Stack<RecycleableMonobehaviour> pool) ||
                     pool.Count == 0)
             {
@@ -1397,8 +1405,11 @@ namespace Syadeu.Presentation.Proxy
     internal sealed class ProxyMessageModule : PresentationSystemModule<GameObjectProxySystem>
     {
         private Dictionary<ProxyTransform, Entry> m_Entries;
+        private Dictionary<int, object> m_CachedObjects;
         private List<ProxyTransform> m_WaitTransforms;
-        private ObjectPool<NativeQueue<MessageContext>> m_QueuePool;
+
+        private ObjectPool<NativeQueue<MessageContext>> m_CtxQueuePool;
+
         private uint m_TickCounter;
 
         private static NativeQueue<MessageContext> QueueFactory()
@@ -1416,13 +1427,14 @@ namespace Syadeu.Presentation.Proxy
 
         protected override void OnInitialize()
         {
-            m_QueuePool = new ObjectPool<NativeQueue<MessageContext>>(
+            m_CtxQueuePool = new ObjectPool<NativeQueue<MessageContext>>(
                 QueueFactory,
                 null,
                 QueueReserve,
                 QueueRelease
                 );
             m_Entries = new Dictionary<ProxyTransform, Entry>();
+            m_CachedObjects = new Dictionary<int, object>();
             m_WaitTransforms = new List<ProxyTransform>();
 
             ProxyTransformExtensions.s_MessageModule = this;
@@ -1433,12 +1445,12 @@ namespace Syadeu.Presentation.Proxy
 
             foreach (var item in m_Entries.Values)
             {
-                m_QueuePool.Reserve(item.queue);
+                m_CtxQueuePool.Reserve(item.queue);
             }
             m_Entries.Clear();
             m_WaitTransforms.Clear();
 
-            m_QueuePool.Dispose();
+            m_CtxQueuePool.Dispose();
         }
 
         private struct Entry
@@ -1467,27 +1479,50 @@ namespace Syadeu.Presentation.Proxy
                 for (int h = 0; h < count; h++)
                 {
                     MessageContext ctx = entry.queue.Dequeue();
-                    proxy.ProcessMessageContext(ctx);
+                    if (m_CachedObjects.TryGetValue(ctx.UserData, out var obj))
+                    {
+                        m_CachedObjects.Remove(ctx.UserData);
+                    }
+
+                    proxy.ProcessMessageContext(ctx, obj);
                 }
 
-                m_QueuePool.Reserve(entry.queue);
+                m_CtxQueuePool.Reserve(entry.queue);
                 m_WaitTransforms.RemoveAt(i);
             }
 
             m_TickCounter = unchecked(m_TickCounter + 1);
         }
 
-        public void SendMessage(ProxyTransform transform, MessageContext ctx)
+        private int GetUniqueID(ProxyTransform tr, object obj, MessageContext ctx)
+        {
+            return unchecked(obj.GetHashCode() ^ tr.index ^ ctx.GetHashCode());
+        }
+        public void SendMessage(ProxyTransform transform, object obj, MessageContext ctx)
         {
             if (transform.hasProxy)
             {
-                transform.proxy.ProcessMessageContext(ctx);
+                transform.proxy.ProcessMessageContext(ctx, obj);
                 return;
+            }
+
+            if (obj != null)
+            {
+                int id = GetUniqueID(transform, obj, ctx);
+
+                if (m_CachedObjects.ContainsKey(id))
+                {
+                    "Error".ToLogError();
+                }
+
+                m_CachedObjects.Add(id, obj);
+
+                ctx.UserData = id;
             }
 
             if (!m_Entries.TryGetValue(transform, out Entry entry))
             {
-                var queue = m_QueuePool.Get();
+                var queue = m_CtxQueuePool.Get();
                 queue.Enqueue(ctx);
 
                 entry = new Entry
@@ -1513,15 +1548,19 @@ namespace Syadeu.Presentation.Proxy
 
         public static void SendMessage(this ProxyTransform t, MessageContext ctx)
         {
-            s_MessageModule.SendMessage(t, ctx);
+            s_MessageModule.SendMessage(t, null, ctx);
         }
         public static void SendMessage(this ProxyTransform t, string methodName)
         {
-            s_MessageModule.SendMessage(t, new MessageContext(methodName));
+            s_MessageModule.SendMessage(t, null, new MessageContext(methodName));
         }
         public static void SendMessage(this ProxyTransform t, string methodName, SendMessageOptions options = SendMessageOptions.RequireReceiver)
         {
-            s_MessageModule.SendMessage(t, new MessageContext(methodName, options));
+            s_MessageModule.SendMessage(t, null, new MessageContext(methodName, options));
+        }
+        public static void SendMessage(this ProxyTransform t, string methodName, object obj, SendMessageOptions options = SendMessageOptions.RequireReceiver)
+        {
+            s_MessageModule.SendMessage(t, obj, new MessageContext(methodName, options));
         }
     }
 }

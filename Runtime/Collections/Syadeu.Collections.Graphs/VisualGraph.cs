@@ -30,11 +30,6 @@ namespace Syadeu.Collections.Graphs
             base.OnEnable();
 
             m_ThisParameter = GetExposedParameter(c_This);
-            //if (m_ThisParameter == null)
-            //{
-            //    string thisParamGuid = AddExposedParameter(c_This, TypeHelper.TypeOf<ObjectExposedParameter>.Type);
-            //    m_ThisParameter = GetExposedParameterFromGUID(thisParamGuid);
-            //}
         }
         protected override void OnDisable()
         {

@@ -18,6 +18,7 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Collections.Graphs;
 using System;
 using System.ComponentModel;
 using Unity.Mathematics;
@@ -41,6 +42,7 @@ namespace Syadeu.Presentation.Data
         private bool m_Circuler = true;
 
         [SerializeField, JsonProperty(Order = 1, PropertyName = "Connectivity")]
-        private Connectivity<Data> m_Connectivity = new Connectivity<Data>();
+        //private Connectivity<Data> m_Connectivity = new Connectivity<Data>();
+        private VisualGraphField m_Connectivity = new VisualGraphField();
     }
 }
