@@ -30,14 +30,16 @@ namespace Syadeu.Presentation.Entities
         INotifyComponent<UIObjectCanvasGroupComponent>
     {
         [Header("Graphics")]
-        [UnityEngine.SerializeField]
-        [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
         internal float m_InitialAlpha = 1;
 
         [Preserve]
         static void AOTCodeGeneration()
         {
+            AotHelper.EnsureType<InstanceID<UIObjectEntity>>();
+            AotHelper.EnsureType<FixedReference<UIObjectEntity>>();
             AotHelper.EnsureType<Reference<UIObjectEntity>>();
             AotHelper.EnsureList<Reference<UIObjectEntity>>();
             AotHelper.EnsureType<Entity<UIObjectEntity>>();
