@@ -21,6 +21,8 @@ using Syadeu.Presentation.Data;
 using Syadeu.Collections;
 using System.ComponentModel;
 using UnityEngine;
+using System;
+using Syadeu.Presentation.Actions;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -36,7 +38,55 @@ namespace Syadeu.Presentation.Actor
         [SerializeField, JsonProperty(Order = 1, PropertyName = "Equipable")]
         private HumanBody m_Equipable = HumanBody.None;
 
+        [Space]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "Interactions")]
+        private ItemInteractionReference m_Interactions = new ItemInteractionReference();
+
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
         [JsonIgnore] public HumanBody Equipable => m_Equipable;
+        [JsonIgnore] public ItemInteractionReference InteractionInfo => m_Interactions;
+    }
+
+    public enum ItemState
+    {
+        /// <summary>
+        /// 바닥에 떨어진 상태
+        /// </summary>
+        Grounded,
+        /// <summary>
+        /// 누군가에게 착용된 상태
+        /// </summary>
+        Equiped,
+        /// <summary>
+        /// 누군가(혹은 물건)에 보관된 상태
+        /// </summary>
+        Stored
+    }
+    [Serializable]
+    public sealed class ItemInteractionReference : PropertyBlock<ItemInteractionReference>
+    {
+        [Header("On Grounded")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "OnGrounded")]
+        public bool m_OnGrounded = true;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "OnGroundedConstAction")]
+        public ConstActionReferenceArray m_OnGroundedConstAction = ConstActionReferenceArray.Empty;
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "OnGroundedTriggerAction")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnGroundedTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
+
+        [Space, Header("On Equiped")]
+        [SerializeField, JsonProperty(Order = 100, PropertyName = "OnEquiped")]
+        public bool m_OnEquiped = true;
+        [SerializeField, JsonProperty(Order = 101, PropertyName = "OnEquipedConstAction")]
+        public ConstActionReferenceArray m_OnEquipedConstAction = ConstActionReferenceArray.Empty;
+        [SerializeField, JsonProperty(Order = 102, PropertyName = "OnEquipedTriggerAction")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnEquipedTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
+
+        [Space, Header("On Equiped")]
+        [SerializeField, JsonProperty(Order = 200, PropertyName = "OnStored")]
+        public bool m_OnStored = true;
+        [SerializeField, JsonProperty(Order = 201, PropertyName = "OnStoredConstAction")]
+        public ConstActionReferenceArray m_OnStoredConstAction = ConstActionReferenceArray.Empty;
+        [SerializeField, JsonProperty(Order = 202, PropertyName = "OnStoredTriggerAction")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnStoredTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
     }
 }

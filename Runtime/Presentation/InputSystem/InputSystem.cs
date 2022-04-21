@@ -43,6 +43,7 @@ namespace Syadeu.Presentation.Input
         private bool m_EnableInput = false;
         private InputAction m_MousePositionInputAction;
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
+        private readonly Dictionary<UserActionType, InputAction> m_CreatedUserActions = new Dictionary<UserActionType, InputAction>();
 
         private Vector2 m_PrecalculatedCursorPosition;
         private Ray m_PrecalculatedCursorRay;
@@ -94,6 +95,21 @@ namespace Syadeu.Presentation.Input
             m_MousePositionInputAction.performed += OnMousePositionChangedHandler;
             m_MousePositionInputAction.Enable();
 
+            {
+                int userActionLength = TypeHelper.Enum<UserActionType>.Length;
+                string binding; InputAction inputAction;
+                for (int i = 0; i < userActionLength; i++)
+                {
+                    binding = GetUserActionKeyBindingString((UserActionType)i);
+                    inputAction = new InputAction(
+                        type: InputActionType.Button,
+                        binding: binding);
+                    inputAction.Enable();
+
+                    m_CreatedUserActions.Add((UserActionType)i, inputAction);
+                }
+            }
+
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
@@ -143,6 +159,8 @@ namespace Syadeu.Presentation.Input
         }
 
         #endregion
+
+        #region Bindings
 
         public InputAction GetMouseButtonBinding(MouseButton mouseButton, InputActionType type)
         {
@@ -239,6 +257,33 @@ namespace Syadeu.Presentation.Input
 
             m_CreatedInputActions.Remove(action);
         }
+
+        public InputAction GetUserActionKeyBinding(UserActionType userActionType)
+        {
+            return m_CreatedUserActions[userActionType];
+        }
+        private static string GetUserActionKeyBindingString(UserActionType userActionType)
+        {
+            const string c_Format = "Input_ActionType_{0}";
+
+            string result;
+            switch (userActionType)
+            {
+                case UserActionType.Interaction:
+                    result = PlayerPrefs.GetString(
+                        string.Format(c_Format, TypeHelper.Enum<UserActionType>.ToString(userActionType)),
+                        "<Keyboard>/f"
+                        );
+
+                    break;
+                default:
+                    throw new NotImplementedException($"{userActionType}");
+            }
+
+            return result;
+        }
+
+        #endregion
 
         public static InputControl ToControlType(ControlType controlType)
         {

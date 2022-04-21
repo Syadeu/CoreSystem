@@ -25,6 +25,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace Syadeu.Collections.Buffer.LowLevel
 {
@@ -229,6 +230,45 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
 
             return true;
+        }
+
+        public static int GetBytes(object obj, ref FixedList4096Bytes<byte> output)
+        {
+            UnsafeReference<byte> ptr;
+            int length;
+
+            if (obj is int integer)
+            {
+                int temp = integer;
+                ptr = AsBytes(ref temp, out length);
+            }
+            else if (obj is bool boolean)
+            {
+                bool temp = boolean;
+                ptr = AsBytes(ref temp, out length);
+            }
+            else if (obj is float single)
+            {
+                float temp = single;
+                ptr = AsBytes(ref temp, out length);
+            }
+            else if (obj is double doub)
+            {
+                double temp = doub;
+                ptr = AsBytes(ref temp, out length);
+            }
+            else
+            {
+                Debug.LogError("?? fatal error");
+                return 0;
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                output.Add(ptr[i]);
+            }
+
+            return length;
         }
 
         #region Memory
