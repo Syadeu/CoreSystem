@@ -87,7 +87,7 @@ namespace SyadeuEditor
         }
         private void OnGUI()
         {
-            const string c_Copyrights = "Copyright 2021 Syadeu. All rights reserved.";
+            const string c_Copyrights = "Copyright 2022 Syadeu. All rights reserved.";
 
             GUILayout.Space(20);
             EditorUtilities.StringHeader("Setup", 30, true);

@@ -10,7 +10,7 @@ using UnityEditor;
 
 namespace SyadeuEditor.Presentation
 {
-    public static class EntityProvider
+    public static class EntityScriptProvider
     {
         private static readonly Dictionary<Type, MonoScript> s_ScriptCache = new Dictionary<Type, MonoScript>();
         private static readonly Dictionary<Type, MonoScript> s_DrawerScriptCache = new Dictionary<Type, MonoScript>();
@@ -48,7 +48,7 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        static EntityProvider()
+        static EntityScriptProvider()
         {
             BuildScriptCache();
         }
@@ -61,7 +61,9 @@ namespace SyadeuEditor.Presentation
                 AddEntityScriptAsset(entityType);
             }
 
+#pragma warning disable SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
             foreach (var entityDrawerType in TypeCache.GetTypesDerivedFrom(typeof(PropertyDrawer<>)))
+#pragma warning restore SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
             {
                 if (entityDrawerType.IsAbstract) continue;
 
@@ -77,6 +79,9 @@ namespace SyadeuEditor.Presentation
         }
         private static void AddEntityDrawerScriptAsset(Type type)
         {
+            const string
+                c_DrawerPostFix = "Drawer", c_PropertyDrawerPostFix = "PropertyDrawer";
+
             IEnumerable<CustomPropertyDrawer> drawers = type.GetCustomAttributes<CustomPropertyDrawer>();
             if (!drawers.Any()) return;
 
@@ -87,9 +92,9 @@ namespace SyadeuEditor.Presentation
 
                 MonoScript script = ScriptUtilities.FindScriptFromClassName(type.Name);
                 if (script == null)
-                    script = ScriptUtilities.FindScriptFromClassName(type.Name + "Drawer");
+                    script = ScriptUtilities.FindScriptFromClassName(type.Name + c_DrawerPostFix);
                 if (script == null)
-                    script = ScriptUtilities.FindScriptFromClassName(type.Name + "PropertyDrawer");
+                    script = ScriptUtilities.FindScriptFromClassName(type.Name + c_PropertyDrawerPostFix);
 
                 s_DrawerPerType[entityType] = type;
                 s_DrawerScriptCache[type] = script;

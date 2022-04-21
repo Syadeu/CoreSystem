@@ -220,6 +220,24 @@ namespace SyadeuEditor.Presentation
             menu.AddSeparator(string.Empty);
             if (item is FolderTreeElement folder)
             {
+                menu.AddItem(new GUIContent("Edit Script"), false, () =>
+                {
+                    EntityScriptProvider.OpenScript(folder.Type);
+                });
+                var editDrawerScriptContent = new GUIContent("Edit Drawer Script");
+                if (EntityScriptProvider.HasDrawerScript(folder.Type))
+                {
+                    menu.AddItem(editDrawerScriptContent, false, () =>
+                    {
+                        EntityScriptProvider.OpenDrawerScript(folder.Type);
+                    });
+                }
+                else
+                {
+                    menu.AddDisabledItem(editDrawerScriptContent);
+                }
+                menu.AddSeparator(string.Empty);
+
                 menu.AddItem(new GUIContent("Add"), false, () =>
                 {
                     var drawer = EntityWindow.Instance.Add(folder.Type);
@@ -233,14 +251,14 @@ namespace SyadeuEditor.Presentation
 
                 menu.AddItem(new GUIContent("Edit Script"), false, () =>
                 {
-                    EntityProvider.OpenScript(entityType);
+                    EntityScriptProvider.OpenScript(entityType);
                 });
                 var editDrawerScriptContent = new GUIContent("Edit Drawer Script");
-                if (EntityProvider.HasDrawerScript(entityType))
+                if (EntityScriptProvider.HasDrawerScript(entityType))
                 {
                     menu.AddItem(editDrawerScriptContent, false, () =>
                     {
-                        EntityProvider.OpenDrawerScript(entityType);
+                        EntityScriptProvider.OpenDrawerScript(entityType);
                     });
                 }
                 else
