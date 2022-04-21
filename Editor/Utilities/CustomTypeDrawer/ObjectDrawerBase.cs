@@ -191,7 +191,8 @@ namespace SyadeuEditor.Utilities
             }
             #endregion
 
-            return new NullDrawer(memberInfo, declaredType);
+            //return new NullDrawer(memberInfo, declaredType);
+            throw new Exception();
         }
     }
 }

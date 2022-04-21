@@ -232,8 +232,7 @@ namespace SyadeuEditor.Presentation
                         EntityScriptProvider.OpenDrawerScript(folder.Type);
                     });
                 }
-                else
-                {
+                else                {
                     menu.AddDisabledItem(editDrawerScriptContent);
                 }
                 menu.AddSeparator(string.Empty);

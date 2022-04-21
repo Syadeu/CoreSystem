@@ -40,12 +40,12 @@ namespace SyadeuEditor.Presentation
             if (Pool.TryGetValue(objectBase, out var drawer)) return drawer;
 
             Type objType = objectBase.GetType();
-            if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntity>.Type.IsAssignableFrom(objType))
-            {
-                drawer = new MapDataEntityDrawer(objectBase);
-                Pool.Add(objectBase, drawer);
-                return drawer;
-            }
+            //if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntity>.Type.IsAssignableFrom(objType))
+            //{
+            //    drawer = new MapDataEntityDrawer(objectBase);
+            //    Pool.Add(objectBase, drawer);
+            //    return drawer;
+            //}
             //else if (TypeHelper.TypeOf<Syadeu.Presentation.Render.SVGEntity>.Type.IsAssignableFrom(objType))
             //{
             //    drawer = new SVGEntityDrawer(objectBase);

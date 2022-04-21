@@ -258,6 +258,18 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        protected void HelpBox(ref AutoRect rect, string text, MessageType type)
+        {
+            GUIStyle style = EditorStyles.helpBox;
+
+            float width = EditorGUI.IndentedRect(rect.Current).width;
+            float height = style.CalcHeight(new GUIContent(text), width);
+
+            AddAutoHeight(height);
+            Rect pos = rect.Pop(height);
+            EditorGUI.HelpBox(pos, text, type);
+        }
+
         #endregion
 
         #region Cache
