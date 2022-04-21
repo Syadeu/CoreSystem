@@ -24,9 +24,11 @@ namespace Syadeu.Presentation.Render
     {
         public static ShaderReference Empty => new ShaderReference(-1);
 
-        [JsonProperty(Order = 0, PropertyName = "Index")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Index")]
         private int m_Index;
 
+        [JsonIgnore]
+        public int Index { get => m_Index; }
         [JsonIgnore]
         public Shader Shader
         {
