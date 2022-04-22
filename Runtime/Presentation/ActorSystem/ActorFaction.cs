@@ -21,9 +21,11 @@ using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Scripting;
-
 namespace Syadeu.Presentation.Actor
 {
+    /// <summary>
+    /// ActorEntity 의 소속입니다.
+    /// </summary>
     [DisplayName("Data: Actor Faction")]
     public sealed class ActorFaction : DataObjectBase
     {

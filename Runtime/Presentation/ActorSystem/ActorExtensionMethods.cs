@@ -63,6 +63,9 @@ namespace Syadeu.Presentation.Actor
             return entity.GetAttribute<ActorControllerAttribute>();
         }
 
+        /// <summary>
+        /// ID 가 ActorEntity 인지 반환합니다.
+        /// </summary>
         public static bool IsActorEntity(this in InstanceID entityID)
         {
             return entityID.IsEntity<ActorEntity>();

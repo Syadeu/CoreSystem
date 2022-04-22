@@ -60,6 +60,8 @@ namespace Syadeu.Presentation.Actor
             m_EntityRaycastSystem = null;
         }
 
+        #region Binds
+
         private void Bind(InputSystem other)
         {
             m_InputSystem = other;
@@ -72,6 +74,8 @@ namespace Syadeu.Presentation.Actor
         {
             m_EntityRaycastSystem = other;
         }
+
+        #endregion
 
         protected override void OnStartPresentation()
         {
@@ -171,5 +175,16 @@ namespace Syadeu.Presentation.Actor
         {
             m_InteractableStates[(int)type] = state;
         }
+    }
+
+    public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
+    {
+        [SerializeField, JsonProperty]
+        private float m_InteractionRange;
+
+    }
+    public struct ActorInteractionComponent : IEntityComponent
+    {
+        public float interactionRange;
     }
 }
