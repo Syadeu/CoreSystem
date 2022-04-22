@@ -16,7 +16,10 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Buffer.LowLevel;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -30,41 +33,24 @@ namespace Syadeu.Collections
     {
         public T x, y, z, w;
 
-        public T this[int index]
+        public unsafe T this[int index]
         {
             get
             {
-                return index switch
-                {
-                    0 => x,
-                    1 => y,
-                    2 => z,
-                    3 => w,
-                    _ => throw new IndexOutOfRangeException(),
-                };
+#if DEBUG_MODE
+                if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+                return Buffer[index];
             }
             set
             {
-                switch (index)
-                {
-                    case 0:
-                        x = value;
-                        break;
-                    case 1:
-                        y = value;
-                        break;
-                    case 2:
-                        z = value;
-                        break;
-                    case 3:
-                        w = value;
-                        break;
-                    default:
-                        throw new IndexOutOfRangeException();
-                }
+#if DEBUG_MODE
+                if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+                Buffer[index] = value;
             }
         }
-        internal unsafe T* Buffer
+        internal unsafe UnsafeReference<T> Buffer
         {
             get
             {
@@ -81,25 +67,151 @@ namespace Syadeu.Collections
         public int Length => 4;
         int IIndexable<T>.Length { get => 4; set => throw new NotImplementedException(); }
         public int Capacity { get => 4; set => throw new NotImplementedException(); }
+        public int Count { get; set; }
 
         public bool IsEmpty => false;
 
+        public Fixed4(IEnumerable<T> iter)
+        {
+            this = default;
+
+#if DEBUG_MODE
+            int count = iter.Count();
+            if (count >= Length) throw new IndexOutOfRangeException();
+#endif
+            foreach (var item in iter)
+            {
+                Add(item);
+            }
+        }
+
         public void Clear()
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < Length; i++)
             {
                 this[i] = default(T);
             }
+            Count = 0;
         }
-        public ref T ElementAt(int index)
+        public unsafe ref T ElementAt(int index)
         {
 #if DEBUG_MODE
-            if (index < 0 || index > 3) throw new IndexOutOfRangeException();
+            if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
 #endif
-            unsafe
+            return ref *(Buffer.Ptr + (UnsafeUtility.SizeOf<T>() * index));
+        }
+        public int Add(in T item)
+        {
+            int index = Count;
+#if DEBUG_MODE
+            if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+            this[index] = item;
+
+            Count++;
+            return index;
+        }
+        public unsafe void RemoveAt(int index)
+        {
+            UnsafeBufferUtility.RemoveAtSwapBack(Buffer, Count, index);
+
+            Count--;
+        }
+    }
+    [BurstCompatible]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Fixed8<T> : IFixedList<T>
+        where T : unmanaged
+    {
+        public T 
+            x01, x02, x03, x04,
+            y01, y02, y03, y04;
+
+        public unsafe T this[int index]
+        {
+            get
             {
-                return ref *(Buffer + (UnsafeUtility.SizeOf<T>() * index));
+#if DEBUG_MODE
+                if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+                return Buffer[index];
             }
+            set
+            {
+#if DEBUG_MODE
+                if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+                Buffer[index] = value;
+            }
+        }
+        internal unsafe UnsafeReference<T> Buffer
+        {
+            get
+            {
+                fixed (T* p = &x01)
+                {
+                    return p;
+                }
+            }
+        }
+
+        public T First => x01;
+        public T Last => y04;
+
+        public int Length => 4;
+        int IIndexable<T>.Length { get => 4; set => throw new NotImplementedException(); }
+        public int Capacity { get => 4; set => throw new NotImplementedException(); }
+        public int Count { get; set; }
+
+        public bool IsEmpty => false;
+
+        public Fixed8(IEnumerable<T> iter)
+        {
+            this = default;
+
+#if DEBUG_MODE
+            int count = iter.Count();
+            if (count >= Length) throw new IndexOutOfRangeException();
+#endif
+            foreach (var item in iter)
+            {
+                Add(item);
+            }
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                this[i] = default(T);
+            }
+            Count = 0;
+        }
+        public unsafe ref T ElementAt(int index)
+        {
+#if DEBUG_MODE
+            if (index < 0 || index >= Length) throw new IndexOutOfRangeException();
+#endif
+            return ref *(Buffer.Ptr + (UnsafeUtility.SizeOf<T>() * index));
+        }
+        public bool Add(in T item)
+        {
+            int index = Count;
+            if (index < 0 || index >= Length)
+            {
+                return false;
+            }
+
+            this[index] = item;
+
+            Count++;
+            return true;
+        }
+        public unsafe void RemoveAt(int index)
+        {
+            UnsafeBufferUtility.RemoveAtSwapBack(Buffer, Count, index);
+
+            Count--;
         }
     }
 }

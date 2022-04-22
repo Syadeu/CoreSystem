@@ -26,7 +26,7 @@ using System.Linq;
 namespace Syadeu.Collections
 {
     [Serializable, JsonArray]
-    public class ArrayWrapper<T> : ICloneable, IList<T>, IReadOnlyList<T>
+    public class ArrayWrapper<T> : ICloneable, IList<T>, IReadOnlyList<T>, IEnumerable<T>
     {
         public static ArrayWrapper<T> Empty => Array.Empty<T>();
 

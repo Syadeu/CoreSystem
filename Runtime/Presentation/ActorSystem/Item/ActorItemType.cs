@@ -40,15 +40,16 @@ namespace Syadeu.Presentation.Actor
 
         [Space]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "Interactions")]
-        private ItemInteractionReference m_Interactions = new ItemInteractionReference();
+        private InteractionReference m_Interactions = new InteractionReference();
 
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
         [JsonIgnore] public HumanBody Equipable => m_Equipable;
-        [JsonIgnore] public ItemInteractionReference InteractionInfo => m_Interactions;
+        [JsonIgnore] public InteractionReference InteractionInfo => m_Interactions;
     }
 
-    public enum ItemState
+    public enum InteractableState : int
     {
+        Default     =   0,
         /// <summary>
         /// 바닥에 떨어진 상태
         /// </summary>
@@ -60,10 +61,10 @@ namespace Syadeu.Presentation.Actor
         /// <summary>
         /// 누군가(혹은 물건)에 보관된 상태
         /// </summary>
-        Stored
+        Stored,
     }
     [Serializable]
-    public sealed class ItemInteractionReference : PropertyBlock<ItemInteractionReference>
+    public sealed class InteractionReference : PropertyBlock<InteractionReference>
     {
         [Header("On Grounded")]
         [SerializeField, JsonProperty(Order = 0, PropertyName = "OnGrounded")]

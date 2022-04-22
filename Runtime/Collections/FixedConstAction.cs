@@ -67,7 +67,7 @@ namespace Syadeu.Collections
         }
 
         [NotBurstCompatible]
-        internal unsafe FixedConstAction(ConstActionReference t)
+        public unsafe FixedConstAction(ConstActionReference t)
         {
             this = default(FixedConstAction);
 

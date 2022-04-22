@@ -28,6 +28,7 @@ using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -63,6 +64,7 @@ namespace Syadeu.Presentation.TurnTable
         private CoroutineSystem m_CoroutineSystem;
         private NavMeshSystem m_NavMeshSystem;
         private EventSystem m_EventSystem;
+        private ActorSystem m_ActorSystem;
 
         // LevelDesignPresentationGroup
         private LevelDesignSystem m_LevelDesignSystem;
@@ -80,6 +82,7 @@ namespace Syadeu.Presentation.TurnTable
             RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, NavMeshSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, ActorSystem>(Bind);
 
             RequestSystem<LevelDesignPresentationGroup, LevelDesignSystem>(Bind);
             RequestSystem<TRPGIngameSystemGroup, TRPGTurnTableSystem>(Bind);
@@ -120,6 +123,7 @@ namespace Syadeu.Presentation.TurnTable
             m_CoroutineSystem = null;
             m_NavMeshSystem = null;
             m_EventSystem = null;
+            m_ActorSystem = null;
 
             m_LevelDesignSystem = null;
             m_TurnTableSystem = null;
@@ -186,6 +190,10 @@ namespace Syadeu.Presentation.TurnTable
         private void Bind(EventSystem other)
         {
             m_EventSystem = other;
+        }
+        private void Bind(ActorSystem other)
+        {
+            m_ActorSystem = other;
         }
 
         private void Bind(LevelDesignSystem other)
@@ -360,6 +368,11 @@ namespace Syadeu.Presentation.TurnTable
 
             if (selectionComponent.m_Holdable)
             {
+                if (entity.Idx.IsActorEntity())
+                {
+                    m_ActorSystem.AddCurrentControl(entity.ToEntity<ActorEntity>());
+                }
+
                 Selection selection = m_SelectionPool.Get();
                 selection.Initialize(entity);
 
@@ -400,6 +413,10 @@ namespace Syadeu.Presentation.TurnTable
                 InternalRemoveSelection(selection);
             }
 
+            m_ActorSystem.RemoveCurrentControl(m_SelectedEntities
+                .Where(t => t.Entity.Idx.IsActorEntity())
+                .Select(t => t.Entity.ToEntity<ActorEntity>())
+                );
             m_SelectedEntities.Clear();
         }
         private void InternalRemoveSelection(Selection selection)
