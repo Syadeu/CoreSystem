@@ -70,6 +70,9 @@ namespace Syadeu.Presentation.Actor
         {
             return entityID.IsEntity<ActorEntity>();
         }
+        /// <summary>
+        /// ActorFactionComponent 를 가진 서로 다른 엔티티가 동맹관계인지 반환합니다.
+        /// </summary>
         public static bool IsAlly(this in InstanceID entityID, in InstanceID targetID)
         {
             Entity<IEntityData>
@@ -87,6 +90,9 @@ namespace Syadeu.Presentation.Actor
 
             return entity.GetComponent<ActorFactionComponent>().IsAlly(in target.GetComponent<ActorFactionComponent>());
         }
+        /// <summary>
+        /// ActorFactionComponent를 가진 서로 다른 엔티티가 적대관계인지 반환합니다.
+        /// </summary>
         public static bool IsEnemy(this in InstanceID entityID, in InstanceID targetID)
         {
             Entity<IEntityData>
