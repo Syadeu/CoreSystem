@@ -86,6 +86,29 @@ namespace Syadeu.Presentation.Actor
         private void OnInteractionKeyPressed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
         {
             m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
+
+            // TODO : Temp Codes
+
+            IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
+            List<InstanceID> interactableEntities = new List<InstanceID>();
+            for (int i = 0; i < currentControls.Length; i++)
+            {
+                InstanceID element = currentControls[i];
+                if (!element.HasComponent<ActorInteractionComponent>())
+                {
+                    continue;
+                }
+                ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
+
+                interactableEntities.Add(element);
+                ProxyTransform tr = element.GetTransform();
+                IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(tr.position, component.interactionRange);
+                
+            }
+
+            
+
+            // TODO : Temp Codes
         }
 
         #endregion
@@ -139,7 +162,7 @@ namespace Syadeu.Presentation.Actor
             }
         }
         // InteractableState
-        UnsafeHashMap<int, State> m_InteractableStates;
+        private UnsafeHashMap<int, State> m_InteractableStates;
 
         public ActorInteractableComponent(InteractionReference interaction)
         {
@@ -177,14 +200,34 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
+    /// <summary>
+    /// <see cref="ActorEntity"/> 가 <see cref="ActorInteratableComponent"/> 를 가진 
+    /// 다른 오브젝트와 상호작용을 할 수 있게하는 Provider 입니다.
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
     public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
     {
+        [Tooltip("오브젝트가 최대로 상호작용 가능한 거리")]
         [SerializeField, JsonProperty]
-        private float m_InteractionRange;
+        private float m_InteractionRange = 3;
 
+        protected override OnInitialize(in Entity<IEntity> parent, ref ActorInteractionComponent component)
+        {
+            component = new ActorInteractionComponent(m_InteractionRange);
+        }
     }
+    /// <summary>
+    /// <see cref="ActorInternactionProvider"/> 에서 사용되는 컴포넌트입니다.
+    /// </summary>
     public struct ActorInteractionComponent : IEntityComponent
     {
         public float interactionRange;
+
+        public ActorInteractableComponent(float maxRange)
+        {
+            this.interactionRange = maxRange;
+        }
     }
 }
