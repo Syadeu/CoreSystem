@@ -21,6 +21,7 @@ using Syadeu.Collections;
 using Syadeu.Collections.Graphs;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
 using Unity.Mathematics;
@@ -30,7 +31,8 @@ namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Attribute: Actor Weapon Item")]
     public sealed class ActorWeaponItemAttribute : ActorItemAttributeBase, IActorItemAttribute,
-        INotifyComponent<ActorWeaponItemComponent>
+        INotifyComponent<ActorWeaponItemComponent>,
+        INotifyComponent<InteractableComponent>
     {
         [Serializable]
         public sealed class WeaponPositionProperty : PropertyBlock<WeaponPositionProperty>
@@ -55,6 +57,10 @@ namespace Syadeu.Presentation.Actor
         internal WeaponPositionProperty m_HolsterPosition = new WeaponPositionProperty();
         [SerializeField, JsonProperty(Order = -399, PropertyName = "DrawPosition")]
         internal WeaponPositionProperty m_DrawPosition = new WeaponPositionProperty();
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 100, PropertyName = "")]
+        internal InteractionReference m_Interaction = new InteractionReference();
 
         [JsonIgnore] public float Damage => m_Damage;
     }
@@ -100,15 +106,15 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
-    //public static class ActorItemHelper
-    //{
-    //    private static VisualGraphLogicProcessor s_LogicProcessor = new VisualGraphLogicProcessor();
+    internal sealed class ActorWeaponItemAttributeProcessor : AttributeProcessor<ActorWeaponItemAttribute>
+    {
+        protected override void OnCreated(ActorWeaponItemAttribute attribute, Entity<IEntityData> entity)
+        {
+            ref ActorWeaponItemComponent com = ref entity.GetComponent<ActorWeaponItemComponent>();
+            com = new ActorWeaponItemComponent(attribute);
 
-    //    public static void ProcessBehavior(
-    //        ActorItemAttributeBase attributeBase, VisualGraphField visualGraph)
-    //    {
-    //        visualGraph.Process();
-    //        //visualGraph.VisualGraph;
-    //    }
-    //}
+            ref InteractableComponent interact = ref entity.GetComponent<InteractableComponent>();
+            interact = new InteractableComponent(attribute.m_Interaction);
+        }
+    }
 }

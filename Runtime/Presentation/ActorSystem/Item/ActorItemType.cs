@@ -47,21 +47,27 @@ namespace Syadeu.Presentation.Actor
         [JsonIgnore] public InteractionReference InteractionInfo => m_Interactions;
     }
 
+    [Flags]
     public enum InteractableState : int
     {
         Default     =   0,
         /// <summary>
         /// 바닥에 떨어진 상태
         /// </summary>
-        Grounded,
+        Grounded    =   0b0001,
         /// <summary>
         /// 누군가에게 착용된 상태
         /// </summary>
-        Equiped,
+        Equiped     =   0b0010,
         /// <summary>
         /// 누군가(혹은 물건)에 보관된 상태
         /// </summary>
-        Stored,
+        Stored      =   0b0100,
+
+        /**/
+
+        InteractionKey  =   0b00010000,
+        Use             =   0b00100000
     }
     [Serializable]
     public sealed class InteractionReference : PropertyBlock<InteractionReference>

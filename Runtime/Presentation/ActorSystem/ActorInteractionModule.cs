@@ -85,7 +85,7 @@ namespace Syadeu.Presentation.Actor
 
         private void OnInteractionKeyPressed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
         {
-            m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
+            //m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
 
             // TODO : Temp Codes
 
@@ -105,12 +105,11 @@ namespace Syadeu.Presentation.Actor
                 IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(tr.position, component.interactionRange);
                 foreach (Entity<IEntity> interactable in nearbyInteractables)
                 {
-                    var targetInteractableCom = interactable.GetComponent<InteractableComponent>();
-
+                    InteractableComponent targetInteractableCom 
+                        = interactable.GetComponentReadOnly<InteractableComponent>();
+                    targetInteractableCom.Execute(InteractableState.InteractionKey, element);
                 }
             }
-
-            
 
             // TODO : Temp Codes
         }
@@ -136,25 +135,25 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
-    public sealed class OnInteractionKeyPressedEvent : SynchronizedEvent<OnInteractionKeyPressedEvent>
-    {
-        public static OnInteractionKeyPressedEvent GetEvent()
-        {
-            var ev = Dequeue();
+    //public sealed class OnInteractionKeyPressedEvent : SynchronizedEvent<OnInteractionKeyPressedEvent>
+    //{
+    //    public static OnInteractionKeyPressedEvent GetEvent()
+    //    {
+    //        var ev = Dequeue();
 
-            return ev;
-        }
+    //        return ev;
+    //    }
 
-        protected override void OnTerminate()
-        {
-        }
-    }
+    //    protected override void OnTerminate()
+    //    {
+    //    }
+    //}
 
     /// <summary>
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
     /// </summary>
     [BurstCompatible]
-    public struct InteractableComponent : IEntityComponent, IDisposable
+    public struct InteractableComponent : IEntityComponent, IValidation, IDisposable
     {
         [BurstCompatible]
         public struct State
@@ -174,6 +173,10 @@ namespace Syadeu.Presentation.Actor
         }
         // InteractableState
         private UnsafeHashMap<int, State> m_InteractableStates;
+        private InteractableState m_CurrentState;
+        private readonly bool m_IsCreated;
+
+        public InteractableState CurrentState { get => m_CurrentState; set => m_CurrentState = value; }
 
         public InteractableComponent(InteractionReference interaction)
         {
@@ -181,6 +184,9 @@ namespace Syadeu.Presentation.Actor
                 TypeHelper.Enum<InteractableState>.Length,
                 AllocatorManager.Persistent
                 );
+            m_CurrentState = InteractableState.Default;
+            m_IsCreated = true;
+
             Set(InteractableState.Grounded,
                 new State(
                     interaction.m_OnGrounded,
@@ -202,22 +208,39 @@ namespace Syadeu.Presentation.Actor
         }
         void IDisposable.Dispose()
         {
+            if (!m_IsCreated) return;
+
             m_InteractableStates.Dispose();
         }
 
         public void Execute(InteractableState type, InstanceID caller)
         {
-            if (m_InteractableStates.TryGetValue((int)type, out var state) &&
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"err");
+                return;
+            }
+
+            if (m_InteractableStates.TryGetValue((int)(m_CurrentState | type), out var state) &&
                 state.interactable)
             {
                 state.constAction.Execute(caller);
                 state.triggerAction.Execute(caller);
-
             }
         }
         public void Set(InteractableState type, State state)
         {
+            if (!IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Component,
+                    $"err");
+                return;
+            }
+
             m_InteractableStates[(int)type] = state;
         }
+
+        public bool IsValid() => m_IsCreated;
     }
 }

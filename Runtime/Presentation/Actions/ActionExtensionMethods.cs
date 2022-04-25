@@ -406,6 +406,8 @@ namespace Syadeu.Presentation.Actions
             }
         }
 
+        #region Const Action
+
         public static object Execute(this IConstActionReference action, InstanceID entity)
         {
             if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
@@ -551,5 +553,7 @@ namespace Syadeu.Presentation.Actions
         {
             return (TValue)Execute((IConstActionReference)action, entity);
         }
+
+        #endregion
     }
 }
