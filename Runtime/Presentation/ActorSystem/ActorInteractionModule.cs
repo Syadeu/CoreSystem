@@ -16,12 +16,14 @@
 #define DEBUG_MODE
 #endif
 
+using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -91,7 +93,7 @@ namespace Syadeu.Presentation.Actor
 
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
             List<InstanceID> interactableEntities = new List<InstanceID>();
-            for (int i = 0; i < currentControls.Length; i++)
+            for (int i = 0; i < currentControls.Count; i++)
             {
                 InstanceID element = currentControls[i];
                 if (!element.HasComponent<ActorInteractionComponent>())
@@ -210,10 +212,10 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
     {
         [Tooltip("오브젝트가 최대로 상호작용 가능한 거리")]
-        [SerializeField, JsonProperty]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "InteractionRange")]
         private float m_InteractionRange = 3;
 
-        protected override OnInitialize(in Entity<IEntity> parent, ref ActorInteractionComponent component)
+        protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInteractionComponent component)
         {
             component = new ActorInteractionComponent(m_InteractionRange);
         }
@@ -221,11 +223,11 @@ namespace Syadeu.Presentation.Actor
     /// <summary>
     /// <see cref="ActorInternactionProvider"/> 에서 사용되는 컴포넌트입니다.
     /// </summary>
-    public struct ActorInteractionComponent : IEntityComponent
+    public struct ActorInteractionComponent : IActorProviderComponent
     {
         public float interactionRange;
 
-        public ActorInteractableComponent(float maxRange)
+        public ActorInteractionComponent(float maxRange)
         {
             this.interactionRange = maxRange;
         }
