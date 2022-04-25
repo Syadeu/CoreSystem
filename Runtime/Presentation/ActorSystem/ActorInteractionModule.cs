@@ -121,7 +121,7 @@ namespace Syadeu.Presentation.Actor
                 .SphereCastAll(position, radius, float3.zero)
                 .Where(t =>
                 {
-                    return t.entity.HasComponent<ActorInteractableComponent>();
+                    return t.entity.HasComponent<InteractableComponent>();
                 });
 
             return infos.Select(t => t.entity);
@@ -146,7 +146,7 @@ namespace Syadeu.Presentation.Actor
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
     /// </summary>
     [BurstCompatible]
-    public struct ActorInteractableComponent : IEntityComponent, IDisposable
+    public struct InteractableComponent : IEntityComponent, IDisposable
     {
         public struct State
         {
@@ -166,7 +166,7 @@ namespace Syadeu.Presentation.Actor
         // InteractableState
         private UnsafeHashMap<int, State> m_InteractableStates;
 
-        public ActorInteractableComponent(InteractionReference interaction)
+        public InteractableComponent(InteractionReference interaction)
         {
             m_InteractableStates = new UnsafeHashMap<int, State>(
                 TypeHelper.Enum<InteractableState>.Length,
@@ -203,7 +203,7 @@ namespace Syadeu.Presentation.Actor
     }
 
     /// <summary>
-    /// <see cref="ActorEntity"/> 가 <see cref="ActorInteratableComponent"/> 를 가진 
+    /// <see cref="ActorEntity"/> 가 <see cref="InteractableComponent"/> 를 가진 
     /// 다른 오브젝트와 상호작용을 할 수 있게하는 Provider 입니다.
     /// </summary>
     /// <remarks>
@@ -221,7 +221,7 @@ namespace Syadeu.Presentation.Actor
         }
     }
     /// <summary>
-    /// <see cref="ActorInternactionProvider"/> 에서 사용되는 컴포넌트입니다.
+    /// <see cref="ActorInterationProvider"/> 에서 사용되는 컴포넌트입니다.
     /// </summary>
     public struct ActorInteractionComponent : IActorProviderComponent
     {
