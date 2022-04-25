@@ -16,7 +16,6 @@
 #define DEBUG_MODE
 #endif
 
-using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
@@ -31,7 +30,6 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -199,37 +197,6 @@ namespace Syadeu.Presentation.Actor
         public void Set(InteractableState type, State state)
         {
             m_InteractableStates[(int)type] = state;
-        }
-    }
-
-    /// <summary>
-    /// <see cref="ActorEntity"/> 가 <see cref="InteractableComponent"/> 를 가진 
-    /// 다른 오브젝트와 상호작용을 할 수 있게하는 Provider 입니다.
-    /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
-    public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
-    {
-        [Tooltip("오브젝트가 최대로 상호작용 가능한 거리")]
-        [SerializeField, JsonProperty(Order = 0, PropertyName = "InteractionRange")]
-        private float m_InteractionRange = 3;
-
-        protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInteractionComponent component)
-        {
-            component = new ActorInteractionComponent(m_InteractionRange);
-        }
-    }
-    /// <summary>
-    /// <see cref="ActorInterationProvider"/> 에서 사용되는 컴포넌트입니다.
-    /// </summary>
-    public struct ActorInteractionComponent : IActorProviderComponent
-    {
-        public float interactionRange;
-
-        public ActorInteractionComponent(float maxRange)
-        {
-            this.interactionRange = maxRange;
         }
     }
 }
