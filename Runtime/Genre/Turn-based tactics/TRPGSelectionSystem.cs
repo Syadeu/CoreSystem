@@ -406,6 +406,12 @@ namespace Syadeu.Presentation.TurnTable
         }
         public void ClearSelectedEntities()
         {
+            m_ActorSystem.RemoveCurrentControl(
+                m_SelectedEntities
+                    .Where(t => t.Entity.Idx.IsActorEntity())
+                    .Select(t => t.Entity.ToEntity<ActorEntity>())
+                );
+
             for (int i = 0; i < m_SelectedEntities.Count; i++)
             {
                 Selection selection = m_SelectedEntities[i];
@@ -413,10 +419,6 @@ namespace Syadeu.Presentation.TurnTable
                 InternalRemoveSelection(selection);
             }
 
-            m_ActorSystem.RemoveCurrentControl(m_SelectedEntities
-                .Where(t => t.Entity.Idx.IsActorEntity())
-                .Select(t => t.Entity.ToEntity<ActorEntity>())
-                );
             m_SelectedEntities.Clear();
         }
         private void InternalRemoveSelection(Selection selection)

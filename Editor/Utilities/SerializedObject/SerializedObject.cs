@@ -36,6 +36,7 @@ namespace SyadeuEditor.Utilities
                 s_Shared.Add(obj, s);
             }
 
+            s.m_SerializedObject.UpdateIfRequiredOrScript();
             return s;
         }
         public static float GetPropertyHeight(T obj)

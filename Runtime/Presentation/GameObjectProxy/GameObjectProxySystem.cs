@@ -1307,6 +1307,10 @@ namespace Syadeu.Presentation.Proxy
                 {
                     Result.layer = 5;
                 }
+                else
+                {
+                    Result.layer = EntityRaycastSystem.EntityLayer;
+                }
 
                 RecycleableMonobehaviour recycleable = Result.GetComponent<RecycleableMonobehaviour>();
                 if (recycleable == null)

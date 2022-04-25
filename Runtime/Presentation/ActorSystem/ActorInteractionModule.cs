@@ -96,6 +96,7 @@ namespace Syadeu.Presentation.Actor
                 InstanceID element = currentControls[i];
                 if (!element.HasComponent<ActorInteractionComponent>())
                 {
+                    "doesnt have interaction com".ToLog();
                     continue;
                 }
                 ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
@@ -103,6 +104,10 @@ namespace Syadeu.Presentation.Actor
                 //interactableEntities.Add(element);
                 ProxyTransform tr = element.GetTransform();
                 IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(tr.position, component.interactionRange);
+                if (!nearbyInteractables.Any())
+                {
+                    "doesnt have nearby interaction obj".ToLog();
+                }
                 foreach (Entity<IEntity> interactable in nearbyInteractables)
                 {
                     InteractableComponent targetInteractableCom 
