@@ -90,7 +90,7 @@ namespace Syadeu.Presentation.Actor
             // TODO : Temp Codes
 
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
-            List<InstanceID> interactableEntities = new List<InstanceID>();
+            //List<InstanceID> interactableEntities = new List<InstanceID>();
             for (int i = 0; i < currentControls.Count; i++)
             {
                 InstanceID element = currentControls[i];
@@ -100,10 +100,14 @@ namespace Syadeu.Presentation.Actor
                 }
                 ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
 
-                interactableEntities.Add(element);
+                //interactableEntities.Add(element);
                 ProxyTransform tr = element.GetTransform();
                 IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(tr.position, component.interactionRange);
-                
+                foreach (Entity<IEntity> interactable in nearbyInteractables)
+                {
+                    var targetInteractableCom = interactable.GetComponent<InteractableComponent>();
+
+                }
             }
 
             
@@ -113,6 +117,12 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
+        /// <summary>
+        /// 해당 위치의 범위내 <see cref="InteractableComponent"/> 를 가진 모든 엔티티를 반환합니다.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="radius"></param>
+        /// <returns></returns>
         public IEnumerable<Entity<IEntity>> GetInteractables(float3 position, float radius)
         {
             IEnumerable<RaycastInfo> infos = m_EntityRaycastSystem
@@ -146,6 +156,7 @@ namespace Syadeu.Presentation.Actor
     [BurstCompatible]
     public struct InteractableComponent : IEntityComponent, IDisposable
     {
+        [BurstCompatible]
         public struct State
         {
             [MarshalAs(UnmanagedType.U1)]
@@ -194,6 +205,16 @@ namespace Syadeu.Presentation.Actor
             m_InteractableStates.Dispose();
         }
 
+        public void Execute(InteractableState type, InstanceID caller)
+        {
+            if (m_InteractableStates.TryGetValue((int)type, out var state) &&
+                state.interactable)
+            {
+                state.constAction.Execute(caller);
+                state.triggerAction.Execute(caller);
+
+            }
+        }
         public void Set(InteractableState type, State state)
         {
             m_InteractableStates[(int)type] = state;

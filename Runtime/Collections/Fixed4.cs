@@ -18,6 +18,7 @@
 
 using Syadeu.Collections.Buffer.LowLevel;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -28,7 +29,7 @@ namespace Syadeu.Collections
 {
     [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
-    public struct Fixed4<T> : IFixedList<T>
+    public struct Fixed4<T> : IFixedList<T>, IEnumerable<T>
         where T : unmanaged
     {
         public T x, y, z, w;
@@ -117,10 +118,46 @@ namespace Syadeu.Collections
 
             Count--;
         }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private Fixed4<T> m_This;
+            private int m_Index;
+
+            public T Current => m_This[m_Index];
+            object IEnumerator.Current => Current;
+
+            public Enumerator(Fixed4<T> t)
+            {
+                m_This = t;
+                m_Index = 0;
+            }
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                m_Index++;
+                if (m_Index < m_This.Count) return true;
+                return false;
+            }
+
+            public void Reset()
+            {
+                m_Index = 0;
+            }
+        }
     }
     [BurstCompatible]
     [StructLayout(LayoutKind.Sequential)]
-    public struct Fixed8<T> : IFixedList<T>
+    public struct Fixed8<T> : IFixedList<T>, IEnumerable<T>
         where T : unmanaged
     {
         public T 
@@ -212,6 +249,42 @@ namespace Syadeu.Collections
             UnsafeBufferUtility.RemoveAtSwapBack(Buffer, Count, index);
 
             Count--;
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private Fixed8<T> m_This;
+            private int m_Index;
+
+            public T Current => m_This[m_Index];
+            object IEnumerator.Current => Current;
+
+            public Enumerator(Fixed8<T> t)
+            {
+                m_This = t;
+                m_Index = 0;
+            }
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                m_Index++;
+                if (m_Index < m_This.Count) return true;
+                return false;
+            }
+
+            public void Reset()
+            {
+                m_Index = 0;
+            }
         }
     }
 }

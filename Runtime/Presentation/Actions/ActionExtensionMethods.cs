@@ -487,6 +487,27 @@ namespace Syadeu.Presentation.Actions
                 action[i].Execute(entity);
             }
         }
+        public static void Execute(this IEnumerable<ConstActionReference> action, InstanceID entity)
+        {
+            foreach (var item in action)
+            {
+                item.Execute(entity);
+            }
+        }
+        public static void Execute(this IEnumerable<FixedConstAction> action)
+        {
+            foreach (var item in action)
+            {
+                item.Execute();
+            }
+        }
+        public static void Execute(this IEnumerable<FixedConstAction> action, InstanceID entity)
+        {
+            foreach (var item in action)
+            {
+                item.Execute(entity);
+            }
+        }
         public static void Execute(this IList<ConstActionReference> action)
         {
             for (int i = 0; i < action.Count; i++)
