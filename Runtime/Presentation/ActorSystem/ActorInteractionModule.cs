@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Actor
             //m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
 
             // TODO : Temp Codes
-
+            "key inn".ToLog();
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
             //List<InstanceID> interactableEntities = new List<InstanceID>();
             for (int i = 0; i < currentControls.Count; i++)
@@ -108,6 +108,8 @@ namespace Syadeu.Presentation.Actor
                     InteractableComponent targetInteractableCom 
                         = interactable.GetComponentReadOnly<InteractableComponent>();
                     targetInteractableCom.Execute(InteractableState.InteractionKey, element);
+
+                    $"actor({element.GetEntity().Name}) interacting {interactable.Name}".ToLog();
                 }
             }
 

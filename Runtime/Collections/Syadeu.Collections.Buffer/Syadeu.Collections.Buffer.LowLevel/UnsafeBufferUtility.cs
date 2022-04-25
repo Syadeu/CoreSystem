@@ -232,7 +232,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return true;
         }
 
-        public static int GetBytes(object obj, ref FixedList4096Bytes<byte> output)
+        public static int GetBytes(object obj, ref FixedList128Bytes<byte> output)
         {
             UnsafeReference<byte> ptr;
             int length;

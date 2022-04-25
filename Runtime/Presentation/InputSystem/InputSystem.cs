@@ -149,6 +149,17 @@ namespace Syadeu.Presentation.Input
         {
             EnableInput = true;
 
+            {
+                int count = UserActionConstantDataProcessor.s_TempQueue.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    var item = UserActionConstantDataProcessor.s_TempQueue.Dequeue();
+                    var inputAction = GetUserActionKeyBinding(item.m_UserActionType);
+                    inputAction.performed += item.Execute;
+                }
+                UserActionConstantDataProcessor.s_TempQueue = null;
+            }
+
             return base.OnStartPresentation();
         }
         protected override PresentationResult BeforePresentation()

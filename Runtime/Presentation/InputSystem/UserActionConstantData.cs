@@ -17,6 +17,8 @@ using Syadeu.Presentation.Data;
 using Newtonsoft.Json;
 using System.ComponentModel;
 using Syadeu.Presentation.Actions;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Syadeu.Presentation.Input
 {
@@ -35,6 +37,7 @@ namespace Syadeu.Presentation.Input
     }
     internal sealed class UserActionConstantDataProcessor : EntityProcessor<UserActionConstantData>
     {
+        public static Queue<UserActionConstantData> s_TempQueue = new Queue<UserActionConstantData>();
         private InputSystem m_InputSystem;
 
         protected override void OnInitialize()
@@ -52,6 +55,12 @@ namespace Syadeu.Presentation.Input
 
         protected override void OnCreated(UserActionConstantData obj)
         {
+            if (m_InputSystem == null)
+            {
+                s_TempQueue.Enqueue(obj);
+                return;
+            }
+
             var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_UserActionType);
             inputAction.performed += obj.Execute;
         }

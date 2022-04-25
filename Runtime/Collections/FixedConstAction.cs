@@ -28,7 +28,7 @@ namespace Syadeu.Collections
     public struct FixedConstAction : IConstActionReference
     {
         private Guid m_Guid;
-        private FixedList4096Bytes<byte> m_Arguments;
+        private FixedList128Bytes<byte> m_Arguments;
 
         private unsafe UnsafeReference<byte> ArgumentPtr
         {
