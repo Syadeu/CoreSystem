@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
@@ -102,8 +103,8 @@ namespace Syadeu.Presentation.Actor
                 ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
 
                 //interactableEntities.Add(element);
-                ProxyTransform tr = element.GetTransform();
-                IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(tr.position, component.interactionRange);
+                //ProxyTransform tr = element.GetTransform();
+                IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(element);
                 if (!nearbyInteractables.Any())
                 {
                     "doesnt have nearby interaction obj".ToLog();
@@ -139,6 +140,17 @@ namespace Syadeu.Presentation.Actor
                 });
 
             return infos.Select(t => t.entity);
+        }
+        public IEnumerable<Entity<IEntity>> GetInteractables(InstanceID entity)
+        {
+            var triggerBound = entity.GetEntity().GetAttribute<TriggerBoundAttribute>();
+            IEnumerable<Entity<IEntity>> infos = triggerBound.Triggered
+                .Where(t =>
+                {
+                    return t.HasComponent<InteractableComponent>();
+                });
+
+            return infos;
         }
     }
 

@@ -107,7 +107,21 @@ namespace Syadeu.Presentation.Entities
         public FixedString128Bytes RawName => m_Name;
         /// <inheritdoc cref="IObject.Name"/>
         [NotBurstCompatible]
-        public string Name => m_Idx.IsEmpty() || m_Name.IsEmpty ? c_Invalid : m_Name.ConvertToString();
+        public string Name
+        {
+            get
+            {
+                if (m_Idx.IsEmpty() || m_Name.IsEmpty)
+                {
+#if DEBUG_MODE
+                    return Target.Name;
+#else
+                    return c_Invalid;
+#endif
+                }
+                return m_Name.ConvertToString();
+            }
+        }
         /// <inheritdoc cref="IObject.Hash"/>
         public Hash Hash
         {
