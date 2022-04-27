@@ -20,7 +20,7 @@ using System;
 
 namespace SyadeuEditor.Utilities
 {
-    public abstract class SerializedObjectEditor<T> : EditorEntity
+    public abstract class SerializedObjectEditor<T> : InspectorEditor
     {
         private SerializedObject<T> m_SerializedObject = null;
 

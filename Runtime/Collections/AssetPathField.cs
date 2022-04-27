@@ -67,7 +67,8 @@ namespace Syadeu.Collections
     }
     /// <inheritdoc cref="AssetPathField"/>
     /// <typeparam name="T"></typeparam>
-    public abstract class AssetPathField<T> : AssetPathField, IEquatable<AssetPathField<T>>
+    [Serializable]
+    public class AssetPathField<T> : AssetPathField, IEquatable<AssetPathField<T>>
         where T : UnityEngine.Object
     {
         public override System.Type TargetType => TypeHelper.TypeOf<T>.Type;

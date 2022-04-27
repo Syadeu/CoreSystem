@@ -23,6 +23,7 @@ namespace SyadeuEditor.Utilities
     internal sealed class AssetPathFieldPropertyDrawer : PropertyDrawer<AssetPathField>
     {
         private const string c_AssetPathField = "p_AssetPath";
+        private static Type s_GenericType = typeof(AssetPathField<>);
 
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
@@ -32,17 +33,29 @@ namespace SyadeuEditor.Utilities
             UnityEngine.Object asset = GetObjectAtPath(in assetPath);
 
             Type targetType;
-            if (TypeHelper.TypeOf<AssetPathField>.Type.IsAssignableFrom(fieldInfo.FieldType) &&
-                fieldInfo.FieldType.BaseType.GenericTypeArguments.Length > 0)
+            if (TypeHelper.InheritsFrom(fieldInfo.FieldType, s_GenericType))
             {
-                targetType = fieldInfo.FieldType.BaseType.GenericTypeArguments[0];
+                if (fieldInfo.FieldType.IsGenericType &&
+                    s_GenericType.Equals(fieldInfo.FieldType.GetGenericTypeDefinition()))
+                {
+                    targetType = fieldInfo.FieldType.GenericTypeArguments[0];
+                }
+                else
+                {
+                    Type genericDef = TypeHelper.GetGenericBaseType(fieldInfo.FieldType, s_GenericType);
+                    targetType = genericDef.GenericTypeArguments[0];
+                }
             }
-            else targetType = TypeHelper.TypeOf<UnityEngine.Object>.Type;
+            else
+            {
+                targetType = TypeHelper.TypeOf<UnityEngine.Object>.Type;
+            }
 
             using (var changeCheck = new EditorGUI.ChangeCheckScope())
             {
+                Rect pos = rect.Pop();
                 UnityEngine.Object obj
-                    = EditorGUI.ObjectField(rect.Pop(), label, asset, targetType, false);
+                    = EditorGUI.ObjectField(pos, label, asset, targetType, false);
 
                 if (changeCheck.changed)
                 {

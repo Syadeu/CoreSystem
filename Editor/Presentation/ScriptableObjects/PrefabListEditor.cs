@@ -17,7 +17,7 @@ using SyadeuEditor.Utilities;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(PrefabList))]
-    public class PrefabListEditor : EditorEntity<PrefabList>
+    public class PrefabListEditor : InspectorEditor<PrefabList>
     {
         private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);
         private static AddressableAssetGroup m_DefaultGroup;

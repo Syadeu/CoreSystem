@@ -36,8 +36,8 @@ namespace Syadeu.Presentation.Entities
         internal bool m_EnableAutoFade = false;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
         internal float m_InitialAlpha = 1;
-        [SerializeField, JsonProperty(Order = 1, PropertyName = "AlignRotationWithCamera")]
-        internal bool m_AlignRotationWithCamera = true;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "AlignWithCamera")]
+        internal bool m_AlignWithCamera = true;
 
         [Space]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "Events")]
@@ -95,7 +95,7 @@ namespace Syadeu.Presentation.Entities
             com.m_Parent = e.Idx;
             com.Alpha = e.m_InitialAlpha;
 
-            if (e.m_AlignRotationWithCamera)
+            if (e.m_AlignWithCamera)
             {
                 float3 forward = m_RenderSystem.Camera.transform.forward;
                 var tr = entity.transform;

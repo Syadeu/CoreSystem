@@ -12,7 +12,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(SimpleFollower))]
-    public sealed class SimpleFollowerEditor : EditorEntity
+    public sealed class SimpleFollowerEditor : InspectorEditor
     {
         private SimpleFollower m_Scr = null;
 

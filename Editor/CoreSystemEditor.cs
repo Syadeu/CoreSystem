@@ -16,7 +16,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(CoreSystem))]
-    public sealed class CoreSystemEditor : EditorEntity<CoreSystem>
+    public sealed class CoreSystemEditor : InspectorEditor<CoreSystem>
     {
         //private bool m_OpenBackgroundRoutines = false;
 
@@ -24,9 +24,9 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_ManagerView = new VerticalTreeView(Target, serializedObject);
+            m_ManagerView = new VerticalTreeView(target, serializedObject);
 
-            m_RoutinesView = new VerticalTreeView(Target, serializedObject);
+            m_RoutinesView = new VerticalTreeView(target, serializedObject);
             m_RoutinesView.MakeCustomSearchFilter((e, str) =>
             {
                 str = str.ToLower();

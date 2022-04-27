@@ -12,7 +12,7 @@ namespace SyadeuEditor
     /// <summary>
     /// Script Custom Editor Entity
     /// </summary>
-    public abstract class EditorEntity : Editor
+    public abstract class InspectorEditor : Editor
     {
         private const string DEFAULT_MATERIAL = "Sprites-Default.mat";
         const char editorPreferencesArraySeparator = ';';
@@ -39,6 +39,14 @@ namespace SyadeuEditor
                 else
                     return true;
             }
+        }
+
+        protected override sealed void OnHeaderGUI()
+        {
+            EditorUtilities.StringRich("Copyright 2022 Syadeu. All rights reserved.", 11, true);
+            EditorUtilities.StringRich("CoreSystem®", 11, true);
+
+            base.OnHeaderGUI();
         }
 
         #region GL
@@ -360,13 +368,20 @@ namespace SyadeuEditor
         }
     }
 
-    public abstract class EditorEntity<T> : EditorEntity where T : UnityEngine.Object
+    public abstract class InspectorEditor<T> : InspectorEditor where T : UnityEngine.Object
     {
         private static Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
         private static Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
         private static Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
 
-        protected T Target => (T)target;
+        /// <summary>
+        /// <inheritdoc cref="UnityEditor.Editor.target"/>
+        /// </summary>
+        public new T target => (T)base.target;
+        /// <summary>
+        /// <inheritdoc cref="UnityEditor.Editor.targets"/>
+        /// </summary>
+        public new T[] targets => base.targets.Select(t => (T)t).ToArray();
 
         #region Reflections
 
@@ -379,8 +394,8 @@ namespace SyadeuEditor
             m_CachedFieldInfos.Add(hash, value);
             return value;
         }
-        protected TA GetFieldValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(Target);
-        protected void SetFieldValue(string fieldName, object value) => GetField(fieldName).SetValue(Target, value);
+        protected TA GetFieldValue<TA>(string fieldName) => (TA)GetField(fieldName).GetValue(target);
+        protected void SetFieldValue(string fieldName, object value) => GetField(fieldName).SetValue(target, value);
 
         protected PropertyInfo GetProperty(string name)
         {
@@ -391,8 +406,8 @@ namespace SyadeuEditor
             m_CachedPropertyInfos.Add(hash, value);
             return value;
         }
-        protected TA GetPropertyValue<TA>(string propertyName) => (TA)GetProperty(propertyName).GetGetMethod().Invoke(Target, null);
-        protected void SetPropertyValue(string propertyName, object value) => GetProperty(propertyName).GetSetMethod().Invoke(Target, new object[] { value });
+        protected TA GetPropertyValue<TA>(string propertyName) => (TA)GetProperty(propertyName).GetGetMethod().Invoke(target, null);
+        protected void SetPropertyValue(string propertyName, object value) => GetProperty(propertyName).GetSetMethod().Invoke(target, new object[] { value });
 
         protected MethodInfo GetMethod(string name)
         {
@@ -403,7 +418,7 @@ namespace SyadeuEditor
             m_CachedMethodInfos.Add(hash, value);
             return value;
         }
-        protected object InvokeMethod(string methodName, params object[] args) => GetMethod(methodName).Invoke(Target, args);
+        protected object InvokeMethod(string methodName, params object[] args) => GetMethod(methodName).Invoke(target, args);
 
         #endregion
     }
