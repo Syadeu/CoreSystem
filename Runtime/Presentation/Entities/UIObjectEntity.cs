@@ -20,6 +20,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.ComponentModel;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
 
@@ -35,6 +36,8 @@ namespace Syadeu.Presentation.Entities
         internal bool m_EnableAutoFade = false;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
         internal float m_InitialAlpha = 1;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "AlignRotationWithCamera")]
+        internal bool m_AlignRotationWithCamera = true;
 
         [Space]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "Events")]
@@ -57,19 +60,31 @@ namespace Syadeu.Presentation.Entities
         IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         private WorldCanvasSystem m_WorldCanvasSystem;
+        private RenderSystem m_RenderSystem;
 
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
-        }
-        private void Bind(WorldCanvasSystem other)
-        {
-            m_WorldCanvasSystem = other;
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
         }
         protected override void OnDispose()
         {
             m_WorldCanvasSystem = null;
+            m_RenderSystem = null;
         }
+
+        #region Binds
+
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+
+        #endregion
 
         protected override void OnCreated(UIObjectEntity e)
         {
@@ -79,6 +94,13 @@ namespace Syadeu.Presentation.Entities
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
             com.m_Parent = e.Idx;
             com.Alpha = e.m_InitialAlpha;
+
+            if (e.m_AlignRotationWithCamera)
+            {
+                float3 forward = m_RenderSystem.Camera.transform.forward;
+                var tr = entity.transform;
+                tr.rotation = quaternion.LookRotationSafe(forward, math.up());
+            }
 
             e.m_Events.ExecuteOnCreated(entity);
         }
