@@ -114,7 +114,7 @@ namespace Syadeu.Presentation.Actor
             com = new ActorWeaponItemComponent(attribute);
 
             ref InteractableComponent interact = ref entity.GetComponent<InteractableComponent>();
-            interact = new InteractableComponent(attribute.m_Interaction);
+            interact.Setup(attribute.m_Interaction);
         }
     }
 }

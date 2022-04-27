@@ -450,6 +450,24 @@ namespace Syadeu.Presentation
                 return entity;
             }
         }
+        public Entity<IEntity> CreateEntity(in IFixedReference reference, in float3 position)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+
+            using (m_CreateEntityMarker.Auto())
+            {
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
+                {
+                    return Entity<IEntity>.Empty;
+                }
+
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, quaternion.identity, 1);
+
+                return entity;
+            }
+        }
         /// <summary>
         /// 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/> 입니다.
         /// </summary>
@@ -485,6 +503,22 @@ namespace Syadeu.Presentation
         /// <param name="localSize"></param>
         /// <returns></returns>
         public Entity<IEntity> CreateEntity(in Reference reference, in float3 position, in quaternion rotation, in float3 localSize)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+
+            using (m_CreateEntityMarker.Auto())
+            {
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
+                {
+                    return Entity<IEntity>.Empty;
+                }
+
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, in rotation, in localSize);
+
+                return entity;
+            }
+        }
+        public Entity<IEntity> CreateEntity(in IFixedReference reference, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
 

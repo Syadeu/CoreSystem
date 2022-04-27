@@ -234,6 +234,7 @@ namespace Syadeu.Presentation
                     {
                         fromAtt.m_Triggered.Add(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
+                        fromAtt.ProcessEvent(from, to, true);
                     }
                     if (CanTriggerable(in toAtt, in from) &&
                         CanTriggerableLayer(in toAtt, in fromAtt) &&
@@ -241,6 +242,7 @@ namespace Syadeu.Presentation
                     {
                         toAtt.m_Triggered.Add(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, true));
+                        toAtt.ProcessEvent(to, from, true);
                     }
                 }
                 else
@@ -249,11 +251,13 @@ namespace Syadeu.Presentation
                     {
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
+                        fromAtt.ProcessEvent(from, to, false);
                     }
                     if (/*CanTriggerable(in toAtt, in from) && */toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Remove(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
+                        toAtt.ProcessEvent(to, from, false);
                     }
                 }
             }

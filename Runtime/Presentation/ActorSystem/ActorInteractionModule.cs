@@ -159,7 +159,7 @@ namespace Syadeu.Presentation.Actor
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
     /// </summary>
     [BurstCompatible]
-    public struct InteractableComponent : IEntityComponent, IValidation, IDisposable
+    public struct InteractableComponent : IEntityComponent, IDisposable
     {
         [BurstCompatible]
         public struct State
@@ -181,20 +181,24 @@ namespace Syadeu.Presentation.Actor
         // InteractableState
         private UnsafeHashMap<int, State> m_InteractableStates;
         private ItemState m_CurrentState;
-        private readonly bool m_IsCreated;
+
+        private InstanceID<UIObjectEntity> m_CreatedUI;
 
         public ItemState CurrentState { get => m_CurrentState; set => m_CurrentState = value; }
         public FixedReference<UIObjectEntity> UI => m_UI;
 
-        public InteractableComponent(InteractionReferenceData interaction)
+        public InteractableComponent(int unused)
+        {
+            this = default(InteractableComponent);
+
+            m_InteractableStates = new UnsafeHashMap<int, State>(
+                TypeHelper.Enum<ItemState>.Length, 
+                AllocatorManager.Persistent);
+        }
+        public void Setup(InteractionReferenceData interaction)
         {
             m_UI = interaction.m_InteractionUI;
-            m_InteractableStates = new UnsafeHashMap<int, State>(
-                TypeHelper.Enum<ItemState>.Length,
-                AllocatorManager.Persistent
-                );
             m_CurrentState = ItemState.Default;
-            m_IsCreated = true;
 
             Set(ItemState.Grounded,
                 new State(
@@ -217,20 +221,11 @@ namespace Syadeu.Presentation.Actor
         }
         void IDisposable.Dispose()
         {
-            if (!m_IsCreated) return;
-
             m_InteractableStates.Dispose();
         }
 
         public void Execute(ItemState type, InstanceID caller)
         {
-            if (!IsValid())
-            {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"err");
-                return;
-            }
-
             if (m_InteractableStates.TryGetValue((int)(m_CurrentState | type), out var state) &&
                 state.interactable)
             {
@@ -240,27 +235,65 @@ namespace Syadeu.Presentation.Actor
         }
         public void Set(ItemState type, State state)
         {
-            if (!IsValid())
+            m_InteractableStates[(int)type] = state;
+        }
+        public void CreateUI(float3 pos, quaternion rot)
+        {
+            if (!m_CreatedUI.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Component,
-                    $"err");
+                "??".ToLog();
                 return;
             }
 
-            m_InteractableStates[(int)type] = state;
+            m_CreatedUI = m_UI.CreateEntity(pos, rot, 1);
+        }
+        public void RemoveUI()
+        {
+            if (m_CreatedUI.IsEmpty())
+            {
+                "??".ToLog();
+                return;
+            }
+
+            m_CreatedUI.GetEntity().Destroy();
+        }
+    }
+    internal sealed class InteractableComponentProcessor : ComponentProcessor<InteractableComponent>
+    {
+        protected override void OnCreated(in InstanceID id, ref InteractableComponent component)
+        {
+            component = new InteractableComponent(0);
+
+            Entity<IEntity> entity = id.GetEntity<IEntity>();
+            if (!entity.HasAttribute<TriggerBoundAttribute>())
+            {
+                return;
+            }
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
+            att.OnTriggerBoundEvent += Att_OnTriggerBoundEvent;
+        }
+        protected override void OnDestroy(in InstanceID id, ref InteractableComponent component)
+        {
+            Entity<IEntity> entity = id.GetEntity<IEntity>();
+            if (!entity.HasAttribute<TriggerBoundAttribute>())
+            {
+                return;
+            }
+            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
+            att.OnTriggerBoundEvent -= Att_OnTriggerBoundEvent;
         }
 
-        public bool IsValid() => m_IsCreated;
-    }
-
-    [DisplayName("TriggerAction: Open Interaction UI")]
-    public sealed class OpenInteractUITriggerAction : TriggerAction
-    {
-        protected override void OnExecute(Entity<IObject> entity)
+        private static void Att_OnTriggerBoundEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)
         {
-            if (!entity.HasComponent<InteractableComponent>()) return;
+            if (entered)
+            {
+                var tr = source.transform;
+                source.GetComponent<InteractableComponent>().CreateUI(tr.position, quaternion.identity);
 
+                return;
+            }
 
+            source.GetComponent<InteractableComponent>().RemoveUI();
         }
     }
 }

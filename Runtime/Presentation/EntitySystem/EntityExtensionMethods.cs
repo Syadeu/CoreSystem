@@ -82,6 +82,14 @@ namespace Syadeu.Presentation
             return new Reference<T>(t.Hash);
         }
 
+        public static Entity<T> CreateEntity<T>(this Reference<T> other)
+            where T : class, IObject
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<T> ins = system.CreateEntity(other);
+            return ins;
+        }
         public static Entity<T> CreateEntity<T>(this IFixedReference<T> other)
             where T : class, IObject
         {
@@ -98,6 +106,14 @@ namespace Syadeu.Presentation
             Entity<IEntity> ins = system.CreateEntity(other, in pos);
             return ins.ToEntity<T>();
         }
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other, in float3 pos)
+            where T : class, IObject
+        {
+            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
+
+            Entity<IEntity> ins = system.CreateEntity(other, in pos);
+            return ins.ToEntity<T>();
+        }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
             where T : class, IEntity
         {
@@ -106,15 +122,15 @@ namespace Syadeu.Presentation
             Entity<IEntity> ins = system.CreateEntity(other, in pos, in rot, in localScale);
             return ins.ToEntity<T>();
         }
-        public static Entity<T> CreateEntity<T>(this Reference<T> other)
-            where T : class, IObject
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other, float3 pos, quaternion rot, float3 localScale)
+            where T : class, IEntity
         {
             var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-            Entity<T> ins = system.CreateEntity(other);
-            return ins;
+            Entity<IEntity> ins = system.CreateEntity(other, in pos, in rot, in localScale);
+            return ins.ToEntity<T>();
         }
-
+        
         /// <summary>
         /// 이 엔티티의 부모가 <typeparamref name="T"/>를 부모로 삼는지 반환합니다.
         /// </summary>

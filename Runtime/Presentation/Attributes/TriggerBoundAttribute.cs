@@ -37,6 +37,8 @@ namespace Syadeu.Presentation.Attributes
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class TriggerBoundAttribute : AttributeBase
     {
+        public delegate void TriggerBoundEventHandler(Entity<IEntity> source, Entity<IEntity> target, bool entered);
+
         [JsonIgnore] internal ClusterID m_ClusterID = ClusterID.Empty;
 
         [JsonProperty(Order = -1, PropertyName = "IsStatic")]
@@ -75,11 +77,17 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 7, PropertyName = "Layer")]
         public Reference<TriggerBoundLayer> m_Layer = Reference<TriggerBoundLayer>.Empty;
 
-        // TODO : to component side
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 
         [JsonIgnore] public bool Enabled { get; set; } = true;
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Triggered => m_Triggered;
+
+        public event TriggerBoundEventHandler OnTriggerBoundEvent;
+
+        internal void ProcessEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)
+        {
+            OnTriggerBoundEvent?.Invoke(source, target, entered);
+        }
     }
     [Obsolete]
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
