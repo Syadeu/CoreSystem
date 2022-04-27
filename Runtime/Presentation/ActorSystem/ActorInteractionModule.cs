@@ -24,6 +24,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Proxy;
+using Syadeu.Presentation.Render;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -32,6 +33,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -294,6 +296,24 @@ namespace Syadeu.Presentation.Actor
     }
     internal sealed class InteractableComponentProcessor : ComponentProcessor<InteractableComponent>
     {
+        private RenderSystem m_RenderSystem;
+        //private RenderTexture m_RT;
+
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+        }
+        protected override void OnDispose()
+        {
+            m_RenderSystem = null;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+
+            //m_RT = new RenderTexture(256, 256, 24);
+        }
+
         protected override void OnCreated(in InstanceID id, ref InteractableComponent component)
         {
             component = new InteractableComponent(0);
@@ -317,7 +337,7 @@ namespace Syadeu.Presentation.Actor
             att.OnTriggerBoundEvent -= Att_OnTriggerBoundEvent;
         }
 
-        private static void Att_OnTriggerBoundEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)
+        private void Att_OnTriggerBoundEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)
         {
             if (entered)
             {
@@ -329,6 +349,7 @@ namespace Syadeu.Presentation.Actor
 
             source.GetComponent<InteractableComponent>().RemoveUI();
 
+            //m_RenderSystem.GetProjectionCamera()
             $"open interaction ui for {target.Name}".ToLog();
         }
     }
