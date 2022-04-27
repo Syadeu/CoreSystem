@@ -46,6 +46,13 @@ namespace Syadeu.Presentation.Render
 
         }
         // https://stackoverflow.com/questions/58021797/put-a-text-onto-a-game-object-but-as-if-it-was-painted
+        public HDRPUIProjector GetUIProjector()
+        {
+            GameObject gameObj = m_SceneSystem.CreateGameObject($"Projection Camera {m_Creation++}");
+            HDRPUIProjector projector = new HDRPUIProjector(this, gameObj);
+
+            return projector;
+        }
         public HDRPProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
         {
             Camera cam;
@@ -100,7 +107,7 @@ namespace Syadeu.Presentation.Render
         }
     }
 
-    public sealed class HDRPTextProjector
+    public sealed class HDRPUIProjector
     {
         private HDRPRenderProjectionModule m_Module;
 
@@ -110,14 +117,14 @@ namespace Syadeu.Presentation.Render
 
         private TextMeshProUGUI m_Text;
 
-        public RenderTexture RT
+        private RenderTexture RT
         {
             get => m_Camera.targetTexture;
             set => m_Camera.targetTexture = value;
         }
         public TextMeshProUGUI Text => m_Text;
 
-        internal HDRPTextProjector(
+        internal HDRPUIProjector(
             HDRPRenderProjectionModule module, GameObject obj)
         {
             m_Module = module;
@@ -125,6 +132,7 @@ namespace Syadeu.Presentation.Render
             GameObject camObj = new GameObject("Camera");
             camObj.transform.SetParent(obj.transform, false);
             m_Camera = camObj.AddComponent<Camera>();
+            m_Camera.enabled = false;
             m_Data = camObj.AddComponent<HDAdditionalCameraData>();
             {
                 m_Camera.cullingMask = RenderSystem.ProjectionMask;
@@ -132,7 +140,7 @@ namespace Syadeu.Presentation.Render
                 m_Camera.orthographicSize = .5f;
                 m_Camera.nearClipPlane = 0;
 
-                m_Data.volumeLayerMask = RenderSystem.ProjectionMask;
+                m_Data.volumeLayerMask = 0;
                 m_Data.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
                 m_Data.backgroundColorHDR = Color.clear;
             }
@@ -151,8 +159,17 @@ namespace Syadeu.Presentation.Render
             textObj.transform.SetParent(canvasObj.transform, true);
             m_Text = textObj.AddComponent<TextMeshProUGUI>();
             {
-
+                var textRectTransform = textObj.GetComponent<RectTransform>();
+                textRectTransform.localScale = Vector3.one * 0.001f;
+                textRectTransform.sizeDelta = new Vector2(1000, 1000);
             }
+        }
+
+        public void Render(RenderTexture rt)
+        {
+            RT = rt;
+            m_Camera.Render();
+            RT = null;
         }
     }
 #endif
