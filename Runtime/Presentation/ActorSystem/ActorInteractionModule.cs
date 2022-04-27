@@ -294,6 +294,8 @@ namespace Syadeu.Presentation.Actor
             }
 
             source.GetComponent<InteractableComponent>().RemoveUI();
+
+            $"open interaction ui for {target.Name}".ToLog();
         }
     }
 }
