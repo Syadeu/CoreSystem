@@ -15,6 +15,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
@@ -34,6 +35,10 @@ namespace Syadeu.Presentation.Entities
         internal bool m_EnableAutoFade = false;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
         internal float m_InitialAlpha = 1;
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "Events")]
+        internal EntityEventProperty m_Events = new EntityEventProperty();
 
         [Preserve]
         static void AOTCodeGeneration()
@@ -74,6 +79,14 @@ namespace Syadeu.Presentation.Entities
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
             com.m_Parent = e.Idx;
             com.Alpha = e.m_InitialAlpha;
+
+            e.m_Events.ExecuteOnCreated(entity);
+        }
+        protected override void OnDestroy(UIObjectEntity obj)
+        {
+            Entity<IEntityData> entity = Entity<IEntityData>.GetEntityWithoutCheck(obj.Idx);
+
+            obj.m_Events.ExecuteOnDestroy(entity);
         }
 
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)

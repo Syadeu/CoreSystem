@@ -118,7 +118,10 @@ namespace Syadeu.Presentation.Input
         private void OnMousePositionChangedHandler(InputAction.CallbackContext obj)
         {
             m_PrecalculatedCursorPosition = obj.ReadValue<Vector2>();
-            m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
+            if (m_RenderSystem != null)
+            {
+                m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
+            }
 
             OnMousePositionChanged?.Invoke(m_PrecalculatedCursorPosition);
         }

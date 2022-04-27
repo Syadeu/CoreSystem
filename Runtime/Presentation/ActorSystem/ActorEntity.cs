@@ -33,17 +33,9 @@ namespace Syadeu.Presentation.Actor
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Faction")]
         private Reference<ActorFaction> m_Faction = Reference<ActorFaction>.Empty;
 
-        [Space, Header("TriggerAction")]
-        [SerializeField, JsonProperty(Order = 1, PropertyName = "OnCreated")]
-        internal ArrayWrapper<Reference<TriggerAction>> m_OnCreated = Array.Empty<Reference<TriggerAction>>();
-        [SerializeField, JsonProperty(Order = 2, PropertyName = "OnDestroy")]
-        internal ArrayWrapper<Reference<TriggerAction>> m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
-
-        [Space, Header("ConstAction")]
-        [SerializeField, JsonProperty(Order = 4, PropertyName = "OnCreatedConst")]
-        internal ConstActionReferenceArray m_OnCreatedConst = Array.Empty<ConstActionReference>();
-        [SerializeField, JsonProperty(Order = 5, PropertyName = "OnDestroyConst")]
-        internal ConstActionReferenceArray m_OnDestroyConst = Array.Empty<ConstActionReference>();
+        [Space]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Events")]
+        internal EntityEventProperty m_Events = new EntityEventProperty();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
@@ -102,15 +94,12 @@ namespace Syadeu.Presentation.Actor
                 m_Enemies = enemies
             });
 
-            actor.m_OnCreated.Execute(entity);
-            actor.m_OnCreatedConst.Execute(entity);
+            actor.m_Events.ExecuteOnCreated(entity);
         }
         protected override void OnDestroy(ActorEntity actor)
         {
             Entity<IObject> entity = Entity<IObject>.GetEntityWithoutCheck(actor.Idx);
-
-            actor.m_OnDestroy.Execute(entity);
-            actor.m_OnDestroyConst.Execute(entity);
+            actor.m_Events.ExecuteOnDestroy(entity);
         }
     }
 }
