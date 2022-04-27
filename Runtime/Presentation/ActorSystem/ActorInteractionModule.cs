@@ -256,6 +256,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             m_CreatedUI.GetEntity().Destroy();
+            m_CreatedUI = InstanceID<UIObjectEntity>.Empty;
         }
     }
     internal sealed class InteractableComponentProcessor : ComponentProcessor<InteractableComponent>
