@@ -57,12 +57,7 @@ namespace Syadeu.Presentation.Actor
             [SerializeField, JsonProperty(Order = 0, PropertyName = "IconImage")]
             private ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
 
-            [Space, Header("Interaction")]
-            [SerializeField, JsonProperty(Order = 2, PropertyName = "InteractionUI")]
-            private Reference<UIObjectEntity> m_InteractionUI = Reference<UIObjectEntity>.Empty;
-
             [JsonIgnore] public ArrayWrapper<PrefabReference<Sprite>> IconImage => m_IconImage;
-            [JsonIgnore] public Reference<UIObjectEntity> InteractionUI => m_InteractionUI;
         }
         [Serializable]
         public sealed class GeneralInfomation : PropertyBlock<GeneralInfomation>

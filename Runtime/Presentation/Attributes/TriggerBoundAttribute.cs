@@ -59,10 +59,16 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 
         [Header("TriggerActions")]
+        [Tooltip("target => entered obj")]
         [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
         public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerEnter = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
+        [JsonProperty(Order = 6, PropertyName = "OnTriggerEnterThis")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerEnterThis = Array.Empty<Reference<TriggerAction>>();
+
+        [JsonProperty(Order = 7, PropertyName = "OnTriggerExit")]
         public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 8, PropertyName = "OnTriggerExitThis")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerExitThis = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Layer")]
         [Tooltip("Entity 의 Raycasting Layer 를 지정할 수 있습니다.")]
@@ -118,10 +124,12 @@ namespace Syadeu.Presentation.Attributes
             if (ev.IsEnter)
             {
                 result = target.m_OnTriggerEnter.Execute(ev.Source.ToEntity<IEntityData>());
+                target.m_OnTriggerEnterThis.Execute(ev.Target.ToEntity<IEntityData>());
             }
             else
             {
                 result = target.m_OnTriggerExit.Execute(ev.Source.ToEntity<IEntityData>());
+                target.m_OnTriggerExitThis.Execute(ev.Target.ToEntity<IEntityData>());
             }
 
             if (!result)

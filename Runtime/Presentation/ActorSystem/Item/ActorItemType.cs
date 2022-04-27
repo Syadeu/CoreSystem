@@ -23,6 +23,7 @@ using System.ComponentModel;
 using UnityEngine;
 using System;
 using Syadeu.Presentation.Actions;
+using Syadeu.Presentation.Entities;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -38,17 +39,12 @@ namespace Syadeu.Presentation.Actor
         [SerializeField, JsonProperty(Order = 1, PropertyName = "Equipable")]
         private HumanBody m_Equipable = HumanBody.None;
 
-        [Space]
-        [SerializeField, JsonProperty(Order = 2, PropertyName = "Interactions")]
-        private InteractionReference m_Interactions = new InteractionReference();
-
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
         [JsonIgnore] public HumanBody Equipable => m_Equipable;
-        [JsonIgnore] public InteractionReference InteractionInfo => m_Interactions;
     }
 
     [Flags]
-    public enum InteractableState : int
+    public enum ItemState : int
     {
         Default     =   0,
         /// <summary>
@@ -69,9 +65,15 @@ namespace Syadeu.Presentation.Actor
         InteractionKey  =   0b00010000,
         Use             =   0b00100000
     }
+
     [Serializable]
-    public sealed class InteractionReference : PropertyBlock<InteractionReference>
+    [DisplayName("Data: Interaction Reference")]
+    public sealed class InteractionReferenceData : DataObjectBase
     {
+        [Header("Graphics")]
+        [SerializeField, JsonProperty(Order = -10, PropertyName = "InteractionUI")]
+        public Reference<UIObjectEntity> m_InteractionUI = Reference<UIObjectEntity>.Empty;
+
         [Header("On Grounded")]
         [SerializeField, JsonProperty(Order = 0, PropertyName = "OnGrounded")]
         public bool m_OnGrounded = true;

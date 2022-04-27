@@ -59,8 +59,8 @@ namespace Syadeu.Presentation.Actor
         internal WeaponPositionProperty m_DrawPosition = new WeaponPositionProperty();
 
         [Space]
-        [SerializeField, JsonProperty(Order = 100, PropertyName = "")]
-        internal InteractionReference m_Interaction = new InteractionReference();
+        [SerializeField, JsonProperty(Order = 100, PropertyName = "Interaction")]
+        internal Reference<InteractionReferenceData> m_Interaction = Reference<InteractionReferenceData>.Empty;
 
         [JsonIgnore] public float Damage => m_Damage;
     }

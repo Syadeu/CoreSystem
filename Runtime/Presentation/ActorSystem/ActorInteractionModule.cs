@@ -26,6 +26,7 @@ using Syadeu.Presentation.Input;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -113,7 +114,7 @@ namespace Syadeu.Presentation.Actor
                 {
                     InteractableComponent targetInteractableCom 
                         = interactable.GetComponentReadOnly<InteractableComponent>();
-                    targetInteractableCom.Execute(InteractableState.InteractionKey, element);
+                    targetInteractableCom.Execute(ItemState.InteractionKey, element);
 
                     $"actor({element.GetEntity().Name}) interacting {interactable.Name}".ToLog();
                 }
@@ -154,20 +155,6 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
-    //public sealed class OnInteractionKeyPressedEvent : SynchronizedEvent<OnInteractionKeyPressedEvent>
-    //{
-    //    public static OnInteractionKeyPressedEvent GetEvent()
-    //    {
-    //        var ev = Dequeue();
-
-    //        return ev;
-    //    }
-
-    //    protected override void OnTerminate()
-    //    {
-    //    }
-    //}
-
     /// <summary>
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
     /// </summary>
@@ -190,35 +177,38 @@ namespace Syadeu.Presentation.Actor
                 this.constAction = constAction;
             }
         }
+        private FixedReference<UIObjectEntity> m_UI;
         // InteractableState
         private UnsafeHashMap<int, State> m_InteractableStates;
-        private InteractableState m_CurrentState;
+        private ItemState m_CurrentState;
         private readonly bool m_IsCreated;
 
-        public InteractableState CurrentState { get => m_CurrentState; set => m_CurrentState = value; }
+        public ItemState CurrentState { get => m_CurrentState; set => m_CurrentState = value; }
+        public FixedReference<UIObjectEntity> UI => m_UI;
 
-        public InteractableComponent(InteractionReference interaction)
+        public InteractableComponent(InteractionReferenceData interaction)
         {
+            m_UI = interaction.m_InteractionUI;
             m_InteractableStates = new UnsafeHashMap<int, State>(
-                TypeHelper.Enum<InteractableState>.Length,
+                TypeHelper.Enum<ItemState>.Length,
                 AllocatorManager.Persistent
                 );
-            m_CurrentState = InteractableState.Default;
+            m_CurrentState = ItemState.Default;
             m_IsCreated = true;
 
-            Set(InteractableState.Grounded,
+            Set(ItemState.Grounded,
                 new State(
                     interaction.m_OnGrounded,
                     interaction.m_OnGroundedTriggerAction.ToFixedList64(),
                     new Fixed8<FixedConstAction>(interaction.m_OnGroundedConstAction.Select(t => new FixedConstAction(t)))
                     ));
-            Set(InteractableState.Equiped,
+            Set(ItemState.Equiped,
                 new State(
                     interaction.m_OnEquiped,
                     interaction.m_OnEquipedTriggerAction.ToFixedList64(),
                     new Fixed8<FixedConstAction>(interaction.m_OnEquipedConstAction.Select(t => new FixedConstAction(t)))
                     ));
-            Set(InteractableState.Stored,
+            Set(ItemState.Stored,
                 new State(
                     interaction.m_OnStored,
                     interaction.m_OnStoredTriggerAction.ToFixedList64(),
@@ -232,7 +222,7 @@ namespace Syadeu.Presentation.Actor
             m_InteractableStates.Dispose();
         }
 
-        public void Execute(InteractableState type, InstanceID caller)
+        public void Execute(ItemState type, InstanceID caller)
         {
             if (!IsValid())
             {
@@ -248,7 +238,7 @@ namespace Syadeu.Presentation.Actor
                 state.triggerAction.Execute(caller);
             }
         }
-        public void Set(InteractableState type, State state)
+        public void Set(ItemState type, State state)
         {
             if (!IsValid())
             {
@@ -261,5 +251,16 @@ namespace Syadeu.Presentation.Actor
         }
 
         public bool IsValid() => m_IsCreated;
+    }
+
+    [DisplayName("TriggerAction: Open Interaction UI")]
+    public sealed class OpenInteractUITriggerAction : TriggerAction
+    {
+        protected override void OnExecute(Entity<IObject> entity)
+        {
+            if (!entity.HasComponent<InteractableComponent>()) return;
+
+
+        }
     }
 }
