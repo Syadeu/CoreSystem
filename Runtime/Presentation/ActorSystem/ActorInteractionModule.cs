@@ -41,6 +41,20 @@ namespace Syadeu.Presentation.Actor
         private EventSystem m_EventSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
 
+        /// <summary>
+        /// 상호작용을 행하는 주체 (ex. 사람이 물건을 집는다 에서 사람)
+        /// </summary>
+        private static InstanceID s_InteractingControlAtThisFrame;
+        /// <summary>
+        /// 상호작용의 목표 (ex. 사람이 물건을 집는다 에서 물건)
+        /// </summary>
+        private static Entity<IEntity> s_InteractingEntityAtThisFrame;
+
+        /// <inheritdoc cref="s_InteractingControlAtThisFrame"/>
+        public static Entity<IEntity> InteractingControlAtThisFrame => s_InteractingControlAtThisFrame.GetEntity<IEntity>();
+        /// <inheritdoc cref="s_InteractingEntityAtThisFrame"/>
+        public static Entity<IEntity> InteractingEntityAtThisFrame => s_InteractingEntityAtThisFrame;
+
         #region Presentation Methods
 
         protected override void OnInitialize()
@@ -89,10 +103,8 @@ namespace Syadeu.Presentation.Actor
         {
             //m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
 
-            // TODO : Temp Codes
             "key inn".ToLog();
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
-            //List<InstanceID> interactableEntities = new List<InstanceID>();
             for (int i = 0; i < currentControls.Count; i++)
             {
                 InstanceID element = currentControls[i];
@@ -102,25 +114,27 @@ namespace Syadeu.Presentation.Actor
                     continue;
                 }
                 ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
-
-                //interactableEntities.Add(element);
-                //ProxyTransform tr = element.GetTransform();
                 IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(element);
                 if (!nearbyInteractables.Any())
                 {
                     "doesnt have nearby interaction obj".ToLog();
                 }
+
+                s_InteractingControlAtThisFrame = element;
                 foreach (Entity<IEntity> interactable in nearbyInteractables)
                 {
+                    s_InteractingEntityAtThisFrame = interactable;
+
                     InteractableComponent targetInteractableCom 
                         = interactable.GetComponentReadOnly<InteractableComponent>();
                     targetInteractableCom.Execute(ItemState.InteractionKey, element);
 
                     $"actor({element.GetEntity().Name}) interacting {interactable.Name}".ToLog();
                 }
-            }
 
-            // TODO : Temp Codes
+                s_InteractingEntityAtThisFrame = Entity<IEntity>.Empty;
+            }
+            s_InteractingControlAtThisFrame = InstanceID.Empty;
         }
 
         #endregion
@@ -155,6 +169,19 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
+    //public struct InteractableLink
+    //{
+
+    //}
+
+    //public abstract class InteractConstAction : ConstAction<InteractableLink>
+    //{
+    //    /// <inheritdoc cref="ActorInteractionModule.s_InteractingControlAtThisFrame"/>
+    //    protected Entity<IEntity> InteractingControlAtThisFrame => ActorInteractionModule.InteractingControlAtThisFrame;
+    //    /// <inheritdoc cref="ActorInteractionModule.s_InteractingEntityAtThisFrame"/>
+    //    protected Entity<IEntity> InteractingEntityAtThisFrame => ActorInteractionModule.InteractingEntityAtThisFrame;
+    //}
+
     /// <summary>
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
     /// </summary>
@@ -185,9 +212,9 @@ namespace Syadeu.Presentation.Actor
         private InstanceID<UIObjectEntity> m_CreatedUI;
 
         public ItemState CurrentState { get => m_CurrentState; set => m_CurrentState = value; }
-        public FixedReference<UIObjectEntity> UI => m_UI;
+        public FixedReference<UIObjectEntity> UI { get => m_UI; set => m_UI = value; }
 
-        public InteractableComponent(int unused)
+        internal InteractableComponent(int unused)
         {
             this = default(InteractableComponent);
 
@@ -224,7 +251,7 @@ namespace Syadeu.Presentation.Actor
             m_InteractableStates.Dispose();
         }
 
-        public void Execute(ItemState type, InstanceID caller)
+        internal void Execute(ItemState type, InstanceID caller)
         {
             if (m_InteractableStates.TryGetValue((int)(m_CurrentState | type), out var state) &&
                 state.interactable)
@@ -237,21 +264,27 @@ namespace Syadeu.Presentation.Actor
         {
             m_InteractableStates[(int)type] = state;
         }
-        public void CreateUI(float3 pos, quaternion rot)
+        internal void CreateUI(float3 pos, quaternion rot)
         {
-            if (!m_CreatedUI.IsEmpty())
+            if (m_UI.IsEmpty()) return;
+#if DEBUG_MODE
+            else if (!m_CreatedUI.IsEmpty())
             {
-                "??".ToLog();
+                "??".ToLogError();
                 return;
             }
-
+            else if (!m_UI.IsValid())
+            {
+                "??".ToLogError();
+                return;
+            }
+#endif
             m_CreatedUI = m_UI.CreateEntity(pos, rot, 1);
         }
-        public void RemoveUI()
+        internal void RemoveUI()
         {
             if (m_CreatedUI.IsEmpty())
             {
-                "??".ToLog();
                 return;
             }
 
