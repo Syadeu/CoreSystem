@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.Actions
             }
 
             var system = PresentationSystem<DefaultPresentationGroup, DataContainerSystem>.System;
-            system.Enqueue(m_Key, entity.GetEntity();
+            system.Enqueue(m_Key, entity.GetEntity());
 
             return 0;
         }
