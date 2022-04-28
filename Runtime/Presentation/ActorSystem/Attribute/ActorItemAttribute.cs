@@ -141,7 +141,7 @@ namespace Syadeu.Presentation.Actor
             interact.Setup(attribute.m_Interaction);
         }
     }
-    public struct ActorItemComponent : IEntityComponent
+    public struct ActorItemComponent : IEntityComponent, IDisposable
     {
         public struct WeaponPosition
         {
@@ -153,17 +153,21 @@ namespace Syadeu.Presentation.Actor
         }
 
         private Reference<ActorItemType> m_ItemType;
+        private UnsafeLinkedBlock m_ItemSpace;
 
         private float m_Damage;
         internal WeaponPosition m_HolsterPosition;
         internal WeaponPosition m_DrawPosition;
 
         public Reference<ActorItemType> ItemType => m_ItemType;
+        public UnsafeLinkedBlock ItemSpace => m_ItemSpace;
+
         public float Damage { get => m_Damage; set => m_Damage = value; }
 
         public ActorItemComponent(ActorItemAttribute att)
         {
             m_ItemType = att.ItemType;
+            m_ItemSpace = new UnsafeLinkedBlock(att.GeneralInfo.ItemSpace, Unity.Collections.Allocator.Persistent);
 
             m_Damage = att.WeaponInfo.m_Damage;
             m_HolsterPosition = new WeaponPosition
@@ -180,6 +184,10 @@ namespace Syadeu.Presentation.Actor
                 m_WeaponPosOffset = att.WeaponInfo.m_DrawPosition.m_WeaponPosOffset,
                 m_WeaponRotOffset = att.WeaponInfo.m_DrawPosition.m_WeaponRotOffset
             };
+        }
+        public void Dispose()
+        {
+            m_ItemSpace.Dispose();
         }
     }
 

@@ -82,7 +82,7 @@ namespace SyadeuEditor.Presentation
             }
 
             SerializedProperty
-                graphcisProp = Helper.GetGraphicsInfoProperty(property),
+                graphicsProp = Helper.GetGraphicsInfoProperty(property),
                 generalProp = Helper.GetGeneralInfoProperty(property),
                 weaponProp = Helper.GetWeaponInfoProperty(property),
                 interactionProp = Helper.GetInteractionProperty(property);
@@ -92,7 +92,7 @@ namespace SyadeuEditor.Presentation
 
             Line(ref rect);
 
-            PropertyField(ref rect, graphcisProp);
+            PropertyField(ref rect, graphicsProp);
             PropertyField(ref rect, generalProp);
             
             if (actorItemType.ItemCategory == ItemCategory.Weapon)

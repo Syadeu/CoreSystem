@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -34,16 +35,31 @@ namespace Syadeu.Presentation.Actor
         private readonly InstanceID m_Owner;
 
         private UnsafeInstanceArray m_Inventory;
+        private UnsafeLinkedBlock m_LinkedBlock;
 
         public InstanceID Owner => m_Owner;
 
-        public ItemInventory(InstanceID owner, int initialCapacity, Allocator allocator)
+        public ItemInventory(InstanceID owner, LinkedBlock linkedBlock, Allocator allocator)
         {
             m_Owner = owner;
             
-            m_Inventory = new UnsafeInstanceArray(initialCapacity, allocator);
+            m_Inventory = new UnsafeInstanceArray(linkedBlock.Count, allocator);
+            m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
+        public bool IsInsertable(in InstanceID item, out int2 pos)
+        {
+            if (!item.HasComponent<ActorItemComponent>())
+            {
+                pos = int2.zero;
+                return false;
+            }
+
+            ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
+            UnsafeLinkedBlock itemSpace = component.ItemSpace;
+
+            return m_LinkedBlock.HasSpaceFor(itemSpace, out pos);
+        }
         public void Add(in InstanceID item)
         {
 #if DEBUG_MODE
@@ -68,8 +84,18 @@ namespace Syadeu.Presentation.Actor
             return m_Inventory.Contains(item);
         }
 
-        public void Dispose() => m_Inventory.Dispose();
-        public JobHandle Dispose(JobHandle inputDeps) => m_Inventory.Dispose(inputDeps);
+        public void Dispose()
+        {
+            m_Inventory.Dispose();
+            m_LinkedBlock.Dispose();
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            inputDeps = m_Inventory.Dispose(inputDeps);
+            inputDeps = m_LinkedBlock.Dispose(inputDeps);
+
+            return inputDeps;
+        }
 
         public bool Equals(ItemInventory other) => m_Inventory.Equals(other.m_Inventory);
 

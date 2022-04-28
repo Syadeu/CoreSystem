@@ -13,8 +13,11 @@
 // limitations under the License.
 
 using Newtonsoft.Json;
+using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -27,13 +30,157 @@ namespace Syadeu.Collections
         public sealed class Column
         {
             [SerializeField, JsonProperty(Order = 0, PropertyName = "Positions")]
-            public bool[] m_Positions = Array.Empty<bool>();
+            private bool[] m_Positions = Array.Empty<bool>();
+
+            [JsonIgnore] public bool[] Positions => m_Positions;
         }
 
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Columns")]
         private Column[] m_Columns = Array.Empty<Column>();
 
         [JsonIgnore] public IReadOnlyList<Column> Columns => m_Columns;
-        [JsonIgnore] public int Length => m_Columns.Length;
+
+        [JsonIgnore] public int RowCount => m_Columns.Length;
+        [JsonIgnore] public int ColumnCount => m_Columns.Length > 0 ? m_Columns[0].Positions.Length : 0;
+        [JsonIgnore] public int Count => RowCount * ColumnCount;
+
+        [JsonIgnore]
+        public bool this[int x, int y]
+        {
+            get
+            {
+                return m_Columns[x].Positions[y];
+            }
+            set
+            {
+                m_Columns[x].Positions[y] = value;
+            }
+        }
+    }
+    [BurstCompatible]
+    public struct UnsafeLinkedBlock : IDisposable, INativeDisposable
+    {
+        public struct Column : IDisposable, INativeDisposable
+        {
+            private UnsafeAllocator<bool> m_Positions;
+
+            public bool this[int index]
+            {
+                get => m_Positions[index];
+                set => m_Positions[index] = value;
+            }
+            public int Length => m_Positions.Length;
+
+            public Column(bool[] pos, Allocator allocator)
+            {
+                m_Positions = new UnsafeAllocator<bool>(pos.Length, allocator);
+                for (int i = 0; i < pos.Length; i++)
+                {
+                    m_Positions[i] = pos[i];
+                }
+            }
+            public void Dispose()
+            {
+                m_Positions.Dispose();
+            }
+            public JobHandle Dispose(JobHandle inputDeps)
+            {
+                return m_Positions.Dispose(inputDeps);
+            }
+        }
+
+        private UnsafeAllocator<Column> m_Columns;
+
+        public Column this[int x]
+        {
+            get => m_Columns[x];
+        }
+        public bool this[int x, int y]
+        {
+            get
+            {
+                return m_Columns[x][y];
+            }
+            set
+            {
+                m_Columns[x][y] = value;
+            }
+        }
+        public int RowLength => m_Columns.Length;
+
+        public UnsafeLinkedBlock(LinkedBlock linkedBlock, Allocator allocator)
+        {
+            m_Columns = new UnsafeAllocator<Column>(linkedBlock.RowCount, allocator);
+            for (int i = 0; i < linkedBlock.RowCount; i++)
+            {
+                m_Columns[i] = new Column(linkedBlock.Columns[i].Positions, allocator);
+            }
+        }
+
+        public void SetValue(int2 pos, UnsafeLinkedBlock block, bool value)
+        {
+            for (int y = 0; y < block.RowLength; y++)
+            {
+                for (int x = 0; x < block[y].Length; x++)
+                {
+                    int2 reletivePos = pos + new int2(x, y);
+
+                    this[reletivePos.x, reletivePos.y] = value;
+                }
+            }
+        }
+        public bool HasSpaceFor(UnsafeLinkedBlock block, out int2 pos)
+        {
+            pos = int2.zero;
+            for (int y = 0; y < RowLength; y++)
+            {
+                for (int x = 0; x < this[y].Length; x++)
+                {
+                    pos = new int2(x, y);
+
+                    if (!this[y][x]) continue;
+                    else if (HasSpaceFor(pos, block))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        public bool HasSpaceFor(int2 pos, UnsafeLinkedBlock block)
+        {
+            if (!this[pos.x, pos.y]) return false;
+
+            for (int y = 0; y < block.RowLength; y++)
+            {
+                for (int x = 0; x < block[y].Length; x++)
+                {
+                    if (!block[y][x]) continue;
+
+                    int2 reletivePos = pos + new int2(x, y);
+                    if (!this[reletivePos.x, reletivePos.y]) return false;
+                }
+            }
+            return true;
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < m_Columns.Length; i++)
+            {
+                m_Columns[i].Dispose();
+            }
+            m_Columns.Dispose();
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            for (int i = 0; i < m_Columns.Length; i++)
+            {
+                inputDeps = m_Columns[i].Dispose(inputDeps);
+            }
+            inputDeps = m_Columns.Dispose(inputDeps);
+            return inputDeps;
+        }
     }
 }

@@ -35,7 +35,7 @@ namespace SyadeuEditor.Utilities
 
         protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = CoreGUI.GetLineHeight(1);
+            float height = 5 + CoreGUI.GetLineHeight(1);
 
             //var positionProp = GetPositionsField(property);
             //height += positionProp.arraySize * LineHeight;
@@ -64,15 +64,25 @@ namespace SyadeuEditor.Utilities
             Space(ref rect, 3);
             EditorGUI.indentLevel++;
             {
-                //Label(ref rect, $"{positionProp.propertyType}");
-                if (Button(ref rect, "add"))
+                Rect bttLinePos = EditorGUI.IndentedRect(rect.Pop());
+                AddAutoHeight(bttLinePos.height);
+                Rect[] bttPos = AutoRect.Divide(bttLinePos, 2);
+
+                if (GUI.Button(bttPos[0], "Add"))
                 {
                     positionProp.InsertArrayElementAtIndex(positionProp.arraySize);
                 }
-                if (Button(ref rect, "Remove"))
+                if (GUI.Button(bttPos[1], "Remove"))
                 {
                     positionProp.DeleteArrayElementAtIndex(positionProp.arraySize - 1);
                 }
+
+                Rect fieldLinePos = EditorGUI.IndentedRect(rect.Pop());
+                AddAutoHeight(fieldLinePos.height);
+                Rect[] fieldPos = AutoRect.Divide(fieldLinePos, 2);
+
+                positionProp.arraySize = EditorGUI.IntField(fieldPos[0], GUIContent.none, positionProp.arraySize);
+                EditorGUI.IntField(fieldPos[1], GUIContent.none, GetMaxRowCount(positionProp));
 
                 // column
                 for (int i = 0; i < positionProp.arraySize; i++)

@@ -19,15 +19,20 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using System;
+using UnityEngine;
 using Unity.Collections;
+using Newtonsoft.Json;
 
 namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
     {
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
+        public LinkedBlock m_Space = new LinkedBlock();
+
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
-            component = new ActorInventoryComponent(parent.Idx, 128);
+            component = new ActorInventoryComponent(parent.Idx, m_Space.Count);
         }
         public void Insert(Entity<IObject> item)
         {
