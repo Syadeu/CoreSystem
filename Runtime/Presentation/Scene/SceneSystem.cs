@@ -59,7 +59,7 @@ namespace Syadeu.Presentation
         private Transform m_SceneInstanceFolder;
 
 #pragma warning disable IDE0044 // Add readonly modifier
-        [XmlField(Name = "DebugMode")] private bool m_DebugMode;
+        [XmlField(PropertyName = "DebugMode")] private bool m_DebugMode;
 #pragma warning restore IDE0044 // Add readonly modifier
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();

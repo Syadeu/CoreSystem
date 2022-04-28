@@ -28,6 +28,9 @@ using UnityEngine;
 
 namespace Syadeu.Collections
 {
+    /// <summary>
+    /// XML 으로 런타임 중 사용되는 값을 저장할 수 있게 도와줍니다.
+    /// </summary>
     public sealed class XmlSettings
     {
         private static readonly string s_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.xml");
@@ -91,7 +94,7 @@ namespace Syadeu.Collections
             }
 
             string xml = doc.Document.ToString();
-            Debug.Log(xml);
+            //Debug.Log(xml);
 
             using (var wr = new StreamWriter(s_GlobalConfigPath, false))
             {
@@ -108,8 +111,8 @@ namespace Syadeu.Collections
             }
 
             string key;
-            if (settings.Name.IsNullOrEmpty()) key = TypeHelper.ToString(t);
-            else key = settings.Name;
+            if (settings.PropertyName.IsNullOrEmpty()) key = TypeHelper.ToString(t);
+            else key = settings.PropertyName;
 
             XDocument doc = settings.SaveToDisk ? LoadDocumentFromDisk() : LoadDocumentFromPref(key);
             XElement objRoot;
@@ -166,7 +169,7 @@ namespace Syadeu.Collections
 
                 XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
 
-                string elementName = fieldAtt.Name.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.Name;
+                string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
                 XElement element = objRoot.Element(elementName);
                 if (element == null)
                 {
@@ -185,6 +188,13 @@ namespace Syadeu.Collections
             Debug.Log($"save doc for {obj.GetType().Name}");
             SaveDocument(objRoot, att.SaveToDisk);
         }
+        /// <summary>
+        /// <paramref name="obj"/> 의 설정 값을 불러옵니다.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="obj"/> 는 <see cref="XmlSettingsAttribute"/> 를 가지고 있어야합니다.
+        /// </remarks>
+        /// <param name="obj"></param>
         public static void LoadSettings(object obj)
         {
             Type t = obj.GetType();
@@ -204,7 +214,7 @@ namespace Syadeu.Collections
 
                 XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
 
-                string elementName = fieldAtt.Name.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.Name;
+                string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
                 XElement element = objRoot.Element(elementName);
                 if (element == null)
                 {
@@ -308,12 +318,16 @@ namespace Syadeu.Collections
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class XmlSettingsAttribute : Attribute
     {
-        public string Name;
+        public string PropertyName;
+        /// <summary>
+        /// <see langword="true"/> 일 경우, <see cref="PlayerPrefs"/> 를 사용하여 레지스트리에 저장합니다. 
+        /// <see langword="false"/> 일 경우에는 로컬에 저장합니다.
+        /// </summary>
         public bool SaveToDisk;
     }
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class XmlFieldAttribute : Attribute 
     {
-        public string Name;
+        public string PropertyName;
     }
 }
