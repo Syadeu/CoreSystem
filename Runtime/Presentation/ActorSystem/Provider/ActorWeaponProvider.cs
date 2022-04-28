@@ -234,13 +234,13 @@ namespace Syadeu.Presentation.Actor
                 {
                     return;
                 }
-                else if (!weapon.HasComponent<EntityBase, ActorWeaponItemComponent>())
+                else if (!weapon.HasComponent<EntityBase, ActorItemComponent>())
                 {
                     return;
                 }
 
                 //ActorWeaponData.OverrideData overrideData = data.Overrides;
-                ActorWeaponItemComponent data = weapon.GetComponent<EntityBase, ActorWeaponItemComponent>();
+                ActorItemComponent data = weapon.GetComponent<EntityBase, ActorItemComponent>();
                 ProxyTransform weaponTr = ((InstanceID)weapon).GetTransform();
 
                 //ActorWeaponData.OverrideOptions options = weaponDrawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;

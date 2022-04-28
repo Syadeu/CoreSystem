@@ -152,21 +152,10 @@ namespace Syadeu.Presentation.Actor
         {
             m_EventSystem.PostEvent(ActorOnInteractionEvent.GetEvent(entity, target));
 
-            ActorItemAttributeBase itemAttributeBase = null;
-            if (target.HasComponent<ActorWeaponItemComponent>())
+            if (target.HasComponent<ActorItemComponent>())
             {
-                var att = target.GetEntity().GetAttribute<ActorWeaponItemAttribute>();
-                itemAttributeBase = att;
-            }
-            else if (target.HasComponent<ActorItemComponent>())
-            {
-                var att = target.GetEntity().GetAttribute<ActorItemAttribute>();
-                itemAttributeBase = att;
-            }
-
-            if (itemAttributeBase != null)
-            {
-                itemAttributeBase.GeneralInfo.ExecuteOnInteract(entity);
+                ActorItemAttribute att = target.GetEntity().GetAttribute<ActorItemAttribute>();
+                att.GeneralInfo.ExecuteOnInteract(entity);
             }
         }
 

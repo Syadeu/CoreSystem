@@ -38,11 +38,20 @@ namespace Syadeu.Presentation.Actor
         private int m_MaximumMultipleCount = 1;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "Equipable")]
         private HumanBody m_Equipable = HumanBody.None;
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "ItemCategory")]
+        private ItemCategory m_ItemCategory = ItemCategory.Default;
 
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
         [JsonIgnore] public HumanBody Equipable => m_Equipable;
+        [JsonIgnore] public ItemCategory ItemCategory => m_ItemCategory;
     }
 
+    public enum ItemCategory
+    {
+        Default,
+        Consumable,
+        Weapon
+    }
     [Flags]
     public enum ItemState : int
     {
