@@ -42,6 +42,7 @@ namespace Syadeu.Presentation.Actor
         private InputSystem m_InputSystem;
         private EventSystem m_EventSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
+        private RenderSystem m_RenderSystem;
 
         /// <summary>
         /// 상호작용을 행하는 주체 (ex. 사람이 물건을 집는다 에서 사람)
@@ -64,6 +65,7 @@ namespace Syadeu.Presentation.Actor
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntityRaycastSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
         }
         protected override void OnShutDown()
         {
@@ -76,6 +78,7 @@ namespace Syadeu.Presentation.Actor
             m_InputSystem = null;
             m_EventSystem = null;
             m_EntityRaycastSystem = null;
+            m_RenderSystem = null;
         }
 
         #region Binds
@@ -92,6 +95,10 @@ namespace Syadeu.Presentation.Actor
         {
             m_EntityRaycastSystem = other;
         }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
 
         #endregion
 
@@ -99,6 +106,8 @@ namespace Syadeu.Presentation.Actor
         {
             var inputAction = m_InputSystem.GetUserActionKeyBinding(UserActionType.Interaction);
             inputAction.performed += OnInteractionKeyPressed;
+
+
         }
 
         private void OnInteractionKeyPressed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
