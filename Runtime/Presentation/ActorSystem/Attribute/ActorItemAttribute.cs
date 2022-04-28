@@ -65,9 +65,9 @@ namespace Syadeu.Presentation.Actor
             [Tooltip(
                 "이 아이템과 상호작용할때 수행하는 행동입니다.")]
             [SerializeField, JsonProperty(Order = 3, PropertyName = "OnInteractConstAction")]
-            private ConstActionReferenceArray m_OnInteractConstAction = ConstActionReferenceArray.Empty;
+            internal ConstActionReferenceArray m_OnInteractConstAction = ConstActionReferenceArray.Empty;
             [SerializeField, JsonProperty(Order = 4, PropertyName = "OnInteractTriggerAction")]
-            private ArrayWrapper<Reference<TriggerAction>> m_OnInteractTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
+            internal ArrayWrapper<Reference<TriggerAction>> m_OnInteractTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
 
             [JsonIgnore] public float Weight => m_Weight;
             [JsonIgnore] public LinkedBlock ItemSpace => m_ItemSpace;
@@ -153,8 +153,8 @@ namespace Syadeu.Presentation.Actor
         }
 
         private Reference<ActorItemType> m_ItemType;
-        private float m_Damage;
 
+        private float m_Damage;
         internal WeaponPosition m_HolsterPosition;
         internal WeaponPosition m_DrawPosition;
 
@@ -164,8 +164,8 @@ namespace Syadeu.Presentation.Actor
         public ActorItemComponent(ActorItemAttribute att)
         {
             m_ItemType = att.ItemType;
-            m_Damage = att.WeaponInfo.m_Damage;
 
+            m_Damage = att.WeaponInfo.m_Damage;
             m_HolsterPosition = new WeaponPosition
             {
                 m_AttachedBone = att.WeaponInfo.m_HolsterPosition.m_AttachedBone,
