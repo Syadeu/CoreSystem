@@ -62,18 +62,24 @@ namespace SyadeuEditor.Presentation
 
             Space(ref rect, 10);
             Line(ref rect);
-            Space(ref rect, 10);
+            Space(ref rect, 2);
 
             SerializedProperty itemTypeProp = Helper.GetItemTypeProperty(property);
-            PropertyField(ref rect, itemTypeProp);
-
             Reference<ActorItemType> itemTypeReference = SerializedPropertyHelper.ReadReference<ActorItemType>(itemTypeProp);
+
+            ActorItemType actorItemType;
             if (itemTypeReference.IsEmpty() || !itemTypeReference.IsValid())
             {
                 HelpBox(ref rect, "Item requires ItemType.", MessageType.Error);
+                PropertyField(ref rect, itemTypeProp);
                 return;
             }
-            ActorItemType actorItemType = itemTypeReference.GetObject();
+            else
+            {
+                actorItemType = itemTypeReference.GetObject();
+                Label(ref rect, $"{actorItemType.ItemCategory}", 15, TextAnchor.MiddleCenter);
+                Space(ref rect, 4);
+            }
 
             SerializedProperty
                 graphcisProp = Helper.GetGraphicsInfoProperty(property),
@@ -81,15 +87,20 @@ namespace SyadeuEditor.Presentation
                 weaponProp = Helper.GetWeaponInfoProperty(property),
                 interactionProp = Helper.GetInteractionProperty(property);
 
+            PropertyField(ref rect, itemTypeProp);
+            PropertyField(ref rect, interactionProp);
+
+            Line(ref rect);
+
             PropertyField(ref rect, graphcisProp);
             PropertyField(ref rect, generalProp);
             
             if (actorItemType.ItemCategory == ItemCategory.Weapon)
             {
+                Line(ref rect);
+                Label(ref rect, $"Weapon Settings", 15, TextAnchor.MiddleCenter);
                 PropertyField(ref rect, weaponProp);
             }
-            
-            PropertyField(ref rect, interactionProp);
         }
     }
 }

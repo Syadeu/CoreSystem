@@ -175,6 +175,16 @@ namespace SyadeuEditor.Utilities
 
             CoreGUI.Label(rect.Pop(CoreGUI.GetLineHeight(1)), content);
         }
+        protected void Label(ref AutoRect rect, string text, int size, TextAnchor textAnchor)
+        {
+            GUIContent content = new GUIContent(text);
+            var pos = rect.Pop(GetLabelToggleHeight(in rect, content, size, textAnchor));
+            AddAutoHeight(pos.height);
+
+            content.text = HTMLString.String(text, size);
+
+            CoreGUI.Label(pos, content, textAnchor);
+        }
 
         #region PropertyField
 
