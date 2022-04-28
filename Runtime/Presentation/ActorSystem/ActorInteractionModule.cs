@@ -151,6 +151,23 @@ namespace Syadeu.Presentation.Actor
         private void ProcessOnInteraction(InstanceID entity, InstanceID target)
         {
             m_EventSystem.PostEvent(ActorOnInteractionEvent.GetEvent(entity, target));
+
+            ActorItemAttributeBase itemAttributeBase = null;
+            if (target.HasComponent<ActorWeaponItemComponent>())
+            {
+                var att = target.GetEntity().GetAttribute<ActorWeaponItemAttribute>();
+                itemAttributeBase = att;
+            }
+            else if (target.HasComponent<ActorItemComponent>())
+            {
+                var att = target.GetEntity().GetAttribute<ActorItemAttribute>();
+                itemAttributeBase = att;
+            }
+
+            if (itemAttributeBase != null)
+            {
+                itemAttributeBase.GeneralInfo.ExecuteOnInteract(entity);
+            }
         }
 
         #endregion
@@ -182,33 +199,6 @@ namespace Syadeu.Presentation.Actor
                 });
 
             return infos;
-        }
-    }
-
-    public sealed class ActorOnInteractionEvent : SynchronizedEvent<ActorOnInteractionEvent>
-    {
-        /// <summary>
-        /// <seealso cref="ActorInterationProvider"/>
-        /// </summary>
-        public InstanceID Actor { get; private set; }
-        /// <summary>
-        /// <seealso cref="InteractableComponent"/>
-        /// </summary>
-        public InstanceID Target { get; private set; }
-
-        public static ActorOnInteractionEvent GetEvent(InstanceID actor, InstanceID target)
-        {
-            var ev = Dequeue();
-
-            ev.Actor = actor;
-            ev.Target = target;
-
-            return ev;
-        }
-        protected override void OnTerminate()
-        {
-            Actor = InstanceID.Empty;
-            Target = InstanceID.Empty;
         }
     }
 

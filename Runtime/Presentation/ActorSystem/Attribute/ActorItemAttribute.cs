@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Collections.Graphs;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
@@ -70,12 +71,27 @@ namespace Syadeu.Presentation.Actor
             [SerializeField, JsonProperty(Order = 1, PropertyName = "ItemSpace")]
             private LinkedBlock m_ItemSpace = new LinkedBlock();
 
-            [SerializeField, JsonProperty(Order = 2)]
+            [SerializeField, JsonProperty(Order = 2, PropertyName = "Behavior")]
             private VisualGraphField m_Behavior = new VisualGraphField();
+
+            [Space]
+            // ActorInteractionModule.InteractingControlAtThisFrame
+            [Tooltip(
+                "이 아이템과 상호작용할때 수행하는 행동입니다.")]
+            [SerializeField, JsonProperty(Order = 3, PropertyName = "OnInteractConstAction")]
+            private ConstActionReferenceArray m_OnInteractConstAction = ConstActionReferenceArray.Empty;
+            [SerializeField, JsonProperty(Order = 4, PropertyName = "OnInteractTriggerAction")]
+            private ArrayWrapper<Reference<TriggerAction>> m_OnInteractTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
 
             [JsonIgnore] public float Weight => m_Weight;
             [JsonIgnore] public LinkedBlock ItemSpace => m_ItemSpace;
             [JsonIgnore] public VisualGraphField Behavior => m_Behavior;
+
+            public void ExecuteOnInteract(InstanceID caller)
+            {
+                m_OnInteractConstAction.Execute(caller);
+                m_OnInteractTriggerAction.Execute(caller);
+            }
         }
 
         [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
