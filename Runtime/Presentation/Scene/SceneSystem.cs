@@ -47,7 +47,7 @@ using Unity.Mathematics;
 
 namespace Syadeu.Presentation
 {
-    [RequireGlobalConfig("General")]
+    [XmlSettings(SaveToDisk = true)]
     public sealed class SceneSystem : PresentationSystemEntity<SceneSystem>
     {
         private Scene m_MasterScene;
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation
         private Transform m_SceneInstanceFolder;
 
 #pragma warning disable IDE0044 // Add readonly modifier
-        [ConfigValue(Name = "DebugMode")] private bool m_DebugMode;
+        [XmlField(Name = "DebugMode")] private bool m_DebugMode;
 #pragma warning restore IDE0044 // Add readonly modifier
 
         private readonly Queue<Action> m_LoadingEvent = new Queue<Action>();
@@ -265,8 +265,8 @@ namespace Syadeu.Presentation
                     scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
                     float
-                        m_ResolutionX = ConfigLoader.LoadConfigValue<float>("Graphics", "Resolution", "X"),
-                        m_ResolutionY = ConfigLoader.LoadConfigValue<float>("Graphics", "Resolution", "Y");
+                        m_ResolutionX = XmlSettings.LoadValueFromPref<float>("Resolution", "X", Screen.width),
+                        m_ResolutionY = XmlSettings.LoadValueFromPref<float>("Resolution", "Y", Screen.height);
                     scaler.referenceResolution = new Vector2(m_ResolutionX, m_ResolutionY);
 
                     Image image = new GameObject("Black Screen").AddComponent<Image>();
