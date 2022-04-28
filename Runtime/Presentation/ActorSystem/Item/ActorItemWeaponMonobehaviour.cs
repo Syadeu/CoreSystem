@@ -21,6 +21,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -53,7 +54,7 @@ namespace Syadeu.Presentation.Actor
         }
 
         [SerializeField]
-        private FireProperty m_FireProperty = new FireProperty();
+        protected FireProperty m_FireProperty = new FireProperty();
 
         private RecycleableMonobehaviour m_Main;
 

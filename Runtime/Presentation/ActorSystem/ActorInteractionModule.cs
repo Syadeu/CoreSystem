@@ -112,8 +112,6 @@ namespace Syadeu.Presentation.Actor
 
         private void OnInteractionKeyPressed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
         {
-            //m_EventSystem.PostEvent(OnInteractionKeyPressedEvent.GetEvent());
-
             "key inn".ToLog();
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;
             for (int i = 0; i < currentControls.Count; i++)
@@ -141,11 +139,18 @@ namespace Syadeu.Presentation.Actor
                     targetInteractableCom.Execute(ItemState.InteractionKey, element);
 
                     $"actor({element.GetEntity().Name}) interacting {interactable.Name}".ToLog();
+                    
+                    ProcessOnInteraction(element, interactable);
                 }
 
                 s_InteractingEntityAtThisFrame = Entity<IEntity>.Empty;
             }
             s_InteractingControlAtThisFrame = InstanceID.Empty;
+        }
+
+        private void ProcessOnInteraction(InstanceID entity, InstanceID target)
+        {
+            m_EventSystem.PostEvent(ActorOnInteractionEvent.GetEvent(entity, target));
         }
 
         #endregion
@@ -180,18 +185,32 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
-    //public struct InteractableLink
-    //{
+    public sealed class ActorOnInteractionEvent : SynchronizedEvent<ActorOnInteractionEvent>
+    {
+        /// <summary>
+        /// <seealso cref="ActorInterationProvider"/>
+        /// </summary>
+        public InstanceID Actor { get; private set; }
+        /// <summary>
+        /// <seealso cref="InteractableComponent"/>
+        /// </summary>
+        public InstanceID Target { get; private set; }
 
-    //}
+        public static ActorOnInteractionEvent GetEvent(InstanceID actor, InstanceID target)
+        {
+            var ev = Dequeue();
 
-    //public abstract class InteractConstAction : ConstAction<InteractableLink>
-    //{
-    //    /// <inheritdoc cref="ActorInteractionModule.s_InteractingControlAtThisFrame"/>
-    //    protected Entity<IEntity> InteractingControlAtThisFrame => ActorInteractionModule.InteractingControlAtThisFrame;
-    //    /// <inheritdoc cref="ActorInteractionModule.s_InteractingEntityAtThisFrame"/>
-    //    protected Entity<IEntity> InteractingEntityAtThisFrame => ActorInteractionModule.InteractingEntityAtThisFrame;
-    //}
+            ev.Actor = actor;
+            ev.Target = target;
+
+            return ev;
+        }
+        protected override void OnTerminate()
+        {
+            Actor = InstanceID.Empty;
+            Target = InstanceID.Empty;
+        }
+    }
 
     /// <summary>
     /// <see cref="ActorEntity"/> 와 상호작용을 할 수 있는 <see cref="Entities.EntityBase"/> 가 가지는 컴포넌트입니다.
