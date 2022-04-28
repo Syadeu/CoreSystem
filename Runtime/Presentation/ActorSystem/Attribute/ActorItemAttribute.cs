@@ -106,29 +106,29 @@ namespace Syadeu.Presentation.Actor
             public float3 m_WeaponRotOffset = float3.zero;
         }
 
-        [SerializeField, JsonProperty(Order = -509, PropertyName = "ItemType")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "ItemType")]
         private Reference<ActorItemType> m_ItemType = Reference<ActorItemType>.Empty;
 
         [Space]
-        [SerializeField, JsonProperty(Order = -499, PropertyName = "GraphicsInformation")]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "GraphicsInformation")]
         private GraphicsInformation m_GraphicsInfo = new GraphicsInformation();
 
         [Space]
-        [SerializeField, JsonProperty(Order = -498, PropertyName = "GeneralInfomation")]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "GeneralInfomation")]
         private GeneralInformation m_GeneralInfo = new GeneralInformation();
 
         [Space]
-        [SerializeField, JsonProperty(Order = 3, PropertyName = "WeaponProperty")]
-        private WeaponInformation m_WeaponProperty = new WeaponInformation();
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "WeaponInfo")]
+        private WeaponInformation m_WeaponInfo = new WeaponInformation();
 
         [Space]
-        [SerializeField, JsonProperty(Order = 100, PropertyName = "Interaction")]
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "Interaction")]
         internal Reference<InteractionReferenceData> m_Interaction = Reference<InteractionReferenceData>.Empty;
 
         [JsonIgnore] public Reference<ActorItemType> ItemType => m_ItemType;
         [JsonIgnore] public GraphicsInformation GraphicsInfo => m_GraphicsInfo;
         [JsonIgnore] public GeneralInformation GeneralInfo => m_GeneralInfo;
-        [JsonIgnore] public WeaponInformation WeaponInfo => m_WeaponProperty;
+        [JsonIgnore] public WeaponInformation WeaponInfo => m_WeaponInfo;
     }
     internal sealed class ActorItemAttributeProcessor : AttributeProcessor<ActorItemAttribute>
     {

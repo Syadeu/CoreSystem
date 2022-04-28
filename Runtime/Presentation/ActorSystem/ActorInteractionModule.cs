@@ -236,24 +236,35 @@ namespace Syadeu.Presentation.Actor
             m_UI = interaction.m_InteractionUI;
             m_CurrentState = ItemState.Default;
 
-            Set(ItemState.Grounded,
-                new State(
-                    interaction.m_OnGrounded,
-                    interaction.m_OnGroundedTriggerAction.ToFixedList64(),
-                    new Fixed8<FixedConstAction>(interaction.m_OnGroundedConstAction.Select(t => new FixedConstAction(t)))
-                    ));
-            Set(ItemState.Equiped,
-                new State(
-                    interaction.m_OnEquiped,
-                    interaction.m_OnEquipedTriggerAction.ToFixedList64(),
-                    new Fixed8<FixedConstAction>(interaction.m_OnEquipedConstAction.Select(t => new FixedConstAction(t)))
-                    ));
-            Set(ItemState.Stored,
-                new State(
-                    interaction.m_OnStored,
-                    interaction.m_OnStoredTriggerAction.ToFixedList64(),
-                    new Fixed8<FixedConstAction>(interaction.m_OnStoredConstAction.Select(t => new FixedConstAction(t)))
-                    ));
+            if (interaction.m_OnGrounded)
+            {
+                Set(ItemState.Grounded,
+                    new State(
+                        interaction.m_OnGrounded,
+                        interaction.m_OnGroundedTriggerAction.ToFixedList64(),
+                        new Fixed8<FixedConstAction>(interaction.m_OnGroundedConstAction.Select(t => new FixedConstAction(t)))
+                        ));
+            }
+            
+            if (interaction.m_OnEquiped)
+            {
+                Set(ItemState.Equiped,
+                    new State(
+                        interaction.m_OnEquiped,
+                        interaction.m_OnEquipedTriggerAction.ToFixedList64(),
+                        new Fixed8<FixedConstAction>(interaction.m_OnEquipedConstAction.Select(t => new FixedConstAction(t)))
+                        ));
+            }
+            
+            if (interaction.m_OnStored)
+            {
+                Set(ItemState.Stored,
+                    new State(
+                        interaction.m_OnStored,
+                        interaction.m_OnStoredTriggerAction.ToFixedList64(),
+                        new Fixed8<FixedConstAction>(interaction.m_OnStoredConstAction.Select(t => new FixedConstAction(t)))
+                        ));
+            }
         }
         void IDisposable.Dispose()
         {
