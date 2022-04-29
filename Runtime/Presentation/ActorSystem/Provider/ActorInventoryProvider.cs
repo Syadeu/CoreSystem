@@ -22,10 +22,13 @@ using System;
 using UnityEngine;
 using Unity.Collections;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
+    [DisplayName("ActorProvider: Inventory Provider")]
+    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>, 
+        IPrefabPreloader
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
         public LinkedBlock m_Space = new LinkedBlock();
@@ -35,10 +38,19 @@ namespace Syadeu.Presentation.Actor
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
             component = new ActorInventoryComponent(parent.Idx, m_Space);
+
+            //m_InventoryPrefab.GetOrCreateInstance
         }
         public void Insert(Entity<IObject> item)
         {
 
+        }
+
+        public void Register(PrefabPreloader loader)
+        {
+            if (m_InventoryPrefab.IsNone() || !m_InventoryPrefab.IsValid()) return;
+
+            loader.Add(m_InventoryPrefab);
         }
     }
 
