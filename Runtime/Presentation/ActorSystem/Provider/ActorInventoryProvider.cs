@@ -27,13 +27,13 @@ using System.ComponentModel;
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("ActorProvider: Inventory Provider")]
-    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>, 
-        IPrefabPreloader
+    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent> 
+        //IPrefabPreloader
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
         public LinkedBlock m_Space = new LinkedBlock();
-        [SerializeField]
-        public PrefabReference<ActorInventoryMonobehaviour> m_InventoryPrefab = PrefabReference<ActorInventoryMonobehaviour>.None;
+        //[SerializeField]
+        //public PrefabReference<ActorInventoryMonobehaviour> m_InventoryPrefab = PrefabReference<ActorInventoryMonobehaviour>.None;
 
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
@@ -41,17 +41,13 @@ namespace Syadeu.Presentation.Actor
 
             //m_InventoryPrefab.GetOrCreateInstance
         }
-        public void Insert(Entity<IObject> item)
-        {
 
-        }
+        //void IPrefabPreloader.Register(PrefabPreloader loader)
+        //{
+        //    if (m_InventoryPrefab.IsNone() || !m_InventoryPrefab.IsValid()) return;
 
-        public void Register(PrefabPreloader loader)
-        {
-            if (m_InventoryPrefab.IsNone() || !m_InventoryPrefab.IsValid()) return;
-
-            loader.Add(m_InventoryPrefab);
-        }
+        //    loader.Add(m_InventoryPrefab);
+        //}
     }
 
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable

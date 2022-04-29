@@ -170,8 +170,7 @@ namespace Syadeu.Presentation.Actor
                     }
                     else if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
                     {
-                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Target;
-                        if (inventory == null)
+                        if (!Parent.HasComponent<ActorInventoryComponent>())
                         {
                             CoreSystem.Logger.LogError(Channel.Entity,
                                 $"Destroying equip request weapon instance({ev.Weapon.Target.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
@@ -179,7 +178,8 @@ namespace Syadeu.Presentation.Actor
                         }
                         else
                         {
-                            inventory.Insert(ev.Weapon);
+                            ActorInventoryComponent inventory = Parent.GetComponent<ActorInventoryComponent>();
+                            inventory.Inventory.Add(ev.Weapon);
                         }
                     }
                     else
