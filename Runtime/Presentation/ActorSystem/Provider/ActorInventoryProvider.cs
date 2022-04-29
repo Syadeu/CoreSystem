@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actor
 
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
-            component = new ActorInventoryComponent(parent.Idx, m_Space.Count);
+            component = new ActorInventoryComponent(parent.Idx, m_Space);
         }
         public void Insert(Entity<IObject> item)
         {
@@ -46,9 +46,9 @@ namespace Syadeu.Presentation.Actor
 
         public ItemInventory Inventory => m_Inventory;
 
-        public ActorInventoryComponent(InstanceID owner, int initialLength)
+        public ActorInventoryComponent(InstanceID owner, LinkedBlock block)
         {
-            m_Inventory = new ItemInventory(owner, initialLength, Allocator.Persistent);
+            m_Inventory = new ItemInventory(owner, block, Allocator.Persistent);
         }
 
         void IDisposable.Dispose()
