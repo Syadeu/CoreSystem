@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7184014179483203893}
   - component: {fileID: 6079369642349116362}
   - component: {fileID: 3834284405741491034}
+  - component: {fileID: 5247463265631625345}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -65,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: E
+  m_text: F
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b04f3173f946b754db673ac13842f4c1, type: 2}
   m_sharedMaterial: {fileID: 21728410361126204, guid: b04f3173f946b754db673ac13842f4c1, type: 2}
@@ -134,6 +135,21 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &5247463265631625345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2509026677146587169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94f1a344ac1e8c3499e97392f9b45f12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Target: {fileID: 3834284405741491034}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_Speed: 4
 --- !u!1 &3829927035977739600
 GameObject:
   m_ObjectHideFlags: 0
@@ -145,6 +161,7 @@ GameObject:
   - component: {fileID: 7180333866967006790}
   - component: {fileID: 7309963234526163335}
   - component: {fileID: 3868420609311344817}
+  - component: {fileID: 9127670886994749606}
   m_Layer: 0
   m_Name: Image
   m_TagString: Untagged
@@ -209,6 +226,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &9127670886994749606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3829927035977739600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94f1a344ac1e8c3499e97392f9b45f12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Target: {fileID: 3868420609311344817}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Speed: 4
 --- !u!1 &7029852353742720768
 GameObject:
   m_ObjectHideFlags: 0
@@ -220,6 +252,7 @@ GameObject:
   - component: {fileID: 8322285777915191460}
   - component: {fileID: 5626829834689968737}
   - component: {fileID: 2462681856052121208}
+  - component: {fileID: 4346540000044311649}
   m_Layer: 0
   m_Name: SVG Image
   m_TagString: Untagged
@@ -276,6 +309,21 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 3286163911610860551, guid: f717d0f48c4ae974e9aa0e32c4a634ca, type: 3}
   m_PreserveAspect: 0
+--- !u!114 &4346540000044311649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7029852353742720768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94f1a344ac1e8c3499e97392f9b45f12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Target: {fileID: 2462681856052121208}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Speed: 4
 --- !u!1 &7653358356929606693
 GameObject:
   m_ObjectHideFlags: 0
@@ -286,6 +334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4693935656981462570}
   - component: {fileID: 3795891396691645215}
+  - component: {fileID: 2751275033887246915}
   - component: {fileID: 7709693870403327733}
   m_Layer: 0
   m_Name: InteractionKey
@@ -324,7 +373,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7653358356929606693}
   m_CullTransparentMesh: 1
---- !u!114 &7709693870403327733
+--- !u!114 &2751275033887246915
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -332,6 +381,40 @@ MonoBehaviour:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7653358356929606693}
   m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9c7f478ca143364d8546f4bedcb111b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  onCreation:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2751275033887246915}
+        m_TargetAssemblyTypeName: Syadeu.Presentation.Proxy.ManagedRecycleObject,
+          Syadeu.Presentation
+        m_MethodName: Test
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Component, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onInitializion:
+    m_PersistentCalls:
+      m_Calls: []
+  onTermination:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &7709693870403327733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7653358356929606693}
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 

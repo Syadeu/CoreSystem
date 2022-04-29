@@ -56,6 +56,7 @@ namespace Syadeu.Presentation.Proxy
 
         private IProxyComponent[] m_ProxyComponents;
         private IPresentationReceiver[] m_PresentationReceivers;
+        private IPresentationUpdater[] m_PresentationUpdaters = Array.Empty<IPresentationUpdater>();
 
         public event Action<Entity<IEntity>> OnVisible;
         public event Action<Entity<IEntity>> OnInvisible;
@@ -137,6 +138,7 @@ namespace Syadeu.Presentation.Proxy
                 proxyComponents[i].OnProxyCreated(this);
             }
             SetupPresentationReceiverCallbacks();
+            SetupPresentationUpdater();
 
             OnCreated();
             PresentationReceiverOnCreated();
@@ -370,12 +372,30 @@ namespace Syadeu.Presentation.Proxy
 
         #endregion
 
+        private void SetupPresentationUpdater()
+        {
+            m_PresentationUpdaters = GetComponentsInChildren<IPresentationUpdater>(true);
+
+            for (int i = 0; i < m_PresentationUpdaters.Length; i++)
+            {
+                PresentationManager.Instance.Update += m_PresentationUpdaters[i].OnPresentation;
+            }
+        }
+
         internal void ProcessMessageContext(MessageContext ctx, object obj)
         {
             SendMessage(ctx.methodName, obj, ctx.options);
         }
 
         #endregion
+
+        protected void OnDestroy()
+        {
+            for (int i = 0; i < m_PresentationUpdaters.Length; i++)
+            {
+                PresentationManager.Instance.Update -= m_PresentationUpdaters[i].OnPresentation;
+            }
+        }
 
         /// <summary>
         /// 이 객체가 생성되었을때만 한번 실행하는 함수입니다.
@@ -432,5 +452,10 @@ namespace Syadeu.Presentation.Proxy
         {
             return unchecked(m_MethodName.GetHashCode() ^ (int)m_Options);
         }
+    }
+
+    public interface IPresentationUpdater
+    {
+        void OnPresentation();
     }
 }
