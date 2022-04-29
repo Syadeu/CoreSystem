@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -62,23 +63,38 @@ namespace Syadeu.Collections
     {
         public struct Column : IDisposable, INativeDisposable
         {
-            private UnsafeAllocator<bool> m_Positions;
+            private unsafe struct Data
+            {
+                [MarshalAs(UnmanagedType.U1)]
+                public bool value;
+                public UnsafeReference userData;
+            }
+            private UnsafeAllocator<Data> m_Positions;
 
             public bool this[int index]
             {
-                get => m_Positions[index];
-                set => m_Positions[index] = value;
+                get => m_Positions[index].value;
+                set => m_Positions[index].value = value;
             }
             public int Length => m_Positions.Length;
 
             public Column(bool[] pos, Allocator allocator)
             {
-                m_Positions = new UnsafeAllocator<bool>(pos.Length, allocator);
+                m_Positions = new UnsafeAllocator<Data>(pos.Length, allocator);
                 for (int i = 0; i < pos.Length; i++)
                 {
-                    m_Positions[i] = pos[i];
+                    m_Positions[i] = new Data
+                    {
+                        value = pos[i]
+                    };
                 }
             }
+
+            public unsafe void SetUserData(int index, UnsafeReference ptr)
+            {
+                m_Positions[index].userData = ptr;
+            }
+
             public void Dispose()
             {
                 m_Positions.Dispose();
@@ -99,11 +115,11 @@ namespace Syadeu.Collections
         {
             get
             {
-                return m_Columns[x][y];
+                return m_Columns[y][x];
             }
             set
             {
-                m_Columns[x][y] = value;
+                m_Columns[y][x] = value;
             }
         }
         public int RowLength => m_Columns.Length;
@@ -117,15 +133,18 @@ namespace Syadeu.Collections
             }
         }
 
-        public void SetValue(int2 pos, UnsafeLinkedBlock block, bool value)
+        public void SetValue(int2 pos, UnsafeLinkedBlock block, bool value, UnsafeReference userData)
         {
             for (int y = 0; y < block.RowLength; y++)
             {
                 for (int x = 0; x < block[y].Length; x++)
                 {
+                    if (!block[x, y]) continue;
+
                     int2 reletivePos = pos + new int2(x, y);
 
                     this[reletivePos.x, reletivePos.y] = value;
+                    this[reletivePos.y].SetUserData(reletivePos.x, userData);
                 }
             }
         }

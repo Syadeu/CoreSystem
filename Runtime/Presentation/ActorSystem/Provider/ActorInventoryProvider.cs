@@ -29,6 +29,8 @@ namespace Syadeu.Presentation.Actor
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
         public LinkedBlock m_Space = new LinkedBlock();
+        [SerializeField]
+        public PrefabReference<ActorInventoryMonobehaviour> m_InventoryPrefab = PrefabReference<ActorInventoryMonobehaviour>.None;
 
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {

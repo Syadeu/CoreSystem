@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Actor
         private readonly InstanceID m_Owner;
 
         private UnsafeInstanceArray m_Inventory;
-        private UnsafeLinkedBlock m_LinkedBlock;
+        //private UnsafeLinkedBlock m_LinkedBlock;
 
         public InstanceID Owner => m_Owner;
 
@@ -44,23 +44,23 @@ namespace Syadeu.Presentation.Actor
             m_Owner = owner;
             
             m_Inventory = new UnsafeInstanceArray(linkedBlock.Count, allocator);
-            m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
+            //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
-        public bool IsInsertable(in InstanceID item, out int2 pos)
-        {
-            if (!item.HasComponent<ActorItemComponent>())
-            {
-                pos = int2.zero;
-                return false;
-            }
+        //public bool IsInsertable(in InstanceID item, out int2 pos)
+        //{
+        //    if (!item.HasComponent<ActorItemComponent>())
+        //    {
+        //        pos = int2.zero;
+        //        return false;
+        //    }
 
-            ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
-            UnsafeLinkedBlock itemSpace = component.ItemSpace;
+        //    ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
+        //    UnsafeLinkedBlock itemSpace = component.ItemSpace;
 
-            return m_LinkedBlock.HasSpaceFor(itemSpace, out pos);
-        }
-        public void Add(in InstanceID item)
+        //    return m_LinkedBlock.HasSpaceFor(itemSpace, out pos);
+        //}
+        public bool Add(in InstanceID item)
         {
 #if DEBUG_MODE
             if (!item.HasComponent<ActorItemComponent>())
@@ -68,10 +68,18 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This instance({item.GetEntity().Name}) doesn\'t have {nameof(ActorItemAttribute)}.");
 
-                return;
+                return false;
             }
 #endif
+            //ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
+            //if (!m_LinkedBlock.HasSpaceFor(component.ItemSpace, out var pos))
+            //{
+            //    return false;
+            //}
+
             m_Inventory.Add(item);
+            //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
+            return true;
         }
         public void Remove(in InstanceID item)
         {
@@ -87,12 +95,12 @@ namespace Syadeu.Presentation.Actor
         public void Dispose()
         {
             m_Inventory.Dispose();
-            m_LinkedBlock.Dispose();
+            //m_LinkedBlock.Dispose();
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
             inputDeps = m_Inventory.Dispose(inputDeps);
-            inputDeps = m_LinkedBlock.Dispose(inputDeps);
+            //inputDeps = m_LinkedBlock.Dispose(inputDeps);
 
             return inputDeps;
         }

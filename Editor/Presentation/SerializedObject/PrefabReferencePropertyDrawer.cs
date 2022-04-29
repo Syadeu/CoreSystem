@@ -177,7 +177,22 @@ namespace SyadeuEditor.Presentation
                         {
                             if (other.GetEditorAsset() == null) return false;
 
-                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                            UnityEngine.Object asset = other.GetEditorAsset();
+                            Type targetType = type.GenericTypeArguments[0];
+
+                            if (asset is GameObject gameObj)
+                            {
+                                if (TypeHelper.TypeOf<GameObject>.Type.Equals(targetType))
+                                {
+                                    return true;
+                                }
+                                else if (TypeHelper.InheritsFrom<UnityEngine.Component>(targetType))
+                                {
+                                    return gameObj.GetComponent(targetType) != null;
+                                }
+                                return true;
+                            }
+                            else if (targetType.IsAssignableFrom(other.GetEditorAsset().GetType()))
                             {
                                 return true;
                             }

@@ -221,7 +221,7 @@ namespace Syadeu.Presentation.Components
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        unsafe public static TComponent* GetComponentPointer<TComponent>(this InstanceID t)
+        unsafe public static Collections.Buffer.LowLevel.UnsafeReference<TComponent> GetComponentPointer<TComponent>(this InstanceID t)
             where TComponent : unmanaged, IEntityComponent
         {
 #if DEBUG_MODE
