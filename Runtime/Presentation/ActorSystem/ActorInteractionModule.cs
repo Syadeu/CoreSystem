@@ -155,7 +155,7 @@ namespace Syadeu.Presentation.Actor
             if (target.HasComponent<ActorItemComponent>())
             {
                 ActorItemAttribute att = target.GetEntity().GetAttribute<ActorItemAttribute>();
-                att.GeneralInfo.ExecuteOnInteract(entity);
+                att.GeneralInfo.ExecuteOnInteract(entity, target);
             }
         }
 
@@ -346,6 +346,8 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnDestroy(in InstanceID id, ref InteractableComponent component)
         {
+            component.RemoveUI();
+
             Entity<IEntity> entity = id.GetEntity<IEntity>();
             if (!entity.HasAttribute<TriggerBoundAttribute>())
             {

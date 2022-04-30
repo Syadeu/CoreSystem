@@ -64,19 +64,28 @@ namespace Syadeu.Presentation.Actor
             // ActorInteractionModule.InteractingControlAtThisFrame
             [Tooltip(
                 "이 아이템과 상호작용할때 수행하는 행동입니다.")]
+            // 이 아이템과 상호작용한 엔티티가 인자로 들어옴
             [SerializeField, JsonProperty(Order = 3, PropertyName = "OnInteractConstAction")]
             internal ConstActionReferenceArray m_OnInteractConstAction = ConstActionReferenceArray.Empty;
             [SerializeField, JsonProperty(Order = 4, PropertyName = "OnInteractTriggerAction")]
             internal ArrayWrapper<Reference<TriggerAction>> m_OnInteractTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
+            // 이 아이템이 인자로 들어옴
+            [SerializeField, JsonProperty(Order = 5, PropertyName = "OnInteractThisConstAction")]
+            internal ConstActionReferenceArray m_OnInteractThisConstAction = ConstActionReferenceArray.Empty;
+            [SerializeField, JsonProperty(Order = 6, PropertyName = "OnInteractThisTriggerAction")]
+            internal ArrayWrapper<Reference<TriggerAction>> m_OnInteractThisTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
 
             [JsonIgnore] public float Weight => m_Weight;
             [JsonIgnore] public LinkedBlock ItemSpace => m_ItemSpace;
             [JsonIgnore] public VisualGraphField Behavior => m_Behavior;
 
-            public void ExecuteOnInteract(InstanceID caller)
+            public void ExecuteOnInteract(InstanceID caller, InstanceID item)
             {
                 m_OnInteractConstAction.Execute(caller);
                 m_OnInteractTriggerAction.Execute(caller);
+
+                m_OnInteractThisConstAction.Execute(item);
+                m_OnInteractThisTriggerAction.Execute(item);
             }
         }
         [Serializable]
@@ -139,55 +148,6 @@ namespace Syadeu.Presentation.Actor
 
             ref InteractableComponent interact = ref entity.GetComponent<InteractableComponent>();
             interact.Setup(attribute.m_Interaction);
-        }
-    }
-    public struct ActorItemComponent : IEntityComponent, IDisposable
-    {
-        public struct WeaponPosition
-        {
-            public bool m_UseBone;
-            public HumanBodyBones m_AttachedBone;
-
-            public float3 m_WeaponPosOffset;
-            public float3 m_WeaponRotOffset;
-        }
-
-        private Reference<ActorItemType> m_ItemType;
-        private UnsafeLinkedBlock m_ItemSpace;
-
-        private float m_Damage;
-        internal WeaponPosition m_HolsterPosition;
-        internal WeaponPosition m_DrawPosition;
-
-        public Reference<ActorItemType> ItemType => m_ItemType;
-        public UnsafeLinkedBlock ItemSpace => m_ItemSpace;
-
-        public float Damage { get => m_Damage; set => m_Damage = value; }
-
-        public ActorItemComponent(ActorItemAttribute att)
-        {
-            m_ItemType = att.ItemType;
-            m_ItemSpace = new UnsafeLinkedBlock(att.GeneralInfo.ItemSpace, Unity.Collections.Allocator.Persistent);
-
-            m_Damage = att.WeaponInfo.m_Damage;
-            m_HolsterPosition = new WeaponPosition
-            {
-                m_AttachedBone = att.WeaponInfo.m_HolsterPosition.m_AttachedBone,
-                m_UseBone = att.WeaponInfo.m_HolsterPosition.m_UseBone,
-                m_WeaponPosOffset = att.WeaponInfo.m_HolsterPosition.m_WeaponPosOffset,
-                m_WeaponRotOffset = att.WeaponInfo.m_HolsterPosition.m_WeaponRotOffset
-            };
-            m_DrawPosition = new WeaponPosition
-            {
-                m_AttachedBone = att.WeaponInfo.m_DrawPosition.m_AttachedBone,
-                m_UseBone = att.WeaponInfo.m_DrawPosition.m_UseBone,
-                m_WeaponPosOffset = att.WeaponInfo.m_DrawPosition.m_WeaponPosOffset,
-                m_WeaponRotOffset = att.WeaponInfo.m_DrawPosition.m_WeaponRotOffset
-            };
-        }
-        public void Dispose()
-        {
-            m_ItemSpace.Dispose();
         }
     }
 

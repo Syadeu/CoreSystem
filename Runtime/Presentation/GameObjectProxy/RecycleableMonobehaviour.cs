@@ -26,7 +26,6 @@ using Syadeu.Presentation.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
@@ -395,6 +394,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 PresentationManager.Instance.Update -= m_PresentationUpdaters[i].OnPresentation;
             }
+            m_PresentationUpdaters = null;
         }
 
         /// <summary>
@@ -408,54 +408,5 @@ namespace Syadeu.Presentation.Proxy
         protected virtual void OnTerminate() { }
 
         public bool IsValid() => Activated && !m_Entity.Equals(Entity<IEntity>.Empty);
-    }
-
-    [BurstCompatible]
-    public struct MessageContext
-    {
-        private FixedString512Bytes m_MethodName;
-        private int m_UserData;
-        private SendMessageOptions m_Options;
-
-        public string methodName
-        {
-            get => m_MethodName.ToString();
-            set => m_MethodName = value;
-        }
-        public int UserData
-        {
-            get => m_UserData;
-            set => m_UserData = value;
-        }
-        public SendMessageOptions options
-        {
-            get => m_Options;
-            set => m_Options = value;
-        }
-
-        [NotBurstCompatible]
-        public MessageContext(string methodName, SendMessageOptions options = SendMessageOptions.RequireReceiver)
-        {
-            m_MethodName = methodName;
-            m_UserData = 0;
-            m_Options = options;
-        }
-        [NotBurstCompatible]
-        public MessageContext(string methodName, int userData, SendMessageOptions options = SendMessageOptions.RequireReceiver)
-        {
-            m_MethodName = methodName;
-            m_UserData = userData;
-            m_Options = options;
-        }
-
-        public override int GetHashCode()
-        {
-            return unchecked(m_MethodName.GetHashCode() ^ (int)m_Options);
-        }
-    }
-
-    public interface IPresentationUpdater
-    {
-        void OnPresentation();
     }
 }

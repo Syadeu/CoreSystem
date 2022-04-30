@@ -23,6 +23,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -30,11 +31,11 @@ namespace Syadeu.Presentation.Actor
 {
     [BurstCompatible]
     public struct ItemInventory : IDisposable, INativeDisposable, 
-        IEquatable<ItemInventory>, IEnumerable<InstanceID>
+        IEquatable<ItemInventory>
     {
         private readonly InstanceID m_Owner;
 
-        private UnsafeInstanceArray m_Inventory;
+        private UnsafeList<FixedReference> m_Inventory;
         //private UnsafeLinkedBlock m_LinkedBlock;
 
         public InstanceID Owner => m_Owner;
@@ -43,7 +44,7 @@ namespace Syadeu.Presentation.Actor
         {
             m_Owner = owner;
             
-            m_Inventory = new UnsafeInstanceArray(linkedBlock.Count, allocator);
+            m_Inventory = new UnsafeList<FixedReference>(linkedBlock.Count, allocator);
             //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
@@ -76,20 +77,28 @@ namespace Syadeu.Presentation.Actor
             //{
             //    return false;
             //}
+            FixedReference reference = new FixedReference(item.GetEntity().Hash);
 
-            m_Inventory.Add(item);
+            m_Inventory.Add(reference);
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
             return true;
         }
         public void Remove(in InstanceID item)
         {
-            m_Inventory.Remove(in item);
+            FixedReference reference = new FixedReference(item.GetEntity().Hash);
+            int index = m_Inventory.IndexOf(reference);
+            if (index < 0) return;
+
+            m_Inventory.RemoveAtSwapBack(index);
         }
         public void Clear() => m_Inventory.Clear();
 
         public bool Contains(in InstanceID item)
         {
-            return m_Inventory.Contains(item);
+            FixedReference reference = new FixedReference(item.GetEntity().Hash);
+            int index = m_Inventory.IndexOf(reference);
+
+            return index >= 0;
         }
 
         public void Dispose()
@@ -106,44 +115,5 @@ namespace Syadeu.Presentation.Actor
         }
 
         public bool Equals(ItemInventory other) => m_Inventory.Equals(other.m_Inventory);
-
-        #region Enumerator 
-
-        public Enumerator GetEnumerator() => new Enumerator(m_Inventory);
-        IEnumerator<InstanceID> IEnumerable<InstanceID>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        public struct Enumerator : IEnumerator<InstanceID>
-        {
-            private int m_Index;
-            private UnsafeInstanceArray m_Inventory;
-
-            public InstanceID Current => throw new NotImplementedException();
-            object IEnumerator.Current => throw new NotImplementedException();
-
-            internal Enumerator(UnsafeInstanceArray inventory)
-            {
-                m_Index = -1;
-                m_Inventory = inventory;
-            }
-
-            public void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                m_Index++;
-
-                if (m_Index >= m_Inventory.Length) return false;
-                return true;
-            }
-            public void Reset()
-            {
-                m_Index = -1;
-            }
-        }
-
-        #endregion
     }
 }
