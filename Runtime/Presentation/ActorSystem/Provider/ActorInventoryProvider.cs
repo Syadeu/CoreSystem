@@ -23,6 +23,7 @@ using UnityEngine;
 using Unity.Collections;
 using Newtonsoft.Json;
 using System.ComponentModel;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -30,8 +31,25 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent> 
         //IPrefabPreloader
     {
+        [Serializable]
+        public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "UIPrefab")]
+            public Reference<UIObjectEntity> m_UIPrefab = Reference<UIObjectEntity>.Empty;
+
+            [Space]
+            [SerializeField, JsonProperty(Order = 1, PropertyName = "PositionOffset")]
+            public float3 m_PositionOffset;
+            [SerializeField, JsonProperty(Order = 2, PropertyName = "RotationOffset")]
+            public float3 m_RotationOffset;
+        }
+
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
         public LinkedBlock m_Space = new LinkedBlock();
+
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "GraphicsInfo")]
+        public GraphicsInformation m_GraphicsInfo = new GraphicsInformation();
+
         //[SerializeField]
         //public PrefabReference<ActorInventoryMonobehaviour> m_InventoryPrefab = PrefabReference<ActorInventoryMonobehaviour>.None;
 

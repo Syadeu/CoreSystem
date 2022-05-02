@@ -18,7 +18,9 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Entities;
+using System.Linq;
 using UnityEngine;
 
 namespace Syadeu.Presentation.Actor
@@ -32,13 +34,15 @@ namespace Syadeu.Presentation.Actor
     /// </remarks>
     public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
     {
-        [Tooltip("오브젝트가 최대로 상호작용 가능한 거리")]
-        [SerializeField, JsonProperty(Order = 0, PropertyName = "InteractionRange")]
-        private float m_InteractionRange = 3;
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "OnInteractionConstAction")]
+        public ConstActionReferenceArray m_OnInteractionConstAction = ConstActionReferenceArray.Empty;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "OnInteractionTriggerAction")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnInteractionTriggerAction = ArrayWrapper<Reference<TriggerAction>>.Empty;
 
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInteractionComponent component)
         {
-            component = new ActorInteractionComponent(m_InteractionRange);
+            component = new ActorInteractionComponent(
+                m_OnInteractionConstAction, m_OnInteractionTriggerAction);
         }
     }
     /// <summary>
@@ -46,11 +50,22 @@ namespace Syadeu.Presentation.Actor
     /// </summary>
     public struct ActorInteractionComponent : IActorProviderComponent
     {
-        public float interactionRange;
+        private Fixed8<FixedConstAction> m_OnInteractionConstAction;
+        private FixedReferenceList16<TriggerAction> m_OnInteractionTriggerAction;
 
-        public ActorInteractionComponent(float maxRange)
+        public ActorInteractionComponent(
+            ConstActionReferenceArray onInteractionConstAction,
+            ArrayWrapper<Reference<TriggerAction>> onInteractionTriggerAction)
         {
-            this.interactionRange = maxRange;
+            m_OnInteractionConstAction 
+                = new Fixed8<FixedConstAction>(onInteractionConstAction.Select(t => new FixedConstAction(t)));
+            m_OnInteractionTriggerAction = onInteractionTriggerAction.ToFixedList16();
+        }
+
+        public void ExecuteOnInteraction(InstanceID actor)
+        {
+            m_OnInteractionConstAction.Execute(actor);
+            m_OnInteractionTriggerAction.Execute(actor);
         }
     }
 }

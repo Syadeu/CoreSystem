@@ -122,7 +122,7 @@ namespace Syadeu.Presentation.Actor
                     "doesnt have interaction com".ToLog();
                     continue;
                 }
-                ActorInteractionComponent component = element.GetComponent<ActorInteractionComponent>();
+                ActorInteractionComponent component = element.GetComponentReadOnly<ActorInteractionComponent>();
                 IEnumerable<Entity<IEntity>> nearbyInteractables = GetInteractables(element);
                 if (!nearbyInteractables.Any())
                 {
@@ -142,6 +142,7 @@ namespace Syadeu.Presentation.Actor
                     
                     ProcessOnInteraction(element, interactable);
                 }
+                component.ExecuteOnInteraction(element);
 
                 s_InteractingEntityAtThisFrame = Entity<IEntity>.Empty;
             }
