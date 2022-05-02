@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 
 namespace Syadeu.Presentation.Actions
 {
-    [DisplayName("System/Add This Entity To Data Container")]
+    [DisplayName("Entity/Add This Entity To Data Container")]
     [Guid("B2EB45E1-D286-49A9-97BA-17D7EEC9C0FA")]
     internal sealed class AddDataContainerConstAction : ConstTriggerAction<int>
     {
