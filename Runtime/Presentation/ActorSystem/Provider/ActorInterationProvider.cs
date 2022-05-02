@@ -34,6 +34,7 @@ namespace Syadeu.Presentation.Actor
     /// </remarks>
     public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
     {
+        // target == parent
         [SerializeField, JsonProperty(Order = 0, PropertyName = "OnInteractionConstAction")]
         public ConstActionReferenceArray m_OnInteractionConstAction = ConstActionReferenceArray.Empty;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "OnInteractionTriggerAction")]
