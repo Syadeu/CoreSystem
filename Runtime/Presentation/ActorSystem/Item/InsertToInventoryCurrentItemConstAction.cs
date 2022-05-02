@@ -30,21 +30,31 @@ namespace Syadeu.Presentation.Actor
     [Guid("69096259-D9DB-48C2-8863-C0C1388FCB75")]
     internal sealed class InsertToInventoryCurrentItemConstAction : ConstTriggerAction<int>
     {
+        [UnityEngine.SerializeField]
+        private bool m_DestroyIfDosenotHaveInventory = true;
+
         protected override int Execute(InstanceID entity)
         {
             InstanceID item = ActorInteractionModule.InteractingEntityAtThisFrame.Idx;
             if (item.IsEmpty())
             {
-                "?".ToLog();
+                "?".ToLogError();
                 return 0;
             }
-#if DEBUG_MODE
             else if (!entity.HasComponent<ActorInventoryComponent>())
             {
-                $"doesnot have any inventory at {entity.GetEntity().Name}".ToLog();
-                return 0;
+                if (m_DestroyIfDosenotHaveInventory)
+                {
+                    item.IsDestroyed
+                    return 0;
+                }
+                else
+                {
+                    $"doesnot have any inventory at {entity.GetEntity().Name}".ToLog();
+                    return 0;
+                }
             }
-#endif
+
             ref ActorInventoryComponent inventoryCom = ref entity.GetComponent<ActorInventoryComponent>();
             inventoryCom.Inventory.Add(item);
 

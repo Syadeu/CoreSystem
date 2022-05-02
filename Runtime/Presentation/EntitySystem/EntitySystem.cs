@@ -133,6 +133,7 @@ namespace Syadeu.Presentation
 
             PresentationManager.Instance.PreUpdate += m_DestroyedObjectsInThisFrameAction.Invoke;
 
+            EntityExtensionMethods.s_EntitySystem = this;
             return base.OnInitialize();
         }
 
@@ -209,6 +210,7 @@ namespace Syadeu.Presentation
             m_CoroutineSystem = null;
             m_ComponentSystem = null;
             m_SceneSystem = null;
+            EntityExtensionMethods.s_EntitySystem = null;
         }
 
         #region Binds
@@ -658,7 +660,7 @@ namespace Syadeu.Presentation
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
         /// <remarks>
-        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ITransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
+        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ProxyTransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
         public void DestroyEntity(InstanceID instance) => InternalDestroyEntity(instance);
