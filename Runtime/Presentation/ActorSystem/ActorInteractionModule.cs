@@ -308,7 +308,7 @@ namespace Syadeu.Presentation.Actor
                 return;
             }
 
-            m_CreatedUI.GetEntity().Destroy();
+            m_CreatedUI.Destroy();
             m_CreatedUI = InstanceID<UIObjectEntity>.Empty;
         }
     }

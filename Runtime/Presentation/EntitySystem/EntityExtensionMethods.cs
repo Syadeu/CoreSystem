@@ -72,15 +72,15 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntity(t.Idx);
         }
 
-        public static Reference<T> AsOriginal<T>(this T t)
+        public static FixedReference<T> AsOriginal<T>(this T t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Hash);
+            return new FixedReference<T>(t.Hash);
         }
-        public static Reference<T> AsOriginal<T>(this Entity<T> t)
+        public static FixedReference<T> AsOriginal<T>(this Entity<T> t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Hash);
+            return new FixedReference<T>(t.Hash);
         }
         public static FixedReference<T> AsOriginal<T>(this in InstanceID t)
             where T : class, IObject
@@ -155,6 +155,12 @@ namespace Syadeu.Presentation
         }
         /// <inheritdoc cref="EntitySystem.DestroyEntity(InstanceID)"/>
         public static void Destroy(this in InstanceID id)
+        {
+            s_EntitySystem.DestroyEntity(id);
+        }
+        /// <inheritdoc cref="EntitySystem.DestroyEntity(InstanceID)"/>
+        public static void Destroy<T>(this in InstanceID<T> id)
+            where T : class, IObject
         {
             s_EntitySystem.DestroyEntity(id);
         }
