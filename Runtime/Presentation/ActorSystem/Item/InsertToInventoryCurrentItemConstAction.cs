@@ -45,7 +45,7 @@ namespace Syadeu.Presentation.Actor
             {
                 if (m_DestroyIfDosenotHaveInventory)
                 {
-                    item.IsDestroyed
+                    item.Destroy();
                     return 0;
                 }
                 else
