@@ -37,7 +37,7 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>,
-        INotifySystemModule<ActorItemModule>,
+        INotifySystemModule<ActorInventoryModule>,
         INotifySystemModule<ActorInteractionModule>,
         ISystemEventScheduler
     {

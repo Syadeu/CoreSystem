@@ -18,7 +18,7 @@
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorItemModule : PresentationSystemModule<ActorSystem>
+    public sealed class ActorInventoryModule : PresentationSystemModule<ActorSystem>
     {
 
     }

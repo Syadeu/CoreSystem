@@ -290,6 +290,13 @@ namespace Syadeu.Presentation.Input
                         );
 
                     break;
+                case UserActionType.Inventory:
+                    result = PlayerPrefs.GetString(
+                        string.Format(c_Format, TypeHelper.Enum<UserActionType>.ToString(userActionType)),
+                        "<Keyboard>/i"
+                        );
+
+                    break;
                 default:
                     throw new NotImplementedException($"{userActionType}");
             }

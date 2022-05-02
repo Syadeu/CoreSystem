@@ -22,5 +22,7 @@ namespace Syadeu.Presentation.Input
     {
         // 아이템, 사물 등 상호작용
         Interaction     =   0,
+        // 가방
+        Inventory
     }
 }
