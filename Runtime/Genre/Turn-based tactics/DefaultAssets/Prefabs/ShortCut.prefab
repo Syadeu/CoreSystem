@@ -214,7 +214,6 @@ GameObject:
   - component: {fileID: 6596494984131858559}
   - component: {fileID: 8076510694412432102}
   - component: {fileID: 7103872157504904159}
-  - component: {fileID: 2717410247140647746}
   m_Layer: 5
   m_Name: ShortCut
   m_TagString: Untagged
@@ -318,20 +317,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2717410247140647746
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6596494984131858554}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 230a7960c2aa68a478ad328d6c48c212, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ShortcutType: 0
-  m_ShortcutIndexText: {fileID: 6596494984745821961}
 --- !u!1 &6596494984745826551
 GameObject:
   m_ObjectHideFlags: 0
