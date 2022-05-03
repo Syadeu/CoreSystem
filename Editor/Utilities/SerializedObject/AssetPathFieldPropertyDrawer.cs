@@ -51,17 +51,30 @@ namespace SyadeuEditor.Utilities
                 targetType = TypeHelper.TypeOf<UnityEngine.Object>.Type;
             }
 
-            using (var changeCheck = new EditorGUI.ChangeCheckScope())
-            {
-                Rect pos = rect.Pop();
-                UnityEngine.Object obj
-                    = EditorGUI.ObjectField(pos, label, asset, targetType, false);
+            Rect[] pos = AutoRect.DivideWithRatio(rect.Pop(), .9f, .1f);
 
-                if (changeCheck.changed)
+            if (!property.isExpanded)
+            {
+                using (var changeCheck = new EditorGUI.ChangeCheckScope())
                 {
-                    pathProperty.stringValue
-                        = AssetDatabase.GetAssetPath(obj);
+                    UnityEngine.Object obj
+                        = EditorGUI.ObjectField(pos[0], label, asset, targetType, false);
+
+                    if (changeCheck.changed)
+                    {
+                        pathProperty.stringValue
+                            = AssetDatabase.GetAssetPath(obj);
+                    }
                 }
+            }
+            else
+            {
+                pathProperty.stringValue = EditorGUI.TextField(pos[0], label, pathProperty.stringValue);
+            }
+
+            if (GUI.Button(pos[1], "Raw"))
+            {
+                property.isExpanded = !property.isExpanded;
             }
         }
 
