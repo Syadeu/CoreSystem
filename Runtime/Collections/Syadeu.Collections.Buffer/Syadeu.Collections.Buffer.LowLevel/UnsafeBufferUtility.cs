@@ -20,11 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace Syadeu.Collections.Buffer.LowLevel
@@ -40,6 +43,36 @@ namespace Syadeu.Collections.Buffer.LowLevel
             void* p = UnsafeUtility.AddressOf(ref t);
             
             return (byte*)p;
+        }
+        public static byte[] ToBytes(in UnsafeReference ptr, in int length)
+        {
+            if (!ptr.IsCreated || ptr.Ptr == null) return Array.Empty<byte>();
+
+            byte[] arr = new byte[length];
+            Marshal.Copy(ptr.IntPtr, arr, 0, length);
+
+            return arr;
+        }
+
+        public static byte[] ObjectToByteArray(this object obj)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            using (var ms = new MemoryStream())
+            {
+                bf.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+        public static object ByteArrayToObject(byte[] arrBytes)
+        {
+            using (var memStream = new MemoryStream())
+            {
+                var binForm = new BinaryFormatter();
+                memStream.Write(arrBytes, 0, arrBytes.Length);
+                memStream.Seek(0, SeekOrigin.Begin);
+                var obj = binForm.Deserialize(memStream);
+                return obj;
+            }
         }
 
         /// <summary>
@@ -344,5 +377,130 @@ namespace Syadeu.Collections.Buffer.LowLevel
 #endif
 
         #endregion
+
+        private static readonly Dictionary<Type, ExportFieldInfo> s_ParsedExportFields = new Dictionary<Type, ExportFieldInfo>();
+        private sealed class ExportFieldInfo
+        {
+            public FieldInfo[] fieldInfos;
+            public int size;
+            public int alignment;
+        }
+        private struct ExportDataComparer : IComparer<int>
+        {
+            public int Compare(int x, int y)
+            {
+                if (x == y) return 0;
+                else if (x < y) return -1;
+                else return 1;
+            }
+        }
+        private static ExportFieldInfo GetExportFieldInfo(Type t)
+        {
+            if (!s_ParsedExportFields.TryGetValue(t, out var fields))
+            {
+                var temp = t
+                    .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                    .Where(t =>
+                    {
+                        if (t.GetCustomAttribute<ExportDataAttribute>() == null) return false;
+                        else if (!t.IsPublic)
+                        {
+                            return t.GetCustomAttribute<SerializeField>() != null;
+                        }
+                        return t.GetCustomAttribute<NonSerializedAttribute>() == null;
+                    })
+                    .OrderBy(t => TypeHelper.SizeOf(t.FieldType), new ExportDataComparer())
+                    .ToArray();
+                int size = 0, alignment = 0;
+                foreach (var item in temp)
+                {
+                    int itemSize = TypeHelper.SizeOf(item.FieldType);
+                    size += itemSize;
+
+                    alignment = Mathf.Max(alignment, itemSize);
+                    alignment = alignment > 4 ? 4 : alignment;
+                }
+                fields = new ExportFieldInfo
+                {
+                    fieldInfos = temp,
+                    size = size,
+                    alignment = alignment
+                };
+
+                s_ParsedExportFields.Add(t, fields);
+            }
+            return fields;
+        }
+        public static unsafe UnsafeExportedData ExportData<T>(in T t, Allocator allocator)
+            where T : unmanaged
+        {
+            ExportFieldInfo fields = GetExportFieldInfo(TypeHelper.TypeOf<T>.Type);
+
+            UnsafeAllocator alloc = new UnsafeAllocator(fields.size, fields.alignment, allocator);
+            UnsafeReference p = alloc.Ptr;
+
+            foreach (FieldInfo field in fields.fieldInfos)
+            {
+                object obj = field.GetValue(t);
+                byte[] bytes = obj.ObjectToByteArray();
+
+                fixed (byte* ptr = bytes)
+                {
+                    UnsafeUtility.MemCpy(p, ptr, bytes.Length);
+                    p += bytes.Length;
+                }
+            }
+
+            return new UnsafeExportedData(alloc);
+        }
+        public static unsafe T ReadData<T>(this in UnsafeExportedData t, int index)
+            where T : unmanaged
+        {
+            ExportFieldInfo fields = GetExportFieldInfo(TypeHelper.TypeOf<T>.Type);
+
+            UnsafeAllocator alloc = t.Allocator;
+
+            //FieldInfo field = fields.fieldInfos[index];
+            UnsafeReference p = alloc.Ptr;
+            for (int i = 0; i < index; i++)
+            {
+                p += TypeHelper.SizeOf(fields.fieldInfos[i].FieldType);
+            }
+
+            T data = Marshal.PtrToStructure<T>(p);
+            return data;
+        }
+    }
+    [BurstCompatible]
+    public struct UnsafeExportedData : IValidation, IDisposable, INativeDisposable
+    {
+        private UnsafeAllocator m_Allocator;
+
+        public UnsafeAllocator Allocator => m_Allocator;
+
+        internal UnsafeExportedData(UnsafeAllocator allocator)
+        {
+            m_Allocator = allocator;
+        }
+
+        public bool IsValid() => m_Allocator.IsCreated;
+        public void Dispose()
+        {
+            m_Allocator.Dispose();
+        }
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            inputDeps = m_Allocator.Dispose(inputDeps);
+
+            return inputDeps;
+        }
+    }
+
+    /// <summary>
+    /// <see cref="UnsafeBufferUtility.ExportData{T}(in T, Allocator)"/> 를 통해 추출 될 수 있는 맴버를 지정합니다.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    public class ExportDataAttribute : Attribute
+    {
     }
 }

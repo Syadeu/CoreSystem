@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using System;
 using Unity.Mathematics;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace Syadeu.Presentation.Actor
         private Reference<ActorItemType> m_ItemType;
         //private UnsafeLinkedBlock m_ItemSpace;
 
+        [ExportData]
         private float m_Damage;
         internal WeaponPosition m_HolsterPosition;
         internal WeaponPosition m_DrawPosition;

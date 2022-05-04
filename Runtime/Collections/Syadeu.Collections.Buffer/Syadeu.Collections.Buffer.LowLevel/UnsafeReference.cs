@@ -98,9 +98,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
-        public static unsafe implicit operator UnsafeReference(void* p) => new UnsafeReference(p);
-        public static unsafe implicit operator UnsafeReference(IntPtr p) => new UnsafeReference(p);
+        public static unsafe implicit operator UnsafeReference(void* p)
+        {
+            if (p == null)
+            {
+                return default(UnsafeReference);
+            }
+
+            return new UnsafeReference(p);
+        }
+        public static implicit operator UnsafeReference(IntPtr p) => new UnsafeReference(p);
         public static unsafe implicit operator void*(UnsafeReference p) => p.m_Ptr;
+        public static unsafe implicit operator IntPtr(UnsafeReference p) => (IntPtr)p.m_Ptr;
     }
     /// <summary><inheritdoc cref="UnsafeReference"/></summary>
     /// <typeparam name="T"></typeparam>
@@ -284,11 +293,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
             }
         }
 
-        public static unsafe implicit operator UnsafeReference<T>(T* p) => new UnsafeReference<T>(p);
-        public static unsafe implicit operator UnsafeReference(UnsafeReference<T> p) => new UnsafeReference(p.IntPtr);
-        public static unsafe implicit operator T*(UnsafeReference<T> p) => p.m_Ptr;
+        public static unsafe implicit operator UnsafeReference<T>(T* p)
+        {
+            if (p == null) return default(UnsafeReference<T>);
 
+            return new UnsafeReference<T>(p);
+        }
+        public static unsafe implicit operator UnsafeReference(UnsafeReference<T> p) => new UnsafeReference(p.IntPtr);
+        public static unsafe implicit operator T*(UnsafeReference<T> p) => p.Ptr;
         public static unsafe explicit operator UnsafeReference<T>(UnsafeReference p) => new UnsafeReference<T>(p.IntPtr);
+
+        public static unsafe implicit operator IntPtr(UnsafeReference<T> p) => (IntPtr)p.m_Ptr;
+        //public static unsafe implicit operator IntPtr<T>(UnsafeReference<T> p) => new IntPtr<T>((IntPtr)p.m_Ptr);
 
         [BurstCompatible]
         public struct ReadOnly

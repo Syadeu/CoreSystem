@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Buffer.LowLevel;
 using Syadeu.Collections.LowLevel;
 using Syadeu.Presentation.Components;
 using System;
@@ -36,6 +37,7 @@ namespace Syadeu.Presentation.Actor
         private readonly InstanceID m_Owner;
 
         private UnsafeList<FixedReference> m_Inventory;
+        private UnsafeList<UnsafeExportedData> m_ItemData;
         //private UnsafeLinkedBlock m_LinkedBlock;
 
         public InstanceID Owner => m_Owner;
@@ -45,6 +47,7 @@ namespace Syadeu.Presentation.Actor
             m_Owner = owner;
             
             m_Inventory = new UnsafeList<FixedReference>(linkedBlock.Count, allocator);
+            m_ItemData = new UnsafeList<UnsafeExportedData>(linkedBlock.Count, allocator);
             //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
@@ -72,7 +75,7 @@ namespace Syadeu.Presentation.Actor
                 return false;
             }
 #endif
-            //ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
+            ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
             //if (!m_LinkedBlock.HasSpaceFor(component.ItemSpace, out var pos))
             //{
             //    return false;
@@ -80,6 +83,10 @@ namespace Syadeu.Presentation.Actor
             FixedReference reference = new FixedReference(item.GetEntity().Hash);
 
             m_Inventory.Add(reference);
+
+            UnsafeExportedData data = UnsafeBufferUtility.ExportData(component, Allocator.Persistent);
+            m_ItemData.Add(data);
+
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
             return true;
         }
@@ -90,6 +97,10 @@ namespace Syadeu.Presentation.Actor
             if (index < 0) return;
 
             m_Inventory.RemoveAtSwapBack(index);
+
+            UnsafeExportedData data = m_ItemData[index];
+            data.Dispose();
+            m_ItemData.RemoveAtSwapBack(index);
         }
         public void Clear() => m_Inventory.Clear();
 
@@ -104,11 +115,13 @@ namespace Syadeu.Presentation.Actor
         public void Dispose()
         {
             m_Inventory.Dispose();
+            m_ItemData.Dispose();
             //m_LinkedBlock.Dispose();
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
             inputDeps = m_Inventory.Dispose(inputDeps);
+            inputDeps = m_ItemData.Dispose(inputDeps);
             //inputDeps = m_LinkedBlock.Dispose(inputDeps);
 
             return inputDeps;

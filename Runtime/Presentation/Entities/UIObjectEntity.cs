@@ -36,6 +36,7 @@ namespace Syadeu.Presentation.Entities
         [SerializeField, JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
+        [Range(0, 1)]
         internal float m_InitialAlpha = 1;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "AlignWithCamera")]
         internal bool m_AlignWithCamera = true;
