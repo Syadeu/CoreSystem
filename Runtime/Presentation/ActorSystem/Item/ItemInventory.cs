@@ -23,12 +23,10 @@ using Syadeu.Presentation.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Policy;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Hash = Syadeu.Collections.Hash;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -85,6 +83,8 @@ namespace Syadeu.Presentation.Actor
             //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
+        #region List
+
         public int IndexOf(in Key item)
         {
             if (!item.m_InventoryHash.Equals(m_Hash)) return -1;
@@ -103,7 +103,6 @@ namespace Syadeu.Presentation.Actor
 
             return index;
         }
-
         //public bool IsInsertable(in InstanceID item, out int2 pos)
         //{
         //    if (!item.HasComponent<ActorItemComponent>())
@@ -143,6 +142,19 @@ namespace Syadeu.Presentation.Actor
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
             return new Key(m_Hash, reference, data.ID);
         }
+        public void RemoveAt(in int index)
+        {
+            if (index < 0 || m_Inventory.Length <= index)
+            {
+                return;
+            }
+
+            m_Inventory.RemoveAtSwapBack(index);
+
+            UnsafeExportedData data = m_ItemData[index];
+            data.Dispose();
+            m_ItemData.RemoveAtSwapBack(index);
+        }
         public void Remove(in Key item)
         {
             int index = IndexOf(in item);
@@ -154,13 +166,31 @@ namespace Syadeu.Presentation.Actor
             data.Dispose();
             m_ItemData.RemoveAtSwapBack(index);
         }
-        public void Clear() => m_Inventory.Clear();
+        public void Clear()
+        {
+            m_Inventory.Clear();
 
+            for (int i = 0; i < m_ItemData.Length; i++)
+            {
+                m_ItemData[i].Dispose();
+            }
+            m_ItemData.Clear();
+        }
         public bool Contains(in Key item)
         {
             int index = IndexOf(item);
 
             return index >= 0;
+        }
+
+        #endregion
+
+        public UnsafeExportedData GetExportedData(in Key item)
+        {
+            int index = IndexOf(in item);
+            if (index < 0) return default(UnsafeExportedData);
+
+            return m_ItemData[index];
         }
 
         public void Dispose()
@@ -191,4 +221,3 @@ namespace Syadeu.Presentation.Actor
         public bool Equals(ItemInventory other) => m_Hash.Equals(other.m_Hash);
     }
 }
-
