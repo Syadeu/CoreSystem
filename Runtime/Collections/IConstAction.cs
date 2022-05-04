@@ -25,7 +25,7 @@ namespace Syadeu.Collections
         void SetArguments(params object[] args);
 
         void Initialize();
-        object Execute();
+        object Execute(params object[] args);
 
         void OnShutdown();
     }

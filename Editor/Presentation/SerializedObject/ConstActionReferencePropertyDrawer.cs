@@ -184,6 +184,7 @@ namespace SyadeuEditor.Presentation
                         SerializedPropertyHelper.SetConstActionReference(cachedProperty, t.GUID, param);
                     }
                     cachedProperty.isExpanded = false;
+                    cachedProperty.serializedObject.ApplyModifiedProperties();
                 }, m_TargetType);
             }
         }

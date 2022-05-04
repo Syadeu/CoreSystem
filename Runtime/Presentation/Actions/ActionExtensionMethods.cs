@@ -482,6 +482,43 @@ namespace Syadeu.Presentation.Actions
             }
             return result;
         }
+        public static object Execute(this IConstActionReference action, params object[] args)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return null;
+            }
+
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            constAction.SetArguments(action.Arguments);
+            //info.SetArguments(constAction, action.Arguments);
+
+            object result;
+            try
+            {
+                result = constAction.Execute(args);
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"Unexpected error has been raised while executing ConstAction");
+
+                UnityEngine.Debug.LogError(ex);
+
+                return null;
+            }
+            return result;
+        }
+        public static TResult Execute<TResult>(this ConstActionReference<TResult> action)
+        {
+            return (TResult)Execute((IConstActionReference)action);
+        }
+        public static TResult Execute<TResult>(this ConstActionReference<TResult> action, params object[] args)
+        {
+            return (TResult)Execute((IConstActionReference)action, args);
+        }
+
         public static void Execute(this IList<ConstActionReference> action, InstanceID entity)
         {
             for (int i = 0; i < action.Count; i++)
@@ -516,10 +553,6 @@ namespace Syadeu.Presentation.Actions
             {
                 action[i].Execute();
             }
-        }
-        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
-        {
-            return (TValue)Execute((IConstActionReference)action);
         }
 
         /// <summary>

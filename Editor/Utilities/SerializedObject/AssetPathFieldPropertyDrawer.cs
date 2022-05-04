@@ -32,17 +32,21 @@ namespace SyadeuEditor.Utilities
             string assetPath = pathProperty.stringValue;
             UnityEngine.Object asset = GetObjectAtPath(in assetPath);
 
+            Type fieldType;
+            if (fieldInfo.FieldType.IsArray) fieldType = fieldInfo.FieldType.GetElementType();
+            else fieldType = fieldInfo.FieldType;
+
             Type targetType;
-            if (TypeHelper.InheritsFrom(fieldInfo.FieldType, s_GenericType))
+            if (TypeHelper.InheritsFrom(fieldType, s_GenericType))
             {
-                if (fieldInfo.FieldType.IsGenericType &&
-                    s_GenericType.Equals(fieldInfo.FieldType.GetGenericTypeDefinition()))
+                if (fieldType.IsGenericType &&
+                    s_GenericType.Equals(fieldType.GetGenericTypeDefinition()))
                 {
-                    targetType = fieldInfo.FieldType.GenericTypeArguments[0];
+                    targetType = fieldType.GenericTypeArguments[0];
                 }
                 else
                 {
-                    Type genericDef = TypeHelper.GetGenericBaseType(fieldInfo.FieldType, s_GenericType);
+                    Type genericDef = TypeHelper.GetGenericBaseType(fieldType, s_GenericType);
                     targetType = genericDef.GenericTypeArguments[0];
                 }
             }
@@ -53,6 +57,7 @@ namespace SyadeuEditor.Utilities
 
             Rect[] pos = AutoRect.DivideWithRatio(rect.Pop(), .9f, .1f);
 
+            label = property.IsInArray() ? GUIContent.none : label;
             if (!property.isExpanded)
             {
                 using (var changeCheck = new EditorGUI.ChangeCheckScope())
