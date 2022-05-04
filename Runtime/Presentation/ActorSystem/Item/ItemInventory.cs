@@ -23,10 +23,12 @@ using Syadeu.Presentation.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Policy;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Hash = Syadeu.Collections.Hash;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -38,11 +40,13 @@ namespace Syadeu.Presentation.Actor
         {
             public static Key Empty => new Key();
 
+            internal readonly Hash m_InventoryHash;
             private readonly FixedReference m_Reference;
             private readonly UnsafeExportedData.Identifier m_ID;
 
-            internal Key(FixedReference refer, UnsafeExportedData.Identifier id)
+            internal Key(Hash inventoryHash, FixedReference refer, UnsafeExportedData.Identifier id)
             {
+                m_InventoryHash = inventoryHash;
                 m_Reference = refer;
                 m_ID = id;
             }
@@ -63,6 +67,7 @@ namespace Syadeu.Presentation.Actor
         }
 
         private readonly InstanceID m_Owner;
+        private readonly Hash m_Hash;
 
         private UnsafeList<FixedReference> m_Inventory;
         private UnsafeList<UnsafeExportedData> m_ItemData;
@@ -73,7 +78,8 @@ namespace Syadeu.Presentation.Actor
         public ItemInventory(InstanceID owner, LinkedBlock linkedBlock, Allocator allocator)
         {
             m_Owner = owner;
-            
+            m_Hash = Hash.NewHash();
+
             m_Inventory = new UnsafeList<FixedReference>(linkedBlock.Count, allocator);
             m_ItemData = new UnsafeList<UnsafeExportedData>(linkedBlock.Count, allocator);
             //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
@@ -81,6 +87,8 @@ namespace Syadeu.Presentation.Actor
 
         public int IndexOf(in Key item)
         {
+            if (!item.m_InventoryHash.Equals(m_Hash)) return -1;
+
             int index = -1;
             for (int i = 0; i < m_Inventory.Length; i++)
             {
@@ -133,7 +141,7 @@ namespace Syadeu.Presentation.Actor
             m_ItemData.Add(data);
 
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
-            return new Key(reference, data.ID);
+            return new Key(m_Hash, reference, data.ID);
         }
         public void Remove(in Key item)
         {
@@ -148,10 +156,9 @@ namespace Syadeu.Presentation.Actor
         }
         public void Clear() => m_Inventory.Clear();
 
-        public bool Contains(in InstanceID item)
+        public bool Contains(in Key item)
         {
-            FixedReference reference = new FixedReference(item.GetEntity().Hash);
-            int index = m_Inventory.IndexOf(reference);
+            int index = IndexOf(item);
 
             return index >= 0;
         }
@@ -181,6 +188,7 @@ namespace Syadeu.Presentation.Actor
             return inputDeps;
         }
 
-        public bool Equals(ItemInventory other) => m_Inventory.Equals(other.m_Inventory);
+        public bool Equals(ItemInventory other) => m_Hash.Equals(other.m_Hash);
     }
 }
+
