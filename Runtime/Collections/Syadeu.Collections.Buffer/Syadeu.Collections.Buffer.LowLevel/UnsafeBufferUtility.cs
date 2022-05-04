@@ -442,17 +442,58 @@ namespace Syadeu.Collections.Buffer.LowLevel
             foreach (FieldInfo field in fields.fieldInfos)
             {
                 object obj = field.GetValue(t);
-                byte[] bytes = obj.ObjectToByteArray();
+                int size = TypeHelper.SizeOf(field.FieldType);
+                
+                GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Weak);
+                byte* ptr = (byte*)GCHandle.ToIntPtr(handle);
 
-                fixed (byte* ptr = bytes)
-                {
-                    UnsafeUtility.MemCpy(p, ptr, bytes.Length);
-                    p += bytes.Length;
-                }
+                UnsafeUtility.MemCpy(p, ptr, size);
+                p += size;
+
+                handle.Free();
             }
 
             return new UnsafeExportedData(TypeHelper.TypeOf<T>.Type.ToTypeInfo(), alloc);
         }
+        public static int Count(this in UnsafeExportedData t)
+        {
+            ExportFieldInfo fields = GetExportFieldInfo(t.Type);
+            return fields.fieldInfos.Length;
+        }
+        /// <summary>
+        /// <see cref="ExportData{T}(in T, Allocator)"/> 에서 넣은 타입으로 그대로 뽑아 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <param name="obj"></param>
+        public static unsafe void ReadData<T>(this in UnsafeExportedData t, ref T obj)
+            where T : unmanaged
+        {
+            ExportFieldInfo fields = GetExportFieldInfo(t.Type);
+
+            object boxed = obj;
+            UnsafeAllocator alloc = t.Allocator;
+
+            UnsafeReference p = alloc.Ptr;
+            for (int i = 0; i < fields.fieldInfos.Length; i++)
+            {
+                int size = TypeHelper.SizeOf(fields.fieldInfos[i].FieldType);
+
+                object element = Marshal.PtrToStructure(p, fields.fieldInfos[i].FieldType);
+                fields.fieldInfos[i].SetValue(boxed, element);
+
+                p += size;
+            }
+
+            obj = (T)boxed;
+        }
+        /// <summary>
+        /// 타입내 맴버를 인덱스로 가져와 값을 반환합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public static unsafe T ReadData<T>(this in UnsafeExportedData t, int index)
             where T : unmanaged
         {
@@ -467,10 +508,18 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 p += TypeHelper.SizeOf(fields.fieldInfos[i].FieldType);
             }
 
-            T data = Marshal.PtrToStructure<T>(p);
+            UnsafeUtility.CopyPtrToStructure(p, out T data);
+            //T data = Marshal.PtrToStructure<T>(p);
             return data;
         }
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// <seealso cref="ExportDataAttribute"/>
+    /// </remarks>
     [BurstCompatible]
     public struct UnsafeExportedData : IValidation, IDisposable, INativeDisposable
     {

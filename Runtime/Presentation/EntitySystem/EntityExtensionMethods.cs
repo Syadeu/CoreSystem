@@ -88,6 +88,12 @@ namespace Syadeu.Presentation
             return new FixedReference<T>(t.GetEntity().Hash);
         }
 
+        public static InstanceID CreateEntity(this IFixedReference t)
+        {
+            Entity<IObject> ins = s_EntitySystem.CreateEntity(t);
+            return ins.Idx;
+        }
+
         public static Entity<T> CreateEntity<T>(this Reference<T> other)
             where T : class, IObject
         {

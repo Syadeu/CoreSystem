@@ -116,6 +116,7 @@ namespace Syadeu.Presentation.Actor
 
         //    return m_LinkedBlock.HasSpaceFor(itemSpace, out pos);
         //}
+        
         public Key Add(in InstanceID item)
         {
 #if DEBUG_MODE
@@ -142,6 +143,49 @@ namespace Syadeu.Presentation.Actor
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
             return new Key(m_Hash, reference, data.ID);
         }
+        public bool Peek(in int index, out ActorItemComponent component)
+        {
+            component = default(ActorItemComponent);
+            if (index < 0 || m_Inventory.Length <= index)
+            {
+                return false;
+            }
+
+            UnsafeExportedData data = m_ItemData[index];
+            data.ReadData(ref component);
+            return true;
+        }
+        public bool Peek(in Key item, out ActorItemComponent component)
+        {
+            component = default(ActorItemComponent);
+
+            int index = IndexOf(in item);
+            if (index < 0) return false;
+
+            UnsafeExportedData data = m_ItemData[index];
+            data.ReadData(ref component);
+            return true;
+        }
+
+        public InstanceID Pop(in Key item)
+        {
+            int index = IndexOf(in item);
+            if (index < 0) return InstanceID.Empty;
+
+            FixedReference reference = m_Inventory[index];
+            UnsafeExportedData data = m_ItemData[index];
+            InstanceID entity = reference.CreateEntity();
+
+            ref ActorItemComponent component = ref entity.GetComponent<ActorItemComponent>();
+            data.ReadData(ref component);
+
+            m_Inventory.RemoveAtSwapBack(index);
+            data.Dispose();
+            m_ItemData.RemoveAtSwapBack(index);
+
+            return entity;
+        }
+
         public void RemoveAt(in int index)
         {
             if (index < 0 || m_Inventory.Length <= index)
@@ -184,14 +228,6 @@ namespace Syadeu.Presentation.Actor
         }
 
         #endregion
-
-        public UnsafeExportedData GetExportedData(in Key item)
-        {
-            int index = IndexOf(in item);
-            if (index < 0) return default(UnsafeExportedData);
-
-            return m_ItemData[index];
-        }
 
         public void Dispose()
         {
