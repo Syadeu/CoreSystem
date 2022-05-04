@@ -451,12 +451,12 @@ namespace Syadeu.Collections.Buffer.LowLevel
                 }
             }
 
-            return new UnsafeExportedData(alloc);
+            return new UnsafeExportedData(TypeHelper.TypeOf<T>.Type.ToTypeInfo(), alloc);
         }
         public static unsafe T ReadData<T>(this in UnsafeExportedData t, int index)
             where T : unmanaged
         {
-            ExportFieldInfo fields = GetExportFieldInfo(TypeHelper.TypeOf<T>.Type);
+            ExportFieldInfo fields = GetExportFieldInfo(t.Type);
 
             UnsafeAllocator alloc = t.Allocator;
 
@@ -474,12 +474,32 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompatible]
     public struct UnsafeExportedData : IValidation, IDisposable, INativeDisposable
     {
+        public readonly struct Identifier : IEmpty, IEquatable<Identifier>
+        {
+            private readonly Hash m_Hash;
+            internal Identifier(Hash hash)
+            {
+                m_Hash = hash;
+            }
+
+            public bool Equals(Identifier other) => m_Hash.Equals(other.m_Hash);
+            public bool IsEmpty() => m_Hash.IsEmpty();
+
+            public static implicit operator Hash(Identifier t) => t.m_Hash;
+        }
+
+        private readonly Identifier m_ID;
+        private readonly TypeInfo m_Type;
         private UnsafeAllocator m_Allocator;
 
+        public Identifier ID => m_ID;
+        public TypeInfo Type => m_Type;
         public UnsafeAllocator Allocator => m_Allocator;
 
-        internal UnsafeExportedData(UnsafeAllocator allocator)
+        internal UnsafeExportedData(TypeInfo type, UnsafeAllocator allocator)
         {
+            m_ID = new Identifier(Hash.NewHash());
+            m_Type = type;
             m_Allocator = allocator;
         }
 

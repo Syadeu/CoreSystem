@@ -34,6 +34,34 @@ namespace Syadeu.Presentation.Actor
     public struct ItemInventory : IDisposable, INativeDisposable, 
         IEquatable<ItemInventory>
     {
+        public readonly struct Key : IValidation, IEmpty, IEquatable<Key>
+        {
+            public static Key Empty => new Key();
+
+            private readonly FixedReference m_Reference;
+            private readonly UnsafeExportedData.Identifier m_ID;
+
+            internal Key(FixedReference refer, UnsafeExportedData.Identifier id)
+            {
+                m_Reference = refer;
+                m_ID = id;
+            }
+
+            internal bool IsMatch(FixedReference refer, UnsafeExportedData data)
+            {
+                return refer.Equals(m_Reference) && m_ID.Equals(data.ID);
+            }
+
+            public bool IsEmpty() => Equals(Empty);
+            public bool IsValid()
+            {
+                if (IsEmpty()) return false;
+
+                return m_Reference.IsValid() && !m_ID.IsEmpty();
+            }
+            public bool Equals(Key other) => m_Reference.Equals(other.m_Reference) && m_ID.Equals(other.m_ID);
+        }
+
         private readonly InstanceID m_Owner;
 
         private UnsafeList<FixedReference> m_Inventory;
@@ -51,6 +79,23 @@ namespace Syadeu.Presentation.Actor
             //m_LinkedBlock = new UnsafeLinkedBlock(linkedBlock, allocator);
         }
 
+        public int IndexOf(in Key item)
+        {
+            int index = -1;
+            for (int i = 0; i < m_Inventory.Length; i++)
+            {
+                if (!item.IsMatch(m_Inventory[i], m_ItemData[i]))
+                {
+                    continue;
+                }
+
+                index = i;
+                break;
+            }
+
+            return index;
+        }
+
         //public bool IsInsertable(in InstanceID item, out int2 pos)
         //{
         //    if (!item.HasComponent<ActorItemComponent>())
@@ -64,7 +109,7 @@ namespace Syadeu.Presentation.Actor
 
         //    return m_LinkedBlock.HasSpaceFor(itemSpace, out pos);
         //}
-        public bool Add(in InstanceID item)
+        public Key Add(in InstanceID item)
         {
 #if DEBUG_MODE
             if (!item.HasComponent<ActorItemComponent>())
@@ -72,7 +117,7 @@ namespace Syadeu.Presentation.Actor
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"This instance({item.GetEntity().Name}) doesn\'t have {nameof(ActorItemAttribute)}.");
 
-                return false;
+                return Key.Empty;
             }
 #endif
             ActorItemComponent component = item.GetComponentReadOnly<ActorItemComponent>();
@@ -88,12 +133,11 @@ namespace Syadeu.Presentation.Actor
             m_ItemData.Add(data);
 
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
-            return true;
+            return new Key(reference, data.ID);
         }
-        public void Remove(in InstanceID item)
+        public void Remove(in Key item)
         {
-            FixedReference reference = new FixedReference(item.GetEntity().Hash);
-            int index = m_Inventory.IndexOf(reference);
+            int index = IndexOf(in item);
             if (index < 0) return;
 
             m_Inventory.RemoveAtSwapBack(index);
@@ -114,12 +158,22 @@ namespace Syadeu.Presentation.Actor
 
         public void Dispose()
         {
+            for (int i = 0; i < m_ItemData.Length; i++)
+            {
+                m_ItemData[i].Dispose();
+            }
+
             m_Inventory.Dispose();
             m_ItemData.Dispose();
             //m_LinkedBlock.Dispose();
         }
         public JobHandle Dispose(JobHandle inputDeps)
         {
+            for (int i = 0; i < m_ItemData.Length; i++)
+            {
+                inputDeps = m_ItemData[i].Dispose(inputDeps);
+            }
+
             inputDeps = m_Inventory.Dispose(inputDeps);
             inputDeps = m_ItemData.Dispose(inputDeps);
             //inputDeps = m_LinkedBlock.Dispose(inputDeps);
