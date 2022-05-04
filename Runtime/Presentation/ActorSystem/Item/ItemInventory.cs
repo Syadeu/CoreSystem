@@ -143,6 +143,7 @@ namespace Syadeu.Presentation.Actor
             //m_LinkedBlock.SetValue(pos, m_LinkedBlock, true, item.GetComponentPointer<ActorItemComponent>());
             return new Key(m_Hash, reference, data.ID);
         }
+
         public bool Peek(in int index, out ActorItemComponent component)
         {
             component = default(ActorItemComponent);
@@ -167,6 +168,26 @@ namespace Syadeu.Presentation.Actor
             return true;
         }
 
+        public InstanceID Pop(in int index)
+        {
+            if (index < 0 || m_Inventory.Length <= index)
+            {
+                return InstanceID.Empty;
+            }
+
+            FixedReference reference = m_Inventory[index];
+            UnsafeExportedData data = m_ItemData[index];
+            InstanceID entity = reference.CreateEntity();
+
+            ref ActorItemComponent component = ref entity.GetComponent<ActorItemComponent>();
+            data.ReadData(ref component);
+
+            m_Inventory.RemoveAtSwapBack(index);
+            data.Dispose();
+            m_ItemData.RemoveAtSwapBack(index);
+
+            return entity;
+        }
         public InstanceID Pop(in Key item)
         {
             int index = IndexOf(in item);
