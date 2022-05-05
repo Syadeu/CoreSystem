@@ -438,9 +438,22 @@ namespace Syadeu.Presentation
                     for (int i = 0; i < m_Initializers.Count; i++)
                     {
                         m_Initializers[i].OnStartPresentation();
+
+                        for (int j = 0; j < m_Systems[i].m_Modules.Length; j++)
+                        {
+                            try
+                            {
+                                m_Systems[i].m_Modules[j].InternalOnStartPresentation();
+                            }
+                            catch (Exception ex)
+                            {
+                                CoreSystem.Logger.LogError(Channel.Presentation,
+                                    ex);
+                            }
+                        }
                     }
 
-                    OnStartModules();
+                    //OnStartModules();
                 }
             }
             private void OnStartModules()

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,9 +39,11 @@ using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
 namespace Syadeu.Presentation.TurnTable
 {
+    /// <summary>
+    /// <see cref="TRPGIngameSystemGroup"/>
+    /// </summary>
     public sealed class TRPGSelectionSystem : PresentationSystemEntity<TRPGSelectionSystem>,
-        INotifySystemModule<OverlaySelectionEntityModule>,
-        INotifySystemModule<DisplaySelectionInventoryModule>
+        INotifySystemModule<OverlaySelectionEntityModule>
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
@@ -560,91 +562,5 @@ namespace Syadeu.Presentation.TurnTable
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// <see cref="TRPGSelectionSystem"/> 을 통해 선택된 타겟의 인벤토리 UI 를 표시하는 모듈입니다.
-    /// </summary>
-    public sealed class DisplaySelectionInventoryModule : PresentationSystemModule<TRPGSelectionSystem>
-    {
-        private InputAction m_IKey;
-
-        private InputSystem m_InputSystem;
-
-        public bool OpenInWorldSpace { get; set; } = true;
-
-        #region Presentation Methods
-
-        protected override void OnInitialize()
-        {
-            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
-        }
-        protected override void OnDispose()
-        {
-            m_InputSystem = null;
-        }
-
-        private void Bind(InputSystem other)
-        {
-            m_InputSystem = other;
-        }
-
-        protected override void OnStartPresentation()
-        {
-            m_IKey = m_InputSystem.GetKeyboardBinding(Key.I, InputActionType.Button);
-
-            m_IKey.performed += OnInventoryKeyPressed;
-
-            m_IKey.Enable();
-        }
-
-        private void OnInventoryKeyPressed(InputAction.CallbackContext obj)
-        {
-            Open(System.CurrentSelection);
-        }
-
-        #endregion
-
-        public void Open(InstanceID entity)
-        {
-            if (!PrivateValidate(entity))
-            {
-                "validate falied".ToLogError();
-                return;
-            }
-
-            if (OpenInWorldSpace)
-            {
-                PrivateOpenInWorldSpace(entity);
-                return;
-            }
-
-            "not implemented".ToLogError();
-        }
-        private bool PrivateValidate(InstanceID entity)
-        {
-            if (!entity.IsValid())
-            {
-                "current selection is none".ToLog();
-                return false;
-            }
-            else if (!entity.IsActorEntity())
-            {
-                return false;
-            }
-            else if (!entity.HasComponent<ActorInventoryComponent>())
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private void PrivateOpenInWorldSpace(InstanceID entity)
-        {
-            ProxyTransform tr = entity.GetTransform();
-
-
-        }
     }
 }

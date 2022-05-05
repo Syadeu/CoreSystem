@@ -60,12 +60,15 @@ namespace Syadeu.Presentation.Input
                 s_TempQueue.Enqueue(obj);
                 return;
             }
+            else if (obj.m_UserActionType == UserActionType.None) return;
 
             var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_UserActionType);
             inputAction.performed += obj.Execute;
         }
         protected override void OnDestroy(UserActionConstantData obj)
         {
+            if (obj.m_UserActionType == UserActionType.None) return;
+
             var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_UserActionType);
             inputAction.performed -= obj.Execute;
         }

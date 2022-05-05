@@ -96,19 +96,16 @@ namespace Syadeu.Presentation.Render
     }
     internal sealed class UIDocumentConstantDataProcessor : EntityProcessor<UIDocumentConstantData>
     {
-        private Input.InputSystem m_InputSystem;
+        private Promise<Input.InputSystem> m_InputSystem;
 
         protected override void OnInitialize()
         {
-            RequestSystem<DefaultPresentationGroup, Input.InputSystem>(Bind);
+            m_InputSystem = RequestSystem<DefaultPresentationGroup, Input.InputSystem>();
+            "init".ToLog();
         }
         protected override void OnDispose()
         {
             m_InputSystem = null;
-        }
-        private void Bind(Input.InputSystem other)
-        {
-            m_InputSystem = other;
         }
 
         protected override void OnCreated(UIDocumentConstantData obj)
@@ -130,17 +127,21 @@ namespace Syadeu.Presentation.Render
             {
                 if (obj.m_BindUserActionKey != UserActionType.None)
                 {
-                    var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_BindUserActionKey);
-                    for (int i = 0; i < obj.m_InputAction.bindings.Count; i++)
+                    $"{m_InputSystem == null}".ToLog();
+                    m_InputSystem.OnComplete += t =>
                     {
-                        int index = inputAction.bindings.IndexOf(t => t.Equals(obj.m_InputAction.bindings[i]));
-                        if (index < 0)
+                        var inputAction = t.GetUserActionKeyBinding(obj.m_BindUserActionKey);
+                        for (int i = 0; i < obj.m_InputAction.bindings.Count; i++)
                         {
-                            inputAction.AddBinding(obj.m_InputAction.bindings[i]);
+                            int index = inputAction.bindings.IndexOf(t => t.Equals(obj.m_InputAction.bindings[i]));
+                            if (index < 0)
+                            {
+                                inputAction.AddBinding(obj.m_InputAction.bindings[i]);
+                            }
                         }
-                    }
 
-                    inputAction.performed += obj.OnKeyHandler;
+                        inputAction.performed += obj.OnKeyHandler;
+                    };
                 }
                 else
                 {
