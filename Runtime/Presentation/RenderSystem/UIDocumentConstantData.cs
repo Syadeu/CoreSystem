@@ -66,7 +66,7 @@ namespace Syadeu.Presentation.Render
         internal UIDocument m_UIDocument = null;
 
 #if ENABLE_INPUT_SYSTEM
-        internal void M_InputAction_performed(InputAction.CallbackContext obj)
+        internal void OnKeyHandler(InputAction.CallbackContext obj)
         {
             if (m_UXMLAsset.IsNone() || !m_UXMLAsset.IsValid() ||
                 m_PanelSettings.IsNone() || !m_PanelSettings.IsValid())
@@ -128,14 +128,25 @@ namespace Syadeu.Presentation.Render
 #if ENABLE_INPUT_SYSTEM
             if (obj.m_BindInputSystem)
             {
-                obj.m_InputAction.performed += obj.M_InputAction_performed;
-                obj.m_InputAction.Enable();
-            }
+                if (obj.m_BindUserActionKey != UserActionType.None)
+                {
+                    var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_BindUserActionKey);
+                    for (int i = 0; i < obj.m_InputAction.bindings.Count; i++)
+                    {
+                        int index = inputAction.bindings.IndexOf(t => t.Equals(obj.m_InputAction.bindings[i]));
+                        if (index < 0)
+                        {
+                            inputAction.AddBinding(obj.m_InputAction.bindings[i]);
+                        }
+                    }
 
-            if (obj.m_BindUserActionKey != UserActionType.None)
-            {
-                var inputAction = m_InputSystem.GetUserActionKeyBinding(obj.m_BindUserActionKey);
-                inputAction.performed += obj.M_InputAction_performed;
+                    inputAction.performed += obj.OnKeyHandler;
+                }
+                else
+                {
+                    obj.m_InputAction.performed += obj.OnKeyHandler;
+                    obj.m_InputAction.Enable();
+                }
             }
 #endif
         }

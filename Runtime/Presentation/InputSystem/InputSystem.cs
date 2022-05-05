@@ -119,7 +119,7 @@ namespace Syadeu.Presentation.Input
             {
                 int userActionLength = TypeHelper.Enum<UserActionType>.Length;
                 string binding; InputAction inputAction;
-                for (int i = 0; i < userActionLength; i++)
+                for (int i = 1; i < userActionLength; i++)
                 {
                     binding = GetUserActionKeyBindingString((UserActionType)i);
                     inputAction = new InputAction(
