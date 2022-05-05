@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Render
             {
                 m_UIDocument = ScreenCanvasSystem.CreateVisualElement(m_PanelSettings, m_UXMLAsset, true);
 
-                m_OnOpenedConstAction.Execute();
+                m_OnOpenedConstAction.Execute(m_UIDocument);
                 return;
             }
             bool current = m_UIDocument.rootVisualElement.enabledInHierarchy;
@@ -86,8 +86,8 @@ namespace Syadeu.Presentation.Render
             m_UIDocument.rootVisualElement.visible = !current;
             m_UIDocument.rootVisualElement.SetEnabled(!current);
 
-            if (!current) m_OnOpenedConstAction.Execute();
-            else m_OnClosedConstAction.Execute();
+            if (!current) m_OnOpenedConstAction.Execute(m_UIDocument);
+            else m_OnClosedConstAction.Execute(m_UIDocument);
         }
 #endif
     }

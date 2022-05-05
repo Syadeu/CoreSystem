@@ -554,6 +554,13 @@ namespace Syadeu.Presentation.Actions
                 action[i].Execute();
             }
         }
+        public static void Execute(this IList<ConstActionReference> action, params object[] args)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                action[i].Execute(args);
+            }
+        }
 
         /// <summary>
         /// 전부 참을 반환해야 <see langword="true"/> 를 반환합니다.
