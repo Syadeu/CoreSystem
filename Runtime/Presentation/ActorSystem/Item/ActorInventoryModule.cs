@@ -16,10 +16,44 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Presentation.Input;
+using UnityEngine.InputSystem;
+using InputSystem = Syadeu.Presentation.Input.InputSystem;
+
 namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorInventoryModule : PresentationSystemModule<ActorSystem>
     {
+        private InputSystem m_InputSystem;
+        private InputAction m_InventoryKey;
 
+        protected override void OnInitialize()
+        {
+            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+        }
+        protected override void OnShutDown()
+        {
+        }
+        protected override void OnDispose()
+        {
+            m_InputSystem = null;
+        }
+
+        #region Binds
+
+        private void Bind(InputSystem other)
+        {
+            m_InputSystem = other;
+
+            m_InventoryKey = m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory);
+            m_InventoryKey.performed += OnInventoryKeyEventHandler;
+        }
+
+        #endregion
+
+        private void OnInventoryKeyEventHandler(InputAction.CallbackContext obj)
+        {
+
+        }
     }
 }

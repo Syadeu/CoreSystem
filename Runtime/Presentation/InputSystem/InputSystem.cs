@@ -43,7 +43,28 @@ namespace Syadeu.Presentation.Input
         private bool m_EnableInput = false;
         private InputAction m_MousePositionInputAction;
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
-        private readonly Dictionary<UserActionType, InputAction> m_CreatedUserActions = new Dictionary<UserActionType, InputAction>();
+        private readonly Dictionary<UserActionType, UsereActionTypeHandle> m_CreatedUserActions = new Dictionary<UserActionType, UsereActionTypeHandle>();
+
+        private sealed class UsereActionTypeHandle
+        {
+            public InputAction inputAction;
+            private bool opened;
+
+            public bool Opened => opened;
+
+            public UsereActionTypeHandle(InputAction inputAction)
+            {
+                this.inputAction = inputAction;
+                opened = false;
+
+                inputAction.performed += OnKeyHandler;
+            }
+
+            private void OnKeyHandler(InputAction.CallbackContext obj)
+            {
+                opened = !opened;
+            }
+        }
 
         private Vector2 m_PrecalculatedCursorPosition;
         private Ray m_PrecalculatedCursorRay;
@@ -106,7 +127,7 @@ namespace Syadeu.Presentation.Input
                         binding: binding);
                     inputAction.Enable();
 
-                    m_CreatedUserActions.Add((UserActionType)i, inputAction);
+                    m_CreatedUserActions.Add((UserActionType)i, new UsereActionTypeHandle(inputAction));
                 }
             }
 
@@ -274,7 +295,7 @@ namespace Syadeu.Presentation.Input
 
         public InputAction GetUserActionKeyBinding(UserActionType userActionType)
         {
-            return m_CreatedUserActions[userActionType];
+            return m_CreatedUserActions[userActionType].inputAction;
         }
         private static string GetUserActionKeyBindingString(UserActionType userActionType)
         {

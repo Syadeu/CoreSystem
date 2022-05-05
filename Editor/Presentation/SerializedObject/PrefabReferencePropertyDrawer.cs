@@ -1,4 +1,5 @@
-﻿using Syadeu.Collections;
+﻿using Syadeu;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using SyadeuEditor.Utilities;
 using System;
@@ -169,18 +170,17 @@ namespace SyadeuEditor.Presentation
                 //}
 #pragma warning restore SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
                 List<ReferenceAsset> list;
-
-                if (type.GenericTypeArguments.Length > 0)
+                if (type.GetGenericArguments().Length > 0)
                 {
+                    Type targetType = type.GetGenericArguments()[0];
+
                     list = PrefabList.Instance.ObjectSettings
-                        .Where((other) =>
+                        .Where(other =>
                         {
-                            if (other.GetEditorAsset() == null) return false;
+                            UnityEngine.Object editorAsset = other.GetEditorAsset();
+                            if (editorAsset == null) return false;
 
-                            UnityEngine.Object asset = other.GetEditorAsset();
-                            Type targetType = type.GenericTypeArguments[0];
-
-                            if (asset is GameObject gameObj)
+                            if (editorAsset is GameObject gameObj)
                             {
                                 if (TypeHelper.TypeOf<GameObject>.Type.Equals(targetType))
                                 {
@@ -190,12 +190,17 @@ namespace SyadeuEditor.Presentation
                                 {
                                     return gameObj.GetComponent(targetType) != null;
                                 }
-                                return true;
+                                return false;
                             }
-                            else if (targetType.IsAssignableFrom(other.GetEditorAsset().GetType()))
+                            else if (TypeHelper.InheritsFrom(editorAsset.GetType(), targetType))
                             {
                                 return true;
                             }
+                            //else if (targetType.IsAssignableFrom(editorAsset.GetType()))
+                            //{
+                            //    return true;
+                            //}
+
                             return false;
                         })
                         .Select(t => new ReferenceAsset()

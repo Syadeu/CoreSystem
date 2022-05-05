@@ -19,8 +19,10 @@ namespace Syadeu.Presentation.Input
 {
     public enum UserActionType
     {
+        None            =   0,
+
         // 아이템, 사물 등 상호작용
-        Interaction     =   0,
+        Interaction,
         // 가방
         Inventory
     }
