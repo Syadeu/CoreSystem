@@ -39,6 +39,8 @@ namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorInteractionModule : PresentationSystemModule<ActorSystem>
     {
+        public delegate void OnInteractionHandler(InstanceID entity, InstanceID target);
+
         private InputSystem m_InputSystem;
         private EventSystem m_EventSystem;
         private EntityRaycastSystem m_EntityRaycastSystem;
@@ -57,6 +59,8 @@ namespace Syadeu.Presentation.Actor
         public static Entity<IEntity> InteractingControlAtThisFrame => s_InteractingControlAtThisFrame.GetEntity<IEntity>();
         /// <inheritdoc cref="s_InteractingEntityAtThisFrame"/>
         public static Entity<IEntity> InteractingEntityAtThisFrame => s_InteractingEntityAtThisFrame;
+
+        public event OnInteractionHandler OnInteraction;
 
         #region Presentation Methods
 
@@ -139,8 +143,9 @@ namespace Syadeu.Presentation.Actor
                     targetInteractableCom.Execute(ItemState.InteractionKey, element);
 
                     $"actor({element.GetEntity().Name}) interacting {interactable.Name}".ToLog();
-                    
+
                     ProcessOnInteraction(element, interactable);
+                    OnInteraction?.Invoke(element, interactable);
                 }
                 component.ExecuteOnInteraction(element);
 
