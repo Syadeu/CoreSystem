@@ -17,16 +17,17 @@ using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Data;
 using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Render;
 using System;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
-namespace Syadeu.Presentation.Render
+namespace Syadeu.Presentation.TurnTable.UI
 {
-    [DisplayName("ConstantData: UI Document Constant Data")]
-    public class UIDocumentConstantData : ConstantData
+    [DisplayName("ConstantData: TRPG Inventory UI Constant Data")]
+    public sealed class TRPGInventoryUIConstantData : ConstantData
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "PanelSettings")]
         internal PrefabReference<PanelSettings> m_PanelSettings = PrefabReference<PanelSettings>.None;
@@ -91,11 +92,9 @@ namespace Syadeu.Presentation.Render
         }
 #endif
     }
-    public class UIDocumentConstantDataProcessor : EntityProcessor<UIDocumentConstantData>
+    internal sealed class TRPGInventoryUIConstantDataProcessor : EntityProcessor<TRPGInventoryUIConstantData>
     {
         private Promise<Input.InputSystem> m_InputSystem;
-
-        protected Promise<Input.InputSystem> InputSystem => m_InputSystem;
 
         protected override void OnInitialize()
         {
@@ -106,7 +105,7 @@ namespace Syadeu.Presentation.Render
             m_InputSystem = null;
         }
 
-        protected override void OnCreated(UIDocumentConstantData obj)
+        protected override void OnCreated(TRPGInventoryUIConstantData obj)
         {
             if (!obj.m_UXMLAsset.IsValid()) return;
 
