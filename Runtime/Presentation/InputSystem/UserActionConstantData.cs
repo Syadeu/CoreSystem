@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.Input
         [SerializeField, JsonProperty(Order = 1, PropertyName = "ConstActions")]
         internal ConstActionReferenceArray m_ConstActions = ConstActionReferenceArray.Empty;
 
-        internal void Execute(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
+        internal void Execute()
         {
             m_ConstActions.Execute();
         }

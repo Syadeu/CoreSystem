@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorInventoryModule : PresentationSystemModule<ActorSystem>
     {
         private InputSystem m_InputSystem;
-        private InputAction m_InventoryKey;
+        private InputSystem.UserActionHandle m_InventoryKey;
 
         protected override void OnInitialize()
         {
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
-        private void OnInventoryKeyEventHandler(InputAction.CallbackContext obj)
+        private void OnInventoryKeyEventHandler()
         {
 
         }

@@ -66,15 +66,13 @@ namespace Syadeu.Presentation.Render
         internal UIDocument m_UIDocument = null;
 
 #if ENABLE_INPUT_SYSTEM
-        internal void OnKeyHandler(InputAction.CallbackContext obj)
+        internal void OnKeyHandler()
         {
             if (m_UXMLAsset.IsNone() || !m_UXMLAsset.IsValid() ||
                 m_PanelSettings.IsNone() || !m_PanelSettings.IsValid())
             {
                 return;
             }
-            else 
-                if (!m_EnableIf.True()) return;
 
             if (m_UIDocument == null)
             {
@@ -83,7 +81,6 @@ namespace Syadeu.Presentation.Render
                 m_OnOpenedConstAction.Execute();
                 return;
             }
-
             bool current = m_UIDocument.rootVisualElement.enabledInHierarchy;
 
             m_UIDocument.rootVisualElement.visible = !current;
@@ -127,25 +124,18 @@ namespace Syadeu.Presentation.Render
             {
                 if (obj.m_BindUserActionKey != UserActionType.None)
                 {
-                    $"{m_InputSystem == null}".ToLog();
                     m_InputSystem.OnComplete += t =>
                     {
                         var inputAction = t.GetUserActionKeyBinding(obj.m_BindUserActionKey);
-                        for (int i = 0; i < obj.m_InputAction.bindings.Count; i++)
-                        {
-                            int index = inputAction.bindings.IndexOf(t => t.Equals(obj.m_InputAction.bindings[i]));
-                            if (index < 0)
-                            {
-                                inputAction.AddBinding(obj.m_InputAction.bindings[i]);
-                            }
-                        }
+                        inputAction.ChangeBindings(obj.m_InputAction);
 
+                        inputAction.executable = t => obj.m_EnableIf.True();
                         inputAction.performed += obj.OnKeyHandler;
                     };
                 }
                 else
                 {
-                    obj.m_InputAction.performed += obj.OnKeyHandler;
+                    obj.m_InputAction.performed += t => obj.OnKeyHandler();
                     obj.m_InputAction.Enable();
                 }
             }

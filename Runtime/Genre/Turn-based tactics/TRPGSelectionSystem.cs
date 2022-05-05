@@ -234,6 +234,12 @@ namespace Syadeu.Presentation.TurnTable
                 }
 
                 ClearSelectedEntities();
+
+                // Inventory
+                if (m_InputSystem.IsUseractionKeyOpened(UserActionType.Inventory))
+                {
+                    m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory).Execute();
+                }
             }
         }
         private void M_RightMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)

@@ -114,7 +114,7 @@ namespace Syadeu.Presentation.Actor
 
         }
 
-        private void OnInteractionKeyPressed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
+        private void OnInteractionKeyPressed()
         {
             "key inn".ToLog();
             IReadOnlyList<InstanceID> currentControls = System.CurrentControls;

@@ -929,7 +929,6 @@ namespace Syadeu.Presentation.Proxy
                     connectedTrArr[i].rotation = transform.rotation;
                     connectedTrArr[i].localScale = transform.localScale;
                 }
-                $"in".ToLog();
             }
         }
 

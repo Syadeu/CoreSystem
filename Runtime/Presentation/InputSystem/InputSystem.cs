@@ -45,24 +45,59 @@ namespace Syadeu.Presentation.Input
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
         private readonly Dictionary<UserActionType, UsereActionTypeHandle> m_CreatedUserActions = new Dictionary<UserActionType, UsereActionTypeHandle>();
 
+        public sealed class UserActionHandle
+        {
+            private InputAction m_InputAction;
+
+            public Predicate<InputAction.CallbackContext> executable;
+            public event Action performed;
+
+            internal UserActionHandle(InputAction inputAction)
+            {
+                m_InputAction = inputAction;
+
+                m_InputAction.performed += M_InputAction_performed;
+            }
+
+            private void M_InputAction_performed(InputAction.CallbackContext obj)
+            {
+                if (executable != null && !executable.Invoke(obj)) return;
+
+                performed?.Invoke();
+            }
+
+            public void ChangeBindings(InputAction inputAction)
+            {
+                for (int i = 0; i < inputAction.bindings.Count; i++)
+                {
+                    int index = m_InputAction.bindings.IndexOf(t => t.Equals(inputAction.bindings[i]));
+                    if (index < 0)
+                    {
+                        m_InputAction.AddBinding(inputAction.bindings[i]);
+                    }
+                }
+            }
+            public void Execute() => performed?.Invoke();
+        }
         private sealed class UsereActionTypeHandle
         {
-            public InputAction inputAction;
+            public UserActionHandle inputAction;
             private bool opened;
 
             public bool Opened => opened;
 
             public UsereActionTypeHandle(InputAction inputAction)
             {
-                this.inputAction = inputAction;
+                this.inputAction = new UserActionHandle(inputAction);
                 opened = false;
 
-                inputAction.performed += OnKeyHandler;
+                this.inputAction.performed += OnKeyHandler;
             }
 
-            private void OnKeyHandler(InputAction.CallbackContext obj)
+            private void OnKeyHandler()
             {
                 opened = !opened;
+                $"{opened}".ToLog();
             }
         }
 
@@ -293,10 +328,12 @@ namespace Syadeu.Presentation.Input
             m_CreatedInputActions.Remove(action);
         }
 
-        public InputAction GetUserActionKeyBinding(UserActionType userActionType)
+        public UserActionHandle GetUserActionKeyBinding(UserActionType userActionType)
         {
             return m_CreatedUserActions[userActionType].inputAction;
         }
+        public bool IsUseractionKeyOpened(UserActionType userActionType) => m_CreatedUserActions[userActionType].Opened;
+
         private static string GetUserActionKeyBindingString(UserActionType userActionType)
         {
             const string c_Format = "Input_ActionType_{0}";
