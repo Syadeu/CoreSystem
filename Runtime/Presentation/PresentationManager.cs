@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections.Threading;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation.Entities;
@@ -30,6 +31,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -805,9 +808,67 @@ namespace Syadeu.Presentation
 
         private Thread m_PresentationThread;
 
+        private AtomicSafeInteger m_PrefabPreloadCounter;
+        private int m_ExpectedPrefabPreloadCount;
+
         public override void OnInitialize()
         {
             SetPlayerLoop();
+
+            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true);
+            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
+
+            #region Prefab Preloader
+
+            var m_PrefabPreloadStream = new List<PrefabReference>();
+            {
+                using (PrefabPreloader prefabPreloader = new PrefabPreloader(m_PrefabPreloadStream))
+                {
+                    foreach (var item in EntityDataList.Instance.GetData(t => t is IPrefabPreloader).Select(t => (IPrefabPreloader)t))
+                    {
+                        item.Register(prefabPreloader);
+                    }
+                }
+                
+                m_ExpectedPrefabPreloadCount = 0;
+                for (int i = 0; i < m_PrefabPreloadStream.Count; i++)
+                {
+                    var prefab = m_PrefabPreloadStream[i];
+
+                    if (prefab.Asset != null) continue;
+
+                    var oper = prefab.LoadAssetAsync();
+                    oper.Completed += ctx =>
+                    {
+                        $"loaded {((UnityEngine.Object)ctx.Result).name}".ToLog();
+                        m_PrefabPreloadCounter.Increment();
+                    };
+                    m_ExpectedPrefabPreloadCount++;
+
+#if DEBUG_MODE
+                    CoreSystem.Logger.Log(Channel.Entity,
+                        $"Preloading prefab({prefab.GetObjectSetting().Name}).");
+#endif
+                }
+            }
+            m_PrefabPreloadStream = null;
+
+            #endregion
+
+            StartUnityUpdate(ThreadStart());
+        }
+        private IEnumerator ThreadStart()
+        {
+            const string c_ThreadName = "core.pre";
+
+            while (!m_PrefabPreloadCounter.Equals(m_ExpectedPrefabPreloadCount))
+            {
+                yield return null;
+            }
+            $"{(int)m_PrefabPreloadCounter} :: {m_ExpectedPrefabPreloadCount} in".ToLog();
+
+            #region Start Presentation
 
             Type[] registers = TypeHelper.GetTypes(t => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<IPresentationRegister>.Type.IsAssignableFrom(t)).ToArray();
 
@@ -817,10 +878,6 @@ namespace Syadeu.Presentation
                 presentations[i] = (IPresentationRegister)Activator.CreateInstance(registers[i]);
                 presentations[i].Register();
             }
-
-            m_BeforeUpdateAsyncSemaphore = new ManualResetEvent(true);
-            m_OnUpdateAsyncSemaphore = new ManualResetEvent(true);
-            m_AfterUpdateAsyncSemaphore = new ManualResetEvent(true);
 
             StartPresentation(m_DefaultGroupHash);
             for (int i = 0; i < presentations.Length; i++)
@@ -858,14 +915,8 @@ namespace Syadeu.Presentation
                     group.AddGroupDependence(GroupToHash(presentations[i].GetType()));
                 }
             }
-            
-            StartUnityUpdate(ThreadStart());
-        }
-        private IEnumerator ThreadStart()
-        {
-            const string c_ThreadName = "core.pre";
 
-            //ProcessThread.
+            #endregion
 
             m_PresentationThread = new Thread(PresentationAsyncUpdate)
             {

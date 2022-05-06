@@ -27,13 +27,20 @@ using UnityEngine.UIElements;
 namespace Syadeu.Presentation.TurnTable.UI
 {
     [DisplayName("ConstantData: TRPG Inventory UI Constant Data")]
-    public sealed class TRPGInventoryUIConstantData : ConstantData
+    public sealed class TRPGInventoryUIConstantData : ConstantData, IPrefabPreloader
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "PanelSettings")]
         internal PrefabReference<PanelSettings> m_PanelSettings = PrefabReference<PanelSettings>.None;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "UXMLAsset")]
         internal PrefabReference<VisualTreeAsset> m_UXMLAsset = PrefabReference<VisualTreeAsset>.None;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "ItemUXMLAsset")]
+        internal Reference<TRPGInventoryItemUIConstantData> m_ItemUXMLAsset = Reference<TRPGInventoryItemUIConstantData>.Empty;
 
+        [Space]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "ItemContainerField")]
+        internal string m_ItemContainerField = "ItemContainer";
+
+        [Space]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "CreateOnLoad")]
         [Tooltip(
             "Application 시작과 동시에 인스턴스를 생성할 것인지")]
@@ -65,6 +72,11 @@ namespace Syadeu.Presentation.TurnTable.UI
 
         [JsonIgnore, NonSerialized]
         internal UIDocument m_UIDocument = null;
+
+        void IPrefabPreloader.Register(PrefabPreloader loader)
+        {
+            loader.Add(m_PanelSettings, m_UXMLAsset);
+        }
 
 #if ENABLE_INPUT_SYSTEM
         internal void OnKeyHandler()
@@ -111,7 +123,14 @@ namespace Syadeu.Presentation.TurnTable.UI
 
             if (obj.m_CreateOnLoad)
             {
-                obj.m_UIDocument = ScreenCanvasSystem.CreateVisualElement(obj.m_PanelSettings, obj.m_UXMLAsset, obj.m_EnableOnCreateWithOpen);
+                obj.m_UIDocument = ScreenCanvasSystem.CreateVisualElement(obj.m_PanelSettings, obj.m_UXMLAsset, obj.m_EnableOnCreateWithOpen, (root) =>
+                {
+                    //
+                    //var root = obj.m_UIDocument.rootVisualElement.Q(name: "Inventory");
+                    var itemContainer = root.Q(name: obj.m_ItemContainerField);
+                    itemContainer.Add(obj.m_ItemUXMLAsset.GetObject().GetRoot());
+                    //
+                });
 
                 if (obj.m_EnableOnCreateWithOpen)
                 {

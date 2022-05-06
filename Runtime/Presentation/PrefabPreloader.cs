@@ -18,36 +18,35 @@
 
 using Syadeu.Collections;
 using System;
+using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Syadeu.Presentation
 {
-    public struct PrefabPreloader : IDisposable
+    public sealed class PrefabPreloader : IDisposable
     {
-        private UnsafeStream.Writer m_Writer;
+        private List<PrefabReference> m_Writer;
 
-        internal PrefabPreloader(UnsafeStream.Writer wr)
+        internal PrefabPreloader(List<PrefabReference> wr)
         {
             m_Writer = wr;
-
-            m_Writer.BeginForEachIndex(0);
         }
 
         public void Add(PrefabReference prefab)
         {
-            m_Writer.Write(prefab);
+            m_Writer.Add(prefab);
         }
         public void Add(params PrefabReference[] prefabs)
         {
             for (int i = 0; i < prefabs.Length; i++)
             {
-                m_Writer.Write(prefabs[i]);
+                m_Writer.Add(prefabs[i]);
             }
         }
 
         void IDisposable.Dispose()
         {
-            m_Writer.EndForEachIndex();
+            m_Writer = null;
         }
     }
 }
