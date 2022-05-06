@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using System.ComponentModel;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace Syadeu.Presentation.Entities
@@ -23,6 +25,9 @@ namespace Syadeu.Presentation.Entities
     [InternalLowLevelEntity]
     public sealed class ObjectEntity : EntityBase
     {
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Events")]
+        internal EntityEventProperty m_Events = new EntityEventProperty();
+
         protected override ObjectBase Copy()
         {
             ObjectEntity clone = (ObjectEntity)base.Copy();
@@ -38,6 +43,17 @@ namespace Syadeu.Presentation.Entities
             AotHelper.EnsureList<Entity<ObjectEntity>>();
             AotHelper.EnsureType<ObjectEntity>();
             AotHelper.EnsureList<ObjectEntity>();
+        }
+    }
+    internal sealed class ObjectEntityProcessor : EntityProcessor<ObjectEntity>
+    {
+        protected override void OnCreated(ObjectEntity obj)
+        {
+            obj.m_Events.ExecuteOnCreated(obj.Idx);
+        }
+        protected override void OnDestroy(ObjectEntity obj)
+        {
+            obj.m_Events.ExecuteOnDestroy(obj.Idx);
         }
     }
 }

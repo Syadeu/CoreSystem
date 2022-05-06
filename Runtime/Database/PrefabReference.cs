@@ -179,7 +179,11 @@ namespace Syadeu.Collections
             return PrefabList.Instance.ObjectSettings[(int)m_Idx];
         }
 
-        [Obsolete]
+        public void Load()
+        {
+            LoadAssetAsync();
+        }
+        [Obsolete("Do not use. Use Load()")]
         public T LoadAsset()
         {
             var temp = GetObjectSetting()?.LoadAsset(m_SubAssetName);

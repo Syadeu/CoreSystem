@@ -32,10 +32,10 @@ namespace Syadeu.Presentation.Actor
     [ActorProviderRequire(typeof(ActorWeaponProvider))]
     public class ActorAttackProvider : ActorProviderBase<ActorAttackComponent>
     {
-        [JsonProperty(Order = -10, PropertyName = "OnAttack")]
-        protected LogicTriggerAction[] m_OnAttack = Array.Empty<LogicTriggerAction>();
-        [JsonProperty(Order = -9, PropertyName = "OnHit")]
-        protected LogicTriggerAction[] m_OnHit = Array.Empty<LogicTriggerAction>();
+        [SerializeField, JsonProperty(Order = -10, PropertyName = "OnAttack")]
+        protected ArrayWrapper<LogicTriggerAction> m_OnAttack = Array.Empty<LogicTriggerAction>();
+        [SerializeField, JsonProperty(Order = -9, PropertyName = "OnHit")]
+        protected ArrayWrapper<LogicTriggerAction> m_OnHit = Array.Empty<LogicTriggerAction>();
 
         protected override void OnEventReceived(IActorEvent ev)
         {

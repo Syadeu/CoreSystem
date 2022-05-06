@@ -40,12 +40,8 @@ namespace SyadeuEditor.Presentation
                 m_Selected = value;
                 if (value != null)
                 {
-                    //SelectedDrawer = ObjectBaseDrawer.GetDrawer(value);
-                    //SerializedObject = new SerializedObject<ObjectBase>(value);
-                    //SelectedDrawer = SerializedObject.GetEditor();
-                    //SerializedObject.GetCachedEditor(ref m_SelectedDrawer);
-
-                    SerializedObject<ObjectBase>.GetSharedObject(value).GetCachedEditor(ref m_SelectedDrawer);
+                    //SerializedObject<ObjectBase>.GetSharedObject(value).GetCachedEditor(ref m_SelectedDrawer);
+                    m_SelectedDrawer = SerializedObject<ObjectBase>.GetSharedObject(value).GetEditor();
                 }
                 else
                 {
@@ -123,7 +119,7 @@ namespace SyadeuEditor.Presentation
 
                 #endregion
 
-                using (new EditorUtilities.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(pos.width - 15)))
+                using (new CoreGUI.BoxBlock(ColorPalettes.PastelDreams.Yellow, GUILayout.Width(pos.width - 15)))
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
                     if (Selected != null)

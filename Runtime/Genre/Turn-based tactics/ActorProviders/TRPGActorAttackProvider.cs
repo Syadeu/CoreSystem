@@ -19,7 +19,8 @@ namespace Syadeu.Presentation.TurnTable
     [DisplayName("ActorProvider: TRPG Attack Provider")]
     public sealed class TRPGActorAttackProvider : ActorAttackProvider
     {
-        [JsonProperty(Order = 1, PropertyName = "SearchRange")] private int m_SearchRange = 3;
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "SearchRange")] 
+        private int m_SearchRange = 3;
 
         protected override void OnCreated()
         {

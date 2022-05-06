@@ -28,6 +28,7 @@ namespace Syadeu.Presentation.TurnTable.UI
     [DisplayName("Data: TRPG Shortcut data")]
     public sealed class TRPGShortcutData : ConstantData, IComparable<TRPGShortcutData>
     {
+        [Serializable]
         public sealed class GeneralOptions : PropertyBlock<GeneralOptions>
         {
             [Space]
@@ -52,6 +53,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             [JsonProperty(Order = 7, PropertyName = "FontSize")]
             public float m_FontSize = 18;
         }
+        [Serializable]
         public sealed class VisibleOptions : PropertyBlock<VisibleOptions>
         {
             [Space]
@@ -60,6 +62,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             [JsonProperty(Order = 1, PropertyName = "ConstVisibleOptions")]
             public ConstActionReference<bool>[] m_ConstVisibleOptions = Array.Empty<ConstActionReference<bool>>();
         }
+        [Serializable]
         public sealed class OnEnableOptions : PropertyBlock<OnEnableOptions>
         {
             [Space]
@@ -71,6 +74,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             [Description("대상은 현재 턴의 엔티티입니다.")]
             public Reference<TriggerAction>[] m_OnTargetEnable = Array.Empty<Reference<TriggerAction>>();
         }
+        [Serializable]
         public sealed class OnDisableOptions : PropertyBlock<OnDisableOptions>
         {
             [Space]
@@ -82,6 +86,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             [Description("대상은 현재 턴의 엔티티입니다.")]
             public Reference<TriggerAction>[] m_OnTargetDisable = Array.Empty<Reference<TriggerAction>>();
         }
+        [Serializable]
         public sealed class OnExecuteOptions : PropertyBlock<OnExecuteOptions>
         {
             [Space]

@@ -19,6 +19,7 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Internal;
+using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -136,9 +137,15 @@ namespace Syadeu.Presentation
                 {
                     PresentationSystemEntity.DontDestroyOnLoad(gameobj);
                 }
-            }
 
-            obj = stack.Pop();
+                ProcessOnCreated(obj);
+            }
+            else
+            {
+                obj = stack.Pop();
+            }
+            ProcessOnInitialize(obj);
+
             return obj;
         }
         public void ReservePrefab(PrefabReference prefab, UnityEngine.Object obj)
@@ -165,7 +172,60 @@ namespace Syadeu.Presentation
                 m_ReservedPrefabObjects.Add(prefab, stack);
             }
 
+            ProcessOnReserve(obj);
             stack.Push(obj);
+        }
+
+        private static void ProcessOnCreated(UnityEngine.Object obj)
+        {
+            RecycleableMonobehaviour recycleable;
+            if (obj is GameObject gameObj)
+            {
+                recycleable = gameObj.GetComponent<RecycleableMonobehaviour>();
+            }
+            else if (obj is Component component)
+            {
+                recycleable = component.GetComponent<RecycleableMonobehaviour>();
+            }
+            else return;
+
+            if (recycleable == null) return;
+
+            recycleable.InternalOnCreated();
+        }
+        private static void ProcessOnInitialize(UnityEngine.Object obj)
+        {
+            RecycleableMonobehaviour recycleable;
+            if (obj is GameObject gameObj)
+            {
+                recycleable = gameObj.GetComponent<RecycleableMonobehaviour>();
+            }
+            else if (obj is Component component)
+            {
+                recycleable = component.GetComponent<RecycleableMonobehaviour>();
+            }
+            else return;
+
+            if (recycleable == null) return;
+
+            recycleable.InternalInitialize();
+        }
+        private static void ProcessOnReserve(UnityEngine.Object obj)
+        {
+            RecycleableMonobehaviour recycleable;
+            if (obj is GameObject gameObj)
+            {
+                recycleable = gameObj.GetComponent<RecycleableMonobehaviour>();
+            }
+            else if (obj is Component component)
+            {
+                recycleable = component.GetComponent<RecycleableMonobehaviour>();
+            }
+            else return;
+
+            if (recycleable == null) return;
+
+            recycleable.InternalTerminate();
         }
 
         #endregion

@@ -14,8 +14,6 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Collections.Proxy;
-using Syadeu.Internal;
 using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Components;
@@ -24,7 +22,6 @@ using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections;
 using System.ComponentModel;
-using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -35,25 +32,25 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorWeaponProvider : ActorProviderBase<ActorWeaponComponent>
     {
         [Header("Accept Weapon Types")]
-        [JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
-        internal Reference<ActorItemType>[] m_ExcludeWeaponType = Array.Empty<Reference<ActorItemType>>();
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "ExcludeWeaponType")]
+        internal ArrayWrapper<Reference<ActorItemType>> m_ExcludeWeaponType = Array.Empty<Reference<ActorItemType>>();
         //[JsonProperty(Order = 3, PropertyName = "IncludeWeaponType")]
         //internal Reference<ActorItemType>[] m_IncludeWeaponType = Array.Empty<Reference<ActorItemType>>();
 
         [Header("General")]
-        [JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "DefaultWeapon")]
         internal Reference<EntityBase> m_DefaultWeapon = Reference<EntityBase>.Empty;
         [Tooltip("최대로 착용할 수 있는 무기의 개수입니다. 0과 같거나 작을 수 없습니다.")]
-        [JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
+        [SerializeField, JsonProperty(Order = 5, PropertyName = "MaxEquipableCount")]
         internal int m_MaxEquipableCount = 1;
 
         [Header("TriggerAction")]
-        [JsonProperty(Order = 10, PropertyName = "OnWeaponSelected")]
-        internal Reference<TriggerAction>[] m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 11, PropertyName = "OnEquipWeapon")]
-        internal Reference<TriggerAction>[] m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
-        internal Reference<TriggerAction>[] m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField, JsonProperty(Order = 10, PropertyName = "OnWeaponSelected")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnWeaponSelected = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField, JsonProperty(Order = 11, PropertyName = "OnEquipWeapon")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnEquipWeapon = Array.Empty<Reference<TriggerAction>>();
+        [SerializeField, JsonProperty(Order = 12, PropertyName = "OnUnequipWeapon")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnUnequipWeapon = Array.Empty<Reference<TriggerAction>>();
 
         [JsonIgnore] CoroutineHandler m_WeaponPoser;
 
@@ -173,8 +170,7 @@ namespace Syadeu.Presentation.Actor
                     }
                     else if ((ev.EquipOptions & ActorWeaponEquipOptions.ToInventoryIfIsFull) == ActorWeaponEquipOptions.ToInventoryIfIsFull)
                     {
-                        ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Target;
-                        if (inventory == null)
+                        if (!Parent.HasComponent<ActorInventoryComponent>())
                         {
                             CoreSystem.Logger.LogError(Channel.Entity,
                                 $"Destroying equip request weapon instance({ev.Weapon.Target.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
@@ -182,7 +178,8 @@ namespace Syadeu.Presentation.Actor
                         }
                         else
                         {
-                            inventory.Insert(ev.Weapon);
+                            ref ActorInventoryComponent inventory = ref Parent.GetComponent<ActorInventoryComponent>();
+                            inventory.Inventory.Add(ev.Weapon);
                         }
                     }
                     else
@@ -237,13 +234,13 @@ namespace Syadeu.Presentation.Actor
                 {
                     return;
                 }
-                else if (!weapon.HasComponent<EntityBase, ActorWeaponItemComponent>())
+                else if (!weapon.HasComponent<EntityBase, ActorItemComponent>())
                 {
                     return;
                 }
 
                 //ActorWeaponData.OverrideData overrideData = data.Overrides;
-                ActorWeaponItemComponent data = weapon.GetComponent<EntityBase, ActorWeaponItemComponent>();
+                ActorItemComponent data = weapon.GetComponent<EntityBase, ActorItemComponent>();
                 ProxyTransform weaponTr = ((InstanceID)weapon).GetTransform();
 
                 //ActorWeaponData.OverrideOptions options = weaponDrawn ? overrideData.DrawOverrideOptions : overrideData.HolsterOverrideOptions;

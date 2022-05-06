@@ -106,7 +106,7 @@ namespace SyadeuEditor.Presentation
         {
             using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll, true, true,
                 GUILayout.MaxWidth(pos.width), GUILayout.MaxHeight(pos.height)))
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 if (!Application.isPlaying)
                 {
@@ -130,7 +130,7 @@ namespace SyadeuEditor.Presentation
 
                 EditorUtilities.StringRich(m_SelectedName, 20);
                 EditorGUILayout.Space(3);
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 DrawDefaultInfomation(obj);
 
@@ -139,7 +139,7 @@ namespace SyadeuEditor.Presentation
                     DrawEntity(entityDataBase);
                 }
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 for (int i = 0; i < m_SelectedMembers.Length; i++)
                 {
@@ -180,7 +180,7 @@ namespace SyadeuEditor.Presentation
             if (entity is EntityBase entityBase)
             {
                 ProxyTransform proxy = entityBase.GetTransform();
-                using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                using (new CoreGUI.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     EntityDrawer.DrawModel(entityBase, true);
 
@@ -194,8 +194,8 @@ namespace SyadeuEditor.Presentation
                     entityBase.Size
                         = EditorGUILayout.Vector3Field("Size", entityBase.Size);
                 }
-                EditorUtilities.Line();
-                using (new EditorUtilities.BoxBlock(ColorPalettes.WaterFoam.Teal))
+                CoreGUI.Line();
+                using (new CoreGUI.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
                     EditorUtilities.StringRich("Transform", 15);
                     EditorGUI.indentLevel++;

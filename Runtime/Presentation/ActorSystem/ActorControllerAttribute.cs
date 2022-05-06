@@ -36,14 +36,14 @@ namespace Syadeu.Presentation.Actor
         INotifyComponent<ActorControllerComponent>
     {
         [Header("General")]
-        [JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "SetAliveOnCreated")]
         internal bool m_SetAliveOnCreated = true;
-        [JsonProperty(Order = 1, PropertyName = "OnEventReceived")]
-        internal Reference<ParamAction<IActorEvent>>[] m_OnEventReceived = Array.Empty<Reference<ParamAction<IActorEvent>>>();
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "OnEventReceived")]
+        internal ArrayWrapper<Reference<ParamAction<IActorEvent>>> m_OnEventReceived = Array.Empty<Reference<ParamAction<IActorEvent>>>();
 
         [Header("Provider")]
-        [JsonProperty(Order = 2, PropertyName = "Providers")] 
-        internal Reference<IActorProvider>[] m_Providers = Array.Empty<Reference<IActorProvider>>();
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "Providers")] 
+        internal ArrayWrapper<Reference<IActorProvider>> m_Providers = Array.Empty<Reference<IActorProvider>>();
     }
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
         IAttributeOnProxy

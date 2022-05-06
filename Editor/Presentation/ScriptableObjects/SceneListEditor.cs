@@ -10,7 +10,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(SceneSettings))]
-    public sealed class SceneListEditor : EditorEntity<SceneSettings>
+    public sealed class SceneListEditor : InspectorEditor<SceneSettings>
     {
         SceneReference m_CurrentScene;
 
@@ -23,11 +23,11 @@ namespace SyadeuEditor
         {
             Scene scene = SceneManager.GetActiveScene();
 
-            for (int i = 0; i < Target.Scenes.Count; i++)
+            for (int i = 0; i < target.Scenes.Count; i++)
             {
-                if (Target.Scenes[i].ScenePath.Equals(scene.path))
+                if (target.Scenes[i].ScenePath.Equals(scene.path))
                 {
-                    m_CurrentScene = Target.Scenes[i];
+                    m_CurrentScene = target.Scenes[i];
                     break;
                 }
             }

@@ -220,6 +220,23 @@ namespace SyadeuEditor.Presentation
             menu.AddSeparator(string.Empty);
             if (item is FolderTreeElement folder)
             {
+                menu.AddItem(new GUIContent("Edit Script"), false, () =>
+                {
+                    EntityScriptProvider.OpenScript(folder.Type);
+                });
+                var editDrawerScriptContent = new GUIContent("Edit Drawer Script");
+                if (EntityScriptProvider.HasDrawerScript(folder.Type))
+                {
+                    menu.AddItem(editDrawerScriptContent, false, () =>
+                    {
+                        EntityScriptProvider.OpenDrawerScript(folder.Type);
+                    });
+                }
+                else                {
+                    menu.AddDisabledItem(editDrawerScriptContent);
+                }
+                menu.AddSeparator(string.Empty);
+
                 menu.AddItem(new GUIContent("Add"), false, () =>
                 {
                     var drawer = EntityWindow.Instance.Add(folder.Type);
@@ -229,6 +246,27 @@ namespace SyadeuEditor.Presentation
             }
             else if (item is ObjectTreeElement obj)
             {
+                Type entityType = obj.Target.GetType();
+
+                menu.AddItem(new GUIContent("Edit Script"), false, () =>
+                {
+                    EntityScriptProvider.OpenScript(entityType);
+                });
+                var editDrawerScriptContent = new GUIContent("Edit Drawer Script");
+                if (EntityScriptProvider.HasDrawerScript(entityType))
+                {
+                    menu.AddItem(editDrawerScriptContent, false, () =>
+                    {
+                        EntityScriptProvider.OpenDrawerScript(entityType);
+                    });
+                }
+                else
+                {
+                    menu.AddDisabledItem(editDrawerScriptContent);
+                }
+
+                menu.AddSeparator(string.Empty);
+
                 menu.AddItem(new GUIContent("Duplicate"), false, () =>
                 {
                     ObjectBase clone = (ObjectBase)obj.Target.Clone();

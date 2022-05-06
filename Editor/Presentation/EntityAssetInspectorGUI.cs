@@ -10,6 +10,7 @@ using UnityEditor.Build.Utilities;
 using UnityEditor.AddressableAssets.Build;
 using Syadeu;
 using System.Linq;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor.Presentation
 {
@@ -187,7 +188,7 @@ namespace SyadeuEditor.Presentation
             }
             else if (addressableCount == editor.targets.Length)
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 string headerString = EditorUtilities.String("Entity", 13);
                 if (currentGroupIdx == 0)
                 {
@@ -232,11 +233,11 @@ namespace SyadeuEditor.Presentation
                     }
                 }
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
             }
             else
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 string headerString = EditorUtilities.String("Entity", 13);
                 headerString += EditorUtilities.String(": Mixed", 10);
 

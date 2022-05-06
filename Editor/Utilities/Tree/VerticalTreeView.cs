@@ -66,9 +66,9 @@ namespace SyadeuEditor.Tree
         {
             const string notFound = "Not Found";
 
-            using (new EditorUtilities.BoxBlock(Color.white))
+            using (new CoreGUI.BoxBlock(Color.white))
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 BeforeDraw();
                 DrawToolbar();
                 DrawSearchField();
@@ -88,8 +88,8 @@ namespace SyadeuEditor.Tree
                         if (Asset != null) EditorUtility.SetDirty(Asset);
                     }
                 }
-                
-                EditorUtilities.Line();
+
+                CoreGUI.Line();
 
                 Color color1 = Color.black, color2 = Color.gray;
                 color1.a = .5f; color2.a = .3f;
@@ -102,7 +102,7 @@ namespace SyadeuEditor.Tree
                 {
                     if (m_Elements[i].HideElementInTree) continue;
 
-                    using (new EditorUtilities.BoxBlock(nextColor))
+                    using (new CoreGUI.BoxBlock(nextColor))
                     {
                         DrawChild(m_Elements[i]);
                     }
@@ -112,12 +112,12 @@ namespace SyadeuEditor.Tree
                     if (nextColor == color1) nextColor = color2;
                     else nextColor = color1;
 
-                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.Line();
+                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) CoreGUI.Line();
                 }
 
                 if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
                 AfterDraw();
-                EditorUtilities.Line();
+                CoreGUI.Line();
             }
         }
 
@@ -200,7 +200,7 @@ namespace SyadeuEditor.Tree
 
                     m_CurrentDrawChilds += 1;
 
-                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) EditorUtilities.SectorLine();
+                    if (m_Elements[i].m_Opened && i + 1 < m_Elements.Count) CoreGUI.SectorLine();
                 }
                 if (m_CurrentDrawChilds == 0) EditorUtilities.StringRich(notFound, true);
                 AfterDraw();

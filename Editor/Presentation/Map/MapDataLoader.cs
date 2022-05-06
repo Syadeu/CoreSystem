@@ -182,7 +182,7 @@ namespace SyadeuEditor.Presentation.Map
             {
                 m_Scroll = scroll.scrollPosition;
 
-                using (new EditorUtilities.BoxBlock(Color.gray))
+                using (new CoreGUI.BoxBlock(Color.gray))
                 {
                     EditorGUI.BeginDisabledGroup(m_LoadedMapDataReference.Count == 0);
                     if (GUILayout.Button("Save"))
@@ -322,9 +322,9 @@ namespace SyadeuEditor.Presentation.Map
                     }
                 }
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
-                using (new EditorUtilities.BoxBlock(Color.gray))
+                using (new CoreGUI.BoxBlock(Color.gray))
                 {
                     EditorUtilities.StringRich("Lightmapping", 13);
                     LightingSettings lightSettings = Lightmapping.GetLightingSettingsForScene(EditorSceneManager.GetActiveScene());

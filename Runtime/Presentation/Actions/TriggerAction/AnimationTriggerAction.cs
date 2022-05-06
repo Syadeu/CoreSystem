@@ -27,10 +27,10 @@ namespace Syadeu.Presentation.Actions
     public sealed class AnimationTriggerAction : TriggerAction
     {
         [Header("General")]
-        [JsonProperty(Order = 0, PropertyName = "TriggerName")] public string m_TriggerName;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "TriggerName")] public string m_TriggerName;
 
         [Space, Header("TriggerActions")]
-        [JsonProperty(Order = 1, PropertyName = "OnExecute")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "OnExecute")]
         private Reference<TriggerAction>[] m_OnExecute = Array.Empty<Reference<TriggerAction>>();
 
         protected override void OnExecute(Entity<IObject> entity)

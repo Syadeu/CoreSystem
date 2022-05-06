@@ -17,6 +17,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
+    using TMPro;
 #if CORESYSTEM_HDRP
     using UnityEngine.Rendering.HighDefinition;
 
@@ -44,7 +45,14 @@ namespace Syadeu.Presentation.Render
         {
 
         }
+        // https://stackoverflow.com/questions/58021797/put-a-text-onto-a-game-object-but-as-if-it-was-painted
+        public HDRPUIProjector GetUIProjector()
+        {
+            GameObject gameObj = m_SceneSystem.CreateGameObject($"Projection Camera {m_Creation++}");
+            HDRPUIProjector projector = new HDRPUIProjector(this, gameObj);
 
+            return projector;
+        }
         public HDRPProjectionCamera GetProjectionCamera(Material mat, RenderTexture renderTexture)
         {
             Camera cam;
@@ -62,9 +70,13 @@ namespace Syadeu.Presentation.Render
                 GameObject gameObj = m_SceneSystem.CreateGameObject($"Projection Camera {m_Creation++}");
                 cam = gameObj.AddComponent<Camera>();
                 cam.orthographic = true;
+                cam.forceIntoRenderTexture = true;
 
                 cam.cullingMask = RenderSystem.ProjectionMask;
-                gameObj.AddComponent<HDAdditionalCameraData>().volumeLayerMask = RenderSystem.ProjectionMask;
+                var data = gameObj.AddComponent<HDAdditionalCameraData>();
+                data.volumeLayerMask = RenderSystem.ProjectionMask;
+                data.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
+                data.backgroundColorHDR = Color.clear;
 
                 cam.orthographicSize = 20;
 
@@ -92,6 +104,72 @@ namespace Syadeu.Presentation.Render
         {
             cam.gameObject.SetActive(false);
             m_UnusedProjectionCameras.Push(cam);
+        }
+    }
+
+    public sealed class HDRPUIProjector
+    {
+        private HDRPRenderProjectionModule m_Module;
+
+        private Camera m_Camera;
+        private HDAdditionalCameraData m_Data;
+        private Canvas m_Canvas;
+
+        private TextMeshProUGUI m_Text;
+
+        private RenderTexture RT
+        {
+            get => m_Camera.targetTexture;
+            set => m_Camera.targetTexture = value;
+        }
+        public TextMeshProUGUI Text => m_Text;
+
+        internal HDRPUIProjector(
+            HDRPRenderProjectionModule module, GameObject obj)
+        {
+            m_Module = module;
+
+            GameObject camObj = new GameObject("Camera");
+            camObj.transform.SetParent(obj.transform, false);
+            m_Camera = camObj.AddComponent<Camera>();
+            m_Camera.enabled = false;
+            m_Data = camObj.AddComponent<HDAdditionalCameraData>();
+            {
+                m_Camera.cullingMask = RenderSystem.ProjectionMask;
+                m_Camera.orthographic = true;
+                m_Camera.orthographicSize = .5f;
+                m_Camera.nearClipPlane = 0;
+
+                m_Data.volumeLayerMask = 0;
+                m_Data.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
+                m_Data.backgroundColorHDR = Color.clear;
+            }
+
+            GameObject canvasObj = new GameObject("Canvas");
+            canvasObj.layer = RenderSystem.ProjectionMask;
+            canvasObj.transform.SetParent(obj.transform, false);
+            m_Canvas = canvasObj.AddComponent<Canvas>();
+            {
+                m_Canvas.renderMode = RenderMode.WorldSpace;
+                m_Canvas.GetComponent<RectTransform>().sizeDelta = Vector2.one;
+            }
+
+            GameObject textObj = new GameObject("Text");
+            textObj.layer = RenderSystem.ProjectionMask;
+            textObj.transform.SetParent(canvasObj.transform, true);
+            m_Text = textObj.AddComponent<TextMeshProUGUI>();
+            {
+                var textRectTransform = textObj.GetComponent<RectTransform>();
+                textRectTransform.localScale = Vector3.one * 0.001f;
+                textRectTransform.sizeDelta = new Vector2(1000, 1000);
+            }
+        }
+
+        public void Render(RenderTexture rt)
+        {
+            RT = rt;
+            m_Camera.Render();
+            RT = null;
         }
     }
 #endif

@@ -71,7 +71,14 @@ namespace Syadeu.Collections
             private readonly FieldInfo[] m_ArgumentFields;
             private readonly JsonPropertyAttribute[] m_JsonPropertyAttributes;
 
+            public Guid Guid => m_Type.GUID;
+            /// <summary>
+            /// <see cref="IConstAction"/> 의 타입
+            /// </summary>
             public Type Type => m_Type;
+            /// <summary>
+            /// 반환하는 타입
+            /// </summary>
             public Type ReturnType => m_ReturnType;
             public FieldInfo[] ArgumentFields => m_ArgumentFields;
             public JsonPropertyAttribute[] JsonAttributes => m_JsonPropertyAttributes;

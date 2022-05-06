@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.TurnTable
             //            }
             #endregion
 
-            TRPGSettings.Instance.m_CoverableSprite.LoadAsset();
+            TRPGSettings.Instance.m_CoverableSprite.Load();
 
             m_GridTempCoverables = new NativeList<GridIndex>(512, Allocator.Persistent);
             m_GridTempMoveables = new NativeList<GridIndex>(512, Allocator.Persistent);
@@ -182,6 +182,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnDispose()
         {
+            TRPGSettings.Instance.m_CoverableSprite.UnloadAsset();
+
             m_GridTempCoverables.Dispose();
             m_GridTempMoveables.Dispose();
             m_GridTempOutcoasts.Dispose();

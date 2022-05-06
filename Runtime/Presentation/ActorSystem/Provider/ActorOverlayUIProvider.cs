@@ -14,14 +14,11 @@
 
 using Newtonsoft.Json;
 using Syadeu.Collections;
-using Syadeu.Internal;
-using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Entities;
-using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using Unity.Collections;
 
 namespace Syadeu.Presentation.Actor
@@ -31,8 +28,8 @@ namespace Syadeu.Presentation.Actor
     /// </summary>
     public class ActorOverlayUIProvider : ActorProviderBase<ActorOverlayUIComponent>
     {
-        [JsonProperty(Order = -10, PropertyName = "UIEntries")]
-        protected Reference<ActorOverlayUIEntry>[] m_UIEntries = Array.Empty<Reference<ActorOverlayUIEntry>>();
+        [SerializeField, JsonProperty(Order = -10, PropertyName = "UIEntries")]
+        protected ArrayWrapper<Reference<ActorOverlayUIEntry>> m_UIEntries = Array.Empty<Reference<ActorOverlayUIEntry>>();
 
         [JsonIgnore] public IReadOnlyList<Reference<ActorOverlayUIEntry>> UIEntries => m_UIEntries;
 

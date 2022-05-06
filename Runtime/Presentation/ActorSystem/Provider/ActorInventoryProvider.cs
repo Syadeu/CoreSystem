@@ -19,20 +19,53 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Entities;
 using System;
+using UnityEngine;
 using Unity.Collections;
+using Newtonsoft.Json;
+using System.ComponentModel;
+using Unity.Mathematics;
 
 namespace Syadeu.Presentation.Actor
 {
-    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent>
+    [DisplayName("ActorProvider: Inventory Provider")]
+    public sealed class ActorInventoryProvider : ActorProviderBase<ActorInventoryComponent> 
+        //IPrefabPreloader
     {
+        [Serializable]
+        public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "UIPrefab")]
+            public Reference<UIObjectEntity> m_UIPrefab = Reference<UIObjectEntity>.Empty;
+
+            [Space]
+            [SerializeField, JsonProperty(Order = 1, PropertyName = "PositionOffset")]
+            public float3 m_PositionOffset;
+            [SerializeField, JsonProperty(Order = 2, PropertyName = "RotationOffset")]
+            public float3 m_RotationOffset;
+        }
+
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
+        public LinkedBlock m_Space = new LinkedBlock();
+
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "GraphicsInfo")]
+        public GraphicsInformation m_GraphicsInfo = new GraphicsInformation();
+
+        //[SerializeField]
+        //public PrefabReference<ActorInventoryMonobehaviour> m_InventoryPrefab = PrefabReference<ActorInventoryMonobehaviour>.None;
+
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
-            component = new ActorInventoryComponent(parent.Idx, 128);
-        }
-        public void Insert(Entity<IObject> item)
-        {
+            component = new ActorInventoryComponent(parent.Idx, m_Space);
 
+            //m_InventoryPrefab.GetOrCreateInstance
         }
+
+        //void IPrefabPreloader.Register(PrefabPreloader loader)
+        //{
+        //    if (m_InventoryPrefab.IsNone() || !m_InventoryPrefab.IsValid()) return;
+
+        //    loader.Add(m_InventoryPrefab);
+        //}
     }
 
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
@@ -41,9 +74,9 @@ namespace Syadeu.Presentation.Actor
 
         public ItemInventory Inventory => m_Inventory;
 
-        public ActorInventoryComponent(InstanceID owner, int initialLength)
+        public ActorInventoryComponent(InstanceID owner, LinkedBlock block)
         {
-            m_Inventory = new ItemInventory(owner, initialLength, Allocator.Persistent);
+            m_Inventory = new ItemInventory(owner, block, Allocator.Persistent);
         }
 
         void IDisposable.Dispose()

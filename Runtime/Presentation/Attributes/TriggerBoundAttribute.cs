@@ -37,6 +37,8 @@ namespace Syadeu.Presentation.Attributes
     [AttributeAcceptOnly(typeof(EntityBase))]
     public sealed class TriggerBoundAttribute : AttributeBase
     {
+        public delegate void TriggerBoundEventHandler(Entity<IEntity> source, Entity<IEntity> target, bool entered);
+
         [JsonIgnore] internal ClusterID m_ClusterID = ClusterID.Empty;
 
         [JsonProperty(Order = -1, PropertyName = "IsStatic")]
@@ -44,8 +46,13 @@ namespace Syadeu.Presentation.Attributes
 
         [Header("Trigger Applies")]
         [Tooltip("만약 아무것도 없으면 타입 전부를 트리거합니다.")]
-        [JsonProperty(Order = 0, PropertyName = "TriggerOnly")] public Reference<EntityBase>[] m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
+        [JsonProperty(Order = 0, PropertyName = "TriggerOnly")] 
+        public ArrayWrapper<Reference<EntityBase>> m_TriggerOnly = Array.Empty<Reference<EntityBase>>();
         [JsonProperty(Order = 1, PropertyName = "Inverse")] public bool m_Inverse;
+
+        [Header("Ignore Layers")]
+        [JsonProperty(Order = 1, PropertyName = "IgnoreLayers")]
+        public ArrayWrapper<Reference<TriggerBoundLayer>> m_IgnoreLayers = ArrayWrapper<Reference<TriggerBoundLayer>>.Empty;
 
         [Header("AABB Collision")]
         [Tooltip("만약 MatchWithAABB가 true일 경우, 아래 설정은 무시됩니다")]
@@ -54,21 +61,33 @@ namespace Syadeu.Presentation.Attributes
         [JsonProperty(Order = 4, PropertyName = "Size")] public float3 m_Size = 1;
 
         [Header("TriggerActions")]
+        [Tooltip("target => entered obj")]
         [JsonProperty(Order = 5, PropertyName = "OnTriggerEnter")]
-        public Reference<TriggerAction>[] m_OnTriggerEnter = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 6, PropertyName = "OnTriggerExit")]
-        public Reference<TriggerAction>[] m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerEnter = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 6, PropertyName = "OnTriggerEnterThis")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerEnterThis = Array.Empty<Reference<TriggerAction>>();
+
+        [JsonProperty(Order = 7, PropertyName = "OnTriggerExit")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerExit = Array.Empty<Reference<TriggerAction>>();
+        [JsonProperty(Order = 8, PropertyName = "OnTriggerExitThis")]
+        public ArrayWrapper<Reference<TriggerAction>> m_OnTriggerExitThis = Array.Empty<Reference<TriggerAction>>();
 
         [Header("Layer")]
         [Tooltip("Entity 의 Raycasting Layer 를 지정할 수 있습니다.")]
         [JsonProperty(Order = 7, PropertyName = "Layer")]
         public Reference<TriggerBoundLayer> m_Layer = Reference<TriggerBoundLayer>.Empty;
 
-        // TODO : to component side
         [JsonIgnore] internal List<Entity<IEntity>> m_Triggered;
 
         [JsonIgnore] public bool Enabled { get; set; } = true;
         [JsonIgnore] public IReadOnlyList<Entity<IEntity>> Triggered => m_Triggered;
+
+        public event TriggerBoundEventHandler OnTriggerBoundEvent;
+
+        internal void ProcessEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)
+        {
+            OnTriggerBoundEvent?.Invoke(source, target, entered);
+        }
     }
     [Obsolete]
     internal sealed class TriggerBoundProcessor : AttributeProcessor<TriggerBoundAttribute>
@@ -113,10 +132,12 @@ namespace Syadeu.Presentation.Attributes
             if (ev.IsEnter)
             {
                 result = target.m_OnTriggerEnter.Execute(ev.Source.ToEntity<IEntityData>());
+                target.m_OnTriggerEnterThis.Execute(ev.Target.ToEntity<IEntityData>());
             }
             else
             {
                 result = target.m_OnTriggerExit.Execute(ev.Source.ToEntity<IEntityData>());
+                target.m_OnTriggerExitThis.Execute(ev.Target.ToEntity<IEntityData>());
             }
 
             if (!result)

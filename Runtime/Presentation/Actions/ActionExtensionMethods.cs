@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Actions
             return result;
         }
 
-        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity) where T : TriggerAction
+        public static bool Execute<T>(this IList<Reference<T>> actions, Entity<IObject> entity) where T : TriggerAction
         {
             if (!entity.IsValid())
             {
@@ -122,7 +122,7 @@ namespace Syadeu.Presentation.Actions
             }
 
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -137,7 +137,7 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
+        public static bool Execute<T>(this IList<Reference<T>> actions, Entity<IObject> entity, out bool predicate) where T : TriggerPredicateAction
         {
             if (!entity.IsValid())
             {
@@ -150,7 +150,7 @@ namespace Syadeu.Presentation.Actions
             bool 
                 isFailed = false,
                 isFalse = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -167,10 +167,10 @@ namespace Syadeu.Presentation.Actions
             predicate = !isFalse;
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<T>[] actions) where T : InstanceAction
+        public static bool Execute<T>(this IList<Reference<T>> actions) where T : InstanceAction
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -185,10 +185,10 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T>(this Reference<ParamAction<T>>[] actions, T target)
+        public static bool Execute<T>(this IList<Reference<ParamAction<T>>> actions, T target)
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -203,10 +203,10 @@ namespace Syadeu.Presentation.Actions
 
             return !isFailed;
         }
-        public static bool Execute<T, TA>(this Reference<ParamAction<T, TA>>[] actions, T t, TA ta)
+        public static bool Execute<T, TA>(this IList<Reference<ParamAction<T, TA>>> actions, T t, TA ta)
         {
             bool isFailed = false;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 if (!actions[i].IsValid()) continue;
 
@@ -382,29 +382,31 @@ namespace Syadeu.Presentation.Actions
             }
         }
         //[Obsolete("Use FixedReferenceList64")]
-        public static void Schedule<T>(this Reference<T>[] actions)
+        public static void Schedule<T>(this IList<Reference<T>> actions)
             where T : InstanceAction
         {
-            if (actions == null || actions.Length == 0) return;
+            if (actions == null || actions.Count == 0) return;
 
             ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 system.ScheduleInstanceAction(actions[i]);
             }
         }
         //[Obsolete("Use FixedReferenceList64")]
-        public static void Schedule<T>(this Reference<T>[] actions, Entity<IObject> entity)
+        public static void Schedule<T>(this IList<Reference<T>> actions, Entity<IObject> entity)
             where T : TriggerAction
         {
-            if (actions == null || actions.Length == 0) return;
+            if (actions == null || actions.Count == 0) return;
 
             ActionSystem system = PresentationSystem<DefaultPresentationGroup, ActionSystem>.System;
-            for (int i = 0; i < actions.Length; i++)
+            for (int i = 0; i < actions.Count; i++)
             {
                 system.ScheduleTriggerAction<T>(actions[i], entity);
             }
         }
+
+        #region Const Action
 
         public static object Execute(this IConstActionReference action, InstanceID entity)
         {
@@ -480,11 +482,69 @@ namespace Syadeu.Presentation.Actions
             }
             return result;
         }
+        public static object Execute(this IConstActionReference action, params object[] args)
+        {
+            if (!ConstActionUtilities.TryGetWithGuid(action.Guid, out var info))
+            {
+                "?".ToLogError();
+                return null;
+            }
+
+            IConstAction constAction = s_ActionSystem.GetConstAction(info.Type);
+            constAction.SetArguments(action.Arguments);
+            //info.SetArguments(constAction, action.Arguments);
+
+            object result;
+            try
+            {
+                result = constAction.Execute(args);
+            }
+            catch (Exception ex)
+            {
+                CoreSystem.Logger.LogError(Channel.Action,
+                    $"Unexpected error has been raised while executing ConstAction");
+
+                UnityEngine.Debug.LogError(ex);
+
+                return null;
+            }
+            return result;
+        }
+        public static TResult Execute<TResult>(this ConstActionReference<TResult> action)
+        {
+            return (TResult)Execute((IConstActionReference)action);
+        }
+        public static TResult Execute<TResult>(this ConstActionReference<TResult> action, params object[] args)
+        {
+            return (TResult)Execute((IConstActionReference)action, args);
+        }
+
         public static void Execute(this IList<ConstActionReference> action, InstanceID entity)
         {
             for (int i = 0; i < action.Count; i++)
             {
                 action[i].Execute(entity);
+            }
+        }
+        public static void Execute(this IEnumerable<ConstActionReference> action, InstanceID entity)
+        {
+            foreach (var item in action)
+            {
+                item.Execute(entity);
+            }
+        }
+        public static void Execute(this IEnumerable<FixedConstAction> action)
+        {
+            foreach (var item in action)
+            {
+                item.Execute();
+            }
+        }
+        public static void Execute(this IEnumerable<FixedConstAction> action, InstanceID entity)
+        {
+            foreach (var item in action)
+            {
+                item.Execute(entity);
             }
         }
         public static void Execute(this IList<ConstActionReference> action)
@@ -494,13 +554,46 @@ namespace Syadeu.Presentation.Actions
                 action[i].Execute();
             }
         }
-        public static TValue Execute<TValue>(this ConstActionReference<TValue> action)
+        public static void Execute(this IList<ConstActionReference> action, params object[] args)
         {
-            return (TValue)Execute((IConstActionReference)action);
+            for (int i = 0; i < action.Count; i++)
+            {
+                action[i].Execute(args);
+            }
         }
+
+        /// <summary>
+        /// 전부 참을 반환해야 <see langword="true"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool True(this ConstActionReferenceArray<bool> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                if (!action[i].Execute()) return false;
+            }
+            return true;
+        }
+        /// <summary>
+        /// 전부 거짓을 반환해야 <see langword="true"/> 를 반환합니다.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool False(this ConstActionReferenceArray<bool> action)
+        {
+            for (int i = 0; i < action.Count; i++)
+            {
+                if (action[i].Execute()) return false;
+            }
+            return true;
+        }
+
         public static TValue Execute<TValue>(this ConstActionReference<TValue> action, InstanceID entity)
         {
             return (TValue)Execute((IConstActionReference)action, entity);
         }
+
+        #endregion
     }
 }

@@ -40,17 +40,17 @@ namespace Syadeu.Presentation.Actions
             UpdatePosition  =   0x100
         }
 
-        [JsonProperty(Order = 0, PropertyName = "AudioClip")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "AudioClip")]
         private PrefabReference<AudioClip> m_AudioClip = PrefabReference<AudioClip>.None;
-        [JsonProperty(Order = 1, PropertyName = "PlayOptions")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "PlayOptions")]
         private PlayOptions m_PlayOptions = PlayOptions.OneShot;
 
         [Space, Header("General")]
-        [JsonProperty(Order = 2, PropertyName = "Volume"), Range(0, 1)]
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "Volume"), Range(0, 1)]
         private float m_Volume = 1;
-        [JsonProperty(Order = 3, PropertyName = "Pitch"), Range(0, 1)]
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "Pitch"), Range(0, 1)]
         private float m_Pitch = 1;
-        [JsonProperty(Order = 4, PropertyName = "StereoPan"), Range(-1, 1)]
+        [UnityEngine.SerializeField, JsonProperty(Order = 4, PropertyName = "StereoPan"), Range(-1, 1)]
         private float m_StereoPan = 0;
 
         [JsonIgnore] private CoroutineSystem m_CoroutineSystem = null;

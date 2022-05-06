@@ -13,7 +13,7 @@ namespace SyadeuEditor.Utilities
 
         public override ITransform Draw(ITransform currentValue)
         {
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 EditorUtilities.StringRich("Transform", 15);
                 EditorGUI.indentLevel++;

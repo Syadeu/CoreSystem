@@ -41,7 +41,65 @@ namespace Syadeu.Presentation.Input
         public override bool EnableAfterPresentation => false;
 
         private bool m_EnableInput = false;
+        private InputAction m_MousePositionInputAction;
         private readonly List<InputAction> m_CreatedInputActions = new List<InputAction>();
+        private readonly Dictionary<UserActionType, UsereActionTypeHandle> m_CreatedUserActions = new Dictionary<UserActionType, UsereActionTypeHandle>();
+
+        public sealed class UserActionHandle
+        {
+            private InputAction m_InputAction;
+
+            public Predicate<InputAction.CallbackContext> executable;
+            public event Action performed;
+
+            internal UserActionHandle(InputAction inputAction)
+            {
+                m_InputAction = inputAction;
+
+                m_InputAction.performed += M_InputAction_performed;
+            }
+
+            private void M_InputAction_performed(InputAction.CallbackContext obj)
+            {
+                if (executable != null && !executable.Invoke(obj)) return;
+
+                performed?.Invoke();
+            }
+
+            public void ChangeBindings(InputAction inputAction)
+            {
+                for (int i = 0; i < inputAction.bindings.Count; i++)
+                {
+                    int index = m_InputAction.bindings.IndexOf(t => t.Equals(inputAction.bindings[i]));
+                    if (index < 0)
+                    {
+                        m_InputAction.AddBinding(inputAction.bindings[i]);
+                    }
+                }
+            }
+            public void Execute() => performed?.Invoke();
+        }
+        private sealed class UsereActionTypeHandle
+        {
+            public UserActionHandle inputAction;
+            private bool opened;
+
+            public bool Opened => opened;
+
+            public UsereActionTypeHandle(InputAction inputAction)
+            {
+                this.inputAction = new UserActionHandle(inputAction);
+                opened = false;
+
+                this.inputAction.performed += OnKeyHandler;
+            }
+
+            private void OnKeyHandler()
+            {
+                opened = !opened;
+                $"{opened}".ToLog();
+            }
+        }
 
         private Vector2 m_PrecalculatedCursorPosition;
         private Ray m_PrecalculatedCursorRay;
@@ -78,14 +136,52 @@ namespace Syadeu.Presentation.Input
             }
         }
 
+        public event Action<Vector2> OnMousePositionChanged;
+
+        #region Presentation Methods
+
         protected override PresentationResult OnInitialize()
         {
             ConsoleWindow.OnWindowOpened += ConsoleWindow_OnWindowOpened;
+
+            m_MousePositionInputAction = new InputAction(
+                "Mouse Position", InputActionType.Value,
+                binding: "<Mouse>/position",
+                expectedControlType: "Vector2");
+            m_MousePositionInputAction.performed += OnMousePositionChangedHandler;
+            m_MousePositionInputAction.Enable();
+
+            {
+                int userActionLength = TypeHelper.Enum<UserActionType>.Length;
+                string binding; InputAction inputAction;
+                for (int i = 1; i < userActionLength; i++)
+                {
+                    binding = GetUserActionKeyBindingString((UserActionType)i);
+                    inputAction = new InputAction(
+                        type: InputActionType.Button,
+                        binding: binding);
+                    inputAction.Enable();
+
+                    m_CreatedUserActions.Add((UserActionType)i, new UsereActionTypeHandle(inputAction));
+                }
+            }
 
             RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             return base.OnInitialize();
         }
+
+        private void OnMousePositionChangedHandler(InputAction.CallbackContext obj)
+        {
+            m_PrecalculatedCursorPosition = obj.ReadValue<Vector2>();
+            if (m_RenderSystem != null)
+            {
+                m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
+            }
+
+            OnMousePositionChanged?.Invoke(m_PrecalculatedCursorPosition);
+        }
+
         private void ConsoleWindow_OnWindowOpened(bool opened)
         {
             EnableInput = !opened;
@@ -112,16 +208,29 @@ namespace Syadeu.Presentation.Input
         {
             EnableInput = true;
 
+            {
+                int count = UserActionConstantDataProcessor.s_TempQueue.Count;
+                for (int i = 1; i < count; i++)
+                {
+                    var item = UserActionConstantDataProcessor.s_TempQueue.Dequeue();
+                    var inputAction = GetUserActionKeyBinding(item.m_UserActionType);
+                    inputAction.performed += item.Execute;
+                }
+                UserActionConstantDataProcessor.s_TempQueue = null;
+            }
+
             return base.OnStartPresentation();
         }
         protected override PresentationResult BeforePresentation()
         {
-            m_PrecalculatedCursorPosition = Mouse.current.position.ReadValue();
-            m_PrecalculatedCursorRay = m_RenderSystem.ScreenPointToRay(new Unity.Mathematics.float3(m_PrecalculatedCursorPosition, 1));
             m_PrecalculatedCursorPreseedInThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
 
             return base.BeforePresentation();
         }
+
+        #endregion
+
+        #region Bindings
 
         public InputAction GetMouseButtonBinding(MouseButton mouseButton, InputActionType type)
         {
@@ -192,6 +301,16 @@ namespace Syadeu.Presentation.Input
             m_CreatedInputActions.Add(action);
             return action;
         }
+        /// <summary>
+        /// 키보드 액션을 생성하여 반환합니다.
+        /// </summary>
+        /// <remarks>
+        /// 사용자는 사용하기 위해 <see cref="InputAction.Enable"/> 을 호출해야합니다. 
+        /// 사용이 모두 끝났으면 <see cref="RemoveBinding(InputAction)"/> 을 통해 반드시 제거해야합니다.
+        /// </remarks>
+        /// <param name="keyCode"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public InputAction GetKeyboardBinding(Key keyCode, InputActionType type)
         {
             InputAction action = new InputAction(binding:
@@ -208,6 +327,42 @@ namespace Syadeu.Presentation.Input
 
             m_CreatedInputActions.Remove(action);
         }
+
+        public UserActionHandle GetUserActionKeyBinding(UserActionType userActionType)
+        {
+            return m_CreatedUserActions[userActionType].inputAction;
+        }
+        public bool IsUseractionKeyOpened(UserActionType userActionType) => m_CreatedUserActions[userActionType].Opened;
+
+        private static string GetUserActionKeyBindingString(UserActionType userActionType)
+        {
+            const string c_Format = "Input_ActionType_{0}";
+
+            string result;
+            switch (userActionType)
+            {
+                case UserActionType.Interaction:
+                    result = PlayerPrefs.GetString(
+                        string.Format(c_Format, TypeHelper.Enum<UserActionType>.ToString(userActionType)),
+                        "<Keyboard>/f"
+                        );
+
+                    break;
+                case UserActionType.Inventory:
+                    result = PlayerPrefs.GetString(
+                        string.Format(c_Format, TypeHelper.Enum<UserActionType>.ToString(userActionType)),
+                        "<Keyboard>/i"
+                        );
+
+                    break;
+                default:
+                    throw new NotImplementedException($"{userActionType}");
+            }
+
+            return result;
+        }
+
+        #endregion
 
         public static InputControl ToControlType(ControlType controlType)
         {

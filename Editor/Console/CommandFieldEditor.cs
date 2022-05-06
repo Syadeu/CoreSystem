@@ -3,6 +3,8 @@ using Syadeu.Mono.Console;
 
 using UnityEngine;
 using UnityEditor;
+using SyadeuEditor.Utilities;
+using Syadeu.Collections;
 
 namespace SyadeuEditor
 {
@@ -26,7 +28,7 @@ namespace SyadeuEditor
         {
             EditorGUILayout.Space();
             EditorUtilities.StringHeader("Command Field", StringColor.grey, true);
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUI.BeginChangeCheck();
             Arguments();
@@ -48,7 +50,7 @@ namespace SyadeuEditor
             CommandDefinitionEditor.ShowTypeHelpBox(m_Field.m_Settings);
             m_Field.m_Settings = (CommandSetting)EditorGUILayout.EnumFlagsField("Input Type: ", m_Field.m_Settings);
 
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
             EditorGUILayout.PropertyField(m_Args, new GUIContent("Command Arguments"));
             //EditorGUILayout.HelpBox("이 변수로 실행할 수 있는 변수들입니다", MessageType.Info);
 

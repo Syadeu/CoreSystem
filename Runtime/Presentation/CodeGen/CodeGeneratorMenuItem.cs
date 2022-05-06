@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.CodeGen
                     //var typedef = temp.GetType(item.AssemblyQualifiedName);
 
                     //$"{item.Module.FullyQualifiedName} :: {item.Assembly.Location}".ToLog();
-                    string scriptPath = ScriptUtilites.GetScriptPath(m_ClassNames[i]);
+                    string scriptPath = ScriptUtilities.GetScriptPath(m_ClassNames[i]);
                     if (scriptPath != null)
                     {
                         m_ClassPaths[i] = scriptPath;

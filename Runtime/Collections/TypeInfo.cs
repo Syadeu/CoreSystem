@@ -77,5 +77,7 @@ namespace Syadeu.Collections
 
             return true;
         }
+
+        public static implicit operator Type(TypeInfo t) => t.Type;
     }
 }

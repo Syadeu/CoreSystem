@@ -27,16 +27,16 @@ namespace Syadeu.Presentation.Actions
     {
         public sealed class ConstActionProperty
         {
-            [JsonProperty(Order = 0, PropertyName = "FriendlyName")]
+            [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "FriendlyName")]
             public string m_FriendlyName = "None";
-            [JsonProperty(Order = 1, PropertyName = "ConstAction")]
-            public ConstActionReference m_ConstAction;
+            [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "ConstAction")]
+            public ConstActionReference m_ConstAction = new ConstActionReference();
         }
 
-        [JsonProperty(Order = 0, PropertyName = "ShaderData")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "ShaderData")]
         private Reference<ShaderConstantData>[] m_ShaderData = Array.Empty<Reference<ShaderConstantData>>();
 
-        [JsonProperty(Order = 1, PropertyName = "ConstActionProperties")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "ConstActionProperties")]
         private ConstActionProperty[] m_ConstActionProperties = Array.Empty<ConstActionProperty>();
 
         protected override void OnExecute()

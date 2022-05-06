@@ -68,8 +68,7 @@ namespace SyadeuEditor.Presentation
                         m_WasEdited = false;
                     }
 
-                    m_Open = EditorUtilities.BoxToggleButton(
-                        m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString,
+                    m_Open = CoreGUI.BoxToggleButton(
                         m_Open,
                         ColorPalettes.PastelDreams.TiffanyBlue,
                         ColorPalettes.PastelDreams.HotPink,
@@ -82,7 +81,7 @@ namespace SyadeuEditor.Presentation
 
                     using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
                     {
-                        if (EditorUtilities.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
+                        if (CoreGUI.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
                         {
                             ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
 
@@ -113,7 +112,7 @@ namespace SyadeuEditor.Presentation
 
                     EditorGUI.indentLevel++;
 
-                    using (new EditorUtilities.BoxBlock(color3))
+                    using (new CoreGUI.BoxBlock(color3))
                     {
                         if (!currentValue.IsValid())
                         {
@@ -157,7 +156,7 @@ namespace SyadeuEditor.Presentation
                 {
                     GUILayout.Label(name, GUILayout.Width(Screen.width * .25f));
                 }
-                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                clicked = CoreGUI.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
                 {
                     GenericMenu menu = new GenericMenu();
                     menu.AddDisabledItem(displayName);

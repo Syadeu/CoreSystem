@@ -24,7 +24,7 @@ using Unity.Mathematics;
 namespace SyadeuEditor.Utilities
 {
     [CustomPropertyDrawer(typeof(ScaleHandleAttribute))]
-    internal sealed class ScaleHandleAttributeDrawer : Vector3AttributeDrawer
+    internal sealed class ScaleHandleAttributeDrawer : VectorAttributeDrawer
     {
         new ScaleHandleAttribute attribute => (ScaleHandleAttribute)base.attribute;
 
@@ -117,7 +117,7 @@ namespace SyadeuEditor.Utilities
                 Handles.BeginGUI();
                 float
                     width = 100,
-                    height = PropertyDrawerHelper.GetPropertyHeight(1);
+                    height = CoreGUI.GetLineHeight(1);
 
                 var rect = AutoRect.LeftBottomAlign(width, height);
                 GUI.BeginGroup(rect, EditorStyleUtilities.Box);

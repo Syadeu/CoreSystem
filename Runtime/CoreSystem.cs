@@ -441,6 +441,7 @@ namespace Syadeu
 
         // Render
         public event Action OnRender;
+        public event Action OnFixedUpdate;
 
         public override bool HideInHierarchy => false;
 
@@ -566,6 +567,10 @@ namespace Syadeu
         private void OnGUI()
         {
             OnGUIUpdate?.Invoke();
+        }
+        private void FixedUpdate()
+        {
+            OnFixedUpdate?.Invoke();
         }
 
         #endregion

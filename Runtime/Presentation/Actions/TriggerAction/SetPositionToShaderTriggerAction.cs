@@ -29,12 +29,12 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Set PositionToShader")]
     public sealed class SetPositionToShaderTriggerAction : ShaderTriggerActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "FriendlyName")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "FriendlyName")]
         private string m_FriendlyName = "None";
 
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         public ConstActionReference<int> m_TestInt;
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         public ConstActionReference<float> m_TestFloat;
 
         protected override void OnExecute(Entity<IObject> entity)

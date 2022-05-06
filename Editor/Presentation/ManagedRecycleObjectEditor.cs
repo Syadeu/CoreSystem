@@ -8,7 +8,7 @@ using SyadeuEditor.Utilities;
 namespace SyadeuEditor.Presentation
 {
     [CustomEditor(typeof(ManagedRecycleObject))]
-    public sealed class ManagedRecycleObjectEditor : EditorEntity<ManagedRecycleObject>
+    public sealed class ManagedRecycleObjectEditor : InspectorEditor<ManagedRecycleObject>
     {
         private SerializedProperty onCreation;
         private SerializedProperty onInitializion;
@@ -23,7 +23,7 @@ namespace SyadeuEditor.Presentation
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("Recycle Object");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(onCreation, new GUIContent("인스턴스 생성 시 한번만 호출할 함수"));
@@ -35,29 +35,31 @@ namespace SyadeuEditor.Presentation
 
             if (!Application.isPlaying) return;
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
-            if (!Target.entity.IsValid())
+            if (!target.entity.IsValid())
             {
                 EditorUtilities.StringRich("Invalid Entity", 13, true);
                 return;
             }
 
-            var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Target.entity.Target);
-            drawer.OnGUI();
+            var property = SerializedObject<ObjectBase>.GetSharedObject((ObjectBase)target.entity.Target);
+            EditorGUILayout.PropertyField(property);
+            //var drawer = ObjectBaseDrawer.GetDrawer((ObjectBase)Target.entity.Target);
+            //drawer.OnGUI();
         }
 
         private void OnSceneGUI()
         {
             if (!Application.isPlaying) return;
-            else if (!Target.entity.IsValid()) return;
+            else if (!target.entity.IsValid()) return;
 
-            Vector2 guiPos = HandleUtility.WorldToGUIPoint(Target.transform.position);
+            Vector2 guiPos = HandleUtility.WorldToGUIPoint(target.transform.position);
             Handles.BeginGUI();
 
             Rect rect = new Rect(guiPos, new Vector2(180, 60));
 
-            using (new GUI.GroupScope(rect, Target.entity.Name, EditorStyleUtilities.Box))
+            using (new GUI.GroupScope(rect, target.entity.Name, EditorStyleUtilities.Box))
             {
                 EditorGUILayout.LabelField("test");
             }

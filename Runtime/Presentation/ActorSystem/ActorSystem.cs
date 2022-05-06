@@ -25,6 +25,7 @@ using Syadeu.Presentation.Events;
 using Syadeu.Presentation.Map;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -36,13 +37,18 @@ using UnityEngine.Scripting;
 namespace Syadeu.Presentation.Actor
 {
     public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>,
-        ISystemEventScheduler,
-        INotifySystemModule<AutoMoveActorModule>
+        INotifySystemModule<ActorInventoryModule>,
+        INotifySystemModule<ActorInteractionModule>,
+        ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
 
+        /// <summary>
+        /// 현재 조작되는 글로벌 액터들
+        /// </summary>
+        private readonly List<InstanceID> m_CurrentControls = new List<InstanceID>();
         private readonly List<InstanceID> m_PlayableActors = new List<InstanceID>();
 
         private readonly List<IEventHandler> m_ScheduledEvents = new List<IEventHandler>();
@@ -51,6 +57,7 @@ namespace Syadeu.Presentation.Actor
 
         private CLRContainer<IEventHandler> m_EventDataPool;
 
+        public IReadOnlyList<InstanceID> CurrentControls => m_CurrentControls;
         public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
         public IReadOnlyList<InstanceID> PlayableActors => m_PlayableActors;
 
@@ -350,6 +357,8 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
+        #region Events
+
         private int FindScheduledEvent<TEvent>(TEvent ev)
 #if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
             where TEvent : struct, IActorEvent
@@ -573,6 +582,30 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
+        #endregion
+
+        public void SetCurrentControl(params Entity<ActorEntity>[] entities)
+        {
+            ClearCurrentControl();
+            AddCurrentControl(entities);
+        }
+        public void AddCurrentControl(params Entity<ActorEntity>[] entities)
+        {
+            m_CurrentControls.AddRange(entities.Select(t => t.Idx));
+        }
+        public void RemoveCurrentControl(params Entity<ActorEntity>[] entities)
+        {
+            m_CurrentControls.RemoveAll(t => entities.Contains(t));
+        }
+        public void RemoveCurrentControl(IEnumerable<Entity<ActorEntity>> entities)
+        {
+            m_CurrentControls.RemoveAll(t => entities.Contains(t));
+        }
+        public void ClearCurrentControl()
+        {
+            m_CurrentControls.Clear();
+        }
+
         [Preserve]
         static void AOTCodeGeneration()
         {
@@ -597,35 +630,4 @@ namespace Syadeu.Presentation.Actor
             ActorSystem.PostEvent<TEvent>(Entity<ActorEntity>.Empty, default);
         }
     }
-
-    public sealed class AutoMoveActorModule : PresentationSystemModule<ActorSystem>
-    {
-        public void Register()
-        {
-
-        }
-
-        public enum MoveHandle
-        {
-            RandomPosition,
-            Waypoint
-        }
-        public struct AutoMoveOptions
-        {
-            private InstanceID m_Entity;
-
-            private MoveHandle m_MoveHandle;
-            /*                                      */
-            // MoveHandle.RandomPosition
-            private bool
-                m_UseXAxis, m_UseYAxis, m_UseZAxis;
-            private float3
-                m_Minimum, m_Maximum;
-            /*                                      */
-            // MoveHandle.Waypoint
-            //private bool
-            //    m_
-        }
-    }
-    
 }

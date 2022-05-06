@@ -115,12 +115,14 @@ namespace Syadeu.Presentation.Map
                 m_Rotation = quaternion.identity;
             }
         }
+        [Serializable]
         public sealed class EntityDataObject : Entry
         {
             [UnityEngine.SerializeField]
             [JsonProperty(Order = 0, PropertyName = "Object")]
             public Reference<EntityDataBase> m_Object = Reference<EntityDataBase>.Empty;
         }
+        [Serializable]
         public sealed class DataObject : Entry
         {
             [UnityEngine.SerializeField]

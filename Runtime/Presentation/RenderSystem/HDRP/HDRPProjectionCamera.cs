@@ -49,6 +49,7 @@ namespace Syadeu.Presentation.Render
         {
             m_Transform.position = pos + new Vector3(0, 10, 0);
         }
+
         public void Dispose()
         {
             m_Module.ReserveProjectionCamere(this, m_Camera);

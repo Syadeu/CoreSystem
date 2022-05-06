@@ -271,7 +271,7 @@ namespace SyadeuEditor.Presentation
                 headerString,
                 EditorStyleUtilities.HeaderStyle);
             HeaderLinePos.width = Screen.width;
-            EditorUtilities.Line(HeaderLinePos);
+            CoreGUI.Line(HeaderLinePos);
 
             if (Application.isPlaying && !(CurrentWindow is EntityDebugWindow))
             {
@@ -422,7 +422,7 @@ namespace SyadeuEditor.Presentation
 
             public void OnGUI()
             {
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     DrawTools();

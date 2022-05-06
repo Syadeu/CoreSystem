@@ -24,15 +24,15 @@ namespace Syadeu.Presentation.Actions
     [Obsolete]
     public sealed class LoadSceneTriggerAction : TriggerAction, IEventSequence
     {
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         private bool m_ToMain = false;
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         private int m_SceneIndex = 0;
 
         [Space]
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         private float m_PreDelay = 1;
-        [JsonProperty]
+        [UnityEngine.SerializeField, JsonProperty]
         private float m_PostDelay = 2;
 
         public bool KeepWait => false;

@@ -17,35 +17,39 @@ using Unity.Mathematics;
 
 namespace Syadeu.Collections
 {
+    /// <summary>
+    /// <see cref="TimeSpan"/> 의 Serialized 버전
+    /// </summary>
     [Serializable]
     public struct TimeData
     {
         public static TimeData Current => new TimeData(DateTime.UtcNow.TimeOfDay);
 
-        private TimeSpan m_Time;
+        [UnityEngine.SerializeField]
+        private int3 m_Time;
 
-        public TimeSpan Time => m_Time;
+        public TimeSpan Time => new TimeSpan(m_Time.x, m_Time.y, m_Time.z);
 
         public TimeData(int hours, int minutes, int seconds)
         {
-            m_Time = new TimeSpan(hours, minutes, seconds);
+            m_Time = new int3(hours, minutes, seconds);
         }
         public TimeData(int3 time)
         {
-            m_Time = new TimeSpan(time.x, time.y, time.z);
+            m_Time = new int3(time.x, time.y, time.z);
         }
         public TimeData(TimeSpan time)
         {
-            m_Time = time;
+            m_Time = new int3(time.Hours, time.Minutes, time.Seconds);
         }
 
         public static TimeData operator +(TimeData x, TimeData y)
         {
-            return new TimeData(TimeSpan.FromTicks(x.m_Time.Ticks + y.m_Time.Ticks));
+            return new TimeData(TimeSpan.FromTicks(x.Time.Ticks + y.Time.Ticks));
         }
         public static TimeData operator-(TimeData x, TimeData y)
         {
-            return new TimeData(TimeSpan.FromTicks(x.m_Time.Ticks - y.m_Time.Ticks));
+            return new TimeData(TimeSpan.FromTicks(x.Time.Ticks - y.Time.Ticks));
         }
     }
 }

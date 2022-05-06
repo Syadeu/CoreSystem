@@ -84,6 +84,8 @@ namespace Syadeu.Mono
             [Obsolete]
             public UnityEngine.Object LoadAsset(FixedString128Bytes name)
             {
+                if (!m_RefPrefab.IsValid()) return null;
+
                 if (!name.IsEmpty)
                 {
                     if (m_SubAssets == null) m_SubAssets = new Dictionary<FixedString128Bytes, AssetReference>();
@@ -273,34 +275,34 @@ namespace Syadeu.Mono
         }
 
         [SerializeField] private List<ObjectSetting> m_ObjectSettings = new List<ObjectSetting>();
-        private Dictionary<UnityEngine.Object, int> m_PrefabHashMap;
+        //private Dictionary<UnityEngine.Object, int> m_PrefabHashMap;
 
         public List<ObjectSetting> ObjectSettings => m_ObjectSettings;
 
-        public override void OnInitialize()
-        {
-            ReInitialize();
-        }
-        public void ReInitialize()
-        {
-            m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
-            for (int i = 0; i < m_ObjectSettings.Count; i++)
-            {
-                var obj = m_ObjectSettings[i].LoadAsset(string.Empty);
-                if (obj == null) continue;
+        //public override void OnInitialize()
+        //{
+        //    ReInitialize();
+        //}
+        //public void ReInitialize()
+        //{
+        //    m_PrefabHashMap = new Dictionary<UnityEngine.Object, int>();
+        //    for (int i = 0; i < m_ObjectSettings.Count; i++)
+        //    {
+        //        var obj = m_ObjectSettings[i].LoadAsset(string.Empty);
+        //        if (obj == null) continue;
 
-                m_PrefabHashMap.Add(obj, i);
-            }
-        }
+        //        m_PrefabHashMap.Add(obj, i);
+        //    }
+        //}
 
-        public ObjectSetting GetSettingWithObject(UnityEngine.Object obj)
-        {
-            if (!m_PrefabHashMap.TryGetValue(obj, out int index))
-            {
-                return null;
-            }
+        //public ObjectSetting GetSettingWithObject(UnityEngine.Object obj)
+        //{
+        //    if (!m_PrefabHashMap.TryGetValue(obj, out int index))
+        //    {
+        //        return null;
+        //    }
 
-            return m_ObjectSettings[index];
-        }
+        //    return m_ObjectSettings[index];
+        //}
     }
 }

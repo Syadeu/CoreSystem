@@ -117,6 +117,35 @@ namespace SyadeuEditor.Utilities
 
         #endregion
 
+        #region ConstActionReference
+
+        public static void SetConstActionReference(SerializedProperty property, Guid guid, params object[] args)
+        {
+            ConstActionReferenceSetGuid(property, guid);
+            ConstActionReferenceSetArguments(property, args);
+        }
+        public static void ConstActionReferenceSetGuid(SerializedProperty property, Guid guid)
+        {
+            var guidProp = property.FindPropertyRelative("m_Guid");
+            guidProp.stringValue = guid.ToString();
+        }
+        public static void ConstActionReferenceSetArguments(SerializedProperty property, params object[] args)
+        {
+            var argsProp = property.FindPropertyRelative("m_Arguments");
+
+            argsProp.ClearArray();
+            for (int i = 0; i < args.Length; i++)
+            {
+                argsProp.InsertArrayElementAtIndex(0);
+            }
+            for (int i = 0; i < args.Length; i++)
+            {
+                argsProp.GetArrayElementAtIndex(i).managedReferenceValue = args[i];
+            }
+        }
+
+        #endregion
+
         #region Unity.Collections
 
         public static void ApplyToProperty(this in FixedString128Bytes t, SerializedProperty property) => SetFixedString128Bytes(property, t);
@@ -186,6 +215,8 @@ namespace SyadeuEditor.Utilities
 
         public static FixedBytes126 ReadFixedBytes126(SerializedProperty property)
         {
+            const string c_Str = "offset0000";
+
             SerializedProperty item = property.FindPropertyRelative("offset0000");
             FixedBytes126 result = new FixedBytes126();
             result.offset0000 = ReadFixedBytes16(item);
@@ -254,6 +285,8 @@ namespace SyadeuEditor.Utilities
         }
         public static void SetFixedBytes126(SerializedProperty property, FixedBytes126 bytes)
         {
+            const string c_Str = "offset0000";
+
             SerializedProperty item = property.FindPropertyRelative("offset0000");
             SetFixedBytes16(item, bytes.offset0000);
 
@@ -320,7 +353,9 @@ namespace SyadeuEditor.Utilities
 
         public static FixedBytes16 ReadFixedBytes16(SerializedProperty property)
         {
-            SerializedProperty item = property.FindPropertyRelative("byte0000");
+            const string c_Str = "byte0000";
+
+            SerializedProperty item = property.FindPropertyRelative(c_Str);
             FixedBytes16 result = new FixedBytes16();
             result.byte0000 = (byte)item.intValue;
 
@@ -455,10 +490,30 @@ namespace SyadeuEditor.Utilities
 
             throw new NotImplementedException();
         }
+        public static Vector4 GetVector4(this SerializedProperty t)
+        {
+            SerializedProperty
+                x = t.FindPropertyRelative("x"),
+                y = t.FindPropertyRelative("y"),
+                z = t.FindPropertyRelative("z"),
+                w = t.FindPropertyRelative("w");
+
+            return new Vector4(x.floatValue, y.floatValue, z.floatValue, w.floatValue);
+        }
 
         public static Type GetSystemType(this SerializedProperty t)
         {
-            return t.GetTargetObject().GetType();
+            return t.GetTargetObject()?.GetType();
+        }
+        public static Type GetFieldTypeType(this SerializedProperty t)
+        {
+            var fieldInfo = t.GetFieldInfo();
+            if (t.IsInArray())
+            {
+                return fieldInfo.FieldType.GetElementType();
+            }
+
+            return fieldInfo.FieldType;
         }
 
         public static bool IsTypeOf<T>(this SerializedProperty t)
@@ -636,6 +691,16 @@ namespace SyadeuEditor.Utilities
             }
         }
 
+        public static float GetPropertyHeight(this SerializedProperty t, GUIContent label)
+        {
+            //PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
+            //if (propertyDrawer != null)
+            //{
+            //    return propertyDrawer.GetPropertyHeight(t, label);
+            //}
+            return EditorGUI.GetPropertyHeight(t, label);
+        }
+
         public static void Draw(this SerializedProperty t, Rect rect, GUIContent label, bool includeChildren)
         {
             PropertyDrawer propertyDrawer = GetPropertyDrawer(t);
@@ -654,9 +719,11 @@ namespace SyadeuEditor.Utilities
 
             if (propertyDrawer == null)
             {
+                Rect temp = rect.Pop(EditorGUI.GetPropertyHeight(t));
                 EditorGUI.PropertyField(
-                    rect.Pop(EditorGUI.GetPropertyHeight(t))
+                    temp
                     , t, label, includeChildren);
+                //EditorGUI.LabelField(temp, "not found");
                 return;
             }
 
@@ -675,14 +742,16 @@ namespace SyadeuEditor.Utilities
                 Type foundDrawerType = null;
                 Type foundDrawerTargetType = null;
 
-                //$"{propertyType.Name} start".ToLog();
+                //UnityEngine.Debug.Log($"{propertyType.Name} start");
                 foreach (var drawerType in TypeHelper.GetTypesIter(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttributes<CustomPropertyDrawer>().Any()))
                 {
                     foreach (var customPropertyDrawer in drawerType.GetCustomAttributes<CustomPropertyDrawer>())
                     {
                         Type targetType = (Type)CachedPropertyTypeField.GetValue(customPropertyDrawer);
                         bool useChild = (bool)CachedPropertyUseChildField.GetValue(customPropertyDrawer);
-                        //$"target:{targetType.Name} usechild:{useChild}".ToLog();
+                        //UnityEngine.Debug.Log(
+                        //    $"{propertyType.Name}:: target:{targetType.Name} " +
+                        //    $"usechild:{useChild} ? {TypeHelper.InheritsFrom(propertyType, targetType)}");
                         if (targetType.Equals(propertyType))
                         {
                             //$"target:{targetType.Name} {propertyType.Name}".ToLog();
@@ -690,12 +759,13 @@ namespace SyadeuEditor.Utilities
 
                             break;
                         }
-                        else if (useChild && (propertyType.IsSubclassOf(targetType) || targetType.IsAssignableFrom(propertyType)))
+                        else if (
+                            useChild && TypeHelper.InheritsFrom(propertyType, targetType))
                         {
                             if (foundDrawerType != null)
                             {
                                 // 만약 더 상위를 타겟으로 하고 있으면 교체
-                                if (foundDrawerTargetType.IsAssignableFrom(targetType))
+                                if (TypeHelper.InheritsFrom(foundDrawerTargetType, targetType))
                                 {
                                     foundDrawerType = drawerType;
                                     foundDrawerTargetType = targetType;
@@ -736,38 +806,44 @@ namespace SyadeuEditor.Utilities
 
             string path = prop.propertyPath.Replace(".Array.data[", "[");
             Type t = prop.serializedObject.targetObject.GetType();
+            object currentValue = prop.serializedObject.targetObject;
             FieldInfo currentField = null;
             string[] elements = path.Split('.');
 
             foreach (string element in elements)
             {
                 Type currentType = currentField == null ? t : currentField.FieldType;
+                if (currentField != null)
+                {
+                    currentValue = currentField.GetValue(currentValue);
+                }
+
+                if (currentType.Equals(TypeHelper.TypeOf<object>.Type))
+                {
+                    currentType = currentValue.GetType();
+                }
+                //if (currentType.IsArray) currentType = currentType.GetElementType();
+
                 if (element.Contains("["))
                 {
                     string elementName = element.Substring(0, element.IndexOf("["));
-                    //int index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", string.Empty).Replace("]", string.Empty));
-
-                    //obj = GetValue_Imp(obj, elementName, index);
-                    currentField = currentType.GetField(elementName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    currentField = TypeHelper.GetFieldInfoRecursive(currentType, elementName);
+                    if (currentField == null)
+                    {
+                        throw new Exception($"1. from ({currentType.FullName}) {elementName}:{path}");
+                    }
                 }
                 else
                 {
-                    //obj = GetValue_Imp(obj, element);
-
-                    currentField = currentType.GetField(element, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    currentField = TypeHelper.GetFieldInfoRecursive(currentType, element);
+                    if (currentField == null)
+                    {
+                        throw new Exception($"2. from ({currentType.FullName}) :: {element}:{path}");
+                    }
                 }
             }
 
             return currentField;
         }
     }
-
-    //[CustomPropertyDrawer(typeof(List<>), true)]
-    //internal sealed class SerializedArrayDrawer : PropertyDrawer<Array>
-    //{
-    //    protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
-    //    {
-    //        EditorGUI.LabelField(rect.Pop(), "test");
-    //    }
-    //}
 }

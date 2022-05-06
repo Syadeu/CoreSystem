@@ -220,23 +220,29 @@ namespace Syadeu.Presentation
                 TriggerBoundAttribute fromAtt = from.GetAttribute<TriggerBoundAttribute>();
                 TriggerBoundAttribute toAtt = to.GetAttribute<TriggerBoundAttribute>();
 
-                AABB fromAABB = fromAtt.m_MatchWithAABB ? from.transform.aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Center);
-                AABB toAABB = toAtt.m_MatchWithAABB ? to.transform.aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Center);
+                AABB fromAABB = fromAtt.m_MatchWithAABB ? from.transform.aabb : new AABB(fromAtt.m_Center + from.transform.position, fromAtt.m_Size);
+                AABB toAABB = toAtt.m_MatchWithAABB ? to.transform.aabb : new AABB(toAtt.m_Center + to.transform.position, toAtt.m_Size);
 
                 CoreSystem.Logger.False(fromAtt.m_Triggered == toAtt.m_Triggered, "??");
 
                 if (fromAABB.Intersect(toAABB))
                 {
                     //"1".ToLog();
-                    if (CanTriggerable(in fromAtt, in to) && !fromAtt.m_Triggered.Contains(to))
+                    if (CanTriggerable(in fromAtt, in to) &&
+                        CanTriggerableLayer(in fromAtt, in toAtt) &&
+                        !fromAtt.m_Triggered.Contains(to))
                     {
                         fromAtt.m_Triggered.Add(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, true));
+                        fromAtt.ProcessEvent(from, to, true);
                     }
-                    if (CanTriggerable(in toAtt, in from) && !toAtt.m_Triggered.Contains(from))
+                    if (CanTriggerable(in toAtt, in from) &&
+                        CanTriggerableLayer(in toAtt, in fromAtt) &&
+                        !toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Add(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, true));
+                        toAtt.ProcessEvent(to, from, true);
                     }
                 }
                 else
@@ -245,11 +251,13 @@ namespace Syadeu.Presentation
                     {
                         fromAtt.m_Triggered.Remove(to);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
+                        fromAtt.ProcessEvent(from, to, false);
                     }
                     if (/*CanTriggerable(in toAtt, in from) && */toAtt.m_Triggered.Contains(from))
                     {
                         toAtt.m_Triggered.Remove(from);
                         eventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
+                        toAtt.ProcessEvent(to, from, false);
                     }
                 }
             }
@@ -258,6 +266,18 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        private static bool CanTriggerableLayer(in TriggerBoundAttribute from, in TriggerBoundAttribute to)
+        {
+            if (from.m_IgnoreLayers.Count == 0 ||
+                to.m_Layer.IsEmpty()) return true;
+
+            for (int i = 0; i < from.m_IgnoreLayers.Count; i++)
+            {
+                if (from.m_IgnoreLayers[i].Hash.Equals(to.m_Layer.Hash)) return false;
+            }
+
+            return true;
+        }
         private static bool CanTriggerable(in TriggerBoundAttribute att, in Entity<IEntity> target)
         {
             if (!att.Enabled) return false;

@@ -30,13 +30,12 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorEntity : EntityBase,
         INotifyComponent<ActorFactionComponent>
     {
-        [JsonProperty(Order = 0, PropertyName = "Faction")] private Reference<ActorFaction> m_Faction;
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "Faction")]
+        private Reference<ActorFaction> m_Faction = Reference<ActorFaction>.Empty;
 
-        [Space, Header("TriggerAction")]
-        [JsonProperty(Order = 1, PropertyName = "OnCreated")]
-        internal Reference<TriggerAction>[] m_OnCreated = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 2, PropertyName = "OnDestroy")]
-        internal Reference<TriggerAction>[] m_OnDestroy = Array.Empty<Reference<TriggerAction>>();
+        [Space]
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Events")]
+        internal EntityEventProperty m_Events = new EntityEventProperty();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
         [JsonIgnore] public ActorFaction Faction => m_Faction.IsValid() ? m_Faction.GetObject() : null;
@@ -52,7 +51,7 @@ namespace Syadeu.Presentation.Actor
             AotHelper.EnsureList<ActorEntity>();
         }
     }
-    internal sealed class ActorProccesor : EntityProcessor<ActorEntity>
+    internal sealed class ActorEntityProccesor : EntityProcessor<ActorEntity>
     {
         protected override void OnCreated(ActorEntity actor)
         {
@@ -95,13 +94,12 @@ namespace Syadeu.Presentation.Actor
                 m_Enemies = enemies
             });
 
-            actor.m_OnCreated.Execute(entity);
+            actor.m_Events.ExecuteOnCreated(entity);
         }
         protected override void OnDestroy(ActorEntity actor)
         {
             Entity<IObject> entity = Entity<IObject>.GetEntityWithoutCheck(actor.Idx);
-
-            actor.m_OnDestroy.Execute(entity);
+            actor.m_Events.ExecuteOnDestroy(entity);
         }
     }
 }

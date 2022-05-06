@@ -22,7 +22,8 @@ namespace Syadeu.Presentation.Actions
     [System.ComponentModel.DisplayName("TriggerAction: Set Animator Integer")]
     public sealed class AnimatorSetIntegerAction : AnimatorParameterActionBase
     {
-        [JsonProperty(Order = 0, PropertyName = "Value")] private int m_Value;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Value")] 
+        private int m_Value;
 
         protected override void OnExecute(Entity<IObject> entity)
         {

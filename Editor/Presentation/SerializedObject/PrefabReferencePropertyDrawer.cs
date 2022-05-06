@@ -1,4 +1,5 @@
-﻿using Syadeu.Collections;
+﻿using Syadeu;
+using Syadeu.Collections;
 using Syadeu.Mono;
 using SyadeuEditor.Utilities;
 using System;
@@ -14,6 +15,8 @@ namespace SyadeuEditor.Presentation
     [CustomPropertyDrawer(typeof(IPrefabReference), true)]
     public sealed class PrefabReferencePropertyDrawer : PropertyDrawer<IPrefabReference>
     {
+        private bool m_Changed = false;
+
         private static SerializedProperty GetIndexProperty(SerializedProperty property)
         {
             const string c_Name = "m_Idx";
@@ -27,46 +30,177 @@ namespace SyadeuEditor.Presentation
             return property.FindPropertyRelative(c_Name);
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        public override bool CanCacheInspectorGUI(SerializedProperty property)
         {
-            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+            return false;
+        }
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return CoreGUI.GetLineHeight(1);
         }
 
+        protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        {
+            if (m_Changed)
+            {
+                GUI.changed = true;
+                m_Changed = false;
+            }
+        }
         protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
-            SerializedProperty 
+            #region Setup
+
+            SerializedProperty
                 idxProperty = GetIndexProperty(property),
                 subAssetNameProperty = GetSubAssetNameProperty(property);
 
             PrefabReference currentValue 
                 = SerializedPropertyHelper.ReadPrefabReference(idxProperty, subAssetNameProperty);
+            IPrefabResource objSetting = currentValue.GetObjectSetting();
 
             GUIContent displayName = currentValue.GetDisplayName();
 
-            Rect propertyRect = rect.Pop();
-            var propRects = AutoRect.DivideWithRatio(propertyRect, .2f, .8f);
+            #endregion
 
-            EditorGUI.LabelField(propRects[0], label);
+            #region Rect Setup
+            
+            Rect 
+                propertyRect = EditorGUI.IndentedRect(rect.Pop()),
+                buttonRect, expandRect;
 
-            if (GUI.Button(propRects[1], displayName, EditorStyleUtilities.SelectorStyle))
+            if (!property.IsInArray())
+            {
+                var rects = AutoRect.DivideWithRatio(propertyRect, .2f, .8f);
+                EditorGUI.LabelField(rects[0], label);
+                buttonRect = rects[1];
+
+                Rect[] tempRects = AutoRect.DivideWithFixedWidthRight(rects[1], 20);
+                expandRect = tempRects[0];
+                AutoRect.AlignRect(ref buttonRect, expandRect);
+            }
+            else
+            {
+                if (property.GetParent().CountInProperty() > 1)
+                {
+                    var rects = AutoRect.DivideWithRatio(propertyRect, .2f, .8f);
+                    EditorGUI.LabelField(rects[0], label);
+                    buttonRect = rects[1];
+
+                    Rect[] tempRects = AutoRect.DivideWithFixedWidthRight(rects[1], 20, 20);
+                    expandRect = tempRects[0];
+                    AutoRect.AlignRect(ref buttonRect, expandRect);
+                }
+                else
+                {
+                    buttonRect = propertyRect;
+
+                    Rect[] tempRects = AutoRect.DivideWithFixedWidthRight(propertyRect, 20, 20);
+                    expandRect = tempRects[0];
+                    AutoRect.AlignRect(ref buttonRect, expandRect);
+                }
+            }
+
+            #endregion
+
+            bool clicked = CoreGUI.BoxButton(buttonRect, displayName, ColorPalettes.PastelDreams.Mint, () =>
+            {
+                GenericMenu menu = new GenericMenu();
+
+                menu.AddDisabledItem(displayName);
+                menu.AddSeparator(string.Empty);
+
+                if (objSetting == null)
+                {
+                    menu.AddDisabledItem(new GUIContent("Select"));
+                }
+                else
+                {
+                    menu.AddItem(new GUIContent("Select"), false, () =>
+                    {
+                        Selection.activeObject = currentValue.GetEditorAsset();
+                        EditorGUIUtility.PingObject(Selection.activeObject);
+                    });
+                }
+
+                menu.AddDisabledItem(new GUIContent("Edit"));
+
+                menu.ShowAsContext();
+            });
+
+            bool disable = currentValue.IsNone() || !currentValue.IsValid();
+            using (new EditorGUI.DisabledGroupScope(disable))
+            {
+                string str = property.isExpanded ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
+                property.isExpanded = CoreGUI.BoxToggleButton(
+                    expandRect,
+                    property.isExpanded,
+                    new GUIContent(str),
+                    ColorPalettes.PastelDreams.TiffanyBlue,
+                    ColorPalettes.PastelDreams.HotPink
+                    );
+
+                //if (property.isExpanded)
+                //{
+                //    Editor.CreateCachedEditor(currentValue.GetEditorAsset(), null, ref editor);
+
+                //    using (new EditorGUI.DisabledGroupScope(true))
+                //    {
+                //        editor.DrawHeader();
+                //        editor.OnInspectorGUI();
+                //    }
+                //}
+            }
+
+            //if (GUI.Button(propRects[1], displayName, EditorStyleUtilities.SelectorStyle))
+            if (clicked)
             {
                 Rect popupRect = GUILayoutUtility.GetRect(150, 300);
                 popupRect.position = Event.current.mousePosition;
 
                 Type type = fieldInfo.FieldType;
-                List<ReferenceAsset> list;
-
-                if (type.GenericTypeArguments.Length > 0)
+#pragma warning disable SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
+                if (type.IsArray)
                 {
-                    list = PrefabList.Instance.ObjectSettings
-                        .Where((other) =>
-                        {
-                            if (other.GetEditorAsset() == null) return false;
+                    type = type.GetElementType();
+                }
+                //else if (TypeHelper.InheritsFrom(type, typeof(IList<>)))
+                //{
+                //    type = type.GetGenericArguments()[0];
+                //}
+#pragma warning restore SD0001 // typeof(T) 는 매 호출시마다 Reflection 으로 새로 값을 받아옵니다.
+                List<ReferenceAsset> list;
+                if (type.GetGenericArguments().Length > 0)
+                {
+                    Type targetType = type.GetGenericArguments()[0];
 
-                            if (type.GenericTypeArguments[0].IsAssignableFrom(other.GetEditorAsset().GetType()))
+                    list = PrefabList.Instance.ObjectSettings
+                        .Where(other =>
+                        {
+                            UnityEngine.Object editorAsset = other.GetEditorAsset();
+                            if (editorAsset == null) return false;
+
+                            if (editorAsset is GameObject gameObj)
+                            {
+                                if (TypeHelper.TypeOf<GameObject>.Type.Equals(targetType))
+                                {
+                                    return true;
+                                }
+                                else if (TypeHelper.InheritsFrom<UnityEngine.Component>(targetType))
+                                {
+                                    return gameObj.GetComponent(targetType) != null;
+                                }
+                                return false;
+                            }
+                            else if (TypeHelper.InheritsFrom(editorAsset.GetType(), targetType))
                             {
                                 return true;
                             }
+                            //else if (targetType.IsAssignableFrom(editorAsset.GetType()))
+                            //{
+                            //    return true;
+                            //}
+
                             return false;
                         })
                         .Select(t => new ReferenceAsset()
@@ -123,6 +257,9 @@ namespace SyadeuEditor.Presentation
                             );
 
                         idxProperty.serializedObject.ApplyModifiedProperties();
+
+                        //m_ChangedTarget = prefabIdx;
+                        m_Changed = true;
                     },
                     (objSet) =>
                     {
@@ -168,7 +305,7 @@ namespace SyadeuEditor.Presentation
 
             bool clicked;
             {
-                clicked = EditorUtilities.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
+                clicked = CoreGUI.BoxButton(displayName.text, ColorPalettes.PastelDreams.Mint, () =>
                 {
                     GenericMenu menu = new GenericMenu();
 

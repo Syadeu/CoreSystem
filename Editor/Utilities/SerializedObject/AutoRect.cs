@@ -1,8 +1,25 @@
-﻿using UnityEditor;
+﻿// Copyright 2022 Seung Ha Kim
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using UnityEditor;
 using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    /// <summary>
+    /// 자동으로 공간을 계산하는 <see cref="Rect"/> 입니다.
+    /// </summary>
     public struct AutoRect
     {
         public static float SpaceHeight => EditorGUIUtility.singleLineHeight;
@@ -45,7 +62,11 @@ namespace SyadeuEditor.Utilities
             //temp = EditorGUI.IndentedRect(temp);
             return temp;
         }
-        public Rect Pop() => Pop(PropertyDrawerHelper.GetPropertyHeight(1));
+        /// <summary>
+        /// <see cref="CoreGUI.GetLineHeight(int)"/> 의 1 만큼의 높이로 반환합니다.
+        /// </summary>
+        /// <returns></returns>
+        public Rect Pop() => Pop(CoreGUI.GetLineHeight(1));
 
         public void Space()
         {
@@ -67,6 +88,23 @@ namespace SyadeuEditor.Utilities
             rect.width -= pixel;
 
             return rect;
+        }
+
+        public static Rect[] Divide(Rect rect, int count)
+        {
+            float perRectWidth = rect.width / count;
+
+            Rect[] rects = new Rect[count];
+            var temp = rect;
+            for (int i = 0; i < count; i++)
+            {
+                rects[i] = new Rect(temp);
+                rects[i].width = perRectWidth;
+
+                temp.x += rects[i].width;
+            }
+
+            return rects;
         }
 
         public static Rect[] DivideWithRatio(Rect rect, params float[] ratio)
@@ -110,8 +148,14 @@ namespace SyadeuEditor.Utilities
         {
             Rect[] array = new Rect[width.Length];
 
+            float widthSum = 0;
+            for (int i = 0; i < width.Length; i++)
+            {
+                widthSum += width[i];
+            }
+
             array[0] = rect;
-            array[0].x = rect.x + rect.width - (width[0] * array.Length);
+            array[0].x = rect.x + rect.width - widthSum;
             array[0].width = width[0];
 
             float nextX = array[0].x + width[0];

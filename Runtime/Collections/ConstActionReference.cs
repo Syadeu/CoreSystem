@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Seung Ha Kim
+﻿// Copyright 2022 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,34 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
+#endif
+
 using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Syadeu.Collections
 {
     /// <inheritdoc cref="IConstActionReference"/>
     /// <typeparam name="TValue">이 액션이 수행했을 때 반환하는 값의 타입입니다.</typeparam>
+    [Serializable]
     public sealed class ConstActionReference<TValue> : IConstActionReference
     {
+        [SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Guid")]
-        private Guid m_Guid;
+        private string m_Guid = String.Empty;
+        [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
-        private object[] m_Arguments;
+        private object[] m_Arguments = Array.Empty<object>();
 
-        public Guid Guid => m_Guid;
+        public Guid Guid
+        {
+            get
+            {
+                if (!Guid.TryParse(m_Guid, out var result)) return Guid.Empty;
+                return result;
+            }
+        }
         public object[] Arguments => m_Arguments;
 
         public ConstActionReference()
         {
-            m_Guid = Guid.Empty;
+            m_Guid = Guid.Empty.ToString();
             m_Arguments = Array.Empty<object>();
         }
         public ConstActionReference(Guid guid, IEnumerable<object> args)
         {
-            m_Guid = guid;
+            m_Guid = guid.ToString();
             if (args == null || !args.Any())
             {
                 m_Arguments = Array.Empty<object>();
@@ -51,24 +66,34 @@ namespace Syadeu.Collections
         public void SetArguments(params object[] args) => m_Arguments = args;
     }
     /// <inheritdoc cref="IConstActionReference"/>
+    [Serializable]
     public sealed class ConstActionReference : IConstActionReference
     {
+        [SerializeField]
         [JsonProperty(Order = 0, PropertyName = "Guid")]
-        private Guid m_Guid;
+        private string m_Guid = String.Empty;
+        [SerializeReference]
         [JsonProperty(Order = 1, PropertyName = "Arguments")]
         private object[] m_Arguments;
 
-        public Guid Guid => m_Guid;
+        public Guid Guid
+        {
+            get
+            {
+                if (!Guid.TryParse(m_Guid, out var result)) return Guid.Empty;
+                return result;
+            }
+        }
         public object[] Arguments => m_Arguments;
 
         public ConstActionReference()
         {
-            m_Guid = Guid.Empty;
+            m_Guid = Guid.Empty.ToString();
             m_Arguments = Array.Empty<object>();
         }
         public ConstActionReference(Guid guid, IEnumerable<object> args)
         {
-            m_Guid = guid;
+            m_Guid = guid.ToString();
             if (args == null || !args.Any())
             {
                 m_Arguments = Array.Empty<object>();

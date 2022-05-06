@@ -34,15 +34,15 @@ namespace Syadeu.Presentation.Actions
             Instant,
             Lerp
         }
-        [JsonProperty(Order = 1, PropertyName = "UpdateType")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "UpdateType")]
         private Update m_UpdateType = Update.Instant;
 
         [Tooltip("UpdateType 이 Lerp 일 경우에만 적용됩니다.")]
-        [JsonProperty(Order = 2, PropertyName = "TargetUpdateTime")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "TargetUpdateTime")]
         private float m_TargetUpdateTime = 0.1f;
 
         [Space, Header("Sequence")]
-        [JsonProperty(Order = 2, PropertyName = "AfterDelay")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "AfterDelay")]
         private float m_AfterDelay = 0;
 
         [JsonIgnore] private bool m_KeepWait = false;

@@ -8,7 +8,10 @@
         "Unity.InputSystem",
         "Unity.Mathematics",
         "Unity.Jobs",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "UnityEngine.UIElementsModule",
+        "UnityEngine.UIElementsInputSystemModule",
+        "com.alelievr.NodeGraphProcessor.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -23,6 +26,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.ui",
+            "expression": "1.0.0",
+            "define": "UNITY_UI"
+        }
+    ],
     "noEngineReferences": false
 }

@@ -364,7 +364,7 @@ namespace SyadeuEditor.Utilities
         {
             if (list == null) list = (IList)Activator.CreateInstance(m_DeclaredType);
 
-            using (new EditorUtilities.BoxBlock(color3))
+            using (new CoreGUI.BoxBlock(color3))
             {
                 #region Header
                 
@@ -419,7 +419,7 @@ namespace SyadeuEditor.Utilities
                 if (m_Open && m_ElementDrawers.Count > 0)
                 {
                     EditorGUI.indentLevel++;
-                    using (new EditorUtilities.BoxBlock(color2))
+                    using (new CoreGUI.BoxBlock(color2))
                     {
                         for (int i = 0; i < m_ElementDrawers.Count; i++)
                         {
@@ -446,7 +446,7 @@ namespace SyadeuEditor.Utilities
                             if (!m_ElementOpen[i]) continue;
 
                             EditorGUI.indentLevel++;
-                            using (new EditorUtilities.BoxBlock(Color.black))
+                            using (new CoreGUI.BoxBlock(Color.black))
                             {
                                 using (new EditorGUILayout.HorizontalScope())
                                 {
@@ -459,7 +459,7 @@ namespace SyadeuEditor.Utilities
                                     }
                                 }
 
-                                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
+                                if (i + 1 < m_ElementDrawers.Count) CoreGUI.Line();
                             }
                             EditorGUI.indentLevel--;
                         }
@@ -586,7 +586,7 @@ namespace SyadeuEditor.Utilities
             if (!m_ElementOpen[i]) return;
 
             EditorGUI.indentLevel++;
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -601,7 +601,7 @@ namespace SyadeuEditor.Utilities
                     }
                 }
 
-                if (i + 1 < m_ElementDrawers.Count) EditorUtilities.Line();
+                if (i + 1 < m_ElementDrawers.Count) CoreGUI.Line();
             }
             EditorGUI.indentLevel--;
         }
@@ -758,7 +758,7 @@ namespace SyadeuEditor.Utilities
             //    DrawSystemAttribute(in item);
             //}
 
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 if (m_EnableFoldout && FieldCount > 1)
                 {

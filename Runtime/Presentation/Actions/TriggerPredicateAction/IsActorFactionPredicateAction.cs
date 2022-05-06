@@ -34,11 +34,11 @@ namespace Syadeu.Presentation.Actions
             False
         }
 
-        [JsonProperty(Order = 0, PropertyName = "PredicateType")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "PredicateType")]
         private PredicateType m_PredicateType = PredicateType.True;
 
-        [JsonProperty(Order = 1, PropertyName = "Value")]
-        private Reference<ActorFaction>[] m_Value = Array.Empty<Reference<ActorFaction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "Value")]
+        private ArrayWrapper<Reference<ActorFaction>> m_Value = Array.Empty<Reference<ActorFaction>>();
 
         protected override bool OnExecute(Entity<IObject> entity)
         {

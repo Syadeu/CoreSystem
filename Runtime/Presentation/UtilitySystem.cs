@@ -18,7 +18,6 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Threading;
-using System;
 using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
@@ -102,48 +101,4 @@ namespace Syadeu.Presentation
 
         public int CreateHashCode() => m_Random.NextInt(int.MinValue, int.MaxValue);
     }
-
-    public struct PrefabPreloader : IDisposable
-    {
-        private UnsafeStream.Writer m_Writer;
-
-        internal PrefabPreloader(UnsafeStream.Writer wr)
-        {
-            m_Writer = wr;
-
-            m_Writer.BeginForEachIndex(0);
-        }
-
-        public void Add(PrefabReference prefab)
-        {
-            m_Writer.Write(prefab);
-        }
-        public void Add(params PrefabReference[] prefabs)
-        {
-            for (int i = 0; i < prefabs.Length; i++)
-            {
-                m_Writer.Write(prefabs[i]);
-            }
-        }
-
-        void IDisposable.Dispose()
-        {
-            m_Writer.EndForEachIndex();
-        }
-    }
-    /// <summary>
-    /// Application initialize 단계에서 에셋을 프리로드할 수 있는 interface 입니다.
-    /// </summary>
-    public interface IPrefabPreloader
-    {
-        /// <summary>
-        /// Preload 를 등록하는 메소드입니다.
-        /// </summary>
-        /// <remarks>
-        /// <seealso cref="PrefabPreloader.Add(PrefabReference)"/> 로 등록할 수 있습니다.
-        /// </remarks>
-        /// <param name="loader"></param>
-        void Register(PrefabPreloader loader);
-    }
-
 }

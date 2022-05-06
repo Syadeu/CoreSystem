@@ -27,7 +27,7 @@ namespace Syadeu.Presentation.Actions
     [DisplayName("TriggerAction: Set TriggerBoundAttribute")]
     public sealed class SetTriggerBoundAttributeAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Enable")] private bool m_Enable;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Enable")] private bool m_Enable;
 
         protected override void OnExecute(Entity<IObject> entity)
         {

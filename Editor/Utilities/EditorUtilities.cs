@@ -15,44 +15,15 @@
 using Syadeu;
 using Syadeu.Collections;
 using SyadeuEditor.Utilities;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using Unity.Mathematics;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
 namespace SyadeuEditor
 {
-    /// <inheritdoc path="https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html"/>
-    public enum StringColor
-    {
-        black,
-        blue,
-        brown,
-        cyan,
-        darkblue,
-        fuchsia,
-        green,
-        grey,
-        lightblue,
-        lime,
-        magenta,
-        maroon,
-        navy,
-        olive,
-        orange,
-        purple,
-        red,
-        silver,
-        teal,
-        white,
-        yellow
-    }
-
     public static class EditorUtilities
     {
         #region Init
@@ -174,120 +145,6 @@ namespace SyadeuEditor
 
         #endregion
 
-        #region Line
-        public static void SectorLine(int lines = 1)
-        {
-            Color old = GUI.backgroundColor;
-            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
-
-            GUILayout.Space(8);
-            GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
-            GUILayout.Space(2);
-
-            for (int i = 1; i < lines; i++)
-            {
-                GUILayout.Space(2);
-                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
-            }
-
-            GUI.backgroundColor = old;
-        }
-        public static void Line()
-        {
-            Rect rect = EditorGUILayout.GetControlRect(false, 1f);
-            rect.height = 1f;
-            rect = EditorGUI.IndentedRect(rect);
-            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
-        }
-        public static void Line(Rect rect)
-        {
-            rect.height = 1f;
-            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
-        }
-        public static void SectorLine(float width, int lines = 1)
-        {
-            Color old = GUI.backgroundColor;
-            GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.white : Color.grey;
-
-            GUILayout.Space(8);
-            GUILayout.Box(string.Empty, EditorStyleUtilities.SplitStyle, GUILayout.Width(width), GUILayout.MaxHeight(1.5f));
-            GUILayout.Space(2);
-
-            for (int i = 1; i < lines; i++)
-            {
-                GUILayout.Space(2);
-                GUILayout.Box("", EditorStyleUtilities.SplitStyle, GUILayout.MaxHeight(1.5f));
-            }
-
-            GUI.backgroundColor = old;
-        }
-        #endregion
-
-        public static object AutoField(FieldInfo fieldInfo, string label, object value, params GUILayoutOption[] options)
-        {
-            if (fieldInfo.FieldType == TypeHelper.TypeOf<int>.Type)
-            {
-                return EditorGUILayout.IntField(label, Convert.ToInt32(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<float>.Type)
-            {
-                return EditorGUILayout.FloatField(label, Convert.ToSingle(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<bool>.Type)
-            {
-                return EditorGUILayout.ToggleLeft(label, Convert.ToBoolean(value), options);
-            }
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<string>.Type)
-            {
-                return EditorGUILayout.TextField(label, Convert.ToString(value), options);
-            }
-            //else if (fieldInfo.FieldType == TypeHelper.TypeOf<float3>.Type)
-            //{
-            //    return EditorGUILayout.Vector3Field(label, (float3)(value), options);
-            //}
-            else if (fieldInfo.FieldType == TypeHelper.TypeOf<Vector3>.Type)
-            {
-                return EditorGUILayout.Vector3Field(label, (Vector3)(value), options);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        public sealed class BoxBlock : IDisposable
-        {
-            Color m_PrevColor;
-            int m_PrevIndent;
-
-            GUILayout.HorizontalScope m_HorizontalScope;
-            GUILayout.VerticalScope m_VerticalScope;
-
-            public BoxBlock(Color color, params GUILayoutOption[] options)
-            {
-                m_PrevColor = GUI.backgroundColor;
-                m_PrevIndent = EditorGUI.indentLevel;
-
-                EditorGUI.indentLevel = 0;
-
-                m_HorizontalScope = new GUILayout.HorizontalScope();
-                GUILayout.Space(m_PrevIndent * 15);
-                GUI.backgroundColor = color;
-
-                m_VerticalScope = new GUILayout.VerticalScope(EditorStyleUtilities.Box, options);
-                GUI.backgroundColor = m_PrevColor;
-            }
-            public void Dispose()
-            {
-                m_VerticalScope.Dispose();
-                m_HorizontalScope.Dispose();
-
-                m_VerticalScope = null;
-                m_HorizontalScope = null;
-
-                EditorGUI.indentLevel = m_PrevIndent;
-                GUI.backgroundColor = m_PrevColor;
-            }
-        }
-
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, UnityEngine.Object obj)
         {
@@ -357,144 +214,6 @@ namespace SyadeuEditor
 
             return temp;
         }
-        //public static bool ToggleButton(bool btt, string name)
-        //{
-        //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal);
-        //}
-        //public static bool ToggleButton(bool btt, string name, params GUILayoutOption[] options)
-        //{
-        //    return GUILayout.Button(name, btt ? toggleBttStyleToggled : toggleBttStyleNormal, options);
-        //}
-
-        private static GUIStyle s_BoxButtonStyle = null;
-        public static GUIStyle BoxButtonStyle
-        {
-            get
-            {
-                if (s_BoxButtonStyle == null)
-                {
-                    s_BoxButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
-                }
-                return s_BoxButtonStyle;
-            }
-        }
-
-        public static bool BoxButton(string name, Color color, params GUILayoutOption[] options)
-            => BoxButton(name, color, null, options);
-        public static bool BoxButton(string name, Color color, Action contextClick, params GUILayoutOption[] options)
-        {
-            GUIContent enableCullName = new GUIContent(name);
-            Rect enableCullRect = GUILayoutUtility.GetRect(
-                enableCullName,
-                EditorStyles.toolbarButton, /*GUILayout.ExpandWidth(true), */options);
-            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
-
-            bool clicked = false;
-            switch (Event.current.GetTypeForControl(enableCullID))
-            {
-                case EventType.Repaint:
-                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
-
-                    Color origin = GUI.color;
-                    GUI.color = Color.Lerp(color, Color.white, isHover && GUI.enabled ? .7f : 0);
-                    EditorStyles.toolbarButton.Draw(enableCullRect,
-                        isHover, isActive: true, on: true, false);
-                    GUI.color = origin;
-
-                    var temp = new GUIStyle(EditorStyles.label);
-                    temp.alignment = TextAnchor.MiddleCenter;
-                    temp.Draw(enableCullRect, enableCullName, enableCullID);
-                    break;
-                case EventType.ContextClick:
-                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
-
-                    contextClick?.Invoke();
-                    Event.current.Use();
-
-                    break;
-                case EventType.MouseDown:
-                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
-
-                    if (Event.current.button == 0)
-                    {
-                        GUIUtility.hotControl = enableCullID;
-                        clicked = true;
-                        GUI.changed = true;
-                        Event.current.Use();
-                    }
-
-                    break;
-                case EventType.MouseUp:
-                    if (!GUI.enabled || !enableCullRect.Contains(Event.current.mousePosition)) break;
-
-                    var drag = DragAndDrop.GetGenericData("GenericDragColumnDragging");
-                    if (drag != null)
-                    {
-                        $"in {drag.GetType().Name}".ToLog();
-                    }
-
-                    if (GUIUtility.hotControl == enableCullID)
-                    {
-                        GUIUtility.hotControl = 0;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            return clicked;
-        }
-        public static bool BoxToggleButton(string name, bool value, Color enableColor, Color disableColor, params GUILayoutOption[] options)
-        {
-            GUIContent enableCullName = new GUIContent(name);
-            Rect enableCullRect = GUILayoutUtility.GetRect(
-                enableCullName,
-                BoxButtonStyle, /*GUILayout.ExpandWidth(true), */options);
-            int enableCullID = GUIUtility.GetControlID(FocusType.Passive, enableCullRect);
-
-            switch (Event.current.GetTypeForControl(enableCullID))
-            {
-                case EventType.Repaint:
-                    bool isHover = enableCullRect.Contains(Event.current.mousePosition);
-
-                    Color origin = GUI.backgroundColor;
-                    GUI.backgroundColor = value ? enableColor : disableColor;
-                    GUI.backgroundColor = Color.Lerp(GUI.backgroundColor, Color.white, isHover && GUI.enabled ? .7f : 0);
-                    BoxButtonStyle.Draw(enableCullRect,
-                        isHover, isActive: true, on: true, false);
-                    GUI.backgroundColor = origin;
-
-                    var temp = new GUIStyle(EditorStyles.label);
-                    temp.alignment = TextAnchor.MiddleCenter;
-                    temp.Draw(enableCullRect, enableCullName, enableCullID);
-                    break;
-                case EventType.MouseDown:
-                    if (!GUI.enabled) break;
-
-                    if (!enableCullRect.Contains(Event.current.mousePosition)) break;
-
-                    if (Event.current.button == 0)
-                    {
-                        GUIUtility.hotControl = enableCullID;
-                        value = !value;
-                        GUI.changed = true;
-                        Event.current.Use();
-                    }
-
-                    break;
-                case EventType.MouseUp:
-                    if (GUIUtility.hotControl == enableCullID)
-                    {
-                        GUIUtility.hotControl = 0;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            return value;
-        }
-
         public static bool Foldout(bool foldout, string name, int size = -1)
         {
             string firstKey = foldout ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
@@ -505,55 +224,6 @@ namespace SyadeuEditor
             else
             {
                 return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey, size), true, EditorStyleUtilities.HeaderStyle);
-            }
-        }
-
-        public static void ShowSimpleListLabel(ref bool opened, string header, IList list, 
-            GUIStyle style = null, bool disableGroup = false)
-        {
-            opened = Foldout(opened, header);
-            if (opened)
-            {
-                EditorGUI.indentLevel += 1;
-                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
-                for (int i = 0; i < list.Count; i++)
-                {
-                    StringRich($"> {list[i].GetType().Name}", style);
-                }
-                if (disableGroup) EditorGUI.EndDisabledGroup();
-                EditorGUI.indentLevel -= 1;
-            }
-        }
-        public static void ShowSimpleListLabel<T>(ref bool opened, string header, IList<T> list, 
-            GUIStyle style = null, bool disableGroup = false)
-        {
-            opened = Foldout(opened, header);
-            if (opened)
-            {
-                EditorGUI.indentLevel += 1;
-                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
-                for (int i = 0; i < list.Count; i++)
-                {
-                    StringRich($"> {list[i].GetType().Name}", style);
-                }
-                if (disableGroup) EditorGUI.EndDisabledGroup();
-                EditorGUI.indentLevel -= 1;
-            }
-        }
-        public static void ShowSimpleListLabel<T>(ref bool opened, string header, IReadOnlyList<T> list, 
-            GUIStyle style = null, bool disableGroup = false)
-        {
-            opened = Foldout(opened, header);
-            if (opened)
-            {
-                EditorGUI.indentLevel += 1;
-                if (disableGroup) EditorGUI.BeginDisabledGroup(true);
-                for (int i = 0; i < list.Count; i++)
-                {
-                    StringRich($"> {list[i].GetType().Name}", style);
-                }
-                if (disableGroup) EditorGUI.EndDisabledGroup();
-                EditorGUI.indentLevel -= 1;
             }
         }
 

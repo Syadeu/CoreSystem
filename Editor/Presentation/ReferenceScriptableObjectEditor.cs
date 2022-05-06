@@ -6,7 +6,7 @@ using UnityEditor;
 namespace SyadeuEditor.Presentation
 {
     [CustomEditor(typeof(ReferenceScriptableObject))]
-    public sealed class ReferenceScriptableObjectEditor : EditorEntity<ReferenceScriptableObject>
+    public sealed class ReferenceScriptableObjectEditor : InspectorEditor<ReferenceScriptableObject>
     {
         private ReferenceDrawer Drawer;
 

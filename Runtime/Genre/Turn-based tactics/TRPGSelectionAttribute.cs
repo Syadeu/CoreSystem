@@ -37,15 +37,15 @@ namespace Syadeu.Presentation.TurnTable
     {
         [Description(
             "지속적으로 선택될 수 있는지 설정합니다. False 인 경우에는 OnSelect 이벤트만 발생합니다.")]
-        [JsonProperty(Order = 0, PropertyName = "Holdable")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Holdable")]
         internal bool m_Holdable = true;
-        [JsonProperty(Order = 1, PropertyName = "SelectedFloorUI")]
-        internal FXBounds[] m_SelectedFloorUI = Array.Empty<FXBounds>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "SelectedFloorUI")]
+        internal ArrayWrapper<FXBounds> m_SelectedFloorUI = Array.Empty<FXBounds>();
 
-        [JsonProperty(Order = 2, PropertyName = "OnSelect")]
-        internal Reference<TriggerAction>[] m_OnSelect = Array.Empty<Reference<TriggerAction>>();
-        [JsonProperty(Order = 3, PropertyName = "OnDeselect")]
-        internal Reference<TriggerAction>[] m_OnDeselect = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "OnSelect")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnSelect = Array.Empty<Reference<TriggerAction>>();
+        [UnityEngine.SerializeField, JsonProperty(Order = 3, PropertyName = "OnDeselect")]
+        internal ArrayWrapper<Reference<TriggerAction>> m_OnDeselect = Array.Empty<Reference<TriggerAction>>();
 
 //#if CORESYSTEM_SHAPES
 //        [Header("Shapes")]

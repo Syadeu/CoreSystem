@@ -24,6 +24,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -37,6 +38,8 @@ namespace Syadeu.Presentation
 
     public sealed class EntityRaycastSystem : PresentationSystemEntity<EntityRaycastSystem>
     {
+        public static readonly LayerMask EntityLayer = LayerMask.NameToLayer("Entity");
+
         public override bool EnableBeforePresentation => false;
         public override bool EnableOnPresentation => false;
         public override bool EnableAfterPresentation => false;
@@ -98,8 +101,49 @@ namespace Syadeu.Presentation
             m_LayerMap.Remove(new LayerInfo(layer), entity);
         }
 
+        // https://answers.unity.com/questions/1246539/why-does-a-spherecast-require-a-direction-shouldnt.html
+        public bool SphereCast(float3 origin, float radius, float3 direction, out RaycastInfo info, in float maxDistance = float.MaxValue)
+        {
+            info = RaycastInfo.Empty;
+
+            if (Physics.SphereCast(origin, radius, direction, out RaycastHit hit, maxDistance))
+            {
+                var monoObj = hit.collider.GetComponent<RecycleableMonobehaviour>();
+                if (monoObj != null)
+                {
+                    info = new RaycastInfo(monoObj.entity, true, hit.distance, hit.point);
+
+                    return true;
+                }
+            }
+            return false;
+        }
+        public IEnumerable<RaycastInfo> SphereCastAll(float3 origin, float radius, float3 direction, in float maxDistance = float.MaxValue)
+        {
+            var hits = Physics.SphereCastAll(origin, radius, direction, maxDistance);
+            if (hits == null || hits.Length == 0) return Array.Empty<RaycastInfo>();
+
+            return hits
+                .Where(t => t.collider.GetComponent<RecycleableMonobehaviour>() != null)
+                .Select(t =>
+                {
+                    var monoObj = t.collider.GetComponent<RecycleableMonobehaviour>();
+                    return new RaycastInfo(monoObj.entity, true, t.distance, t.point);
+                });
+            //List<RaycastInfo> infos = new List<RaycastInfo>();
+            //for (int i = 0; i < hits.Length; i++)
+            //{
+            //    var monoObj = hits[i].collider.GetComponent<RecycleableMonobehaviour>();
+            //    if (monoObj == null) continue;
+
+            //    var temp = new RaycastInfo(monoObj.entity, true, hits[i].distance, hits[i].point);
+            //    infos.Add(temp);
+            //}
+
+            //return infos;
+        }
         /// <summary>
-        /// 레이캐스트를 실행합니다.
+        /// 레이캐스트를 실행합니다. TODO : 최적화
         /// </summary>
         /// <remarks>
         /// <see cref="TriggerBoundAttribute"/>가 있는 <see cref="Entity{T}"/>만 검출합니다. 

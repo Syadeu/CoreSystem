@@ -27,6 +27,7 @@ namespace Syadeu.Presentation
 {
     public static class EntityExtensionMethods
     {
+        internal static EntitySystem s_EntitySystem;
         internal static EntityRecycleModule s_EntityRecycleModule;
 
         public static EntityShortID GetShortID(this InstanceID id)
@@ -71,50 +72,65 @@ namespace Syadeu.Presentation
             return Entity<T>.GetEntity(t.Idx);
         }
 
-        public static Reference<T> AsOriginal<T>(this T t)
+        public static FixedReference<T> AsOriginal<T>(this T t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Hash);
+            return new FixedReference<T>(t.Hash);
         }
-        public static Reference<T> AsOriginal<T>(this Entity<T> t)
+        public static FixedReference<T> AsOriginal<T>(this Entity<T> t)
             where T : class, IObject
         {
-            return new Reference<T>(t.Hash);
+            return new FixedReference<T>(t.Hash);
+        }
+        public static FixedReference<T> AsOriginal<T>(this in InstanceID t)
+            where T : class, IObject
+        {
+            return new FixedReference<T>(t.GetEntity().Hash);
         }
 
+        public static InstanceID CreateEntity(this IFixedReference t)
+        {
+            Entity<IObject> ins = s_EntitySystem.CreateEntity(t);
+            return ins.Idx;
+        }
+
+        public static Entity<T> CreateEntity<T>(this Reference<T> other)
+            where T : class, IObject
+        {
+            Entity<T> ins = s_EntitySystem.CreateEntity(other);
+            return ins;
+        }
         public static Entity<T> CreateEntity<T>(this IFixedReference<T> other)
             where T : class, IObject
         {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            Entity<IObject> ins = system.CreateEntity(other);
+            Entity<IObject> ins = s_EntitySystem.CreateEntity(other);
             return ins.ToEntity<T>();
         }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, in float3 pos)
             where T : class, IObject
         {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            Entity<IEntity> ins = system.CreateEntity(other, in pos);
+            Entity<IEntity> ins = s_EntitySystem.CreateEntity(other, in pos);
+            return ins.ToEntity<T>();
+        }
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other, in float3 pos)
+            where T : class, IObject
+        {
+            Entity<IEntity> ins = s_EntitySystem.CreateEntity(other, in pos);
             return ins.ToEntity<T>();
         }
         public static Entity<T> CreateEntity<T>(this Reference<T> other, float3 pos, quaternion rot, float3 localScale)
             where T : class, IEntity
         {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            Entity<IEntity> ins = system.CreateEntity(other, in pos, in rot, in localScale);
+            Entity<IEntity> ins = s_EntitySystem.CreateEntity(other, in pos, in rot, in localScale);
             return ins.ToEntity<T>();
         }
-        public static Entity<T> CreateEntity<T>(this Reference<T> other)
-            where T : class, IObject
+        public static Entity<T> CreateEntity<T>(this IFixedReference<T> other, float3 pos, quaternion rot, float3 localScale)
+            where T : class, IEntity
         {
-            var system = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            Entity<T> ins = system.CreateEntity(other);
-            return ins;
+            Entity<IEntity> ins = s_EntitySystem.CreateEntity(other, in pos, in rot, in localScale);
+            return ins.ToEntity<T>();
         }
-
+        
         /// <summary>
         /// 이 엔티티의 부모가 <typeparamref name="T"/>를 부모로 삼는지 반환합니다.
         /// </summary>
@@ -141,9 +157,18 @@ namespace Syadeu.Presentation
         }
         public static bool IsDestroyed(this in InstanceID id)
         {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            return entitySystem.IsDestroyed(in id) || entitySystem.IsMarkedAsDestroyed(in id);
+            return s_EntitySystem.IsDestroyed(in id) || s_EntitySystem.IsMarkedAsDestroyed(in id);
+        }
+        /// <inheritdoc cref="EntitySystem.DestroyEntity(InstanceID)"/>
+        public static void Destroy(this in InstanceID id)
+        {
+            s_EntitySystem.DestroyEntity(id);
+        }
+        /// <inheritdoc cref="EntitySystem.DestroyEntity(InstanceID)"/>
+        public static void Destroy<T>(this in InstanceID<T> id)
+            where T : class, IObject
+        {
+            s_EntitySystem.DestroyEntity(id);
         }
 
         public static Entity<IObject> GetEntity(this InstanceID id) => GetEntity<IObject>(id);
@@ -166,25 +191,19 @@ namespace Syadeu.Presentation
 
         public static ObjectBase GetObject(this InstanceID id)
         {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
+            ObjectBase obj = s_EntitySystem.GetEntityByID(id);
             return obj;
         }
         public static T GetObject<T>(this InstanceID id)
             where T : ObjectBase
         {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
+            ObjectBase obj = s_EntitySystem.GetEntityByID(id);
             return (T)obj;
         }
         public static T GetObject<T>(this InstanceID<T> id)
             where T : ObjectBase
         {
-            EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
-
-            ObjectBase obj = entitySystem.GetEntityByID(id);
+            ObjectBase obj = s_EntitySystem.GetEntityByID(id);
             return (T)obj;
         }
 
@@ -317,6 +336,7 @@ namespace Syadeu.Presentation
 
         #endregion
 
+        /// <inheritdoc cref="EntitySystem.DestroyEntity(InstanceID)"/>
         public static void Destroy(this IEntityDataID t)
         {
 #if DEBUG_MODE
@@ -327,7 +347,7 @@ namespace Syadeu.Presentation
                 return;
             }
 #endif
-            PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.InternalDestroyEntity(t.Idx);
+            s_EntitySystem.InternalDestroyEntity(t.Idx);
         }
 
         #endregion

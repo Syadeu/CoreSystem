@@ -15,10 +15,13 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
+using Syadeu.Presentation.Actions;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
+using System.Collections;
 using System.ComponentModel;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
 
@@ -30,14 +33,23 @@ namespace Syadeu.Presentation.Entities
         INotifyComponent<UIObjectCanvasGroupComponent>
     {
         [Header("Graphics")]
-        [UnityEngine.SerializeField]
-        [JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "EnableAutoFade")]
         internal bool m_EnableAutoFade = false;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "InitialAlpha")]
+        [Range(0, 1)]
         internal float m_InitialAlpha = 1;
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "AlignWithCamera")]
+        internal bool m_AlignWithCamera = true;
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "Events")]
+        internal EntityEventProperty m_Events = new EntityEventProperty();
 
         [Preserve]
         static void AOTCodeGeneration()
         {
+            AotHelper.EnsureType<InstanceID<UIObjectEntity>>();
+            AotHelper.EnsureType<FixedReference<UIObjectEntity>>();
             AotHelper.EnsureType<Reference<UIObjectEntity>>();
             AotHelper.EnsureList<Reference<UIObjectEntity>>();
             AotHelper.EnsureType<Entity<UIObjectEntity>>();
@@ -50,19 +62,38 @@ namespace Syadeu.Presentation.Entities
         IEntityOnProxyCreated, IEntityOnProxyRemoved
     {
         private WorldCanvasSystem m_WorldCanvasSystem;
+        private RenderSystem m_RenderSystem;
+        private CoroutineSystem m_CoroutineSystem;
 
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, WorldCanvasSystem>(Bind);
-        }
-        private void Bind(WorldCanvasSystem other)
-        {
-            m_WorldCanvasSystem = other;
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, CoroutineSystem>(Bind);
         }
         protected override void OnDispose()
         {
             m_WorldCanvasSystem = null;
+            m_RenderSystem = null;
+            m_CoroutineSystem = null;
         }
+
+        #region Binds
+
+        private void Bind(WorldCanvasSystem other)
+        {
+            m_WorldCanvasSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
+        }
+        private void Bind(CoroutineSystem other)
+        {
+            m_CoroutineSystem = other;
+        }
+
+        #endregion
 
         protected override void OnCreated(UIObjectEntity e)
         {
@@ -72,6 +103,23 @@ namespace Syadeu.Presentation.Entities
             com = (new UIObjectCanvasGroupComponent() { m_Enabled = true });
             com.m_Parent = e.Idx;
             com.Alpha = e.m_InitialAlpha;
+
+            if (e.m_AlignWithCamera)
+            {
+                float3 forward = m_RenderSystem.Camera.transform.forward;
+                var tr = entity.transform;
+                tr.rotation = quaternion.LookRotationSafe(forward, math.up());
+
+                m_CoroutineSystem.StartCoroutine(new AlignUpdate(e.Idx, m_RenderSystem));
+            }
+
+            e.m_Events.ExecuteOnCreated(entity);
+        }
+        protected override void OnDestroy(UIObjectEntity obj)
+        {
+            Entity<IEntityData> entity = Entity<IEntityData>.GetEntityWithoutCheck(obj.Idx);
+
+            obj.m_Events.ExecuteOnDestroy(entity);
         }
 
         public void OnProxyCreated(EntityBase entityBase, Entity<IEntity> entity, RecycleableMonobehaviour monoObj)
@@ -98,6 +146,37 @@ namespace Syadeu.Presentation.Entities
             //var cg = monoObj.GetComponentUnity<CanvasGroup>();
 
             //m_WorldCanvasSystem.InternalSetProxy(entityBase, entity.Cast<IEntity, UIObjectEntity>(), cg, false);
+        }
+
+        private sealed class AlignUpdate : ICoroutineJob
+        {
+            private readonly InstanceID m_Entity;
+            private RenderSystem m_RenderSystem;
+
+            public UpdateLoop Loop => UpdateLoop.AfterTransform;
+
+            public AlignUpdate(InstanceID entity, RenderSystem renderSystem)
+            {
+                m_Entity = entity;
+                m_RenderSystem = renderSystem;
+            }
+
+            public void Dispose()
+            {
+                m_RenderSystem = null;
+            }
+            public IEnumerator Execute()
+            {
+                ProxyTransform tr = m_Entity.GetTransform();
+
+                while (!m_Entity.IsDestroyed())
+                {
+                    float3 forward = m_RenderSystem.Camera.transform.forward;
+                    tr.rotation = quaternion.LookRotationSafe(forward, math.up());
+
+                    yield return null;
+                }
+            }
         }
     }
 }

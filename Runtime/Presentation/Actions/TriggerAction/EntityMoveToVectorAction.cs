@@ -33,9 +33,12 @@ namespace Syadeu.Presentation.Actions
             Lerp    =   1
         }
 
-        [JsonProperty(Order = 0, PropertyName = "Target")] private float3 m_Target;
-        [JsonProperty(Order = 1, PropertyName = "UpdateType")] private UpdateType m_UpdateType;
-        [JsonProperty(Order = 2, PropertyName = "Speed")] private float m_Speed = 5;
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Target")] 
+        private float3 m_Target;
+        [UnityEngine.SerializeField, JsonProperty(Order = 1, PropertyName = "UpdateType")] 
+        private UpdateType m_UpdateType;
+        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "Speed")] 
+        private float m_Speed = 5;
 
         protected override void OnExecute(Entity<IObject> e)
         {

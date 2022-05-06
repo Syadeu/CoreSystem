@@ -85,11 +85,12 @@ namespace Syadeu.Presentation.Actor
                         return 0;
                     }
 
-                    return m_DefaultWeapon.GetObject().GetAttribute<ActorWeaponItemAttribute>().Damage;
+                    //return m_DefaultWeapon.GetObject().GetAttribute<ActorWeaponItemAttribute>().Damage;
                 }
 
-                return ((InstanceID)EquipedWeapons[m_SelectedWeaponIndex])
-                    .GetComponentReadOnly<ActorWeaponItemComponent>().Damage;
+                //return ((InstanceID)EquipedWeapons[m_SelectedWeaponIndex])
+                //    .GetComponentReadOnly<ActorWeaponItemComponent>().Damage;
+                throw new Exception();
             }
         }
 
@@ -107,22 +108,22 @@ namespace Syadeu.Presentation.Actor
         }
         public bool IsEquipable(Entity<EntityBase> weapon)
         {
-            if (!weapon.HasComponent<ActorWeaponItemComponent>())
-            {
-                return false;
-            }
-            ActorWeaponItemComponent com = weapon.GetComponentReadOnly<ActorWeaponItemComponent>();
+            //if (!weapon.HasComponent<ActorWeaponItemComponent>())
+            //{
+            //    return false;
+            //}
+            //ActorWeaponItemComponent com = weapon.GetComponentReadOnly<ActorWeaponItemComponent>();
 
             //var original = weapon.AsOriginal();
             //var weaponObj = weapon.Target;
 
             //ActorWeaponProvider provider = Provider;
 
-            if (m_ExcludeWeaponType.Contains(com.ItemType))
-            {
-                //if (!m_IncludeWeapon.Contains(original)) return false;
-                return false;
-            }
+            //if (m_ExcludeWeaponType.Contains(com.ItemType))
+            //{
+            //    //if (!m_IncludeWeapon.Contains(original)) return false;
+            //    return false;
+            //}
             //else if (m_IncludeWeaponType.Contains(com.ItemType))
             //{
             //    //if (m_ExcludeWeapon.Contains(original)) return false;

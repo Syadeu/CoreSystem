@@ -133,6 +133,7 @@ namespace Syadeu.Presentation
 
             PresentationManager.Instance.PreUpdate += m_DestroyedObjectsInThisFrameAction.Invoke;
 
+            EntityExtensionMethods.s_EntitySystem = this;
             return base.OnInitialize();
         }
 
@@ -209,6 +210,7 @@ namespace Syadeu.Presentation
             m_CoroutineSystem = null;
             m_ComponentSystem = null;
             m_SceneSystem = null;
+            EntityExtensionMethods.s_EntitySystem = null;
         }
 
         #region Binds
@@ -291,7 +293,7 @@ namespace Syadeu.Presentation
             InstanceID entityHash = transformModule.GetEntity(in tr);
             IEntity entity = (IEntity)m_ObjectEntities[entityHash];
 
-            monoObj.m_Entity = Entity<IEntity>.GetEntityWithoutCheck(in entityHash);
+            monoObj.entity = Entity<IEntity>.GetEntityWithoutCheck(in entityHash);
             EntityProcessorModule.ProcessEntityOnProxyCreated(GetModule<EntityProcessorModule>(), entity, monoObj);
         }
         private void M_ProxySystem_OnDataObjectProxyRemoved(ProxyTransform tr, RecycleableMonobehaviour monoObj)
@@ -323,7 +325,7 @@ namespace Syadeu.Presentation
             IEntity entity = (IEntity)objectBase;
 
             EntityProcessorModule.ProcessEntityOnProxyRemoved(GetModule<EntityProcessorModule>(), entity, monoObj);
-            monoObj.m_Entity = Entity<IEntity>.Empty;
+            monoObj.entity = Entity<IEntity>.Empty;
         }
         
         private void Bind(Events.EventSystem other)
@@ -450,6 +452,24 @@ namespace Syadeu.Presentation
                 return entity;
             }
         }
+        public Entity<IEntity> CreateEntity(in IFixedReference reference, in float3 position)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+
+            using (m_CreateEntityMarker.Auto())
+            {
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
+                {
+                    return Entity<IEntity>.Empty;
+                }
+
+                //ProxyTransform obj = InternalCreateProxy(in temp, temp.Prefab, in position, quaternion.identity, 1);
+                //Entity<IEntity> entity = InternalCreateEntity(in temp, in obj);
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, quaternion.identity, 1);
+
+                return entity;
+            }
+        }
         /// <summary>
         /// 엔티티를 생성합니다. <paramref name="name"/>은 <seealso cref="IEntityData.Name"/> 입니다.
         /// </summary>
@@ -485,6 +505,22 @@ namespace Syadeu.Presentation
         /// <param name="localSize"></param>
         /// <returns></returns>
         public Entity<IEntity> CreateEntity(in Reference reference, in float3 position, in quaternion rotation, in float3 localSize)
+        {
+            CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
+
+            using (m_CreateEntityMarker.Auto())
+            {
+                if (!InternalEntityValidation(reference.Hash, in position, out EntityBase temp))
+                {
+                    return Entity<IEntity>.Empty;
+                }
+
+                Entity<IEntity> entity = InternalCreateEntity(in temp, in position, in rotation, in localSize);
+
+                return entity;
+            }
+        }
+        public Entity<IEntity> CreateEntity(in IFixedReference reference, in float3 position, in quaternion rotation, in float3 localSize)
         {
             CoreSystem.Logger.ThreadBlock(nameof(CreateEntity), ThreadInfo.Unity);
 
@@ -624,7 +660,7 @@ namespace Syadeu.Presentation
         /// 해당 엔티티를 즉시 파괴합니다.
         /// </summary>
         /// <remarks>
-        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ITransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
+        /// 씬이 전환되는 경우, 해당 씬에서 생성된 <see cref="EntityBase"/>는 자동으로 파괴되므로 호출하지 마세요. 단, <see cref="EntityDataBase"/>(<seealso cref="ProxyTransform"/>이 없는 엔티티)는 씬이 전환되어도 자동으로 파괴되지 않습니다.
         /// </remarks>
         /// <param name="hash"><seealso cref="IEntityData.Idx"/> 값</param>
         public void DestroyEntity(InstanceID instance) => InternalDestroyEntity(instance);

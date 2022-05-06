@@ -11,6 +11,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    [Obsolete("Use Unity Serialized -> PropertyDrawer<T>")]
     public abstract class ObjectDrawerBase : IDisposable
     {
         public abstract object TargetObject { get; }
@@ -36,7 +37,7 @@ namespace SyadeuEditor.Utilities
             }
             else if (attribute is HeaderAttribute header)
             {
-                EditorUtilities.Line();
+                CoreGUI.Line();
                 EditorUtilities.StringRich(header.header, 15);
             }
         }
@@ -190,7 +191,8 @@ namespace SyadeuEditor.Utilities
             }
             #endregion
 
-            return new NullDrawer(memberInfo, declaredType);
+            //return new NullDrawer(memberInfo, declaredType);
+            throw new Exception();
         }
     }
 }

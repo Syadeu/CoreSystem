@@ -7,7 +7,7 @@ using System;
 namespace SyadeuEditor.Presentation
 {
     [CustomEditor(typeof(InputSystemSettings))]
-    public sealed class InputSystemSettingsEditor : EditorEntity<InputSystemSettings>
+    public sealed class InputSystemSettingsEditor : InspectorEditor<InputSystemSettings>
     {
         SerializedProperty m_AdditionalInputActions;
 
@@ -23,14 +23,14 @@ namespace SyadeuEditor.Presentation
             if (GUILayout.Button("+"))
             {
                 FieldInfo field = GetField("m_AdditionalInputActions");
-                InputSystemSettings.CustomInputAction[] ori = (InputSystemSettings.CustomInputAction[])field.GetValue(Target);
+                InputSystemSettings.CustomInputAction[] ori = (InputSystemSettings.CustomInputAction[])field.GetValue(target);
 
                 InputSystemSettings.CustomInputAction[] temp = new InputSystemSettings.CustomInputAction[ori.Length + 1];
                 Array.Copy(ori, temp, ori.Length);
 
                 temp[temp.Length - 1] = new InputSystemSettings.CustomInputAction();
 
-                field.SetValue(Target, temp);
+                field.SetValue(target, temp);
                 serializedObject.Update();
             }
             if (GUILayout.Button("-"))

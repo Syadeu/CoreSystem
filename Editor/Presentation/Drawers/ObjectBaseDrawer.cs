@@ -40,12 +40,12 @@ namespace SyadeuEditor.Presentation
             if (Pool.TryGetValue(objectBase, out var drawer)) return drawer;
 
             Type objType = objectBase.GetType();
-            if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntity>.Type.IsAssignableFrom(objType))
-            {
-                drawer = new MapDataEntityDrawer(objectBase);
-                Pool.Add(objectBase, drawer);
-                return drawer;
-            }
+            //if (TypeHelper.TypeOf<Syadeu.Presentation.Map.MapDataEntity>.Type.IsAssignableFrom(objType))
+            //{
+            //    drawer = new MapDataEntityDrawer(objectBase);
+            //    Pool.Add(objectBase, drawer);
+            //    return drawer;
+            //}
             //else if (TypeHelper.TypeOf<Syadeu.Presentation.Render.SVGEntity>.Type.IsAssignableFrom(objType))
             //{
             //    drawer = new SVGEntityDrawer(objectBase);
@@ -112,7 +112,7 @@ namespace SyadeuEditor.Presentation
         {
             const string c_ObsoleteMsg = "This type marked as deprecated.\n{0}";
 
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 if (m_Obsolete != null)
                 {
@@ -142,7 +142,7 @@ namespace SyadeuEditor.Presentation
         {
             EditorUtilities.StringRich(Name + EditorUtilities.String($": {Type.Name}", 11), 20);
             EditorGUILayout.Space(3);
-            EditorUtilities.Line();
+            CoreGUI.Line();
         }
         protected void DrawField(ObjectDrawerBase drawer)
         {

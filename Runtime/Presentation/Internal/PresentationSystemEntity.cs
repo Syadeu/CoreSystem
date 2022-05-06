@@ -96,7 +96,8 @@ namespace Syadeu.Presentation.Internal
 
         internal PresentationSystemEntity()
         {
-            ConfigLoader.LoadConfig(this);
+            //ConfigLoader.LoadConfig(this);
+            XmlSettings.LoadSettings(this);
         }
 
         internal void InternalOnShutdown()
@@ -110,6 +111,7 @@ namespace Syadeu.Presentation.Internal
                 m_Modules[i].InternalOnShutDown();
             }
 
+            XmlSettings.SaveSettings(this);
             CoreSystem.Logger.Log(Channel.Presentation,
                 $"Shutdown system {GetType().Name}");
         }

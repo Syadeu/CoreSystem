@@ -1,4 +1,5 @@
 ﻿using Syadeu.Mono;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(SimpleFollower))]
-    public sealed class SimpleFollowerEditor : EditorEntity
+    public sealed class SimpleFollowerEditor : InspectorEditor
     {
         private SimpleFollower m_Scr = null;
 
@@ -44,7 +45,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("Simple Follower");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUILayout.PropertyField(m_Target, new GUIContent("Target Transform: "));
             EditorGUI.BeginChangeCheck();

@@ -17,7 +17,7 @@ namespace Syadeu.Presentation.TurnTable
     [DisplayName("TriggerAction: TRPG Set Camera Follow")]
     public sealed class TRPGSetCameraFollowTriggerAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "Follow")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "Follow")]
         private bool m_Follow = false;
 
         protected override void OnExecute(Entity<IObject> entity)

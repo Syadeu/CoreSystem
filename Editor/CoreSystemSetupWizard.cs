@@ -87,19 +87,19 @@ namespace SyadeuEditor
         }
         private void OnGUI()
         {
-            const string c_Copyrights = "Copyright 2021 Syadeu. All rights reserved.";
+            const string c_Copyrights = "Copyright 2022 Syadeu. All rights reserved.";
 
             GUILayout.Space(20);
             EditorUtilities.StringHeader("Setup", 30, true);
             GUILayout.Space(10);
-            EditorUtilities.Line();
+            CoreGUI.Line();
             GUILayout.Space(10);
 
             DrawToolbar();
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 m_SelectedToolbar.OnGUI();
             }
@@ -129,7 +129,7 @@ namespace SyadeuEditor
         }
         private void DrawToolbarButton(int i, string name, bool enable)
         {
-            using (new EditorUtilities.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
+            using (new CoreGUI.BoxBlock(i.Equals(m_SelectedToolbar) ? Color.black : Color.gray))
             {
                 EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
                 if (GUILayout.Button(name, titleStyle))
@@ -183,7 +183,7 @@ namespace SyadeuEditor
             SerializedProperty m_TagProperty, m_LayerProperty;
 
             static string[] c_RequireTags = new string[] { };
-            static string[] c_RequireLayers = new string[] { "Terrain", "FloorProjection" };
+            static string[] c_RequireLayers = new string[] { "Terrain", "FloorProjection", "Entity" };
 
             List<string> m_MissingTags, m_MissingLayers;
 
@@ -282,23 +282,23 @@ namespace SyadeuEditor
             {
                 using (var scroll = new EditorGUILayout.ScrollViewScope(m_Scroll))
                 {
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawContraints();
                     }
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawTagManager();
                     }
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawSettings();
                     }
 
                     using (new EditorGUI.DisabledGroupScope(m_DefinedFMOD))
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         DrawUnityAudio();
                     }
@@ -328,7 +328,7 @@ namespace SyadeuEditor
                 DrawConstraint(ref m_DefinedCollectionsChecks, UNITY_COLLECTIONS_CHECKS);
 
                 EditorGUILayout.Space();
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("CoreSystem Constraints", 13);
 
@@ -336,14 +336,25 @@ namespace SyadeuEditor
                 DrawConstraint(ref m_DefinedTurnBasedSystem, CORESYSTEM_TURNBASESYSTEM);
 
                 EditorGUILayout.Space();
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("Third Party Constraints", 13);
                 
                 DrawConstraint(ref m_DefinedFMOD, CORESYSTEM_FMOD);
                 DrawConstraint(ref m_DefinedDotween, CORESYSTEM_DOTWEEN);
                 DrawConstraint(ref m_DefinedMotionMatching, CORESYSTEM_MOTIONMATCHING);
-                DrawConstraint(ref m_DefinedShapes, CORESYSTEM_SHAPES);
+
+                bool enableShapes;
+#if SHAPES_HDRP
+                enableShapes = true;
+#else
+                enableShapes = false;
+#endif
+                using (new EditorGUI.DisabledGroupScope(enableShapes))
+                {
+                    DrawConstraint(ref m_DefinedShapes, CORESYSTEM_SHAPES);
+                }
+                
                 DrawConstraint(ref m_DefinedBehaviorTree, CORESYSTEM_BEHAVIORTREE);
 
                 EditorGUI.indentLevel--;
@@ -433,7 +444,7 @@ namespace SyadeuEditor
                 }
                 else EditorGUILayout.HelpBox("Nominal", MessageType.Info);
 
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorUtilities.StringRich("Layers", 13);
                 if (m_MissingLayers.Count > 0)
@@ -512,7 +523,7 @@ namespace SyadeuEditor
 
                 EditorGUI.indentLevel++;
 
-                using (new EditorUtilities.BoxBlock(Color.white))
+                using (new CoreGUI.BoxBlock(Color.white))
                 {
                     EditorUtilities.StringRich("Global Settings", 13);
                     EditorGUILayout.Space();
@@ -532,7 +543,7 @@ namespace SyadeuEditor
                     m_CoreSystemSettings.m_EnableLua =
                         EditorGUILayout.ToggleLeft("Enable Lua", m_CoreSystemSettings.m_EnableLua);
                 }
-                EditorUtilities.Line();
+                CoreGUI.Line();
 
                 EditorGUI.indentLevel--;
             }
@@ -550,7 +561,7 @@ namespace SyadeuEditor
                 if (!m_OpenUnityAudio) return;
 
                 EditorGUI.indentLevel++;
-                using (new EditorUtilities.BoxBlock(Color.white))
+                using (new CoreGUI.BoxBlock(Color.white))
                 {
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
@@ -563,7 +574,7 @@ namespace SyadeuEditor
                         }
                     }
 
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
 
                     if (m_UnityAudioDisableAudio.boolValue)
                     {
@@ -598,7 +609,7 @@ namespace SyadeuEditor
                     m_UnityAudioDopplerFactor.floatValue
                         = EditorGUILayout.Slider("Doppler Factor", m_UnityAudioDopplerFactor.floatValue, 0, 1);
 
-                    EditorUtilities.Line();
+                    CoreGUI.Line();
 
                     m_UnityAudioRealVoiceCount.intValue
                         = EditorGUILayout.IntField("Max Real Voices", m_UnityAudioRealVoiceCount.intValue);
@@ -682,7 +693,7 @@ namespace SyadeuEditor
 
                     #region Scenes Selector
 
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath);
@@ -720,8 +731,8 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    CoreGUI.Line();
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath);
@@ -759,8 +770,8 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    CoreGUI.Line();
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath);
@@ -824,8 +835,8 @@ namespace SyadeuEditor
                             }
                         }
                     }
-                    EditorUtilities.Line();
-                    using (new EditorUtilities.BoxBlock(Color.black))
+                    CoreGUI.Line();
+                    using (new CoreGUI.BoxBlock(Color.black))
                     {
                         m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
 
@@ -984,7 +995,7 @@ namespace SyadeuEditor
 
                 m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     if (!Predicate())
                     {
@@ -996,7 +1007,7 @@ namespace SyadeuEditor
                     }
                 }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     if (m_InvalidIndices.Count > 0)
                     {
@@ -1150,7 +1161,7 @@ namespace SyadeuEditor
                     }
                 }
 
-                using (new EditorUtilities.BoxBlock(Color.black))
+                using (new CoreGUI.BoxBlock(Color.black))
                 {
                     EditorUtilities.StringRich("Nominal", true);
                 }

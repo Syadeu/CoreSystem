@@ -12,7 +12,7 @@ namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGAddAPAction : TriggerAction
     {
-        [JsonProperty(Order = 0, PropertyName = "AddActionPoint")]
+        [UnityEngine.SerializeField, JsonProperty(Order = 0, PropertyName = "AddActionPoint")]
         private int m_AddActionPoint = 0;
 
         protected override void OnExecute(Entity<IObject> entity)
@@ -26,7 +26,7 @@ namespace Syadeu.Presentation.TurnTable
             }
 #endif
             ref TurnPlayerComponent turnPlayer = ref entity.GetComponent<TurnPlayerComponent>();
-            
+
             if (turnPlayer.ActionPoint + m_AddActionPoint < 0)
             {
                 turnPlayer.ActionPoint = 0;

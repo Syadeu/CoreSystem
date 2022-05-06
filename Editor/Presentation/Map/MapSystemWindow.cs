@@ -75,12 +75,12 @@ namespace SyadeuEditor.Presentation.Map
 
         private void OnGUI()
         {
-            using (new EditorUtilities.BoxBlock(Color.black))
+            using (new CoreGUI.BoxBlock(Color.black))
             {
                 EditorUtilities.StringHeader("Map System", 20, true);
             }
             GUILayout.Space(4);
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             //EditorGUI.BeginChangeCheck();
             //m_EnableEdit = EditorGUILayout.ToggleLeft("Enable Edit", m_EnableEdit);
@@ -93,7 +93,7 @@ namespace SyadeuEditor.Presentation.Map
 
             //MapDataGUI();
             #region Scene data selector
-            using (new EditorUtilities.BoxBlock(Color.gray))
+            using (new CoreGUI.BoxBlock(Color.gray))
             {
                 using (new EditorGUI.DisabledGroupScope(m_SceneDataTarget == null))
                 using (new EditorGUILayout.HorizontalScope())
@@ -128,7 +128,7 @@ namespace SyadeuEditor.Presentation.Map
             }
             #endregion
 
-            EditorUtilities.Line();
+            CoreGUI.Line();
 
             m_MapDataLoader.OnGUI();
 

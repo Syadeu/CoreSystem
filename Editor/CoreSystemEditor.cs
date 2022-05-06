@@ -2,6 +2,7 @@
 using Syadeu.Entities;
 using Syadeu.Mono;
 using SyadeuEditor.Tree;
+using SyadeuEditor.Utilities;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
 #endif
@@ -15,7 +16,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(CoreSystem))]
-    public sealed class CoreSystemEditor : EditorEntity<CoreSystem>
+    public sealed class CoreSystemEditor : InspectorEditor<CoreSystem>
     {
         //private bool m_OpenBackgroundRoutines = false;
 
@@ -23,9 +24,9 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_ManagerView = new VerticalTreeView(Target, serializedObject);
+            m_ManagerView = new VerticalTreeView(target, serializedObject);
 
-            m_RoutinesView = new VerticalTreeView(Target, serializedObject);
+            m_RoutinesView = new VerticalTreeView(target, serializedObject);
             m_RoutinesView.MakeCustomSearchFilter((e, str) =>
             {
                 str = str.ToLower();
@@ -192,7 +193,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("CoreSystem");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUILayout.Space();
             //EditorGUILayout.PropertyField(m_DisplayLogChannel);
@@ -227,7 +228,7 @@ namespace SyadeuEditor
             m_ManagerView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorUtilities.StringHeader("Routines", 15);
             EditorGUI.indentLevel += 1;

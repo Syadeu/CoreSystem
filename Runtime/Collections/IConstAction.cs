@@ -16,6 +16,7 @@ using System;
 
 namespace Syadeu.Collections
 {
+    [UnityEngine.Scripting.RequireImplementors]
     public interface IConstAction : IDisposable
     {
         Type ReturnType { get; }
@@ -24,7 +25,7 @@ namespace Syadeu.Collections
         void SetArguments(params object[] args);
 
         void Initialize();
-        object Execute();
+        object Execute(params object[] args);
 
         void OnShutdown();
     }

@@ -5,6 +5,7 @@ using Syadeu.Collections;
 using UnityEngine;
 using UnityEditor;
 using System.Runtime.InteropServices;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
@@ -44,7 +45,7 @@ namespace SyadeuEditor
         private void OnGUI()
         {
             EditorUtilities.StringHeader("SQLite Window", StringColor.grey, true);
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             #region 데이터 경로 지정 및 닫기
             EditorGUI.BeginDisabledGroup(true);
@@ -115,11 +116,11 @@ namespace SyadeuEditor
 
             if (!m_DatabaseLoaded)
             {
-                EditorUtilities.SectorLine();
+                CoreGUI.SectorLine();
                 return;
             }
             m_SelectedToolbar = GUILayout.Toolbar(m_SelectedToolbar, m_ToolbarNames);
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             if (m_Database.Tables.Count == 0)
             {
@@ -166,7 +167,7 @@ namespace SyadeuEditor
             if (m_TableNames.Length < m_SeletedTable) m_SeletedTable = 0;
 
             EditorUtilities.StringHeader(m_TableNames[m_SeletedTable]);
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorUtilities.StringRich("작업중", true);
 
@@ -177,7 +178,7 @@ namespace SyadeuEditor
             if (m_TableNames.Length == 0) return;
 
             EditorUtilities.StringRich("Global Infomation", 20, StringColor.grey);
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.TextField("File size: ", $"{new FileInfo(m_DatabasePath).Length / 1e+6} Mb");
@@ -215,10 +216,10 @@ namespace SyadeuEditor
             EditorGUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
             
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             EditorUtilities.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height * .5f));
 

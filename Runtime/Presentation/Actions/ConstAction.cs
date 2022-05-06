@@ -34,33 +34,73 @@ namespace Syadeu.Presentation.Actions
     /// 정의된 <see cref="ConstAction{TValue}"/> 는 <seealso cref="ConstActionReference{TValue}"/> 를 통해 
     /// 레퍼런스 될 수 있습니다.
     /// </remarks>
-    /// <typeparam name="TValue"></typeparam>
+    /// <typeparam name="TValue">
+    /// 의미있는 값을 반환하지 않는다면 int 를 사용하세요
+    /// </typeparam>
     [Serializable]
-    public abstract class ConstAction<TValue> : IConstAction
+    public abstract class ConstAction<TResult> : ConstActionBase<TResult>
     {
-        Type IConstAction.ReturnType => TypeHelper.TypeOf<TValue>.Type;
-
-        public ConstAction()
+        protected internal override sealed object InternalExecute(params object[] args)
         {
+            return Execute();
         }
+        protected abstract TResult Execute();
+    }
+    [Serializable]
+    public abstract class ConstAction<TResult, T> : ConstActionBase<TResult>
+    {
+        protected internal override object InternalExecute(params object[] args)
+        {
+            if (args == null || args.Length == 0)
+            {
+                return Execute(default(T));
+            }
+
+            T arg0 = (T)args[0];
+
+            return Execute(arg0);
+        }
+        protected abstract TResult Execute(T arg0);
+    }
+    public abstract class ConstTriggerAction<TValue> : ConstActionBase<TValue>, IConstTriggerAction
+    {
+        [JsonIgnore] private InstanceID m_Entity;
+
+        internal protected override sealed void InternalSetArguments(params object[] args)
+        {
+            object[] arr = ArrayPool<object>.Shared.Rent(args.Length - 1);
+            Array.Copy(args, 1, arr, 0, args.Length - 1);
+
+            m_Entity = (InstanceID)args[0];
+
+            ConstActionUtilities.HashMap[GetType()].SetArguments(this, arr);
+
+            ArrayPool<object>.Shared.Return(arr);
+        }
+        internal protected override object InternalExecute(params object[] args) => Execute(m_Entity);
+
+        protected abstract TValue Execute(InstanceID entity);
+    }
+    public abstract class ConstActionBase : IConstAction
+    {
+        protected abstract Type ReturnType { get; }
+        Type IConstAction.ReturnType => ReturnType;
 
         ConstActionUtilities.Info IConstAction.GetInfo() => ConstActionUtilities.HashMap[GetType()];
         void IConstAction.SetArguments(params object[] args) => InternalSetArguments(args);
 
         void IConstAction.Initialize() => OnInitialize();
-        object IConstAction.Execute() => InternalExecute();
+        object IConstAction.Execute(params object[] args) => InternalExecute();
         void IConstAction.OnShutdown() => OnShutdown();
         void IDisposable.Dispose() => OnDispose();
 
-        protected virtual void InternalSetArguments(params object[] args)
+        internal protected virtual void InternalSetArguments(params object[] args)
         {
             ConstActionUtilities.HashMap[GetType()].SetArguments(this, args);
         }
-        protected virtual TValue InternalExecute() => Execute();
+        internal protected abstract object InternalExecute(params object[] args);
 
         protected virtual void OnInitialize() { }
-        protected abstract TValue Execute();
-
         protected virtual void OnShutdown() { }
         protected virtual void OnDispose() { }
 
@@ -92,27 +132,8 @@ namespace Syadeu.Presentation.Actions
 
         #endregion
     }
-    public abstract class ConstTriggerAction<TValue> : ConstAction<TValue>, IConstTriggerAction
+    public abstract class ConstActionBase<TResult> : ConstActionBase
     {
-        [JsonIgnore] private InstanceID m_Entity;
-
-        protected override sealed void InternalSetArguments(params object[] args)
-        {
-            object[] arr = ArrayPool<object>.Shared.Rent(args.Length - 1);
-            Array.Copy(args, 1, arr, 0, args.Length - 1);
-
-            m_Entity = (InstanceID)args[0];
-
-            ConstActionUtilities.HashMap[GetType()].SetArguments(this, arr);
-
-            ArrayPool<object>.Shared.Return(arr);
-        }
-        protected override TValue InternalExecute() => Execute(m_Entity);
-
-        protected abstract TValue Execute(InstanceID entity);
-        protected override sealed TValue Execute()
-        {
-            throw new NotImplementedException();
-        }
+        protected override sealed Type ReturnType => TypeHelper.TypeOf<TResult>.Type;
     }
 }

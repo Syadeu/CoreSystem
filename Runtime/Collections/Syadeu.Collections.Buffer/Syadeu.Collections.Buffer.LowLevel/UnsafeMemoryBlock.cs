@@ -26,8 +26,10 @@ namespace Syadeu.Collections.Buffer.LowLevel
     /// <see cref="UnsafeMemoryPool"/> 에서 할당받은 메모리 공간입니다.
     /// </summary>
     [BurstCompatible]
-    public struct UnsafeMemoryBlock : IValidation, IEquatable<UnsafeMemoryBlock>, IEquatable<Hash>
+    public struct UnsafeMemoryBlock : IEmpty, IValidation, IEquatable<UnsafeMemoryBlock>, IEquatable<Hash>
     {
+        public static UnsafeMemoryBlock Empty => new UnsafeMemoryBlock();
+
         private readonly Hash m_Identifier;
         private readonly Hash m_Owner;
 
@@ -68,6 +70,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
         }
         internal UnsafeReference<byte> Last() => m_Block + m_Length;
 
+        public bool IsEmpty() => !m_Block.IsCreated;
         public bool IsValid() => m_Block.IsCreated && m_Length > 0;
 
         public bool Equals(UnsafeMemoryBlock other) => m_Block.Equals(other.m_Block) && m_Length == other.m_Length;
@@ -78,7 +81,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [BurstCompatible]
-    public struct UnsafeMemoryBlock<T> : IValidation, IEquatable<UnsafeMemoryBlock<T>>, IEquatable<UnsafeMemoryBlock>
+    public struct UnsafeMemoryBlock<T> : IEmpty, IValidation, IEquatable<UnsafeMemoryBlock<T>>, IEquatable<UnsafeMemoryBlock>
         where T : unmanaged
     {
         private UnsafeMemoryBlock m_MemoryBlock;
@@ -113,6 +116,7 @@ namespace Syadeu.Collections.Buffer.LowLevel
             return Ptr + (Size * stride);
         }
 
+        public bool IsEmpty() => m_MemoryBlock.IsEmpty();
         public bool IsValid() => m_MemoryBlock.IsValid();
 
         public bool Equals(UnsafeMemoryBlock other) => m_MemoryBlock.Equals(other);

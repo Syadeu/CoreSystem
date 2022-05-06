@@ -22,5 +22,6 @@ namespace Syadeu.Collections
     public sealed class PositionHandleAttribute : PropertyAttribute
     {
         public string ScaleField = string.Empty;
+        public string RotationField = string.Empty;
     }
 }

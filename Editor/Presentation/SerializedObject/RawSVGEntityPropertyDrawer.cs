@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SyadeuEditor.Presentation
 {
     //[CustomPropertyDrawer(typeof(RawSVGEntity))]
-    internal sealed class RawSVGEntityPropertyDrawer : CoreSystemObjectPropertyDrawer<RawSVGEntity>
+    internal sealed class RawSVGEntityPropertyDrawer : ObjectBasePropertyDrawer
     {
         #region GetProperty
 
@@ -19,13 +19,13 @@ namespace SyadeuEditor.Presentation
 
         #endregion
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = base.GetPropertyHeight(property, label);
+            float height = base.PropertyHeight(property, label);
 
             height += AutoRect.SpaceHeight;
             height += EditorGUI.GetPropertyHeight(GetRawDataProperty(property));
-            height += PropertyDrawerHelper.GetPropertyHeight(1);
+            height += CoreGUI.GetLineHeight(1);
 
             return height;
         }

@@ -12,11 +12,12 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(PrefabList))]
-    public class PrefabListEditor : EditorEntity<PrefabList>
+    public class PrefabListEditor : InspectorEditor<PrefabList>
     {
         private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);
         private static AddressableAssetGroup m_DefaultGroup;
@@ -63,7 +64,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorUtilities.StringHeader("Prefab List");
-            EditorUtilities.SectorLine();
+            CoreGUI.SectorLine();
 
             if (GUILayout.Button("Build"))
             {
@@ -134,7 +135,7 @@ namespace SyadeuEditor
                 foreach (AddressableAssetEntry item in group.entries)
                 {
                     string name = item.address.Split('/').Last().Split('.').First();
-                    if (list.Where((other) => other.m_Name.Equals(name)).Any())
+                    if (list.Where(other => other.m_Name.Equals(name) && other.m_RefPrefab != null && other.m_RefPrefab.editorAsset != null).Any())
                     {
                         continue;
                     }
@@ -155,7 +156,8 @@ namespace SyadeuEditor
                         list[targetIdx] = new PrefabList.ObjectSetting(name, refObj, isWorldUI);
 
                         CoreSystem.Logger.Log(Channel.Editor,
-                            $"PrefabList index at {targetIdx}:{previousName} was invalid but replaced to newly added prefab");
+                            $"PrefabList index at {targetIdx}:{previousName} was invalid " +
+                            $"but replaced to newly added prefab({name})");
 
                         changed = true;
                     }

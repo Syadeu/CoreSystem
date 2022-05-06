@@ -21,6 +21,8 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using System;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 
 namespace SyadeuEditor.Utilities
 {
@@ -68,6 +70,26 @@ namespace SyadeuEditor.Utilities
             Rect elementRect = rect.Pop();
             Draw(elementRect, property, label);
         }
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            //VisualElement root = new VisualElement();
+
+            SerializedProperty
+                x = property.FindPropertyRelative("x"),
+                y = property.FindPropertyRelative("y"),
+                z = property.FindPropertyRelative("z");
+
+            Vector3Field vector3Field = new Vector3Field(property.displayName);
+            vector3Field.RegisterValueChangedCallback(evt =>
+            {
+                x.floatValue = evt.newValue.x;
+                y.floatValue = evt.newValue.y;
+                z.floatValue = evt.newValue.z;
+            });
+            //root.Add(vector3Field);
+
+            return vector3Field;
+        }
     }
     [CustomPropertyDrawer(typeof(int3))]
     internal sealed class Int3PropertyDrawer : PropertyDrawer<int3>
@@ -113,17 +135,6 @@ namespace SyadeuEditor.Utilities
             Rect elementRect = rect.Pop();
             //Rect[] rects = AutoRect.DivideWithRatio(elementRect, .2f, .4f, .4f);
             Draw(elementRect, property, label);
-        }
-    }
-
-    [CustomPropertyDrawer(typeof(Array), true)]
-    internal sealed class ArrayPropertyDrawer : PropertyDrawer<IList>
-    {
-        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
-        {
-            EditorGUI.LabelField(rect.Pop(), " test");
-
-            base.OnPropertyGUI(ref rect, property, label);
         }
     }
 }

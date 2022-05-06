@@ -24,7 +24,7 @@ using Unity.Mathematics;
 namespace SyadeuEditor.Utilities
 {
     [CustomPropertyDrawer(typeof(PositionHandleAttribute))]
-    internal sealed class PositionHandleAttributeDrawer : Vector3AttributeDrawer
+    internal sealed class PositionHandleAttributeDrawer : VectorAttributeDrawer
     {
         new PositionHandleAttribute attribute => (PositionHandleAttribute)base.attribute;
 
@@ -37,9 +37,9 @@ namespace SyadeuEditor.Utilities
 
         protected override bool Opened => m_Opened;
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return base.GetPropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
+            return base.PropertyHeight(property, label) + EditorGUIUtility.standardVerticalSpacing;
         }
 
         protected override void BeforePropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
@@ -54,9 +54,18 @@ namespace SyadeuEditor.Utilities
             if (!m_Opened)
             {
                 var parent = property.GetParent();
-                var scaleField = parent.FindPropertyRelative(attribute.ScaleField);
+                SerializedProperty 
+                    rotationField = null, scaleField = null;
+                if (!attribute.ScaleField.IsNullOrEmpty())
+                {
+                    scaleField = parent.FindPropertyRelative(attribute.ScaleField);
+                }
+                if (!attribute.RotationField.IsNullOrEmpty())
+                {
+                    rotationField = parent.FindPropertyRelative(attribute.RotationField);
+                }
 
-                Popup.Instance.SetProperty(property, scaleField);
+                Popup.Instance.SetProperty(property, rotationField, scaleField);
                 Popup.Instance.Open();
 
                 m_Opened = true;
@@ -71,7 +80,7 @@ namespace SyadeuEditor.Utilities
         private sealed class Popup : CLRSingleTone<Popup>
         {
             private SerializedProperty
-                m_Property, m_ScaleProperty,
+                m_Property, m_RotationProperty, m_ScaleProperty,
                 m_X, m_Y, m_Z;
 
             public bool IsOpened { get; private set; } = false;
@@ -103,9 +112,11 @@ namespace SyadeuEditor.Utilities
                 SceneView.RepaintAll();
                 IsOpened = false;
             }
-            public void SetProperty(SerializedProperty property, SerializedProperty scaleProperty)
+            public void SetProperty(SerializedProperty property, 
+                SerializedProperty rotationProperty, SerializedProperty scaleProperty)
             {
                 m_Property = property;
+                m_RotationProperty = rotationProperty;
                 m_ScaleProperty = scaleProperty;
 
                 m_X = m_Property.FindPropertyRelative("x");
@@ -120,7 +131,7 @@ namespace SyadeuEditor.Utilities
                 Handles.BeginGUI();
                 float
                     width = 100,
-                    height = PropertyDrawerHelper.GetPropertyHeight(1);
+                    height = CoreGUI.GetLineHeight(1);
 
                 var rect = AutoRect.LeftBottomAlign(width, height);
                 GUI.BeginGroup(rect, EditorStyleUtilities.Box);
@@ -144,8 +155,15 @@ namespace SyadeuEditor.Utilities
                     Vector3 scale = m_ScaleProperty.GetVector3();
                     Handles.DrawWireCube(position, scale);
                 }
+                Quaternion rotation = Quaternion.identity;
+                if (m_RotationProperty != null)
+                {
+                    Vector4 xyzw = m_RotationProperty.GetVector4();
+                    if (xyzw.Equals(Vector4.zero)) xyzw = new Vector4(0, 0, 0, 1);
+                    rotation = new Quaternion(xyzw.x, xyzw.y, xyzw.z, xyzw.w);
+                }
 
-                position = Handles.DoPositionHandle(position, quaternion.identity);
+                position = Handles.DoPositionHandle(position, rotation);
 
                 m_X.floatValue = position.x;
                 m_Y.floatValue = position.y;
@@ -153,6 +171,7 @@ namespace SyadeuEditor.Utilities
 
                 // https://gamedev.stackexchange.com/questions/149514/use-unity-handles-for-interaction-in-the-scene-view
 
+                m_Property.serializedObject.ApplyModifiedProperties();
                 //Debug.Log($"{Event.current.mousePosition}");
             }
             //
