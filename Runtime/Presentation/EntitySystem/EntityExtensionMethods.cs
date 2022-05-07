@@ -137,7 +137,7 @@ namespace Syadeu.Presentation
         /// <typeparam name="T"></typeparam>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static bool IsEntity<T>(this in InstanceID id) where T : IEntityData
+        public static bool IsEntity<T>(this in InstanceID id) where T : IObject
         {
             EntitySystem entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
@@ -195,9 +195,9 @@ namespace Syadeu.Presentation
             return obj;
         }
         public static T GetObject<T>(this InstanceID id)
-            where T : ObjectBase
+            where T : IObject
         {
-            ObjectBase obj = s_EntitySystem.GetEntityByID(id);
+            IObject obj = s_EntitySystem.GetEntityByID(id);
             return (T)obj;
         }
         public static T GetObject<T>(this InstanceID<T> id)

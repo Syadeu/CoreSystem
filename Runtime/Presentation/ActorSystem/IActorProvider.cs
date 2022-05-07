@@ -38,6 +38,7 @@ namespace Syadeu.Presentation.Actor
         //#endif
         void ReceivedEvent(IActorEvent ev);
         void OnCreated();
+        void OnReserve();
 
         void OnProxyCreated();
         void OnProxyRemoved();

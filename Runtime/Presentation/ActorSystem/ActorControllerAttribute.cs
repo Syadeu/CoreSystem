@@ -44,6 +44,15 @@ namespace Syadeu.Presentation.Actor
         [Header("Provider")]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "Providers")] 
         internal ArrayWrapper<Reference<IActorProvider>> m_Providers = Array.Empty<Reference<IActorProvider>>();
+
+        //protected override void OnReserve()
+        //{
+        //    ref ActorControllerComponent component = ref Idx.GetComponent<ActorControllerComponent>();
+        //    for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+        //    {
+        //        component.m_InstanceProviders[i].Destroy();
+        //    }
+        //}
     }
     internal sealed class ActorControllerProcessor : AttributeProcessor<ActorControllerAttribute>,
         IAttributeOnProxy
@@ -125,6 +134,11 @@ namespace Syadeu.Presentation.Actor
         protected override void OnDestroy(ActorControllerAttribute attribute, Entity<IEntityData> entity)
         {
             ref ActorControllerComponent component = ref entity.GetComponent<ActorControllerComponent>();
+
+            for (int i = 0; i < component.m_InstanceProviders.Length; i++)
+            {
+                component.m_InstanceProviders[i].GetObject<IActorProvider>().OnReserve();
+            }
             for (int i = 0; i < component.m_InstanceProviders.Length; i++)
             {
                 //ExecuteOnDestroy(component.m_InstanceProviders[i].GetObject());

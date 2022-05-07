@@ -33,8 +33,7 @@ namespace Syadeu.Presentation.Actor
     /// <remarks>
     /// 
     /// </remarks>
-    public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>,
-        INotifyComponent<InteractableComponent>
+    public sealed class ActorInterationProvider : ActorProviderBase<ActorInteractionComponent>
     {
         // target == parent
         [SerializeField, JsonProperty(Order = 0, PropertyName = "OnInteractionConstAction")]
@@ -50,24 +49,24 @@ namespace Syadeu.Presentation.Actor
         {
             component = new ActorInteractionComponent(
                 m_OnInteractionConstAction, m_OnInteractionTriggerAction);
-        }
-    }
-    internal sealed class ActorInterationProviderProcessor : EntityProcessor<ActorInterationProvider>
-    {
-        protected override void OnCreated(ActorInterationProvider obj)
-        {
-            ref var interactable = ref obj.GetComponent<InteractableComponent>();
+
+            parent.AddComponent<InteractableComponent>();
+            ref var interactable = ref parent.GetComponent<InteractableComponent>();
             interactable = new InteractableComponent(0);
 
-            if (obj.m_Interaction.IsEmpty() || !obj.m_Interaction.IsValid())
+            if (m_Interaction.IsEmpty() || !m_Interaction.IsValid())
             {
                 CoreSystem.Logger.LogError(Channel.Entity,
                     $"interaction is null");
             }
             else
             {
-                interactable.Setup(obj.m_Interaction);
+                interactable.Setup(m_Interaction);
             }
+        }
+        protected override void OnReserve(in Entity<IEntityData> parent, ref ActorInteractionComponent component)
+        {
+            parent.RemoveComponent<InteractableComponent>();
         }
     }
 

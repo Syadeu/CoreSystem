@@ -57,7 +57,7 @@ namespace Syadeu.Presentation
         /// </summary>
         [JsonIgnore] public InstanceID Idx { get; private set; } = InstanceID.Empty;
 
-        [JsonIgnore] private bool m_Reserved = true;
+        [JsonIgnore] internal protected bool m_Reserved = true;
 
         [JsonIgnore] public bool Reserved => m_Reserved;
         [JsonIgnore] string IObject.Name => Name;

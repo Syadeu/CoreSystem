@@ -57,8 +57,18 @@ namespace Syadeu.Presentation.Actor
             {
                 m_Parent.AddComponent<TComponent>();
             }
-            OnInitialize(ref m_Parent.GetComponent<TComponent>());
-            OnInitialize(in m_Parent, ref m_Parent.GetComponent<TComponent>());
+            ref TComponent component = ref m_Parent.GetComponent<TComponent>();
+            OnInitialize(ref component);
+            OnInitialize(in m_Parent, ref component);
+        }
+        void IActorProvider.OnReserve()
+        {
+            ref TComponent component = ref m_Parent.GetComponent<TComponent>();
+            OnReserve(ref component);
+            OnReserve(in m_Parent, ref component);
+
+            m_Parent.RemoveComponent<TComponent>();
+            m_Parent = Entity<IEntityData>.Empty;
         }
 
         void IActorProvider.OnProxyCreated()
@@ -89,10 +99,12 @@ namespace Syadeu.Presentation.Actor
 
         protected override sealed void OnReserve()
         {
-            OnReserve(ref m_Parent.GetComponent<TComponent>());
+            //ref TComponent component = ref m_Parent.GetComponent<TComponent>();
+            //OnReserve(ref component);
+            //OnReserve(in m_Parent, ref component);
 
-            m_Parent.RemoveComponent<TComponent>();
-            m_Parent = Entity<IEntityData>.Empty;
+            //m_Parent.RemoveComponent<TComponent>();
+            //m_Parent = Entity<IEntityData>.Empty;
         }
 
         protected virtual void OnEventReceived(IActorEvent ev) { }
@@ -104,6 +116,7 @@ namespace Syadeu.Presentation.Actor
         /// <summary><inheritdoc cref="ObjectBase.OnReserve"/></summary>
         /// <param name="component"></param>
         protected virtual void OnReserve(ref TComponent component) { }
+        protected virtual void OnReserve(in Entity<IEntityData> parent, ref TComponent component) { }
 
         protected virtual void OnProxyCreated(ref TComponent component, ITransform transform) { }
         protected virtual void OnProxyRemoved(ref TComponent component, ITransform transform) { }

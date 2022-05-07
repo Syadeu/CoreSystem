@@ -245,12 +245,14 @@ namespace Syadeu.Presentation.Entities
         }
         internal override void InternalOnReserve()
         {
-            base.InternalOnReserve();
+            OnReserve();
 
             for (int i = 0; i < m_Attributes.Length; i++)
             {
                 m_Attributes[i].InternalOnReserve();
             }
+
+            m_Reserved = true;
         }
         internal override void InternalInitialize()
         {

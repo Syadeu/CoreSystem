@@ -342,25 +342,31 @@ namespace Syadeu.Presentation.Actor
         {
             component = new InteractableComponent(0);
 
-            Entity<IEntity> entity = id.GetEntity<IEntity>();
-            if (!entity.HasAttribute<TriggerBoundAttribute>())
+            if (id.IsEntity<IEntity>())
             {
-                return;
+                Entity<IEntity> entity = id.GetEntity<IEntity>();
+                if (!entity.HasAttribute<TriggerBoundAttribute>())
+                {
+                    return;
+                }
+                TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
+                att.OnTriggerBoundEvent += Att_OnTriggerBoundEvent;
             }
-            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
-            att.OnTriggerBoundEvent += Att_OnTriggerBoundEvent;
         }
         protected override void OnDestroy(in InstanceID id, ref InteractableComponent component)
         {
             component.RemoveUI();
 
-            Entity<IEntity> entity = id.GetEntity<IEntity>();
-            if (!entity.HasAttribute<TriggerBoundAttribute>())
+            if (id.IsEntity<IEntity>())
             {
-                return;
+                Entity<IEntity> entity = id.GetEntity<IEntity>();
+                if (!entity.HasAttribute<TriggerBoundAttribute>())
+                {
+                    return;
+                }
+                TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
+                att.OnTriggerBoundEvent -= Att_OnTriggerBoundEvent;
             }
-            TriggerBoundAttribute att = entity.GetAttribute<TriggerBoundAttribute>();
-            att.OnTriggerBoundEvent -= Att_OnTriggerBoundEvent;
         }
 
         private void Att_OnTriggerBoundEvent(Entity<IEntity> source, Entity<IEntity> target, bool entered)

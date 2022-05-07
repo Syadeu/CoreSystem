@@ -293,8 +293,6 @@ namespace Syadeu.Presentation
 
             ProcessEntityOnReserve(this, obj);
 
-            m_ComponentSystem.RemoveNotifiedComponents(obj);
-
             EntityTransformModule transformModule = System.GetModule<EntityTransformModule>();
             if (transformModule.HasTransform(obj.Idx))
             {
@@ -302,6 +300,16 @@ namespace Syadeu.Presentation
             }
 
             OnEntityDestroy?.Invoke(obj);
+
+            m_ComponentSystem.RemoveNotifiedComponents(obj);
+            if (obj is IEntityData entityData)
+            {
+                for (int i = 0; i < entityData.Attributes.Length; i++)
+                {
+                    IAttribute other = entityData.Attributes[i];
+                    m_ComponentSystem.RemoveNotifiedComponents(other);
+                }
+            }
 
             obj.InternalOnReserve();
         }
@@ -452,7 +460,7 @@ namespace Syadeu.Presentation
                         }
                     }
 
-                    system.m_ComponentSystem.RemoveNotifiedComponents(other);
+                    //system.m_ComponentSystem.RemoveNotifiedComponents(other);
                 }
             }
 

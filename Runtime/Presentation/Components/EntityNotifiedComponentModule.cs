@@ -62,10 +62,6 @@ namespace Syadeu.Presentation.Components
             {
                 return att.ParentEntity.Idx;
             }
-            else if (rawObject is IActorProvider provider)
-            {
-                return provider.Parent.Idx;
-            }
 
             return rawObject.Idx;
         }
