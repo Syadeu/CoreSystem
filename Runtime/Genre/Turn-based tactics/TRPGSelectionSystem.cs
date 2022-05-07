@@ -257,7 +257,6 @@ namespace Syadeu.Presentation.TurnTable
                 {
                     EntityMoveHandler();
                 }
-
             }
             else
             {

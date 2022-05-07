@@ -120,6 +120,7 @@ namespace Syadeu.Presentation.Actor
             private readonly UQueryState<Label>
                 m_HeaderQuery, m_QuantityQuery;
 
+            public VisualElement VisualElement => m_VisualElement;
             public string name
             {
                 get => m_HeaderQuery.First().text;
@@ -203,28 +204,66 @@ namespace Syadeu.Presentation.Actor
             container.Add(ins);
             return result;
         }
-        public UxmlWrapper? GetItem(ItemCategory type, string name)
+        public UxmlWrapper? GetItem(ActorItemType type, string name)
         {
-            UxmlWrapper container = GetOrCreateItemContainer(type);
+            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
 
-            var query = container.GetChild(name);
-            return query;
+            var items = container.VisualElement.Query().Name(name).Build();
+            if (items.First() == null) return null;
+
+            int maxCount = type.MaximumMultipleCount;
+            foreach (var item in items)
+            {
+                UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+
+                if (itemWrapper.quantity >= maxCount) continue;
+
+                return itemWrapper;
+            }
+
+            return null;
         }
-        public UxmlWrapper GetOrCreateItem(ItemCategory type, string name)
+        public UxmlWrapper CreateItem(ActorItemType type, string name)
         {
-            UxmlWrapper? item = GetItem(type, name);
-            if (item.HasValue) return item.Value;
+            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
 
             var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
             ins.name = name;
 
             UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
             result.name = name;
-            result.quantity = 1;
+            result.quantity = 0;
 
-            UxmlWrapper itemContainer = GetItemContainer(type).Value;
-            itemContainer.Add(result);
-            itemContainer.quantity += 1;
+            container.Add(result);
+
+            return result;
+        }
+        public UxmlWrapper GetOrCreateItem(ActorItemType type, string name)
+        {
+            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
+
+            var items = container.VisualElement.Query().Name(name).Build();
+            if (items.First() != null)
+            {
+                int maxCount = type.MaximumMultipleCount;
+                foreach (var item in items)
+                {
+                    UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+
+                    if (itemWrapper.quantity >= maxCount) continue;
+
+                    return itemWrapper;
+                }
+            }
+
+            var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
+            ins.name = name;
+
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            result.name = name;
+            result.quantity = 0;
+
+            container.Add(result);
 
             return result;
         }
@@ -278,10 +317,19 @@ namespace Syadeu.Presentation.Actor
             ItemInventory.Key key = m_Inventory.Add(item);
             ActorInventoryProvider provider = m_Provider.GetObject();
 
-            provider.GetOrCreateItem(
-                itemComponent.ItemType.GetObject().ItemCategory,
-                item.GetEntity().Name
+            var itemType = itemComponent.ItemType.GetObject();
+            string itemName = item.GetEntity().Name;
+
+            ActorInventoryProvider.UxmlWrapper uxmlContainer = provider.GetOrCreateItemContainer(
+                itemType.ItemCategory
                 );
+            ActorInventoryProvider.UxmlWrapper uxmlItem = provider.GetOrCreateItem(
+                itemType,
+                itemName
+                );
+
+            uxmlContainer.quantity += 1;
+            uxmlItem.quantity += 1;
         }
     }
 }
