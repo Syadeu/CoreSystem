@@ -102,72 +102,119 @@ namespace Syadeu.Presentation.Actor
 
         #region Uxml
 
-        public VisualElement GetContainer()
+        public struct UxmlWrapper
+        {
+            private readonly VisualElement m_VisualElement;
+            private readonly UQueryState<Label>
+                m_HeaderQuery, m_QuantityQuery;
+
+            public string name
+            {
+                get => m_HeaderQuery.First().text;
+                set
+                {
+                    var label = m_HeaderQuery.First();
+                    label.text = value;
+                }
+            }
+            public int quantity
+            {
+                get => int.Parse(m_QuantityQuery.First().text.Substring(1));
+                set
+                {
+                    const string c_Format = "x{0}";
+                    m_QuantityQuery.First().text = string.Format(c_Format, value);
+                }
+            }
+
+            public UxmlWrapper(
+                VisualElement element, string headerField, string quantityField)
+            {
+                m_VisualElement = element;
+                m_HeaderQuery = m_VisualElement.Query<Label>(name: headerField).Build();
+                m_QuantityQuery = m_VisualElement.Query<Label>(name: quantityField).Build();
+            }
+            private UxmlWrapper(
+                VisualElement element, UQueryState<Label> headerField, UQueryState<Label> quantityField)
+            {
+                m_VisualElement = element;
+                m_HeaderQuery = headerField;
+                m_QuantityQuery = quantityField;
+            }
+
+            public UxmlWrapper? GetChild(string name)
+            {
+                VisualElement element = m_VisualElement.Q(name);
+                if (element == null)
+                {
+                    return null;
+                }
+
+                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element));
+            }
+            public void Add(UxmlWrapper? uxml)
+            {
+                if (!uxml.HasValue) return;
+
+                m_VisualElement.Add(uxml.Value.m_VisualElement);
+            }
+        }
+
+        private VisualElement GetContainer()
         {
             return m_UIDocument.rootVisualElement.Q(name: m_GraphicsInfo.m_ContainerField);
         }
-        public VisualElement GetItemContainer(ItemCategory type)
+        public UxmlWrapper? GetItemContainer(ItemCategory type)
         {
             VisualElement container = GetContainer();
             UQueryBuilder<VisualElement> query = container.Query().Name(TypeHelper.Enum<ItemCategory>.ToString(type));
 
-            return query.Build().First();
+            VisualElement result = query.Build().First();
+
+            if (result == null) return null;
+            return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
         }
-        public VisualElement GetOrCreateItemContainer(ItemCategory type)
+        public UxmlWrapper GetOrCreateItemContainer(ItemCategory type)
         {
-            VisualElement target = GetItemContainer(type);
-            if (target != null) return target;
+            UxmlWrapper? target = GetItemContainer(type);
+            if (target.HasValue) return target.Value;
 
             VisualElement container = GetContainer();
-            target = m_GraphicsInfo.m_ItemContainerUXMLAsset.Asset.CloneTree();
-            target.name = TypeHelper.Enum<ItemCategory>.ToString(type);
+            TemplateContainer ins = m_GraphicsInfo.m_ItemContainerUXMLAsset.Asset.CloneTree();
+            ins.name = TypeHelper.Enum<ItemCategory>.ToString(type);
 
-            Label
-                header = target.Q<Label>(name: m_GraphicsInfo.m_HeaderField),
-                quantity = target.Q<Label>(name: m_GraphicsInfo.m_QuantityField);
-            header.text = target.name;
-            quantity.text = "x0";
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
 
-            container.Add(target);
-            return target;
+            result.name = ins.name;
+            result.quantity = 0;
+
+            container.Add(ins);
+            return result;
         }
-        public void SetItemContainerQuantity(ItemCategory type, int quantity)
+        public UxmlWrapper? GetItem(ItemCategory type, string name)
         {
-            const string c_Format = "x{0}";
-            VisualElement container = GetOrCreateItemContainer(type);
+            UxmlWrapper container = GetOrCreateItemContainer(type);
 
-            Label quantityLabel = container.Q<Label>(name: m_GraphicsInfo.m_QuantityField);
-            quantityLabel.text = string.Format(c_Format, quantity);
+            var query = container.GetChild(name);
+            return query;
         }
-        public VisualElement GetItem(ItemCategory type, string name)
+        public UxmlWrapper GetOrCreateItem(ItemCategory type, string name)
         {
-            VisualElement container = GetOrCreateItemContainer(type);
+            UxmlWrapper? item = GetItem(type, name);
+            if (item.HasValue) return item.Value;
 
-            var query = container.Query().Name(name);
-            return query.Build().First();
-        }
-        public VisualElement GetOrCreateItem(ItemCategory type, string name)
-        {
-            VisualElement item = GetItem(type, name);
-            if (item != null) return item;
+            var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
+            ins.name = name;
 
-            item = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
-            item.name = name;
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            result.name = name;
+            result.quantity = 1;
 
-            Label
-                header = item.Q<Label>(name: m_GraphicsInfo.m_HeaderField),
-                quantity = item.Q<Label>(name: m_GraphicsInfo.m_QuantityField);
-            header.text = name;
-            quantity.text = "x1";
+            UxmlWrapper itemContainer = GetItemContainer(type).Value;
+            itemContainer.Add(result);
+            itemContainer.quantity += 1;
 
-            VisualElement itemContainer = GetItemContainer(type);
-            itemContainer.Add(item);
-
-            return item;
-        }
-        public void SetItemQuantity(ItemCategory type, string name, int quantity)
-        {
-            VisualElement item = GetOrCreateItem(type, name);
+            return result;
         }
 
         #endregion

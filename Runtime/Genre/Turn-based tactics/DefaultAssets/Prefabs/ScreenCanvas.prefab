@@ -28,7 +28,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7335476378936990814}
   m_RootOrder: 0
@@ -104,7 +103,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5246164779309718730}
   - {fileID: 2054025140937129339}
@@ -184,7 +182,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0, y: 0, z: 0}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7871146547878635002}
   - {fileID: 1388632810569337611}
@@ -298,7 +295,6 @@ RectTransform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -12.051737}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6719643615527811501}
   m_Father: {fileID: 1388632811284880580}
@@ -387,14 +383,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4730878333891277097}
-  m_LocalRotation: {x: 0.042956725, y: 0.17348288, z: -0.007574429, w: 0.98387045}
+  m_LocalRotation: {x: 0.12854317, y: 0.17216258, z: -0.022665627, w: 0.9763827}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1388632811284880580}
   m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 5, y: 20, z: 0}
+  m_LocalEulerAnglesHint: {x: 15, y: 20, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -728,6 +723,11 @@ PrefabInstance:
       objectReference: {fileID: 3960648019674737179}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5ce30afbfa44aa546808f2505617ed7c, type: 3}
+--- !u!224 &7871146547878635002 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6568347989622301152, guid: 5ce30afbfa44aa546808f2505617ed7c, type: 3}
+  m_PrefabInstance: {fileID: 3899162519558652954}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3960648019674737179 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 66313490127564289, guid: 5ce30afbfa44aa546808f2505617ed7c, type: 3}
@@ -739,11 +739,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!224 &7871146547878635002 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 6568347989622301152, guid: 5ce30afbfa44aa546808f2505617ed7c, type: 3}
-  m_PrefabInstance: {fileID: 3899162519558652954}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5118949859634982150
 PrefabInstance:
   m_ObjectHideFlags: 0

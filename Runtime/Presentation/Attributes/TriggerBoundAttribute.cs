@@ -119,6 +119,24 @@ namespace Syadeu.Presentation.Attributes
         }
         protected override void OnDestroy(TriggerBoundAttribute attribute, Entity<IEntityData> entity)
         {
+            var from = entity.ToEntity<IEntity>();
+            for (int i = 0; i < attribute.m_Triggered.Count; i++)
+            {
+                var to = attribute.m_Triggered[i];
+                var toAtt = to.GetAttribute<TriggerBoundAttribute>();
+
+                attribute.m_Triggered.Remove(to);
+                toAtt.m_Triggered.Remove(from);
+
+                EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(from, to, false));
+                EventSystem.PostEvent(EntityTriggerBoundEvent.GetEvent(to, from, false));
+
+                attribute.ProcessEvent(from, to, false);
+                toAtt.ProcessEvent(to, from, false);
+            }
+            attribute.m_Triggered.Clear();
+            attribute.m_Triggered = null;
+
             m_EntityRaycastSystem.RemoveLayerEntity(attribute.m_Layer, entity.ToEntity<IEntity>());
         }
 
