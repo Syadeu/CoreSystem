@@ -280,6 +280,15 @@ namespace Syadeu.Presentation.Actor
                 }
             }
 
+            float
+                originalOpacity = ins.resolvedStyle.opacity,
+                originalHeight = ins.resolvedStyle.height;
+            ins.style.opacity = 0;
+            ins.style.height = 0;
+
+            ins.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
+            ins.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
+
             container.Add(ins);
             return result;
         }
@@ -346,9 +355,6 @@ namespace Syadeu.Presentation.Actor
 
             element.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
             element.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
-            //element.experimental.animation
-            //    .Start(0, originalHeight, durationMs: 1000, UIElementAnimation.SetHeight)
-            //    .Ease(Easing.OutBounce);
 
             container.Add(result);
 
