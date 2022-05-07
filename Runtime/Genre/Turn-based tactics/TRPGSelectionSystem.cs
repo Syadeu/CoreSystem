@@ -55,6 +55,11 @@ namespace Syadeu.Presentation.TurnTable
         private List<Selection> m_SelectedEntities;
 
         public Entity<IEntity> CurrentSelection => m_SelectedEntities.Count > 0 ? m_SelectedEntities[0].Entity : Entity<IEntity>.Empty;
+        /// <summary>
+        /// 선택이 가능한지 설정합니다. 
+        /// <see langword="false"/> 일 경우에는 엔티티 클릭시 선택 및 취소가 되지 않습니다.
+        /// </summary>
+        public bool EnableSelection { get; set; } = true;
 
         private InputAction
             m_LeftMouseButtonAction,
@@ -214,7 +219,7 @@ namespace Syadeu.Presentation.TurnTable
 
         private void M_LeftMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            if (m_EntityRaycastSystem == null || m_RenderSystem == null) return;
+            if (m_EntityRaycastSystem == null || m_RenderSystem == null || !EnableSelection) return;
 
             m_EntityRaycastSystem.Raycast(m_InputSystem.CursorRay, out RaycastInfo info);
 

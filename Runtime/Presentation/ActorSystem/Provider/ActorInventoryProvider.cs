@@ -27,6 +27,7 @@ using Unity.Mathematics;
 using Syadeu.Presentation.Render;
 using UnityEngine.UIElements;
 using Syadeu.Presentation.Components;
+using Syadeu.Presentation.Actions;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -57,12 +58,23 @@ namespace Syadeu.Presentation.Actor
             [SerializeField, JsonProperty(Order = 6, PropertyName = "QuantityField")]
             public string m_QuantityField = "Quantity";
         }
+        [Serializable]
+        public sealed class CallbackInformation : PropertyBlock<CallbackInformation>
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "OnInventoryOpenedConstAction")]
+            public ConstActionReferenceArray m_OnInventoryOpenedConstAction = new ConstActionReferenceArray();
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "OnInventoryClosedConstAction")]
+            public ConstActionReferenceArray m_OnInventoryClosedConstAction = new ConstActionReferenceArray();
+        }
 
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Space")]
         public LinkedBlock m_Space = new LinkedBlock();
 
         [SerializeField, JsonProperty(Order = 1, PropertyName = "GraphicsInfo")]
         public GraphicsInformation m_GraphicsInfo = new GraphicsInformation();
+
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "CallbackInfo")]
+        private CallbackInformation m_CallbackInfo = new CallbackInformation();
 
         [NonSerialized, JsonIgnore]
         private UIDocument m_UIDocument;
@@ -215,6 +227,19 @@ namespace Syadeu.Presentation.Actor
             itemContainer.quantity += 1;
 
             return result;
+        }
+
+        #endregion
+
+        #region Callbacks
+
+        public void ExecuteOnInventoryOpened()
+        {
+            m_CallbackInfo.m_OnInventoryOpenedConstAction.Execute();
+        }
+        public void ExecuteOnInventoryClosed()
+        {
+            m_CallbackInfo.m_OnInventoryClosedConstAction.Execute();
         }
 
         #endregion

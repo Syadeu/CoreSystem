@@ -114,14 +114,21 @@ namespace Syadeu.Presentation.Actor
         public void EnableInventoryUI(InstanceID actor)
         {
             ActorControllerComponent component = actor.GetComponent<ActorControllerComponent>();
-            var invenProvider = component.GetProvider<ActorInventoryProvider>();
+            var invenProvider = component.GetProvider<ActorInventoryProvider>().Target;
 
-            m_UIDocument = invenProvider.Target.UIDocument;
+            m_UIDocument = invenProvider.UIDocument;
             m_UIDocument.SetActive(true);
             m_CurrentActor = actor;
+
+            invenProvider.ExecuteOnInventoryOpened();
         }
         public void DisableInventoryUI()
         {
+            ActorControllerComponent component = m_CurrentActor.GetComponent<ActorControllerComponent>();
+            var invenProvider = component.GetProvider<ActorInventoryProvider>().Target;
+
+            invenProvider.ExecuteOnInventoryClosed();
+
             m_CurrentActor = InstanceID.Empty;
 
             m_UIDocument.SetActive(false);
