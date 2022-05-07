@@ -53,10 +53,13 @@ namespace Syadeu.Presentation.Actor
             [SerializeField, JsonProperty(Order = 4, PropertyName = "ItemContainerField")]
             public string m_ItemContainerField = "ItemContainer";
 
+            [Space]
             [SerializeField, JsonProperty(Order = 5, PropertyName = "HeaderField")]
             public string m_HeaderField = "Header";
             [SerializeField, JsonProperty(Order = 6, PropertyName = "QuantityField")]
             public string m_QuantityField = "Quantity";
+            [SerializeField, JsonProperty(Order = 7, PropertyName = "CheckBoxField")]
+            public string m_CheckBoxField = "CheckBox";
         }
         [Serializable]
         public sealed class CallbackInformation : PropertyBlock<CallbackInformation>
@@ -119,6 +122,8 @@ namespace Syadeu.Presentation.Actor
             private readonly VisualElement m_VisualElement;
             private readonly UQueryState<Label>
                 m_HeaderQuery, m_QuantityQuery;
+            private readonly UQueryState<VisualElement>
+                m_CheckBoxQuery;
 
             public VisualElement VisualElement => m_VisualElement;
             public string name
@@ -139,20 +144,31 @@ namespace Syadeu.Presentation.Actor
                     m_QuantityQuery.First().text = string.Format(c_Format, value);
                 }
             }
+            public VisualElement checkBox
+            {
+                get
+                {
+                    return m_CheckBoxQuery.First();
+                }
+            }
 
             public UxmlWrapper(
-                VisualElement element, string headerField, string quantityField)
+                VisualElement element, 
+                string headerField, string quantityField, string checkBoxField)
             {
                 m_VisualElement = element;
                 m_HeaderQuery = m_VisualElement.Query<Label>(name: headerField).Build();
                 m_QuantityQuery = m_VisualElement.Query<Label>(name: quantityField).Build();
+                m_CheckBoxQuery = m_VisualElement.Query<VisualElement>(name: checkBoxField).Build();
             }
             private UxmlWrapper(
-                VisualElement element, UQueryState<Label> headerField, UQueryState<Label> quantityField)
+                VisualElement element, 
+                UQueryState<Label> headerField, UQueryState<Label> quantityField, UQueryState<VisualElement> checkBoxField)
             {
                 m_VisualElement = element;
                 m_HeaderQuery = headerField;
                 m_QuantityQuery = quantityField;
+                m_CheckBoxQuery = checkBoxField;
             }
 
             public UxmlWrapper? GetChild(string name)
@@ -163,7 +179,7 @@ namespace Syadeu.Presentation.Actor
                     return null;
                 }
 
-                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element));
+                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element), m_CheckBoxQuery.RebuildOn(element));
             }
             public void Add(UxmlWrapper? uxml)
             {
@@ -185,7 +201,7 @@ namespace Syadeu.Presentation.Actor
             VisualElement result = query.Build().First();
 
             if (result == null) return null;
-            return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
         }
         public UxmlWrapper GetOrCreateItemContainer(ItemCategory type)
         {
@@ -196,7 +212,7 @@ namespace Syadeu.Presentation.Actor
             TemplateContainer ins = m_GraphicsInfo.m_ItemContainerUXMLAsset.Asset.CloneTree();
             ins.name = TypeHelper.Enum<ItemCategory>.ToString(type);
 
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
 
             result.name = ins.name;
             result.quantity = 0;
@@ -214,7 +230,7 @@ namespace Syadeu.Presentation.Actor
             int maxCount = type.MaximumMultipleCount;
             foreach (var item in items)
             {
-                UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+                UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
 
                 if (itemWrapper.quantity >= maxCount) continue;
 
@@ -230,7 +246,7 @@ namespace Syadeu.Presentation.Actor
             var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
             ins.name = name;
 
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
             result.name = name;
             result.quantity = 0;
 
@@ -248,7 +264,7 @@ namespace Syadeu.Presentation.Actor
                 int maxCount = type.MaximumMultipleCount;
                 foreach (var item in items)
                 {
-                    UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+                    UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
 
                     if (itemWrapper.quantity >= maxCount) continue;
 
@@ -259,7 +275,7 @@ namespace Syadeu.Presentation.Actor
             var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
             ins.name = name;
 
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField);
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
             result.name = name;
             result.quantity = 0;
 
