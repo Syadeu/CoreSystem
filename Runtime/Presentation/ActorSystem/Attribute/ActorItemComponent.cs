@@ -36,6 +36,7 @@ namespace Syadeu.Presentation.Actor
         }
 
         private Reference<ActorItemType> m_ItemType;
+        private PrefabReference<Texture2D> m_Icon;
         //private UnsafeLinkedBlock m_ItemSpace;
 
         [ExportData]
@@ -44,6 +45,7 @@ namespace Syadeu.Presentation.Actor
         internal WeaponPosition m_DrawPosition;
 
         public Reference<ActorItemType> ItemType => m_ItemType;
+        public PrefabReference<Texture2D> Icon => m_Icon;
         //public UnsafeLinkedBlock ItemSpace => m_ItemSpace;
 
         public float Damage { get => m_Damage; set => m_Damage = value; }
@@ -51,6 +53,7 @@ namespace Syadeu.Presentation.Actor
         public ActorItemComponent(ActorItemAttribute att)
         {
             m_ItemType = att.ItemType;
+            m_Icon = att.GraphicsInfo.Icon;
             //m_ItemSpace = new UnsafeLinkedBlock(att.GeneralInfo.ItemSpace, Unity.Collections.Allocator.Persistent);
 
             m_Damage = att.WeaponInfo.m_Damage;

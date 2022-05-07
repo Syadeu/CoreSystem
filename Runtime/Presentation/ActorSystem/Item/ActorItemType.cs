@@ -41,9 +41,15 @@ namespace Syadeu.Presentation.Actor
         [SerializeField, JsonProperty(Order = 2, PropertyName = "ItemCategory")]
         private ItemCategory m_ItemCategory = ItemCategory.Default;
 
+        [Space]
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "Icon")]
+        private PrefabReference<Texture2D> m_Icon = PrefabReference<Texture2D>.None;
+
         [JsonIgnore] public int MaximumMultipleCount => m_MaximumMultipleCount;
         [JsonIgnore] public HumanBody Equipable => m_Equipable;
         [JsonIgnore] public ItemCategory ItemCategory => m_ItemCategory;
+
+        [JsonIgnore] public PrefabReference<Texture2D> Icon => m_Icon;
     }
 
     public enum ItemCategory

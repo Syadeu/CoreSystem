@@ -156,15 +156,19 @@ namespace Syadeu.Presentation.Actor
             data.ReadData(ref component);
             return true;
         }
-        public bool Peek(in Key item, out ActorItemComponent component)
+        public bool Peek(in Key item, out FixedReference reference, out ActorItemComponent component)
         {
             component = default(ActorItemComponent);
+            reference = default(FixedReference);
 
             int index = IndexOf(in item);
             if (index < 0) return false;
 
             UnsafeExportedData data = m_ItemData[index];
             data.ReadData(ref component);
+
+            reference = m_Inventory[index];
+
             return true;
         }
 

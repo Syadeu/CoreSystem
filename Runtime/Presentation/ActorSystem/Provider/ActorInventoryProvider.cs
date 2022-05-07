@@ -60,6 +60,8 @@ namespace Syadeu.Presentation.Actor
             public string m_QuantityField = "Quantity";
             [SerializeField, JsonProperty(Order = 7, PropertyName = "CheckBoxField")]
             public string m_CheckBoxField = "CheckBox";
+            [SerializeField, JsonProperty(Order = 8, PropertyName = "IconField")]
+            public string m_IconField = "Icon";
         }
         [Serializable]
         public sealed class CallbackInformation : PropertyBlock<CallbackInformation>
@@ -123,7 +125,7 @@ namespace Syadeu.Presentation.Actor
             private readonly UQueryState<Label>
                 m_HeaderQuery, m_QuantityQuery;
             private readonly UQueryState<VisualElement>
-                m_CheckBoxQuery;
+                m_CheckBoxQuery, m_IconQuery;
 
             public VisualElement VisualElement => m_VisualElement;
             public string name
@@ -151,24 +153,33 @@ namespace Syadeu.Presentation.Actor
                     return m_CheckBoxQuery.First();
                 }
             }
+            public VisualElement icon
+            {
+                get
+                {
+                    return m_IconQuery.First();
+                }
+            }
 
             public UxmlWrapper(
                 VisualElement element, 
-                string headerField, string quantityField, string checkBoxField)
+                string headerField, string quantityField, string checkBoxField, string iconField)
             {
                 m_VisualElement = element;
                 m_HeaderQuery = m_VisualElement.Query<Label>(name: headerField).Build();
                 m_QuantityQuery = m_VisualElement.Query<Label>(name: quantityField).Build();
                 m_CheckBoxQuery = m_VisualElement.Query<VisualElement>(name: checkBoxField).Build();
+                m_IconQuery = m_VisualElement.Query<VisualElement>(name: iconField).Build();
             }
             private UxmlWrapper(
                 VisualElement element, 
-                UQueryState<Label> headerField, UQueryState<Label> quantityField, UQueryState<VisualElement> checkBoxField)
+                UQueryState<Label> headerField, UQueryState<Label> quantityField, UQueryState<VisualElement> checkBoxField, UQueryState<VisualElement> iconField)
             {
                 m_VisualElement = element;
                 m_HeaderQuery = headerField;
                 m_QuantityQuery = quantityField;
                 m_CheckBoxQuery = checkBoxField;
+                m_IconQuery = iconField;
             }
 
             public UxmlWrapper? GetChild(string name)
@@ -179,7 +190,7 @@ namespace Syadeu.Presentation.Actor
                     return null;
                 }
 
-                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element), m_CheckBoxQuery.RebuildOn(element));
+                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element), m_CheckBoxQuery.RebuildOn(element), m_IconQuery.RebuildOn(element));
             }
             public void Add(UxmlWrapper? uxml)
             {
@@ -193,36 +204,48 @@ namespace Syadeu.Presentation.Actor
         {
             return m_UIDocument.rootVisualElement.Q(name: m_GraphicsInfo.m_ContainerField);
         }
-        public UxmlWrapper? GetItemContainer(ItemCategory type)
+        public UxmlWrapper? GetItemContainer(ActorItemType type)
         {
             VisualElement container = GetContainer();
-            UQueryBuilder<VisualElement> query = container.Query().Name(TypeHelper.Enum<ItemCategory>.ToString(type));
+            UQueryBuilder<VisualElement> query = container.Query().Name(TypeHelper.Enum<ItemCategory>.ToString(type.ItemCategory));
 
             VisualElement result = query.Build().First();
 
             if (result == null) return null;
-            return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
+            return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
         }
-        public UxmlWrapper GetOrCreateItemContainer(ItemCategory type)
+        public UxmlWrapper GetOrCreateItemContainer(ActorItemType type)
         {
             UxmlWrapper? target = GetItemContainer(type);
             if (target.HasValue) return target.Value;
 
             VisualElement container = GetContainer();
             TemplateContainer ins = m_GraphicsInfo.m_ItemContainerUXMLAsset.Asset.CloneTree();
-            ins.name = TypeHelper.Enum<ItemCategory>.ToString(type);
+            ins.name = TypeHelper.Enum<ItemCategory>.ToString(type.ItemCategory);
 
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
 
             result.name = ins.name;
             result.quantity = 0;
+
+            if (!type.Icon.IsNone() && type.Icon.IsValid())
+            {
+                if (type.Icon.Asset != null)
+                {
+                    result.icon.style.backgroundImage = new StyleBackground(type.Icon.Asset);
+                }
+                else
+                {
+                    type.Icon.LoadAssetAsync(t => result.icon.style.backgroundImage = new StyleBackground(t));
+                }
+            }
 
             container.Add(ins);
             return result;
         }
         public UxmlWrapper? GetItem(ActorItemType type, string name)
         {
-            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
+            UxmlWrapper container = GetOrCreateItemContainer(type);
 
             var items = container.VisualElement.Query().Name(name).Build();
             if (items.First() == null) return null;
@@ -230,7 +253,7 @@ namespace Syadeu.Presentation.Actor
             int maxCount = type.MaximumMultipleCount;
             foreach (var item in items)
             {
-                UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
+                UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
 
                 if (itemWrapper.quantity >= maxCount) continue;
 
@@ -239,24 +262,9 @@ namespace Syadeu.Presentation.Actor
 
             return null;
         }
-        public UxmlWrapper CreateItem(ActorItemType type, string name)
+        public UxmlWrapper GetOrCreateItem(ActorItemType type, string name, PrefabReference<Texture2D> itemIcon, ItemData data)
         {
-            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
-
-            var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
-            ins.name = name;
-
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
-            result.name = name;
-            result.quantity = 0;
-
-            container.Add(result);
-
-            return result;
-        }
-        public UxmlWrapper GetOrCreateItem(ActorItemType type, string name)
-        {
-            UxmlWrapper container = GetOrCreateItemContainer(type.ItemCategory);
+            UxmlWrapper container = GetOrCreateItemContainer(type);
 
             var items = container.VisualElement.Query().Name(name).Build();
             if (items.First() != null)
@@ -264,7 +272,7 @@ namespace Syadeu.Presentation.Actor
                 int maxCount = type.MaximumMultipleCount;
                 foreach (var item in items)
                 {
-                    UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
+                    UxmlWrapper itemWrapper = new UxmlWrapper(item, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
 
                     if (itemWrapper.quantity >= maxCount) continue;
 
@@ -275,9 +283,22 @@ namespace Syadeu.Presentation.Actor
             var ins = m_GraphicsInfo.m_ItemUXMLAsset.Asset.CloneTree();
             ins.name = name;
 
-            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField);
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
             result.name = name;
             result.quantity = 0;
+
+            if (itemIcon.Asset != null)
+            {
+                result.icon.style.backgroundImage = new StyleBackground(itemIcon.Asset);
+            }
+            else
+            {
+                itemIcon.LoadAssetAsync(t => result.icon.style.backgroundImage = new StyleBackground(t));
+            }
+
+
+            //result.VisualElement.AddManipulator(new Clickable(OnItemMouseDownEventHandler));
+            result.VisualElement.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
 
             container.Add(result);
 
@@ -297,9 +318,23 @@ namespace Syadeu.Presentation.Actor
             m_CallbackInfo.m_OnInventoryClosedConstAction.Execute();
         }
 
+        private void OnItemMouseDownEventHandler(MouseDownEvent e, ItemData data)
+        {
+            if (e.target is VisualElement element)
+            {
+                data.inventory.Peek(data.key, out var refer, out var com);
+                $"clicked {refer.GetObject().Name}".ToLog();
+            }
+        }
+
         #endregion
     }
 
+    public struct ItemData
+    {
+        public ItemInventory inventory;
+        public ItemInventory.Key key;
+    }
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
     {
         private InstanceID<ActorInventoryProvider> m_Provider;
@@ -337,11 +372,17 @@ namespace Syadeu.Presentation.Actor
             string itemName = item.GetEntity().Name;
 
             ActorInventoryProvider.UxmlWrapper uxmlContainer = provider.GetOrCreateItemContainer(
-                itemType.ItemCategory
+                itemType
                 );
             ActorInventoryProvider.UxmlWrapper uxmlItem = provider.GetOrCreateItem(
                 itemType,
-                itemName
+                itemName,
+                itemComponent.Icon,
+                new ItemData
+                {
+                    inventory = m_Inventory,
+                    key = key
+                }
                 );
 
             uxmlContainer.quantity += 1;

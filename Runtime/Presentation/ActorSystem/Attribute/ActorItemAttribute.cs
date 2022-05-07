@@ -41,10 +41,10 @@ namespace Syadeu.Presentation.Actor
         [Serializable]
         public sealed class GraphicsInformation : PropertyBlock<GraphicsInformation>
         {
-            [SerializeField, JsonProperty(Order = 0, PropertyName = "IconImage")]
-            private ArrayWrapper<PrefabReference<Sprite>> m_IconImage = ArrayWrapper<PrefabReference<Sprite>>.Empty;
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "Icon")]
+            private PrefabReference<Texture2D> m_Icon = PrefabReference<Texture2D>.None;
 
-            [JsonIgnore] public ArrayWrapper<PrefabReference<Sprite>> IconImage => m_IconImage;
+            [JsonIgnore] public PrefabReference<Texture2D> Icon => m_Icon;
         }
         [Serializable]
         public sealed class GeneralInformation : PropertyBlock<GeneralInformation>
