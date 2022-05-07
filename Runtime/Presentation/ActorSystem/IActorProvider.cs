@@ -24,6 +24,8 @@ namespace Syadeu.Presentation.Actor
     public interface IActorProvider : IObject
     {
         [JsonIgnore]
+        Entity<IEntityData> Parent { get; }
+        [JsonIgnore]
         object Component { get; }
 
         void Bind(Entity<IEntityData> parent);

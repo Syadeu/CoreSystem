@@ -16,8 +16,14 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
+using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Render;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
 namespace Syadeu.Presentation.Actor
@@ -27,16 +33,29 @@ namespace Syadeu.Presentation.Actor
         private InputSystem m_InputSystem;
         private InputSystem.UserActionHandle m_InventoryKey;
 
+        private SceneSystem m_SceneSystem;
+
+        private InstanceID m_CurrentActor = InstanceID.Empty;
+        private UIDocument m_UIDocument;
+
+        public InstanceID CurrentActor => m_CurrentActor;
+        public bool IsOpened => m_UIDocument != null;
+
         protected override void OnInitialize()
         {
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+
+            System.OnCurrentControlChanged += System_OnCurrentControlChanged;
         }
+
         protected override void OnShutDown()
         {
         }
         protected override void OnDispose()
         {
             m_InputSystem = null;
+            m_SceneSystem = null;
         }
 
         #region Binds
@@ -46,14 +65,67 @@ namespace Syadeu.Presentation.Actor
             m_InputSystem = other;
 
             m_InventoryKey = m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory);
+            m_InventoryKey.executable = InventoryKeyExecutable;
             m_InventoryKey.performed += OnInventoryKeyEventHandler;
+        }
+        private void Bind(SceneSystem other)
+        {
+            m_SceneSystem = other;
         }
 
         #endregion
 
+        #region Event Handlers
+
+        private bool InventoryKeyExecutable(InputAction.CallbackContext ctx)
+        {
+            if (m_SceneSystem == null ||
+               !m_SceneSystem.IsIngame ||
+               System.CurrentControls.Count == 0) return false;
+
+            InstanceID first = System.CurrentControls[0];
+            if (!first.HasComponent<ActorControllerComponent>()) return false;
+
+            return true;
+        }
+        private void System_OnCurrentControlChanged(IReadOnlyList<InstanceID> obj)
+        {
+            if (m_CurrentActor.IsEmpty()) return;
+
+            if (!obj.Contains(m_CurrentActor))
+            {
+                DisableInventoryUI();
+            }
+        }
         private void OnInventoryKeyEventHandler()
         {
+            if (IsOpened)
+            {
+                DisableInventoryUI();
+                return;
+            }
 
+            InstanceID first = System.CurrentControls[0];
+            EnableInventoryUI(first);
+        }
+
+        #endregion
+
+        public void EnableInventoryUI(InstanceID actor)
+        {
+            ActorControllerComponent component = actor.GetComponent<ActorControllerComponent>();
+            var invenProvider = component.GetProvider<ActorInventoryProvider>();
+
+            m_UIDocument = invenProvider.Target.UIDocument;
+            m_UIDocument.SetActive(true);
+            m_CurrentActor = actor;
+        }
+        public void DisableInventoryUI()
+        {
+            m_CurrentActor = InstanceID.Empty;
+
+            m_UIDocument.SetActive(false);
+            m_UIDocument = null;
         }
     }
 }

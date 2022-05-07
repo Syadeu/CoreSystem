@@ -179,7 +179,7 @@ namespace Syadeu.Presentation.Actor
                         else
                         {
                             ref ActorInventoryComponent inventory = ref Parent.GetComponent<ActorInventoryComponent>();
-                            inventory.Inventory.Add(ev.Weapon);
+                            inventory.Add(ev.Weapon);
                         }
                     }
                     else

@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Presentation.Actor;
 using Syadeu.Presentation.Attributes;
 using Syadeu.Presentation.Entities;
 using System;
@@ -55,10 +56,23 @@ namespace Syadeu.Presentation.Components
             m_EntitySystem = other;
         }
 
+        private InstanceID GetTargetID(IObject rawObject)
+        {
+            if (rawObject is AttributeBase att)
+            {
+                return att.ParentEntity.Idx;
+            }
+            else if (rawObject is IActorProvider provider)
+            {
+                return provider.Parent.Idx;
+            }
+
+            return rawObject.Idx;
+        }
         public void TryAddComponent(IObject rawObject, Action<InstanceID, Type> onAdd)
         {
             Hash rawID = rawObject.Hash;
-            InstanceID instanceID = (rawObject is AttributeBase att) ? att.ParentEntity.Idx : rawObject.Idx;
+            InstanceID instanceID = GetTargetID(rawObject);
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;
             else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))
@@ -92,7 +106,7 @@ namespace Syadeu.Presentation.Components
         public void TryRemoveComponent(IObject rawObject, Action<InstanceID, Type> onRemove)
         {
             Hash rawID = rawObject.Hash;
-            InstanceID instanceID = (rawObject is AttributeBase att) ? att.ParentEntity.Idx : rawObject.Idx;
+            InstanceID instanceID = GetTargetID(rawObject);
 
             if (m_ZeroNotifiedObjects.Contains(rawID)) return;
             else if (m_NotifiedObjects.TryGetFirstValue(rawID, out TypeInfo typeInfo, out var parsedIter))

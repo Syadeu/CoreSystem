@@ -195,34 +195,59 @@ namespace Syadeu.Presentation.Render
             return obj;
         }
 
+        public static UIDocument CreateVisualElement()
+        {
+            GameObject obj = CreateGameObject(true);
+            var temp = obj.AddComponent<UIDocument>();
+
+            return temp;
+        }
         public static UIDocument CreateVisualElement(
-            PrefabReference<PanelSettings> settings, PrefabReference<VisualTreeAsset> asset, bool enable, Action<VisualElement> onCompleted = null)
+            PrefabReference<PanelSettings> settings, PrefabReference<VisualTreeAsset> asset, bool enable, Action<UIDocument> onCompleted = null)
         {
 #if DEBUG_MODE
             const string c_NameFormat = "UIDocument({0})";
 #endif
-            GameObject obj = CreateGameObject(true);
-            var temp = obj.AddComponent<UIDocument>();
+            var temp = CreateVisualElement();
 
-            var settingHandler = settings.LoadAssetUntypedAsync();
-            settingHandler.Completed += t =>
+            if (settings.Asset == null)
             {
-                temp.panelSettings = (PanelSettings)t.Result;
-            };
+                var settingHandler = settings.LoadAssetUntypedAsync();
+                settingHandler.Completed += t =>
+                {
+                    temp.panelSettings = (PanelSettings)t.Result;
+                };
+            }
+            else
+            {
+                temp.panelSettings = settings.Asset;
+            }
 
-            var assetHandler = asset.LoadAssetUntypedAsync();
-            assetHandler.Completed += t =>
+            if (asset.Asset == null)
             {
-                temp.visualTreeAsset = (VisualTreeAsset)t.Result;
+                var assetHandler = asset.LoadAssetUntypedAsync();
+                assetHandler.Completed += t =>
+                {
+                    temp.visualTreeAsset = (VisualTreeAsset)t.Result;
 #if DEBUG_MODE
-                obj.name = string.Format(c_NameFormat, temp.visualTreeAsset.name);
+                    temp.gameObject.name = string.Format(c_NameFormat, temp.visualTreeAsset.name);
 #endif
-                temp.rootVisualElement.visible = enable;
-                temp.rootVisualElement.SetEnabled(enable);
+                    temp.rootVisualElement.visible = enable;
+                    temp.rootVisualElement.SetEnabled(enable);
 
-                onCompleted?.Invoke(temp.rootVisualElement);
-            };
-
+                    onCompleted?.Invoke(temp);
+                };
+            }
+            else
+            {
+                temp.visualTreeAsset = asset.Asset;
+#if DEBUG_MODE
+                temp.gameObject.name = string.Format(c_NameFormat, temp.visualTreeAsset.name);
+#endif
+                temp.SetActive(enable);
+                onCompleted?.Invoke(temp);
+            }
+            
             return temp;
         }
     }

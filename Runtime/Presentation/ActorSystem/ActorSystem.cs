@@ -61,6 +61,8 @@ namespace Syadeu.Presentation.Actor
         public Entity<ActorEntity> CurrentEventActor => m_CurrentEvent.Event == null ? Entity<ActorEntity>.Empty : m_CurrentEvent.Event.Actor;
         public IReadOnlyList<InstanceID> PlayableActors => m_PlayableActors;
 
+        public event Action<IReadOnlyList<InstanceID>> OnCurrentControlChanged;
+
         private EntitySystem m_EntitySystem;
         private EventSystem m_EventSystem;
 
@@ -586,24 +588,33 @@ namespace Syadeu.Presentation.Actor
 
         public void SetCurrentControl(params Entity<ActorEntity>[] entities)
         {
-            ClearCurrentControl();
+            m_CurrentControls.Clear();
             AddCurrentControl(entities);
         }
+
         public void AddCurrentControl(params Entity<ActorEntity>[] entities)
         {
             m_CurrentControls.AddRange(entities.Select(t => t.Idx));
+
+            OnCurrentControlChanged?.Invoke(m_CurrentControls);
         }
         public void RemoveCurrentControl(params Entity<ActorEntity>[] entities)
         {
             m_CurrentControls.RemoveAll(t => entities.Contains(t));
+
+            OnCurrentControlChanged?.Invoke(m_CurrentControls);
         }
         public void RemoveCurrentControl(IEnumerable<Entity<ActorEntity>> entities)
         {
             m_CurrentControls.RemoveAll(t => entities.Contains(t));
+
+            OnCurrentControlChanged?.Invoke(m_CurrentControls);
         }
         public void ClearCurrentControl()
         {
             m_CurrentControls.Clear();
+
+            OnCurrentControlChanged?.Invoke(m_CurrentControls);
         }
 
         [Preserve]

@@ -83,13 +83,21 @@ namespace Syadeu.Presentation.Render
             }
             bool current = m_UIDocument.rootVisualElement.enabledInHierarchy;
 
-            m_UIDocument.rootVisualElement.visible = !current;
-            m_UIDocument.rootVisualElement.SetEnabled(!current);
+            m_UIDocument.SetActive(!current);
 
             if (!current) m_OnOpenedConstAction.Execute(m_UIDocument);
             else m_OnClosedConstAction.Execute(m_UIDocument);
         }
 #endif
+
+        public UIDocument GetUIDocument()
+        {
+            if (m_UIDocument == null)
+            {
+                m_UIDocument = ScreenCanvasSystem.CreateVisualElement(m_PanelSettings, m_UXMLAsset, true, t => t.SetActive(false));
+            }
+            return m_UIDocument;
+        }
     }
     public class UIDocumentConstantDataProcessor : EntityProcessor<UIDocumentConstantData>
     {
@@ -118,6 +126,11 @@ namespace Syadeu.Presentation.Render
                 {
                     obj.m_OnOpenedConstAction.Execute();
                 }
+                else
+                {
+                    obj.m_UIDocument.rootVisualElement.visible = false;
+                    obj.m_UIDocument.rootVisualElement.SetEnabled(false);
+                }
             }
 
 #if ENABLE_INPUT_SYSTEM
@@ -141,6 +154,20 @@ namespace Syadeu.Presentation.Render
                 }
             }
 #endif
+        }
+    }
+
+    public static class UIDocumentExtensions
+    {
+        /// <summary>
+        /// 활성화 여부를 설정합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="value"></param>
+        public static void SetActive(this UIDocument t, bool value)
+        {
+            t.rootVisualElement.visible = value;
+            t.rootVisualElement.SetEnabled(value);
         }
     }
 }

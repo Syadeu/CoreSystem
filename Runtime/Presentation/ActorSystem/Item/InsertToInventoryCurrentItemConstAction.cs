@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Actor
             }
 
             ref ActorInventoryComponent inventoryCom = ref entity.GetComponent<ActorInventoryComponent>();
-            inventoryCom.Inventory.Add(item);
+            inventoryCom.Add(item);
 
             "insert item".ToLog();
             return 0;

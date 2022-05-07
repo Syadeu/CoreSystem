@@ -82,23 +82,23 @@ namespace Syadeu.Presentation.Input
         private sealed class UsereActionTypeHandle
         {
             public UserActionHandle inputAction;
-            private bool opened;
+            //private bool opened;
 
-            public bool Opened => opened;
+            //public bool Opened => opened;
 
             public UsereActionTypeHandle(InputAction inputAction)
             {
                 this.inputAction = new UserActionHandle(inputAction);
-                opened = false;
+                //opened = false;
 
-                this.inputAction.performed += OnKeyHandler;
+                //this.inputAction.performed += OnKeyHandler;
             }
 
-            private void OnKeyHandler()
-            {
-                opened = !opened;
-                $"{opened}".ToLog();
-            }
+            //private void OnKeyHandler()
+            //{
+            //    opened = !opened;
+            //    $"{opened}".ToLog();
+            //}
         }
 
         private Vector2 m_PrecalculatedCursorPosition;
@@ -332,7 +332,7 @@ namespace Syadeu.Presentation.Input
         {
             return m_CreatedUserActions[userActionType].inputAction;
         }
-        public bool IsUseractionKeyOpened(UserActionType userActionType) => m_CreatedUserActions[userActionType].Opened;
+        //public bool IsUseractionKeyOpened(UserActionType userActionType) => m_CreatedUserActions[userActionType].Opened;
 
         private static string GetUserActionKeyBindingString(UserActionType userActionType)
         {

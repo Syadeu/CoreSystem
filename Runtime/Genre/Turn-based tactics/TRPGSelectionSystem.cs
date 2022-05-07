@@ -236,9 +236,11 @@ namespace Syadeu.Presentation.TurnTable
                 ClearSelectedEntities();
 
                 // Inventory
-                if (m_InputSystem.IsUseractionKeyOpened(UserActionType.Inventory))
+                var invenModule = m_ActorSystem.GetModule<ActorInventoryModule>();
+                if (invenModule.IsOpened)
                 {
-                    m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory).Execute();
+                    //m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory).Execute();
+                    m_ActorSystem.GetModule<ActorInventoryModule>().DisableInventoryUI();
                 }
             }
         }
