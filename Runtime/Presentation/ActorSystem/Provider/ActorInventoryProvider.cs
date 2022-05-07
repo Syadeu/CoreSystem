@@ -28,6 +28,8 @@ using Syadeu.Presentation.Render;
 using UnityEngine.UIElements;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Actions;
+using UnityEngine.UIElements.Experimental;
+using DG.Tweening;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -139,11 +141,22 @@ namespace Syadeu.Presentation.Actor
             }
             public int quantity
             {
-                get => int.Parse(m_QuantityQuery.First().text.Substring(1));
+                get
+                {
+                    string text = m_QuantityQuery.First().text;
+
+                    if (text.IsNullOrEmpty()) return 0;
+                    return int.Parse(text.Substring(1));
+                }
                 set
                 {
                     const string c_Format = "x{0}";
-                    m_QuantityQuery.First().text = string.Format(c_Format, value);
+                    if (value > 0)
+                    {
+                        m_QuantityQuery.First().text = string.Format(c_Format, value);
+                        return;
+                    }
+                    m_QuantityQuery.First().text = string.Empty;
                 }
             }
             public VisualElement checkBox
@@ -204,15 +217,42 @@ namespace Syadeu.Presentation.Actor
         {
             return m_UIDocument.rootVisualElement.Q(name: m_GraphicsInfo.m_ContainerField);
         }
-        public UxmlWrapper? GetItemContainer(ActorItemType type)
+        private UxmlWrapper? GetItemContainer(string type)
         {
             VisualElement container = GetContainer();
-            UQueryBuilder<VisualElement> query = container.Query().Name(TypeHelper.Enum<ItemCategory>.ToString(type.ItemCategory));
+            UQueryBuilder<VisualElement> query = container.Query().Name(type);
 
             VisualElement result = query.Build().First();
 
             if (result == null) return null;
             return new UxmlWrapper(result, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
+        }
+        private UxmlWrapper GetOrCreateItemContainer(string type)
+        {
+            UxmlWrapper? target = GetItemContainer(type);
+            if (target.HasValue) return target.Value;
+
+            VisualElement container = GetContainer();
+            TemplateContainer ins = m_GraphicsInfo.m_ItemContainerUXMLAsset.Asset.CloneTree();
+            ins.name = type;
+
+            UxmlWrapper result = new UxmlWrapper(ins, m_GraphicsInfo.m_HeaderField, m_GraphicsInfo.m_QuantityField, m_GraphicsInfo.m_CheckBoxField, m_GraphicsInfo.m_IconField);
+
+            result.name = ins.name;
+            result.quantity = 0;
+
+            container.Add(ins);
+            return result;
+        }
+
+        public UxmlWrapper GetEquipedContainer()
+        {
+            return GetOrCreateItemContainer("Equiped on Character");
+        }
+
+        public UxmlWrapper? GetItemContainer(ActorItemType type)
+        {
+            return GetItemContainer(TypeHelper.Enum<ItemCategory>.ToString(type.ItemCategory));
         }
         public UxmlWrapper GetOrCreateItemContainer(ActorItemType type)
         {
@@ -296,9 +336,19 @@ namespace Syadeu.Presentation.Actor
                 itemIcon.LoadAssetAsync(t => result.icon.style.backgroundImage = new StyleBackground(t));
             }
 
+            VisualElement element = result.VisualElement;
+            element.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
+            float
+                originalOpacity = element.resolvedStyle.opacity,
+                originalHeight = element.resolvedStyle.height;
+            element.style.opacity = 0;
+            element.style.height = 0;
 
-            //result.VisualElement.AddManipulator(new Clickable(OnItemMouseDownEventHandler));
-            result.VisualElement.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
+            element.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
+            element.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
+            //element.experimental.animation
+            //    .Start(0, originalHeight, durationMs: 1000, UIElementAnimation.SetHeight)
+            //    .Ease(Easing.OutBounce);
 
             container.Add(result);
 
@@ -320,11 +370,9 @@ namespace Syadeu.Presentation.Actor
 
         private void OnItemMouseDownEventHandler(MouseDownEvent e, ItemData data)
         {
-            if (e.target is VisualElement element)
-            {
-                data.inventory.Peek(data.key, out var refer, out var com);
-                $"clicked {refer.GetObject().Name}".ToLog();
-            }
+            data.inventory.Peek(data.key, out FixedReference refer, out ActorItemComponent component);
+
+            $"clicked {refer.GetObject().Name}".ToLog();
         }
 
         #endregion
