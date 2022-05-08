@@ -66,6 +66,8 @@ namespace Syadeu.Presentation.TurnTable
         private TRPGGridSystem m_TRPGGridSystem;
         private TRPGCanvasUISystem m_TRPGCanvasUISystem;
 
+        private ScreenControlModule m_ScreenControlModule;
+
         #region Presentation Methods
 
         protected override PresentationResult OnInitialize()
@@ -87,7 +89,7 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnShutDown()
         {
-            m_RenderSystem.GetModule<ScreenControlModule>().OnMouseAtCornor -= OnMouseAtCornorHandler;
+            m_ScreenControlModule.OnMouseAtCornor -= OnMouseAtCornorHandler;
 
             m_LookPlayerKey.performed -= OnLookPlayerKeyPressed;
             m_LookPlayerKey.Dispose();
@@ -112,6 +114,8 @@ namespace Syadeu.Presentation.TurnTable
             m_TRPGCameraMovement = null;
             m_TRPGGridSystem = null;
             m_TRPGCanvasUISystem = null;
+
+            m_ScreenControlModule = null;
         }
 
         #region Binds
@@ -178,7 +182,8 @@ namespace Syadeu.Presentation.TurnTable
 
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
-            m_RenderSystem.GetModule<ScreenControlModule>().OnMouseAtCornor += OnMouseAtCornorHandler;
+            m_ScreenControlModule = m_RenderSystem.GetModule<ScreenControlModule>();
+            m_ScreenControlModule.OnMouseAtCornor += OnMouseAtCornorHandler;
 
             m_TRPGCanvasUISystem.SetPlayerUI(false);
 

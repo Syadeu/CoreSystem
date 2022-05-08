@@ -925,6 +925,8 @@ namespace SyadeuEditor
             int m_AddressableCount = 0;
             readonly List<int> m_InvalidIndices = new List<int>();
 
+            private GameObject[] m_BrokenPrefabs = Array.Empty<GameObject>();
+
             Vector2
                 m_Scroll = Vector2.zero;
 
@@ -969,11 +971,16 @@ namespace SyadeuEditor
                 {
                     m_AddressableCount += groups[i].entries.Count;
                 }
+
+                m_BrokenPrefabs = objectSettings.Where(t => PrefabUtility.IsPartOfAnyPrefab(t.GetEditorAsset())).Select(t => (GameObject)t.GetEditorAsset()).Where(t => t.GetComponentsInChildren<Component>(true).Any(t => t == null)).ToArray();
             }
 
             public override bool Predicate()
             {
                 if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
+
+                else if (m_BrokenPrefabs.Length > 0) return false;
+
                 return true;
             }
             public override void OnGUI()
@@ -1026,6 +1033,21 @@ namespace SyadeuEditor
                         EditorGUI.EndDisabledGroup();
 
                         EditorGUI.indentLevel--;
+                    }
+                    else if (m_BrokenPrefabs.Length > 0)
+                    {
+                        EditorGUILayout.HelpBox("We\'ve found invalid assets in PrefabList with missing monoscript. This is not allowed.", MessageType.Error);
+
+                        EditorGUI.BeginDisabledGroup(true);
+                        for (int i = 0; i < m_BrokenPrefabs.Length; i++)
+                        {
+                            EditorGUILayout.ObjectField(
+                                new GUIContent(m_BrokenPrefabs[i].name),
+                                m_BrokenPrefabs[i],
+                                TypeHelper.TypeOf<GameObject>.Type,
+                                false);
+                        }
+                        EditorGUI.EndDisabledGroup();
                     }
                     else
                     {

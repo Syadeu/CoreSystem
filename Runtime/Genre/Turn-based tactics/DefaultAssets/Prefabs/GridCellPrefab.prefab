@@ -177,7 +177,6 @@ GameObject:
   - component: {fileID: 7627187436086608564}
   - component: {fileID: -1528361407640268649}
   - component: {fileID: 1466479329233610466}
-  - component: {fileID: 4004630529627889661}
   - component: {fileID: 7627187436086608561}
   m_Layer: 5
   m_Name: GridCellPrefab
@@ -224,7 +223,7 @@ MonoBehaviour:
   onCreation:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4004630529627889661}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIGridCell, Assembly-CSharp
         m_MethodName: OnCreated
         m_Mode: 1
@@ -239,7 +238,7 @@ MonoBehaviour:
   onInitializion:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4004630529627889661}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIGridCell, Assembly-CSharp
         m_MethodName: OnInitialize
         m_Mode: 1
@@ -254,7 +253,7 @@ MonoBehaviour:
   onTermination:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4004630529627889661}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIGridCell, Assembly-CSharp
         m_MethodName: Terminate
         m_Mode: 1
@@ -278,30 +277,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &4004630529627889661
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7627187436086608565}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c318b678c69802847a79f24ec63d3c93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_RecycleComponent: {fileID: -1528361407640268649}
-  m_CanvasGroup: {fileID: 1466479329233610466}
-  m_Outline: {fileID: 7262203311608163366}
-  m_BackgroundImg: {fileID: 669930832851793057}
-  m_SelectedImg: {fileID: 7708556005891050418}
-  m_DetectionImg: {fileID: 2607172266407821793}
-  m_NormalColor: {r: 1, g: 1, b: 1, a: 0.21960784}
-  m_HighlightedColor: {r: 0.6, g: 0.81960785, b: 1, a: 0.21960784}
-  m_SelectedColor: {r: 0.39215687, g: 1, b: 0.54509807, a: 0.21960784}
-  m_DisabledColor: {r: 1, g: 0.41960785, b: 0.41960785, a: 0.21960784}
-  m_ControlPath: <Mouse>/leftButton
-  m_IsDetectionTile: 0
 --- !u!222 &7627187436086608561
 CanvasRenderer:
   m_ObjectHideFlags: 0

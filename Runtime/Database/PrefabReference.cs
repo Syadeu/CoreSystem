@@ -75,7 +75,20 @@ namespace Syadeu.Collections
 
         [Obsolete]
         public UnityEngine.Object LoadAsset() => GetObjectSetting().LoadAsset(m_SubAssetName);
-        public AsyncOperationHandle LoadAssetAsync() => GetObjectSetting().LoadAssetAsync(m_SubAssetName);
+        public AsyncOperationHandle LoadAssetAsync()
+        {
+            var setting = GetObjectSetting();
+#if DEBUG_MODE
+            if (setting == null)
+            {
+                CoreSystem.Logger.LogError(Channel.Core,
+                    $"Cannot load asset(idx: {m_Idx}, subasset: {m_SubAssetName.ToString()})");
+                UnityEngine.Debug.Break();
+                return default(AsyncOperationHandle);
+            }
+#endif
+            return setting.LoadAssetAsync(m_SubAssetName);
+        }
         public AsyncOperationHandle<T> LoadAssetAsync<T>() where T : UnityEngine.Object => GetObjectSetting().LoadAssetAsync<T>(m_SubAssetName);
         public void UnloadAsset() => GetObjectSetting().UnloadAsset();
         public void ReleaseInstance(UnityEngine.GameObject obj) => GetObjectSetting().ReleaseInstance(obj);
@@ -146,7 +159,18 @@ namespace Syadeu.Collections
 
                 var target = set.GetLoadedObject(SubAssetName);
                 if (target == null) return null;
-                return (T)target;
+
+                try
+                {
+                    return (T)target;
+                }
+                catch (InvalidCastException)
+                {
+                    CoreSystem.Logger.LogError(Channel.Data,
+                        $"Asset({target.name}) is {TypeHelper.ToString(target.GetType())} " +
+                        $"but you're trying to cast {TypeHelper.TypeOf<T>.ToString()}.");
+                    throw;
+                }
             }
         }
         public bool IsSubAsset => !m_SubAssetName.IsEmpty;

@@ -22,11 +22,12 @@ using System.ComponentModel;
 using UnityEngine.Scripting;
 using UnityEngine;
 using Syadeu.Presentation.Render;
+using UnityEngine.UIElements;
 
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Attribute: Actor Stat")]
-    public sealed class ActorStatAttribute : ActorAttributeBase
+    public sealed class ActorStatAttribute : ActorAttributeBase, IPrefabPreloader
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "HP")]
         private float m_HP = 1;
@@ -34,14 +35,24 @@ namespace Syadeu.Presentation.Actor
         private ValuePairContainer m_Stats = new ValuePairContainer();
 
         [Space]
+        [Header("Short UI")]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "ShortUI")]
         internal Reference<UIDocumentConstantData> m_ShortUI = Reference<UIDocumentConstantData>.Empty;
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "ShortUIHPField")]
+        private string m_ShortUIHPField = "HPView";
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "ShortUIHPIcon")]
+        private PrefabReference<Texture2D> m_ShortUIHPIcon = PrefabReference<Texture2D>.None;
+        [SerializeField, JsonProperty(Order = 5, PropertyName = "ShortUIHPIconField")]
+        private string m_ShortUIHPIconField = "Icon";
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
+        [JsonIgnore] private UIDocument m_UIDocument;
 
         public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
         [JsonIgnore] public float HP => m_HP;
+
+        #region Object Descriptions
 
         protected override ObjectBase Copy()
         {
@@ -53,6 +64,11 @@ namespace Syadeu.Presentation.Actor
         protected override void OnCreated()
         {
             m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+
+            m_UIDocument = m_ShortUI.GetObject().GetUIDocument();
+            VisualElement element = m_UIDocument.rootVisualElement.Q(name: m_ShortUIHPField);
+            VisualElement icon = element.Q(name: m_ShortUIHPIconField);
+            icon.style.backgroundImage = m_ShortUIHPIcon.Asset;
         }
         protected override void OnInitialize()
         {
@@ -63,7 +79,10 @@ namespace Syadeu.Presentation.Actor
             base.OnReserve();
 
             m_CurrentStats = null;
+            m_UIDocument = null;
         }
+
+        #endregion
 
         public T GetOriginalValue<T>(string name) => m_Stats.GetValue<T>(name);
         public T GetOriginalValue<T>(Hash hash) => m_Stats.GetValue<T>(hash);
@@ -83,7 +102,26 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
+        #region Uxml
+
+        public struct UxmlWrapper
+        {
+            private VisualElement m_VisualElement;
+
+            internal UxmlWrapper(VisualElement element)
+            {
+                m_VisualElement = element;
+            }
+        }
+
+        #endregion
+
         public static Hash ToValueHash(string name) => Hash.NewHash(name);
+
+        void IPrefabPreloader.Register(PrefabPreloader loader)
+        {
+            loader.Add(m_ShortUIHPIcon);
+        }
     }
     [Preserve]
     internal sealed class ActorStatProcessor : AttributeProcessor<ActorStatAttribute>

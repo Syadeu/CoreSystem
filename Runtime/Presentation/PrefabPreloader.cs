@@ -34,6 +34,14 @@ namespace Syadeu.Presentation
 
         public void Add(PrefabReference prefab)
         {
+#if DEBUG_MODE
+            if (prefab.IsNone() || !prefab.IsValid())
+            {
+                CoreSystem.Logger.LogError(Channel.Core,
+                    $"Cannot add invalid prefab(index: {prefab.Index}, subasset: {prefab.SubAssetName}) to preload");
+                return;
+            }
+#endif
             m_Writer.Add(prefab);
         }
         public void Add(params PrefabReference[] prefabs)
