@@ -365,13 +365,13 @@ namespace Syadeu.Presentation.Actor
 
         #region Callbacks
 
-        public void ExecuteOnInventoryOpened()
+        public void ExecuteOnInventoryOpened(InstanceID actor)
         {
-            m_CallbackInfo.m_OnInventoryOpenedConstAction.Execute();
+            m_CallbackInfo.m_OnInventoryOpenedConstAction.Execute(actor);
         }
-        public void ExecuteOnInventoryClosed()
+        public void ExecuteOnInventoryClosed(InstanceID actor)
         {
-            m_CallbackInfo.m_OnInventoryClosedConstAction.Execute();
+            m_CallbackInfo.m_OnInventoryClosedConstAction.Execute(actor);
         }
 
         private void OnItemMouseDownEventHandler(MouseDownEvent e, ItemData data)

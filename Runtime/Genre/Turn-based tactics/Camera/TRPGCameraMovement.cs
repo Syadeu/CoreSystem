@@ -24,6 +24,7 @@ namespace Syadeu.Presentation.TurnTable
         [Space]
         [SerializeField] private string m_DefaultViewString = string.Empty;
         [SerializeField] private string m_AimViewString = string.Empty;
+        [SerializeField] private string m_InventoryViewString = string.Empty;
 
         [Space]
         [SerializeField] private float m_DefaultTopViewHeight = 22.5f;
@@ -38,7 +39,7 @@ namespace Syadeu.Presentation.TurnTable
         private float3 m_TargetOrientation = new float3(45, 45, 0);
 
         private int
-            m_DefaultViewHash, m_AimViewHash;
+            m_DefaultViewHash, m_AimViewHash, m_InventoryViewHash;
 
         private readonly UpdateTransform[] m_AimTarget = new UpdateTransform[2];
 
@@ -140,6 +141,7 @@ namespace Syadeu.Presentation.TurnTable
             m_CameraAnimator = stateDrivenCamera.GetComponent<Animator>();
             m_DefaultViewHash = Animator.StringToHash(m_DefaultViewString);
             m_AimViewHash = Animator.StringToHash(m_AimViewString);
+            m_InventoryViewHash = Animator.StringToHash(m_InventoryViewString);
 
             GameObject target = new GameObject("Default Target");
             m_DefaultTarget = target.transform;
@@ -199,7 +201,7 @@ namespace Syadeu.Presentation.TurnTable
                 orientationTarget.localRotation
                     = Quaternion.Slerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
 
-                if (State == TRPGCameraState.Aim)
+                if (State == TRPGCameraState.Aim || State == TRPGCameraState.Inventory)
                 {
                     for (int i = 0; i < m_AimTarget.Length; i++)
                     {
@@ -247,8 +249,37 @@ namespace Syadeu.Presentation.TurnTable
             State = TRPGCameraState.Aim;
             m_CameraAnimator.Play(m_AimViewHash);
 
-            m_AimTarget[0].Origin = from;
-            m_AimTarget[1].Origin = target;
+            m_AimTarget[0].SetTr(from);
+            m_AimTarget[1].SetTr(target);
+
+            m_TargetGroup.m_Targets = new CinemachineTargetGroup.Target[]
+            {
+                new CinemachineTargetGroup.Target
+                {
+                    target = m_AimTarget[0].Proxy,
+                    radius = 1,
+                    weight = 1
+                }
+                //,
+                //new CinemachineTargetGroup.Target
+                //{
+                //    target = m_AimTarget[1].Proxy,
+                //    radius = 1,
+                //    weight = .5f
+                //}
+            };
+
+            m_StateCamera.LookAt = m_AimTarget[1].Proxy;
+        }
+        public void SetInventory(ProxyTransform target)
+        {
+            State = TRPGCameraState.Inventory;
+            m_CameraAnimator.Play(m_InventoryViewHash);
+
+            float3 startPos = target.position + (target.forward * 10);
+
+            m_AimTarget[0].SetPos(startPos);
+            m_AimTarget[1].SetTr(target);
 
             m_TargetGroup.m_Targets = new CinemachineTargetGroup.Target[]
             {
@@ -272,15 +303,47 @@ namespace Syadeu.Presentation.TurnTable
 
         private class UpdateTransform : IValidation
         {
-            public ProxyTransform Origin;
+            private bool m_Tr = false;
+            private ProxyTransform Origin;
+            private Vector3 pos;
+
             public Transform Proxy;
 
-            public bool IsValid() => !Origin.isDestroyed && Proxy != null;
+            public bool IsValid()
+            {
+                if (m_Tr)
+                {
+                    if (Origin.isDestroyed) return false;
+                }
+
+                return Proxy != null;
+            }
+            public void SetTr(ProxyTransform tr)
+            {
+                Origin= tr;
+                m_Tr = true;
+            }
+            public void SetPos(Vector3 pos)
+            {
+                this.pos = pos;
+                m_Tr= false;
+            }
+            public void Clear()
+            {
+                Origin = ProxyTransform.Null;
+            }
             public void Update()
             {
-                Proxy.position = Origin.position;
-                Proxy.rotation = Origin.rotation;
-                Proxy.localScale = Origin.scale;
+                if (m_Tr)
+                {
+                    Proxy.position = Origin.position;
+                    Proxy.rotation = Origin.rotation;
+                    Proxy.localScale = Origin.scale;
+                }
+                else
+                {
+                    Proxy.position = pos;
+                }
             }
         }
     }
@@ -289,7 +352,8 @@ namespace Syadeu.Presentation.TurnTable
     {
         Normal,
 
-        Aim
+        Aim,
+        Inventory
     }
 
     public static class TRPGCameraExtensions

@@ -19,6 +19,7 @@
 using Syadeu.Collections;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Input;
+using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation.Render;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace Syadeu.Presentation.Actor
         private InputSystem.UserActionHandle m_InventoryKey;
 
         private SceneSystem m_SceneSystem;
+        private RenderSystem m_RenderSystem;
 
         private InstanceID m_CurrentActor = InstanceID.Empty;
         private UIDocument m_UIDocument;
@@ -45,6 +47,7 @@ namespace Syadeu.Presentation.Actor
         {
             RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
 
             System.OnCurrentControlChanged += System_OnCurrentControlChanged;
         }
@@ -56,6 +59,7 @@ namespace Syadeu.Presentation.Actor
         {
             m_InputSystem = null;
             m_SceneSystem = null;
+            m_RenderSystem = null;
         }
 
         #region Binds
@@ -71,6 +75,10 @@ namespace Syadeu.Presentation.Actor
         private void Bind(SceneSystem other)
         {
             m_SceneSystem = other;
+        }
+        private void Bind(RenderSystem other)
+        {
+            m_RenderSystem = other;
         }
 
         #endregion
@@ -120,14 +128,14 @@ namespace Syadeu.Presentation.Actor
             m_UIDocument.SetActive(true);
             m_CurrentActor = actor;
 
-            invenProvider.ExecuteOnInventoryOpened();
+            invenProvider.ExecuteOnInventoryOpened(actor);
         }
         public void DisableInventoryUI()
         {
             ActorControllerComponent component = m_CurrentActor.GetComponent<ActorControllerComponent>();
             var invenProvider = component.GetProvider<ActorInventoryProvider>().Target;
 
-            invenProvider.ExecuteOnInventoryClosed();
+            invenProvider.ExecuteOnInventoryClosed(m_CurrentActor);
 
             m_CurrentActor = InstanceID.Empty;
 
