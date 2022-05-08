@@ -203,6 +203,9 @@ namespace Syadeu.Presentation.TurnTable
 
                 m_Q.Enable();
                 m_E.Enable();
+
+                inputSystem.SetInputGroup(m_Q, Input.InputSystem.DefaultIngameControls);
+                inputSystem.SetInputGroup(m_E, Input.InputSystem.DefaultIngameControls);
             }
 
             public void Disable()

@@ -39,6 +39,7 @@ namespace Syadeu.Presentation.Actor
     public sealed class ActorSystem : PresentationSystemEntity<ActorSystem>,
         INotifySystemModule<ActorInventoryModule>,
         INotifySystemModule<ActorInteractionModule>,
+        INotifySystemModule<ActorStatusModule>,
         ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;

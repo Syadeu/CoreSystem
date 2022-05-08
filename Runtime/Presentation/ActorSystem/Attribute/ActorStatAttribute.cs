@@ -20,15 +20,22 @@ using Syadeu.Presentation.Entities;
 using System;
 using System.ComponentModel;
 using UnityEngine.Scripting;
+using UnityEngine;
+using Syadeu.Presentation.Render;
 
 namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Attribute: Actor Stat")]
     public sealed class ActorStatAttribute : ActorAttributeBase
     {
-        [JsonProperty(Order = 0, PropertyName = "HP")]
+        [SerializeField, JsonProperty(Order = 0, PropertyName = "HP")]
         private float m_HP = 1;
-        [JsonProperty(Order = 1, PropertyName = "Stats")] private ValuePairContainer m_Stats = new ValuePairContainer();
+        [SerializeField, JsonProperty(Order = 1, PropertyName = "Stats")] 
+        private ValuePairContainer m_Stats = new ValuePairContainer();
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 2, PropertyName = "ShortUI")]
+        internal Reference<UIDocumentConstantData> m_ShortUI = Reference<UIDocumentConstantData>.Empty;
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
 
@@ -85,7 +92,7 @@ namespace Syadeu.Presentation.Actor
         {
             entity.AddComponent<ActorStatComponent>();
             ref ActorStatComponent stat = ref entity.GetComponent<ActorStatComponent>();
-            stat = new ActorStatComponent(attribute.HP);
+            stat = new ActorStatComponent(attribute.HP, attribute.m_ShortUI);
         }
         protected override void OnDestroy(ActorStatAttribute attribute, Entity<IEntityData> entity)
         {
@@ -98,6 +105,8 @@ namespace Syadeu.Presentation.Actor
         private float m_OriginalHP;
         private float m_HP;
 
+        private FixedReference<UIDocumentConstantData> m_ShortUI;
+
         public float OriginalHP => m_OriginalHP;
         public float HP
         {
@@ -108,11 +117,15 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        public ActorStatComponent(
-            in float originalHP)
+        public FixedReference<UIDocumentConstantData> ShortUI => m_ShortUI;
+
+        public ActorStatComponent(float originalHP,
+            FixedReference<UIDocumentConstantData> shortUI)
         {
             m_OriginalHP = originalHP;
             m_HP = originalHP;
+
+            m_ShortUI = shortUI;
         }
     }
 }

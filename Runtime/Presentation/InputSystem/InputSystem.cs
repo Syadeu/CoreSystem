@@ -31,10 +31,14 @@ using UnityEngine.InputSystem.Editor;
 
 namespace Syadeu.Presentation.Input
 {
-    public sealed class InputSystem : PresentationSystemEntity<InputSystem>
+    public sealed class InputSystem : PresentationSystemEntity<InputSystem>,
+        INotifySystemModule<InputGroupModule>
     {
         private const string c_KeyboardBinding = "<Keyboard>/{0}";
         private const string c_MouseBinding = "<Mouse>/{0}";
+
+        public static InputGroup DefaultUIControls => "default-ui-controls";
+        public static InputGroup DefaultIngameControls => "default-ingame-controls";
 
         public override bool EnableBeforePresentation => true;
         public override bool EnableOnPresentation => false;
@@ -371,6 +375,76 @@ namespace Syadeu.Presentation.Input
             else if (controlType == ControlType.Gamepad) return Gamepad.current;
 
             return null;
+        }
+
+        public void SetInputGroup(InputAction action, InputGroup group)
+        {
+            GetModule<InputGroupModule>().SetInputGroup(action, group);
+        }
+        public void SetEnableInputGroup(InputGroup group, bool enable)
+        {
+            GetModule<InputGroupModule>().SetEnableInputGroup(group, enable);
+        }
+    }
+
+    internal sealed class InputGroupModule : PresentationSystemModule<InputSystem>
+    {
+        private Dictionary<InputGroup, List<InputAction>> m_GroupedActions = new Dictionary<InputGroup, List<InputAction>>();
+        private Dictionary<InputAction, List<InputGroup>> m_LinkedGroup = new Dictionary<InputAction, List<InputGroup>>();
+        private Dictionary<InputGroup, bool> m_Enabled = new Dictionary<InputGroup, bool>();
+
+        public void SetInputGroup(InputAction action, InputGroup group)
+        {
+            if (!m_GroupedActions.TryGetValue(group, out var list))
+            {
+                list = new List<InputAction>();
+                m_GroupedActions.Add(group, list);
+            }
+
+            if (list.Contains(action))
+            {
+                "??".ToLogError();
+            }
+            else
+            {
+                list.Add(action);
+            }
+
+            if (!m_LinkedGroup.TryGetValue(action, out var links))
+            {
+                links = new List<InputGroup>();
+                m_LinkedGroup.Add(action, links);
+            }
+
+            if (links.Contains(group))
+            {
+                "??".ToLogError();
+            }
+            else
+            {
+                links.Add(group);
+            }
+        }
+        public void SetEnableInputGroup(InputGroup group, bool enable)
+        {
+            m_Enabled[group] = enable;
+
+            if (!m_GroupedActions.TryGetValue(group, out var list)) return;
+
+            if (enable)
+            {
+                foreach (var inputAction in list)
+                {
+                    inputAction.Enable();
+                }
+            }
+            else
+            {
+                foreach (var inputAction in list)
+                {
+                    inputAction.Disable();
+                }
+            }
         }
     }
 

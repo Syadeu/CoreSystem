@@ -45,10 +45,6 @@ namespace Syadeu.Presentation.Actions
         [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "TargetUpdateTime")]
         private float m_TargetUpdateTime = 0.1f;
 
-        [Space, Header("Sequence")]
-        [UnityEngine.SerializeField, JsonProperty(Order = 2, PropertyName = "AfterDelay")]
-        private float m_AfterDelay = 0;
-
         [JsonIgnore] private bool m_KeepWait = false;
 
         protected override int Execute()

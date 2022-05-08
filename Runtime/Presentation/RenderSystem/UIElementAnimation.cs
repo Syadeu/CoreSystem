@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Render
                 m_Tweener = temp;
 
                 m_Tweener.onKill += Reserve;
-                return temp;
+                return temp.SetUpdate(true);
             }
             public TweenerCore<float, float, FloatOptions> DOHeight(VisualElement tr, float endValue, float duration)
             {
@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Render
                 m_Tweener = temp;
 
                 m_Tweener.onKill += Reserve;
-                return temp;
+                return temp.SetUpdate(true);
             }
 
             public float GetOpacity() => m_VisualElement.resolvedStyle.opacity;

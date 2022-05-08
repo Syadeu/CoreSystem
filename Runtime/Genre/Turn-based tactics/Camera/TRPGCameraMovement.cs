@@ -179,9 +179,11 @@ namespace Syadeu.Presentation.TurnTable
 
         private IEnumerator Updater()
         {
-            WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
+            //WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
+            var waitForFixedUpdate = new WaitForEndOfFrame();
             
             var inputSystem = PresentationSystem<DefaultPresentationGroup, Input.InputSystem>.System;
+            inputSystem.SetInputGroup(m_MoveAxis, Input.InputSystem.DefaultIngameControls);
             while (m_TargetGroup != null)
             {
                 if (!inputSystem.EnableInput)
@@ -208,6 +210,16 @@ namespace Syadeu.Presentation.TurnTable
                         if (!m_AimTarget[i].IsValid()) continue;
                         m_AimTarget[i].Update();
                     }
+                }
+
+                if (State == TRPGCameraState.Inventory)
+                {
+                    float3 forward = -math.mul(quaternion.Euler(TargetOrientation * Mathf.Deg2Rad), math.forward());
+                    forward = math.normalize(Vector3.ProjectOnPlane(forward, Vector3.up));
+
+                    float3 startPos = (float3)m_AimTarget[1].Proxy.position + (forward * 3.6f);
+
+                    m_AimTarget[0].SetPos(startPos);
                 }
                 //groupTr.position = math.lerp(groupTr.position, TargetPosition, Time.deltaTime * MoveSpeed);
 
@@ -276,7 +288,10 @@ namespace Syadeu.Presentation.TurnTable
             State = TRPGCameraState.Inventory;
             m_CameraAnimator.Play(m_InventoryViewHash);
 
-            float3 startPos = target.position + (target.forward * 10);
+            float3 forward = -math.mul(quaternion.Euler(TargetOrientation * Mathf.Deg2Rad), math.forward());
+            forward = math.normalize(Vector3.ProjectOnPlane(forward, Vector3.up));
+
+            float3 startPos = target.position + (forward * 3.6f);
 
             m_AimTarget[0].SetPos(startPos);
             m_AimTarget[1].SetTr(target);
@@ -289,13 +304,6 @@ namespace Syadeu.Presentation.TurnTable
                     radius = 1,
                     weight = 1
                 }
-                //,
-                //new CinemachineTargetGroup.Target
-                //{
-                //    target = m_AimTarget[1].Proxy,
-                //    radius = 1,
-                //    weight = .5f
-                //}
             };
 
             m_StateCamera.LookAt = m_AimTarget[1].Proxy;

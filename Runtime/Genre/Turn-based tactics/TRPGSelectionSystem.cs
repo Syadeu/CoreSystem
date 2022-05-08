@@ -230,6 +230,7 @@ namespace Syadeu.Presentation.TurnTable
                 SelectEntity(info.entity);
 
                 m_EventSystem.PostEvent(TRPGSelectionChangedEvent.GetEvent(info.entity));
+                m_ActorSystem.GetModule<ActorStatusModule>().EnableShortStatusUI(info.entity);
             }
             else
             {
@@ -247,6 +248,8 @@ namespace Syadeu.Presentation.TurnTable
                     //m_InputSystem.GetUserActionKeyBinding(UserActionType.Inventory).Execute();
                     m_ActorSystem.GetModule<ActorInventoryModule>().DisableInventoryUI();
                 }
+
+                m_ActorSystem.GetModule<ActorStatusModule>().DisableShortStatusUI();
             }
         }
         private void M_RightMouseButtonAction_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)

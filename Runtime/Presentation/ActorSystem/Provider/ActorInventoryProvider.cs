@@ -184,27 +184,7 @@ namespace Syadeu.Presentation.Actor
                 m_CheckBoxQuery = m_VisualElement.Query<VisualElement>(name: checkBoxField).Build();
                 m_IconQuery = m_VisualElement.Query<VisualElement>(name: iconField).Build();
             }
-            private UxmlWrapper(
-                VisualElement element, 
-                UQueryState<Label> headerField, UQueryState<Label> quantityField, UQueryState<VisualElement> checkBoxField, UQueryState<VisualElement> iconField)
-            {
-                m_VisualElement = element;
-                m_HeaderQuery = headerField;
-                m_QuantityQuery = quantityField;
-                m_CheckBoxQuery = checkBoxField;
-                m_IconQuery = iconField;
-            }
 
-            public UxmlWrapper? GetChild(string name)
-            {
-                VisualElement element = m_VisualElement.Q(name);
-                if (element == null)
-                {
-                    return null;
-                }
-
-                return new UxmlWrapper(element, m_HeaderQuery.RebuildOn(element), m_QuantityQuery.RebuildOn(element), m_CheckBoxQuery.RebuildOn(element), m_IconQuery.RebuildOn(element));
-            }
             public void Add(UxmlWrapper? uxml)
             {
                 if (!uxml.HasValue) return;
@@ -273,10 +253,15 @@ namespace Syadeu.Presentation.Actor
                 if (type.Icon.Asset != null)
                 {
                     result.icon.style.backgroundImage = new StyleBackground(type.Icon.Asset);
+                    $"in icon create {type.Icon.Asset.name} at {result.name}".ToLog();
                 }
                 else
                 {
-                    type.Icon.LoadAssetAsync(t => result.icon.style.backgroundImage = new StyleBackground(t));
+                    type.Icon.LoadAssetAsync(t =>
+                    {
+                        result.icon.style.backgroundImage = new StyleBackground(t);
+                        $"in icon create {type.Icon.Asset.name} at {result.name}".ToLog();
+                    });
                 }
             }
 
@@ -286,8 +271,8 @@ namespace Syadeu.Presentation.Actor
             ins.style.opacity = 0;
             ins.style.height = 0;
 
-            ins.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
             ins.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
+            ins.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
 
             container.Add(ins);
             return result;
@@ -353,8 +338,8 @@ namespace Syadeu.Presentation.Actor
             element.style.opacity = 0;
             element.style.height = 0;
 
-            element.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
             element.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
+            element.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
 
             container.Add(result);
 

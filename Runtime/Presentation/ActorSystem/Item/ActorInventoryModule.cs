@@ -121,11 +121,28 @@ namespace Syadeu.Presentation.Actor
 
         public void EnableInventoryUI(InstanceID actor)
         {
+            if (!actor.HasComponent<ActorControllerComponent>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor({actor.GetEntity().Name}) doesn\'t have {nameof(ActorControllerComponent)}. This is not allowed.");
+                return;
+            }
             ActorControllerComponent component = actor.GetComponent<ActorControllerComponent>();
+            if (!component.HasProvider<ActorInventoryProvider>())
+            {
+                CoreSystem.Logger.LogError(Channel.Entity,
+                    $"Actor({actor.GetEntity().Name}) doesn\'t have {nameof(ActorInventoryProvider)}.");
+                return;
+            }
             var invenProvider = component.GetProvider<ActorInventoryProvider>().Target;
 
             m_UIDocument = invenProvider.UIDocument;
+            float originalHeight = m_UIDocument.rootVisualElement.resolvedStyle.height;
+            m_UIDocument.rootVisualElement.style.height = 0;
+
             m_UIDocument.SetActive(true);
+            m_UIDocument.rootVisualElement.DOHeight(originalHeight, .5f);
+
             m_CurrentActor = actor;
 
             invenProvider.ExecuteOnInventoryOpened(actor);
@@ -139,6 +156,37 @@ namespace Syadeu.Presentation.Actor
 
             m_CurrentActor = InstanceID.Empty;
 
+            m_UIDocument.SetActive(false);
+            m_UIDocument = null;
+        }
+    }
+
+    public sealed class ActorStatusModule : PresentationSystemModule<ActorSystem>
+    {
+        private InstanceID m_CurrentActor = InstanceID.Empty;
+        private UIDocument m_UIDocument;
+
+        public InstanceID CurrentActor => m_CurrentActor;
+        public bool IsOpened => m_UIDocument != null;
+
+        public void EnableShortStatusUI(InstanceID actor)
+        {
+            if (!actor.HasComponent<ActorStatComponent>())
+            {
+                "??".ToLogError();
+                return;
+            }
+
+            m_UIDocument =
+                actor.GetComponentReadOnly<ActorStatComponent>().ShortUI.GetObject().GetUIDocument();
+
+            //setting
+
+            //
+            m_UIDocument.SetActive(true);
+        }
+        public void DisableShortStatusUI()
+        {
             m_UIDocument.SetActive(false);
             m_UIDocument = null;
         }
