@@ -32,6 +32,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine.InputSystem;
 using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
@@ -39,7 +40,6 @@ namespace Syadeu.Presentation.TurnTable
 {
     [SubSystem(typeof(DefaultPresentationGroup), typeof(RenderSystem))]
     public sealed class TRPGPlayerSystem : PresentationSystemEntity<TRPGPlayerSystem>,
-        INotifySystemModule<TRPGScreenControlSystem>,
         ISystemEventScheduler
     {
         public override bool EnableBeforePresentation => false;
@@ -87,6 +87,8 @@ namespace Syadeu.Presentation.TurnTable
         }
         protected override void OnShutDown()
         {
+            m_RenderSystem.GetModule<ScreenControlModule>().OnMouseAtCornor -= OnMouseAtCornorHandler;
+
             m_LookPlayerKey.performed -= OnLookPlayerKeyPressed;
             m_LookPlayerKey.Dispose();
 
@@ -176,7 +178,7 @@ namespace Syadeu.Presentation.TurnTable
 
             m_TRPGCameraMovement = m_RenderSystem.CameraComponent.GetCameraComponent<TRPGCameraMovement>();
 
-            
+            m_RenderSystem.GetModule<ScreenControlModule>().OnMouseAtCornor += OnMouseAtCornorHandler;
 
             m_TRPGCanvasUISystem.SetPlayerUI(false);
 
@@ -186,6 +188,16 @@ namespace Syadeu.Presentation.TurnTable
         #endregion
 
         #region Event Handlers
+
+        private void OnMouseAtCornorHandler(float2 force)
+        {
+            if (!m_InputSystem.GetEnableInputGroup(InputSystem.DefaultIngameControls))
+            {
+                return;
+            }
+
+            m_RenderSystem.SetCameraAxis(force);
+        }
 
         private int m_CurrentLookPlayerIndex = 0;
         private void OnLookPlayerKeyPressed(InputAction.CallbackContext obj)

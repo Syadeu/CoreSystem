@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Seung Ha Kim
+﻿// Copyright 2021 Seung Ha Kim
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,54 +12,63 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#undef UNITY_ADDRESSABLES
 #if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
 #define DEBUG_MODE
 #endif
 
-using Syadeu.Presentation.Render;
+#if UNITY_ADDRESSABLES
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.ResourceManagement.AsyncOperations;
+#endif
+
+#if !CORESYSTEM_URP && !CORESYSTEM_HDRP
+#define CORESYSTEM_SRP
+#endif
+
 using System;
 using Unity.Mathematics;
 using UnityEngine;
-using InputSystem = Syadeu.Presentation.Input.InputSystem;
 
-namespace Syadeu.Presentation.TurnTable
+#if CORESYSTEM_URP
+using UnityEngine.Rendering.Universal;
+#elif CORESYSTEM_HDRP
+#endif
+
+namespace Syadeu.Presentation.Render
 {
-    [Obsolete("Merged to RenderSystem sub module", true)]
-    public sealed class TRPGScreenControlSystem : PresentationSystemModule<TRPGPlayerSystem>
+    public sealed class ScreenControlModule : PresentationSystemModule<RenderSystem>
     {
         private Rect
             m_UpRect, m_DownRect,
             m_LeftRect, m_RightRect;
 
-        private InputSystem m_InputSystem;
-        private RenderSystem m_RenderSystem;
+        public event Action<float2> OnMouseAtCornor;
+
+        private Input.InputSystem m_InputSystem;
+
+        #region Presentation Methods
 
         protected override void OnInitialize()
         {
-            RequestSystem<DefaultPresentationGroup, InputSystem>(Bind);
-            RequestSystem<DefaultPresentationGroup, RenderSystem>(Bind);
+            RequestSystem<DefaultPresentationGroup, Input.InputSystem>(Bind);
         }
-
-        private void Bind(InputSystem other)
-        {
-            m_InputSystem = other;
-        }
-        private void Bind(RenderSystem other)
-        {
-            m_RenderSystem = other;
-        }
-
         protected override void OnDispose()
         {
             m_InputSystem = null;
-            m_RenderSystem = null;
+        }
+
+        private void Bind(Input.InputSystem other)
+        {
+            m_InputSystem = other;
         }
 
         protected override void OnStartPresentation()
         {
             const float c_Ratio = .05f;
 
-            ScreenAspect aspect = m_RenderSystem.ScreenAspect;
+            ScreenAspect aspect = System.ScreenAspect;
 
             float
                 widthReletive = c_Ratio * aspect.Width,
@@ -74,17 +83,20 @@ namespace Syadeu.Presentation.TurnTable
             m_LeftRect = new Rect(0, 0, widthReletive, aspect.Height);
             m_RightRect = new Rect(rightXPos, 0, widthReletive, aspect.Height);
         }
+
         protected override void OnPresentation()
         {
             if (IsMouseAtCornor())
             {
-                m_RenderSystem.SetCameraAxis(GetMouseForce());
+                OnMouseAtCornor?.Invoke(GetMouseForce());
             }
         }
 
+        #endregion
+
         private float2 GetMouseForce()
         {
-            Vector2 center = m_RenderSystem.ScreenCenter;
+            Vector2 center = System.ScreenCenter;
             Vector2 mousePos = m_InputSystem.MousePosition;
 
             return -math.normalizesafe(center - mousePos, 0);

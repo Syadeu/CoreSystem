@@ -377,6 +377,10 @@ namespace Syadeu.Presentation.Input
             return null;
         }
 
+        public bool GetEnableInputGroup(InputGroup group)
+        {
+            return GetModule<InputGroupModule>().GetEnableInputGroup(group);
+        }
         public void SetInputGroup(InputAction action, InputGroup group)
         {
             GetModule<InputGroupModule>().SetInputGroup(action, group);
@@ -393,6 +397,11 @@ namespace Syadeu.Presentation.Input
         private Dictionary<InputAction, List<InputGroup>> m_LinkedGroup = new Dictionary<InputAction, List<InputGroup>>();
         private Dictionary<InputGroup, bool> m_Enabled = new Dictionary<InputGroup, bool>();
 
+        public bool GetEnableInputGroup(InputGroup group)
+        {
+            if (!m_Enabled.TryGetValue(group, out var result)) return false;
+            return result;
+        }
         public void SetInputGroup(InputAction action, InputGroup group)
         {
             if (!m_GroupedActions.TryGetValue(group, out var list))

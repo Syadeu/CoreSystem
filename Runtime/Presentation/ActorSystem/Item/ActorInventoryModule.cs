@@ -160,35 +160,4 @@ namespace Syadeu.Presentation.Actor
             m_UIDocument = null;
         }
     }
-
-    public sealed class ActorStatusModule : PresentationSystemModule<ActorSystem>
-    {
-        private InstanceID m_CurrentActor = InstanceID.Empty;
-        private UIDocument m_UIDocument;
-
-        public InstanceID CurrentActor => m_CurrentActor;
-        public bool IsOpened => m_UIDocument != null;
-
-        public void EnableShortStatusUI(InstanceID actor)
-        {
-            if (!actor.HasComponent<ActorStatComponent>())
-            {
-                "??".ToLogError();
-                return;
-            }
-
-            m_UIDocument =
-                actor.GetComponentReadOnly<ActorStatComponent>().ShortUI.GetObject().GetUIDocument();
-
-            //setting
-
-            //
-            m_UIDocument.SetActive(true);
-        }
-        public void DisableShortStatusUI()
-        {
-            m_UIDocument.SetActive(false);
-            m_UIDocument = null;
-        }
-    }
 }
