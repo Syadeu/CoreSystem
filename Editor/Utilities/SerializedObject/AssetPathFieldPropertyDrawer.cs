@@ -57,7 +57,11 @@ namespace SyadeuEditor.Utilities
 
             Rect[] pos = AutoRect.DivideWithRatio(rect.Pop(), .9f, .1f);
 
-            label = property.IsInArray() ? GUIContent.none : label;
+            if (property.IsInArray() && property.GetParent().ChildCount() == 1)
+            {
+                label = GUIContent.none;
+            }
+            //label = property.IsInArray() ? GUIContent.none : label;
             if (!property.isExpanded)
             {
                 using (var changeCheck = new EditorGUI.ChangeCheckScope())
