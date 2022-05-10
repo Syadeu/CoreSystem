@@ -1,0 +1,29 @@
+.context-item {
+    width: 100%;
+    height: 20px;
+    flex-direction: row;
+    background-color: rgb(43, 43, 43);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.context-item:hover {
+    width: 100%;
+    height: 20px;
+    flex-direction: row;
+    background-color: rgb(108, 108, 108);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}

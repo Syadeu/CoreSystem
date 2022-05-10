@@ -1,0 +1,87 @@
+.mainmenu-button {
+    height: 35px;
+    width: 289px;
+    align-items: stretch;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    -unity-font-definition: resource('Fonts & Materials/LiberationSans SDF');
+    font-size: 15px;
+    background-color: rgb(0, 0, 0);
+}
+
+.mainmenu-button:hover {
+    height: 35px;
+    width: 289px;
+    align-items: stretch;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    -unity-font-definition: resource('Fonts & Materials/LiberationSans SDF');
+    font-size: 15px;
+    background-color: rgb(87, 87, 87);
+}
+
+.mainmenu-button:active {
+    height: 35px;
+    width: 289px;
+    align-items: stretch;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    -unity-font-definition: resource('Fonts & Materials/LiberationSans SDF');
+    font-size: 15px;
+    background-color: rgb(188, 188, 188);
+    color: rgb(60, 60, 60);
+}
+
+.default-border {
+    border-left-width: 7px;
+    border-right-width: 7px;
+    border-top-width: 7px;
+    border-bottom-width: 7px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.item {
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    background-color: rgba(255, 255, 255, 0);
+    height: 35px;
+    color: rgb(255, 255, 255);
+    margin-top: 3px;
+    overflow: hidden;
+}
+
+.item:hover {
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.43);
+    height: 35px;
+    margin-top: 3px;
+    overflow: hidden;
+}

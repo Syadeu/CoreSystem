@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Styles/color-palatte.uss" />
+    <ui:VisualElement name="ItemContainerTemplete" style="border-top-left-radius: 10px; border-top-right-radius: 10px; overflow: hidden;">
+        <ui:VisualElement class="templete00-color-2" style="overflow: visible; border-left-width: 7px; border-right-width: 7px; border-top-width: 7px; border-bottom-width: 7px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; margin-top: 3px; height: 35px; flex-direction: row; align-items: center;">
+            <ui:VisualElement name="Icon" style="width: 25px; height: 25px; background-color: rgb(255, 255, 255);" />
+            <ui:VisualElement style="width: 100%; flex-direction: row;">
+                <ui:Label text="Label" display-tooltip-when-elided="true" name="Header" style="font-size: 20px; -unity-font-definition: resource(&apos;&apos;); -unity-font-style: normal; width: 80%; height: 100%; padding-top: 0; -unity-text-align: middle-left; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Rajdhani-Regular.ttf&apos;); padding-left: 15px; color: rgb(255, 255, 255);" />
+                <ui:Label text="x123" display-tooltip-when-elided="true" name="Quantity" style="font-size: 15px; -unity-font-definition: resource(&apos;&apos;); -unity-font-style: normal; padding-top: 0; -unity-text-align: middle-left; height: 100%; width: 20%; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Electronic Highway Sign.TTF&apos;); padding-left: 10px; color: rgb(255, 255, 255);" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="ItemContainer" style="padding-top: 0; padding-left: 5px; margin-right: -3px;" />
+    </ui:VisualElement>
+</ui:UXML>

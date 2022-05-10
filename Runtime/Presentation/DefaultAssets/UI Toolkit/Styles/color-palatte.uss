@@ -1,0 +1,23 @@
+.templete00-color-0 {
+    background-color: rgba(255, 255, 255, 255);
+}
+
+.templete00-color-1 {
+    background-color: rgb(0, 23, 31);
+}
+
+.templete00-color-2 {
+    background-color: rgb(0, 52, 89);
+}
+
+.templete00-color-3 {
+    background-color: rgb(0, 126, 167);
+}
+
+.templete00-color-4 {
+    background-color: rgb(0, 168, 232);
+}
+
+.templete00-color-5 {
+    background-color: rgb(23, 176, 234);
+}

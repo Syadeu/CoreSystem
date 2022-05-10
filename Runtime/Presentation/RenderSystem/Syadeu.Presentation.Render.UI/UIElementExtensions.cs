@@ -25,7 +25,7 @@ namespace Syadeu.Presentation.Render.UI
             t.style.top = position.y;
             t.style.left = position.x;
         }
-        public static void SetPosition(this VisualElement t, MouseDownEvent evt)
+        public static void SetPosition(this VisualElement t, EventBase evt)
         {
             VisualElement target = evt.currentTarget as VisualElement;
             if (target == null)
@@ -34,7 +34,8 @@ namespace Syadeu.Presentation.Render.UI
                 return;
             }
 
-            Vector2 position = target.LocalToWorld(evt.localMousePosition);
+            //Vector2 position = target.LocalToWorld(evt.localMousePosition);
+            Vector2 position = evt.originalMousePosition;
             t.SetPosition(position, Position.Absolute);
         }
 

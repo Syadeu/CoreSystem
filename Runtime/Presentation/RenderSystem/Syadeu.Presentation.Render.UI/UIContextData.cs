@@ -16,11 +16,13 @@ using Newtonsoft.Json;
 using Syadeu.Collections;
 using Syadeu.Presentation.Data;
 using System;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Syadeu.Presentation.Render.UI
 {
+    [DisplayName("Data: UI Context Data")]
     public sealed class UIContextData : DataObjectBase, IPrefabPreloader
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "UXMLAsset")]
@@ -41,16 +43,18 @@ namespace Syadeu.Presentation.Render.UI
             loader.Add(m_UXMLAsset, m_ItemUXMLAsset);
         }
 
-        public struct UxmlWrapper
+        public struct UxmlWrapper : IValidation, IDisposable
         {
-            private VisualElement m_Root, m_ContentContainer;
+            private TemplateContainer m_Root;
+            private VisualElement m_ContentContainer;
             private PrefabReference<VisualTreeAsset> m_ItemUXMLAsset;
             private UQueryState<VisualElement>
                 m_NameQuery, m_IconQuery;
 
-            public VisualElement Root => m_Root;
+            public TemplateContainer TemplateContainer => m_Root;
+            public VisualElement Root => m_Root.contentContainer.ElementAt(0);
 
-            internal UxmlWrapper(VisualElement root, VisualElement container, PrefabReference<VisualTreeAsset> item, string nameField, string iconField)
+            internal UxmlWrapper(TemplateContainer root, VisualElement container, PrefabReference<VisualTreeAsset> item, string nameField, string iconField)
             {
                 m_Root = root;
                 m_ContentContainer = container;
@@ -60,17 +64,31 @@ namespace Syadeu.Presentation.Render.UI
                 m_IconQuery = m_ContentContainer.Query().Name(iconField).Build();
             }
 
-            public void AddContextMenu<T>(string name, Texture2D iconTexture, EventCallback<MouseDownEvent, T> callback, T userData)
+            public VisualElement CreateContextMenu(string name, Texture2D icon)
             {
                 var item = m_ItemUXMLAsset.Asset.CloneTree();
 
                 Label label = (Label)m_NameQuery.RebuildOn(item).First();
-                VisualElement icon = m_IconQuery.RebuildOn(item).First();
+                VisualElement iconElement = m_IconQuery.RebuildOn(item).First();
 
                 label.text = name;
-                icon.style.backgroundImage = iconTexture;
+                iconElement.style.backgroundImage = icon;
 
-                item.RegisterCallback(callback, userData);
+                m_ContentContainer.Add(item);
+                return item;
+            }
+
+            public bool IsValid() => m_Root != null && m_ContentContainer != null;
+            public void Dispose()
+            {
+                m_NameQuery = default(UQueryState<VisualElement>);
+                m_IconQuery = default(UQueryState<VisualElement>);
+
+                m_ContentContainer.Clear();
+                m_ContentContainer = null;
+
+                m_Root.Clear();
+                m_Root = null;
             }
 
             public static implicit operator VisualElement(UxmlWrapper t) => t.m_Root;
@@ -78,8 +96,8 @@ namespace Syadeu.Presentation.Render.UI
 
         public UxmlWrapper GetVisualElement()
         {
+            TemplateContainer root = m_UXMLAsset.Asset.CloneTree();
             VisualElement 
-                root = m_UXMLAsset.Asset.CloneTree(),
                 contentContainer = root.Q(name: m_ContentContainerField);
 
             return new UxmlWrapper(root, contentContainer, m_ItemUXMLAsset, m_ItemNameField, m_ItemIconField);

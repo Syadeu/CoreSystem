@@ -334,6 +334,14 @@ namespace Syadeu.Presentation.Actor
             }
 
             VisualElement element = result.VisualElement;
+            element.AddManipulator(new MouseContextManipulator(
+                m_UIDocument.rootVisualElement,
+                m_GraphicsInfo.m_ContextUXMLAsset,
+                ctx =>
+                {
+                    "manipulator".ToLog();
+                }
+                ));
             element.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
             //element.AddManipulator(new MouseDragManipulator(m_UIDocument.rootVisualElement, name));
 
@@ -378,11 +386,10 @@ namespace Syadeu.Presentation.Actor
                     break;
                 case MouseButton.RightMouse:
                     "right m".ToLog();
-                    var ctxElement = m_GraphicsInfo.m_ContextUXMLAsset.GetObject().GetVisualElement();
-                    m_UIDocument.rootVisualElement.Add(ctxElement);
+                    //var ctxElement = m_GraphicsInfo.m_ContextUXMLAsset.GetObject().GetVisualElement();
+                    //m_UIDocument.rootVisualElement.Add(ctxElement);
 
-                    ctxElement.Root.SetPosition(e);
-
+                    //ctxElement.Root.SetPosition(e);
 
                     break;
                 case MouseButton.MiddleMouse:
