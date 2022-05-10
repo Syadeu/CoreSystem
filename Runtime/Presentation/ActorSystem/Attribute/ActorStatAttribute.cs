@@ -31,49 +31,62 @@ namespace Syadeu.Presentation.Actor
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "HP")]
         private float m_HP = 1;
-        [SerializeField, JsonProperty(Order = 1, PropertyName = "Stats")] 
-        private ValuePairContainer m_Stats = new ValuePairContainer();
+        //[SerializeField, JsonProperty(Order = 1, PropertyName = "Stats")] 
+        //private ValuePairContainer m_Stats = new ValuePairContainer();
 
         [Space]
         [Header("Short UI")]
         [SerializeField, JsonProperty(Order = 2, PropertyName = "ShortUI")]
         internal Reference<UIDocumentConstantData> m_ShortUI = Reference<UIDocumentConstantData>.Empty;
-        [SerializeField, JsonProperty(Order = 3, PropertyName = "ShortUIHPField")]
+        [SerializeField, JsonProperty(Order = 3, PropertyName = "ShortUIIconField")]
+        private string m_ShortUIIconField = "Icon";
+
+        [Space]
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "ShortUIHPField")]
         private string m_ShortUIHPField = "HPView";
-        [SerializeField, JsonProperty(Order = 4, PropertyName = "ShortUIHPIcon")]
+        [SerializeField, JsonProperty(Order = 5, PropertyName = "ShortUIHPIcon")]
         private PrefabReference<Texture2D> m_ShortUIHPIcon = PrefabReference<Texture2D>.None;
-        [SerializeField, JsonProperty(Order = 5, PropertyName = "ShortUIHPIconField")]
-        private string m_ShortUIHPIconField = "Icon";
+        [SerializeField, JsonProperty(Order = 6, PropertyName = "ShortUISTField")]
+        private string m_ShortUISTField = "StaminaView";
+        [SerializeField, JsonProperty(Order = 7, PropertyName = "ShortUISTIcon")]
+        private PrefabReference<Texture2D> m_ShortUISTIcon = PrefabReference<Texture2D>.None;
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
         [JsonIgnore] private UIDocument m_UIDocument;
 
-        public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
+        //public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
         [JsonIgnore] public float HP => m_HP;
 
         #region Object Descriptions
 
-        protected override ObjectBase Copy()
-        {
-            ActorStatAttribute att = (ActorStatAttribute)base.Copy();
-            att.m_Stats = (ValuePairContainer)m_Stats.Clone();
+        //protected override ObjectBase Copy()
+        //{
+        //    ActorStatAttribute att = (ActorStatAttribute)base.Copy();
+        //    att.m_Stats = (ValuePairContainer)m_Stats.Clone();
 
-            return att;
-        }
+        //    return att;
+        //}
         protected override void OnCreated()
         {
-            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+            //m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
 
             m_UIDocument = m_ShortUI.GetObject().GetUIDocument();
-            VisualElement element = m_UIDocument.rootVisualElement.Q(name: m_ShortUIHPField);
-            VisualElement icon = element.Q(name: m_ShortUIHPIconField);
-            icon.style.backgroundImage = m_ShortUIHPIcon.Asset;
+
+            VisualElement
+                hpElement = m_UIDocument.rootVisualElement.Q(name: m_ShortUIHPField),
+                hpIcon = hpElement.Q(name: m_ShortUIIconField),
+
+                stElement = m_UIDocument.rootVisualElement.Q(name: m_ShortUISTField),
+                stIcon = stElement.Q(name: m_ShortUIIconField);
+
+            hpIcon.style.backgroundImage = m_ShortUIHPIcon.Asset;
+            stIcon.style.backgroundImage = m_ShortUISTIcon.Asset;
         }
-        protected override void OnInitialize()
-        {
-            m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
-        }
+        //protected override void OnInitialize()
+        //{
+        //    m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
+        //}
         protected override void OnReserve()
         {
             base.OnReserve();
@@ -84,23 +97,23 @@ namespace Syadeu.Presentation.Actor
 
         #endregion
 
-        public T GetOriginalValue<T>(string name) => m_Stats.GetValue<T>(name);
-        public T GetOriginalValue<T>(Hash hash) => m_Stats.GetValue<T>(hash);
-        public T GetValue<T>(string name) => m_CurrentStats.GetValue<T>(name);
-        public T GetValue<T>(Hash hash) => m_CurrentStats.GetValue<T>(hash);
-        public void SetValue<T>(string name, T value) => SetValue(ToValueHash(name), value);
-        public void SetValue<T>(Hash hash, T value)
-        {
-            m_CurrentStats.SetValue(hash, value);
-            try
-            {
-                OnValueChanged?.Invoke(this, hash, value);
-            }
-            catch (Exception ex)
-            {
-                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(SetValue));
-            }
-        }
+        //public T GetOriginalValue<T>(string name) => m_Stats.GetValue<T>(name);
+        //public T GetOriginalValue<T>(Hash hash) => m_Stats.GetValue<T>(hash);
+        //public T GetValue<T>(string name) => m_CurrentStats.GetValue<T>(name);
+        //public T GetValue<T>(Hash hash) => m_CurrentStats.GetValue<T>(hash);
+        //public void SetValue<T>(string name, T value) => SetValue(ToValueHash(name), value);
+        //public void SetValue<T>(Hash hash, T value)
+        //{
+        //    m_CurrentStats.SetValue(hash, value);
+        //    try
+        //    {
+        //        OnValueChanged?.Invoke(this, hash, value);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(SetValue));
+        //    }
+        //}
 
         #region Uxml
 
@@ -120,7 +133,7 @@ namespace Syadeu.Presentation.Actor
 
         void IPrefabPreloader.Register(PrefabPreloader loader)
         {
-            loader.Add(m_ShortUIHPIcon);
+            loader.Add(m_ShortUIHPIcon, m_ShortUISTIcon);
         }
     }
     [Preserve]

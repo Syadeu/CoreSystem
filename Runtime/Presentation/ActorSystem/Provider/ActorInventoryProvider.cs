@@ -30,6 +30,7 @@ using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Actions;
 using UnityEngine.UIElements.Experimental;
 using DG.Tweening;
+using Syadeu.Presentation.Render.UI;
 
 namespace Syadeu.Presentation.Actor
 {
@@ -42,6 +43,8 @@ namespace Syadeu.Presentation.Actor
         {
             [SerializeField, JsonProperty(Order = 0, PropertyName = "UXMLAsset")]
             public Reference<UIDocumentConstantData> m_UXMLAsset = Reference<UIDocumentConstantData>.Empty;
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "ContextUXMLAsset")]
+            public Reference<UIContextData> m_ContextUXMLAsset = Reference<UIContextData>.Empty;
 
             [Space]
             [SerializeField, JsonProperty(Order = 1, PropertyName = "ItemContainerUXMLAsset")]
@@ -332,6 +335,8 @@ namespace Syadeu.Presentation.Actor
 
             VisualElement element = result.VisualElement;
             element.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
+            //element.AddManipulator(new MouseDragManipulator(m_UIDocument.rootVisualElement, name));
+
             float
                 originalOpacity = element.resolvedStyle.opacity,
                 originalHeight = element.resolvedStyle.height;
@@ -364,16 +369,40 @@ namespace Syadeu.Presentation.Actor
             data.inventory.Peek(data.key, out FixedReference refer, out ActorItemComponent component);
 
             $"clicked {refer.GetObject().Name}".ToLog();
+            
+            switch ((MouseButton)e.button)
+            {
+                case MouseButton.LeftMouse:
+                    "left m".ToLog();
+
+                    break;
+                case MouseButton.RightMouse:
+                    "right m".ToLog();
+                    var ctxElement = m_GraphicsInfo.m_ContextUXMLAsset.GetObject().GetVisualElement();
+                    m_UIDocument.rootVisualElement.Add(ctxElement);
+
+                    ctxElement.Root.SetPosition(e);
+
+
+                    break;
+                case MouseButton.MiddleMouse:
+                    "middle m".ToLog();
+
+                    break;
+                default:
+                    break;
+            }
         }
 
         #endregion
+
+        public struct ItemData
+        {
+            public ItemInventory inventory;
+            public ItemInventory.Key key;
+        }
     }
 
-    public struct ItemData
-    {
-        public ItemInventory inventory;
-        public ItemInventory.Key key;
-    }
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
     {
         private InstanceID<ActorInventoryProvider> m_Provider;
@@ -417,7 +446,7 @@ namespace Syadeu.Presentation.Actor
                 itemType,
                 itemName,
                 itemComponent.Icon,
-                new ItemData
+                new ActorInventoryProvider.ItemData
                 {
                     inventory = m_Inventory,
                     key = key

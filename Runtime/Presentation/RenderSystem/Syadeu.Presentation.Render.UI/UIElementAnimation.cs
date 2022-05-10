@@ -15,7 +15,7 @@
 using Syadeu.Collections;
 using UnityEngine.UIElements;
 
-namespace Syadeu.Presentation.Render
+namespace Syadeu.Presentation.Render.UI
 {
 #if CORESYSTEM_DOTWEEN
     using DG.Tweening;
