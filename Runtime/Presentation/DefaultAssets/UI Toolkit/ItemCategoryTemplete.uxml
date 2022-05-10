@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="style.uss" />
-    <Style src="color-palatte.uss" />
-    <ui:VisualElement class="templete00-color-4" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
-        <ui:Label text="NAME" display-tooltip-when-elided="true" name="Text" style="color: rgb(255, 255, 255); -unity-text-align: middle-left; width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; white-space: nowrap; padding-top: 0; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Electronic Highway Sign.TTF&apos;); -unity-font-definition: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset&apos;);" />
+    <Style src="Styles/inventory-style.uss" />
+    <Style src="Styles/color-palatte.uss" />
+    <ui:VisualElement class="templete00-color-4 item-category" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
+        <ui:Label text="NAME" display-tooltip-when-elided="true" name="Text" style="width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; padding-top: 0;" />
     </ui:VisualElement>
 </ui:UXML>

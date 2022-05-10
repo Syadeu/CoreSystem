@@ -5,13 +5,13 @@
         <ui:VisualElement name="Header" style="height: 3%; flex-direction: row; align-items: center; border-left-width: 7px; border-right-width: 7px; border-top-width: 7px; border-bottom-width: 7px;">
             <ui:VisualElement style="width: 35px; height: 35px;" />
             <ui:VisualElement name="ItemCategoryTemplete" style="width: 80%;">
-                <ui:VisualElement class="templete00-color-4" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
-                    <ui:Label text="NAME" display-tooltip-when-elided="true" name="Text" style="color: rgb(255, 255, 255); -unity-text-align: middle-left; width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; white-space: nowrap; padding-top: 0; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Electronic Highway Sign.TTF&apos;); -unity-font-definition: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset&apos;);" />
+                <ui:VisualElement class="templete00-color-4 item-category" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
+                    <ui:Label text="NAME" display-tooltip-when-elided="true" name="Text" style="width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; padding-top: 0;" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="ItemCategoryTemplete" style="width: 20%; margin-left: 5px;">
-                <ui:VisualElement class="templete00-color-4" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
-                    <ui:Label text="COUNT" display-tooltip-when-elided="true" name="Text" style="color: rgb(255, 255, 255); -unity-text-align: middle-left; width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; white-space: nowrap; padding-top: 0; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Electronic Highway Sign.TTF&apos;); -unity-font-definition: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset&apos;);" />
+                <ui:VisualElement class="templete00-color-4 item-category" style="height: 20px; border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; align-items: stretch; justify-content: space-between; background-color: rgba(0, 168, 232, 0.42);">
+                    <ui:Label text="COUNT" display-tooltip-when-elided="true" name="Text" style="width: 100%; height: 100%; left: 0; top: 0; right: 0; bottom: -19px; opacity: 1; padding-top: 0;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -19,5 +19,20 @@
             <ui:VisualElement name="ItemContainer" style="width: 100%; height: 100%;" />
         </ui:ScrollView>
     </ui:VisualElement>
-    <ui:VisualElement name="LoadoutView" class="default-border" style="left: 80%; width: 15%; height: 80%; top: 10%; position: absolute;" />
+    <ui:VisualElement name="LoadoutView" class="default-border" style="left: 1534px; width: 15%; height: 80%; top: 110px; position: absolute;">
+        <ui:VisualElement name="Body" style="width: 100%; height: 70%;">
+            <ui:VisualElement name="Head" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 20%;" />
+            <ui:VisualElement name="Torso" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 40%; flex-direction: row;">
+                <ui:VisualElement name="LeftArm" style="width: 30%; height: 100%;" />
+                <ui:VisualElement style="height: 100%; width: 5%;" />
+                <ui:VisualElement name="Chest" style="width: 30%; height: 100%;" />
+                <ui:VisualElement style="height: 100%; width: 5%;" />
+                <ui:VisualElement name="Chest" style="width: 30%; height: 100%;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Legs" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 40%; flex-direction: row;">
+                <ui:VisualElement name="LeftLeg" style="width: 50%; height: 100%;" />
+                <ui:VisualElement name="RightLeg" style="width: 50%; height: 100%;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
 </ui:UXML>

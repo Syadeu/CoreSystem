@@ -177,6 +177,17 @@ namespace Syadeu.Presentation.TurnTable
             }
         }
 
+        private void FixOrientation(bool instance)
+        {
+            Transform orientationTarget = OrientationTarget;
+            if (instance)
+            {
+                orientationTarget.localRotation = Quaternion.Euler(TargetOrientation);
+                return;
+            }
+            orientationTarget.localRotation
+                = Quaternion.Slerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
+        }
         private IEnumerator Updater()
         {
             //WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
@@ -199,9 +210,7 @@ namespace Syadeu.Presentation.TurnTable
 
                 m_DefaultTarget.position = TargetPosition + new float3(0, m_DefaultTopViewHeight, 0);
 
-                Transform orientationTarget = OrientationTarget;
-                orientationTarget.localRotation
-                    = Quaternion.Slerp(orientationTarget.localRotation, Quaternion.Euler(TargetOrientation), Time.deltaTime * MoveSpeed);
+                FixOrientation(false);
 
                 if (State == TRPGCameraState.Aim || State == TRPGCameraState.Inventory)
                 {
@@ -255,6 +264,8 @@ namespace Syadeu.Presentation.TurnTable
                     weight = 1
                 }
             };
+
+            FixOrientation(true);
         }
         public void SetAim(ProxyTransform from, ProxyTransform target)
         {

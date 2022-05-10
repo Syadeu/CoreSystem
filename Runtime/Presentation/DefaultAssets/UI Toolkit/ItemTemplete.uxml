@@ -6,9 +6,9 @@
         <ui:VisualElement style="width: 100%; flex-direction: row; align-items: center;">
             <ui:VisualElement style="height: 100%; width: 80%; flex-direction: row; margin-left: 5px; padding-top: 0; align-items: center; justify-content: flex-start;">
                 <ui:VisualElement name="Icon" style="width: 25px; height: 25px; background-color: rgb(255, 0, 0);" />
-                <ui:Label text="Label" display-tooltip-when-elided="true" name="Header" style="font-size: 20px; -unity-font-definition: resource(&apos;&apos;); -unity-font-style: normal; width: 80%; height: 100%; padding-top: 0; -unity-text-align: middle-left; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Rajdhani-Regular.ttf&apos;); margin-left: 5px;" />
+                <ui:Label text="Label" display-tooltip-when-elided="true" name="Header" class="item-header" style="width: 80%; height: 100%; margin-left: 5px;" />
             </ui:VisualElement>
-            <ui:Label text="x123" display-tooltip-when-elided="true" name="Quantity" style="font-size: 15px; -unity-font-definition: resource(&apos;&apos;); -unity-font-style: normal; padding-top: 0; -unity-text-align: middle-left; height: 100%; width: 20%; -unity-font: url(&apos;/Assets/CoreSystem/Runtime/Genre/Turn-based tactics/DefaultAssets/Fonts/Electronic Highway Sign.TTF&apos;); padding-left: 6px;" />
+            <ui:Label text="x123" display-tooltip-when-elided="true" name="Quantity" class="item-quantity" style="height: 100%; width: 20%; padding-left: 6px;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

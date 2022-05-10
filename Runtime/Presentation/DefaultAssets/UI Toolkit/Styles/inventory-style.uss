@@ -85,3 +85,50 @@
     margin-top: 3px;
     overflow: hidden;
 }
+
+.item-category {
+    height: 20px;
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    align-items: stretch;
+    justify-content: space-between;
+    background-color: rgba(0, 168, 232, 0.42);
+    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
+    -unity-text-align: middle-left;
+    color: rgba(255, 255, 255, 255);
+}
+
+.item-container.header {
+    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Rajdhani-Regular SDF.asset');
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    -unity-text-align: middle-left;
+    padding-top: 0;
+}
+
+.item-container.quantity {
+    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
+    color: rgba(255, 255, 255, 255);
+    font-size: 15px;
+    padding-top: 0;
+    -unity-text-align: middle-left;
+}
+
+.item-header {
+    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Rajdhani-Regular SDF.asset');
+    -unity-text-align: middle-left;
+    padding-top: 0;
+    font-size: 20px;
+}
+
+.item-quantity {
+    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
+    font-size: 15px;
+    -unity-text-align: middle-left;
+    color: rgba(255, 255, 255, 255);
+    padding-top: 0;
+}
