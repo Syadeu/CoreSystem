@@ -20,24 +20,20 @@ namespace Syadeu.Presentation.Render.UI
 {
     public sealed class MouseContextManipulator : MouseManipulator
     {
-        private VisualElement m_Root;
         private readonly FixedReference<UIContextData> m_ContextData;
         private Action<UIContextData.UxmlWrapper> m_OnContextClick;
 
-        private UIContextData.UxmlWrapper m_OpenedContext;
+        private static UIContextData.UxmlWrapper s_OpenedContext;
 
         public MouseContextManipulator(
-            VisualElement root,
             FixedReference<UIContextData> context, 
             Action<UIContextData.UxmlWrapper> onContextClick)
         {
-            m_Root = root;
             m_ContextData = context;
             m_OnContextClick = onContextClick;
         }
         ~MouseContextManipulator()
         {
-            m_Root = null;
             m_OnContextClick = null;
         }
 
@@ -52,29 +48,28 @@ namespace Syadeu.Presentation.Render.UI
 
         private void MouseDownEventHandler(MouseDownEvent evt)
         {
-            if (m_OpenedContext.IsValid() &&
+            if (s_OpenedContext.IsValid() &&
                 (MouseButton)evt.button == MouseButton.LeftMouse)
             {
                 $"mouse down at item".ToLog();
 
-                m_OpenedContext.Root.UnregisterCallback<MouseDownEvent>(MouseDownEventHandler);
-                m_OpenedContext.Root.ReleaseMouse();
+                s_OpenedContext.Root.UnregisterCallback<MouseDownEvent>(MouseDownEventHandler);
+                s_OpenedContext.Root.ReleaseMouse();
 
-                m_Root.Remove(m_OpenedContext);
-                m_OpenedContext.Dispose();
-                m_OpenedContext = default;
+                s_OpenedContext.Dispose();
+                s_OpenedContext = default;
             }
             else if ((MouseButton)evt.button == MouseButton.RightMouse)
             {
                 //evt.StopImmediatePropagation();
 
-                m_OpenedContext = m_ContextData.GetObject().GetVisualElement();
-                m_OpenedContext.Root.RegisterCallback<MouseDownEvent>(MouseDownEventHandler);
-                m_OpenedContext.Root.CaptureMouse();
-                m_Root.Add(m_OpenedContext);
+                s_OpenedContext = m_ContextData.GetObject().GetVisualElement();
+                s_OpenedContext.Root.RegisterCallback<MouseDownEvent>(MouseDownEventHandler);
+                s_OpenedContext.Root.CaptureMouse();
+                target.GetRoot().Add(s_OpenedContext);
 
-                m_OpenedContext.TemplateContainer.SetPosition(evt);
-                m_OnContextClick?.Invoke(m_OpenedContext);
+                s_OpenedContext.Root.SetPosition(evt);
+                m_OnContextClick?.Invoke(s_OpenedContext);
             }
         }
     }

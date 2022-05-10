@@ -335,7 +335,6 @@ namespace Syadeu.Presentation.Actor
 
             VisualElement element = result.VisualElement;
             element.AddManipulator(new MouseContextManipulator(
-                m_UIDocument.rootVisualElement,
                 m_GraphicsInfo.m_ContextUXMLAsset,
                 ctx =>
                 {

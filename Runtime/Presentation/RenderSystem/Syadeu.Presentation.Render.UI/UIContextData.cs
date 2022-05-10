@@ -51,8 +51,7 @@ namespace Syadeu.Presentation.Render.UI
             private UQueryState<VisualElement>
                 m_NameQuery, m_IconQuery;
 
-            public TemplateContainer TemplateContainer => m_Root;
-            public VisualElement Root => m_Root.contentContainer.ElementAt(0);
+            public VisualElement Root => m_Root;
 
             internal UxmlWrapper(TemplateContainer root, VisualElement container, PrefabReference<VisualTreeAsset> item, string nameField, string iconField)
             {
@@ -88,6 +87,7 @@ namespace Syadeu.Presentation.Render.UI
                 m_ContentContainer = null;
 
                 m_Root.Clear();
+                m_Root.RemoveFromHierarchy();
                 m_Root = null;
             }
 

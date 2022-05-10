@@ -40,6 +40,21 @@ namespace Syadeu.Presentation.Render.UI
         }
 
         /// <summary>
+        /// 최상위 부모를 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static VisualElement GetRoot(this VisualElement t)
+        {
+            VisualElement current = t;
+            while (current.parent != null)
+            {
+                current = current.parent;
+            }
+
+            return current;
+        }
+        /// <summary>
         /// 드래그를 위한 레이어를 찾거나 없으면 새로 만들어서 반환합니다.
         /// </summary>
         /// <param name="t"></param>
