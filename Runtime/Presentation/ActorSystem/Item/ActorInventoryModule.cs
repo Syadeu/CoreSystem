@@ -138,12 +138,13 @@ namespace Syadeu.Presentation.Actor
             var invenProvider = component.GetProvider<ActorInventoryProvider>().Target;
 
             m_UIDocument = invenProvider.UIDocument;
+            m_UIDocument.SetActive(true);
+
+#if CORESYSTEM_DOTWEEN
             float originalHeight = m_UIDocument.rootVisualElement.resolvedStyle.height;
             m_UIDocument.rootVisualElement.style.height = 0;
-
-            m_UIDocument.SetActive(true);
             m_UIDocument.rootVisualElement.DOHeight(originalHeight, .5f);
-
+#endif
             m_CurrentActor = actor;
 
             invenProvider.ExecuteOnInventoryOpened(actor);
