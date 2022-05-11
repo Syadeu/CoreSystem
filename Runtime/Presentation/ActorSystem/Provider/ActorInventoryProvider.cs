@@ -29,8 +29,11 @@ using UnityEngine.UIElements;
 using Syadeu.Presentation.Components;
 using Syadeu.Presentation.Actions;
 using UnityEngine.UIElements.Experimental;
-using DG.Tweening;
 using Syadeu.Presentation.Render.UI;
+
+#if CORESYSTEM_DOTWEEN
+using DG.Tweening;
+#endif
 
 namespace Syadeu.Presentation.Actor
 {
@@ -268,6 +271,7 @@ namespace Syadeu.Presentation.Actor
                 }
             }
 
+#if CORESYSTEM_DOTWEEN
             float
                 originalOpacity = ins.resolvedStyle.opacity,
                 originalHeight = ins.resolvedStyle.height;
@@ -276,7 +280,7 @@ namespace Syadeu.Presentation.Actor
 
             ins.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
             ins.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
-
+#endif
             container.Add(ins);
             return result;
         }
@@ -343,7 +347,7 @@ namespace Syadeu.Presentation.Actor
                 ));
             element.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);
             //element.AddManipulator(new MouseDragManipulator(m_UIDocument.rootVisualElement, name));
-
+#if CORESYSTEM_DOTWEEN
             float
                 originalOpacity = element.resolvedStyle.opacity,
                 originalHeight = element.resolvedStyle.height;
@@ -352,7 +356,7 @@ namespace Syadeu.Presentation.Actor
 
             element.DOFade(originalOpacity, .5f).SetEase(Ease.OutBounce);
             element.DOHeight(originalHeight, 1f).SetEase(Ease.OutBounce);
-
+#endif
             container.Add(result);
 
             return result;
