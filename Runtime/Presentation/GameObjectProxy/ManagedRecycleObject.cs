@@ -16,6 +16,7 @@ using UnityEngine.Events;
 
 namespace Syadeu.Presentation.Proxy
 {
+    [UnityEngine.AddComponentMenu("CoreSystem/Presentation/Managed Recycle Object")]
     public sealed class ManagedRecycleObject : RecycleableMonobehaviour
     {
         public UnityEvent onCreation;

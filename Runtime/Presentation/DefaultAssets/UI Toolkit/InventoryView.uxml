@@ -15,9 +15,18 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:ScrollView style="height: 100%;">
+        <ui:ScrollView style="height: 92%;">
             <ui:VisualElement name="ItemContainer" style="width: 100%; height: 100%;" />
         </ui:ScrollView>
+        <ui:VisualElement style="height: 5%; flex-direction: row-reverse;">
+            <ui:VisualElement name="WeightView" style="flex-direction: row-reverse; width: 100%; align-items: center;">
+                <ui:VisualElement style="flex-direction: row; width: 7%; height: 100%; padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px;">
+                    <ui:VisualElement name="Icon" style="width: 100%; height: 100%;" />
+                </ui:VisualElement>
+                <Syadeu.Presentation.Render.UI.FilableBox fill-color="#00A8E8FF" value="75.9" style="height: 100%; width: 30%; border-left-width: 0.01px; border-right-width: 0.01px; border-top-width: 0.01px; border-bottom-width: 0.01px; border-left-color: rgba(96, 85, 85, 255); border-right-color: rgba(96, 85, 85, 255); border-top-color: rgba(96, 85, 85, 255); border-bottom-color: rgba(96, 85, 85, 255);" />
+                <ui:Label text="80 / 100 kg" display-tooltip-when-elided="true" name="Value" style="position: absolute; right: 10%;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="LoadoutView" class="default-border" style="left: 1534px; width: 15%; height: 80%; top: 110px; position: absolute;">
         <ui:VisualElement name="Body" style="width: 100%; height: 70%;">
