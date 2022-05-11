@@ -343,6 +343,9 @@ namespace Syadeu.Presentation.Actor
                 ctx =>
                 {
                     "manipulator".ToLog();
+                    ctx.AddContextMenu("test menu 1", null);
+                    ctx.AddContextMenu("test menu 2", null);
+                    ctx.AddContextMenu("test menu 3", null);
                 }
                 ));
             element.RegisterCallback<MouseDownEvent, ItemData>(OnItemMouseDownEventHandler, data);

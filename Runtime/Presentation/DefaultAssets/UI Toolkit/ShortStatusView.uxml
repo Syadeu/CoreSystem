@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="StatusView" style="position: absolute; left: 5%; top: 85%; width: 40%; height: 10%; flex-direction: column; align-items: flex-start; justify-content: center;">
+        <ui:VisualElement name="FirstRow" style="width: 100%; height: 45%; justify-content: center; max-height: 30px;">
+            <ui:VisualElement name="HPView" style="flex-direction: row; width: 230px; height: 100%; max-width: 230px;">
+                <ui:VisualElement style="width: 12.5%; height: 100%; justify-content: center;">
+                    <ui:VisualElement style="padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px; background-color: rgba(217, 217, 217, 0.38); height: 100%; width: 100%;">
+                        <ui:VisualElement name="Icon" style="height: 100%; width: 100%;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement style="width: 7.5%; height: 100%; justify-content: center;" />
+                <ui:VisualElement name="HPBar" style="flex-direction: row; align-items: center; width: 80%; height: 100%; justify-content: flex-end;">
+                    <Syadeu.Presentation.Render.UI.FilableBox background-color="#D9D9D962" fill-color="#C03427FF" value="80" style="height: 100%; width: 100%;" />
+                    <ui:Label text="800 / 1000 hp" display-tooltip-when-elided="true" style="position: absolute; right: 3%; color: rgb(255, 255, 255);" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement style="height: 10%;" />
+        <ui:VisualElement name="SecondRow" style="width: 100%; height: 45%; margin-left: 37px; justify-content: center; display: flex; flex-direction: row; max-height: 30px;">
+            <ui:VisualElement name="StaminaView" style="flex-direction: row; width: 230px; height: 100%; max-width: 230px;">
+                <ui:VisualElement style="width: 12.5%; height: 100%; justify-content: center;">
+                    <ui:VisualElement style="padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px; background-color: rgba(217, 217, 217, 0.38); width: 100%; height: 100%;">
+                        <ui:VisualElement name="Icon" style="width: 100%; height: 100%;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement style="width: 7.5%; height: 100%; justify-content: center;" />
+                <ui:VisualElement name="HPBar" style="flex-direction: row; align-items: center; width: 80%; height: 100%; justify-content: flex-end;">
+                    <Syadeu.Presentation.Render.UI.FilableBox background-color="#D9D9D962" fill-color="#205CD9FF" value="80" style="height: 100%; width: 100%;" />
+                    <ui:Label text="80 / 100 st" display-tooltip-when-elided="true" style="position: absolute; right: 3%; color: rgb(255, 255, 255);" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="style.uss" />
+    <ui:VisualElement style="height: 100%; width: 100%; align-items: center; justify-content: center;">
+        <ui:VisualElement name="PauseMenu" style="height: 522px; width: 432px; background-color: rgba(255, 255, 255, 0.76); border-top-left-radius: 15px; border-bottom-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; align-items: center; justify-content: center;">
+            <ui:Label text="Main Menu" display-tooltip-when-elided="true" style="width: 100%; -unity-font-definition: url(&apos;/Assets/Samples/UI Toolkit/1.0.0-preview.18/UI Toolkit Examples/Resources/Fonts &amp; Materials/LiberationSans SDF.asset&apos;); height: 59px; color: rgb(0, 0, 0); font-size: 50px; -unity-text-align: middle-center; left: 0; top: 0; position: absolute;" />
+            <ui:Button text="Button" display-tooltip-when-elided="true" class="mainmenu-button" style="height: 47px; width: 295px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

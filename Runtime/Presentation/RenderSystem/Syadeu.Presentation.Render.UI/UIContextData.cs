@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Render.UI
                 m_IconQuery = m_ContentContainer.Query().Name(iconField).Build();
             }
 
-            public VisualElement CreateContextMenu(string name, Texture2D icon)
+            public VisualElement AddContextMenu(string name, Texture2D icon)
             {
                 var item = m_ItemUXMLAsset.Asset.CloneTree();
 

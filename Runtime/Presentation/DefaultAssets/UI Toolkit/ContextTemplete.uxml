@@ -1,20 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="ContextItemTemplete" />
     <Style src="Styles/context-styles.uss" />
     <ui:VisualElement name="ContextView" style="width: 250px; height: auto; background-color: rgba(195, 195, 195, 0.35); border-top-left-radius: 3px; border-bottom-left-radius: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; border-left-width: 1.5px; border-right-width: 1.5px; border-top-width: 1.5px; border-bottom-width: 1.5px; position: absolute; overflow: hidden;">
         <ui:VisualElement name="Header" style="height: 17.5px; flex-direction: row; align-items: center; justify-content: center; overflow: hidden; background-color: rgb(200, 200, 200); border-top-left-radius: 3px; border-top-right-radius: 3px; display: none;">
             <ui:Label text="Label" display-tooltip-when-elided="true" style="color: rgb(43, 43, 43); padding-top: 0; font-size: 10px;" />
         </ui:VisualElement>
         <ui:VisualElement name="ContentContainer" style="overflow: hidden;">
-            <ui:VisualElement name="ContextItem" class="context-item">
-                <ui:VisualElement style="width: 20%; height: 100%; align-items: center; justify-content: center; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;">
-                    <ui:VisualElement style="height: 100%; width: 12.5px; background-color: rgb(197, 197, 197);">
-                        <ui:VisualElement name="Icon" style="width: 100%; height: 100%;" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement style="height: 100%; width: 80%; flex-direction: row; align-items: center;">
-                    <ui:Label text="Label" display-tooltip-when-elided="true" style="color: rgb(209, 209, 209); padding-top: 0; font-size: 9px; -unity-text-align: middle-left;" />
-                </ui:VisualElement>
-            </ui:VisualElement>
+            <ui:Instance template="ContextItemTemplete" name="ContextItemTemplete" style="display: none;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
