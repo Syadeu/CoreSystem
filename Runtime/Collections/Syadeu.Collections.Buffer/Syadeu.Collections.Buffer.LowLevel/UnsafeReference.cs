@@ -25,8 +25,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
     [BurstCompatible]
     public readonly struct UnsafeReference : IUnsafeReference, IEquatable<UnsafeReference>
     {
-        [MarshalAs(UnmanagedType.U1)]
-        private readonly bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction]
         private readonly unsafe void* m_Ptr;
 
@@ -59,20 +57,15 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public unsafe void* Ptr => m_Ptr;
         public IntPtr IntPtr { get { unsafe { return (IntPtr)m_Ptr; } } }
 
-        public bool IsCreated => m_IsCreated;
+        public unsafe bool IsCreated => m_Ptr != null;
 
         public unsafe UnsafeReference(void* ptr)
         {
             m_Ptr = ptr;
-            m_IsCreated = true;
         }
-        public UnsafeReference(IntPtr ptr)
+        public unsafe UnsafeReference(IntPtr ptr)
         {
-            unsafe
-            {
-                m_Ptr = ptr.ToPointer();
-            }
-            m_IsCreated = true;
+            m_Ptr = ptr.ToPointer();
         }
 
         public bool Equals(UnsafeReference other)
@@ -118,8 +111,6 @@ namespace Syadeu.Collections.Buffer.LowLevel
         IEquatable<UnsafeReference<T>>, IEquatable<UnsafeReference>
         where T : unmanaged
     {
-        [MarshalAs(UnmanagedType.U1)]
-        private readonly bool m_IsCreated;
         [NativeDisableUnsafePtrRestriction]
         private readonly unsafe T* m_Ptr;
 
@@ -178,20 +169,15 @@ namespace Syadeu.Collections.Buffer.LowLevel
         public IntPtr IntPtr { get { unsafe { return (IntPtr)m_Ptr; } } }
         public ref T Value { get { unsafe { return ref *m_Ptr; } } }
 
-        public bool IsCreated => m_IsCreated;
+        public unsafe bool IsCreated => m_Ptr != null;
 
-        public UnsafeReference(IntPtr ptr)
+        public unsafe UnsafeReference(IntPtr ptr)
         {
-            unsafe
-            {
-                m_Ptr = (T*)ptr.ToPointer();
-            }
-            m_IsCreated = true;
+            m_Ptr = (T*)ptr.ToPointer();
         }
         public unsafe UnsafeReference(T* ptr)
         {
             m_Ptr = ptr;
-            m_IsCreated = true;
         }
         public ReadOnly AsReadOnly() { unsafe { return new ReadOnly(m_Ptr); } }
 
