@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (m_UIDocument == null) return;
 
-            m_UIDocument.SetActive(false);
+            UnityEngine.Object.Destroy(m_UIDocument.gameObject);
             m_UIDocument = null;
         }
     }

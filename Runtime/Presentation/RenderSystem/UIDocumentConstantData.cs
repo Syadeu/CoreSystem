@@ -28,6 +28,23 @@ namespace Syadeu.Presentation.Render
     [DisplayName("ConstantData: UI Document Constant Data")]
     public class UIDocumentConstantData : ConstantData
     {
+        [Serializable]
+        public sealed class ChildElementContainer : PropertyBlock<ChildElementContainer>
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "ParentContainerField")]
+            public string m_ParentContainerField = string.Empty;
+
+            [Space]
+            [SerializeField, JsonProperty(Order = 1, PropertyName = "Childs")]
+            public ArrayWrapper<ChildElement> m_Childs = ArrayWrapper<ChildElement>.Empty;
+        }
+        [Serializable]
+        public sealed class ChildElement : PropertyBlock<ChildElement>
+        {
+            [SerializeField, JsonProperty(Order = 0, PropertyName = "UXMLAsset")]
+            public PrefabReference<VisualTreeAsset> m_UXMLAsset = PrefabReference<VisualTreeAsset>.None;
+        }
+
         [SerializeField, JsonProperty(Order = 0, PropertyName = "PanelSettings")]
         internal PrefabReference<PanelSettings> m_PanelSettings = PrefabReference<PanelSettings>.None;
         [SerializeField, JsonProperty(Order = 1, PropertyName = "UXMLAsset")]
@@ -42,7 +59,13 @@ namespace Syadeu.Presentation.Render
         [SerializeField, JsonProperty(Order = 3, PropertyName = "EnableOnCreateWithOpen")]
         internal bool m_EnableOnCreateWithOpen = false;
 
+        [Space]
+        [Header("Hierachy")]
+        [SerializeField, JsonProperty(Order = 4, PropertyName = "Childs")]
+        private ArrayWrapper<ChildElementContainer> m_Childs = ArrayWrapper<ChildElementContainer>.Empty;
+
 #if ENABLE_INPUT_SYSTEM
+        [Space]
         [Header("InputSystem")]
         [SerializeField, JsonProperty(Order = 4, PropertyName = "BindInputSystem")]
         internal bool m_BindInputSystem = false;

@@ -93,7 +93,17 @@ namespace Syadeu.Presentation.Actor
                System.CurrentControls.Count == 0) return false;
 
             InstanceID first = System.CurrentControls[0];
-            if (!first.HasComponent<ActorControllerComponent>()) return false;
+            if (!first.HasComponent<ActorFactionComponent>())
+            {
+                "?? fatal err. doesnt have actorfaction".ToLogError();
+                return false;
+            }
+            
+            if (first.GetComponentReadOnly<ActorFactionComponent>().FactionType != FactionType.Player)
+            {
+                return false;
+            }
+            else if (!first.HasComponent<ActorControllerComponent>()) return false;
 
             return true;
         }

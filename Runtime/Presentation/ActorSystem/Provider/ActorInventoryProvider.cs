@@ -203,6 +203,24 @@ namespace Syadeu.Presentation.Actor
         {
             return m_UIDocument.rootVisualElement.Q(name: m_GraphicsInfo.m_ContainerField);
         }
+        private VisualElement GetLoadout(HumanBody humanBody)
+        {
+            const string c_StyleClass = ".loadout-item";
+            var q = m_UIDocument.rootVisualElement.Query().Class(c_StyleClass);
+
+            q = q.Name(humanBody.ToString());
+            //if (humanBody == HumanBody.Head)
+            //{
+            //    q = q.Name("Head");
+            //}
+            //else if (humanBody == HumanBody.LeftArm)
+            //{
+            //    q = q.Name("LeftArm");
+            //}
+
+            return q.Build().First();
+        }
+
         private UxmlWrapper? GetItemContainer(string type)
         {
             VisualElement container = GetContainer();
@@ -343,7 +361,12 @@ namespace Syadeu.Presentation.Actor
                 ctx =>
                 {
                     "manipulator".ToLog();
-                    ctx.AddContextMenu("test menu 1", null);
+                    ctx.AddContextMenu("test menu 1", null)
+                        .RegisterCallback<MouseDownEvent, ContextData>(OnItemContextDownEventHandler, new ContextData(data)
+                        {
+                            msg = "test menu 1"
+                        });
+
                     ctx.AddContextMenu("test menu 2", null);
                     ctx.AddContextMenu("test menu 3", null);
                 }
@@ -407,8 +430,25 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
+        private void OnItemContextDownEventHandler(MouseDownEvent e, ContextData data)
+        {
+            data.msg.ToLog();
+        }
+
         #endregion
 
+        private struct ContextData
+        {
+            public readonly ItemData itemData;
+            public string msg;
+
+            public ContextData(ItemData data)
+            {
+                this = default(ContextData);
+
+                itemData = data;
+            }
+        }
         public struct ItemData
         {
             public ItemInventory inventory;

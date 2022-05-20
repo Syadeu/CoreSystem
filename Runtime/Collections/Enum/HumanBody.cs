@@ -30,6 +30,8 @@ namespace Syadeu.Collections
         RightUpperArm = 1 << 5,
         RightLowerArm = 1 << 6,
         Torso = LeftUpperArm | LeftLowerArm | RightUpperArm | RightLowerArm,
+        LeftArm = LeftUpperArm | LeftLowerArm,
+        RightArm = RightUpperArm | RightLowerArm,
 
         LeftHand = 1 << 7,
         RightHand = 1 << 8,

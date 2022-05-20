@@ -23,24 +23,24 @@
                 <ui:VisualElement style="flex-direction: row; width: 7%; height: 100%; padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px;">
                     <ui:VisualElement name="Icon" style="width: 100%; height: 100%;" />
                 </ui:VisualElement>
-                <Syadeu.Presentation.Render.UI.FilableBox fill-color="#00A8E8FF" value="75.9" style="height: 100%; width: 30%; border-left-width: 0.01px; border-right-width: 0.01px; border-top-width: 0.01px; border-bottom-width: 0.01px; border-left-color: rgba(96, 85, 85, 255); border-right-color: rgba(96, 85, 85, 255); border-top-color: rgba(96, 85, 85, 255); border-bottom-color: rgba(96, 85, 85, 255);" />
+                <Syadeu.Presentation.Render.UI.FilableBox fill-color="#00A8E8FF" value="75.9" style="height: 100%; width: 30%; border-left-width: 0.01px; border-right-width: 0.01px; border-top-width: 0.01px; border-bottom-width: 0.01px; border-left-color: rgb(96, 85, 85); border-right-color: rgb(96, 85, 85); border-top-color: rgb(96, 85, 85); border-bottom-color: rgb(96, 85, 85);" />
                 <ui:Label text="80 / 100 kg" display-tooltip-when-elided="true" name="Value" style="position: absolute; right: 10%;" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="LoadoutView" class="default-border" style="left: 1534px; width: 15%; height: 80%; top: 110px; position: absolute;">
         <ui:VisualElement name="Body" style="width: 100%; height: 70%;">
-            <ui:VisualElement name="Head" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 20%;" />
+            <ui:VisualElement name="Head" class="loadout-item" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 20%;" />
             <ui:VisualElement name="Torso" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 40%; flex-direction: row;">
-                <ui:VisualElement name="LeftArm" style="width: 30%; height: 100%;" />
+                <ui:VisualElement name="LeftArm" class="loadout-item" style="width: 30%; height: 100%;" />
                 <ui:VisualElement style="height: 100%; width: 5%;" />
-                <ui:VisualElement name="Chest" style="width: 30%; height: 100%;" />
+                <ui:VisualElement name="Chest" class="loadout-item" style="width: 30%; height: 100%;" />
                 <ui:VisualElement style="height: 100%; width: 5%;" />
-                <ui:VisualElement name="Chest" style="width: 30%; height: 100%;" />
+                <ui:VisualElement name="RightArm" class="loadout-item" style="width: 30%; height: 100%;" />
             </ui:VisualElement>
             <ui:VisualElement name="Legs" style="background-color: rgba(0, 0, 0, 0.54); width: 100%; height: 40%; flex-direction: row;">
-                <ui:VisualElement name="LeftLeg" style="width: 50%; height: 100%;" />
-                <ui:VisualElement name="RightLeg" style="width: 50%; height: 100%;" />
+                <ui:VisualElement name="LeftLeg" class="loadout-item" style="width: 50%; height: 100%;" />
+                <ui:VisualElement name="RightLeg" class="loadout-item" style="width: 50%; height: 100%;" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

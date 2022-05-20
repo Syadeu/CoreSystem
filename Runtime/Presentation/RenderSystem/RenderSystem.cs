@@ -48,7 +48,6 @@ using UnityEngine.Rendering.Universal;
 
 namespace Syadeu.Presentation.Render
 {
-    [RequireGlobalConfig("Graphics")]
     public sealed class RenderSystem : PresentationSystemEntity<RenderSystem>,
         INotifySystemModule<ScreenControlModule>,
         INotifySystemModule<VectorGraphicsModule>,
@@ -72,6 +71,14 @@ namespace Syadeu.Presentation.Render
 #else
         public const string s_DefaultShaderName = "Standard";
 #endif
+        [XmlSettings(PropertyName = "Resolution", SaveToDisk = false)]
+        public static class ResolutionSettings
+        {
+            [XmlField(PropertyName = "X")]
+            public static int X = 1920;
+            [XmlField(PropertyName = "Y")]
+            public static int Y = 1080;
+        }
 
         public static readonly LayerMask ProjectionLayer = LayerMask.NameToLayer("FloorProjection");
         public static readonly LayerMask ProjectionMask = LayerMask.GetMask("FloorProjection");
@@ -84,9 +91,6 @@ namespace Syadeu.Presentation.Render
 #endif
         private ObClass<Light> m_DirectionalLight;
         private Matrix4x4 m_Matrix4x4;
-
-        [ConfigValue(Header = "Resolution", Name = "X")] private int m_ResolutionX;
-        [ConfigValue(Header = "Resolution", Name = "Y")] private int m_ResolutionY;
 
         public Camera Camera
         {
@@ -141,7 +145,9 @@ namespace Syadeu.Presentation.Render
 
         public event Action<Camera, Camera> OnCameraChanged;
         public event Action<ScriptableRenderContext, Camera> OnRender;
+#if CORESYSTEM_SHAPES
         public event Action<ScriptableRenderContext, Camera> OnRenderShapes;
+#endif
 
         public event Action<ScriptableRenderContext, Camera[]> OnFrameRender;
 
@@ -238,7 +244,14 @@ namespace Syadeu.Presentation.Render
         private void Instance_OnRender(ScriptableRenderContext ctx, Camera cam)
         {
             // 메인 카메라가 아니면 안됨.
-            if (cam != m_Camera.Value) return;
+            if (cam != m_Camera.Value
+#if UNITY_EDITOR
+                && (UnityEditor.SceneView.currentDrawingSceneView == null || UnityEditor.SceneView.currentDrawingSceneView.camera != cam)
+#endif
+                )
+            {
+                return;
+            }
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)

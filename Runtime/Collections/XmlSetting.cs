@@ -36,6 +36,55 @@ namespace Syadeu.Collections
         private static readonly string s_GlobalConfigPath = Path.Combine(CoreSystemFolder.CoreSystemDataPath, "config.xml");
         private static readonly Dictionary<Type, FieldInfo[]> s_CachedSettingFields = new Dictionary<Type, FieldInfo[]>();
 
+        private static readonly List<Type> s_StaticLoadedTypes = new List<Type>();
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void Initialize()
+        {
+            s_StaticLoadedTypes.Clear();
+            var iter = TypeHelper
+                .GetTypesIter(t => !t.IsAbstract && !t.IsInterface)
+                .Where(t => t.GetCustomAttribute<XmlSettingsAttribute>() != null);
+            foreach (var item in iter)
+            {
+                FieldInfo[] settingFields = GetSettingFields(item);
+                XElement element = GetElement(item, item.GetCustomAttribute<XmlSettingsAttribute>());
+
+                bool hasValue = false;
+                for (int i = 0; i < settingFields.Length; i++)
+                {
+                    if (!settingFields[i].IsStatic) continue;
+
+                    FieldInfo field = settingFields[i];
+                    SetValue(element, field, null);
+
+                    hasValue |= true;
+                }
+
+                if (!hasValue) continue;
+
+                s_StaticLoadedTypes.Add(item);
+            }
+
+            Application.quitting -= OnApplicationExit;
+            Application.quitting += OnApplicationExit;
+        }
+        private static void OnApplicationExit()
+        {
+            foreach (Type item in s_StaticLoadedTypes)
+            {
+                FieldInfo[] settingFields = GetSettingFields(item);
+                XElement element = GetElement(item, item.GetCustomAttribute<XmlSettingsAttribute>());
+
+                foreach (FieldInfo field in settingFields)
+                {
+                    if (!field.IsStatic) continue;
+
+                    SaveValue(element, field, null);
+                }
+            }
+        }
+
         private static XDocument LoadDocumentFromDisk()
         {
             XDocument doc;
@@ -101,15 +150,9 @@ namespace Syadeu.Collections
                 wr.Write(xml);
             }
         }
-        
-        private static XElement GetElement(object obj, XmlSettingsAttribute settings = null)
-        {
-            Type t = obj.GetType();
-            if (settings == null)
-            {
-                settings = t.GetCustomAttribute<XmlSettingsAttribute>();
-            }
 
+        private static XElement GetElement(Type t, XmlSettingsAttribute settings)
+        {
             string key;
             if (settings.PropertyName.IsNullOrEmpty()) key = TypeHelper.ToString(t);
             else key = settings.PropertyName;
@@ -137,6 +180,16 @@ namespace Syadeu.Collections
 
             return objRoot;
         }
+        private static XElement GetElement(object obj, XmlSettingsAttribute settings = null)
+        {
+            Type t = obj.GetType();
+            if (settings == null)
+            {
+                settings = t.GetCustomAttribute<XmlSettingsAttribute>();
+            }
+
+            return GetElement(t, settings);
+        }
         private static FieldInfo[] GetSettingFields(Type t)
         {
             if (s_CachedSettingFields.TryGetValue(t, out FieldInfo[] fields)) return fields;
@@ -150,6 +203,62 @@ namespace Syadeu.Collections
             return fields;
         }
 
+        private static void SaveValue(XElement objRoot, FieldInfo fieldInfo, object obj)
+        {
+            if (!ValidateFieldType(fieldInfo))
+            {
+                Debug.Log($"not valid {fieldInfo.Name}");
+                return;
+            }
+
+            XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
+
+            string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
+            XElement element = objRoot.Element(elementName);
+            if (element == null)
+            {
+                objRoot.Add(
+                    new XElement(
+                        elementName,
+                        fieldInfo.GetValue(obj).ToString()
+                        )
+                    );
+                return;
+            }
+
+            element.Value = fieldInfo.GetValue(obj).ToString();
+        }
+        private static void SetValue(XElement objRoot, FieldInfo fieldInfo, object obj)
+        {
+            if (!ValidateFieldType(fieldInfo))
+            {
+                Debug.Log($"not valid {fieldInfo.Name}");
+                return;
+            }
+
+            XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
+
+            string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
+            XElement element = objRoot.Element(elementName);
+            if (element == null)
+            {
+                objRoot.Add(
+                    new XElement(
+                        elementName,
+                        //TypeHelper.GetDefaultValue(fieldInfo.FieldType).ToString()
+                        fieldInfo.GetValue(obj).ToString()
+                        )
+                    );
+                Debug.Log($"not exist {elementName} adding");
+                return;
+            }
+
+            object value = Convert.ChangeType(element.Value, fieldInfo.FieldType);
+            Debug.Log($"{fieldInfo.Name}={value} :: loaded");
+
+            fieldInfo.SetValue(obj, value);
+        }
+
         public static void SaveSettings(object obj)
         {
             Type t = obj.GetType();
@@ -161,28 +270,7 @@ namespace Syadeu.Collections
             IEnumerable<FieldInfo> fieldsIter = GetSettingFields(t);
             foreach (FieldInfo fieldInfo in fieldsIter)
             {
-                if (!ValidateFieldType(fieldInfo))
-                {
-                    Debug.Log($"not valid {fieldInfo.Name}");
-                    continue;
-                }
-
-                XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
-
-                string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
-                XElement element = objRoot.Element(elementName);
-                if (element == null)
-                {
-                    objRoot.Add(
-                        new XElement(
-                            elementName,
-                            fieldInfo.GetValue(obj).ToString()
-                            )
-                        );
-                    continue;
-                }
-
-                element.Value = fieldInfo.GetValue(obj).ToString();
+                SaveValue(objRoot, fieldInfo, obj);
             }
 
             Debug.Log($"save doc for {obj.GetType().Name}");
@@ -206,31 +294,7 @@ namespace Syadeu.Collections
             IEnumerable<FieldInfo> fieldsIter = GetSettingFields(t);
             foreach (FieldInfo fieldInfo in fieldsIter)
             {
-                if (!ValidateFieldType(fieldInfo))
-                {
-                    Debug.Log($"not valid {fieldInfo.Name}");
-                    continue;
-                }
-
-                XmlFieldAttribute fieldAtt = fieldInfo.GetCustomAttribute<XmlFieldAttribute>();
-
-                string elementName = fieldAtt.PropertyName.IsNullOrEmpty() ? fieldInfo.Name : fieldAtt.PropertyName;
-                XElement element = objRoot.Element(elementName);
-                if (element == null)
-                {
-                    objRoot.Add(
-                        new XElement(
-                            elementName,
-                            //TypeHelper.GetDefaultValue(fieldInfo.FieldType).ToString()
-                            fieldInfo.GetValue(obj).ToString()
-                            )
-                        );
-                    Debug.Log($"not exist {elementName} adding");
-                    continue;
-                }
-                object value = Convert.ChangeType(element.Value, fieldInfo.FieldType);
-                Debug.Log($"{fieldInfo.Name}={value} :: loaded");
-                fieldInfo.SetValue(obj, value);
+                SetValue(objRoot, fieldInfo, obj);
             }
 
             //Debug.Log(doc.ToString());
@@ -315,7 +379,7 @@ namespace Syadeu.Collections
             return false;
         }
     }
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public sealed class XmlSettingsAttribute : Attribute
     {
         public string PropertyName;
@@ -325,7 +389,7 @@ namespace Syadeu.Collections
         /// </summary>
         public bool SaveToDisk;
     }
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class XmlFieldAttribute : Attribute 
     {
         public string PropertyName;

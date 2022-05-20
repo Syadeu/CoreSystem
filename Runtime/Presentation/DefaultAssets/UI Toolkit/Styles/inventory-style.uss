@@ -133,3 +133,14 @@
     color: rgb(255, 255, 255);
     padding-top: 0;
 }
+
+.loadout-item {
+    border-left-color: rgba(255, 255, 255, 255);
+    border-right-color: rgba(255, 255, 255, 255);
+    border-top-color: rgba(255, 255, 255, 255);
+    border-bottom-color: rgba(255, 255, 255, 255);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+}
