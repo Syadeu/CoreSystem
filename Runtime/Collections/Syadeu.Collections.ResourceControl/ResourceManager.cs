@@ -22,9 +22,6 @@
 #define DEBUG_MODE
 #endif
 #define UNITYENGINE
-#if UNITY_2019 || !UNITY_2020_1_OR_NEWER
-#define UNITYENGINE_OLD
-#else
 using Syadeu.Collections.ResourceControl.LowLevel;
 using Syadeu.Collections.Buffer.LowLevel;
 using System;
@@ -38,7 +35,6 @@ using Unity.Jobs;
 using UnityEngine.Networking;
 #if UNITY_MATHEMATICS
 using Unity.Mathematics;
-#endif
 #endif
 
 using UnityEngine;
@@ -58,7 +54,6 @@ namespace Syadeu.Collections.ResourceControl
         protected override bool EnableLog => false;
         protected override bool HideInInspector => true;
 
-#if !UNITYENGINE_OLD
         private const string c_FileUri = "file:///";
         private const float c_UnloadTime = 300.0f;
 
@@ -954,7 +949,6 @@ namespace Syadeu.Collections.ResourceControl
             
             return LoadAsset(p, in key);
         }
-#endif
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
