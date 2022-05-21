@@ -34,6 +34,10 @@ namespace Syadeu.Presentation.Grid
             FixedList4096Bytes<GridIndex> cur,
             bool reIndex)
         {
+            if (entity.IsEmpty() || !entity.IsValid())
+            {
+                "?? invalid".ToLogError();
+            }
             var temp = Dequeue();
 
             temp.Entity = entity;

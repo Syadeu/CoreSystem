@@ -20,7 +20,7 @@ namespace Syadeu.Collections
     {
         internal const string
             c_WhiteSpace = " ",
-            c_MessagePrefix = "[<color=lime>Point</color>]",
+            c_MessagePrefix = "[<color=lime>CoreSystem</color>]",
             c_Context = "[{0}]",
             c_InvalidString = "Invalid";
 
