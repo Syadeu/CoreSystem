@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Components
 
                         requester.Enqueue(m_ComponentIndex);
 
-                        CoreSystem.Logger.Log(Channel.Component, true,
+                        CoreSystem.Logger.Log(LogChannel.Component, true,
                             $"New ECB has been created for component({TypeHelper.ToString(m_ComponentBuffer->TypeInfo.Type)})");
                     }
                     Interlocked.MemoryBarrier();

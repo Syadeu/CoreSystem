@@ -103,7 +103,7 @@ namespace Syadeu.Presentation.Actor
 #if DEBUG_MODE
                 if (attribute.m_Providers[i].IsEmpty() || !attribute.m_Providers[i].IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Entity({actor.RawName}) has an invalid provider at {i}. This is not allowed.");
                     continue;
                 }

@@ -205,7 +205,7 @@ namespace Syadeu.Presentation.Map
         {
             if (component.m_Registered)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     "error");
                 return;
             }
@@ -221,7 +221,7 @@ namespace Syadeu.Presentation.Map
         {
             if (!component.m_Registered)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     "error");
                 return;
             }
@@ -237,7 +237,7 @@ namespace Syadeu.Presentation.Map
 
             if (terrainData.m_TerrainInstance == null)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, "Terrain is not an instance");
+                CoreSystem.Logger.LogError(LogChannel.Presentation, "Terrain is not an instance");
                 return;
             }
 
@@ -260,7 +260,7 @@ namespace Syadeu.Presentation.Map
             CoreSystem.Logger.ThreadBlock(nameof(AddObstacle), ThreadInfo.Unity);
             if (!(transform is IProxyTransform tr))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, "unity tr is not support");
+                CoreSystem.Logger.LogError(LogChannel.Presentation, "unity tr is not support");
                 return;
             }
 
@@ -606,7 +606,7 @@ namespace Syadeu.Presentation.Map
 
                     if (!agent.isOnNavMesh)
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity,
+                        CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"This entity({entity.RawName}) is not on NavMesh.");
                         yield break;
                     }

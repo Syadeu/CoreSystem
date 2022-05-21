@@ -157,7 +157,7 @@ namespace Syadeu.Presentation.Events
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Event,
+                        CoreSystem.Logger.LogError(LogChannel.Event,
                             $"Invalid event({ev.InternalName}, {ev.EventHash}) has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
@@ -168,7 +168,7 @@ namespace Syadeu.Presentation.Events
 
                     if (ev.InternalDisplayLog)
                     {
-                        CoreSystem.Logger.Log(Channel.Event, 
+                        CoreSystem.Logger.Log(LogChannel.Event, 
                             string.Format(c_LogPostedEvent, ev.InternalName));
                     }
                 }
@@ -188,7 +188,7 @@ namespace Syadeu.Presentation.Events
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation,
+                        CoreSystem.Logger.LogError(LogChannel.Presentation,
                             $"Invalid action has been posted");
                         UnityEngine.Debug.LogException(ex);
                     }
@@ -213,7 +213,7 @@ namespace Syadeu.Presentation.Events
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Event,
+                    CoreSystem.Logger.LogError(LogChannel.Event,
                         $"Invalid event({ev.InternalName}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
@@ -224,7 +224,7 @@ namespace Syadeu.Presentation.Events
 
                 if (ev.InternalDisplayLog)
                 {
-                    CoreSystem.Logger.Log(Channel.Event,
+                    CoreSystem.Logger.Log(LogChannel.Event,
                         string.Format(c_LogPostedEvent, ev.InternalName));
                 }
             }
@@ -246,7 +246,7 @@ namespace Syadeu.Presentation.Events
 #if DEBUG_MODE
             if (m_AddedEvents.Contains(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Event,
+                CoreSystem.Logger.LogError(LogChannel.Event,
                     $"Attemp to add same delegate event({ev.Method.Name}) at {TypeHelper.TypeOf<TEvent>.Name}.");
                 return;
             }
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation.Events
             Hash eventHash = Hash.NewHash(TypeHelper.TypeOf<TEvent>.Name);
             if (!m_Events.ContainsKey(eventHash) || !m_EventActions.ContainsKey(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Event,
+                CoreSystem.Logger.LogError(LogChannel.Event,
                     $"Event({TypeHelper.TypeOf<TEvent>.Name}) " +
                     $"doesn\'t have method({ev.Method.DeclaringType.Name}.{ev.Method.Name}) but you trying to remove.");
                 return;
@@ -365,14 +365,14 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
-                    CoreSystem.Logger.LogError(Channel.Event, ex);
+                    CoreSystem.Logger.LogError(LogChannel.Event, ex);
                 }
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
                 {
                     if (m_ScheduledEventHandler.IsExceedTimeout(10))
                     {
-                        CoreSystem.Logger.LogError(Channel.Event,
+                        CoreSystem.Logger.LogError(LogChannel.Event,
                             string.Format(c_BlockingTooLongExceptionLog, TypeHelper.ToString(m_ScheduledEventHandler.m_EventType), TypeHelper.ToString(m_ScheduledEventHandler.m_System.GetType())));
 
                         m_ScheduledEventHandler.ResetTimer();
@@ -398,7 +398,7 @@ namespace Syadeu.Presentation.Events
                 catch (Exception ex)
                 {
                     m_ScheduledEventHandler.m_Result = SystemEventResult.Failed;
-                    CoreSystem.Logger.LogError(Channel.Event, ex);
+                    CoreSystem.Logger.LogError(LogChannel.Event, ex);
                 }
 
                 if ((m_ScheduledEventHandler.m_Result & SystemEventResult.Wait) == SystemEventResult.Wait)
@@ -452,7 +452,7 @@ namespace Syadeu.Presentation.Events
             
             if (ev.IsValid() && m_Events.ContainsKey(ev.EventHash))
             {
-                CoreSystem.Logger.Log(Channel.Action,
+                CoreSystem.Logger.Log(LogChannel.Action,
                     string.Format(c_ExecuteEventMsg, ev.InternalName));
 
                 try
@@ -462,7 +462,7 @@ namespace Syadeu.Presentation.Events
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Event,
+                    CoreSystem.Logger.LogError(LogChannel.Event,
                         $"Invalid event({ev.InternalName}) has been posted");
                     UnityEngine.Debug.LogException(ex);
                 }
@@ -471,7 +471,7 @@ namespace Syadeu.Presentation.Events
                     ev.InternalTerminate();
                 }
 
-                CoreSystem.Logger.Log(Channel.Event,
+                CoreSystem.Logger.Log(LogChannel.Event,
                     string.Format(c_PostedEventMsg, ev.InternalName));
             }
 

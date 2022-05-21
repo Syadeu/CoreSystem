@@ -28,13 +28,14 @@ namespace Syadeu.Presentation.Actor
 {
     [DisplayName("Entity: Actor")]
     public sealed class ActorEntity : EntityBase,
+        INotifyComponent<ActorComponent>,
         INotifyComponent<ActorFactionComponent>
     {
         [SerializeField, JsonProperty(Order = 0, PropertyName = "Faction")]
         private Reference<ActorFaction> m_Faction = Reference<ActorFaction>.Empty;
 
         [Space]
-        [SerializeField, JsonProperty(Order = 1, PropertyName = "Events")]
+        [SerializeField, JsonProperty(Order = 1000, PropertyName = "Events")]
         internal EntityEventProperty m_Events = new EntityEventProperty();
 
         [JsonIgnore] public Entity<IEntityData> Parent => Entity<IEntityData>.GetEntityWithoutCheck(Idx);
@@ -50,6 +51,10 @@ namespace Syadeu.Presentation.Actor
             AotHelper.EnsureType<ActorEntity>();
             AotHelper.EnsureList<ActorEntity>();
         }
+    }
+    public struct ActorComponent : IEntityComponent
+    {
+        public FixedInstanceList16<IEntity> equipedItems;
     }
     internal sealed class ActorEntityProccesor : EntityProcessor<ActorEntity>
     {
@@ -78,7 +83,7 @@ namespace Syadeu.Presentation.Actor
                 factionType = FactionType.NPC;
                 factionHash = Hash.Empty;
 
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Actor({actor.Name}) doesn\'t have any faction. This is not allowed.");
             }
 

@@ -46,13 +46,13 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (IsNull())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Cannot retrived system. ID is null.");
                     return null;
                 }
                 else if (!IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Cannot retrived system. ID is invalid.");
                     return null;
                 }
@@ -105,13 +105,13 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (IsNull())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Cannot retrived system {TypeHelper.TypeOf<TSystem>.Name}. ID is null.");
                     return null;
                 }
                 else if (!IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Cannot retrived system {TypeHelper.TypeOf<TSystem>.Name}. ID is invalid.");
                     return null;
                 }

@@ -47,7 +47,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!(t.Target is T))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({t.RawName}) is not {TypeHelper.TypeOf<T>.ToString()}.");
 
                 return Entity<T>.Empty;
@@ -219,7 +219,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
@@ -235,7 +235,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
@@ -251,7 +251,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
@@ -268,7 +268,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return null;
             }
@@ -285,7 +285,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return null;
             }
@@ -304,7 +304,7 @@ namespace Syadeu.Presentation
             {
                 var entitySystem = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System;
 
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.\n" +
                     $"d:{entitySystem.IsDestroyed(t.Idx)}, dq:{entitySystem.IsMarkedAsDestroyed(t.Idx)}, resv:{((ObjectBase)t.Target).Reserved}, tr:{((t.Target is EntityBase entity) ? $"{entity.HasTransform()}" : "notr")}");
                 return null;
@@ -322,7 +322,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return null;
             }
@@ -342,7 +342,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     "An empty entity reference trying to destroy.");
                 return;
             }
@@ -403,7 +403,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (idx.Equals(Hash.Empty))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                 $"Cannot convert an empty hash to Entity. This is an invalid operation and not allowed.");
                 return Entity<T>.Empty;
             }
@@ -413,13 +413,13 @@ namespace Syadeu.Presentation
             ObjectBase target = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(idx);
             if (target == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot found entity({idx})");
                 return Entity<T>.Empty;
             }
             else if (!(target is T))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                 $"Entity({target.Name}) is not a {TypeHelper.TypeOf<T>.Name}. This is an invalid operation and not allowed.");
                 return Entity<T>.Empty;
             }

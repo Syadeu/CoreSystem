@@ -142,7 +142,7 @@ namespace Syadeu.Collections.Lua
             {
                 if (m_Scripts[i] == null || !m_Scripts[i].IsValid())
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Lua, string.Format(c_ScriptError, $"{i}"));
+                    CoreSystem.Logger.LogWarning(LogChannel.Lua, string.Format(c_ScriptError, $"{i}"));
                     continue;
                 }
 
@@ -157,7 +157,7 @@ namespace Syadeu.Collections.Lua
                 }
                 catch (ScriptRuntimeException runtimeEx)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Lua, string.Format(c_ScriptError, $"{i}: {runtimeEx.DecoratedMessage}"));
+                    CoreSystem.Logger.LogWarning(LogChannel.Lua, string.Format(c_ScriptError, $"{i}: {runtimeEx.DecoratedMessage}"));
                 }
                 catch (Exception)
                 {

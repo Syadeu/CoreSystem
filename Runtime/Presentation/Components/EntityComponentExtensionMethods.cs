@@ -42,21 +42,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -75,20 +75,20 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return false;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return false;
             }
@@ -109,27 +109,27 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return false;
             }
 
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({componentType.Name}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -156,21 +156,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -193,21 +193,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -227,21 +227,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -262,20 +262,20 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -295,26 +295,26 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return;
             }
             else if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({componentType.Name}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -332,21 +332,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -362,21 +362,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -391,27 +391,27 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return false;
             }
             else if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({componentType.Name}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -427,21 +427,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -457,21 +457,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -487,21 +487,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -517,21 +517,21 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({nameof(TComponent)}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -546,26 +546,26 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return;
             }
             else if (t.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot access a component({componentType.Name}) with an empty entity id.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}). This is not allowed.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -584,14 +584,14 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -606,13 +606,13 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return false;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return false;
             }
@@ -625,19 +625,19 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return false;
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity. This is not allowed.");
                 return false;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return false;
             }
@@ -651,7 +651,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity(t:{TypeHelper.ToString(t.GetType())}, {t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -659,7 +659,7 @@ namespace Syadeu.Presentation.Components
 #endif
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -674,14 +674,14 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -696,14 +696,14 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -718,13 +718,13 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -737,19 +737,19 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return;
             }
             else if (!t.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"You\'re trying to access to an invalid entity({t.Hash}, {t.RawName}). This is not allowed.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -766,7 +766,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -781,7 +781,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return false;
             }
@@ -794,13 +794,13 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return false;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return false;
             }
@@ -814,7 +814,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -829,7 +829,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -844,7 +844,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
 
                 throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -859,7 +859,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }
@@ -872,13 +872,13 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<IEntityComponent>.Type.IsAssignableFrom(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Type {TypeHelper.ToString(componentType)} is not an {nameof(IEntityComponent)}.");
                 return;
             }
             else if (s_ComponentSystem == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot retrived {nameof(EntityComponentSystem)}.");
                 return;
             }

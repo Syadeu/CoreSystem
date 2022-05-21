@@ -36,7 +36,7 @@ namespace Syadeu
 #if UNITY_EDITOR
                     if (CoreSystem.s_BlockCreateInstance)
                     {
-                        LogManager.Log(Channel.Core, ResultFlag.Warning,
+                        LogManager.Log(LogChannel.Core, ResultFlag.Warning,
                             $"종료 중에 StaticDataManager<{TypeHelper.TypeOf<T>.Name}> 인스턴스를 생성하려 합니다.\n" +
                             $"이 요청은 무시됩니다.", true);
                         return null;
@@ -57,7 +57,7 @@ namespace Syadeu
 
                     ins.OnInitialize();
                     m_Instance = ins;
-                    CoreSystem.Logger.Log(Channel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
+                    CoreSystem.Logger.Log(LogChannel.Core, $"{TypeHelper.TypeOf<T>.Name} is initialized");
 
                     if (!TypeHelper.TypeOf<T>.Type.Equals(TypeHelper.TypeOf<ConfigLoader>.Type))
                     {
@@ -103,7 +103,7 @@ namespace Syadeu
             m_Instance = null;
             CoreSystem.Instance.m_CleanupManagers = true;
 
-            CoreSystem.Logger.Log(Channel.Core, $"DataManager {TypeHelper.TypeOf<T>.Name} has been disposed.");
+            CoreSystem.Logger.Log(LogChannel.Core, $"DataManager {TypeHelper.TypeOf<T>.Name} has been disposed.");
         }
     }
 }

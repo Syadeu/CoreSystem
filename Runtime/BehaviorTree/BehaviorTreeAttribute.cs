@@ -33,14 +33,14 @@ namespace Syadeu.Presentation.BehaviorTree
                 Entity<IEntity> entity = Parent.ToEntity<IEntity>();
                 if (!entity.hasProxy)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Entity({entity.Name}) has no proxy.");
                     return null;
                 }
                 UnityEngine.Object obj = entity.proxy;
                 if (!(obj is RecycleableMonobehaviour monoObj))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Target entity({entity.Name}) is not a Entity.");
                     return null;
                 }
@@ -65,7 +65,7 @@ namespace Syadeu.Presentation.BehaviorTree
             Behavior behavior = BehaviorTreeComponent;
             if (behavior == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unknown error: {Parent.Name} behavior tree null.");
                 return;
             }
@@ -100,7 +100,7 @@ namespace Syadeu.Presentation.BehaviorTree
         {
             if (attribute.BehaviorTree.IsNone() || !attribute.BehaviorTree.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) has {nameof(BehaviorTreeAttribute)} but attribute has an invalid behavior tree. This is not allowed.");
                 return;
             }

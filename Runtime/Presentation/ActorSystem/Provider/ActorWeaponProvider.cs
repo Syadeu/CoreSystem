@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Actor
             if (m_MaxEquipableCount <= 0)
             {
                 m_MaxEquipableCount = 1;
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Parent.Name}) in {nameof(ActorWeaponProvider)} Max Equipable Count must be over 0. Force to set 1");
             }
             
@@ -122,7 +122,7 @@ namespace Syadeu.Presentation.Actor
 
             if (!component.IsEquipable(ev.Weapon))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Parent.Name}) trying to equip weapon({ev.Weapon.Target.Name}) that doesn\'t fit.");
                 return;
             }
@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Actor
                 ActorInventoryProvider inventory = GetProvider<ActorInventoryProvider>().Target;
                 if (inventory == null)
                 {
-                    CoreSystem.Logger.Log(Channel.Entity,
+                    CoreSystem.Logger.Log(LogChannel.Entity,
                         $"Destroying weapon instance({component.SelectedWeapon.GetEntity().Name}) because there\'s no inventory in this actor({Parent.Name}).");
 
                     //if (component.SelectedWeapon.Equals(component.m_DefaultWeaponInstance))
@@ -157,7 +157,7 @@ namespace Syadeu.Presentation.Actor
                     component.SelectWeapon(component.m_SelectedWeaponIndex);
                 }
 
-                CoreSystem.Logger.Log(Channel.Entity,
+                CoreSystem.Logger.Log(LogChannel.Entity,
                     $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetEntity().Name}).");
             }
             else
@@ -172,7 +172,7 @@ namespace Syadeu.Presentation.Actor
                     {
                         if (!Parent.HasComponent<ActorInventoryComponent>())
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity,
+                            CoreSystem.Logger.LogError(LogChannel.Entity,
                                 $"Destroying equip request weapon instance({ev.Weapon.Target.Name}). There\'s no inventory in this actor({Parent.Name}) but you\'re trying to insert inventory.");
                             ev.Weapon.Destroy();
                         }
@@ -198,7 +198,7 @@ namespace Syadeu.Presentation.Actor
                         component.SelectWeapon(index);
                     }
 
-                    CoreSystem.Logger.Log(Channel.Entity,
+                    CoreSystem.Logger.Log(LogChannel.Entity,
                         $"Entity({Parent.Name}) has equiped weapon({component.SelectedWeapon.GetEntity().Name}).");
 
 
@@ -263,7 +263,7 @@ namespace Syadeu.Presentation.Actor
                     targetPosition = tr.position;
                     targetRotation = tr.rotation;
 
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"This entity({entity.RawName}) use bone for weapon but doesn\'t have {nameof(AnimatorAttribute)}.");
                 }
                 else

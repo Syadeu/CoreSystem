@@ -35,14 +35,14 @@ namespace Syadeu.Presentation.TurnTable
 #if DEBUG_MODE
             if (m_Targets.Length == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Doesn\'t have any targets.");
 
                 return Entity<T>.Empty;
             }
             else if (m_Targets.Length >= index || index < 0)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target range is out of range.");
 
                 return Entity<T>.Empty;

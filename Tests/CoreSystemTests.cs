@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using System;
 using Unity.Jobs;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections;
 
 public class CoreSystemTests
 {

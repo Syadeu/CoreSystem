@@ -172,7 +172,7 @@ namespace Syadeu.Presentation
                 else if (iter.Iter.Current is YieldInstruction &&
                     !(iter.Iter.Current is UnityEngine.AsyncOperation))
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"해당 yield return 타입({TypeHelper.ToString(iter.Iter.Current.GetType())})은 지원하지 않습니다");
 
                     handler.m_Activated = false;

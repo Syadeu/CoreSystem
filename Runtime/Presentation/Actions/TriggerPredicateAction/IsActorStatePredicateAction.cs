@@ -41,7 +41,7 @@ namespace Syadeu.Presentation.Actions
             ActorStateAttribute actorState = entity.GetAttribute<ActorStateAttribute>();
             if (actorState == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) does not have any {nameof(ActorStateAttribute)}.");
                 return false;
             }

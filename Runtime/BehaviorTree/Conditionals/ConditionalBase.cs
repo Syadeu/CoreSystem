@@ -16,7 +16,7 @@ namespace Syadeu.Presentation.BehaviorTree
 
             if (m_This == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"BehaviorTree Entity not found error.");
             }
         }

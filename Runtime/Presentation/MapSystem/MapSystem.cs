@@ -86,7 +86,7 @@ namespace Syadeu.Presentation.Map
 
                 m_SceneDependences.Add(dependence);
 
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"Scene Data({sceneData[i].Name}) is registered.");
             }
         }
@@ -235,7 +235,7 @@ namespace Syadeu.Presentation.Map
 #if DEBUG_MODE
             if (!m_Entries.ContainsKey(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"??");
 
                 return null;

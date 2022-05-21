@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.TurnTable
 #if DEBUG_MODE
             if (!entity.HasComponent<TurnPlayerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
                 return;
             }

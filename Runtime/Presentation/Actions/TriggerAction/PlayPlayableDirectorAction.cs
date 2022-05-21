@@ -233,7 +233,7 @@ namespace Syadeu.Presentation.Actions
                         var component = proxy.GetComponent(type);
                         if (component == null)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity,
+                            CoreSystem.Logger.LogError(LogChannel.Entity,
                                 $"{m_Data.GetObject().Name} requires {TypeHelper.ToString(type)} " +
                                 $"but {entity.Name} doesn\'t have.");
                             continue;

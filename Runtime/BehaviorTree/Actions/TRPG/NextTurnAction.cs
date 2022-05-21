@@ -4,6 +4,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Collections;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
@@ -16,14 +17,14 @@ namespace Syadeu.Presentation.BehaviorTree
         {
             if (!Entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {nameof(NextTurnAction)}.");
                 return TaskStatus.Failure;
             }
 
             if (!Entity.HasComponent<TurnPlayerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Entity.RawName} doesn\'t have any {nameof(TurnPlayerComponent)}.");
                 return TaskStatus.Failure;
             }
@@ -32,7 +33,7 @@ namespace Syadeu.Presentation.BehaviorTree
 
             if (!turnPlayer.IsMyTurn)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"It is not a entity({Entity.RawName}) turn.");
                 return TaskStatus.Failure;
             }

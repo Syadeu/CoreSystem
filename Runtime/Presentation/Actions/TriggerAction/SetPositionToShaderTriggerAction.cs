@@ -42,7 +42,7 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG_MODE
             if (!entity.hasTransform)
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"This entity({entity.Name}) doesn\'t have any tranform to execute this action({Name})");
             }
 #endif

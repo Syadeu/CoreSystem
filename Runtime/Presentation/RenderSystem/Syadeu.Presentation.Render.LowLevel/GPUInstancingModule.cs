@@ -218,7 +218,7 @@ namespace Syadeu.Presentation.Render.LowLevel
         {
             if (!SystemInfo.supportsInstancing)
             {
-                CoreSystem.Logger.LogError(Channel.Render,
+                CoreSystem.Logger.LogError(LogChannel.Render,
                     $"not support gpu instancing.");
             }
 

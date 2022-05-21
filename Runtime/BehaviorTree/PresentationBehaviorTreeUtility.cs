@@ -15,7 +15,7 @@ namespace Syadeu.Presentation.BehaviorTree
         {
             if (!target.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {calledFrom}.");
                 att = null;
                 return TaskStatus.Failure;
@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.BehaviorTree
             att = target.GetAttribute<T>();
             if (att == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {calledFrom}. {nameof(T)} not found.");
                 return TaskStatus.Failure;
             }

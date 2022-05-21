@@ -39,7 +39,7 @@ namespace SyadeuEditor.Utilities
         {
             if (type.IsAbstract || type.IsInterface)
             {
-                CoreSystem.Logger.LogError(Channel.Editor,
+                CoreSystem.Logger.LogError(LogChannel.Editor,
                     $"Cannot create asset({TypeHelper.ToString(type)}) is abstract.");
                 return null;
             }

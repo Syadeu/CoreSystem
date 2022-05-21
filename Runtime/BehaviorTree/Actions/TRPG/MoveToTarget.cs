@@ -42,31 +42,31 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!Entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {nameof(NextTurnAction)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<TRPGActorAttackComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Entity.RawName} doesn\'t have any {nameof(TRPGActorAttackComponent)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<TRPGActorMoveComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Entity.RawName} doesn\'t have any {nameof(TRPGActorMoveComponent)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<TurnPlayerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Entity.RawName} doesn\'t have any {nameof(TurnPlayerComponent)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<GridComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Entity.RawName} doesn\'t have any {nameof(GridComponent)}.");
                 return TaskStatus.Failure;
             }

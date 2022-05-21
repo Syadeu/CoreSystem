@@ -243,7 +243,7 @@ namespace Syadeu.Presentation.Render
         {
             if (!entity.HasComponent<UIObjectCanvasGroupComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"UI Entity({entity.RawName}) dosen\'t have any {nameof(UIObjectCanvasGroupComponent)}.");
 
                 return;
@@ -287,7 +287,7 @@ namespace Syadeu.Presentation.Render
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unexpected error");
                 return;
             }
@@ -303,7 +303,7 @@ namespace Syadeu.Presentation.Render
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unexpected error");
                 return;
             }
@@ -323,7 +323,7 @@ namespace Syadeu.Presentation.Render
 
             if (!found)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unexpected error");
                 return;
             }
@@ -336,7 +336,7 @@ namespace Syadeu.Presentation.Render
             ref var ui = ref entity.GetComponent<ActorOverlayUIComponent>();
             if (ui.m_OpenedUI.Contains(uiEntry))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.RawName}) already have {uiEntry.GetObject().Name} overlay ui.");
                 return;
             }
@@ -348,13 +348,13 @@ namespace Syadeu.Presentation.Render
 #if UNITY_EDITOR
             if (setting.m_Prefab.IsEmpty() || !setting.m_Prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.RawName}) has an invalid ui entry({setting.Name}) has invalid prefab entity.");
                 return;
             }
             else if (!setting.m_Prefab.GetObject().HasAttribute<ActorOverlayUIAttributeBase>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Attached UI entity({setting.m_Prefab.GetObject().Name}) at entity({entity.Name}) has no {nameof(ActorOverlayUIAttributeBase)}.");
                 return;
             }
@@ -375,7 +375,7 @@ namespace Syadeu.Presentation.Render
             ref var ui = ref entity.GetComponent<ActorOverlayUIComponent>();
             if (!ui.m_OpenedUI.Contains(uiEntry))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.RawName}) does not have {uiEntry.GetObject().Name} overlay ui.");
                 return;
             }
@@ -385,7 +385,7 @@ namespace Syadeu.Presentation.Render
             if (!m_AttachedUIHashMap.TryGetFirstValue(targetEntity,
                     out Entity<UIObjectEntity> uiEntity, out var iterator))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unexpected error");
                 return;
             }
@@ -405,7 +405,7 @@ namespace Syadeu.Presentation.Render
 
             if (!found)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Unexpected error");
                 return;
             }
@@ -456,7 +456,7 @@ namespace Syadeu.Presentation.Render
 
                 if (m_UseBone && !m_Entity.HasAttribute<AnimatorAttribute>())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Entity({entity.RawName}) use bone but doesn\'t have {nameof(AnimatorAttribute)}.");
                     m_UseBone = false;
                 }

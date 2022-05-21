@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!Entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {nameof(NextTurnAction)}.");
                 return TaskStatus.Failure;
             }

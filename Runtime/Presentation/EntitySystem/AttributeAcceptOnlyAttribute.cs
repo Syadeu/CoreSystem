@@ -38,7 +38,7 @@ namespace Syadeu.Presentation
             {
                 if (!typeof(Entities.EntityDataBase).IsAssignableFrom(types[i]))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, 
+                    CoreSystem.Logger.LogError(LogChannel.Entity, 
                         $"Type({types[i].Name}) is not a entity type.");
                     throw new Exception();
                 }

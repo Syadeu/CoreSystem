@@ -69,7 +69,7 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG_MODE
             if (!(entity.Target is IEntity))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"TriggerAction({nameof(PlayUnityAudioAction)}) is only can attached to IEntity. {entity.RawName} is not allowed.");
 
                 return;

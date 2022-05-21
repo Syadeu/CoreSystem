@@ -1045,7 +1045,7 @@ namespace Syadeu
                 m_RoutineChanged = waitForRemove.Count != 0;
                 if (m_RoutineChanged)
                 {
-                    CoreSystem.Logger.Log(Channel.Core,
+                    CoreSystem.Logger.Log(LogChannel.Core,
                         $"Background Routine removed {waitForRemove.Count}");
                 }
                 for (int i = 0; i < waitForRemove.Count; i++)
@@ -1825,7 +1825,7 @@ namespace Syadeu
             {
                 if (gameObject == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Core, "Target gameobject is null. Cannot retrived transform");
+                    CoreSystem.Logger.LogError(LogChannel.Core, "Target gameobject is null. Cannot retrived transform");
                     return null;
                 }
                 return gameObject.transform;
@@ -1981,38 +1981,38 @@ namespace Syadeu
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void Log(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
+            public static void Log(LogChannel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
             //public static void Log(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Normal, msg, false);
-            public static void Log(Channel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Normal, msg, false, scriptName);
+            public static void Log(LogChannel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Normal, msg, false, scriptName);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogWarning(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
+            public static void LogWarning(LogChannel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogWarning(Channel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
+            public static void LogWarning(LogChannel channel, string msg) => LogManager.Log(channel, ResultFlag.Warning, msg, false);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogError(Channel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
+            public static void LogError(LogChannel channel, bool logThread, string msg) => LogManager.Log(channel, ResultFlag.Error, msg, logThread);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogError(Channel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Error, msg, false, scriptName);
+            public static void LogError(LogChannel channel, string msg, [System.Runtime.CompilerServices.CallerFilePath] string scriptName = "") => LogManager.Log(channel, ResultFlag.Error, msg, false, scriptName);
 #if DEBUG_MODE
             [System.Diagnostics.DebuggerHidden]
 #endif
             //[System.Diagnostics.Conditional("DEBUG_MODE")]
-            public static void LogError(Channel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+            public static void LogError(LogChannel channel, Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
             {
 #if DEBUG_MODE
                 const string c_Msg = "Unhandled Exception has been raised while executing {0}.\n{1}\n{2}";
@@ -2055,10 +2055,10 @@ namespace Syadeu
             const string c_Log = "Name of {0} takes {1}ms";
 
             private string Name;
-            private Channel Channel;
+            private LogChannel Channel;
             private System.Diagnostics.Stopwatch Stopwatch;
 
-            public LogTimer(string name, Channel channel = Channel.Core)
+            public LogTimer(string name, LogChannel channel = LogChannel.Core)
             {
                 Name = name;
                 Channel = channel;

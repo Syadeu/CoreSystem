@@ -60,13 +60,13 @@ namespace Syadeu.Presentation.Attributes
 #if UNITY_EDITOR
             if (!Parameters.TryGetValue(key, out object target))
             {
-                CoreSystem.Logger.LogError(Channel.Entity, 
+                CoreSystem.Logger.LogError(LogChannel.Entity, 
                     string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is int))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_TypeMisMatchError, key, ParentEntity.Name, 
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
@@ -83,13 +83,13 @@ namespace Syadeu.Presentation.Attributes
 #if UNITY_EDITOR
             if (!Parameters.TryGetValue(key, out object target))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is float))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_TypeMisMatchError, key, ParentEntity.Name,
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
@@ -106,12 +106,12 @@ namespace Syadeu.Presentation.Attributes
             {
                 if (value is float floatVal) return floatVal;
 
-                CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) float, but this is not a float type.");
+                CoreSystem.Logger.LogError(LogChannel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) float, but this is not a float type.");
 
                 return 0;
             }
 
-            CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) but doesn\'t have one.");
+            CoreSystem.Logger.LogError(LogChannel.Entity, $"Entity({Parent.RawName}) in {nameof(AnimatorAttribute)} called animation key({key}) but doesn\'t have one.");
             return 0;
         }
 
@@ -120,13 +120,13 @@ namespace Syadeu.Presentation.Attributes
 #if UNITY_EDITOR
             if (!Parameters.TryGetValue(key, out object target))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_KeyNotFoundError, ParentEntity.Name, key));
                 return;
             }
             if (!(target is bool))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_TypeMisMatchError, key, ParentEntity.Name,
                     TypeHelper.ToString(target.GetType()),
                     TypeHelper.TypeOf<int>.ToString()));
@@ -178,7 +178,7 @@ namespace Syadeu.Presentation.Attributes
 #if DEBUG_MODE
                 if (animator == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) has {nameof(AnimatorAttribute)} but cannot found animator({nameof(AnimatorComponent)})");
                     return false;
                 }

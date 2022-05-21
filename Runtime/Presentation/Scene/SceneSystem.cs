@@ -211,7 +211,7 @@ namespace Syadeu.Presentation
             {
                 if (string.IsNullOrEmpty(SceneSettings.Instance.MasterScene))
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"You\'re trying to start the game while MasterScene is not setted. " +
                         $"This is not allowed. Forcing to debug.");
 
@@ -226,7 +226,7 @@ namespace Syadeu.Presentation
                 }
                 else
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"You\'re trying to start the game outside of MasterScene while Debug mode is true. " +
                         $"This is not allowed.");
                     return false;
@@ -235,7 +235,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (SceneSettings.Instance.CameraPrefab.IsNone() || !SceneSettings.Instance.CameraPrefab.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Camera prefab is null. This is not allowed. " +
                         $"You can set this at SetupWizard -> Scene tab.");
                 }
@@ -376,7 +376,7 @@ namespace Syadeu.Presentation
                 if (SceneSettings.Instance.CameraPrefab.IsNone() || 
                     !SceneSettings.Instance.CameraPrefab.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Camera prefab is null. This is not allowed. " +
                         $"You can set this at SetupWizard -> Scene tab.");
                 }
@@ -496,7 +496,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (key == null || string.IsNullOrEmpty(key.scenePath))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"Target scene is invalid. Cannot add scene asset(s) at {TypeHelper.ToString(asset.GetType())}");
                 return;
             }
@@ -552,11 +552,11 @@ namespace Syadeu.Presentation
             //    "디버그 모드일때에는 씬 전환을 할 수 없습니다. DebugMode = False 로 설정한 후, MasterScene 에서 시작해주세요.");
             if (IsSceneLoading || m_AsyncOperation != null)
             {
-                CoreSystem.Logger.LogError(Channel.Scene, true, "Cannot load new scene while in loading phase");
+                CoreSystem.Logger.LogError(LogChannel.Scene, true, "Cannot load new scene while in loading phase");
                 return;
             }
 
-            CoreSystem.Logger.Log(Channel.Scene, 
+            CoreSystem.Logger.Log(LogChannel.Scene, 
                 string.Format(c_SceneChangeStartLog, m_CurrentScene.name, Path.GetFileNameWithoutExtension(scene)));
 
             CompleteJob();
@@ -574,7 +574,7 @@ namespace Syadeu.Presentation
             }
 
             OnWaitLoading?.Invoke(0, preDelay);
-            CoreSystem.Logger.Log(Channel.Scene, $"Before scene load fake time({preDelay}s) started");
+            CoreSystem.Logger.Log(LogChannel.Scene, $"Before scene load fake time({preDelay}s) started");
 
             CoreSystem.WaitInvoke(preDelay, () =>
             {
@@ -596,7 +596,7 @@ namespace Syadeu.Presentation
                 }
                 OnLoading?.Invoke(1);
 
-                CoreSystem.Logger.Log(Channel.Scene, $"Scene({scene.ScenePath}) load completed");
+                CoreSystem.Logger.Log(LogChannel.Scene, $"Scene({scene.ScenePath}) load completed");
 
                 m_CurrentScene = SceneManager.GetSceneByPath(scene);
 #if DEBUG_MODE && CORESYSTEM_HDRP
@@ -608,7 +608,7 @@ namespace Syadeu.Presentation
                         existingCameras = roots[i].GetComponentsInChildren<Camera>();
                         if (existingCameras.Length > 0)
                         {
-                            CoreSystem.Logger.LogError(Channel.Scene,
+                            CoreSystem.Logger.LogError(LogChannel.Scene,
                                 $"Detecting camera(s) in this scene. " +
                                 $"HDRP doesn\'t allow multiple cameras.");
 #if UNITY_EDITOR
@@ -626,7 +626,7 @@ namespace Syadeu.Presentation
                 OnSceneChanged?.Invoke();
                 onCompleted?.Invoke(oper);
 
-                CoreSystem.Logger.Log(Channel.Scene, "Initialize dependence presentation groups");
+                CoreSystem.Logger.Log(LogChannel.Scene, "Initialize dependence presentation groups");
                 List<ICustomYieldAwaiter> awaiters = StartSceneDependences(this, scene);
 
                 while (!CheckAwaiters(awaiters, out int status))
@@ -634,11 +634,11 @@ namespace Syadeu.Presentation
                     yield return null;
                 }
 
-                CoreSystem.Logger.Log(Channel.Scene,
+                CoreSystem.Logger.Log(LogChannel.Scene,
                         "Started dependence presentation groups");
 
                 OnAfterLoading?.Invoke(0, postDelay);
-                CoreSystem.Logger.Log(Channel.Scene, $"After scene load fake time({postDelay}s) started");
+                CoreSystem.Logger.Log(LogChannel.Scene, $"After scene load fake time({postDelay}s) started");
 
                 CoreSystem.WaitInvoke(postDelay, () =>
                 {
@@ -655,7 +655,7 @@ namespace Syadeu.Presentation
                         m_EventSystem.PostEvent(OnAppStateChangedEvent.GetEvent(OnAppStateChangedEvent.AppState.Game));
                     }
 
-                    CoreSystem.Logger.Log(Channel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
+                    CoreSystem.Logger.Log(LogChannel.Scene, $"Scene({m_CurrentScene.name}) has been fully loaded");
                 }, (passed) => OnAfterLoading?.Invoke(passed, postDelay));
             }
             static bool CheckAwaiters(List<ICustomYieldAwaiter> awaiters, out int status)
@@ -719,7 +719,7 @@ namespace Syadeu.Presentation
 
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Logger.Log(Channel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
+                CoreSystem.Logger.Log(LogChannel.Scene, $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for load");
                 return awaiters;
             }
 
@@ -753,7 +753,7 @@ namespace Syadeu.Presentation
 
             if (!PresentationManager.Instance.m_DependenceSceneList.TryGetValue(key, out List<Hash> groupHashs))
             {
-                CoreSystem.Logger.Log(Channel.Scene, 
+                CoreSystem.Logger.Log(LogChannel.Scene, 
                     $"Scene({key.ScenePath.Split('/').Last()}) has no dependence systems for unload");
                 return;
             }

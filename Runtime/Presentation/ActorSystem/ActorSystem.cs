@@ -177,7 +177,7 @@ namespace Syadeu.Presentation.Actor
 
             if (m_ScheduledEvents.Count == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Event,
+                CoreSystem.Logger.LogError(LogChannel.Event,
                     $"System({nameof(ActorSystem)}) take event schedule queue but no event left.");
 
                 return;
@@ -194,7 +194,7 @@ namespace Syadeu.Presentation.Actor
                 ctr.m_IsExecutingEvent = true;
                 ctr.m_LastExecuteEventName = ev.EventType.ToTypeInfo();
 
-                CoreSystem.Logger.Log(Channel.Event,
+                CoreSystem.Logger.Log(LogChannel.Event,
                     $"Execute scheduled actor event({ev.GetEventName()})");
 
                 ev.Post();
@@ -213,7 +213,7 @@ namespace Syadeu.Presentation.Actor
             }
             else
             {
-                CoreSystem.Logger.Log(Channel.Action,
+                CoreSystem.Logger.Log(LogChannel.Action,
                     $"Execute scheduled actor event({ev.GetEventName()})");
 
                 ev.Post();
@@ -439,7 +439,7 @@ namespace Syadeu.Presentation.Actor
 #if DEBUG_MODE
             if (!UnsafeUtility.IsUnmanaged<TEvent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Actor event({TypeHelper.TypeOf<TEvent>.ToString()}) is not unmanaged struct.");
             }
 #endif
@@ -508,7 +508,7 @@ namespace Syadeu.Presentation.Actor
 #if DEBUG_MODE
             if (!UnsafeUtility.IsUnmanaged<TEvent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Actor event({TypeHelper.TypeOf<TEvent>.ToString()}) is not unmanaged struct.");
             }
 #endif
@@ -531,7 +531,7 @@ namespace Syadeu.Presentation.Actor
             }
             catch (Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, ex);
+                CoreSystem.Logger.LogError(LogChannel.Entity, ex);
                 return;
             }
 

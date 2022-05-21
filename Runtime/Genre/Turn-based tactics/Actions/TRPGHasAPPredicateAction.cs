@@ -19,7 +19,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!entity.HasComponent<TurnPlayerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
                 return false;
             }

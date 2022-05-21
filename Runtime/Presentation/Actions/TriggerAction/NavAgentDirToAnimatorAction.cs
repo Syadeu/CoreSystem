@@ -43,17 +43,17 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG
             if (string.IsNullOrEmpty(m_HorizontalKey))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_HorizontalKey)} string. This is not allowed.");
             }
             if (string.IsNullOrEmpty(m_VerticalKey))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_VerticalKey)} string. This is not allowed.");
             }
             if (string.IsNullOrEmpty(m_SpeedKey))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"TriggerAction({nameof(NavAgentDirToAnimatorAction)}, name of {Name}) has empty {nameof(m_SpeedKey)} string. This is not allowed.");
             }
 #endif
@@ -67,7 +67,7 @@ namespace Syadeu.Presentation.Actions
             //NavAgentAttribute navAgent = entity.GetAttribute<NavAgentAttribute>();
             if (!entity.HasComponent<NavAgentComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{nameof(NavAgentAttribute)} not found at {entity.Name}");
                 return;
             }
@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Actions
             AnimatorAttribute animator = entity.GetAttribute<AnimatorAttribute>();
             if (animator == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{nameof(AnimatorAttribute)} not found at {entity.Name}");
                 return;
             }

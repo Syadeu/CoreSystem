@@ -40,7 +40,7 @@ namespace Syadeu.Presentation
             {
                 if (!typeof(Attributes.AttributeBase).IsAssignableFrom(attributeTypes[i]))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, 
+                    CoreSystem.Logger.LogError(LogChannel.Entity, 
                         $"Type({attributeTypes[i].Name}) is not a attribute type.");
                     throw new Exception();
                 }

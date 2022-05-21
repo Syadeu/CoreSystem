@@ -108,7 +108,7 @@ namespace Syadeu.Presentation.Grid
 #if DEBUG_MODE
                 if (!observerID.HasComponent<GridDetectorComponent>())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"grid err");
                     continue;
                 }

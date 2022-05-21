@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Actions
             }
             else
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"{nameof(AddDataContainer)}({Name}) error. Key({m_Key}) cannot be a null or empty.");
             }
 
@@ -62,7 +62,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (m_KeyHash.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"{nameof(AddDataContainer)}({Name}) error. Key({m_Key}) cannot be a null or empty.");
                 return;
             }

@@ -134,14 +134,14 @@ namespace Syadeu.Presentation.Actor
         {
             if (!actor.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Actor({actor.GetEntity().Name}) doesn\'t have {nameof(ActorControllerComponent)}. This is not allowed.");
                 return;
             }
             ActorControllerComponent component = actor.GetComponent<ActorControllerComponent>();
             if (!component.HasProvider<ActorInventoryProvider>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Actor({actor.GetEntity().Name}) doesn\'t have {nameof(ActorInventoryProvider)}.");
                 return;
             }

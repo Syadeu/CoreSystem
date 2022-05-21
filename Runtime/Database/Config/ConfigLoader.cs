@@ -39,7 +39,7 @@ namespace Syadeu.Collections
                 {
                     m_Global = new Config(m_GlobalConfigPath, rdr);
 
-                    CoreSystem.Logger.Log(Channel.Core, $"Config {m_Global.Name} loaded");
+                    CoreSystem.Logger.Log(LogChannel.Core, $"Config {m_Global.Name} loaded");
                 }
             }
             else m_Global = new Config("config");
@@ -53,7 +53,7 @@ namespace Syadeu.Collections
                     Config config = new Config(Path.GetFileNameWithoutExtension(subConfigsPath[i]), rdr);
                     m_Locals.Add(Hash.NewHash(config.Name), config);
 
-                    CoreSystem.Logger.Log(Channel.Core, $"Config {config.Name} loaded");
+                    CoreSystem.Logger.Log(LogChannel.Core, $"Config {config.Name} loaded");
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace Syadeu.Collections
                 {
                     wr.Write(Instance.m_Global.ToString());
 
-                    CoreSystem.Logger.Log(Channel.Core, $"Config({Instance.m_Global.Name}) saved");
+                    CoreSystem.Logger.Log(LogChannel.Core, $"Config({Instance.m_Global.Name}) saved");
                 }
             }
 
@@ -83,7 +83,7 @@ namespace Syadeu.Collections
                         wr.Write(item.ToString());
                     }
 
-                    CoreSystem.Logger.Log(Channel.Core, $"Config({item.Name}) saved");
+                    CoreSystem.Logger.Log(LogChannel.Core, $"Config({item.Name}) saved");
                 }
             }
         }
@@ -118,7 +118,7 @@ namespace Syadeu.Collections
 
             if (!TypeHelper.TypeOf<T>.Type.Equals(valueBase.GetValue().GetType()))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     "Request config value type not match. " +
                     $"Requested {TypeHelper.TypeOf<T>.Name} but Expected {valueBase.GetValue().GetType()}");
             }
@@ -129,7 +129,7 @@ namespace Syadeu.Collections
             System.Type t = obj.GetType();
             var configAtt = t.GetCustomAttribute<RequireGlobalConfigAttribute>();
             if (configAtt == null) return;
-            CoreSystem.Logger.Log(Channel.Core, $"Config loading for {t.Name}");
+            CoreSystem.Logger.Log(LogChannel.Core, $"Config loading for {t.Name}");
 
             Config config;
             if (configAtt.m_Location == ConfigLocation.Global) config = Global;
@@ -177,14 +177,14 @@ namespace Syadeu.Collections
                 object targetValue = value.GetValue();
                 if (!targetValue.GetType().Equals(fields[i].FieldType))
                 {
-                    CoreSystem.Logger.LogError(Channel.Core,
+                    CoreSystem.Logger.LogError(LogChannel.Core,
                         $"Config({config.Name}) has an invalid value nameof({value.Name}, {value.Type}). Expected as {fields[i].FieldType.Name} but {targetValue.GetType().Name}. Request ignored.");
                     continue;
                 }
                 fields[i].SetValue(obj, value.GetValue());
             }
 
-            CoreSystem.Logger.Log(Channel.Core, $"Config loaded for {t.Name}");
+            CoreSystem.Logger.Log(LogChannel.Core, $"Config loaded for {t.Name}");
         }
     }
 }

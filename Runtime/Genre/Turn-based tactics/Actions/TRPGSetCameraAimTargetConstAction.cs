@@ -55,7 +55,7 @@ namespace Syadeu.Presentation.TurnTable
             ActorControllerComponent ctr = entity.GetComponent<ActorControllerComponent>();
             if (!entity.HasComponent<TRPGActorAttackComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.GetEntity().Target.Name}) doesn\'t have {nameof(TRPGActorAttackComponent)}.");
 
                 return 0;

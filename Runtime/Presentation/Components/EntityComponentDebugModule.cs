@@ -127,12 +127,12 @@ namespace Syadeu.Presentation.Components
             {
                 if (Debug_HasComponent(m_InstanceID, out int count, out string names))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         string.Format(c_ComponentIsNotFullDisposed, m_Name, count, names));
                 }
                 else
                 {
-                    CoreSystem.Logger.Log(Channel.Entity,
+                    CoreSystem.Logger.Log(LogChannel.Entity,
                         string.Format(c_ComponentFullDiposed, m_Name));
                 }
 

@@ -46,7 +46,7 @@ namespace Syadeu.Presentation
 
         ~ProcessorBase()
         {
-            CoreSystem.Logger.Log(Channel.GC, $"Disposing processor({TypeHelper.ToString(Target)})");
+            CoreSystem.Logger.Log(LogChannel.GC, $"Disposing processor({TypeHelper.ToString(Target)})");
             ((IDisposable)this).Dispose();
         }
 

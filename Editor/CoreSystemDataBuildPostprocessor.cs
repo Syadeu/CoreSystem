@@ -6,6 +6,7 @@ using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 using UnityEditor.AddressableAssets.Settings;
+using Syadeu.Collections;
 
 namespace SyadeuEditor
 {

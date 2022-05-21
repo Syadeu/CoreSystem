@@ -190,7 +190,7 @@ namespace Syadeu.Collections
                 {
                     header.Values.Add(key, ToValue(split[0].Trim(), split[1].Trim()));
                 }
-                else CoreSystem.Logger.LogWarning(Channel.Data,
+                else CoreSystem.Logger.LogWarning(LogChannel.Data,
                     $"Same value key({key}) has been write at {Name}, header({headerTxt}). This is not allowed.");
             }
 

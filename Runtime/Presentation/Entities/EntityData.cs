@@ -63,7 +63,7 @@ namespace Syadeu.Presentation.Entities
 #if DEBUG_MODE
                 if (IsEmpty())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         "An empty entity reference trying to access.");
                     return null;
                 }
@@ -71,14 +71,14 @@ namespace Syadeu.Presentation.Entities
                 ObjectBase value = PresentationSystem<DefaultPresentationGroup, EntitySystem>.System.GetEntityByID(Idx);
                 if (value == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         "An destroyed entity reference trying to access.");
                     return null;
                 }
 
                 if (!(value is T t))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Entity validation error. This entity is not an {TypeHelper.TypeOf<T>.ToString()} but {TypeHelper.ToString(value?.GetType())}.");
                     return null;
                 }
@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Entities
 #if DEBUG_MODE
                 if (IsEmpty() || Target == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         "An empty entity reference trying to access transform.");
 
                     return ProxyTransform.Null;
@@ -191,7 +191,7 @@ namespace Syadeu.Presentation.Entities
 #if DEBUG_MODE
             if (IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     "An empty entity reference trying to access transform.");
                 return 0;
             }

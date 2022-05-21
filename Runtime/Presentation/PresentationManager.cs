@@ -251,13 +251,13 @@ namespace Syadeu.Presentation
             {
                 m_IsStarted = false;
 
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"{TypeHelper.ToString(m_Name)} group invoke OnShutdown", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
                     m_Systems[i].InternalOnShutdown();
                 }
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"{TypeHelper.ToString(m_Name)} group invoke OnDispose", TypeHelper.ToString(m_Name));
                 for (int i = 0; i < m_Systems.Count; i++)
                 {
@@ -365,7 +365,7 @@ namespace Syadeu.Presentation
 
             public void Initialize()
             {
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"{TypeHelper.ToString(m_Name)} group invoke OnInitialize", TypeHelper.ToString(m_Name));
 
                 using (m_InitializeMarker.Auto())
@@ -391,7 +391,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -399,7 +399,7 @@ namespace Syadeu.Presentation
             }
             public void InitializeAsync()
             {
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"{TypeHelper.ToString(m_Name)} group invoke OnInitializeAsync");
 
                 using (m_InitializeAsyncMarker.Auto())
@@ -425,7 +425,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -433,7 +433,7 @@ namespace Syadeu.Presentation
             }
             public void OnStartPresentation()
             {
-                CoreSystem.Logger.Log(Channel.Presentation,
+                CoreSystem.Logger.Log(LogChannel.Presentation,
                     $"{TypeHelper.ToString(m_Name)} group invoke OnStartPresentation", TypeHelper.ToString(m_Name));
 
                 using (m_StartPreMarker.Auto())
@@ -450,7 +450,7 @@ namespace Syadeu.Presentation
                             }
                             catch (Exception ex)
                             {
-                                CoreSystem.Logger.LogError(Channel.Presentation,
+                                CoreSystem.Logger.LogError(LogChannel.Presentation,
                                     ex);
                             }
                         }
@@ -471,7 +471,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -521,7 +521,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -552,7 +552,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -602,7 +602,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -633,7 +633,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -683,7 +683,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -714,7 +714,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation,
+                            CoreSystem.Logger.LogError(LogChannel.Presentation,
                                 ex);
                         }
                     }
@@ -738,7 +738,7 @@ namespace Syadeu.Presentation
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                        CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                     }
                 }
 
@@ -758,7 +758,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                            CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                         }
                     }
                 }
@@ -793,7 +793,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                            CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                         }
                     }
                 }
@@ -847,7 +847,7 @@ namespace Syadeu.Presentation
                     m_ExpectedPrefabPreloadCount++;
 
 #if DEBUG_MODE
-                    CoreSystem.Logger.Log(Channel.Entity,
+                    CoreSystem.Logger.Log(LogChannel.Entity,
                         $"Preloading prefab({prefab.GetObjectSetting().Name}).");
 #endif
                 }
@@ -892,7 +892,7 @@ namespace Syadeu.Presentation
                     if (presentations[i].DependenceGroup.IsAbstract ||
                         presentations[i].DependenceGroup.IsInterface)
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation,
+                        CoreSystem.Logger.LogError(LogChannel.Presentation,
                             $"On Presentation Group({presentations[i].GetType().Name}), " +
                             $"dependence group cannot be an abstract or interface and must be absolute type." +
                             $"{presentations[i].DependenceGroup.Name} is not allowed.");
@@ -1046,7 +1046,7 @@ namespace Syadeu.Presentation
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                        CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                     }
                 }
             }
@@ -1367,9 +1367,9 @@ namespace Syadeu.Presentation
         {
             if (dependenceScene != null)
             {
-                CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}, has dependece scene ({dependenceScene.ScenePath})");
+                CoreSystem.Logger.Log(LogChannel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}, has dependece scene ({dependenceScene.ScenePath})");
             }
-            else CoreSystem.Logger.Log(Channel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
+            else CoreSystem.Logger.Log(LogChannel.Presentation, $"Registration start ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
 
             Hash groupHash = GroupToHash(groupName);
             if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group group))
@@ -1397,7 +1397,7 @@ namespace Syadeu.Presentation
                     Instance.m_DependenceSceneList.Add(dependenceScene, list);
                 }
 
-                if (list.Contains(groupHash)) CoreSystem.Logger.LogError(Channel.Presentation, $"{groupName.Name.Split('.').Last()} 은 이미 해당 씬({dependenceScene.ScenePath})에 종속되었습니다. 중복 추가는 허용하지 않습니다.");
+                if (list.Contains(groupHash)) CoreSystem.Logger.LogError(LogChannel.Presentation, $"{groupName.Name.Split('.').Last()} 은 이미 해당 씬({dependenceScene.ScenePath})에 종속되었습니다. 중복 추가는 허용하지 않습니다.");
                 list.Add(groupHash);
             }
 
@@ -1433,7 +1433,7 @@ namespace Syadeu.Presentation
                 //    Instance.m_RegisteredGroup.Add(systems[i], groupHash);
                 //}
                 
-                CoreSystem.Logger.Log(Channel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
+                CoreSystem.Logger.Log(LogChannel.Presentation, $"System ({groupName.Name.Split('.').Last()}): {systems[i].Name} Registered");
             }
 
             group.m_RegisteredSystemTypes = registedTypes.ToArray();
@@ -1448,19 +1448,19 @@ namespace Syadeu.Presentation
             }
             else group.m_RequireSystemTypes = Array.Empty<(Type, Type)>();
 
-            CoreSystem.Logger.Log(Channel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
+            CoreSystem.Logger.Log(LogChannel.Presentation, $"Registration Ended ({groupName.Name.Split('.').Last()}), number of {systems.Length}");
         }
         internal ICustomYieldAwaiter StartPresentation(Hash groupHash)
         {
             Group group = m_PresentationGroups[groupHash];
             if (group.m_IsStarted)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"Presentation Group {group.m_Name.Name} has already started and running. Request ignored.");
                 return new NullCustomYieldAwaiter();
             }
 
-            CoreSystem.Logger.Log(Channel.Presentation,
+            CoreSystem.Logger.Log(LogChannel.Presentation,
                 $"start call {group.m_Name.Name}");
 
             for (int i = 0; i < group.m_RegisteredSystemTypes.Length; i++)
@@ -1497,7 +1497,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                     if (addedModules.Contains(module))
                     {
-                        CoreSystem.Logger.LogError(Channel.Presentation,
+                        CoreSystem.Logger.LogError(LogChannel.Presentation,
                             $"You\'re adding same module({TypeHelper.ToString(module)}) " +
                             $"more then one at {TypeHelper.ToString(t)}. " +
                             $"This is not allowed.");
@@ -1523,11 +1523,11 @@ namespace Syadeu.Presentation
             Instance.StartBackgroundUpdate(PresentationAsync(group));
             group.m_IsStarted = true;
 
-            CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is started");
+            CoreSystem.Logger.Log(LogChannel.Presentation, $"{group.m_Name.Name} group is started");
 
             List<Hash> connectedGroups = group.GetGroupDependences();
 
-            CoreSystem.Logger.Log(Channel.Presentation,
+            CoreSystem.Logger.Log(LogChannel.Presentation,
                 $"{group.m_Name.Name} has connected group {connectedGroups.Count}");
 
             for (int i = 0; i < connectedGroups.Count; i++)
@@ -1542,7 +1542,7 @@ namespace Syadeu.Presentation
             Group group = m_PresentationGroups[groupHash];
             if (!group.m_IsStarted)
             {
-                CoreSystem.Logger.LogWarning(Channel.Presentation, 
+                CoreSystem.Logger.LogWarning(LogChannel.Presentation, 
                     $"Presentation Group {group.m_Name.Name} has already stopped. Request ignored.");
                 return;
             }
@@ -1560,7 +1560,7 @@ namespace Syadeu.Presentation
 
             group.Reset();
 
-            CoreSystem.Logger.Log(Channel.Presentation, $"{group.m_Name.Name} group is stopped");
+            CoreSystem.Logger.Log(LogChannel.Presentation, $"{group.m_Name.Name} group is stopped");
 
             List<Hash> connectedGroups = group.GetGroupDependences();
             for (int i = 0; i < connectedGroups.Count; i++)
@@ -1589,7 +1589,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (TypeHelper.TypeOf<TGroup>.IsAbstract || TypeHelper.TypeOf<TGroup>.Type.IsInterface)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"Requesting group type must be not abstract or interface but {TypeHelper.TypeOf<TGroup>.Name} is.");
                 return;
             }
@@ -1611,13 +1611,13 @@ namespace Syadeu.Presentation
                     if (!group.TryGetSystem<TSystem>(out TSystem target, out _))
                     {
 #if DEBUG_MODE
-                        CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found, from {methodName}");
+                        CoreSystem.Logger.LogError(LogChannel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found, from {methodName}");
 #endif
                         return;
 
                     }
 
-                    CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+                    CoreSystem.Logger.Log(LogChannel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
                     bind.Invoke(target);
                 });
@@ -1632,14 +1632,14 @@ namespace Syadeu.Presentation
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                    CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                 }
                 
                 return;
             }
 
 #if DEBUG_MODE
-            CoreSystem.Logger.LogError(Channel.Presentation,
+            CoreSystem.Logger.LogError(LogChannel.Presentation,
                 $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) is not part of group {TypeHelper.TypeOf<TGroup>.Name}, from {methodName}");
 #endif
         }
@@ -1657,9 +1657,9 @@ namespace Syadeu.Presentation
 
             if (!group.TryGetSystem<TSystem>(out TSystem target, out systemIdx))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
+                CoreSystem.Logger.LogError(LogChannel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) not found");
             }
-            else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+            else CoreSystem.Logger.Log(LogChannel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
             return target;
         }
@@ -1680,7 +1680,7 @@ namespace Syadeu.Presentation
             {
                 return false;
             }
-            else CoreSystem.Logger.Log(Channel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
+            else CoreSystem.Logger.Log(LogChannel.Presentation, $"Requested system ({TypeHelper.TypeOf<TSystem>.Name}) found");
 
             return true;
         }
@@ -1706,8 +1706,8 @@ namespace Syadeu.Presentation
         {
             if (result.m_Result == ResultFlag.Normal) return;
 
-            if (result.m_Result == ResultFlag.Warning) CoreSystem.Logger.LogWarning(Channel.Presentation, result.m_Message);
-            else if (result.m_Result == ResultFlag.Error) CoreSystem.Logger.LogError(Channel.Presentation, result.m_Message);
+            if (result.m_Result == ResultFlag.Warning) CoreSystem.Logger.LogWarning(LogChannel.Presentation, result.m_Message);
+            else if (result.m_Result == ResultFlag.Error) CoreSystem.Logger.LogError(LogChannel.Presentation, result.m_Message);
         }
         private static IEnumerator Presentation(Group group)
         {
@@ -1723,14 +1723,14 @@ namespace Syadeu.Presentation
 
                 if (!Instance.m_PresentationGroups.TryGetValue(groupHash, out Group targetGroup))
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"{group.m_RequireSystemTypes[i].system.Name} is not registered. Request ignored.");
                     continue;
                 }
 #if DEBUG_MODE
                 if (targetGroup.Equals(group))
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"This system({group.m_RegisteredSystemTypes[i].Name}) declared sub system of it\'s own system group. This is not allowed.");
                     continue;
                 }
@@ -1740,7 +1740,7 @@ namespace Syadeu.Presentation
                 {
                     if (dateTime + 10 < Time.realtimeSinceStartup)
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                             $"The system group({group.m_Name.Name}) is awaiting too long because waiting system initialize target ({group.m_RequireSystemTypes[i].system.Name})");
 
                         dateTime = Time.realtimeSinceStartup;
@@ -1762,7 +1762,7 @@ namespace Syadeu.Presentation
             {
                 if (dateTime + 10 < Time.realtimeSinceStartup)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                    CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                         $"The system({group.m_Name.Name}) is awaiting too long. Maybe unexpected handles?");
 
                     dateTime = Time.realtimeSinceStartup;
@@ -1775,7 +1775,7 @@ namespace Syadeu.Presentation
             group.m_MainInitDone = true;
 
             yield return group.m_WaitUntilInitializeCompleted;
-            CoreSystem.Logger.Log(Channel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
+            CoreSystem.Logger.Log(LogChannel.Presentation, $"Presentation group ({group.m_Name.Name}) started");
 
             Instance.BeforeUpdate += group.BeforePresentation;
             Instance.Update += group.OnPresentation;

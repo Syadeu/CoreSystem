@@ -70,7 +70,7 @@ namespace Syadeu.Presentation
         }
         ~ObjectBase()
         {
-            CoreSystem.Logger.Log(Channel.GC, $"Disposing entity object({Name})");
+            CoreSystem.Logger.Log(LogChannel.GC, $"Disposing entity object({Name})");
             //Dispose();
         }
 

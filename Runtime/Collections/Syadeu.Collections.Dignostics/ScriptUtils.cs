@@ -20,7 +20,7 @@ using System.Diagnostics;
 
 namespace Syadeu.Collections.Dignostics
 {
-    public static class ScriptUtilities
+    public static class ScriptUtils
     {
         public static string GetCallerScriptPath()
         {
@@ -29,6 +29,21 @@ namespace Syadeu.Collections.Dignostics
         public static StackFrame GetCallerFrame()
         {
             return new StackTrace(true).GetFrame(1);
+        }
+        public static StackFrame GetCallerFrame(int depth)
+        {
+            return new StackTrace(true).GetFrame(1 + depth);
+        }
+
+        public static string ToStringFormat(StackFrame stackFrame)
+        {
+            var method = stackFrame.GetMethod();
+
+            string methodName = method.Name;
+            string className = method.DeclaringType.Name;
+
+            const string c_Format = "{0}.{1} (at {2}:{3})";
+            return string.Format(c_Format, className, methodName, stackFrame.GetFileName(), stackFrame.GetFileLineNumber());
         }
     }
 }

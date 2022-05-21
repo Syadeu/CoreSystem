@@ -160,7 +160,7 @@ namespace Syadeu.Presentation.Attributes
 
             if (!result)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Action has completed with faild at entity({ev.Target.Name})");
             }
         }

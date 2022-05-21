@@ -20,7 +20,7 @@ namespace Syadeu.Presentation.TurnTable
 #if DEBUG_MODE
             if (!(entity.Target is ActorEntity))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) is not a {nameof(ActorEntity)}.");
                 return;
             }
@@ -30,7 +30,7 @@ namespace Syadeu.Presentation.TurnTable
 #if DEBUG_MODE
             if (!actor.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
@@ -39,13 +39,13 @@ namespace Syadeu.Presentation.TurnTable
 #if DEBUG_MODE
             if (attProvider.IsEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) doesn\'t have any {nameof(TRPGActorAttackProvider)}.");
                 return;
             }
 #endif
             var list = attProvider.Target.GetTargetsInRange();
-            CoreSystem.Logger.Log(Channel.Debug,
+            CoreSystem.Logger.Log(LogChannel.Debug,
                 $"Entity({entity.Name}) found {list.Length} targets.");
         }
     }

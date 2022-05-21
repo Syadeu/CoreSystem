@@ -178,7 +178,7 @@ namespace Syadeu.Presentation.TurnTable
             int hash = ev.GetHashCode();
             if (m_AddedOnStartTurnEvent.Contains(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Event,
+                CoreSystem.Logger.LogError(LogChannel.Event,
                     $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
                 return;
             }
@@ -202,7 +202,7 @@ namespace Syadeu.Presentation.TurnTable
             int hash = ev.GetHashCode();
             if (m_AddedOnEndTurnEvent.Contains(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Event,
+                CoreSystem.Logger.LogError(LogChannel.Event,
                     $"Attemp to add same delegate event({ev.Method.Name}) at {ev.Method.Name}.");
                 return;
             }
@@ -227,7 +227,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
             player.IsMyTurn = true;
-            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} turn start");
+            CoreSystem.Logger.Log(LogChannel.Entity, $"{entity.Name} turn start");
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.Start));
 
@@ -240,7 +240,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             ref TurnPlayerComponent player = ref entity.GetComponent<TurnPlayerComponent>();
             player.IsMyTurn = false;
-            CoreSystem.Logger.Log(Channel.Entity, $"{entity.Name} turn end");
+            CoreSystem.Logger.Log(LogChannel.Entity, $"{entity.Name} turn end");
             m_EventSystem.PostEvent(
                 OnTurnStateChangedEvent.GetEvent(entity, OnTurnStateChangedEvent.TurnState.End));
 

@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.Entities
             }
             else
             {
-                CoreSystem.Logger.LogError(Channel.Entity, "");
+                CoreSystem.Logger.LogError(LogChannel.Entity, "");
             }
         }
         public void Stop()

@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if UNITY_EDITOR
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !CORESYSTEM_DISABLE_CHECKS
+#define DEBUG_MODE
 #endif
+
 
 namespace Syadeu.Collections
 {
-    public interface IStaticInitializer
+    public abstract class CoreMonobehaviour : UnityEngine.MonoBehaviour
     {
+
     }
 }

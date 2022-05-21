@@ -80,7 +80,7 @@ namespace Syadeu.Presentation.Actor
                     if (m_DefaultWeapon.IsEmpty()) return 0;
                     else if (!m_DefaultWeapon.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity,
+                        CoreSystem.Logger.LogError(LogChannel.Entity,
                             $"Entity({m_Parent.Name}) has an invalid default weapon.");
                         return 0;
                     }
@@ -99,7 +99,7 @@ namespace Syadeu.Presentation.Actor
             //ActorWeaponProvider provider = Provider;
             if (index < 0 || index >= m_MaxEquipableCount)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
+                CoreSystem.Logger.LogError(LogChannel.Entity, $"{nameof(SelectWeapon)} index out of range. Index {index}.");
                 return;
             }
 

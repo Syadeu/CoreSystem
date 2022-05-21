@@ -34,17 +34,17 @@ namespace Syadeu.Presentation.Actions
         {
             if (Idx.Equals(InstanceID.Empty))
             {
-                CoreSystem.Logger.LogError(Channel.Action, $"Executing an raw action");
+                CoreSystem.Logger.LogError(LogChannel.Action, $"Executing an raw action");
             }
 
             if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
+                CoreSystem.Logger.Log(LogChannel.Debug, p_DebugText);
             }
 
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Action,
+                CoreSystem.Logger.LogWarning(LogChannel.Action,
                     $"Cannot trigger this action({Name}) because target entity is invalid");
 
                 return false;
@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                 result = false;
             }
 
@@ -67,17 +67,17 @@ namespace Syadeu.Presentation.Actions
         {
             if (Idx.Equals(InstanceID.Empty))
             {
-                CoreSystem.Logger.LogError(Channel.Action, $"Executing an raw action");
+                CoreSystem.Logger.LogError(LogChannel.Action, $"Executing an raw action");
             }
 
             if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
+                CoreSystem.Logger.Log(LogChannel.Debug, p_DebugText);
             }
 
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Action,
+                CoreSystem.Logger.LogWarning(LogChannel.Action,
                     $"Cannot trigger this action({Name}) because target entity is invalid");
 
                 return false;
@@ -90,7 +90,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex);
+                CoreSystem.Logger.LogError(LogChannel.Presentation, ex);
                 result = false;
             }
 

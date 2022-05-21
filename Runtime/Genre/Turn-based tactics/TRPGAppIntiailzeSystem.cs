@@ -17,6 +17,8 @@
 #endif
 
 
+using Syadeu.Collections;
+
 namespace Syadeu.Presentation.TurnTable
 {
     public sealed class TRPGAppIntiailzeSystem : PresentationSystemEntity<TRPGAppIntiailzeSystem>

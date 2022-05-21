@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!clip.legacy)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target data({data.Name}) clip({clip.name}) is not a legacy. Cannot play with this action at entity({executer.Name}). Use {nameof(PlayPlayableDirectorAction)} instead.");
 
                 Terminate();
@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.Actions
             AnimatorComponent component = proxy.GetComponent<AnimatorComponent>();
             if (component == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) does not have animator but requested play animation.");
                 entity.Destroy();
                 Terminate();

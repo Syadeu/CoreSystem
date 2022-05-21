@@ -60,7 +60,7 @@ namespace Syadeu.Presentation
             {
                 if (!exist.Equals(id))
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"id conflect.");
                 }
 

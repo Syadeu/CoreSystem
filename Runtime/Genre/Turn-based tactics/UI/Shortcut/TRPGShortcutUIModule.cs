@@ -142,7 +142,7 @@ namespace Syadeu.Presentation.TurnTable.UI
             }
             else if (!m_TurnTableSystem.CurrentTurn.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({m_TurnTableSystem.CurrentTurn.RawName}) doesn\'t have {nameof(ActorControllerComponent)}.");
                 return;
             }

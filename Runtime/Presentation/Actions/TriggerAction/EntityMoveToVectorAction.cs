@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!(e.Target is EntityBase entity))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     "Target is not a EntityBase");
                 return;
             }

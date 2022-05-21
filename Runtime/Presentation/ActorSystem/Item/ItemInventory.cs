@@ -122,7 +122,7 @@ namespace Syadeu.Presentation.Actor
 #if DEBUG_MODE
             if (!item.HasComponent<ActorItemComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This instance({item.GetEntity().Name}) doesn\'t have {nameof(ActorItemAttribute)}.");
 
                 return Key.Empty;

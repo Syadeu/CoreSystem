@@ -256,7 +256,7 @@ namespace Syadeu.Presentation
         public void ProceessOnCreated(ObjectBase obj)
         {
             const string c_CreateStartMsg = "Create entity({0})";
-            CoreSystem.Logger.Log(Channel.Entity,
+            CoreSystem.Logger.Log(LogChannel.Entity,
                 string.Format(c_CreateStartMsg, obj.Name));
 
             ProcessEntityOnCreated(this, obj);
@@ -276,7 +276,7 @@ namespace Syadeu.Presentation
         {
             if (obj.Reserved)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
                 return;
             }
@@ -288,7 +288,7 @@ namespace Syadeu.Presentation
         private void InternalProcessOnReserve(ObjectBase obj)
         {
             const string c_DestroyStartMsg = "Destroying entity({0})";
-            CoreSystem.Logger.Log(Channel.Entity,
+            CoreSystem.Logger.Log(LogChannel.Entity,
                 string.Format(c_DestroyStartMsg, obj.Name));
 
             ProcessEntityOnReserve(this, obj);
@@ -328,7 +328,7 @@ namespace Syadeu.Presentation
 
                     if (other == null)
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                             string.Format(c_AttributeEmptyWarning, entity.Name));
                         return;
                     }
@@ -348,10 +348,10 @@ namespace Syadeu.Presentation
                             }
                             catch (Exception ex)
                             {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
+                                CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
                             }
                         }
-                        CoreSystem.Logger.Log(Channel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
+                        CoreSystem.Logger.Log(LogChannel.Entity, $"Processed OnCreated at entity({entity.Name}), {t.Name}");
                     }
                 }
             }
@@ -374,7 +374,7 @@ namespace Syadeu.Presentation
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
+                        CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(ProcessorBase.InternalOnCreated));
                     }
                 }
             }
@@ -436,7 +436,7 @@ namespace Syadeu.Presentation
                     IAttribute other = entityData.Attributes[i];
                     if (other == null)
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Presentation,
+                        CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                             string.Format(c_AttributeEmptyWarning, entity.Name));
                         continue;
                     }
@@ -455,7 +455,7 @@ namespace Syadeu.Presentation
                             }
                             catch (Exception ex)
                             {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
+                                CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
                             }
                         }
                     }
@@ -480,7 +480,7 @@ namespace Syadeu.Presentation
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
+                        CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(ProcessorBase.InternalOnDestroy));
                     }
                 }
             }
@@ -495,12 +495,12 @@ namespace Syadeu.Presentation
             const string c_StartMsg = "Processing OnProxyCreated at {0}";
             const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyCreated";
 
-            CoreSystem.Logger.Log(Channel.Entity,
+            CoreSystem.Logger.Log(LogChannel.Entity,
                 string.Format(c_StartMsg, entity.Name));
 
             if (system.System.IsDestroyed(entity.Idx) || system.System.IsMarkedAsDestroyed(entity.Idx))
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_FastDeletionMsg, entity.Name));
                 return;
             }
@@ -520,7 +520,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyCreated.OnProxyCreated));
+                            CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(IEntityOnProxyCreated.OnProxyCreated));
                         }
                     }
                 }
@@ -533,7 +533,7 @@ namespace Syadeu.Presentation
                 var other = entity.Attributes[i];
                 if (other == null)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                    CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
                     continue;
                 }
@@ -552,7 +552,7 @@ namespace Syadeu.Presentation
                             }
                             catch (Exception ex)
                             {
-                                CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyCreated.OnProxyCreated));
+                                CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(IAttributeOnProxyCreated.OnProxyCreated));
                             }
                         }
                     }
@@ -565,12 +565,12 @@ namespace Syadeu.Presentation
             const string c_StartMsg = "Processing OnProxyRemoved at {0}";
             const string c_FastDeletionMsg = "Fast deletion at {0}. From ProcessEntityOnProxyRemoved";
 
-            CoreSystem.Logger.Log(Channel.Entity,
+            CoreSystem.Logger.Log(LogChannel.Entity,
                 string.Format(c_StartMsg, entity.Name));
 
             if (system.System.IsDestroyed(entity.Idx) || system.System.IsMarkedAsDestroyed(entity.Idx))
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_FastDeletionMsg, entity.Name));
                 return;
             }
@@ -590,7 +590,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IEntityOnProxyRemoved.OnProxyRemoved));
+                            CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(IEntityOnProxyRemoved.OnProxyRemoved));
                         }
                     }
                 }
@@ -603,7 +603,7 @@ namespace Syadeu.Presentation
                 var other = entity.Attributes[i];
                 if (other == null)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Presentation,
+                    CoreSystem.Logger.LogWarning(LogChannel.Presentation,
                         string.Format(c_AttributeEmptyWarning, entity.Name));
                 }
 
@@ -621,7 +621,7 @@ namespace Syadeu.Presentation
                         }
                         catch (Exception ex)
                         {
-                            CoreSystem.Logger.LogError(Channel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
+                            CoreSystem.Logger.LogError(LogChannel.Entity, ex, nameof(IAttributeOnProxyRemoved.OnProxyRemoved));
                         }
                     }
                 }

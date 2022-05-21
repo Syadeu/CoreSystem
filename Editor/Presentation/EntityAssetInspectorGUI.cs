@@ -226,7 +226,7 @@ namespace SyadeuEditor.Presentation
                                 targetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, false, true);
                                 aaSettings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, true, false);
 
-                                CoreSystem.Logger.Log(Channel.Editor,
+                                CoreSystem.Logger.Log(LogChannel.Editor,
                                     $"Asset({Path.GetFileName(entry.AssetPath)}) added to PrefabList({targetGroup.Name}) from {originGroup.Name}");
                             }
                         }
@@ -268,7 +268,7 @@ namespace SyadeuEditor.Presentation
                                 targetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, false, true);
                                 aaSettings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, targetGroup, true, false);
 
-                                CoreSystem.Logger.Log(Channel.Editor,
+                                CoreSystem.Logger.Log(LogChannel.Editor,
                                     $"Assets({Path.GetFileName(entry.AssetPath)} and other {editor.targets.Length - 1}) added to PrefabList({targetGroup.Name}) from {originGroup.Name}");
                             }
                         }

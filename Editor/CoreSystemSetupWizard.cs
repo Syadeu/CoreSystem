@@ -460,7 +460,7 @@ namespace SyadeuEditor
                         {
                             if (!InsertLayer(m_MissingLayers[i]))
                             {
-                                CoreSystem.Logger.LogError(Channel.Editor,
+                                CoreSystem.Logger.LogError(LogChannel.Editor,
                                     $"Could not add layer {m_MissingLayers[i]} because layer is full.");
                             }
                             else
@@ -529,7 +529,7 @@ namespace SyadeuEditor
                     EditorGUILayout.Space();
 
                     m_CoreSystemSettings.m_DisplayLogChannel =
-                        (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
+                        (LogChannel)EditorGUILayout.EnumFlagsField("Display Log Channel", m_CoreSystemSettings.m_DisplayLogChannel);
 
                     m_CoreSystemSettings.m_VisualizeObjects =
                         EditorGUILayout.ToggleLeft("Visuallize All Managers", m_CoreSystemSettings.m_VisualizeObjects);

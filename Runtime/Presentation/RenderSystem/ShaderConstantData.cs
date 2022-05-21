@@ -53,7 +53,7 @@ namespace Syadeu.Presentation.Render
 #if DEBUG_MODE
                 if (string.IsNullOrEmpty(m_Keyword))
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, "Shader keyword cannot be empty.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, "Shader keyword cannot be empty.");
                     return;
                 }
 #endif
@@ -157,7 +157,7 @@ namespace Syadeu.Presentation.Render
                     ApplyToGlobal(keyword, (Color)value);
                     break;
                 default:
-                    CoreSystem.Logger.LogError(Channel.Data, "?");
+                    CoreSystem.Logger.LogError(LogChannel.Data, "?");
                     break;
             }
         }
@@ -225,7 +225,7 @@ namespace Syadeu.Presentation.Render
                     Apply(keyword, (Color)value);
                     break;
                 default:
-                    CoreSystem.Logger.LogError(Channel.Data, "?");
+                    CoreSystem.Logger.LogError(LogChannel.Data, "?");
                     break;
             }
         }

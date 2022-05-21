@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG_MODE
             if (att == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({entity.Name}) has not any {nameof(TriggerBoundAttribute)}.");
                 return;
             }

@@ -32,7 +32,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!(target.control is ButtonControl button))
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     "Input type is not match");
                 return;
             }

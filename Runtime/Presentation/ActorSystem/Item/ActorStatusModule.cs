@@ -33,14 +33,14 @@ namespace Syadeu.Presentation.Actor
 
         public void EnableShortStatusUI(InstanceID actor)
         {
-            if (!actor.HasComponent<ActorStatComponent>())
+            if (!actor.IsEntity<IEntity>() || !actor.HasComponent<ActorStatComponent>())
             {
                 "??".ToLogError();
                 return;
             }
+            ActorStatAttribute statAttribute = actor.GetEntity<IEntity>().GetAttribute<ActorStatAttribute>();
 
-            m_UIDocument =
-                actor.GetComponentReadOnly<ActorStatComponent>().ShortUI.GetObject().GetUIDocument();
+            m_UIDocument = statAttribute.ShortUI;
 
             //setting
 
@@ -51,7 +51,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (m_UIDocument == null) return;
 
-            UnityEngine.Object.Destroy(m_UIDocument.gameObject);
+            m_UIDocument.SetActive(false);
             m_UIDocument = null;
         }
     }

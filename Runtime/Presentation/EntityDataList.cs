@@ -121,20 +121,20 @@ namespace Syadeu.Collections
                     obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
                     if (!(obj is T))
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                        CoreSystem.Logger.LogWarning(LogChannel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
                         return;
                     }
                 }
                 catch (Exception)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                    CoreSystem.Logger.LogWarning(LogChannel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
                     return;
                 }
                 T temp = (T)obj;
 
                 if (m_Objects.ContainsKey(temp.Hash))
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
+                    CoreSystem.Logger.LogWarning(LogChannel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
                     File.Delete(dataPaths[i]);
                     return;
                 }
@@ -158,13 +158,13 @@ namespace Syadeu.Collections
                     obj = JsonConvert.DeserializeObject(File.ReadAllText(dataPaths[i]), t);
                     if (!(obj is T))
                     {
-                        CoreSystem.Logger.LogWarning(Channel.Entity, $"1. Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
+                        CoreSystem.Logger.LogWarning(LogChannel.Entity, $"1. Data({t?.Name}) at {dataPaths[i]} is invalid. This data has been ignored");
                         continue;
                     }
                 }
                 catch (Exception ex)
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, 
+                    CoreSystem.Logger.LogWarning(LogChannel.Entity, 
                         $"2. Data({t?.Name}) at {dataPaths[i]} is invalid. " +
                         $"This data has been ignored.");
                     UnityEngine.Debug.LogError(ex);
@@ -174,7 +174,7 @@ namespace Syadeu.Collections
 
                 if (m_Objects.ContainsKey(temp.Hash))
                 {
-                    CoreSystem.Logger.LogWarning(Channel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
+                    CoreSystem.Logger.LogWarning(LogChannel.Entity, $"Data({t?.Name}) at {dataPaths[i]} is already registered. This data has been ignored and removed.");
                     File.Delete(dataPaths[i]);
                     continue;
                 }

@@ -40,7 +40,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (m_TriggerActions.Length == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"Trigger Action({Name}) doesn\'t have any TriggerAction element to execute.");
                 return;
             }

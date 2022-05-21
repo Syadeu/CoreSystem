@@ -15,7 +15,7 @@
 namespace Syadeu
 {
     [System.Flags]
-    public enum Channel
+    public enum LogChannel : int
     {
         None = 0,
 
@@ -36,8 +36,9 @@ namespace Syadeu
         Event           = 0b000000000000000100000000000,
         Action          = 0b000000000000001000000000000,
         Component       = 0b000000000000010000000000000,
+        Collections     = 0b000000000000100000000000000,
 
-        Audio           = 0b000000000000100000000000000,
+        Audio           = 0b000000000001000000000000000,
 
         GC              = 0b001000000000000000000000000,
         Thread          = 0b010000000000000000000000000,

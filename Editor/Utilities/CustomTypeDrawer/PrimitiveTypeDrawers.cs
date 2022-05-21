@@ -651,7 +651,7 @@ namespace SyadeuEditor.Utilities
                     }
                     catch (Exception ex)
                     {
-                        CoreSystem.Logger.LogError(Channel.Editor, ex);
+                        CoreSystem.Logger.LogError(LogChannel.Editor, ex);
                     }
                     return null;
                 };

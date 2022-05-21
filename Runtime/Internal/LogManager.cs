@@ -102,7 +102,7 @@ namespace Syadeu.Internal
 #if DEBUG_MODE
                 if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
                 {
-                    Log(Channel.Thread, ResultFlag.Error,
+                    Log(LogChannel.Thread, ResultFlag.Error,
                         string.Format(c_LogThreadErrorText, name,
                             TypeHelper.Enum<ThreadInfo>.ToString(ThreadInfo.Unity),
                             TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)),
@@ -115,7 +115,7 @@ namespace Syadeu.Internal
             ThreadInfo info = GetThreadType();
             if (!acceptOnly.HasFlag(info))
             {
-                Log(Channel.Thread, ResultFlag.Error,
+                Log(LogChannel.Thread, ResultFlag.Error,
                     string.Format(c_LogThreadErrorText, name,
                         TypeHelper.Enum<ThreadInfo>.ToString(info), 
                         TypeHelper.Enum<ThreadInfo>.ToString(acceptOnly)), 
@@ -125,9 +125,9 @@ namespace Syadeu.Internal
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
-        public static void Log(Channel channel, ResultFlag result, string msg, bool logThread)
+        public static void Log(LogChannel channel, ResultFlag result, string msg, bool logThread)
         {
-            if (channel != Channel.Editor &&
+            if (channel != LogChannel.Editor &&
                 ((CoreSystemSettings.Instance.m_DisplayLogChannel | channel) != CoreSystemSettings.Instance.m_DisplayLogChannel))
             {
                 if (result == ResultFlag.Normal) return;
@@ -135,19 +135,19 @@ namespace Syadeu.Internal
 
             if (result == ResultFlag.Error)
             {
-                Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+                Log(TypeHelper.Enum<LogChannel>.ToString(channel), result, msg, logThread);
             }
             else
             {
-                LogOnDebug(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread);
+                LogOnDebug(TypeHelper.Enum<LogChannel>.ToString(channel), result, msg, logThread);
             }
         }
 #if DEBUG_MODE
         [System.Diagnostics.DebuggerHidden]
 #endif
-        public static void Log(Channel channel, ResultFlag result, string msg, bool logThread, string scriptName)
+        public static void Log(LogChannel channel, ResultFlag result, string msg, bool logThread, string scriptName)
         {
-            if (channel != Channel.Editor &&
+            if (channel != LogChannel.Editor &&
                 ((CoreSystemSettings.Instance.m_DisplayLogChannel | channel) != CoreSystemSettings.Instance.m_DisplayLogChannel))
             {
                 if (result == ResultFlag.Normal) return;
@@ -178,11 +178,11 @@ namespace Syadeu.Internal
 
             if (result == ResultFlag.Error)
             {
-                Log(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread, monoScript);
+                Log(TypeHelper.Enum<LogChannel>.ToString(channel), result, msg, logThread, monoScript);
             }
             else
             {
-                LogOnDebug(TypeHelper.Enum<Channel>.ToString(channel), result, msg, logThread, monoScript);
+                LogOnDebug(TypeHelper.Enum<LogChannel>.ToString(channel), result, msg, logThread, monoScript);
             }
         }
 

@@ -34,7 +34,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!other.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({other.Name}) doesn\'t have any {nameof(ActorControllerComponent)}.");
                 return;
             }
@@ -43,7 +43,7 @@ namespace Syadeu.Presentation.TurnTable
 //#if DEBUG_MODE
             if (!other.HasComponent<TRPGActorAttackComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({other.Name}) doesn\'t have any {nameof(TRPGActorAttackProvider)}.");
                 return;
             }
@@ -52,7 +52,7 @@ namespace Syadeu.Presentation.TurnTable
 
             if (attProvider.TargetCount < index)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Index({index}) is out of range. Target count is {attProvider.TargetCount}.");
                 return;
             }

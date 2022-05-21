@@ -33,7 +33,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!actorEntity.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({actorEntity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!actorEntity.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This entity({actorEntity.Name}) doesn\'t have any {nameof(ActorControllerComponent)}. Cannot post event({ev.GetType().Name}).");
                 return;
             }
@@ -82,7 +82,7 @@ namespace Syadeu.Presentation.Actor
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target entity({target.RawName}) or this entity({entity.RawName}) is not actor entity.");
 
                 return false;
@@ -102,7 +102,7 @@ namespace Syadeu.Presentation.Actor
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target entity({target.RawName}) or this entity({entity.RawName}) is not actor entity.");
 
                 return false;
@@ -115,7 +115,7 @@ namespace Syadeu.Presentation.Actor
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target entity({target.RawName}) or this entity({entity.RawName}) is not actor entity.");
 
                 return false;
@@ -128,7 +128,7 @@ namespace Syadeu.Presentation.Actor
             if (!entity.HasComponent<ActorFactionComponent>() ||
                 !target.HasComponent<ActorFactionComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Target entity({target.RawName}) or this entity({entity.RawName}) is not actor entity.");
 
                 return false;

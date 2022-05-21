@@ -361,10 +361,10 @@ namespace Syadeu.Presentation.Actor
                 ctx =>
                 {
                     "manipulator".ToLog();
-                    ctx.AddContextMenu("test menu 1", null)
-                        .RegisterCallback<MouseDownEvent, ContextData>(OnItemContextDownEventHandler, new ContextData(data)
+                    ctx.AddContextMenu("Equip", null)
+                        .RegisterCallback<MouseDownEvent, ContextData>(OnItemContextEquipEventHandler, new ContextData(data)
                         {
-                            msg = "test menu 1"
+
                         });
 
                     ctx.AddContextMenu("test menu 2", null);
@@ -430,9 +430,12 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        private void OnItemContextDownEventHandler(MouseDownEvent e, ContextData data)
+        private void OnItemContextEquipEventHandler(MouseDownEvent e, ContextData data)
         {
-            data.msg.ToLog();
+            ref var actor = ref data.itemData.inventory.Owner.GetComponent<ActorComponent>();
+            InstanceID item = data.itemData.inventory.Pop(data.itemData.key);
+
+            actor.equipedItems.Add(item);
         }
 
         #endregion
@@ -440,7 +443,6 @@ namespace Syadeu.Presentation.Actor
         private struct ContextData
         {
             public readonly ItemData itemData;
-            public string msg;
 
             public ContextData(ItemData data)
             {
@@ -456,6 +458,26 @@ namespace Syadeu.Presentation.Actor
         }
     }
 
+    public sealed class ActorItemEquipEvent : SynchronizedEvent<ActorItemEquipEvent>
+    {
+        public InstanceID Actor { get; private set; }
+        public InstanceID Item { get; private set; }
+        public int Slot { get; private set; }
+
+        public static ActorItemEquipEvent GetEvent(InstanceID actor, InstanceID item, int slot)
+        {
+            var ev = Dequeue();
+
+            ev.Actor = actor;
+            ev.Item = item;
+            ev.Slot = slot;
+
+            return ev;
+        }
+        protected override void OnTerminate()
+        {
+        }
+    }
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
     {
         private InstanceID<ActorInventoryProvider> m_Provider;
@@ -479,7 +501,7 @@ namespace Syadeu.Presentation.Actor
         {
             if (!item.HasComponent<ActorItemComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Item({item.GetEntity().Name}) doesnt have {nameof(ActorItemComponent)}.");
                 return;
             }

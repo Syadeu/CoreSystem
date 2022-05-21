@@ -88,7 +88,7 @@ namespace Syadeu.Presentation.Actor
             InstanceID currentWeaponIns = component.SelectedWeapon;
             if (currentWeaponIns.IsEmpty() || !currentWeaponIns.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
+                CoreSystem.Logger.LogError(LogChannel.Entity, $"Entity({Parent.Name}) current weapon is invalid");
                 return;
             }
 

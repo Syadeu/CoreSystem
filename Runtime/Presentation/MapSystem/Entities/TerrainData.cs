@@ -92,7 +92,7 @@ namespace Syadeu.Presentation.Map
         {
             if (IsCreated)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"{Name} terrain is already created.");
                 return;
             }
@@ -100,7 +100,7 @@ namespace Syadeu.Presentation.Map
             if (m_Data.IsNone()) return;
             else if (!m_Data.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Terrain({Name}) has an invalid terrain. This is not allowed.");
                 return;
             }
@@ -110,7 +110,7 @@ namespace Syadeu.Presentation.Map
                 AsyncOperationHandle<UnityEngine.TerrainData> asyncHandle = m_Data.LoadAssetAsync();
                 if (!asyncHandle.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Terrain({Name}) raised unexpected error.");
                     return;
                 }
@@ -133,7 +133,7 @@ namespace Syadeu.Presentation.Map
             if (m_Material.IsNone() ||
                 !m_Material.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                        $"Terrain({Name}) raised unexpected error. Material is not valid.");
                 return;
             }
@@ -144,7 +144,7 @@ namespace Syadeu.Presentation.Map
 #if DEBUG_MODE
                 if (!asyncHandle.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Terrain({Name}) raised unexpected error. Material is not valid.");
                     return;
                 }

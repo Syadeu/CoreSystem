@@ -81,7 +81,7 @@ namespace Syadeu.Collections
 #if DEBUG_MODE
             if (setting == null)
             {
-                CoreSystem.Logger.LogError(Channel.Core,
+                CoreSystem.Logger.LogError(LogChannel.Core,
                     $"Cannot load asset(idx: {m_Idx}, subasset: {m_SubAssetName.ToString()})");
                 UnityEngine.Debug.Break();
                 return default(AsyncOperationHandle);
@@ -119,7 +119,7 @@ namespace Syadeu.Collections
         {
             if (0 >= a && a >= PrefabList.Instance.ObjectSettings.Count)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Cannot found prefab index of {a}. Request ignored.");
                 return Invalid;
             }
@@ -166,7 +166,7 @@ namespace Syadeu.Collections
                 }
                 catch (InvalidCastException)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data,
+                    CoreSystem.Logger.LogError(LogChannel.Data,
                         $"Asset({target.name}) is {TypeHelper.ToString(target.GetType())} " +
                         $"but you're trying to cast {TypeHelper.TypeOf<T>.ToString()}.");
                     throw;
@@ -218,7 +218,7 @@ namespace Syadeu.Collections
             }
             catch (InvalidCastException)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Asset({temp.name}) is {TypeHelper.ToString(temp.GetType())} " +
                     $"but you're trying to cast {TypeHelper.TypeOf<T>.ToString()}.");
                 throw;
@@ -231,7 +231,7 @@ namespace Syadeu.Collections
             var setting = GetObjectSetting();
             if (setting == null)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Prefab(at {m_Idx}) is not valid.");
 
                 return default(AsyncOperationHandle<T>);
@@ -244,7 +244,7 @@ namespace Syadeu.Collections
             var setting = GetObjectSetting();
             if (setting == null)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Prefab(at {m_Idx}) is not valid.");
 
                 return;
@@ -268,7 +268,7 @@ namespace Syadeu.Collections
 #if DEBUG_MODE
             if (objSetting == null)
             {
-                CoreSystem.Logger.LogError(Channel.Core,
+                CoreSystem.Logger.LogError(LogChannel.Core,
                     $"Cannot instantiate object(Prefab Index: {m_Idx}).");
 
                 return default(AsyncOperationHandle<UnityEngine.GameObject>);
@@ -302,7 +302,7 @@ namespace Syadeu.Collections
         {
             if (0 >= a && a >= PrefabList.Instance.ObjectSettings.Count)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Cannot found prefab index of {a}. Request ignored.");
                 return Invalid;
             }

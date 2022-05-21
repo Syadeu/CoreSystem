@@ -320,7 +320,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!entity.HasComponent<GridComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.GetEntity().Name}) doesn\'t have any {nameof(GridComponent)}.");
 
                 yield break;

@@ -28,12 +28,12 @@ namespace Syadeu.Presentation.Actions
             predicate = false;
             if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
+                CoreSystem.Logger.Log(LogChannel.Debug, p_DebugText);
             }
 
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     $"Cannot trigger this action({Name}) because target entity is invalid");
 
                 return false;
@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+                CoreSystem.Logger.LogError(LogChannel.Presentation, ex.Message + ex.StackTrace);
                 result = false;
             }
 

@@ -44,7 +44,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 predicate = false;
                 return false;
@@ -116,7 +116,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
@@ -131,7 +131,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
@@ -141,7 +141,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 predicate = false;
                 return false;
@@ -160,7 +160,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
@@ -179,7 +179,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
@@ -197,7 +197,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T>>.Name));
             }
 
@@ -215,7 +215,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T, TA>>.Name));
             }
 
@@ -226,7 +226,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return false;
             }
@@ -241,7 +241,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
@@ -251,7 +251,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 predicate = false;
                 return false;
@@ -270,7 +270,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorTriggerActionCompletedWithFailed, TypeHelper.TypeOf<T>.Name, entity.RawName));
             }
 
@@ -290,7 +290,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<T>.Name));
             }
 
@@ -308,7 +308,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T>>.Name));
             }
 
@@ -326,7 +326,7 @@ namespace Syadeu.Presentation.Actions
 
             if (isFailed)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     string.Format(c_ErrorCompletedWithFailed, TypeHelper.TypeOf<ParamAction<T, TA>>.Name));
             }
 
@@ -351,7 +351,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogWarning(Channel.Entity,
+                CoreSystem.Logger.LogWarning(LogChannel.Entity,
                     string.Format(c_WarningInvalidEntityAction, TypeHelper.TypeOf<T>.Name));
                 return;
             }
@@ -439,7 +439,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"Unexpected error has been raised while executing ConstAction({TypeHelper.ToString(info.Type)})");
 
                 UnityEngine.Debug.LogError(ex);
@@ -473,7 +473,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"Unexpected error has been raised while executing ConstAction");
 
                 UnityEngine.Debug.LogError(ex);
@@ -501,7 +501,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"Unexpected error has been raised while executing ConstAction");
 
                 UnityEngine.Debug.LogError(ex);

@@ -110,14 +110,14 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This prefab(at {prefab.Index}) is invalid.");
 
                 return null;
             }
             else if (prefab.Asset == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This prefab({prefab.GetObjectSetting().Name}) is not loaded. You can preload prefab with {nameof(IPrefabPreloader)}.");
 
                 return null;
@@ -153,14 +153,14 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This prefab(at {prefab.Index}) is invalid.");
 
                 return;
             }
             else if (obj == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     "");
 
                 return;

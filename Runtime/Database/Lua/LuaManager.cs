@@ -19,7 +19,7 @@ namespace Syadeu.Collections.Lua
         public override void OnInitialize()
         {
             //Debug.Log("LUA: Initialize start");
-            CoreSystem.Logger.Log(Channel.Lua, "Registering Proxies");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Registering Proxies");
             //UserData.RegisterProxyType<ItemProxy, Item>(r => r.GetProxy());
             //UserData.RegisterProxyType<ItemInstanceProxy, ItemInstance>(r => r.GetLuaProxy());
             //UserData.RegisterProxyType<ItemTypeProxy, ItemType>(r => r.GetProxy());
@@ -27,13 +27,13 @@ namespace Syadeu.Collections.Lua
             //UserData.RegisterProxyType<ItemEffectTypeProxy, ItemEffectType>(r => r.GetProxy());
             //UserData.RegisterProxyType<CreatureBrainProxy, CreatureBrain>(r => r.Proxy);
 
-            CoreSystem.Logger.Log(Channel.Lua, "Registering Actions");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Registering Actions");
             RegisterSimpleAction();
             RegisterSimpleAction<string>();
             //RegisterSimpleAction<CreatureBrain>();
             //RegisterSimpleAction<ItemInstance>();
 
-            CoreSystem.Logger.Log(Channel.Lua, "Registering Script and Globals");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Registering Script and Globals");
             m_MainScripter = new Script();
             AddGlobal<LuaUtils>("CoreSystem");
             AddGlobal<LuaVectorUtils>("Vector");
@@ -41,13 +41,13 @@ namespace Syadeu.Collections.Lua
             //AddGlobal<LuaCreatureUtils>("Creature");
             AddGlobal<RandomUtils>("Random");
 
-            CoreSystem.Logger.Log(Channel.Lua, "Registering ScriptLoader");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Registering ScriptLoader");
             m_ScriptLoader = new LuaScriptLoader();
             m_MainScripter.Options.ScriptLoader = m_ScriptLoader;
 
-            CoreSystem.Logger.Log(Channel.Lua, "Load Scripts");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Load Scripts");
             LoadScripts();
-            CoreSystem.Logger.Log(Channel.Lua, "Creating Console Commands");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Creating Console Commands");
             CreateLuaCommands();
         }
 

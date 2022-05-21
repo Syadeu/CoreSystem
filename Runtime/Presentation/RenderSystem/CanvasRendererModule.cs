@@ -75,7 +75,7 @@ namespace Syadeu.Presentation.Render
 
             if (!m_UsedRenderers.ContainsKey(idx))
             {
-                CoreSystem.Logger.LogError(Channel.Proxy, "");
+                CoreSystem.Logger.LogError(LogChannel.Proxy, "");
                 return;
             }
 

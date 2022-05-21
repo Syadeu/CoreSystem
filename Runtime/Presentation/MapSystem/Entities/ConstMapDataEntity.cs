@@ -50,7 +50,7 @@ namespace Syadeu.Presentation.Map
             {
                 if (obj.m_DataObjects[i].IsEmpty())
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Cannot be none.");
                 }
 

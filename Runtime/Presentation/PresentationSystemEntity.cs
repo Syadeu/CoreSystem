@@ -120,7 +120,7 @@ namespace Syadeu.Presentation
 
             if (Disposed)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     string.Format(c_ErrorMsg, TypeHelper.TypeOf<T>.ToString()));
             }
         }

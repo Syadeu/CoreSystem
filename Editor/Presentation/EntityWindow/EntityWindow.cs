@@ -162,7 +162,7 @@ namespace SyadeuEditor.Presentation
         {
             if (Application.isPlaying) return;
 
-            CoreSystem.Logger.Log(Channel.Editor, "Entity data saved");
+            CoreSystem.Logger.Log(LogChannel.Editor, "Entity data saved");
 
             EntityDataList.Instance.SaveData();
             base.SaveChanges();
@@ -201,7 +201,7 @@ namespace SyadeuEditor.Presentation
 
             ObjectBaseDrawer.Pool.Clear();
             GetMenuItem<EntityDataWindow>().Reload();
-            CoreSystem.Logger.Log(Channel.Editor, "Entity data loaded");
+            CoreSystem.Logger.Log(LogChannel.Editor, "Entity data loaded");
         }
         public ObjectBase Add(Type objType)
         {

@@ -197,7 +197,7 @@ namespace SyadeuEditor
 
             EditorGUILayout.Space();
             //EditorGUILayout.PropertyField(m_DisplayLogChannel);
-            CoreSystemSettings.Instance.m_DisplayLogChannel = (Channel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", CoreSystemSettings.Instance.m_DisplayLogChannel);
+            CoreSystemSettings.Instance.m_DisplayLogChannel = (LogChannel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", CoreSystemSettings.Instance.m_DisplayLogChannel);
 
             if (Application.isPlaying)
             {

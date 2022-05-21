@@ -130,7 +130,7 @@ namespace Syadeu.Presentation.Actions
                         m_CurrentAction.Payload.Sequence = sequence;
                         m_CurrentAction.Payload.m_ActionInstanceID = action.Idx;
 
-                        CoreSystem.Logger.Log(Channel.Action,
+                        CoreSystem.Logger.Log(LogChannel.Action,
                                 $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                         action.InternalExecute();
@@ -149,7 +149,7 @@ namespace Syadeu.Presentation.Actions
                         return;
                     }
 
-                    CoreSystem.Logger.Log(Channel.Action,
+                    CoreSystem.Logger.Log(LogChannel.Action,
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                     action.InternalExecute();
@@ -163,7 +163,7 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG_MODE
                     if (temp.action.IsEmpty() || !temp.action.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Action,
+                        CoreSystem.Logger.LogError(LogChannel.Action,
                             $"Unknown error raised while executing scheduled action. Scheduled action is not valid.");
 
                         return;
@@ -173,7 +173,7 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG_MODE
                     if (ins.IsEmpty() || !ins.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Action,
+                        CoreSystem.Logger.LogError(LogChannel.Action,
                             $"Action instance creation failed.");
 
                         return;
@@ -187,7 +187,7 @@ namespace Syadeu.Presentation.Actions
                         m_CurrentAction.Payload.Sequence = triggerActionSequence;
                         m_CurrentAction.Payload.m_ActionInstanceID = triggerAction.Idx;
 
-                        CoreSystem.Logger.Log(Channel.Action,
+                        CoreSystem.Logger.Log(LogChannel.Action,
                                 $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                         triggerAction.InternalExecute(temp.entity);
@@ -206,7 +206,7 @@ namespace Syadeu.Presentation.Actions
                         return;
                     }
 
-                    CoreSystem.Logger.Log(Channel.Action,
+                    CoreSystem.Logger.Log(LogChannel.Action,
                         $"Execute scheduled action({temp.action.GetObject().GetType().Name}: {temp.action.GetObject().Name})");
 
                     triggerAction.InternalExecute(temp.entity);
@@ -299,7 +299,7 @@ namespace Syadeu.Presentation.Actions
                 };
 
                 m_ScheduledActions.Insert(0, payload);
-                CoreSystem.Logger.Log(Channel.Action,
+                CoreSystem.Logger.Log(LogChannel.Action,
                     $"Execute override action({temp.GetObject().GetType().Name}: {temp.GetObject().Name})");
 
                 m_EventSystem.TakePrioritizeTicket(this);

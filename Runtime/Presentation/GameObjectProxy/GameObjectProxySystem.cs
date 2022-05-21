@@ -189,7 +189,7 @@ namespace Syadeu.Presentation.Proxy
         }
         private unsafe void M_SceneSystem_OnLoadingEnter()
         {
-            CoreSystem.Logger.Log(Channel.Proxy, true,
+            CoreSystem.Logger.Log(LogChannel.Proxy, true,
                 "Scene on loading enter lambda excute");
 
             m_ProxyData.For(RemoveProxy);
@@ -233,7 +233,7 @@ namespace Syadeu.Presentation.Proxy
             if (!data->m_IsOccupied ||
                 data->m_Generation != data->m_Generation)
             {
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     $"Validation error. Target transform is not valid.");
                 return;
             }
@@ -260,14 +260,14 @@ namespace Syadeu.Presentation.Proxy
 
                 if (!m_Instances.ContainsKey(proxyIndex.x))
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
+                    CoreSystem.Logger.LogError(LogChannel.Proxy,
                         $"Fatal error. {((PrefabReference)proxyIndex.x).GetObjectSetting()?.Name} is not in instance list 1.");
 
                     return;
                 }
                 else if (m_Instances[proxyIndex.x].Count <= proxyIndex.y)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
+                    CoreSystem.Logger.LogError(LogChannel.Proxy,
                         $"Fatal error. {((PrefabReference)proxyIndex.x).GetObjectSetting()?.Name} is not in instance list 2.");
 
                     return;
@@ -327,7 +327,7 @@ namespace Syadeu.Presentation.Proxy
                         !data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
                         data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy,
+                        CoreSystem.Logger.LogError(LogChannel.Proxy,
                             $"Already have proxy({data->m_Prefab.GetObjectSetting()?.Name}):{data->m_ProxyIndex}");
                         continue;
                     }
@@ -352,7 +352,7 @@ namespace Syadeu.Presentation.Proxy
 
                     if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy, $"1 destroyed transform");
+                        CoreSystem.Logger.LogError(LogChannel.Proxy, $"1 destroyed transform");
                         continue;
                     }
                     else if (
@@ -360,7 +360,7 @@ namespace Syadeu.Presentation.Proxy
                         data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued) ||
                         data->m_ProxyIndex.Equals(-3))
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy, 
+                        CoreSystem.Logger.LogError(LogChannel.Proxy, 
                             $"Already have proxy({data->m_Prefab.GetObjectSetting()?.Name}):{data->m_ProxyIndex}");
                         continue;
                     }
@@ -381,14 +381,14 @@ namespace Syadeu.Presentation.Proxy
 
                     if (!data->m_IsOccupied || data->m_DestroyQueued)
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy, $"2 destroyed transform");
+                        CoreSystem.Logger.LogError(LogChannel.Proxy, $"2 destroyed transform");
                         continue;
                     }
                     else if (
                         data->m_ProxyIndex.Equals(ProxyTransform.ProxyNull) ||
                         data->m_ProxyIndex.Equals(ProxyTransform.ProxyQueued))
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy,
+                        CoreSystem.Logger.LogError(LogChannel.Proxy,
                             $"Does not have any proxy");
                         continue;
                     }
@@ -467,7 +467,7 @@ namespace Syadeu.Presentation.Proxy
                     ProxyTransform tr = m_ProxyData[m_RequestDestories.Dequeue()];
                     if (tr.isDestroyed)
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy,
+                        CoreSystem.Logger.LogError(LogChannel.Proxy,
                             $"Already destroyed");
                         continue;
                     }
@@ -945,7 +945,7 @@ namespace Syadeu.Presentation.Proxy
             }
             OnDataObjectCreated?.Invoke(tr);
 
-            CoreSystem.Logger.Log(Channel.Proxy, true,
+            CoreSystem.Logger.Log(LogChannel.Proxy, true,
                 string.Format(c_ProxyCreated, "EMPTY", pos));
 
             return tr;
@@ -976,7 +976,7 @@ namespace Syadeu.Presentation.Proxy
             }
             else if (!prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     $"Trying to create an invalid prefab proxy. This is not allowed. Replaced to empty.");
 
                 tr = m_ProxyData.Add(PrefabReference.None, pos, rot, scale, enableCull, center, size, gpuInstanced);
@@ -995,7 +995,7 @@ namespace Syadeu.Presentation.Proxy
                 m_OverrideRequestProxies.Enqueue(tr.m_Index);
             }
 
-            CoreSystem.Logger.Log(Channel.Proxy, true,
+            CoreSystem.Logger.Log(LogChannel.Proxy, true,
                 string.Format(c_ProxyCreated, (prefab.GetObjectSetting() != null ? prefab.GetObjectSetting().m_Name : "EMPTY"), pos));
 
             return tr;
@@ -1010,7 +1010,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (data->m_DestroyQueued)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy, 
+                    CoreSystem.Logger.LogError(LogChannel.Proxy, 
                         "Cannot destroy this proxy because it is already destroyed.");
                     return;
                 }
@@ -1019,7 +1019,7 @@ namespace Syadeu.Presentation.Proxy
                 data->m_DestroyQueued = true;
 
                 m_RequestDestories.Enqueue(tr.m_Index);
-                CoreSystem.Logger.Log(Channel.Proxy,
+                CoreSystem.Logger.Log(LogChannel.Proxy,
                     $"Destroy({data->m_Prefab.GetObjectSetting()?.m_Name}) called");
             }
         }
@@ -1052,7 +1052,7 @@ namespace Syadeu.Presentation.Proxy
 
                 if (obj.GetComponentInChildren<Rigidbody>() != null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
+                    CoreSystem.Logger.LogError(LogChannel.Proxy,
                         $"Currently gpu instancing system is not support physics object. Proceed to non gpu instancing");
 
                     goto NON_GPUINSTANCED;
@@ -1102,7 +1102,7 @@ namespace Syadeu.Presentation.Proxy
                         }
                         pool.Push(other);
 
-                        CoreSystem.Logger.Log(Channel.Proxy, true,
+                        CoreSystem.Logger.Log(LogChannel.Proxy, true,
                             $"Prefab({prefab.GetObjectSetting().Name}) has been created in different scene. Terminated.");
                         return;
                     }
@@ -1114,11 +1114,11 @@ namespace Syadeu.Presentation.Proxy
                     other.transform.localScale = data->m_Scale;
 
                     OnDataObjectProxyCreated?.Invoke(m_ProxyData.GetTransform(data->m_Index), other);
-                    CoreSystem.Logger.Log(Channel.Proxy, true,
+                    CoreSystem.Logger.Log(LogChannel.Proxy, true,
                         $"Prefab({prefab.GetObjectSetting().Name}) proxy created");
                 });
 
-                CoreSystem.Logger.Log(Channel.Proxy, true,
+                CoreSystem.Logger.Log(LogChannel.Proxy, true,
                         $"Prefab({prefab.GetObjectSetting().Name}) proxy requested");
             }
             else
@@ -1133,7 +1133,7 @@ namespace Syadeu.Presentation.Proxy
                 if (other.InitializeOnCall) other.InternalInitialize();
 
                 OnDataObjectProxyCreated?.Invoke(m_ProxyData.GetTransform(data->m_Index), other);
-                CoreSystem.Logger.Log(Channel.Proxy, true,
+                CoreSystem.Logger.Log(LogChannel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().Name}) proxy created, pool remains {pool.Count}");
             }
         }
@@ -1168,7 +1168,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 data->m_Translation = proxy.transform.position;
 
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     "in-corrected translation found. Did you moved proxy transform directly?");
             }
 
@@ -1184,7 +1184,7 @@ namespace Syadeu.Presentation.Proxy
                 m_TerminatedProxies.Add(prefab, pool);
             }
             pool.Push(proxy);
-            CoreSystem.Logger.Log(Channel.Proxy, true,
+            CoreSystem.Logger.Log(LogChannel.Proxy, true,
                     $"Prefab({prefab.GetObjectSetting().m_Name}) proxy removed.");
             return proxy;
         }
@@ -1224,7 +1224,7 @@ namespace Syadeu.Presentation.Proxy
                     PrefabList.ObjectSetting prefabInfo = prefabIdx.GetObjectSetting();
                     if (prefabInfo == null)
                     {
-                        CoreSystem.Logger.LogError(Channel.Proxy,
+                        CoreSystem.Logger.LogError(LogChannel.Proxy,
                             $"Cannot retrieve prefab setting index of {prefabIdx.Index}.");
                         return;
                     }
@@ -1369,7 +1369,7 @@ namespace Syadeu.Presentation.Proxy
             m_Instances.Clear();
             m_TerminatedProxies.Clear();
 
-            CoreSystem.Logger.Log(Channel.Proxy,
+            CoreSystem.Logger.Log(LogChannel.Proxy,
                 "Release all proxy GameObjects");
         }
 

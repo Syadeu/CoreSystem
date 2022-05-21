@@ -109,7 +109,7 @@ namespace Syadeu.Collections
         {
             if (!Contains(name))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have name of {name} value.");
                 return null;
             }
@@ -119,7 +119,7 @@ namespace Syadeu.Collections
         {
             if (!Contains(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
                 return null;
             }
@@ -130,7 +130,7 @@ namespace Syadeu.Collections
             ValuePair valuePair = GetValuePair(name);
             if (valuePair == null)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have name of {name} value.");
                 return null;
             }
@@ -142,7 +142,7 @@ namespace Syadeu.Collections
             ValuePair valuePair = GetValuePair(hash);
             if (valuePair == null)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
                 return null;
             }
@@ -169,7 +169,7 @@ namespace Syadeu.Collections
         {
             if (!Contains(name))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have name of {name} value.");
                 return;
             }
@@ -179,7 +179,7 @@ namespace Syadeu.Collections
         {
             if (!Contains(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} does not have hash of {hash} value.");
                 return;
             }
@@ -208,7 +208,7 @@ namespace Syadeu.Collections
         {
             if (Contains(valuePair.Hash))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     "Atempt to add same ValuePair.");
                 return;
             }
@@ -221,7 +221,7 @@ namespace Syadeu.Collections
         {
             if (Contains(name))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"This {nameof(ValuePairContainer)} already contains name of {name}.");
                 return;
             }
@@ -234,7 +234,7 @@ namespace Syadeu.Collections
         {
             if (Contains(name))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"This {nameof(ValuePairContainer)} already contains name of {name}.");
                 return;
             }
@@ -276,7 +276,7 @@ namespace Syadeu.Collections
         {
             if (i >= Count)
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{nameof(ValuePairContainer)} raised Out of Range. Request remove index {i} exceed container count {Count}.");
                 return;
             }

@@ -97,7 +97,7 @@ namespace Syadeu.Presentation
         {
             if (!m_ChildHierarchyHashMap.ContainsKey(parent))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({parent.GetObject().Name}) doesn\'t have any childs.");
 
                 return 0;
@@ -120,7 +120,7 @@ namespace Syadeu.Presentation
             int childCount = GetChildCount(in parent);
             if (childCount <= index)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Out of range, Entity({parent.GetObject().Name}) has {childCount} childs.");
 
                 return InstanceID.Empty;

@@ -17,6 +17,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;

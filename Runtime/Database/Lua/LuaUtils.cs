@@ -14,7 +14,7 @@ namespace Syadeu.Collections.Lua
         public static void Log(string txt)
         {
             ConsoleWindow.Log(txt);
-            CoreSystem.Logger.Log(Channel.Lua, txt);
+            CoreSystem.Logger.Log(LogChannel.Lua, txt);
         }
 
         public static void AddConsoleCommand(Action<string> cmd, string[] args)

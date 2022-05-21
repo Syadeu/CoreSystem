@@ -114,7 +114,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if (components[i] == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
+                    CoreSystem.Logger.LogError(LogChannel.Proxy,
                         $"{name} has missing component. Fix it!");
 
                     continue;
@@ -308,7 +308,7 @@ namespace Syadeu.Presentation.Proxy
                 AnimatorComponent animator = GetComponent<AnimatorComponent>();
                 if (animator == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Timeline trying to triggering animator at entity({entity.Name}) but there\'s no animator");
                     return;
                 }
@@ -317,7 +317,7 @@ namespace Syadeu.Presentation.Proxy
                 return;
             }
 
-            CoreSystem.Logger.LogError(Channel.Entity,
+            CoreSystem.Logger.LogError(LogChannel.Entity,
                 $"Unhandled marker type: {notification.GetType().Name}");
         }
 

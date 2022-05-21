@@ -99,7 +99,7 @@ namespace SyadeuEditor
             {
                 if (list[i].GetEditorAsset() == null)
                 {
-                    CoreSystem.Logger.Log(Channel.Editor,
+                    CoreSystem.Logger.Log(LogChannel.Editor,
                         $"PrefabList found an invalid asset at {i}:{list[i].m_Name}");
 
                     //list[i].m_Name = $"!!INVALID!! {list[i].m_Name}";
@@ -155,7 +155,7 @@ namespace SyadeuEditor
 
                         list[targetIdx] = new PrefabList.ObjectSetting(name, refObj, isWorldUI);
 
-                        CoreSystem.Logger.Log(Channel.Editor,
+                        CoreSystem.Logger.Log(LogChannel.Editor,
                             $"PrefabList index at {targetIdx}:{previousName} was invalid " +
                             $"but replaced to newly added prefab({name})");
 

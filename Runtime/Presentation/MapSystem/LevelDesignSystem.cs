@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections;
 using Syadeu.Mono;
 using Syadeu.Presentation.Render;
 using System;

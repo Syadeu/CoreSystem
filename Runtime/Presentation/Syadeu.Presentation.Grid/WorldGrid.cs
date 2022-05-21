@@ -196,7 +196,7 @@ namespace Syadeu.Presentation.Grid
                 int maxCount = ((m_Range.x * 2) + 1) * ((m_Range.z * 2) + 1) * ((m_Range.y * 2) + 1);
                 if (maxCount > 255)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"You\'re trying to get range of grid that exceeding length 255. " +
                         $"Buffer is fixed to 255 length, overloading indices({maxCount - 255}) will be dropped.");
                 }

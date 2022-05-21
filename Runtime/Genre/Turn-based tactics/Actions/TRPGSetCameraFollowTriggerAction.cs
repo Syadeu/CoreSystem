@@ -24,7 +24,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!(entity.Target is IEntity))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
                 return;
             }

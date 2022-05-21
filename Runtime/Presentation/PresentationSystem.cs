@@ -122,7 +122,7 @@ namespace Syadeu.Presentation
         void IDisposable.Dispose()
         {
             s_Instance = Null;
-            CoreSystem.Logger.Log(Channel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
+            CoreSystem.Logger.Log(LogChannel.Presentation, $"Dispose public system struct of {TypeHelper.TypeOf<T>.Name}");
         }
 
         public static bool IsValid() => !Instance.Equals(Null);
@@ -169,13 +169,13 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                 if (TypeHelper.TypeOf<TGroup>.Type.IsAbstract)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Group cannot be abstract.");
                     return Null;
                 }
                 if (TypeHelper.TypeOf<TSystem>.Type.IsAbstract)
                 {
-                    CoreSystem.Logger.LogError(Channel.Presentation,
+                    CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"System cannot be abstract.");
                     return Null;
                 }

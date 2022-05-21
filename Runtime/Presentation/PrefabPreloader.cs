@@ -37,7 +37,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (prefab.IsNone() || !prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Core,
+                CoreSystem.Logger.LogError(LogChannel.Core,
                     $"Cannot add invalid prefab(index: {prefab.Index}, subasset: {prefab.SubAssetName}) to preload");
                 return;
             }

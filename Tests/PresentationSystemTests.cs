@@ -63,7 +63,7 @@ public class PresentationSystemTests
         }
         protected override PresentationResult OnStartPresentation()
         {
-            CoreSystem.Logger.Log(Channel.Core, "Test123System Starting");
+            CoreSystem.Logger.Log(LogChannel.Core, "Test123System Starting");
 
             CoreSystem.Logger.NotNull(testSystem);
 
@@ -72,32 +72,32 @@ public class PresentationSystemTests
 
         protected override PresentationResult BeforePresentation()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.BeforePresentation();
         }
         protected override PresentationResult BeforePresentationAsync()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.BeforePresentationAsync();
         }
         protected override PresentationResult OnPresentation()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.OnPresentation();
         }
         protected override PresentationResult OnPresentationAsync()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.OnPresentationAsync();
         }
         protected override PresentationResult AfterPresentation()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.AfterPresentation();
         }
         protected override PresentationResult AfterPresentationAsync()
         {
-            CoreSystem.Logger.LogError(Channel.Core, "NEVER RUN THIS");
+            CoreSystem.Logger.LogError(LogChannel.Core, "NEVER RUN THIS");
             return base.AfterPresentationAsync();
         }
     }

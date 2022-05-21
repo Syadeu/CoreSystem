@@ -34,19 +34,19 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!Entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {nameof(FindTargetsAction)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Entity.RawName}) doeesn\'t have {nameof(ActorControllerAttribute)}");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<TRPGActorAttackComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Entity.RawName}) doeesn\'t have {nameof(TRPGActorAttackComponent)}");
                 return TaskStatus.Failure;
             }
@@ -59,7 +59,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!ctr.HasProvider<TRPGActorAttackProvider>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Entity.RawName}) doeesn\'t have {nameof(TRPGActorAttackProvider)}");
                 return TaskStatus.Failure;
             }

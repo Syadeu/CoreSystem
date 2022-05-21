@@ -95,22 +95,22 @@ namespace Syadeu
         private const string c_Indent = "    ";
 
 #line hidden
-#if DEBUG_MODE
-        [System.Diagnostics.DebuggerHidden]
-#endif
-        public static void ToLogError(this string log, UnityEngine.Object target = null)
-        {
-            if (target == null) CoreSystem.Logger.LogError(Channel.Debug, log);
-            else Debug.LogError(log, target);
-        }
-#if DEBUG_MODE
-        [System.Diagnostics.DebuggerHidden]
-#endif
-        public static void ToLog(this string log, UnityEngine.Object target = null)
-        {
-            if (target == null) CoreSystem.Logger.Log(Channel.Debug, log);
-            else Debug.Log(log, target);
-        }
+        //#if DEBUG_MODE
+        //        [System.Diagnostics.DebuggerHidden]
+        //#endif
+        //        public static void ToLogError(this string log, UnityEngine.Object target = null)
+        //        {
+        //            if (target == null) CoreSystem.Logger.LogError(LogChannel.Debug, log);
+        //            else Debug.LogError(log, target);
+        //        }
+        //#if DEBUG_MODE
+        //        [System.Diagnostics.DebuggerHidden]
+        //#endif
+        //        public static void ToLog(this string log, UnityEngine.Object target = null)
+        //        {
+        //            if (target == null) CoreSystem.Logger.Log(LogChannel.Debug, log);
+        //            else Debug.Log(log, target);
+        //        }
         public static void ToLogConsole(this string log, ResultFlag flag = ResultFlag.Normal)
         {
             ConsoleWindow.Log(log, flag);

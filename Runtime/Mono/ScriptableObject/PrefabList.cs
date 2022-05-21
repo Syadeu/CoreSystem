@@ -143,13 +143,13 @@ namespace Syadeu.Mono
                 }
                 if (m_RefPrefab.Asset != null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} already loaded. This is not allowed.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, $"{m_Name} already loaded. This is not allowed.");
 
                     return m_RefPrefab.OperationHandle;
                 }
                 if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, $"{m_Name} is not valid.");
                     return default(AsyncOperationHandle);
                 }
 
@@ -184,7 +184,7 @@ namespace Syadeu.Mono
 
                 if (m_RefPrefab.Asset != null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, "already loaded");
+                    CoreSystem.Logger.LogError(LogChannel.Data, "already loaded");
                     return default(AsyncOperationHandle<T>);
                 }
                 else if (m_RefPrefab.OperationHandle.IsValid())
@@ -193,13 +193,13 @@ namespace Syadeu.Mono
                 }
                 else if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, $"{m_Name} is not valid.");
                     return default(AsyncOperationHandle<T>);
                 }
 #if UNITY_EDITOR
                 if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(m_RefPrefab.editorAsset.GetType()))
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, 
+                    CoreSystem.Logger.LogError(LogChannel.Data, 
                         $"Trying to load with wrong casting type at {m_Name}. " +
                         $"Expected {m_RefPrefab.editorAsset.GetType()} but trying {TypeHelper.TypeOf<T>.Type}.");
                     return default(AsyncOperationHandle<T>);
@@ -213,7 +213,7 @@ namespace Syadeu.Mono
                 }
                 catch (InvalidKeyException)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data,
+                    CoreSystem.Logger.LogError(LogChannel.Data,
                         $"Prefab({m_RefPrefab.AssetGUID}) is not valid. Maybe didn\'t build?");
                     return default(AsyncOperationHandle<T>);
                 }
@@ -229,19 +229,19 @@ namespace Syadeu.Mono
             {
                 if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, $"{m_Name} is not valid.");
                     return;
                 }
                 else if (m_InstantateCount > 0)
                 {
-                    CoreSystem.Logger.LogError(Channel.Data,
+                    CoreSystem.Logger.LogError(LogChannel.Data,
                         $"{m_Name} is not fully released but trying to unload.");
                 }
 
                 //m_LoadedObject = null;
                 m_RefPrefab.ReleaseAsset();
 
-                CoreSystem.Logger.Log(Channel.Data,
+                CoreSystem.Logger.Log(LogChannel.Data,
                     $"Unload asset {m_Name}");
             }
 
@@ -251,7 +251,7 @@ namespace Syadeu.Mono
             {
                 if (!m_RefPrefab.RuntimeKeyIsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Data, $"{m_Name} is not valid.");
+                    CoreSystem.Logger.LogError(LogChannel.Data, $"{m_Name} is not valid.");
                     return default(AsyncOperationHandle<GameObject>);
                 }
 

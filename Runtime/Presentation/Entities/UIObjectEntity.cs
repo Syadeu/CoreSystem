@@ -133,7 +133,7 @@ namespace Syadeu.Presentation.Entities
 
             if (!entity.HasComponent<UIObjectCanvasGroupComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"UI Entity({entity.RawName}) dosen\'t have any {nameof(UIObjectCanvasGroupComponent)}.");
 
                 return;

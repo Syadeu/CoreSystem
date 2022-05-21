@@ -36,7 +36,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (!string.IsNullOrEmpty(p_DebugText))
             {
-                CoreSystem.Logger.Log(Channel.Debug, p_DebugText);
+                CoreSystem.Logger.Log(LogChannel.Debug, p_DebugText);
             }
 
             bool result = true;
@@ -46,7 +46,7 @@ namespace Syadeu.Presentation.Actions
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation, ex.Message + ex.StackTrace);
+                CoreSystem.Logger.LogError(LogChannel.Presentation, ex.Message + ex.StackTrace);
                 result = false;
             }
 

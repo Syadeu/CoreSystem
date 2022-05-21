@@ -56,7 +56,7 @@ namespace Syadeu.Presentation.Actor
 
             if (m_Interaction.IsEmpty() || !m_Interaction.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"interaction is null");
             }
             else

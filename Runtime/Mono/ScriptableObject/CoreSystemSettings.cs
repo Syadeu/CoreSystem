@@ -35,7 +35,7 @@ namespace Syadeu.Mono
         public bool m_CrashAfterException = false;
         [Obsolete] public bool m_EnableAutoStaticInitialize = false;
         public string[] m_AutoInitializeTargetAssembly = new string[] { "Assembly-CSharp" };
-        public Channel m_DisplayLogChannel = Channel.All;
+        public LogChannel m_DisplayLogChannel = LogChannel.All;
 
         //// PrefabManager
         //[Header("Prefab Manager")]

@@ -138,7 +138,7 @@ namespace SyadeuEditor.Presentation.Map
                 {
                     EntityDataList.Instance.SaveData();
 
-                    CoreSystem.Logger.Log(Channel.Editor,
+                    CoreSystem.Logger.Log(LogChannel.Editor,
                         $"Map data Saved");
                 }
             }

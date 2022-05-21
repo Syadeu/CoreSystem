@@ -45,19 +45,19 @@ namespace Syadeu.Presentation.Actions
 #if DEBUG
             if (!entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"An invalid entity trying to execute {nameof(IsActorFactionPredicateAction)}.");
                 return false;
             }
             else if (!(entity.Target is ActorEntity))
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"This entity({entity.Name}) is not a {nameof(ActorEntity)} but trying to predicate({nameof(IsActorFactionPredicateAction)})");
                 return false;
             }
             else if (!entity.HasComponent<ActorFactionComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"This entity({entity.RawName}) dosen\'t have any {nameof(ActorFactionComponent)} but you\'re trying to predicate. This is not allowed.");
 
                 return false;

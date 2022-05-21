@@ -35,7 +35,7 @@ namespace Syadeu.Presentation.Actions
         {
             if (m_Key.IsNullOrEmpty())
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"{nameof(AddDataContainer)}({entity}) error. Key({m_Key}) cannot be a null or empty.");
                 return 0;
             }

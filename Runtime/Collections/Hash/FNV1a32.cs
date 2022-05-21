@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Unity.Burst;
+using Unity.Collections;
+
 namespace Syadeu.Collections
 {
+    [BurstCompile]
     public static class FNV1a32
     {
         private const uint kPrime32 = 16777619;
@@ -22,6 +26,7 @@ namespace Syadeu.Collections
         /// <summary>
         /// FNV1a 32-bit
         /// </summary>
+        [BurstCompile]
         public static uint Calculate(string str)
         {
             if (str == null)
@@ -39,6 +44,28 @@ namespace Syadeu.Collections
             }
 
             return hashValue;
+        }
+        [BurstCompile]
+        public static uint Calculate(in FixedString4096Bytes str)
+        {
+            uint hash;
+            unsafe
+            {
+                if (str.Length == 0)
+                {
+                    hash = kOffsetBasis32;
+                    return hash;
+                }
+
+                hash = kOffsetBasis32;
+
+                for (int i = 0; i < str.Length; i++)
+                {
+                    hash *= kPrime32;
+                    hash ^= (uint)str[i];
+                }
+            }
+            return hash;
         }
 
         /// <summary>

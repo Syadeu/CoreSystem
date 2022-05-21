@@ -55,14 +55,6 @@ namespace Syadeu.Collections
         private static void Initialize()
         {
             SetJsonConverters();
-
-            
-
-            Type[] types = TypeHelper.GetTypes((other) => TypeHelper.TypeOf<IStaticInitializer>.Type.IsAssignableFrom(other));
-            for (int i = 0; i < types.Length; i++)
-            {
-                System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(types[i].TypeHandle);
-            }
         }
 
         private static void SetJsonConverters()

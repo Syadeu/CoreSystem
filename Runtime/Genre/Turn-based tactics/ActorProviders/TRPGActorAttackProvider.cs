@@ -57,7 +57,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!Parent.HasComponent<GridComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Parent.Name}) doesn\'t have any {nameof(GridComponent)}.");
 
                 return new FixedList512Bytes<InstanceID>();

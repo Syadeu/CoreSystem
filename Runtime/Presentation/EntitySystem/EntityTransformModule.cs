@@ -100,7 +100,7 @@ namespace Syadeu.Presentation
         {
             if (!m_TransformHashMap.ContainsKey(entity))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
 
                 return ProxyTransform.Null;
@@ -112,7 +112,7 @@ namespace Syadeu.Presentation
         {
             if (!m_TransformHashMap.ContainsKey(entity))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
 
                 return;
@@ -131,7 +131,7 @@ namespace Syadeu.Presentation
         {
             if (!m_EntityHashMap.ContainsKey(transform))
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"");
 
                 return InstanceID.Empty;
@@ -164,7 +164,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!transformStatic.HasTransform(id))
             {
-                CoreSystem.Logger.Log(Channel.Entity,
+                CoreSystem.Logger.Log(LogChannel.Entity,
                     $"This entity({id.GetObject().Name}) doesn\'t have any transform. " +
                     $"If you want to access transform, create it before access.");
 

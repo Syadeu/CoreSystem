@@ -80,7 +80,7 @@ namespace Syadeu.Presentation.Components
             m_Increased += 1;
             m_Length = c_InitialCount * m_Increased;
 
-            CoreSystem.Logger.Log(Channel.Component, $"increased {TypeHelper.ToString(TypeInfo.Type)} {m_Length} :: {m_Increased}");
+            CoreSystem.Logger.Log(LogChannel.Component, $"increased {TypeHelper.ToString(TypeInfo.Type)} {m_Length} :: {m_Increased}");
         }
 
         public bool Find(in InstanceID entity, ref int entityIndex)
@@ -184,11 +184,11 @@ namespace Syadeu.Presentation.Components
             {
                 disposable.Dispose();
 
-                CoreSystem.Logger.Log(Channel.Component,
+                CoreSystem.Logger.Log(LogChannel.Component,
                     $"{TypeInfo.Type.Name} component at {m_EntityBuffer[index].Hash}:{m_EntityBuffer[index].GetObject()?.Name} disposed.");
             }
 
-            CoreSystem.Logger.Log(Channel.Component,
+            CoreSystem.Logger.Log(LogChannel.Component,
                 $"{TypeInfo.Type.Name} component at {m_EntityBuffer[index].Hash}:{m_EntityBuffer[index].GetObject()?.Name} removed");
 
             m_EntityBuffer[index] = InstanceID.Empty;

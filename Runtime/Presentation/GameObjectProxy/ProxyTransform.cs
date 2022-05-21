@@ -657,7 +657,7 @@ namespace Syadeu.Presentation.Proxy
         {
             if (isDestroyed)
             {
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     "Cannot access this transform because it is destroyed.");
                 return;
             }
@@ -666,7 +666,7 @@ namespace Syadeu.Presentation.Proxy
             {
                 if ((*m_Pointer)[m_Index]->m_DestroyQueued)
                 {
-                    CoreSystem.Logger.LogError(Channel.Proxy,
+                    CoreSystem.Logger.LogError(LogChannel.Proxy,
                         "Cannot access this transform because it is destroyed.");
                     return;
                 }

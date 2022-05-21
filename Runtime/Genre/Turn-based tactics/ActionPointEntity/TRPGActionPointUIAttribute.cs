@@ -85,7 +85,7 @@ namespace Syadeu.Presentation.TurnTable
 #if UNITY_EDITOR
             else
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity ({entity.RawName}) prefab doesn\'t have {nameof(TRPGActionPointOverlayUI)} Monobehaviour.");
             }
 #endif
@@ -103,7 +103,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!entity.HasComponent<TurnPlayerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.RawName}) is not an TurnPlayer ?");
                 return;
             }
@@ -115,7 +115,7 @@ namespace Syadeu.Presentation.TurnTable
             var stat = entity.GetAttribute<ActorStatAttribute>();
             if (stat == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({entity.RawName}) doesn\'t have {nameof(ActorStatAttribute)}.");
                 return;
             }

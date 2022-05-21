@@ -147,7 +147,7 @@ namespace Syadeu.Presentation.Map
             {
                 if (mapData[i].IsEmpty() || !mapData[i].IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"MapData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
 
                     continue;
@@ -163,7 +163,7 @@ namespace Syadeu.Presentation.Map
                 if (sceneDataEntity.m_TerrainData[i].IsEmpty() ||
                     !sceneDataEntity.m_TerrainData[i].IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"TerrainData(Element At {i}) in SceneData({sceneDataEntity.Name}) is not valid.");
 
                     continue;

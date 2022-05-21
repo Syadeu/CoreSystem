@@ -133,7 +133,7 @@ namespace Syadeu.Presentation.Data
 #if DEBUG_MODE
             if (!m_DataContainer.ContainsKey(key))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"{key} is not in the {TypeHelper.TypeOf<DataContainerSystem>.Name}.");
 
                 return null;
@@ -148,7 +148,7 @@ namespace Syadeu.Presentation.Data
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(value.GetType()))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.Name}");
 
                 return default(T);
@@ -162,7 +162,7 @@ namespace Syadeu.Presentation.Data
 #if DEBUG_MODE
             if (!TypeHelper.TypeOf<T>.Type.IsAssignableFrom(value.GetType()))
             {
-                CoreSystem.Logger.LogError(Channel.Data,
+                CoreSystem.Logger.LogError(LogChannel.Data,
                     $"Type mismatch. Value is {TypeHelper.ToString(value.GetType())} but requested as {TypeHelper.TypeOf<T>.Name}");
 
                 return default(T);

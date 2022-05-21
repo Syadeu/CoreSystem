@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Syadeu.Collections;
+using System;
 
 namespace Syadeu
 {

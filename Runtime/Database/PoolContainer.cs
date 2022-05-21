@@ -60,7 +60,7 @@ namespace Syadeu.Collections
         {
             if (!m_Initialized)
             {
-                CoreSystem.Logger.LogError(Channel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
+                CoreSystem.Logger.LogError(LogChannel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
                 throw new Exception("Not Initialized");
             }
 
@@ -92,7 +92,7 @@ namespace Syadeu.Collections
         {
             if (!m_Initialized)
             {
-                CoreSystem.Logger.LogError(Channel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
+                CoreSystem.Logger.LogError(LogChannel.Data, $"Pool Container<{TypeHelper.TypeOf<T>.Type}> is not initialized");
                 throw new Exception("Not Initialized");
             }
             m_List.Enqueue(obj);

@@ -168,13 +168,13 @@ namespace Syadeu.Presentation.Components
 
             if (TypeHelper.IsZeroSizeStruct(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Zero sized wrapper struct({TypeHelper.ToString(componentType)}) is in component list.");
             }
             
             if (/*!UnsafeUtility.IsBlittable(componentType) ||*/ !UnsafeUtility.IsUnmanaged(componentType))
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"managed struct({TypeHelper.ToString(componentType)}) is in component list.");
 
                 return default(ComponentBuffer);
@@ -209,7 +209,7 @@ namespace Syadeu.Presentation.Components
                 {
                     if (!CoreSystem.BlockCreateInstance)
                     {
-                        CoreSystem.Logger.LogError(Channel.Component,
+                        CoreSystem.Logger.LogError(LogChannel.Component,
                             $"Component({TypeHelper.ToString(m_ComponentArrayBuffer[i].TypeInfo.Type)}) buffer has not safely disposed.");
                     }
 
@@ -329,7 +329,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (idx == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -347,7 +347,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (idx == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({t.Name}) infomation at initializing stage.");
 
@@ -364,7 +364,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (idx == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({typeInfo.Type.Name}) infomation at initializing stage.");
 
@@ -418,7 +418,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (GetComponentIndex<TComponent>() == 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.ToString()}) infomation at initializing stage.");
 
@@ -459,7 +459,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!buffer.Value.IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.ToString(type)}) infomation at initializing stage.");
 
@@ -473,7 +473,7 @@ namespace Syadeu.Presentation.Components
 
                     if (!buffer.Value.FindEmpty(ref index.y))
                     {
-                        CoreSystem.Logger.LogError(Channel.Component,
+                        CoreSystem.Logger.LogError(LogChannel.Component,
                             $"Component buffer error. " +
                             $"Component({TypeHelper.ToString(type)}) Hash has been conflected twice. Maybe need to increase default buffer size?");
 
@@ -488,7 +488,7 @@ namespace Syadeu.Presentation.Components
                 GetModule<EntityComponentProcessorModule>()
                     .ProcessOnCreated(entity, type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
-                CoreSystem.Logger.Log(Channel.Component,
+                CoreSystem.Logger.Log(LogChannel.Component,
                     $"Component {TypeHelper.ToString(type)} set at entity({entity.Hash}), index {index}");
             }
         }
@@ -505,7 +505,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!buffer.Value.IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({type.Type.Name}) infomation at initializing stage.");
 
@@ -521,7 +521,7 @@ namespace Syadeu.Presentation.Components
 
                     if (!buffer.Value.FindEmpty(ref index.y))
                     {
-                        CoreSystem.Logger.LogError(Channel.Component,
+                        CoreSystem.Logger.LogError(LogChannel.Component,
                             $"Component buffer error. " +
                             $"Component({type.Type.Name}) Hash has been conflected twice. Maybe need to increase default buffer size?");
 
@@ -536,7 +536,7 @@ namespace Syadeu.Presentation.Components
                 GetModule<EntityComponentProcessorModule>()
                     .ProcessOnCreated(entity, type.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
-                CoreSystem.Logger.Log(Channel.Component,
+                CoreSystem.Logger.Log(LogChannel.Component,
                     $"Component {type.Type.Name} set at entity({entity.Hash}), index {index}");
             }
         }
@@ -552,7 +552,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!buffer.Value.IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -566,7 +566,7 @@ namespace Syadeu.Presentation.Components
                     
                     if (!buffer.Value.FindEmpty(ref index.y))
                     {
-                        CoreSystem.Logger.LogError(Channel.Component,
+                        CoreSystem.Logger.LogError(LogChannel.Component,
                             $"Component buffer error. " +
                             $"Component({TypeHelper.TypeOf<TComponent>.Name}) Hash has been conflected twice. Maybe need to increase default buffer size?");
 
@@ -581,7 +581,7 @@ namespace Syadeu.Presentation.Components
                 GetModule<EntityComponentProcessorModule>()
                     .ProcessOnCreated(entity, TypeHelper.TypeOf<TComponent>.Type, m_ComponentArrayBuffer[index.x].ElementAt(index.y));
 
-                CoreSystem.Logger.Log(Channel.Component,
+                CoreSystem.Logger.Log(LogChannel.Component,
                     $"Component {TypeHelper.TypeOf<TComponent>.Name} set at entity({entity.Hash}), index {index}");
 
                 return ref *buffer.Value.ElementAtPointer<TComponent>(in index.y);
@@ -600,7 +600,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -622,7 +622,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.ToString(componentType)}) infomation at initializing stage.");
 
@@ -644,7 +644,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({componentType.Type.Name}) information at initializing stage.");
 
@@ -672,7 +672,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -700,7 +700,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (!m_ComponentArrayBuffer[index.x].IsCreated)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"Component buffer error. " +
                     $"Didn\'t collected this component({componentType.Name}) infomation at initializing stage.");
 
@@ -723,7 +723,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -732,7 +732,7 @@ namespace Syadeu.Presentation.Components
 #endif
                 if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Entity({entity.Hash}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
 
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -753,7 +753,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -762,7 +762,7 @@ namespace Syadeu.Presentation.Components
 #endif
                 if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Entity({entity.Hash}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
 
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");
@@ -782,7 +782,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
                 if (!m_ComponentArrayBuffer[index.x].IsCreated)
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Component buffer error. " +
                         $"Didn\'t collected this component({TypeHelper.TypeOf<TComponent>.Name}) infomation at initializing stage.");
 
@@ -791,7 +791,7 @@ namespace Syadeu.Presentation.Components
 #endif
                 if (!m_ComponentArrayBuffer[index.x].Find(entity, ref index.y))
                 {
-                    CoreSystem.Logger.LogError(Channel.Component,
+                    CoreSystem.Logger.LogError(LogChannel.Component,
                         $"Entity({entity.Hash}) doesn\'t have component({TypeHelper.TypeOf<TComponent>.Name})");
 
                     throw new InvalidOperationException($"Component buffer error. See Error Log.");

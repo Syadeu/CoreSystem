@@ -14,10 +14,12 @@
 
 using Newtonsoft.Json;
 using System;
+using Unity.Collections;
 
 namespace Syadeu.Collections
 {
     [Serializable] [JsonConverter(typeof(Converters.HashJsonConverter))]
+    [BurstCompatible]
     public struct Hash : IEquatable<Hash>
     {
         public enum Algorithm
@@ -29,6 +31,7 @@ namespace Syadeu.Collections
         }
 
         public static readonly Hash Empty = new Hash(0);
+
         public static Hash NewHash(Algorithm algorithm = Algorithm.Default)
         {
             Guid guid = Guid.NewGuid();
@@ -57,6 +60,7 @@ namespace Syadeu.Collections
 
             throw new NotImplementedException();
         }
+        [NotBurstCompatible]
         public static Hash NewHash(string value, Algorithm algorithm = Algorithm.Default)
         {
             if (algorithm == Algorithm.Default || algorithm == Algorithm.FNV1a32)
@@ -75,10 +79,32 @@ namespace Syadeu.Collections
         {
             mBits = bits;
         }
+        public Hash(FixedString4096Bytes key)
+        {
+            mBits = FNV1a32.Calculate(key);
+#if DEBUG_MODE
+            m_Key = new FixedString512Bytes(key);
+#endif
+        }
+        public Hash(FixedString512Bytes key)
+        {
+            mBits = FNV1a32.Calculate(key);
+#if DEBUG_MODE
+            m_Key = key;
+#endif
+        }
+        public Hash(FixedString128Bytes key)
+        {
+            mBits = FNV1a32.Calculate(key);
+#if DEBUG_MODE
+            m_Key = key;
+#endif
+        }
 
         public bool IsEmpty() => Equals(Empty);
 
         public bool Equals(Hash other) => mBits.Equals(other.mBits);
+        [NotBurstCompatible]
         public override bool Equals(object obj) => (obj is Hash hash) && Equals(hash);
 
         public int ToInt32() => (int)mBits;
@@ -94,6 +120,7 @@ namespace Syadeu.Collections
         public static implicit operator Hash(ulong a) => new Hash(a);
 
         public override int GetHashCode() => mBits.GetHashCode();
+        [NotBurstCompatible]
         public override string ToString() => mBits.ToString();
     }
 }

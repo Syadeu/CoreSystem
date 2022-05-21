@@ -37,7 +37,7 @@ namespace Syadeu.Presentation.Actions
             attribute = entity.GetAttribute<AnimatorAttribute>();
             if (attribute == null)
             {
-                CoreSystem.Logger.LogError(Channel.Presentation,
+                CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"Target does not have {nameof(AnimatorAttribute)}");
                 return false;
             }

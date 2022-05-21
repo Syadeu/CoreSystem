@@ -21,7 +21,7 @@ namespace Syadeu.Presentation.TurnTable
         {
             if (!PresentationSystem<TRPGIngameSystemGroup, TRPGGridSystem>.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Action,
+                CoreSystem.Logger.LogError(LogChannel.Action,
                     $"Not ingame");
 
                 return 0;

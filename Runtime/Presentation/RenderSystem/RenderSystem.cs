@@ -108,7 +108,7 @@ namespace Syadeu.Presentation.Render
             {
                 if (value.type != UnityEngine.LightType.Directional)
                 {
-                    CoreSystem.Logger.LogError(Channel.Render,
+                    CoreSystem.Logger.LogError(LogChannel.Render,
                         $"{value.name} is not a Directional Light.");
                     return;
                 }

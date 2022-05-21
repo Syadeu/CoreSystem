@@ -15,6 +15,9 @@
 using System;
 using Unity.Mathematics;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Syadeu.Collections
 {
@@ -82,8 +85,6 @@ namespace Syadeu.Collections
 
             return -1;
         }
-
-        public static bool IsNullOrEmpty(this string t) => string.IsNullOrEmpty(t);
 
         #region Matrix
 
@@ -219,5 +220,59 @@ namespace Syadeu.Collections
 
             return component;
         }
+
+        #region String
+
+        private const char c_StringLineSeperator = '\n';
+        private static string[] s_StringLineSpliter = new[] { "\r\n", "\r", "\n" };
+        private static char[] s_StringLineSpliterChar = new[] { '\r', '\n' };
+
+        /// <summary>
+        /// 이 스트링이 null 혹은 비었는지 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static bool IsNullOrEmpty(this string t)
+        {
+            return string.IsNullOrEmpty(t);
+        }
+        /// <summary>
+        /// 문자열 마지막에 Return iteral 을 추가하여 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static string ReturnAtLast(this string t)
+        {
+            return t + c_StringLineSeperator;
+        }
+        /// <summary>
+        /// 문자열 처음에 Return iteral 을 추가하여 반환합니다.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static string ReturnAtFirst(this string t)
+        {
+            return c_StringLineSeperator + t;
+        }
+
+        #endregion
+
+        #region InputSystem
+
+#if ENABLE_INPUT_SYSTEM
+        public static bool IsMouseAction(this InputAction t)
+        {
+            return t.activeControl.device.Equals(Mouse.current);
+        }
+        public static bool IsMouseMoveAction(this InputAction t)
+        {
+            if (!t.IsMouseAction()) return false;
+            else if (t.ReadValueAsObject() is Vector2) return true;
+
+            return false;
+        }
+#endif
+
+        #endregion
     }
 }

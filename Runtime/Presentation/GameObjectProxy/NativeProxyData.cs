@@ -252,12 +252,12 @@ namespace Syadeu.Presentation.Proxy
 #if DEBUG
             if (p->m_ParentIndex > 0)
             {
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     $"Internal proxy error. Parent has not disclosed while child is destroy.");
             }
             if (p->m_ChildIndices.Length > 0)
             {
-                CoreSystem.Logger.LogError(Channel.Proxy,
+                CoreSystem.Logger.LogError(LogChannel.Proxy,
                     $"Internal proxy error. Parent that has childs(count: {p->m_ChildIndices.Length}) doesn\'t disclosed.");
             }
 #endif

@@ -573,7 +573,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (baseObj == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Cannot create an invalid entity.");
 
                 return Entity<T>.Empty;
@@ -604,12 +604,12 @@ namespace Syadeu.Presentation
             entity = null;
             if (original == null)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityNotFoundError, key, targetPos));
+                CoreSystem.Logger.LogError(LogChannel.Entity, string.Format(c_EntityNotFoundError, key, targetPos));
                 return false;
             }
             if (!(original is EntityBase))
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_IsNotEntityError, key));
+                CoreSystem.Logger.LogError(LogChannel.Entity, string.Format(c_IsNotEntityError, key));
                 return false;
             }
 #endif
@@ -617,7 +617,7 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
             if (!entity.Prefab.IsNone() && !entity.Prefab.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_EntityHasInvalidPrefabError, original.Name));
+                CoreSystem.Logger.LogError(LogChannel.Entity, string.Format(c_EntityHasInvalidPrefabError, original.Name));
                 return false;
             }
 #endif
@@ -672,7 +672,7 @@ namespace Syadeu.Presentation
             {
                 if (!CoreSystem.BlockCreateInstance)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Already destroyed entity {hash}");
                 }
                 
@@ -683,7 +683,7 @@ namespace Syadeu.Presentation
             {
                 if (!CoreSystem.BlockCreateInstance)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"This entity({m_ObjectEntities[hash].Name}) marked as destroyed");
                 }
                 
@@ -738,7 +738,7 @@ namespace Syadeu.Presentation
                 return value;
             }
 
-            CoreSystem.Logger.LogError(Channel.Entity,
+            CoreSystem.Logger.LogError(LogChannel.Entity,
                 $"ID({id.Hash}) entity not found.");
             return null;
         }

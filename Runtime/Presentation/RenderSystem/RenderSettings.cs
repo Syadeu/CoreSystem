@@ -61,7 +61,7 @@ namespace Syadeu.Presentation.Render
             Hash hash = Hash.NewHash(name);
             if (!m_MaterialHashMap.ContainsKey(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Render,
+                CoreSystem.Logger.LogError(LogChannel.Render,
                     $"");
                 return null;
             }
@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Render
             Hash hash = Hash.NewHash(name);
             if (!m_ComputeShaderHashMap.ContainsKey(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Render,
+                CoreSystem.Logger.LogError(LogChannel.Render,
                     $"");
                 return null;
             }
@@ -85,7 +85,7 @@ namespace Syadeu.Presentation.Render
             Hash hash = Hash.NewHash(name);
             if (!m_ShaderHashMap.ContainsKey(hash))
             {
-                CoreSystem.Logger.LogError(Channel.Render,
+                CoreSystem.Logger.LogError(LogChannel.Render,
                     $"");
                 return null;
             }

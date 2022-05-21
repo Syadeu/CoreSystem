@@ -48,7 +48,7 @@ namespace Syadeu.Presentation.Actor
             }
             catch (System.Exception ex)
             {
-                CoreSystem.Logger.LogError(Channel.Entity, ex);
+                CoreSystem.Logger.LogError(LogChannel.Entity, ex);
             }
         }
         void IActorProvider.OnCreated()

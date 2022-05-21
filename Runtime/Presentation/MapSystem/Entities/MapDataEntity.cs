@@ -71,7 +71,7 @@ namespace Syadeu.Presentation.Map
 
                     if (!item.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity,
+                        CoreSystem.Logger.LogError(LogChannel.Entity,
                             $"MapDataEntity() trying to load an invalid entity.");
 
                         Interlocked.Increment(ref m_Counter);
@@ -101,7 +101,7 @@ namespace Syadeu.Presentation.Map
 
                     if (!item.IsValid())
                     {
-                        CoreSystem.Logger.LogError(Channel.Entity,
+                        CoreSystem.Logger.LogError(LogChannel.Entity,
                             $"MapDataEntity() trying to load an invalid entity.");
 
                         Interlocked.Increment(ref m_Counter);
@@ -165,7 +165,7 @@ namespace Syadeu.Presentation.Map
                 if (entity.m_Objects[i].m_Object.IsEmpty() || 
                     !entity.m_Objects[i].m_Object.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Cannot spawn map object in [{entity.Name}] element at {i} is not valid.");
 
                     entity.CreatedEntities[i] = Entity<EntityBase>.Empty;
@@ -181,7 +181,7 @@ namespace Syadeu.Presentation.Map
                 if (entity.m_RawObjects[i].m_Object.IsNone() ||
                     !entity.m_RawObjects[i].m_Object.IsValid())
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity,
+                    CoreSystem.Logger.LogError(LogChannel.Entity,
                         $"Cannot spawn map object in [{entity.Name}] element at {i} raw object is not valid.");
 
                     continue;

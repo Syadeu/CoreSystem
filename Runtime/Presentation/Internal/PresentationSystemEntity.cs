@@ -112,7 +112,7 @@ namespace Syadeu.Presentation.Internal
             }
 
             XmlSettings.SaveSettings(this);
-            CoreSystem.Logger.Log(Channel.Presentation,
+            CoreSystem.Logger.Log(LogChannel.Presentation,
                 $"Shutdown system {GetType().Name}");
         }
         protected virtual void OnShutDown() { }

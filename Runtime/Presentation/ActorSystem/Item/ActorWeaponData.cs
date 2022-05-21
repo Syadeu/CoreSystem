@@ -125,7 +125,7 @@ namespace Syadeu.Presentation.Actor
             }
             else if (!m_PrefabInstance.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity, 
+                CoreSystem.Logger.LogError(LogChannel.Entity, 
                     $"Cannot fire FX({TypeHelper.Enum<FXBounds.TriggerOptions>.ToString(triggerOptions)}), " +
                     $"target prefab in {Name} is invalid.");
                 return;

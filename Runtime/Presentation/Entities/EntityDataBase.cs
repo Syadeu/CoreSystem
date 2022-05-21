@@ -93,7 +93,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (Reserved)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
                 return null;
             }
@@ -113,7 +113,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (Reserved)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
                 return null;
             }
@@ -134,7 +134,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (Reserved)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttribute)} is not allowed.");
                 return null;
             }
@@ -146,7 +146,7 @@ namespace Syadeu.Presentation.Entities
         {
             if (Reserved)
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"This object({Name}) is not an instance. {nameof(IEntityData.GetAttributes)} is not allowed.");
                 return null;
             }
@@ -216,7 +216,7 @@ namespace Syadeu.Presentation.Entities
                 AttributeBase att = (AttributeBase)EntityDataList.Instance.GetObject(m_AttributeList[i]);
                 if (att == null)
                 {
-                    CoreSystem.Logger.LogError(Channel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].Hash, i));
+                    CoreSystem.Logger.LogError(LogChannel.Entity, string.Format(c_AttributeWarning, Name, m_AttributeList[i].Hash, i));
                     continue;
                 }
 

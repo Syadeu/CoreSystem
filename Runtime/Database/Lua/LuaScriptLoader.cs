@@ -39,14 +39,14 @@ namespace Syadeu.Collections.Lua
 
         public void ReloadScripts()
         {
-            CoreSystem.Logger.Log(Channel.Lua, "Reloading");
+            CoreSystem.Logger.Log(LogChannel.Lua, "Reloading");
             m_Resources.Clear();
 
             TextAsset[] scriptAssets = UnityEngine.Resources.LoadAll<TextAsset>("Lua");
             for (int i = 0; i < scriptAssets.Length; i++)
             {
                 m_Resources.Add(scriptAssets[i].name, scriptAssets[i].text);
-                CoreSystem.Logger.Log(Channel.Lua, $"Loaded {scriptAssets[i].name}");
+                CoreSystem.Logger.Log(LogChannel.Lua, $"Loaded {scriptAssets[i].name}");
             }
 
             if (!Directory.Exists($"{CoreSystemFolder.LuaPath}"))
@@ -63,7 +63,7 @@ namespace Syadeu.Collections.Lua
                     string folderName = Path.GetFileName(folders[i]);
                     if (IsSpecialFolder(folderName)) continue;
 
-                    CoreSystem.Logger.Log(Channel.Lua, $"Searching folder ({folderName})");
+                    CoreSystem.Logger.Log(LogChannel.Lua, $"Searching folder ({folderName})");
                     LoadAllScripts(folders[i], scrs, depth + 1);
                 }
 
@@ -74,7 +74,7 @@ namespace Syadeu.Collections.Lua
                     if (!Path.GetExtension(scriptsPath[i]).Equals(".lua")) continue;
 
                     scrs.Add(GetFileName(scriptsPath[i]), File.ReadAllText(scriptsPath[i]));
-                    CoreSystem.Logger.Log(Channel.Lua, $"Loaded {GetFileName(scriptsPath[i])}.lua");
+                    CoreSystem.Logger.Log(LogChannel.Lua, $"Loaded {GetFileName(scriptsPath[i])}.lua");
                 }
             }
             bool IsSpecialFolder(string folderName)

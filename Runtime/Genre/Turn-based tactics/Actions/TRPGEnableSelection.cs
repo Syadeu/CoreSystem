@@ -3,6 +3,7 @@
 #endif
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 using Syadeu.Presentation.Actions;
 using System.ComponentModel;
 using System.Runtime.InteropServices;

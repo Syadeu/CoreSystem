@@ -113,14 +113,15 @@ namespace Syadeu.Collections
 
             public static string ToString(T enumValue)
             {
-                int target = Convert.ToInt32(enumValue);
+                long target = Convert.ToInt64(enumValue);
                 if (IsFlag)
                 {
                     string temp = string.Empty;
                     for (int i = 0; i < Values.Length; i++)
                     {
-                        if (Values[i] == 0 && !target.Equals(0)) continue;
-                        if ((target & Values[i]) == Values[i])
+                        long val = Convert.ToInt64(Values[i]);
+                        if (val == 0 && !target.Equals(0)) continue;
+                        if ((target & val) == val)
                         {
                             if (!string.IsNullOrEmpty(temp)) temp += ", ";
                             temp += Names[i];
@@ -133,11 +134,15 @@ namespace Syadeu.Collections
                 {
                     for (int i = 0; i < Values.Length; i++)
                     {
-                        if (target.Equals(Values[i])) return Names[i];
+                        if (target.Equals(Convert.ToInt64(Values[i]))) return Names[i];
                     }
                 }
 
                 throw new ArgumentException(nameof(enumValue));
+            }
+            public static T ToEnum(in string value)
+            {
+                return (T)Enum.Parse(typeof(T), value, true);
             }
         }
         [StructLayout(LayoutKind.Sequential)]

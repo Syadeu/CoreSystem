@@ -78,7 +78,7 @@ namespace Syadeu.Presentation.Render
 			CoreSystem.Logger.ThreadBlock(nameof(CameraData), Syadeu.Internal.ThreadInfo.Unity);
 			if (cam == null)
             {
-				CoreSystem.Logger.LogError(Channel.Data,
+				CoreSystem.Logger.LogError(LogChannel.Data,
 					$"{nameof(CameraData)} trying to update null");
 				return;
 			}
@@ -153,7 +153,7 @@ namespace Syadeu.Presentation.Render
 			CoreSystem.Logger.ThreadBlock(nameof(LightData), Syadeu.Internal.ThreadInfo.Unity);
 			if (light == null)
             {
-				CoreSystem.Logger.LogError(Channel.Data,
+				CoreSystem.Logger.LogError(LogChannel.Data,
 					$"{nameof(LightData)} trying to update null");
 				return;
             }

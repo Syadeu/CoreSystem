@@ -8,6 +8,7 @@ using Syadeu.Presentation.Components;
 
 namespace Syadeu.Presentation.BehaviorTree
 {
+    using Syadeu.Collections;
 #if CORESYSTEM_TURNBASESYSTEM
     using Syadeu.Presentation.TurnTable;
 
@@ -21,13 +22,13 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!Entity.IsValid())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Invalid Target at {nameof(FindTargetsAction)}.");
                 return TaskStatus.Failure;
             }
             else if (!Entity.HasComponent<ActorControllerComponent>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Entity.RawName}) doesn\'t have {nameof(ActorControllerAttribute)}");
                 return TaskStatus.Failure;
             }
@@ -36,7 +37,7 @@ namespace Syadeu.Presentation.BehaviorTree
 #if DEBUG_MODE
             if (!ctr.HasProvider<TRPGActorAttackProvider>())
             {
-                CoreSystem.Logger.LogError(Channel.Entity,
+                CoreSystem.Logger.LogError(LogChannel.Entity,
                     $"Entity({Entity.RawName}) doesn\'t have {nameof(TRPGActorAttackProvider)}");
                 return TaskStatus.Failure;
             }

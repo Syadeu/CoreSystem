@@ -83,7 +83,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (m_CheckSum.Value != 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"This ECB has already opened writer. ECB cannot have more than 2 writers at the same time. " +
                     $"This is not allowed.");
 
@@ -146,7 +146,7 @@ namespace Syadeu.Presentation.Components
 #if DEBUG_MODE
             if (m_CheckSum.Value != 0)
             {
-                CoreSystem.Logger.LogError(Channel.Component,
+                CoreSystem.Logger.LogError(LogChannel.Component,
                     $"This ECB has un-finshed writing job. This is not allowed.");
             }
 #endif

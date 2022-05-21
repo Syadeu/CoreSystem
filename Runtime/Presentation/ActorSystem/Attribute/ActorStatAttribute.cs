@@ -52,10 +52,11 @@ namespace Syadeu.Presentation.Actor
         private PrefabReference<Texture2D> m_ShortUISTIcon = PrefabReference<Texture2D>.None;
 
         [JsonIgnore] private ValuePairContainer m_CurrentStats;
-        [JsonIgnore] private UIDocument m_UIDocument;
+        [JsonIgnore] private UIDocument m_ShortUIDocument;
 
         //public event Action<ActorStatAttribute, Hash, object> OnValueChanged;
 
+        [JsonIgnore] public UIDocument ShortUI => m_ShortUIDocument;
         [JsonIgnore] public float HP => m_HP;
 
         #region Object Descriptions
@@ -71,17 +72,19 @@ namespace Syadeu.Presentation.Actor
         {
             //m_CurrentStats = (ValuePairContainer)m_Stats.Clone();
 
-            m_UIDocument = m_ShortUI.GetObject().GetUIDocument();
+            m_ShortUIDocument = m_ShortUI.GetObject().GetUIDocument();
 
             VisualElement
-                hpElement = m_UIDocument.rootVisualElement.Q(name: m_ShortUIHPField),
+                hpElement = m_ShortUIDocument.rootVisualElement.Q(name: m_ShortUIHPField),
                 hpIcon = hpElement.Q(name: m_ShortUIIconField),
 
-                stElement = m_UIDocument.rootVisualElement.Q(name: m_ShortUISTField),
+                stElement = m_ShortUIDocument.rootVisualElement.Q(name: m_ShortUISTField),
                 stIcon = stElement.Q(name: m_ShortUIIconField);
 
             hpIcon.style.backgroundImage = m_ShortUIHPIcon.Asset;
             stIcon.style.backgroundImage = m_ShortUISTIcon.Asset;
+
+            m_ShortUIDocument.SetActive(false);
         }
         //protected override void OnInitialize()
         //{
@@ -90,9 +93,10 @@ namespace Syadeu.Presentation.Actor
         protected override void OnReserve()
         {
             base.OnReserve();
+            UnityEngine.Object.Destroy(m_ShortUIDocument.gameObject);
 
             m_CurrentStats = null;
-            m_UIDocument = null;
+            m_ShortUIDocument = null;
         }
 
         #endregion
@@ -143,7 +147,7 @@ namespace Syadeu.Presentation.Actor
         {
             entity.AddComponent<ActorStatComponent>();
             ref ActorStatComponent stat = ref entity.GetComponent<ActorStatComponent>();
-            stat = new ActorStatComponent(attribute.HP, attribute.m_ShortUI);
+            stat = new ActorStatComponent(attribute.HP);
         }
         protected override void OnDestroy(ActorStatAttribute attribute, Entity<IEntityData> entity)
         {
@@ -156,8 +160,6 @@ namespace Syadeu.Presentation.Actor
         private float m_OriginalHP;
         private float m_HP;
 
-        private FixedReference<UIDocumentConstantData> m_ShortUI;
-
         public float OriginalHP => m_OriginalHP;
         public float HP
         {
@@ -168,15 +170,10 @@ namespace Syadeu.Presentation.Actor
             }
         }
 
-        public FixedReference<UIDocumentConstantData> ShortUI => m_ShortUI;
-
-        public ActorStatComponent(float originalHP,
-            FixedReference<UIDocumentConstantData> shortUI)
+        public ActorStatComponent(float originalHP)
         {
             m_OriginalHP = originalHP;
             m_HP = originalHP;
-
-            m_ShortUI = shortUI;
         }
     }
 }
