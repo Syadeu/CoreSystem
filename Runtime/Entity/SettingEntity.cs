@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace Syadeu.Entities
 {
+    [System.Obsolete("")]
     public abstract class SettingEntity : ScriptableObject
     {
         protected static bool IsMainthread()

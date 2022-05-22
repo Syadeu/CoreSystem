@@ -16,6 +16,7 @@ using System;
 
 namespace Syadeu
 {
+    [Obsolete("Use AssetPathAttribute", true)]
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class CustomStaticSettingAttribute : Attribute
     {

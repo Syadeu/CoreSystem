@@ -14,6 +14,7 @@
 
 namespace Syadeu.Entities
 {
+    [System.Obsolete("")]
     public interface IStaticSetting : IInitialize
     {
         bool Initialized { get; }

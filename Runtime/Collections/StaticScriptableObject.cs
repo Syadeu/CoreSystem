@@ -66,8 +66,7 @@ namespace Syadeu.Collections
                     {
                         path = (customPath.Path);
                     }
-                    else path = ("Point");
-
+                    else path = "Syadeu";
 #if UNITY_EDITOR
                     if (!Directory.Exists(Path.Combine(c_EditorAssetPath, path)))
                     {
@@ -75,7 +74,7 @@ namespace Syadeu.Collections
                     }
 
 #endif
-                    s_Instance = Resources.Load<T>($"{path}/{TypeHelper.TypeOf<T>.ToString()}");
+                    s_Instance = Resources.Load<T>(Path.Combine(path, TypeHelper.TypeOf<T>.ToString()));
                     if (s_Instance == null)
                     {
                         Debug.Log(

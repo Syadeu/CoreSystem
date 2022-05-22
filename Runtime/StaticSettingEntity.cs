@@ -29,6 +29,7 @@ namespace Syadeu
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
+    [System.Obsolete("Use StaticScriptableObject<T>")]
     public abstract class StaticSettingEntity<T> : SettingEntity, IStaticSetting 
         where T : ScriptableObject, IStaticSetting
     {
@@ -53,10 +54,10 @@ namespace Syadeu
                     if (m_Instance != null) return m_Instance;
 
                     string path;
-                    var customPathAtt = TypeHelper.TypeOf<T>.Type.GetCustomAttribute<CustomStaticSettingAttribute>();
+                    var customPathAtt = TypeHelper.TypeOf<T>.Type.GetCustomAttribute<AssetPathAttribute>();
                     if (customPathAtt != null)
                     {
-                        path = customPathAtt.CustomPath;
+                        path = customPathAtt.Path;
                     }
                     else path = "Syadeu";
 #if UNITY_EDITOR
