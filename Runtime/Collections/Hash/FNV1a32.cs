@@ -26,24 +26,10 @@ namespace Syadeu.Collections
         /// <summary>
         /// FNV1a 32-bit
         /// </summary>
-        [BurstCompile]
         public static uint Calculate(string str)
         {
-            if (str == null)
-            {
-                return kOffsetBasis32;
-            }
-
-            uint hashValue = kOffsetBasis32;
-
-            int length = str.Length;
-            for (int i = 0; i < length; i++)
-            {
-                hashValue *= kPrime32;
-                hashValue ^= (uint)str[i];
-            }
-
-            return hashValue;
+            FixedString4096Bytes boxed = str;
+            return Calculate(boxed);
         }
         [BurstCompile]
         public static uint Calculate(in FixedString4096Bytes str)
