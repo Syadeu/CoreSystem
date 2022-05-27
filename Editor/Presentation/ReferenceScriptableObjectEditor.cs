@@ -21,7 +21,7 @@ namespace SyadeuEditor.Presentation
             }
         }
 
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorGUI.BeginChangeCheck();
             Drawer.OnGUI();

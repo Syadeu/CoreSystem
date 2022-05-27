@@ -16,7 +16,7 @@ using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(PrefabList))]
+    [CustomEditor(typeof(PrefabList))][Obsolete("", true)]
     public class PrefabListEditor : InspectorEditor<PrefabList>
     {
         private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);
@@ -61,7 +61,7 @@ namespace SyadeuEditor
 
         private bool m_Lock = true;
 
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorUtilities.StringHeader("Prefab List");
             CoreGUI.SectorLine();

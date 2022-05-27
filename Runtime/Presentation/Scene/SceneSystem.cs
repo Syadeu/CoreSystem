@@ -400,7 +400,7 @@ namespace Syadeu.Presentation
             {
                 for (int i = 0; i < SceneSettings.Instance.Scenes.Count; i++)
                 {
-                    ConsoleWindow.Log($"{i}: {SceneSettings.Instance.Scenes[i].scenePath}");
+                    ConsoleWindow.Log($"{i}: {SceneSettings.Instance.Scenes[i].ScenePath}");
                 }
             }
             void LoadStartSceneCmd(string cmd)
@@ -452,13 +452,13 @@ namespace Syadeu.Presentation
         public void RegisterSceneLoadDependence(SceneReference key, Func<ICustomYieldAwaiter> onSceneStart)
         {
 #if DEBUG_MODE
-            if (string.IsNullOrEmpty(key.scenePath))
+            if (string.IsNullOrEmpty(key.ScenePath))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     "Scene is valid");
             }
 #endif
-            Hash hash = Hash.NewHash(key.scenePath);
+            Hash hash = Hash.NewHash(key.ScenePath);
 
             if (!m_CustomSceneLoadDependences.TryGetValue(hash, out var list))
             {
@@ -475,13 +475,13 @@ namespace Syadeu.Presentation
         public void RegisterSceneUnloadDependence(SceneReference key, Action onSceneStart)
         {
 #if DEBUG_MODE
-            if (string.IsNullOrEmpty(key.scenePath))
+            if (string.IsNullOrEmpty(key.ScenePath))
             {
                 throw new CoreSystemException(CoreSystemExceptionFlag.Presentation,
                     "Scene is valid");
             }
 #endif
-            Hash hash = Hash.NewHash(key.scenePath);
+            Hash hash = Hash.NewHash(key.ScenePath);
 
             if (!m_CustomSceneUnloadDependences.TryGetValue(hash, out var list))
             {
@@ -494,7 +494,7 @@ namespace Syadeu.Presentation
         public void RegisterSceneAsset(SceneReference key, INotifyAsset asset)
         {
 #if DEBUG_MODE
-            if (key == null || string.IsNullOrEmpty(key.scenePath))
+            if (key == null || string.IsNullOrEmpty(key.ScenePath))
             {
                 CoreSystem.Logger.LogError(LogChannel.Presentation,
                     $"Target scene is invalid. Cannot add scene asset(s) at {TypeHelper.ToString(asset.GetType())}");
@@ -503,7 +503,7 @@ namespace Syadeu.Presentation
 #endif
             SceneAssetAwaiter awaiter = new SceneAssetAwaiter(asset.NotifyAssets);
 
-            Hash hash = Hash.NewHash(key.scenePath);
+            Hash hash = Hash.NewHash(key.ScenePath);
 
             if (!m_CustomSceneAssetLoadDependences.TryGetValue(hash, out var list))
             {
@@ -697,7 +697,7 @@ namespace Syadeu.Presentation
         private static List<ICustomYieldAwaiter> StartSceneDependences(SceneSystem system, SceneReference key)
         {
             List<ICustomYieldAwaiter> awaiters = new List<ICustomYieldAwaiter>();
-            Hash hash = Hash.NewHash(key.scenePath);
+            Hash hash = Hash.NewHash(key.ScenePath);
             if (system.m_CustomSceneLoadDependences.TryGetValue(hash, out List<Func<ICustomYieldAwaiter>> list))
             {
                 for (int i = 0; i < list.Count; i++)
@@ -733,7 +733,7 @@ namespace Syadeu.Presentation
         }
         private static void StopSceneDependences(SceneSystem system, SceneReference key)
         {
-            Hash hash = Hash.NewHash(key.scenePath);
+            Hash hash = Hash.NewHash(key.ScenePath);
             if (system.m_CustomSceneUnloadDependences.TryGetValue(hash, out List<Action> list))
             {
                 for (int i = 0; i < list.Count; i++)

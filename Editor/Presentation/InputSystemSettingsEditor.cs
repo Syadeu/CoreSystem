@@ -17,7 +17,7 @@ namespace SyadeuEditor.Presentation
         {
             m_AdditionalInputActions = serializedObject.FindProperty("m_AdditionalInputActions");
         }
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("+"))

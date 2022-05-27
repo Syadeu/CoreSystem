@@ -33,6 +33,7 @@ using Unity.Collections;
 namespace Syadeu.Mono
 {
     [PreferBinarySerialization] 
+    //[Obsolete("Deprecated Use ResourceHashMap", true)] 
     public sealed class PrefabList : StaticSettingEntity<PrefabList>
     {
         [Serializable]

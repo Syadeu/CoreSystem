@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace SyadeuEditor.Utilities
 {
-    internal sealed class DefaultSerializedObjectEditor : SerializedObjectEditor<System.Object>
+    internal sealed class DefaultSerializedObjectEditor : InspectorEditor<UnityEngine.Object>
     {
         //public override VisualElement CreateInspectorGUI()
         //{
@@ -19,7 +19,7 @@ namespace SyadeuEditor.Utilities
 
         //    return root;
         //}
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             SerializedProperty property = serializedObject;
             property.isExpanded = true;

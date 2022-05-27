@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Newtonsoft.Json;
+using Syadeu.Collections;
 
 namespace Syadeu.Presentation
 {

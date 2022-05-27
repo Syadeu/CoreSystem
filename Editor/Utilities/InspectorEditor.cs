@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using SyadeuEditor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -48,6 +49,28 @@ namespace SyadeuEditor
 
             base.OnHeaderGUI();
         }
+
+        protected SerializedProperty GetSerializedProperty(string name)
+        {
+            return serializedObject.FindProperty(name);
+        }
+        protected SerializedProperty GetSerializedProperty(SerializedProperty property, string name)
+        {
+            return property.FindPropertyRelative(name);
+        }
+
+        public virtual string GetHeaderName() => ObjectNames.NicifyVariableName(TypeHelper.ToString(target.GetType()));
+        public override sealed void OnInspectorGUI()
+        {
+            EditorUtilities.StringHeader(GetHeaderName());
+            CoreGUI.Line();
+
+            OnInspectorGUIContents();
+        }
+        /// <summary>
+        /// <see cref="UnityEditor.Editor.OnInspectorGUI"/> 와 같습니다.
+        /// </summary>
+        protected virtual void OnInspectorGUIContents() { base.OnInspectorGUI(); }
 
         #region GL
 
@@ -368,20 +391,50 @@ namespace SyadeuEditor
         }
     }
 
-    public abstract class InspectorEditor<T> : InspectorEditor where T : UnityEngine.Object
+    public abstract class InspectorEditor<T> : InspectorEditor
     {
         private static Dictionary<uint, MethodInfo> m_CachedMethodInfos = new Dictionary<uint, MethodInfo>();
         private static Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
         private static Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
 
+        private SerializedObject<T> m_SerializedObject = null;
+
         /// <summary>
         /// <inheritdoc cref="UnityEditor.Editor.target"/>
         /// </summary>
-        public new T target => (T)base.target;
+        public new T target => base.target is T t ? t : (T)TypeHelper.GetDefaultValue(TypeHelper.TypeOf<T>.Type);
         /// <summary>
         /// <inheritdoc cref="UnityEditor.Editor.targets"/>
         /// </summary>
-        public new T[] targets => base.targets.Select(t => (T)t).ToArray();
+        public new T[] targets => base.targets.Select(t => t is T target ? target : (T)TypeHelper.GetDefaultValue(TypeHelper.TypeOf<T>.Type)).ToArray();
+        protected new SerializedObject<T> serializedObject
+        {
+            get
+            {
+                if (m_SerializedObject == null)
+                {
+                    m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject)base.target, base.serializedObject);
+                }
+
+                return m_SerializedObject;
+            }
+        }
+        public string assetPath
+        {
+            get
+            {
+                if (!TypeHelper.InheritsFrom<ScriptableObject>(TypeHelper.TypeOf<T>.Type))
+                {
+                    return string.Empty;
+                }
+
+                if (target is UnityEngine.Object obj)
+                {
+                    return AssetDatabase.GetAssetPath(obj);
+                }
+                return string.Empty;
+            }
+        }
 
         #region Reflections
 

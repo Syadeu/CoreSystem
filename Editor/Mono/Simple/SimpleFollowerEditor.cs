@@ -42,7 +42,7 @@ namespace SyadeuEditor
             m_SelectedUpdateType = m_UpdateType.intValue;
             m_SelectedUpdateAt = m_UpdateAt.intValue;
         }
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorUtilities.StringHeader("Simple Follower");
             CoreGUI.SectorLine();

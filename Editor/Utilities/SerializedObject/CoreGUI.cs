@@ -102,7 +102,6 @@ namespace SyadeuEditor.Utilities
         }
 
         #endregion
-
         #region Label
 
         public static void Label(GUIContent text, StringColor color)
@@ -123,6 +122,13 @@ namespace SyadeuEditor.Utilities
 
             EditorGUILayout.LabelField(content, style);
         }
+        public static void Label(string text, int size)
+        {
+            GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
+
+            text = HTMLString.String(text, size);
+            EditorGUILayout.LabelField(text, style);
+        }
         public static void Label(GUIContent text, StringColor color, int size)
         {
             GUIStyle style = GetLabelStyle(TextAnchor.UpperLeft);
@@ -139,12 +145,37 @@ namespace SyadeuEditor.Utilities
             Rect rect = GUILayoutUtility.GetRect(text, style, options);
             EditorGUI.LabelField(rect, text, style);
         }
+        public static void Label(GUIContent text, int size, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
+        {
+            GUIStyle style = GetLabelStyle(textAnchor);
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(text.text, size);
+
+            Rect rect = GUILayoutUtility.GetRect(content, style, options);
+            EditorGUI.LabelField(rect, content, style);
+        }
+        public static void Label(string text, int size, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
+        {
+            GUIStyle style = GetLabelStyle(textAnchor);
+            text = HTMLString.String(text, size);
+
+            EditorGUILayout.LabelField(text, style, options);
+        }
+        public static void Label(GUIContent text, int size, StringColor color, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
+        {
+            GUIStyle style = GetLabelStyle(textAnchor);
+            GUIContent content = new GUIContent(text);
+            content.text = HTMLString.String(text.text, color, size);
+
+            Rect rect = GUILayoutUtility.GetRect(content, style, options);
+            EditorGUI.LabelField(rect, content, style);
+        }
         public static void Label(GUIContent text1, GUIContent text2, TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
             GUIStyle style = GetLabelStyle(textAnchor);
 
             Rect rect = GUILayoutUtility.GetRect(text2, style, options);
-            
+
             EditorGUI.LabelField(rect, text1, text2, style);
         }
 
@@ -178,6 +209,7 @@ namespace SyadeuEditor.Utilities
         public static void Label(Rect rect, string text) => Label(rect, new GUIContent(text), TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text) => Label(rect, text, TextAnchor.MiddleLeft);
         public static void Label(Rect rect, GUIContent text, TextAnchor textAnchor) => EditorGUI.LabelField(rect, text, GetLabelStyle(textAnchor));
+        public static void Label(Rect rect, string text, TextAnchor textAnchor) => EditorGUI.LabelField(rect, text, GetLabelStyle(textAnchor));
         public static void Label(Rect rect, GUIContent text, AnimFloat alpha, TextAnchor textAnchor)
         {
             GUIStyle style = GetLabelStyle(textAnchor);
@@ -193,6 +225,10 @@ namespace SyadeuEditor.Utilities
             temp.text = EditorUtilities.String(text.text, size);
 
             EditorGUI.LabelField(rect, temp, GetLabelStyle(textAnchor));
+        }
+        public static void Label(Rect rect, string text, int size, TextAnchor textAnchor)
+        {
+            EditorGUI.LabelField(rect, EditorUtilities.String(text, size), GetLabelStyle(textAnchor));
         }
         public static void Label(Rect rect, GUIContent text1, GUIContent text2, TextAnchor textAnchor)
         {

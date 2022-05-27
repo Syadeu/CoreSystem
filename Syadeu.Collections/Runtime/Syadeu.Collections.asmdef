@@ -1,0 +1,42 @@
+{
+    "name": "Syadeu.Collections",
+    "rootNamespace": "Syadeu.Collections",
+    "references": [
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "Unity.InputSystem",
+        "Unity.Mathematics",
+        "Unity.Jobs",
+        "UnityEngine.UIElementsModule",
+        "UnityEngine.UIElementsInputSystemModule",
+        "com.alelievr.NodeGraphProcessor.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll",
+        "Newtonsoft.Json.Bson.dll",
+        "Mono.Data.dll",
+        "Mono.Data.Sqlite.dll",
+        "Mono.Data.SqliteClient.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.ui",
+            "expression": "1.0.0",
+            "define": "UNITY_UI"
+        },
+        {
+            "name": "com.unity.addressables",
+            "expression": "1.18.19",
+            "define": "UNITY_ADDRESSABLES"
+        }
+    ],
+    "noEngineReferences": false
+}

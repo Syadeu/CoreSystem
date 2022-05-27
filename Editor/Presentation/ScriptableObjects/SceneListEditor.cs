@@ -47,7 +47,7 @@ namespace SyadeuEditor
         {
             //GridManager.ClearEditorGrids();
         }
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             if (m_CurrentScene == null)
             {

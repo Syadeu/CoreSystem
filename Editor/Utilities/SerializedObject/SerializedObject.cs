@@ -104,7 +104,7 @@ namespace SyadeuEditor.Utilities
 
         public void GetCachedEditor(ref Editor editor)
         {
-            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<SerializedObjectEditor<T>>.Type.IsAssignableFrom(t));
+            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<InspectorEditor<T>>.Type.IsAssignableFrom(t));
             if (iter.Any())
             {
                 Editor.CreateCachedEditor(m_Object, iter.First(), ref editor);
@@ -115,10 +115,10 @@ namespace SyadeuEditor.Utilities
         }
         public Editor GetEditor()
         {
-            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<SerializedObjectEditor<T>>.Type.IsAssignableFrom(t));
+            var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<InspectorEditor<T>>.Type.IsAssignableFrom(t));
             if (iter.Any())
             {
-                return (SerializedObjectEditor<T>)Editor.CreateEditor(m_Object, iter.First());
+                return (InspectorEditor<T>)Editor.CreateEditor(m_Object, iter.First());
             }
             
             return Editor.CreateEditor(m_Object, TypeHelper.TypeOf<DefaultSerializedObjectEditor>.Type);

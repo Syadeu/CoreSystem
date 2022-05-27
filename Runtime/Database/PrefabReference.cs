@@ -25,6 +25,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Syadeu.Collections
 {
     [Serializable]
+    //[Obsolete("Deprecated Use AssetIndex", true)]
     public struct PrefabReference : IPrefabReference, IEquatable<PrefabReference>
     {
         public static readonly PrefabReference Invalid = new PrefabReference(-1);

@@ -3,6 +3,7 @@ using Syadeu.Entities;
 using Syadeu.Mono;
 using SyadeuEditor.Tree;
 using SyadeuEditor.Utilities;
+using System;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
 #endif
@@ -190,7 +191,7 @@ namespace SyadeuEditor
 
         #endregion
 
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorUtilities.StringHeader("CoreSystem");
             CoreGUI.SectorLine();

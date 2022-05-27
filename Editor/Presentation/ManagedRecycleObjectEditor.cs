@@ -20,7 +20,7 @@ namespace SyadeuEditor.Presentation
             onInitializion = serializedObject.FindProperty("onInitializion");
             onTermination = serializedObject.FindProperty("onTermination");
         }
-        public override void OnInspectorGUI()
+        protected override void OnInspectorGUIContents()
         {
             EditorUtilities.StringHeader("Recycle Object");
             CoreGUI.SectorLine();
