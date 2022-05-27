@@ -75,7 +75,7 @@ namespace Syadeu.Collections.ResourceControl
         /// <summary>
         /// Editor only
         /// </summary>
-        public string Group => m_Group;
+        public string Group { get => m_Group; set => m_Group = new GroupReference(value); }
 
         /// <summary>
         /// Editor only

@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace Syadeu.Presentation.Render
 {
-    public sealed class RenderSettings : StaticSettingEntity<RenderSettings>
+    public sealed class RenderSettings : StaticScriptableObject<RenderSettings>
     {
         public Material[] m_Materials = Array.Empty<Material>();
         public ComputeShader[] m_ComputeShaders = Array.Empty<ComputeShader>();

@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ConstActionReferenceDrawer : ObjectDrawer<IConstActionReference>
     {
         private bool m_Open = false;

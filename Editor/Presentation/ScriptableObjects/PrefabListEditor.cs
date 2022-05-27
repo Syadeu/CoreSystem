@@ -16,7 +16,8 @@ using SyadeuEditor.Utilities;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(PrefabList))][Obsolete("", true)]
+    //[CustomEditor(typeof(PrefabList))]
+    [Obsolete("", true)]
     public class PrefabListEditor : InspectorEditor<PrefabList>
     {
         private static AddressableAssetSettings DefaultSettings => AddressableAssetSettingsDefaultObject.GetSettings(true);

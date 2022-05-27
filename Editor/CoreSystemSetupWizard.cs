@@ -645,11 +645,12 @@ namespace SyadeuEditor
                 masterScene,
                 startScene,
                 loadingScene,
-                sceneList;
+                sceneList,
+                cameraPrefab;
 
-            private FieldInfo m_CameraPrefabFieldInfo;
+            //private FieldInfo m_CameraPrefabFieldInfo;
 
-            PrefabReferenceDrawer m_CameraPrefabDrawer;
+            //PrefabReferenceDrawer m_CameraPrefabDrawer;
 
             bool 
                 m_OpenMasterScene = false,
@@ -668,11 +669,12 @@ namespace SyadeuEditor
                 startScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.StartScene));
                 loadingScene = serializedObject.FindProperty(nameof(SceneSettings.Instance.CustomLoadingScene));
                 sceneList = serializedObject.FindProperty(nameof(SceneSettings.Instance.Scenes));
+                cameraPrefab = serializedObject.FindProperty("m_CameraPrefab");
 
                 //m_CameraPrefabField = serializedObject.FindProperty("m_CameraPrefab");
-                m_CameraPrefabFieldInfo = TypeHelper.TypeOf<SceneSettings>.GetFieldInfo("m_CameraPrefab");
-                m_CameraPrefabDrawer = (PrefabReferenceDrawer)ObjectDrawerBase.ToDrawer(SceneSettings.Instance,
-                    m_CameraPrefabFieldInfo, false);
+                //m_CameraPrefabFieldInfo = TypeHelper.TypeOf<SceneSettings>.GetFieldInfo("m_CameraPrefab");
+                //m_CameraPrefabDrawer = (PrefabReferenceDrawer)ObjectDrawerBase.ToDrawer(SceneSettings.Instance,
+                //    m_CameraPrefabFieldInfo, false);
 
                 m_OpenMasterScene = 
                     string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath) ||
@@ -868,7 +870,8 @@ namespace SyadeuEditor
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         EditorGUILayout.LabelField("Camera Prefab");
-                        m_CameraPrefabDrawer.OnGUI();
+                        //m_CameraPrefabDrawer.OnGUI();
+                        EditorGUILayout.PropertyField(cameraPrefab);
 
                         if (change.changed)
                         {
@@ -911,110 +914,8 @@ namespace SyadeuEditor
 
         #region Prefab Menu
 
+        [Obsolete("")]
         private sealed class PrefabMenu : SetupWizardMenuItem
-        {
-            public override string Name => "Prefab";
-            public override int Order => -9997;
-
-            //SerializedObject serializedObject;
-            //SerializedProperty
-            //    m_ObjectSettings;
-
-            //FieldInfo objectSettingsFieldInfo;
-            //List<PrefabList.ObjectSetting> objectSettings;
-
-            //int m_AddressableCount = 0;
-            //readonly List<int> m_InvalidIndices = new List<int>();
-
-            //private GameObject[] m_BrokenPrefabs = Array.Empty<GameObject>();
-
-            Vector2
-                m_Scroll = Vector2.zero;
-
-            public PrefabMenu()
-            {
-                //serializedObject = new SerializedObject(PrefabList.Instance);
-                //m_ObjectSettings = serializedObject.FindProperty("m_ObjectSettings");
-
-                //objectSettingsFieldInfo = TypeHelper.TypeOf<PrefabList>.Type.GetField("m_ObjectSettings",
-                //    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                //var temp = objectSettingsFieldInfo.GetValue(PrefabList.Instance);
-                
-                //if (temp == null)
-                //{
-                //    objectSettings = new List<PrefabList.ObjectSetting>();
-                //    objectSettingsFieldInfo.SetValue(PrefabList.Instance, objectSettings);
-
-                //    serializedObject.Update();
-                //}
-                //else objectSettings = (List<PrefabList.ObjectSetting>)temp;
-
-                //HashSet<UnityEngine.Object> tempSet = new HashSet<UnityEngine.Object>();
-                //for (int i = 0; i < objectSettings.Count; i++)
-                //{
-                //    UnityEngine.Object obj = objectSettings[i].GetEditorAsset();
-                //    if (obj == null)
-                //    {
-                //        m_InvalidIndices.Add(i);
-                //    }
-                //    if (tempSet.Contains(obj))
-                //    {
-                //        objectSettings[i] = new PrefabList.ObjectSetting(objectSettings[i].m_Name, null, objectSettings[i].m_IsWorldUI);
-                //        m_InvalidIndices.Add(i);
-                //    }
-
-                //    tempSet.Add(obj);
-                //}
-
-                //m_AddressableCount = PrefabListEditor.DefaultGroup.entries.Count;
-                //var groups = PrefabListEditor.PrefabListGroups;
-                //for (int i = 0; i < groups.Length; i++)
-                //{
-                //    m_AddressableCount += groups[i].entries.Count;
-                //}
-
-                //m_BrokenPrefabs = objectSettings.Where(t => PrefabUtility.IsPartOfAnyPrefab(t.GetEditorAsset())).Select(t => (GameObject)t.GetEditorAsset()).Where(t => t.GetComponentsInChildren<Component>(true).Any(t => t == null)).ToArray();
-            }
-
-            public override bool Predicate()
-            {
-                //if (objectSettings.Count - m_InvalidIndices.Count != m_AddressableCount) return false;
-
-                //else if (m_BrokenPrefabs.Length > 0) return false;
-
-                return true;
-            }
-            public override void OnGUI()
-            {
-                if (CoreGUI.BoxButton("Locate HashMap", Color.gray))
-                {
-                    EditorGUIUtility.PingObject(ResourceHashMap.Instance);
-                    Selection.activeObject = ResourceHashMap.Instance;
-
-                    //PrefabListEditor.Rebase();
-                    //serializedObject.Update();
-
-                    //m_InvalidIndices.Clear();
-                    //for (int i = 0; i < objectSettings.Count; i++)
-                    //{
-                    //    if (objectSettings[i].GetEditorAsset() == null)
-                    //    {
-                    //        m_InvalidIndices.Add(i);
-                    //    }
-                    //}
-                }
-
-                m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll);
-
-
-                //
-                EditorGUILayout.EndScrollView();
-            }
-            //
-        }
-
-        [Obsolete("", true)]
-        private sealed class PrefabMenuOld : SetupWizardMenuItem
         {
             public override string Name => "Prefab";
             public override int Order => -9997;
@@ -1034,7 +935,7 @@ namespace SyadeuEditor
             Vector2
                 m_Scroll = Vector2.zero;
 
-            public PrefabMenuOld()
+            public PrefabMenu()
             {
                 serializedObject = new SerializedObject(PrefabList.Instance);
                 m_ObjectSettings = serializedObject.FindProperty("m_ObjectSettings");

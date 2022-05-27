@@ -31,7 +31,7 @@ using UnityEngine;
 namespace Syadeu.Collections.ResourceControl.Editor
 {
     [CustomPropertyDrawer(typeof(GroupReference))]
-    internal sealed class CatalogReferencePropertyDrawer : PropertyDrawer<GroupReference>
+    internal sealed class GroupReferencePropertyDrawer : PropertyDrawer<GroupReference>
     {
         public static class Helper
         {

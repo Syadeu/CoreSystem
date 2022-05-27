@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class UnityObjectDrawer : ObjectDrawer<UnityEngine.Object>
     {
         bool m_Open = false;

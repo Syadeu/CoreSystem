@@ -16,6 +16,7 @@ using UnityEngine.AddressableAssets;
 
 namespace SyadeuEditor.Presentation
 {
+    [Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class PrefabReferenceDrawer : ObjectDrawer<IPrefabReference>
     {
         private readonly ConstructorInfo m_Constructor;

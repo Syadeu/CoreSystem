@@ -21,6 +21,7 @@
 
 using SyadeuEditor;
 using SyadeuEditor.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -36,6 +37,21 @@ namespace Syadeu.Collections.ResourceControl.Editor
     [CustomEditor(typeof(ResourceHashMap))]
     internal sealed class ResourceHashMapEditor : InspectorEditor<ResourceHashMap>
     {
+        private static SerializedObject s_SerializedObject;
+        private static SerializedObject SerializedObject
+        {
+            get
+            {
+                if (s_SerializedObject == null)
+                {
+                    s_SerializedObject = new SerializedObject(ResourceHashMap.Instance);
+                }
+                s_SerializedObject.UpdateIfRequiredOrScript();
+                return s_SerializedObject;
+            }
+        }
+        private static string AssetPath => AssetDatabase.GetAssetPath(ResourceHashMap.Instance);
+
         private SerializedProperty m_SceneBindedLabelsProperty, m_ResourceListsProperty;
 
         private void OnEnable()
@@ -80,6 +96,45 @@ namespace Syadeu.Collections.ResourceControl.Editor
             serializedObject.ApplyModifiedProperties();
             //base.OnInspectorGUIContents();
         }
+
+        public static ResourceList Find(Func<ResourceList, bool> predicate)
+        {
+            if (predicate == null) return null;
+
+            foreach (var item in ResourceHashMap.Instance.ResourceLists)
+            {
+                if (predicate.Invoke(item)) return item;
+            }
+            return null;
+        }
+        public static ResourceList Add(string name)
+        {
+            SerializedProperty
+                m_ResourceListsProperty = SerializedObject.FindProperty("m_SceneBindedLabels");
+
+            int index = m_ResourceListsProperty.arraySize;
+
+            ResourceList list = CreateInstance<ResourceList>();
+            if (name.IsNullOrEmpty())
+            {
+                list.name = "ResourceList " + index;
+            }
+            else list.name = name;
+
+            AssetDatabase.AddObjectToAsset(list, AssetPath);
+            EditorUtility.SetDirty(ResourceHashMap.Instance);
+
+            m_ResourceListsProperty.InsertArrayElementAtIndex(index);
+            m_ResourceListsProperty.GetArrayElementAtIndex(index).objectReferenceValue = list;
+
+            SerializedObject.ApplyModifiedProperties();
+
+            return ResourceHashMap.Instance.ResourceLists[index];
+        }
+        public static new void SetDirty()
+        {
+            EditorUtility.SetDirty(ResourceHashMap.Instance);
+        }
     }
 
     [CustomEditor(typeof(ResourceList))]
@@ -94,7 +149,7 @@ namespace Syadeu.Collections.ResourceControl.Editor
         private void OnEnable()
         {
             m_GroupProperty = serializedObject.FindProperty("m_Group");
-            m_GroupNameProperty = CatalogReferencePropertyDrawer.Helper.GetCatalogName(m_GroupProperty);
+            m_GroupNameProperty = GroupReferencePropertyDrawer.Helper.GetCatalogName(m_GroupProperty);
             m_AssetListProperty = serializedObject.FindProperty("m_AssetList");
 
             Validate();

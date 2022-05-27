@@ -24,118 +24,118 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
-    public sealed class ReferenceDrawer : ObjectDrawer<IFixedReference>
+    public static class ReferenceDrawer /*: ObjectDrawer<IFixedReference>*/
     {
-        private bool 
-            m_Open, 
-            m_WasEdited = false;
+        //private bool 
+        //    m_Open, 
+        //    m_WasEdited = false;
 
-        public ReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
-        {
-        }
-        public ReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
-        {
-        }
-        public ReferenceDrawer(object parentObject, Type declaredType, Action<IFixedReference> setter, Func<IFixedReference> getter) : base(parentObject, declaredType, setter, getter)
-        {
-        }
+        //public ReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
+        //{
+        //}
+        //public ReferenceDrawer(IList list, int index, Type elementType) : base(list, index, elementType)
+        //{
+        //}
+        //public ReferenceDrawer(object parentObject, Type declaredType, Action<IFixedReference> setter, Func<IFixedReference> getter) : base(parentObject, declaredType, setter, getter)
+        //{
+        //}
 
-        public override IFixedReference Draw(IFixedReference currentValue)
-        {
-            Type targetType;
-            Type[] generics = DeclaredType.GetGenericArguments();
-            if (generics.Length > 0) targetType = generics[0];
-            else targetType = null;
+        //public override IFixedReference Draw(IFixedReference currentValue)
+        //{
+        //    Type targetType;
+        //    Type[] generics = DeclaredType.GetGenericArguments();
+        //    if (generics.Length > 0) targetType = generics[0];
+        //    else targetType = null;
 
-            using (new GUILayout.VerticalScope())
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    DrawReferenceSelector(Name, (idx) =>
-                    {
-                        ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
+        //    using (new GUILayout.VerticalScope())
+        //    {
+        //        using (new EditorGUILayout.HorizontalScope())
+        //        {
+        //            DrawReferenceSelector(Name, (idx) =>
+        //            {
+        //                ObjectBase objBase = EntityDataList.Instance.GetObject(idx);
 
-                        object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                            new object[] { objBase });
+        //                object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+        //                    new object[] { objBase });
 
-                        IFixedReference origin = Getter.Invoke();
-                        Setter.Invoke((IFixedReference)temp);
-                        m_WasEdited = !origin.Equals(Getter.Invoke());
-                    }, currentValue, targetType);
-                    if (m_WasEdited)
-                    {
-                        GUI.changed = true;
-                        m_WasEdited = false;
-                    }
+        //                IFixedReference origin = Getter.Invoke();
+        //                Setter.Invoke((IFixedReference)temp);
+        //                m_WasEdited = !origin.Equals(Getter.Invoke());
+        //            }, currentValue, targetType);
+        //            if (m_WasEdited)
+        //            {
+        //                GUI.changed = true;
+        //                m_WasEdited = false;
+        //            }
 
-                    m_Open = CoreGUI.BoxToggleButton(
-                        m_Open,
-                        ColorPalettes.PastelDreams.TiffanyBlue,
-                        ColorPalettes.PastelDreams.HotPink,
-                        GUILayout.Width(20)
-                        );
+        //            m_Open = CoreGUI.BoxToggleButton(
+        //                m_Open,
+        //                ColorPalettes.PastelDreams.TiffanyBlue,
+        //                ColorPalettes.PastelDreams.HotPink,
+        //                GUILayout.Width(20)
+        //                );
 
-                    //m_Open = GUILayout.Toggle(m_Open,
-                    //            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
-                    //            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
+        //            //m_Open = GUILayout.Toggle(m_Open,
+        //            //            m_Open ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString
+        //            //            , EditorStyleUtilities.MiniButton, GUILayout.Width(20));
 
-                    using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
-                    {
-                        if (CoreGUI.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
-                        {
-                            ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
+        //            using (new EditorGUI.DisabledGroupScope(!currentValue.IsValid()))
+        //            {
+        //                if (CoreGUI.BoxButton("C", ColorPalettes.WaterFoam.Spearmint, GUILayout.Width(20)))
+        //                {
+        //                    ObjectBase clone = (ObjectBase)currentValue.GetObject().Clone();
 
-                            clone.Hash = Hash.NewHash();
-                            clone.Name += "_Clone";
+        //                    clone.Hash = Hash.NewHash();
+        //                    clone.Name += "_Clone";
 
-                            if (EntityWindow.IsOpened)
-                            {
-                                EntityWindow.Instance.Add(clone);
-                            }
-                            else
-                            {
-                                EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
-                                EntityDataList.Instance.SaveData(clone);
-                            }
+        //                    if (EntityWindow.IsOpened)
+        //                    {
+        //                        EntityWindow.Instance.Add(clone);
+        //                    }
+        //                    else
+        //                    {
+        //                        EntityDataList.Instance.m_Objects.Add(clone.Hash, clone);
+        //                        EntityDataList.Instance.SaveData(clone);
+        //                    }
 
-                            object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
-                                new object[] { clone });
-                            currentValue = (IFixedReference)temp;
-                        }
-                    }
-                }
+        //                    object temp = TypeHelper.GetConstructorInfo(DeclaredType, TypeHelper.TypeOf<ObjectBase>.Type).Invoke(
+        //                        new object[] { clone });
+        //                    currentValue = (IFixedReference)temp;
+        //                }
+        //            }
+        //        }
 
-                if (m_Open)
-                {
-                    Color color3 = Color.red;
-                    color3.a = .7f;
+        //        if (m_Open)
+        //        {
+        //            Color color3 = Color.red;
+        //            color3.a = .7f;
 
-                    EditorGUI.indentLevel++;
+        //            EditorGUI.indentLevel++;
 
-                    using (new CoreGUI.BoxBlock(color3))
-                    {
-                        if (!currentValue.IsValid())
-                        {
-                            EditorGUILayout.HelpBox(
-                                "This reference is invalid.",
-                                MessageType.Error);
-                        }
-                        else
-                        {
-                            EditorGUILayout.HelpBox(
-                                "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
-                                MessageType.Info);
+        //            using (new CoreGUI.BoxBlock(color3))
+        //            {
+        //                if (!currentValue.IsValid())
+        //                {
+        //                    EditorGUILayout.HelpBox(
+        //                        "This reference is invalid.",
+        //                        MessageType.Error);
+        //                }
+        //                else
+        //                {
+        //                    EditorGUILayout.HelpBox(
+        //                        "This is shared reference. Anything made changes in this inspector view will affect to original reference directly.",
+        //                        MessageType.Info);
 
-                            ObjectBaseDrawer.GetDrawer((ObjectBase)currentValue.GetObject()).OnGUI();
-                        }
-                    }
+        //                    ObjectBaseDrawer.GetDrawer((ObjectBase)currentValue.GetObject()).OnGUI();
+        //                }
+        //            }
 
-                    EditorGUI.indentLevel--;
-                }
-            }
+        //            EditorGUI.indentLevel--;
+        //        }
+        //    }
 
-            return currentValue;
-        }
+        //    return currentValue;
+        //}
 
         public static void DrawReferenceSelector(string name, Action<Hash> setter, IFixedReference current, Type targetType)
         {

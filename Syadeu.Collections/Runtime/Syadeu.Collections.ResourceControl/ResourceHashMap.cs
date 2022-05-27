@@ -30,7 +30,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Unity.Collections;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
@@ -303,38 +302,6 @@ namespace Syadeu.Collections.ResourceControl
     }
 
     [Serializable]
-    public struct AssetIndex : IEmpty, IValidation
-    {
-        public static AssetIndex Empty = default(AssetIndex);
-
-        [SerializeField] internal int2 m_Index;
-        [SerializeField] private bool m_IsCreated;
-
-        public AssetReference AssetReference
-        {
-            get
-            {
-                ResourceHashMap.Instance.TryGetAssetReference(this, out var asset);
-                return asset;
-            }
-        }
-
-        public AssetIndex(int2 index)
-        {
-            m_Index = index;
-            m_IsCreated = true;
-        }
-        public AssetIndex(int x, int y)
-        {
-            m_Index = new int2(x, y);
-            m_IsCreated = true;
-        }
-
-        public bool IsEmpty() => !m_IsCreated;
-        public bool IsValid() => ResourceHashMap.Instance.TryGetAssetReference(this, out _);
-    }
-
-    [Serializable]
     public struct GroupReference : IEmpty
     {
         public static GroupReference Empty = default(GroupReference);
@@ -382,6 +349,9 @@ namespace Syadeu.Collections.ResourceControl
         [SerializeField] private FixedString128Bytes m_Key;
         [SerializeField] private FixedString128Bytes m_SubAssetName;
 
+        [NonSerialized]
+        AsyncOperationHandle m_Handle;
+
         object IKeyEvaluator.RuntimeKey
         {
             get
@@ -406,6 +376,10 @@ namespace Syadeu.Collections.ResourceControl
         {
             m_Key = key;
             m_SubAssetName = subAssetName;
+
+            m_Handle = ResourceManager.CreateCompletedOperation<UnityEngine.Object>(
+                null, new InvalidOperationException()
+                );
         }
 
         public bool IsEmpty()
@@ -440,12 +414,22 @@ namespace Syadeu.Collections.ResourceControl
 
         public AsyncOperationHandle<UnityEngine.Object> LoadAssetAsync()
         {
-            return ResourceManager.LoadAssetAsync<UnityEngine.Object>(this);
+            if (m_Handle.IsValid()) return m_Handle.Convert<UnityEngine.Object>();
+
+            var temp = ResourceManager.LoadAssetAsync<UnityEngine.Object>(this);
+            m_Handle = temp;
+
+            return temp;
         }
         public AsyncOperationHandle<TObject> LoadAssetAsync<TObject>()
             where TObject : UnityEngine.Object
         {
-            return ResourceManager.LoadAssetAsync<TObject>(this);
+            if (m_Handle.IsValid()) return m_Handle.Convert<TObject>();
+
+            var temp = ResourceManager.LoadAssetAsync<TObject>(this);
+            m_Handle = temp;
+
+            return temp;
         }
 
         public bool Equals(AssetReference other) => m_Key.Equals(other.m_Key);

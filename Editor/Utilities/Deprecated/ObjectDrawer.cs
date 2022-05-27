@@ -11,6 +11,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    [Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public abstract class ObjectDrawer<T> : ObjectDrawerBase
     {
         private object m_TargetObject;

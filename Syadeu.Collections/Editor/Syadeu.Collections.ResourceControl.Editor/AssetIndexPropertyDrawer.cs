@@ -31,7 +31,31 @@ using UnityEngine;
 namespace Syadeu.Collections.ResourceControl.Editor
 {
     [CustomPropertyDrawer(typeof(AssetIndex))]
-    internal sealed class AssetIndexPropertyDrawer : PropertyDrawer<AssetIndex>
+    internal sealed class AssetIndexPropertyDrawer : AssetIndexPropertyDrawerBase
+    {
+        protected override bool Predicate(SerializedProperty property, AddressableAsset asset)
+        {
+            return true;
+        }
+    }
+    [CustomPropertyDrawer(typeof(AssetIndex<>), true)]
+    internal sealed class AssetIndexTObjectPropertyDrawer : AssetIndexPropertyDrawerBase
+    {
+        protected override bool Predicate(SerializedProperty property, AddressableAsset asset)
+        {
+            if (asset.EditorAsset == null) return false;
+
+            Type
+                type = property.GetFieldInfo().FieldType.GenericTypeArguments[0],
+                assetType = asset.EditorAsset.GetType();
+
+
+            if (TypeHelper.InheritsFrom(assetType, type)) return true;
+
+            return false;
+        }
+    }
+    internal abstract class AssetIndexPropertyDrawerBase : PropertyDrawer<AssetIndex>
     {
         private bool m_Changed = false;
 
@@ -46,7 +70,7 @@ namespace Syadeu.Collections.ResourceControl.Editor
             return string.Format(c_Format, asset.FriendlyName, asset.EditorAsset.name);
         }
 
-        private static class Helper
+        protected static class Helper
         {
             public static SerializedProperty GetIndex(SerializedProperty property)
             {
@@ -74,11 +98,13 @@ namespace Syadeu.Collections.ResourceControl.Editor
             }
         }
 
-        protected override float PropertyHeight(SerializedProperty property, GUIContent label)
+        protected abstract bool Predicate(SerializedProperty property, AddressableAsset asset);
+
+        protected override sealed float PropertyHeight(SerializedProperty property, GUIContent label)
         {
             return CoreGUI.GetLineHeight(1);
         }
-        protected override void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
+        protected override sealed void OnPropertyGUI(ref AutoRect rect, SerializedProperty property, GUIContent label)
         {
             SerializedProperty
                 listIndexProp = Helper.GetListIndex(property),
@@ -115,7 +141,7 @@ namespace Syadeu.Collections.ResourceControl.Editor
                 menu.AddDisabledItem(new GUIContent(displayName));
                 menu.AddSeparator(string.Empty);
 
-                GUIContent 
+                GUIContent
                     context1 = new GUIContent("Select", "이 에셋을 프로젝트 창에서 선택합니다.");
 
                 if (refAsset == null)
@@ -155,6 +181,10 @@ namespace Syadeu.Collections.ResourceControl.Editor
 
                     m_Changed = true;
                 };
+                provider.m_Predicate = delegate (AddressableAsset asset)
+                {
+                    return Predicate(property, asset);
+                };
 
                 SearchWindow.Open(new SearchWindowContext(pos), provider);
             }
@@ -167,6 +197,7 @@ namespace Syadeu.Collections.ResourceControl.Editor
         }
         private sealed class AssetIndexSearchProvider : SearchProviderBase
         {
+            public Func<AddressableAsset, bool> m_Predicate;
             public Action<int2> m_OnClick;
 
             public AssetIndexSearchProvider(Action<int2> onClick)
@@ -187,11 +218,15 @@ namespace Syadeu.Collections.ResourceControl.Editor
                 for (int i = 0; i < resourceLists.Count; i++)
                 {
                     ResourceList resourceList = resourceLists[i];
-                    SearchTreeGroupEntry listGroup = new SearchTreeGroupEntry(new GUIContent(resourceList.name), 1);
-                    list.Add(listGroup);
+                    List<SearchTreeEntry> childs = new List<SearchTreeEntry>();
                     for (int j = 0; j < resourceList.Count; j++)
                     {
                         AddressableAsset asset = resourceList.GetAddressableAsset(j);
+                        if (m_Predicate == null || !m_Predicate.Invoke(asset))
+                        {
+                            continue;
+                        }
+
                         string displayName = AssetIndexPropertyDrawer.NicifyDisplayName(asset);
 
                         SearchTreeEntry entry = new SearchTreeEntry(
@@ -201,7 +236,14 @@ namespace Syadeu.Collections.ResourceControl.Editor
                             level = 2
                         };
 
-                        list.Add(entry);
+                        childs.Add(entry);
+                    }
+
+                    if (childs.Count > 0)
+                    {
+                        SearchTreeGroupEntry listGroup = new SearchTreeGroupEntry(new GUIContent(resourceList.name), 1);
+                        list.Add(listGroup);
+                        list.AddRange(childs);
                     }
                 }
 

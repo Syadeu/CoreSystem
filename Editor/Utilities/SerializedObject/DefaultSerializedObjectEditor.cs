@@ -5,23 +5,17 @@ using UnityEngine.UIElements;
 
 namespace SyadeuEditor.Utilities
 {
-    internal sealed class DefaultSerializedObjectEditor : InspectorEditor<UnityEngine.Object>
+    internal sealed class DefaultSerializedObjectEditor : Editor
     {
-        //public override VisualElement CreateInspectorGUI()
-        //{
-        //    //return base.CreateInspectorGUI();
-        //    SerializedProperty property = serializedObject;
-        //    property.isExpanded = true;
+        private SerializedObject<UnityEngine.Object> m_SerializedObject = null;
 
-        //    VisualElement root = new VisualElement();
-
-        //    root.Add(new PropertyField(property, string.Empty));
-
-        //    return root;
-        //}
-        protected override void OnInspectorGUIContents()
+        private void OnEnable()
         {
-            SerializedProperty property = serializedObject;
+            m_SerializedObject = new SerializedObject<UnityEngine.Object>((SerializeScriptableObject)base.target, base.serializedObject);
+        }
+        public override void OnInspectorGUI()
+        {
+            SerializedProperty property = m_SerializedObject;
             property.isExpanded = true;
 
             EditorGUILayout.PropertyField(property, GUIContent.none, true);

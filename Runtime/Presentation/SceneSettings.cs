@@ -16,6 +16,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.ResourceControl;
 using Syadeu.Presentation;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +24,7 @@ using UnityEngine;
 namespace Syadeu.Mono
 {
     [PreferBinarySerialization]
-    public sealed class SceneSettings : StaticSettingEntity<SceneSettings>
+    public sealed class SceneSettings : StaticScriptableObject<SceneSettings>
     {
         public SceneReference CustomLoadingScene;
 
@@ -34,9 +35,9 @@ namespace Syadeu.Mono
         public List<SceneReference> Scenes = new List<SceneReference>();
 
         [SerializeField]
-        private PrefabReference<GameObject> m_CameraPrefab = PrefabReference<GameObject>.None;
+        private AssetIndex m_CameraPrefab = AssetIndex.Empty;
 
-        public PrefabReference<GameObject> CameraPrefab => m_CameraPrefab;
+        public AssetIndex CameraPrefab => m_CameraPrefab;
 
         public SceneReference GetScene(string path)
         {

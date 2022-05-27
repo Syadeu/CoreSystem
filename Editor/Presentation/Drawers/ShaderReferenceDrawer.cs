@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ShaderReferenceDrawer : ObjectDrawer<ShaderReference>
     {
         public ShaderReferenceDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)

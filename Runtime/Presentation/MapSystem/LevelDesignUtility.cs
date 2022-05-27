@@ -38,24 +38,24 @@ namespace Syadeu.Presentation.Map
         public const string c_EditorOnly = "EditorOnly";
         private static FieldInfo m_RefPrefabField = null;
 
-        private static UnityEngine.Object GetEditorAsset(this IPrefabReference prefab)
-        {
-            if (m_RefPrefabField == null)
-            {
-                m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
-                    .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
-            }
-            if (prefab == null) return null;
+        //private static UnityEngine.Object GetEditorAsset(this IPrefabReference prefab)
+        //{
+        //    if (m_RefPrefabField == null)
+        //    {
+        //        m_RefPrefabField = TypeHelper.TypeOf<PrefabList.ObjectSetting>.Type
+        //            .GetField("m_RefPrefab", BindingFlags.NonPublic | BindingFlags.Instance);
+        //    }
+        //    if (prefab == null) return null;
 
-            PrefabList.ObjectSetting set = (PrefabList.ObjectSetting)prefab.GetObjectSetting();
-            if (set == null) return null;
+        //    PrefabList.ObjectSetting set = (PrefabList.ObjectSetting)prefab.GetObjectSetting();
+        //    if (set == null) return null;
 
-            object value = m_RefPrefabField.GetValue(set);
-            if (value == null) return null;
+        //    object value = m_RefPrefabField.GetValue(set);
+        //    if (value == null) return null;
 
-            AssetReference asset = (AssetReference)value;
-            return asset.editorAsset;
-        }
+        //    AssetReference asset = (AssetReference)value;
+        //    return asset.editorAsset;
+        //}
 #endif
 
         public static void SelectEntity( Ray ray)

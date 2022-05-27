@@ -43,6 +43,7 @@ using System.Threading;
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
 using Unity.Mathematics;
+using Syadeu.Collections.ResourceControl;
 #endif
 
 namespace Syadeu.Presentation
@@ -178,6 +179,7 @@ namespace Syadeu.Presentation
         private readonly ConcurrentDictionary<Hash, List<SceneAssetAwaiter>> m_CustomSceneAssetLoadDependences = new ConcurrentDictionary<Hash, List<SceneAssetAwaiter>>();
         private readonly ConcurrentDictionary<Hash, List<Action>> m_CustomSceneUnloadDependences = new ConcurrentDictionary<Hash, List<Action>>();
 
+        private AssetReference m_CameraPrefab;
         private EventSystem m_EventSystem;
 
         #region Presentation Methods
@@ -233,14 +235,21 @@ namespace Syadeu.Presentation
                 }
 
 #if DEBUG_MODE
-                if (SceneSettings.Instance.CameraPrefab.IsNone() || !SceneSettings.Instance.CameraPrefab.IsValid())
+                if (SceneSettings.Instance.CameraPrefab.IsEmpty() || !SceneSettings.Instance.CameraPrefab.IsValid())
                 {
                     CoreSystem.Logger.LogError(LogChannel.Presentation,
                         $"Camera prefab is null. This is not allowed. " +
                         $"You can set this at SetupWizard -> Scene tab.");
                 }
 #endif
-                SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
+                // TODO:
+                m_CameraPrefab = SceneSettings.Instance.CameraPrefab.AssetReference;
+                var oper = m_CameraPrefab.LoadAssetAsync<UnityEngine.GameObject>();
+                oper.Completed += t =>
+                {
+                    GameObject.Instantiate(t.Result);
+                };
+                //SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 
                 return true;
             }
@@ -373,7 +382,7 @@ namespace Syadeu.Presentation
                     CoreSystem.WaitInvoke(1, () => StartSceneDependences(this, sceneRef));
                 }
 #if DEBUG_MODE
-                if (SceneSettings.Instance.CameraPrefab.IsNone() || 
+                if (SceneSettings.Instance.CameraPrefab.IsEmpty() || 
                     !SceneSettings.Instance.CameraPrefab.IsValid())
                 {
                     CoreSystem.Logger.LogError(LogChannel.Presentation,
@@ -382,7 +391,15 @@ namespace Syadeu.Presentation
                 }
                 else
 #endif
-                    SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
+                {
+                    m_CameraPrefab = SceneSettings.Instance.CameraPrefab.AssetReference;
+                    var oper = m_CameraPrefab.LoadAssetAsync<UnityEngine.GameObject>();
+                    oper.Completed += t =>
+                    {
+                        GameObject.Instantiate(t.Result);
+                    };
+                }
+                    //SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 
                 OnSceneChanged?.Invoke();
 

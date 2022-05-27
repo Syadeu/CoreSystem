@@ -15,6 +15,7 @@ using Syadeu;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public class EntityDrawer : ObjectBaseDrawer
     {
         public EntityDataBase Target => (EntityDataBase)m_TargetObject;

@@ -397,7 +397,7 @@ namespace SyadeuEditor
         private static Dictionary<uint, FieldInfo> m_CachedFieldInfos = new Dictionary<uint, FieldInfo>();
         private static Dictionary<uint, PropertyInfo> m_CachedPropertyInfos = new Dictionary<uint, PropertyInfo>();
 
-        private SerializedObject<T> m_SerializedObject = null;
+        //private SerializedObject<T> m_SerializedObject = null;
 
         /// <summary>
         /// <inheritdoc cref="UnityEditor.Editor.target"/>
@@ -407,18 +407,18 @@ namespace SyadeuEditor
         /// <inheritdoc cref="UnityEditor.Editor.targets"/>
         /// </summary>
         public new T[] targets => base.targets.Select(t => t is T target ? target : (T)TypeHelper.GetDefaultValue(TypeHelper.TypeOf<T>.Type)).ToArray();
-        protected new SerializedObject<T> serializedObject
-        {
-            get
-            {
-                if (m_SerializedObject == null)
-                {
-                    m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject)base.target, base.serializedObject);
-                }
+        //protected new SerializedObject<T> serializedObject
+        //{
+        //    get
+        //    {
+        //        if (m_SerializedObject == null)
+        //        {
+        //            m_SerializedObject = new SerializedObject<T>((SerializeScriptableObject)base.target, base.serializedObject);
+        //        }
 
-                return m_SerializedObject;
-            }
-        }
+        //        return m_SerializedObject;
+        //    }
+        //}
         public string assetPath
         {
             get

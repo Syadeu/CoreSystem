@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Float3Drawer : ObjectDrawer<float3>
     {
         private bool m_DrawName;
@@ -25,6 +26,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector3Field(string.Empty, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Float4Drawer : ObjectDrawer<float4>
     {
         private bool m_DrawName;
@@ -44,6 +46,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector4Field(string.Empty, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Int3Drawer : ObjectDrawer<int3>
     {
         private bool m_DrawName;
@@ -69,6 +72,7 @@ namespace SyadeuEditor.Utilities
             return new int3(temp.x, temp.y, temp.z);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Float2Drawer : ObjectDrawer<float2>
     {
         private bool m_DrawName;
@@ -88,6 +92,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector2Field(string.Empty, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Int2Drawer : ObjectDrawer<int2>
     {
         private bool m_DrawName;
@@ -113,6 +118,7 @@ namespace SyadeuEditor.Utilities
             return new int2(temp.x, temp.y);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class quaternionDrawer : ObjectDrawer<quaternion>
     {
         private bool m_DrawName;
@@ -137,7 +143,7 @@ namespace SyadeuEditor.Utilities
             return new quaternion(temp);
         }
     }
-
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Vector4Drawer : ObjectDrawer<Vector4>
     {
         public Vector4Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -148,6 +154,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector4Field(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Vector3Drawer : ObjectDrawer<Vector3>
     {
         public Vector3Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -158,6 +165,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector3Field(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Vector3IntDrawer : ObjectDrawer<Vector3Int>
     {
         public Vector3IntDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -168,6 +176,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector3IntField(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Vector2Drawer : ObjectDrawer<Vector2>
     {
         public Vector2Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -179,6 +188,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector2Field(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Vector2IntDrawer : ObjectDrawer<Vector2Int>
     {
         public Vector2IntDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -190,7 +200,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Vector2IntField(Name, currentValue);
         }
     }
-
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class RectDrawer : ObjectDrawer<Rect>
     {
         public RectDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -202,6 +212,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.RectField(Name, currentValue); 
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class RectIntDrawer : ObjectDrawer<RectInt>
     {
         public RectIntDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -213,6 +224,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.RectIntField(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class QuaternionDrawer : ObjectDrawer<Quaternion>
     {
         public QuaternionDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -225,7 +237,7 @@ namespace SyadeuEditor.Utilities
             return new Quaternion(output.x, output.y, output.z, output.w);
         }
     }
-
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ColorDrawer : ObjectDrawer<Color>
     {
         public ColorDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -236,6 +248,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.ColorField(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class Color32Drawer : ObjectDrawer<Color32>
     {
         public Color32Drawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)

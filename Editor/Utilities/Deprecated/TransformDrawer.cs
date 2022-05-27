@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Utilities
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class TransformDrawer : ObjectDrawer<ITransform>
     {
         public TransformDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)

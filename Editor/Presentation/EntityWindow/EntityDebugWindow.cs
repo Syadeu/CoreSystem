@@ -40,7 +40,7 @@ namespace SyadeuEditor.Presentation
         Vector2 m_Scroll;
         private Entity<ObjectBase> m_Selected;
         private string m_SelectedName = string.Empty;
-        private ObjectDrawerBase[] m_SelectedMembers = null;
+        //private ObjectDrawerBase[] m_SelectedMembers = null;
 
         public Entity<ObjectBase> Selected
         {
@@ -52,7 +52,7 @@ namespace SyadeuEditor.Presentation
                     //$"1: {value.IsEmpty()} :: {value.IsValid()}".ToLog();
                     m_Selected = Entity<ObjectBase>.Empty;
                     m_SelectedName = string.Empty;
-                    m_SelectedMembers = null;
+                    //m_SelectedMembers = null;
                     return;
                 }
 
@@ -85,11 +85,11 @@ namespace SyadeuEditor.Presentation
                         return true;
                     })
                     .ToArray();
-                m_SelectedMembers = new ObjectDrawerBase[temp.Length];
-                for (int i = 0; i < temp.Length; i++)
-                {
-                    m_SelectedMembers[i] = ObjectDrawerBase.ToDrawer(entity, temp[i], true);
-                }
+                //m_SelectedMembers = new ObjectDrawerBase[temp.Length];
+                //for (int i = 0; i < temp.Length; i++)
+                //{
+                //    m_SelectedMembers[i] = ObjectDrawerBase.ToDrawer(entity, temp[i], true);
+                //}
 
                 m_Selected = value;
             }
@@ -141,27 +141,27 @@ namespace SyadeuEditor.Presentation
 
                 CoreGUI.Line();
 
-                for (int i = 0; i < m_SelectedMembers.Length; i++)
-                {
-                    if (m_SelectedMembers[i] is AttributeListDrawer ||
-                        m_SelectedMembers[i].Name.Equals("Name") ||
-                        m_SelectedMembers[i].Name.Equals("Hash") ||
-                        m_SelectedMembers[i].Name.Equals("Idx") ||
-                        m_SelectedMembers[i].Name.Equals("EnableCull") ||
-                        m_SelectedMembers[i].Name.Equals("Prefab") ||
-                        m_SelectedMembers[i].Name.Equals("Center") ||
-                        m_SelectedMembers[i].Name.Equals("Size") ||
-                        m_SelectedMembers[i].Name.Equals("transform"))
-                    {
-                        continue;
-                    }
-                    else if (m_SelectedMembers[i] is ArrayDrawer array)
-                    {
-                        if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(array.ElementType)) continue;
-                    }
+                //for (int i = 0; i < m_SelectedMembers.Length; i++)
+                //{
+                //    if (m_SelectedMembers[i] is AttributeListDrawer ||
+                //        m_SelectedMembers[i].Name.Equals("Name") ||
+                //        m_SelectedMembers[i].Name.Equals("Hash") ||
+                //        m_SelectedMembers[i].Name.Equals("Idx") ||
+                //        m_SelectedMembers[i].Name.Equals("EnableCull") ||
+                //        m_SelectedMembers[i].Name.Equals("Prefab") ||
+                //        m_SelectedMembers[i].Name.Equals("Center") ||
+                //        m_SelectedMembers[i].Name.Equals("Size") ||
+                //        m_SelectedMembers[i].Name.Equals("transform"))
+                //    {
+                //        continue;
+                //    }
+                //    else if (m_SelectedMembers[i] is ArrayDrawer array)
+                //    {
+                //        if (TypeHelper.TypeOf<IFixedReference>.Type.IsAssignableFrom(array.ElementType)) continue;
+                //    }
 
-                    m_SelectedMembers[i].OnGUI();
-                }
+                //    m_SelectedMembers[i].OnGUI();
+                //}
 
                 m_Scroll = scroll.scrollPosition;
             }
@@ -182,7 +182,7 @@ namespace SyadeuEditor.Presentation
                 ProxyTransform proxy = entityBase.GetTransform();
                 using (new CoreGUI.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
-                    EntityDrawer.DrawModel(entityBase, true);
+                    //EntityDrawer.DrawModel(entityBase, true);
 
                     if (proxy.hasProxy)
                     {

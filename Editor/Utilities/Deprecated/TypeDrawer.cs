@@ -6,6 +6,7 @@ using UnityEditor;
 
 namespace SyadeuEditor.Utilities
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class TypeDrawer : ObjectDrawer<Type>
     {
         public override int FieldCount => 1;

@@ -22,6 +22,7 @@ namespace Syadeu.Presentation
 #if UNITY_EDITOR
     [CreateAssetMenu(fileName = "NewObjectID", menuName = "CoreSystem/Presentation/Reference")]
 #endif
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ReferenceScriptableObject : ScriptableObject, IValidation
     {
         [SerializeField] private ulong m_Hash = 0;

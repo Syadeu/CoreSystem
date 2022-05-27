@@ -11,6 +11,7 @@ using UnityEngine;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class AttributeListDrawer : ObjectDrawer<AttributeArray>
     {
         private List<ObjectDrawerBase> m_Drawers = new List<ObjectDrawerBase>();

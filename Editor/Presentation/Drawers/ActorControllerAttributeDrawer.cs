@@ -9,6 +9,7 @@ using UnityEditor;
 
 namespace SyadeuEditor.Presentation
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ActorControllerAttributeDrawer : ObjectBaseDrawer<ActorControllerAttribute>
     {
         private ArrayDrawer m_ProvidersDrawer;
@@ -79,31 +80,31 @@ namespace SyadeuEditor.Presentation
         }
         private void DrawProviders(ArrayDrawer providersDrawer)
         {
-            List<System.Type> temp = new List<System.Type>();
-            for (int i = 0; i < providersDrawer.Count; i++)
-            {
-                ReferenceDrawer refDrawer = (ReferenceDrawer)providersDrawer[i];
-                IFixedReference reference = refDrawer.Getter.Invoke();
-                if (reference.IsEmpty() || !reference.IsValid())
-                {
-                    continue;
-                }
+            //List<System.Type> temp = new List<System.Type>();
+            //for (int i = 0; i < providersDrawer.Count; i++)
+            //{
+            //    ReferenceDrawer refDrawer = (ReferenceDrawer)providersDrawer[i];
+            //    IFixedReference reference = refDrawer.Getter.Invoke();
+            //    if (reference.IsEmpty() || !reference.IsValid())
+            //    {
+            //        continue;
+            //    }
 
-                ActorProviderRequireAttribute actorProviderRequire 
-                    = reference.GetObject().GetType().GetCustomAttribute<ActorProviderRequireAttribute>();
+            //    ActorProviderRequireAttribute actorProviderRequire 
+            //        = reference.GetObject().GetType().GetCustomAttribute<ActorProviderRequireAttribute>();
 
-                if (actorProviderRequire == null)
-                {
-                    continue;
-                }
+            //    if (actorProviderRequire == null)
+            //    {
+            //        continue;
+            //    }
 
-                if (!IsValidProvider(actorProviderRequire))
-                {
-                    EditorGUILayout.HelpBox($"Require {ListToString(actorProviderRequire.m_RequireTypes)}", MessageType.Error);
-                }
-            }
+            //    if (!IsValidProvider(actorProviderRequire))
+            //    {
+            //        EditorGUILayout.HelpBox($"Require {ListToString(actorProviderRequire.m_RequireTypes)}", MessageType.Error);
+            //    }
+            //}
 
-            providersDrawer.OnGUI();
+            //providersDrawer.OnGUI();
         }
     }
 }

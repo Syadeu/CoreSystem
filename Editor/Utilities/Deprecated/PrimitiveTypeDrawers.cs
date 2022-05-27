@@ -17,6 +17,7 @@ using UnityEngine.AddressableAssets;
 
 namespace SyadeuEditor.Utilities
 {
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class EnumDrawer : ObjectDrawer<Enum>
     {
         public EnumDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -36,6 +37,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.EnumPopup(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class IntDrawer : ObjectDrawer<int>
     {
         private bool m_DrawName;
@@ -64,6 +66,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.IntField(currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class BoolenDrawer : ObjectDrawer<bool>
     {
         private bool m_DrawName;
@@ -83,6 +86,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.Toggle(currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class FloatDrawer : ObjectDrawer<float>
     {
         private bool m_DrawName;
@@ -111,6 +115,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.FloatField(currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class DoubleDrawer : ObjectDrawer<double>
     {
         private bool m_DrawName;
@@ -130,6 +135,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.DoubleField(currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class LongDrawer : ObjectDrawer<long>
     {
         public LongDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -145,6 +151,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.LongField(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class StringDrawer : ObjectDrawer<string>
     {
         public StringDrawer(object parentObject, MemberInfo memberInfo) : base(parentObject, memberInfo)
@@ -160,6 +167,7 @@ namespace SyadeuEditor.Utilities
             return EditorGUILayout.TextField(Name, currentValue);
         }
     }
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
 
     public sealed class ArrayDrawer : ObjectDrawer<IList>
     {
@@ -606,7 +614,7 @@ namespace SyadeuEditor.Utilities
             EditorGUI.indentLevel--;
         }
     }
-
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public sealed class ObjectDrawer : ObjectDrawerBase
     {
         private object m_TargetObject;

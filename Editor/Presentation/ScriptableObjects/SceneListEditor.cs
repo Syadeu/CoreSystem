@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SyadeuEditor
 {
-    [CustomEditor(typeof(SceneSettings))]
+    //[CustomEditor(typeof(SceneSettings))]
     public sealed class SceneListEditor : InspectorEditor<SceneSettings>
     {
         SceneReference m_CurrentScene;
@@ -21,16 +21,16 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            Scene scene = SceneManager.GetActiveScene();
+            //Scene scene = SceneManager.GetActiveScene();
 
-            for (int i = 0; i < target.Scenes.Count; i++)
-            {
-                if (target.Scenes[i].ScenePath.Equals(scene.path))
-                {
-                    m_CurrentScene = target.Scenes[i];
-                    break;
-                }
-            }
+            //for (int i = 0; i < target.Scenes.Count; i++)
+            //{
+            //    if (target.Scenes[i].ScenePath.Equals(scene.path))
+            //    {
+            //        m_CurrentScene = target.Scenes[i];
+            //        break;
+            //    }
+            //}
 
             //if (m_CurrentScene == null || m_CurrentScene.m_SceneGridData == null ||
             //    m_CurrentScene.m_SceneGridData.Length == 0) return;
@@ -49,12 +49,12 @@ namespace SyadeuEditor
         }
         protected override void OnInspectorGUIContents()
         {
-            if (m_CurrentScene == null)
-            {
-                EditorGUILayout.LabelField("This scene is not in the scenelist");
+            //if (m_CurrentScene == null)
+            //{
+            //    EditorGUILayout.LabelField("This scene is not in the scenelist");
 
-                //return;
-            }
+            //    //return;
+            //}
             //EditorUtils.StringHeader("Grid");
             //center = EditorGUILayout.Vector3IntField("Center: ", center);
             //size = EditorGUILayout.Vector3IntField("Size: ", size);

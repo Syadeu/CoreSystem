@@ -16,6 +16,7 @@ namespace SyadeuEditor.Presentation
     /// <summary>
     /// <see cref="ObjectBase"/>
     /// </summary>
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public class ObjectBaseDrawer : ObjectDrawerBase
     {
         public static readonly Dictionary<ObjectBase, ObjectBaseDrawer> Pool = new Dictionary<ObjectBase, ObjectBaseDrawer>();
@@ -200,7 +201,7 @@ namespace SyadeuEditor.Presentation
         protected T GetDrawer<T>(string name) where T : ObjectDrawerBase
             => (T)(GetDrawer(name));
     }
-
+    [System.Obsolete("Use Unity Serialized -> PropertyDrawer<T>", true)]
     public abstract class ObjectBaseDrawer<T> : ObjectBaseDrawer
         where T : ObjectBase
     {
