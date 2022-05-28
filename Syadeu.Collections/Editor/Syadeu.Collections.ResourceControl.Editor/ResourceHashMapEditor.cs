@@ -19,6 +19,7 @@
 #endif
 #define UNITYENGINE
 
+using Syadeu.Collections.Editor;
 using SyadeuEditor;
 using SyadeuEditor.Utilities;
 using System;

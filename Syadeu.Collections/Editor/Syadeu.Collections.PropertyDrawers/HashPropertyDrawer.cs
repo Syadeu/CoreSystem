@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using SyadeuEditor.Utilities;
 using UnityEditor;
 using UnityEngine;

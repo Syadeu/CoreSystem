@@ -60,7 +60,7 @@ namespace SyadeuEditor
 
         public static void SetDirty(UnityEngine.Object obj) => EditorUtility.SetDirty(obj);
 
-        #region String
+        //#region String
 
         public static void AutoString(ref string original, in string txt)
         {
@@ -68,82 +68,82 @@ namespace SyadeuEditor
             original += txt;
         }
 
-        public static string String(string text) => String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black);
-        public static string String(string text, StringColor color)
-            => $"<color={color}>{text}</color>";
-        public static string String(string text, int size, bool color = true)
-        {
-            if (color)
-            {
-                return $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
-            }
+        //public static string String(string text) => String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black);
+        //public static string String(string text, StringColor color)
+        //    => $"<color={color}>{text}</color>";
+        //public static string String(string text, int size, bool color = true)
+        //{
+        //    if (color)
+        //    {
+        //        return $"<size={size}>{String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black)}</size>";
+        //    }
 
-            return $"<size={size}>{text}</size>";
-        }
-        public static string String(string text, StringColor color, int size)
-            => String(String(text, color), size, false);
-        public static void StringHeader(string text, StringColor color, bool center)
-        {
-            EditorGUILayout.LabelField(String(text, color, 20), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringHeader(string text, int size = 20)
-        {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringHeader(string text, int size, bool center)
-        {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringHeader(string text, int size, params GUILayoutOption[] options)
-        {
-            EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle, options);
-        }
-        public static void StringHeader(string text, StringColor color, int size = 20)
-        {
-            EditorGUILayout.LabelField(String(text, color, size), EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringRich(string text, bool center = false)
-        {
-            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringRich(string text, GUIStyle style, bool center = false)
-        {
-            if (style == null) style = new GUIStyle("Label");
+        //    return $"<size={size}>{text}</size>";
+        //}
+        //public static string String(string text, StringColor color, int size)
+        //    => String(String(text, color), size, false);
+        //public static void StringHeader(string text, StringColor color, bool center)
+        //{
+        //    EditorGUILayout.LabelField(String(text, color, 20), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringHeader(string text, int size = 20)
+        //{
+        //    EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringHeader(string text, int size, bool center)
+        //{
+        //    EditorGUILayout.LabelField(String(text, StringColor.grey, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringHeader(string text, int size, params GUILayoutOption[] options)
+        //{
+        //    EditorGUILayout.LabelField(String(text, StringColor.grey, size), EditorStyleUtilities.HeaderStyle, options);
+        //}
+        //public static void StringHeader(string text, StringColor color, int size = 20)
+        //{
+        //    EditorGUILayout.LabelField(String(text, color, size), EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringRich(string text, bool center = false)
+        //{
+        //    EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringRich(string text, GUIStyle style, bool center = false)
+        //{
+        //    if (style == null) style = new GUIStyle("Label");
 
-            style.richText = true;
-            if (center) style.alignment = TextAnchor.MiddleCenter;
-            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style);
-        }
-        public static void StringRich(string text, StringColor color, bool center, GUIStyle style, params GUILayoutOption[] options)
-        {
-            if (style == null) style = new GUIStyle("Label");
-            style.richText = true;
-            if (center) style.alignment = TextAnchor.MiddleCenter;
+        //    style.richText = true;
+        //    if (center) style.alignment = TextAnchor.MiddleCenter;
+        //    EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style);
+        //}
+        //public static void StringRich(string text, StringColor color, bool center, GUIStyle style, params GUILayoutOption[] options)
+        //{
+        //    if (style == null) style = new GUIStyle("Label");
+        //    style.richText = true;
+        //    if (center) style.alignment = TextAnchor.MiddleCenter;
 
-            GUILayout.Label(String(text, color), style, options);
-        }
-        public static void StringRich(string text, bool center, GUIStyle style, params GUILayoutOption[] options)
-        {
-            if (style == null) style = new GUIStyle("Label");
-            style.richText = true;
-            if (center) style.alignment = TextAnchor.MiddleCenter;
+        //    GUILayout.Label(String(text, color), style, options);
+        //}
+        //public static void StringRich(string text, bool center, GUIStyle style, params GUILayoutOption[] options)
+        //{
+        //    if (style == null) style = new GUIStyle("Label");
+        //    style.richText = true;
+        //    if (center) style.alignment = TextAnchor.MiddleCenter;
 
-            GUILayout.Label(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style, options);
-        }
-        public static void StringRich(string text, StringColor color, bool center = false)
-        {
-            EditorGUILayout.LabelField(String(text, color), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringRich(string text, int size, bool center = false)
-        {
-            EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
-        public static void StringRich(string text, int size, StringColor color, bool center = false)
-        {
-            EditorGUILayout.LabelField(String(text, color, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
-        }
+        //    GUILayout.Label(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black), style, options);
+        //}
+        //public static void StringRich(string text, StringColor color, bool center = false)
+        //{
+        //    EditorGUILayout.LabelField(String(text, color), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringRich(string text, int size, bool center = false)
+        //{
+        //    EditorGUILayout.LabelField(String(text, EditorGUIUtility.isProSkin ? StringColor.white : StringColor.black, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
+        //public static void StringRich(string text, int size, StringColor color, bool center = false)
+        //{
+        //    EditorGUILayout.LabelField(String(text, color, size), center ? EditorStyleUtilities.CenterStyle : EditorStyleUtilities.HeaderStyle);
+        //}
 
-        #endregion
+        //#endregion
 
         private static Editor objectPreviewWindow;
         public static void ObjectPreview(this EditorWindow t, UnityEngine.Object obj)
@@ -214,18 +214,18 @@ namespace SyadeuEditor
 
             return temp;
         }
-        public static bool Foldout(bool foldout, string name, int size = -1)
-        {
-            string firstKey = foldout ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
-            if (size < 0)
-            {
-                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
-            }
-            else
-            {
-                return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey, size), true, EditorStyleUtilities.HeaderStyle);
-            }
-        }
+        //public static bool Foldout(bool foldout, string name, int size = -1)
+        //{
+        //    string firstKey = foldout ? EditorStyleUtilities.FoldoutOpendString : EditorStyleUtilities.FoldoutClosedString;
+        //    if (size < 0)
+        //    {
+        //        return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey), true, EditorStyleUtilities.HeaderStyle);
+        //    }
+        //    else
+        //    {
+        //        return EditorGUILayout.Foldout(foldout, String($"{firstKey} {name}", StringColor.grey, size), true, EditorStyleUtilities.HeaderStyle);
+        //    }
+        //}
 
         public static T CreateScriptable<T>(string folder, string name) where T : ScriptableObject
         {

@@ -1,8 +1,7 @@
 ﻿using Syadeu;
+using Syadeu.Collections.Editor;
 using Syadeu.Entities;
 using Syadeu.Mono;
-using SyadeuEditor.Tree;
-using SyadeuEditor.Utilities;
 using System;
 #if CORESYSTEM_FMOD
 using Syadeu.FMOD;
@@ -25,22 +24,22 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_ManagerView = new VerticalTreeView(target, serializedObject);
+            //m_ManagerView = new VerticalTreeView(target, serializedObject);
 
-            m_RoutinesView = new VerticalTreeView(target, serializedObject);
-            m_RoutinesView.MakeCustomSearchFilter((e, str) =>
-            {
-                str = str.ToLower();
-                if (e is RoutineTreeElement routineElement)
-                {
-                    if (routineElement.Routine.ObjectName.ToLower().Contains(str)) return true;
-                }
-                else if (e.Name.ToLower().Contains(str))
-                {
-                    return true;
-                }
-                return false;
-            });
+            //m_RoutinesView = new VerticalTreeView(target, serializedObject);
+            //m_RoutinesView.MakeCustomSearchFilter((e, str) =>
+            //{
+            //    str = str.ToLower();
+            //    if (e is RoutineTreeElement routineElement)
+            //    {
+            //        if (routineElement.Routine.ObjectName.ToLower().Contains(str)) return true;
+            //    }
+            //    else if (e.Name.ToLower().Contains(str))
+            //    {
+            //        return true;
+            //    }
+            //    return false;
+            //});
             if (Application.isPlaying)
             {
                 CoreSystem.Instance.OnManagerChanged += ValidateManagerView;
@@ -71,88 +70,88 @@ namespace SyadeuEditor
 
         #region ManagerView
 
-        VerticalTreeView m_ManagerView;
+        //VerticalTreeView m_ManagerView;
         List<IStaticManager> m_Managers = new List<IStaticManager>();
-        private class ManagerTreeElement : VerticalTreeElement
-        {
-            private IStaticManager m_Manager;
-            public IStaticManager Manager => m_Manager;
+        //private class ManagerTreeElement : VerticalTreeElement
+        //{
+        //    private IStaticManager m_Manager;
+        //    public IStaticManager Manager => m_Manager;
 
-            public override object TargetObject => m_Manager;
-            private string m_Description = null;
+        //    public override object TargetObject => m_Manager;
+        //    private string m_Description = null;
 
-            public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
-            {
-                m_Manager = manager;
-                string[] split = manager.ToString().Split('.');
-                m_Name = split[split.Length - 1].Trim(')');
+        //    public ManagerTreeElement(VerticalTreeViewEntity tree, IStaticManager manager) : base(tree)
+        //    {
+        //        m_Manager = manager;
+        //        string[] split = manager.ToString().Split('.');
+        //        m_Name = split[split.Length - 1].Trim(')');
 
-                var desc = manager.GetType().GetCustomAttribute<StaticManagerDescriptionAttribute>();
-                if (desc != null)
-                {
-                    m_Description = desc.m_Description;
-                }
-            }
-            public override void OnGUI()
-            {
-                if (string.IsNullOrEmpty(m_Description)) return;
+        //        var desc = manager.GetType().GetCustomAttribute<StaticManagerDescriptionAttribute>();
+        //        if (desc != null)
+        //        {
+        //            m_Description = desc.m_Description;
+        //        }
+        //    }
+        //    public override void OnGUI()
+        //    {
+        //        if (string.IsNullOrEmpty(m_Description)) return;
 
-                EditorGUILayout.TextArea(m_Description);
-            }
-        }
+        //        EditorGUILayout.TextArea(m_Description);
+        //    }
+        //}
         private void ValidateManagerView()
         {
             m_Managers.Clear();
             m_Managers.AddRange(CoreSystem.GetStaticManagers());
             m_Managers.AddRange(CoreSystem.GetDataManagers());
             m_Managers.AddRange(CoreSystem.GetInstanceManagers());
-            m_ManagerView
-                .SetupElements(m_Managers, (other) =>
-                {
-                    VerticalFolderTreeElement folder; ManagerTreeElement element;
-                    if (other is StaticManagerEntity staticMgr)
-                    {
-                        folder = m_ManagerView.GetOrCreateFolder("Static Manager");
-                    }
-                    else if (other is IStaticMonoManager monoMgr)
-                    {
-                        folder = m_ManagerView.GetOrCreateFolder("Mono Manager");
-                    }
-                    else
-                    {
-                        folder = m_ManagerView.GetOrCreateFolder("Data Manager");
-                    }
-                    element = new ManagerTreeElement(m_ManagerView, other as IStaticManager);
-                    element.SetParent(folder);
+            //m_ManagerView
+            //    .SetupElements(m_Managers, (other) =>
+            //    {
+            //        VerticalFolderTreeElement folder; ManagerTreeElement element;
+            //        if (other is StaticManagerEntity staticMgr)
+            //        {
+            //            folder = m_ManagerView.GetOrCreateFolder("Static Manager");
+            //        }
+            //        else if (other is IStaticMonoManager monoMgr)
+            //        {
+            //            folder = m_ManagerView.GetOrCreateFolder("Mono Manager");
+            //        }
+            //        else
+            //        {
+            //            folder = m_ManagerView.GetOrCreateFolder("Data Manager");
+            //        }
+            //        element = new ManagerTreeElement(m_ManagerView, other as IStaticManager);
+            //        element.SetParent(folder);
 
-                    return element;
-                });
+            //        return element;
+            //    });
         }
 
         #endregion
 
         #region Routine View
 
-        VerticalTreeView m_RoutinesView;
+        //VerticalTreeView m_RoutinesView;
         List<CoreRoutine> m_Routines = new List<CoreRoutine>();
-        private class RoutineTreeElement : VerticalTreeElement
-        {
-            private CoreRoutine m_Routine;
-            public CoreRoutine Routine => m_Routine;
+        //private class RoutineTreeElement : VerticalTreeElement
+        //{
+        //    private CoreRoutine m_Routine;
+        //    public CoreRoutine Routine => m_Routine;
 
-            public override object TargetObject => m_Routine;
+        //    public override object TargetObject => m_Routine;
 
-            public RoutineTreeElement(VerticalTreeViewEntity tree, CoreRoutine routine) : base(tree)
-            {
-                m_Routine = routine;
-                m_Name = routine.ObjectName.Split('+')[1];
-            }
+        //    public RoutineTreeElement(VerticalTreeViewEntity tree, CoreRoutine routine) : base(tree)
+        //    {
+        //        m_Routine = routine;
+        //        m_Name = routine.ObjectName.Split('+')[1];
+        //    }
 
-            public override void OnGUI()
-            {
-                //throw new System.NotImplementedException();
-            }
-        }
+        //    public override void OnGUI()
+        //    {
+        //        //throw new System.NotImplementedException();
+        //    }
+        //}
         private void ValidateRoutineView()
         {
             m_Routines.Clear();
@@ -161,42 +160,42 @@ namespace SyadeuEditor
             m_Routines.AddRange(CoreSystem.Instance.GetCustomBackgroundUpdates());
             m_Routines.AddRange(CoreSystem.Instance.GetCustomUpdates());
 
-            m_RoutinesView
-                .SetupElements(m_Routines, (other) =>
-                {
-                    CoreRoutine routine = (CoreRoutine)other;
-                    VerticalFolderTreeElement folder; RoutineTreeElement element;
-                    if (routine.IsEditor)
-                    {
-                        folder = m_RoutinesView.GetOrCreateFolder("Editor Routine");
-                    }
-                    else if (routine.IsBackground)
-                    {
-                        folder = m_RoutinesView.GetOrCreateFolder("Background Routine");
-                    }
-                    else
-                    {
-                        folder = m_RoutinesView.GetOrCreateFolder("Foreground Routine");
-                    }
-                    element = new RoutineTreeElement(m_RoutinesView, routine);
+            //m_RoutinesView
+            //    .SetupElements(m_Routines, (other) =>
+            //    {
+            //        CoreRoutine routine = (CoreRoutine)other;
+            //        VerticalFolderTreeElement folder; RoutineTreeElement element;
+            //        if (routine.IsEditor)
+            //        {
+            //            folder = m_RoutinesView.GetOrCreateFolder("Editor Routine");
+            //        }
+            //        else if (routine.IsBackground)
+            //        {
+            //            folder = m_RoutinesView.GetOrCreateFolder("Background Routine");
+            //        }
+            //        else
+            //        {
+            //            folder = m_RoutinesView.GetOrCreateFolder("Foreground Routine");
+            //        }
+            //        element = new RoutineTreeElement(m_RoutinesView, routine);
 
-                    string objPath = routine.ObjectName.Split('+')[0].Split('.').Last().Trim();
-                    var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
-                    element.SetParent(topFolder);
+            //        string objPath = routine.ObjectName.Split('+')[0].Split('.').Last().Trim();
+            //        var topFolder = m_RoutinesView.GetOrCreateFolder(objPath);
+            //        element.SetParent(topFolder);
 
-                    topFolder.SetParent(folder);
-                    return element;
-                });
+            //        topFolder.SetParent(folder);
+            //        return element;
+            //    });
         }
 
         #endregion
 
         protected override void OnInspectorGUIContents()
         {
-            EditorUtilities.StringHeader("CoreSystem");
-            CoreGUI.SectorLine();
+            //CoreGUI.Label("CoreSystem");
+            //CoreGUI.SectorLine();
 
-            EditorGUILayout.Space();
+            //EditorGUILayout.Space();
             //EditorGUILayout.PropertyField(m_DisplayLogChannel);
             CoreSystemSettings.Instance.m_DisplayLogChannel = (LogChannel)EditorGUILayout.EnumFlagsField("Display Log Channel: ", CoreSystemSettings.Instance.m_DisplayLogChannel);
 
@@ -211,7 +210,7 @@ namespace SyadeuEditor
             else
             {
                 EditorGUILayout.BeginVertical("Box");
-                EditorUtilities.StringRich("이 시스템은 실행 중에만 정보를 표시합니다", 12, true);
+                CoreGUI.Label("이 시스템은 실행 중에만 정보를 표시합니다", 12, TextAnchor.MiddleCenter);
                 EditorGUILayout.EndVertical();
             }
 
@@ -223,24 +222,24 @@ namespace SyadeuEditor
         bool m_OpenDataManagerList = false;
         void Runtime()
         {
-            EditorUtilities.StringHeader("Generals", 15);
+            CoreGUI.Label("Generals", 15);
             EditorGUI.indentLevel += 1;
 
-            m_ManagerView.OnGUI();
+            //m_ManagerView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
             CoreGUI.SectorLine();
 
-            EditorUtilities.StringHeader("Routines", 15);
+            CoreGUI.Label("Routines", 15);
             EditorGUI.indentLevel += 1;
 
             if (GUILayout.Button("Capture")) ValidateRoutineView();
-            m_RoutinesView.OnGUI();
+            //m_RoutinesView.OnGUI();
 
             EditorGUI.indentLevel -= 1;
             EditorGUILayout.Space();
 
-            EditorUtilities.StringHeader("Jobs", 15);
+            CoreGUI.Label("Jobs", 15);
             EditorGUI.indentLevel += 1;
 
             #region Job

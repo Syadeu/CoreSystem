@@ -2,6 +2,7 @@
 using MoonSharp.Interpreter.Loaders;
 using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Collections.Lua;
 using Syadeu.Internal;
 using SyadeuEditor.Utilities;
@@ -194,7 +195,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
             EditorGUILayout.BeginVertical(EditorStyleUtilities.Box);
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtilities.StringRich(string.Format(header, name, other.m_Scripts?.Count.ToString()), 15);
+            CoreGUI.Label(string.Format(header, name, other.m_Scripts?.Count.ToString()), 15);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 if (other.m_Scripts == null) other.m_Scripts = new List<LuaScript>();
@@ -212,7 +213,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
             {
                 CoreGUI.Line();
                 EditorGUILayout.BeginHorizontal();
-                EditorUtilities.StringRich(string.IsNullOrEmpty(other.m_Scripts[i].m_FunctionName) ? $"{i}" : other.m_Scripts[i].m_FunctionName, 12);
+                CoreGUI.Label(string.IsNullOrEmpty(other.m_Scripts[i].m_FunctionName) ? $"{i}" : other.m_Scripts[i].m_FunctionName, 12);
                 if (GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     other.m_Scripts.RemoveAt(i);
@@ -252,7 +253,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
             EditorGUI.BeginDisabledGroup(selected == 0);
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtilities.StringRich("Args", 12);
+            CoreGUI.Label("Args", 12);
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 if (scr.m_Args == null)
@@ -286,7 +287,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, CoreSystem
         public static void DrawFunctionSelector(this LuaScript scr, string name)
         {
             EditorGUILayout.BeginVertical(EditorStyleUtilities.Box);
-            if (!string.IsNullOrEmpty(name)) EditorUtilities.StringRich(name, 15);
+            if (!string.IsNullOrEmpty(name)) CoreGUI.Label(name, 15);
             EditorGUI.indentLevel += 1;
 
             DrawLuaScript(scr);

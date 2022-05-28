@@ -74,7 +74,8 @@ namespace SyadeuEditor.Presentation
             
             if (prefab.IsSubAsset)
             {
-                var obj = asset.GetSubAsset(prefab.SubAssetName.ToString());
+                AssetReference assetReference = new AssetReference($"{asset.AssetGUID}[{prefab.SubAssetName}]");
+                var obj = assetReference.editorAsset;
 
                 return obj;
             }

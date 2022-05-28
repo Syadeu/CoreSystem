@@ -4,6 +4,8 @@ using UnityEditor;
 using Syadeu.Presentation.Proxy;
 using Syadeu.Presentation;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
+using Syadeu.Collections.PropertyDrawers;
 
 namespace SyadeuEditor.Presentation
 {
@@ -22,7 +24,7 @@ namespace SyadeuEditor.Presentation
         }
         protected override void OnInspectorGUIContents()
         {
-            EditorUtilities.StringHeader("Recycle Object");
+            CoreGUI.Label("Recycle Object", 20);
             CoreGUI.SectorLine();
             EditorGUILayout.Space();
 
@@ -39,7 +41,7 @@ namespace SyadeuEditor.Presentation
 
             if (!target.entity.IsValid())
             {
-                EditorUtilities.StringRich("Invalid Entity", 13, true);
+                CoreGUI.Label("Invalid Entity", 13, TextAnchor.MiddleCenter);
                 return;
             }
 

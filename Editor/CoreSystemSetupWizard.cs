@@ -5,6 +5,7 @@ using Syadeu.FMOD;
 
 using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Collections.ResourceControl;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -91,7 +92,7 @@ namespace SyadeuEditor
             const string c_Copyrights = "Copyright 2022 Syadeu. All rights reserved.";
 
             GUILayout.Space(20);
-            EditorUtilities.StringHeader("Setup", 30, true);
+            CoreGUI.Label("Setup", 30, TextAnchor.MiddleCenter);
             GUILayout.Space(10);
             CoreGUI.Line();
             GUILayout.Space(10);
@@ -105,7 +106,7 @@ namespace SyadeuEditor
                 m_SelectedToolbar.OnGUI();
             }
 
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String(c_Copyrights, 11), EditorStyleUtilities.CenterStyle);
+            EditorGUI.LabelField(m_CopyrightRect, HTMLString.String(c_Copyrights, 11), EditorStyleUtilities.CenterStyle);
         }
 
         public SetupWizardMenuItem SelectedToolbar => m_SelectedToolbar;
@@ -319,19 +320,19 @@ namespace SyadeuEditor
 
             private void DrawContraints()
             {
-                m_OpenContraints = EditorUtilities.Foldout(m_OpenContraints, "Constraints");
+                m_OpenContraints = CoreGUI.Foldout(m_OpenContraints, "Constraints");
                 if (!m_OpenContraints) return;
 
                 EditorGUI.indentLevel++;
 
-                EditorUtilities.StringRich("Unity Constraints", 13);
+                CoreGUI.Label("Unity Constraints", 13);
 
                 DrawConstraint(ref m_DefinedCollectionsChecks, UNITY_COLLECTIONS_CHECKS);
 
                 EditorGUILayout.Space();
                 CoreGUI.Line();
 
-                EditorUtilities.StringRich("CoreSystem Constraints", 13);
+                CoreGUI.Label("CoreSystem Constraints", 13);
 
                 DrawConstraint(ref m_DefinedCoresystemChecks, CORESYSTEM_DISABLE_CHECKS);
                 DrawConstraint(ref m_DefinedTurnBasedSystem, CORESYSTEM_TURNBASESYSTEM);
@@ -339,7 +340,7 @@ namespace SyadeuEditor
                 EditorGUILayout.Space();
                 CoreGUI.Line();
 
-                EditorUtilities.StringRich("Third Party Constraints", 13);
+                CoreGUI.Label("Third Party Constraints", 13);
                 
                 DrawConstraint(ref m_DefinedFMOD, CORESYSTEM_FMOD);
                 DrawConstraint(ref m_DefinedDotween, CORESYSTEM_DOTWEEN);
@@ -419,12 +420,12 @@ namespace SyadeuEditor
             }
             private void DrawTagManager()
             {
-                m_OpenTagManager = EditorUtilities.Foldout(m_OpenTagManager, "Tag Manager");
+                m_OpenTagManager = CoreGUI.Foldout(m_OpenTagManager, "Tag Manager");
                 if (!m_OpenTagManager) return;
 
                 EditorGUI.indentLevel++;
 
-                EditorUtilities.StringRich("Tags", 13);
+                CoreGUI.Label("Tags", 13);
                 if (m_MissingTags.Count > 0)
                 {
                     EditorGUILayout.HelpBox($"Number({m_MissingTags.Count}) of Tags are missing", MessageType.Error);
@@ -447,7 +448,7 @@ namespace SyadeuEditor
 
                 CoreGUI.Line();
 
-                EditorUtilities.StringRich("Layers", 13);
+                CoreGUI.Label("Layers", 13);
                 if (m_MissingLayers.Count > 0)
                 {
                     EditorGUILayout.HelpBox($"Number({m_MissingLayers.Count}) of Layers are missing", MessageType.Error);
@@ -519,14 +520,14 @@ namespace SyadeuEditor
 
             private void DrawSettings()
             {
-                m_OpenCoreSystemSettings = EditorUtilities.Foldout(m_OpenCoreSystemSettings, "Settings");
+                m_OpenCoreSystemSettings = CoreGUI.Foldout(m_OpenCoreSystemSettings, "Settings");
                 if (!m_OpenCoreSystemSettings) return;
 
                 EditorGUI.indentLevel++;
 
                 using (new CoreGUI.BoxBlock(Color.white))
                 {
-                    EditorUtilities.StringRich("Global Settings", 13);
+                    CoreGUI.Label("Global Settings", 13);
                     EditorGUILayout.Space();
 
                     m_CoreSystemSettings.m_DisplayLogChannel =
@@ -558,7 +559,7 @@ namespace SyadeuEditor
 
             private void DrawUnityAudio()
             {
-                m_OpenUnityAudio = EditorUtilities.Foldout(m_OpenUnityAudio, "Unity Audio");
+                m_OpenUnityAudio = CoreGUI.Foldout(m_OpenUnityAudio, "Unity Audio");
                 if (!m_OpenUnityAudio) return;
 
                 EditorGUI.indentLevel++;
@@ -698,7 +699,7 @@ namespace SyadeuEditor
 
                     using (new CoreGUI.BoxBlock(Color.black))
                     {
-                        m_OpenMasterScene = EditorUtilities.Foldout(m_OpenMasterScene, "Master Scene", 13);
+                        m_OpenMasterScene = CoreGUI.Foldout(m_OpenMasterScene, "Master Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.MasterScene.ScenePath);
 
                         if (m_OpenMasterScene)
@@ -737,7 +738,7 @@ namespace SyadeuEditor
                     CoreGUI.Line();
                     using (new CoreGUI.BoxBlock(Color.black))
                     {
-                        m_OpenStartScene = EditorUtilities.Foldout(m_OpenStartScene, "Start Scene", 13);
+                        m_OpenStartScene = CoreGUI.Foldout(m_OpenStartScene, "Start Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.StartScene.ScenePath);
 
                         if (m_OpenStartScene)
@@ -776,7 +777,7 @@ namespace SyadeuEditor
                     CoreGUI.Line();
                     using (new CoreGUI.BoxBlock(Color.black))
                     {
-                        m_OpenCustomLoadingScene = EditorUtilities.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
+                        m_OpenCustomLoadingScene = CoreGUI.Foldout(m_OpenCustomLoadingScene, "Loading Scene", 13);
                         bool sceneFound = !string.IsNullOrEmpty(SceneSettings.Instance.CustomLoadingScene.ScenePath);
 
                         if (m_OpenCustomLoadingScene)
@@ -841,7 +842,7 @@ namespace SyadeuEditor
                     CoreGUI.Line();
                     using (new CoreGUI.BoxBlock(Color.black))
                     {
-                        m_OpenSceneList = EditorUtilities.Foldout(m_OpenSceneList, "Scenes", 13);
+                        m_OpenSceneList = CoreGUI.Foldout(m_OpenSceneList, "Scenes", 13);
 
                         if (m_OpenSceneList)
                         {
@@ -1011,11 +1012,11 @@ namespace SyadeuEditor
                 {
                     if (!Predicate())
                     {
-                        EditorUtilities.StringRich($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", true);
+                        CoreGUI.Label($"Require Rebase {objectSettings.Count} - {m_InvalidIndices.Count} != {m_AddressableCount}", TextAnchor.MiddleCenter);
                     }
                     else
                     {
-                        EditorUtilities.StringRich("Asset matched with Addressable", true);
+                        CoreGUI.Label("Asset matched with Addressable", TextAnchor.MiddleCenter);
                     }
                 }
 
@@ -1025,7 +1026,7 @@ namespace SyadeuEditor
                     {
                         EditorGUILayout.HelpBox("We\'ve found invalid assets in PrefabList but normally " +
                         "it is not an issue. You can ignore this", MessageType.Info);
-                        EditorUtilities.StringRich("Invalid prefab found");
+                        CoreGUI.Label("Invalid prefab found");
                         EditorGUI.indentLevel++;
 
                         EditorGUI.BeginDisabledGroup(true);
@@ -1190,7 +1191,7 @@ namespace SyadeuEditor
 
                 using (new CoreGUI.BoxBlock(Color.black))
                 {
-                    EditorUtilities.StringRich("Nominal", true);
+                    CoreGUI.Label("Nominal", TextAnchor.MiddleCenter);
                 }
             }
         }

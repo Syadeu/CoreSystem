@@ -6,6 +6,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {
@@ -86,11 +87,11 @@ namespace SyadeuEditor.Presentation
             PropertyField(ref rect, connectivityProp, connectivityProp.isExpanded);
 
             //m_GraphView.StretchToParentWidth();
-            if (Button(ref rect, "test"))
-            {
-                ConnectivityGraphViewWindow.Open(connectivityProp);
-                //ConnectivityGraphViewWindow.Open<EntityWindow>(connectivityProp, Docker.DockPosition.Bottom);
-            }
+            //if (Button(ref rect, "test"))
+            //{
+            //    ConnectivityGraphViewWindow.Open(connectivityProp);
+            //    //ConnectivityGraphViewWindow.Open<EntityWindow>(connectivityProp, Docker.DockPosition.Bottom);
+            //}
         }
     }
 }

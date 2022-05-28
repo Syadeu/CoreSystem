@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Syadeu.Collections.Editor;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SyadeuEditor

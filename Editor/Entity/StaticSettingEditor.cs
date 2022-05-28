@@ -5,6 +5,7 @@ using Syadeu.Entities;
 using UnityEngine;
 using UnityEditor;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor
 {

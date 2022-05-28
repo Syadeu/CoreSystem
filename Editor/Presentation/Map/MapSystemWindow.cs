@@ -1,10 +1,10 @@
 ﻿using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Internal;
 using Syadeu.Mono;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Map;
-using SyadeuEditor.Tree;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
@@ -77,7 +77,7 @@ namespace SyadeuEditor.Presentation.Map
         {
             using (new CoreGUI.BoxBlock(Color.black))
             {
-                EditorUtilities.StringHeader("Map System", 20, true);
+                CoreGUI.Label("Map System", 20, TextAnchor.MiddleCenter);
             }
             GUILayout.Space(4);
             CoreGUI.Line();

@@ -3,6 +3,7 @@ using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actions;
@@ -261,10 +262,10 @@ namespace SyadeuEditor.Presentation
 
             m_ToolbarWindow.OnGUI();
 
-            string headerString = EditorUtilities.String($"{CurrentWindow.Name} Window", 20);
+            string headerString = HTMLString.String($"{CurrentWindow.Name} Window", 20);
             if (IsDirty)
             {
-                headerString += EditorUtilities.String(": Modified", 10);
+                headerString += HTMLString.String(": Modified", 10);
             }
 
             EditorGUI.LabelField(HeaderPos,
@@ -314,7 +315,7 @@ namespace SyadeuEditor.Presentation
             m_CopyrightRect.width = Screen.width;
             m_CopyrightRect.x = 0;
             m_CopyrightRect.y = Screen.height - 42;
-            EditorGUI.LabelField(m_CopyrightRect, EditorUtilities.String(c_CopyrightText, 11), EditorStyleUtilities.CenterStyle);
+            CoreGUI.Label(m_CopyrightRect, c_CopyrightText, 11, TextAnchor.MiddleCenter);
 
             KeyboardShortcuts();
         }

@@ -11,6 +11,7 @@ using UnityEditor.AddressableAssets.Build;
 using Syadeu;
 using System.Linq;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {
@@ -189,19 +190,19 @@ namespace SyadeuEditor.Presentation
             else if (addressableCount == editor.targets.Length)
             {
                 CoreGUI.Line();
-                string headerString = EditorUtilities.String("Entity", 13);
+                string headerString = HTMLString.String("Entity", 13);
                 if (currentGroupIdx == 0)
                 {
-                    headerString += EditorUtilities.String(": Invalid", 10);
+                    headerString += HTMLString.String(": Invalid", 10);
                 }
                 else
                 {
-                    headerString += EditorUtilities.String(": Valid", 10);
+                    headerString += HTMLString.String(": Valid", 10);
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorUtilities.StringRich(headerString);
+                    CoreGUI.Label(headerString);
 
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
@@ -238,12 +239,12 @@ namespace SyadeuEditor.Presentation
             else
             {
                 CoreGUI.Line();
-                string headerString = EditorUtilities.String("Entity", 13);
-                headerString += EditorUtilities.String(": Mixed", 10);
+                string headerString = HTMLString.String("Entity", 13);
+                headerString += HTMLString.String(": Mixed", 10);
 
                 using (new GUILayout.HorizontalScope())
                 {
-                    EditorUtilities.StringRich(headerString);
+                    CoreGUI.Label(headerString);
 
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {

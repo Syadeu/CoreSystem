@@ -6,6 +6,7 @@ using Syadeu.Presentation;
 using Syadeu.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor
 {

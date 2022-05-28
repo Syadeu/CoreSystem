@@ -42,9 +42,9 @@ namespace Syadeu.Collections.ResourceControl
             [SerializeField] private UnityEvent<TObject> m_OnCompleted;
 
             [NonSerialized] private bool m_IsLoaded;
-            [NonSerialized] private AsyncOperationHandle<TObject> m_LoadHandle;
+            [NonSerialized] private Promise<TObject> m_LoadHandle;
 
-            public bool TryLoadAsync(out AsyncOperationHandle<TObject> handle)
+            public bool TryLoadAsync(out Promise<TObject> handle)
             {
                 if (m_IsLoaded)
                 {
@@ -54,30 +54,30 @@ namespace Syadeu.Collections.ResourceControl
 
                 if (!m_Asset.IsValid())
                 {
-                    handle = ResourceManager.CreateCompletedOperationExeception<TObject>(null,
-                        m_Asset, TypeHelper.TypeOf<TObject>.Type);
+                    handle = null;
                     return false;
                 }
 
                 m_LoadHandle = m_Asset.AssetReference.LoadAssetAsync<TObject>();
-                m_LoadHandle.Completed += M_LoadHandle_Completed;
+                m_LoadHandle.OnCompleted += m_OnCompleted.Invoke;
+                //m_LoadHandle.Completed += M_LoadHandle_Completed;
                 handle = m_LoadHandle;
                 m_IsLoaded = true;
 
                 return true;
             }
-            private void M_LoadHandle_Completed(AsyncOperationHandle<TObject> obj)
-            {
-                TObject result = obj.Result;
+            //private void M_LoadHandle_Completed(AsyncOperationHandle<TObject> obj)
+            //{
+            //    TObject result = obj.Result;
 
-                m_OnCompleted?.Invoke(result);
-            }
+            //    m_OnCompleted?.Invoke(result);
+            //}
             public void Release()
             {
                 if (!m_IsLoaded) return;
 
-                ResourceManager.Release(m_LoadHandle);
-
+                //ResourceManager.Release(m_LoadHandle);
+                m_LoadHandle.Dispose();
                 m_IsLoaded = false;
             }
         }
@@ -87,15 +87,15 @@ namespace Syadeu.Collections.ResourceControl
 
         protected virtual void Awake()
         {
-            AsyncOperationHandle<TObject> handle;
+            //AsyncOperationHandle<TObject> handle;
             for (int i = 0; i < m_Assets.Length; i++)
             {
-                if (!m_Assets[i].TryLoadAsync(out handle))
+                if (!m_Assets[i].TryLoadAsync(out var handle))
                 {
                     continue;
                 }
 
-                handle.Completed += M_LoadHandle_Completed;
+                handle.OnCompleted += OnLoadCompleted;
             }
         }
         protected virtual void OnDestroy()
@@ -106,12 +106,12 @@ namespace Syadeu.Collections.ResourceControl
             }
         }
 
-        private void M_LoadHandle_Completed(AsyncOperationHandle<TObject> obj)
-        {
-            TObject result = obj.Result;
+        //private void M_LoadHandle_Completed(AsyncOperationHandle<TObject> obj)
+        //{
+        //    TObject result = obj.Result;
 
-            OnLoadCompleted(result);
-        }
+        //    OnLoadCompleted(result);
+        //}
 
         protected virtual void OnLoadCompleted(TObject obj) { }
     }

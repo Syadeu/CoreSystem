@@ -1,5 +1,6 @@
 ﻿using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Mono;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
@@ -12,6 +13,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Syadeu.Collections;
 
 namespace SyadeuEditor.Presentation.Map
 {
@@ -326,9 +328,9 @@ namespace SyadeuEditor.Presentation.Map
 
                 using (new CoreGUI.BoxBlock(Color.gray))
                 {
-                    EditorUtilities.StringRich("Lightmapping", 13);
+                    CoreGUI.Label("Lightmapping", 13);
                     LightingSettings lightSettings = Lightmapping.GetLightingSettingsForScene(EditorSceneManager.GetActiveScene());
-                    EditorGUILayout.ObjectField("Light Settings", lightSettings, typeof(LightingSettings), false);
+                    EditorGUILayout.ObjectField("Light Settings", lightSettings, TypeHelper.TypeOf<LightingSettings>.Type, false);
 
                     //if (GUILayout.Button("Bake"))
                     //{

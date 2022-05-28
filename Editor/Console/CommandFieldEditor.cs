@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEditor;
 using SyadeuEditor.Utilities;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor
 {
@@ -27,7 +28,7 @@ namespace SyadeuEditor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.Space();
-            EditorUtilities.StringHeader("Command Field", StringColor.grey, true);
+            CoreGUI.Label("Command Field", StringColor.grey, TextAnchor.MiddleCenter);
             CoreGUI.SectorLine();
 
             EditorGUI.BeginChangeCheck();
@@ -38,7 +39,7 @@ namespace SyadeuEditor
             }
 
             EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
+            m_ShowOriginalContents = CoreGUI.Foldout(m_ShowOriginalContents, "Original Contents");
             if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
 

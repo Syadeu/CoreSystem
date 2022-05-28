@@ -28,7 +28,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -37,7 +36,6 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
-using AddressableReference = UnityEngine.AddressableAssets.AssetReference;
 
 namespace Syadeu.Collections.ResourceControl
 {
@@ -339,125 +337,6 @@ namespace Syadeu.Collections.ResourceControl
             return true;
         }
         public override int GetHashCode() => unchecked((int)m_Key);
-    }
-
-    [Serializable]
-    public struct AssetReference : IValidation, IKeyEvaluator, IEmpty, IEquatable<AssetReference>, IPromiseProvider<UnityEngine.Object>
-    {
-        public static AssetReference Empty => new AssetReference();
-
-        [SerializeField] private FixedString128Bytes m_Key;
-        [SerializeField] private FixedString128Bytes m_SubAssetName;
-
-        [NonSerialized]
-        AsyncOperationHandle m_Handle;
-
-        object IKeyEvaluator.RuntimeKey
-        {
-            get
-            {
-                if (m_Key.IsEmpty) return string.Empty;
-
-                const string c_Format = "{0}[{1}]";
-                if (!m_SubAssetName.IsEmpty)
-                {
-                    return string.Format(c_Format, m_Key.ToString(), m_SubAssetName.ToString());
-                }
-                return m_Key.ToString();
-            }
-        }
-        public AssetRuntimeKey RuntimeKey => new AssetRuntimeKey(FNV1a32.Calculate(((IKeyEvaluator)this).RuntimeKey.ToString()));
-        public bool IsSubAsset => !m_SubAssetName.IsEmpty;
-
-        public AsyncOperationHandle<IResourceLocation> Location => ResourceManager.GetLocation(this, TypeHelper.TypeOf<UnityEngine.Object>.Type);
-
-        public AssetReference(FixedString128Bytes key) : this(key, default) { }
-        public AssetReference(FixedString128Bytes key, FixedString128Bytes subAssetName)
-        {
-            m_Key = key;
-            m_SubAssetName = subAssetName;
-
-            m_Handle = ResourceManager.CreateCompletedOperation<UnityEngine.Object>(
-                null, new InvalidOperationException()
-                );
-        }
-
-        public bool IsEmpty()
-        {
-            return m_Key.IsEmpty || (m_Key.IsEmpty && m_SubAssetName.IsEmpty);
-        }
-        public bool IsValid()
-        {
-            const char c_guidstart = '[';
-
-            if (m_Key.IsEmpty) return false;
-
-            string text = ((IKeyEvaluator)this).RuntimeKey.ToString();
-            int num = text.IndexOf(c_guidstart);
-            if (num != -1)
-            {
-                text = text.Substring(0, num);
-            }
-
-            return Guid.TryParse(text, out _);
-        }
-        bool IKeyEvaluator.RuntimeKeyIsValid() => IsValid();
-        void IPromiseProvider<UnityEngine.Object>.OnComplete(Action<UnityEngine.Object> obj)
-        {
-            AsyncOperationHandle<UnityEngine.Object> oper = LoadAssetAsync();
-            oper.Completed += t =>
-            {
-                obj?.Invoke(t.Result);
-                Addressables.Release(oper);
-            };
-        }
-
-        public AsyncOperationHandle<UnityEngine.Object> LoadAssetAsync()
-        {
-            if (m_Handle.IsValid()) return m_Handle.Convert<UnityEngine.Object>();
-
-            var temp = ResourceManager.LoadAssetAsync<UnityEngine.Object>(this);
-            m_Handle = temp;
-
-            return temp;
-        }
-        public AsyncOperationHandle<TObject> LoadAssetAsync<TObject>()
-            where TObject : UnityEngine.Object
-        {
-            if (m_Handle.IsValid()) return m_Handle.Convert<TObject>();
-
-            var temp = ResourceManager.LoadAssetAsync<TObject>(this);
-            m_Handle = temp;
-
-            return temp;
-        }
-
-        public bool Equals(AssetReference other) => m_Key.Equals(other.m_Key);
-        public override string ToString()
-        {
-            if (IsEmpty()) return "Invalid";
-            else if (IsSubAsset) return $"{m_Key}[{m_SubAssetName}]";
-            return m_Key.ToString();
-        }
-
-        public static implicit operator AssetReference(AddressableReference t)
-        {
-            if (t.AssetGUID.IsNullOrEmpty()) return Empty;
-            else if (t.SubObjectName.IsNullOrEmpty())
-            {
-                return new AssetReference(t.AssetGUID);
-            }
-            return new AssetReference(t.AssetGUID, t.SubObjectName);
-        }
-        public static implicit operator AssetReference(string t)
-        {
-            Match match = Regex.Match(t, @"(^.+)" + Regex.Escape("[") + @"(.+)]");
-            if (match.Success)
-            {
-                return new AssetReference(match.Groups[1].Value, match.Groups[2].Value);
-            }
-            return new AssetReference(t);
-        }
     }
 }
 

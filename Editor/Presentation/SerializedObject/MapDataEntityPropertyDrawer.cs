@@ -7,6 +7,7 @@ using Syadeu.Presentation.Entities;
 using Syadeu.Presentation;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {
@@ -129,7 +130,7 @@ namespace SyadeuEditor.Presentation
 
         private static bool IsValidObject(SerializedProperty element)
         {
-            Reference<EntityBase> reference = SerializedPropertyHelper.ReadReference<EntityBase>(element.FindPropertyRelative("m_Object"));
+            Reference<EntityBase> reference = new Reference<EntityBase>(SerializedPropertyHelper.ReadReference<EntityBase>(element.FindPropertyRelative("m_Object")).Hash);
 
             return !reference.IsEmpty() && reference.IsValid();
         }

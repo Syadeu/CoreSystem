@@ -76,6 +76,8 @@ namespace Syadeu.Collections
     }
     public class Promise<T> : IPromise, IDisposable
     {
+        public static Promise<T> Empty { get; } = new Promise<T>();
+
         private T m_Value;
         private bool m_IsCompleted;
         private Action<T> m_OnCompleted;
@@ -104,6 +106,7 @@ namespace Syadeu.Collections
             }
         }
 
+        public Promise() { }
         public Promise(T obj)
         {
             m_Value = obj;
@@ -127,6 +130,8 @@ namespace Syadeu.Collections
         }
         public void Dispose()
         {
+            OnDispose();
+
             m_Value = default(T);
             m_IsCompleted = false;
             m_OnCompleted = null;
@@ -142,6 +147,7 @@ namespace Syadeu.Collections
 
             m_OnCompleted = null;
         }
+        protected virtual void OnDispose() { }
 
         public static implicit operator Promise<T>(T t)
         {

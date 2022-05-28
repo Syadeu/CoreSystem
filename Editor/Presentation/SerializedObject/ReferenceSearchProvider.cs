@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Presentation;
 using SyadeuEditor.Utilities;
 using System;

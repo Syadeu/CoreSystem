@@ -16,7 +16,9 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Editor;
 using Syadeu.Collections.Graphs;
+using Syadeu.Collections.PropertyDrawers;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;

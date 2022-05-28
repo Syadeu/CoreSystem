@@ -16,6 +16,7 @@
 #define DEBUG_MODE
 #endif
 
+using Syadeu.Collections.Editor;
 using SyadeuEditor.Utilities;
 using Unity.Mathematics;
 using UnityEditor;

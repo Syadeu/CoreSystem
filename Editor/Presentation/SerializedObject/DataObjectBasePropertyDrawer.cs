@@ -2,6 +2,7 @@
 using UnityEditor;
 using SyadeuEditor.Utilities;
 using Syadeu.Presentation.Data;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {

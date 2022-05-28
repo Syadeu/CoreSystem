@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Runtime.InteropServices;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor
 {
@@ -44,7 +45,7 @@ namespace SyadeuEditor
 
         private void OnGUI()
         {
-            EditorUtilities.StringHeader("SQLite Window", StringColor.grey, true);
+            CoreGUI.Label("SQLite Window", StringColor.grey, 20, TextAnchor.MiddleCenter);
             CoreGUI.SectorLine();
 
             #region 데이터 경로 지정 및 닫기
@@ -166,10 +167,10 @@ namespace SyadeuEditor
 
             if (m_TableNames.Length < m_SeletedTable) m_SeletedTable = 0;
 
-            EditorUtilities.StringHeader(m_TableNames[m_SeletedTable]);
+            CoreGUI.Label(m_TableNames[m_SeletedTable], 20);
             CoreGUI.SectorLine();
 
-            EditorUtilities.StringRich("작업중", true);
+            CoreGUI.Label("작업중", TextAnchor.MiddleCenter);
 
             GUILayout.EndScrollView();
         }
@@ -177,7 +178,7 @@ namespace SyadeuEditor
         {
             if (m_TableNames.Length == 0) return;
 
-            EditorUtilities.StringRich("Global Infomation", 20, StringColor.grey);
+            CoreGUI.Label("Global Infomation", StringColor.grey, 20);
             CoreGUI.SectorLine();
 
             EditorGUI.BeginDisabledGroup(true);
@@ -207,7 +208,7 @@ namespace SyadeuEditor
                     versionInfoColor = StringColor.maroon;
                 }
             }
-            EditorUtilities.StringRich(versionInfo, versionInfoColor, true);
+            CoreGUI.Label(versionInfo, versionInfoColor, TextAnchor.MiddleCenter);
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.TextField("Application Version: ", $"{Application.version}");
@@ -218,25 +219,25 @@ namespace SyadeuEditor
             
             CoreGUI.SectorLine();
 
-            EditorUtilities.StringHeader($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>");
+            CoreGUI.Label($"{m_TableNames[m_SeletedTable]} :: <size=13>Analyzer</size>", 20);
             CoreGUI.SectorLine();
 
             m_TableAnalyzerScroll = GUILayout.BeginScrollView(m_TableAnalyzerScroll, false, false, GUILayout.Width(m_TableRightRect.width), GUILayout.Height(m_TableRightRect.height * .5f));
 
             SQLiteTable selectedTable = m_Database.Tables[m_SeletedTable];
             EditorGUILayout.BeginHorizontal();
-            EditorUtilities.StringRich($"Name: ", StringColor.grey);
+            CoreGUI.Label($"Name: ", StringColor.grey);
             for (int i = 0; i < selectedTable.Columns.Count; i++)
             {
-                EditorUtilities.StringRich($"{selectedTable.Columns[i].Name}", StringColor.grey);
+                CoreGUI.Label(new GUIContent($"{selectedTable.Columns[i].Name}"), StringColor.grey);
             }
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            EditorUtilities.StringRich($"Type: ", StringColor.grey);
+            CoreGUI.Label($"Type: ", StringColor.grey);
             for (int i = 0; i < selectedTable.Columns.Count; i++)
             {
-                EditorUtilities.StringRich($"{selectedTable.Columns[i].Type.Name}", StringColor.grey);
+                CoreGUI.Label($"{selectedTable.Columns[i].Type.Name}", StringColor.grey);
             }
             EditorGUILayout.EndHorizontal();
 

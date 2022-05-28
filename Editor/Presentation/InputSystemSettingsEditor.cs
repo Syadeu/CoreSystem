@@ -3,6 +3,7 @@ using UnityEditor;
 using Syadeu.Presentation.Input;
 using System.Reflection;
 using System;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {
@@ -40,9 +41,9 @@ namespace SyadeuEditor.Presentation
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.PropertyField(m_AdditionalInputActions);
 
-            EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Show Original Contents");
-            if (m_ShowOriginalContents) base.OnInspectorGUI();
+            //EditorGUILayout.Space();
+            //m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Show Original Contents");
+            //if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }
 }

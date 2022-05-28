@@ -21,6 +21,8 @@ using System.Reflection;
 using System.ComponentModel;
 using System;
 using Syadeu.Presentation;
+using Syadeu.Collections.PropertyDrawers;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor.Presentation
 {
@@ -106,8 +108,8 @@ namespace SyadeuEditor.Presentation
                 hashProp = GetHashProperty(property);
 
             string
-                nameStr = EditorUtilities.String(nameProp.stringValue + ": ", 20),
-                typeStr = EditorUtilities.String(property.type, 11);
+                nameStr = HTMLString.String(nameProp.stringValue + ": ", 20),
+                typeStr = HTMLString.String(property.type, 11);
 
             CoreGUI.Label(rect.Pop(20), nameStr + typeStr);
             foreach (var item in fieldInfo.GetCustomAttributes())

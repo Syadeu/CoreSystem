@@ -13,6 +13,7 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace SyadeuEditor
 {
@@ -64,7 +65,7 @@ namespace SyadeuEditor
 
         protected override void OnInspectorGUIContents()
         {
-            EditorUtilities.StringHeader("Prefab List");
+            //EditorUtilities.StringHeader("Prefab List");
             CoreGUI.SectorLine();
 
             if (GUILayout.Button("Build"))

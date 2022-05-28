@@ -19,6 +19,7 @@
 #endif
 #define UNITYENGINE
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
@@ -45,6 +46,29 @@ namespace Syadeu.Collections.ResourceControl.Editor
 
             AddressableAssetGroup group = entry.parentGroup;
             return group;
+        }
+
+        public static List<AddressableAssetEntry> GetSubAssets(this UnityEngine.AddressableAssets.AssetReference t)
+        {
+            AddressableAssetEntry entry = AddressableAssetSettingsDefaultObject.GetSettings(true).FindAssetEntry(t.AssetGUID);
+            var list = new List<AddressableAssetEntry>();
+
+            if (entry != null) entry.GatherAllAssets(list, false, true, true);
+
+            return list;
+        }
+        public static UnityEngine.Object GetSubAsset(this UnityEngine.AddressableAssets.AssetReference t, string name)
+        {
+            var subAssets = GetSubAssets(t);
+
+            foreach (var asset in subAssets)
+            {
+                if (asset.TargetAsset.name.Equals(name))
+                {
+                    return asset.TargetAsset;
+                }
+            }
+            return null;
         }
     }
 }

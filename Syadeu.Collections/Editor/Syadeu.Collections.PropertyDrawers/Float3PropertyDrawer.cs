@@ -24,6 +24,7 @@ using System;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace Syadeu.Collections.PropertyDrawers
 {

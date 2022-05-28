@@ -1,4 +1,5 @@
 ﻿using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Internal;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Entities;
@@ -57,7 +58,7 @@ namespace SyadeuEditor.Presentation
                 }
 
                 var entity = value.Target;
-                m_SelectedName = entity.Name + EditorUtilities.String($": {entity.GetType().Name}", 11);
+                m_SelectedName = entity.Name + HTMLString.String($": {entity.GetType().Name}", 11);
 
                 MemberInfo[] temp = entity.GetType()
                     .GetMembers(
@@ -110,25 +111,25 @@ namespace SyadeuEditor.Presentation
             {
                 if (!Application.isPlaying)
                 {
-                    EditorUtilities.StringRich("Debugger only works in runtime", true);
+                    CoreGUI.Label("Debugger only works in runtime", TextAnchor.MiddleCenter);
                     return;
                 }
 
                 if (m_Selected.IsEmpty())
                 {
-                    EditorUtilities.StringRich("Select Data", true);
+                    CoreGUI.Label("Select Data", TextAnchor.MiddleCenter);
                     return;
                 }
 
                 if (!m_Selected.IsValid())
                 {
-                    EditorUtilities.StringRich("This data has been destroyed", true);
+                    CoreGUI.Label("This data has been destroyed", TextAnchor.MiddleCenter);
                     return;
                 }
 
                 ObjectBase obj = m_Selected.Target;
 
-                EditorUtilities.StringRich(m_SelectedName, 20);
+                CoreGUI.Label(m_SelectedName, 20);
                 EditorGUILayout.Space(3);
                 CoreGUI.Line();
 
@@ -197,7 +198,7 @@ namespace SyadeuEditor.Presentation
                 CoreGUI.Line();
                 using (new CoreGUI.BoxBlock(ColorPalettes.WaterFoam.Teal))
                 {
-                    EditorUtilities.StringRich("Transform", 15);
+                    CoreGUI.Label("Transform", 15);
                     EditorGUI.indentLevel++;
 
                     proxy.position =

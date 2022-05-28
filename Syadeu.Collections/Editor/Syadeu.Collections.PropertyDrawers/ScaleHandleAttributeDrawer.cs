@@ -21,6 +21,7 @@ using UnityEditor;
 using Syadeu.Collections;
 using Unity.Mathematics;
 using SyadeuEditor.Utilities;
+using Syadeu.Collections.Editor;
 
 namespace Syadeu.Collections.PropertyDrawers
 {

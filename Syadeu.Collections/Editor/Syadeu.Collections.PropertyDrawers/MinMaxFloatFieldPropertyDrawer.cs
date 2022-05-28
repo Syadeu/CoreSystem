@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Collections.LowLevel;
 using SyadeuEditor.Utilities;
 using System.Reflection;

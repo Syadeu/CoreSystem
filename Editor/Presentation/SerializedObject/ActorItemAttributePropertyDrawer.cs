@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Presentation;
 using Syadeu.Presentation.Actor;
 using SyadeuEditor.Utilities;
@@ -65,8 +67,8 @@ namespace SyadeuEditor.Presentation
             Space(ref rect, 2);
 
             SerializedProperty itemTypeProp = Helper.GetItemTypeProperty(property);
-            Reference<ActorItemType> itemTypeReference = SerializedPropertyHelper.ReadReference<ActorItemType>(itemTypeProp);
-
+            Reference<ActorItemType> itemTypeReference = new Reference<ActorItemType>(SerializedPropertyHelper.ReadReference<ActorItemType>(itemTypeProp).Hash);
+            
             ActorItemType actorItemType;
             if (itemTypeReference.IsEmpty() || !itemTypeReference.IsValid())
             {

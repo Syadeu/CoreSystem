@@ -244,11 +244,7 @@ namespace Syadeu.Presentation
 #endif
                 // TODO:
                 m_CameraPrefab = SceneSettings.Instance.CameraPrefab.AssetReference;
-                var oper = m_CameraPrefab.LoadAssetAsync<UnityEngine.GameObject>();
-                oper.Completed += t =>
-                {
-                    GameObject.Instantiate(t.Result);
-                };
+                var oper = m_CameraPrefab.InstantiateAsync(0, quaternion.identity, null);
                 //SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 
                 return true;
@@ -393,11 +389,7 @@ namespace Syadeu.Presentation
 #endif
                 {
                     m_CameraPrefab = SceneSettings.Instance.CameraPrefab.AssetReference;
-                    var oper = m_CameraPrefab.LoadAssetAsync<UnityEngine.GameObject>();
-                    oper.Completed += t =>
-                    {
-                        GameObject.Instantiate(t.Result);
-                    };
+                    var oper = m_CameraPrefab.InstantiateAsync(0, quaternion.identity, null);
                 }
                     //SceneSettings.Instance.CameraPrefab.InstantiateAysnc(0, quaternion.identity, null);
 

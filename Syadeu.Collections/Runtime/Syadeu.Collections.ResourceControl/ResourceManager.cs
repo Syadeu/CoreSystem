@@ -673,11 +673,15 @@ namespace Syadeu.Collections.ResourceControl
             return LoadAssetAsync<TObject>(locationHandle);
         }
 
+        private static AsyncOperationHandle<TObject> ProvideResource<TObject>(AsyncOperationHandle<IResourceLocation> oper)
+        {
+            return Addressables.ResourceManager.ProvideResource<TObject>(oper.Result);
+        }
         public static AsyncOperationHandle LoadAssetAsync(AsyncOperationHandle<IResourceLocation> location)
         {
             var handle = Addressables.ResourceManager.CreateChainOperation(
                 location,
-                t => Addressables.ResourceManager.ProvideResource<UnityEngine.Object>(t.Result)
+                ProvideResource<UnityEngine.Object>
                 );
 
             return handle;
@@ -687,10 +691,28 @@ namespace Syadeu.Collections.ResourceControl
         {
             var handle = Addressables.ResourceManager.CreateChainOperation(
                 location,
-                t => Addressables.ResourceManager.ProvideResource<TObject>(t.Result)
+                ProvideResource<TObject>
                 );
 
             return handle;
+        }
+
+        public static AsyncOperationHandle<GameObject> InstantiateAsync(
+            AsyncOperationHandle<IResourceLocation> location,
+            InstantiationParameters parameters)
+        {
+            var temp = Addressables.ResourceManager.CreateChainOperation(location,
+                delegate (AsyncOperationHandle<IResourceLocation> t)
+                {
+                    return Addressables.ResourceManager.ProvideInstance(
+                        Addressables.InstanceProvider,
+                        t.Result,
+                        parameters
+                        );
+                });
+            
+
+            return temp;
         }
 
         public static void Release(AsyncOperationHandle handle)

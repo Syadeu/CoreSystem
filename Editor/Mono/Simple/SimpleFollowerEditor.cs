@@ -1,4 +1,5 @@
-﻿using Syadeu.Mono;
+﻿using Syadeu.Collections.Editor;
+using Syadeu.Mono;
 using SyadeuEditor.Utilities;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using UnityEngine;
 namespace SyadeuEditor
 {
     [CustomEditor(typeof(SimpleFollower))]
-    public sealed class SimpleFollowerEditor : InspectorEditor
+    public sealed class SimpleFollowerEditor : InspectorEditor<SimpleFollower>
     {
         private SimpleFollower m_Scr = null;
 
@@ -31,8 +32,6 @@ namespace SyadeuEditor
 
         private void OnEnable()
         {
-            m_Scr = target as SimpleFollower;
-
             m_Target = serializedObject.FindProperty("m_Target");
             m_Offset = serializedObject.FindProperty("m_Offset");
             m_Speed = serializedObject.FindProperty("m_Speed");
@@ -44,9 +43,6 @@ namespace SyadeuEditor
         }
         protected override void OnInspectorGUIContents()
         {
-            EditorUtilities.StringHeader("Simple Follower");
-            CoreGUI.SectorLine();
-
             EditorGUILayout.PropertyField(m_Target, new GUIContent("Target Transform: "));
             EditorGUI.BeginChangeCheck();
             m_SelectedUpdateType = EditorGUILayout.Popup("Update Type: ", m_SelectedUpdateType, m_UpdateTypeString);
@@ -63,9 +59,9 @@ namespace SyadeuEditor
 
             serializedObject.ApplyModifiedProperties();
 
-            EditorGUILayout.Space();
-            m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
-            if (m_ShowOriginalContents) base.OnInspectorGUI();
+            //EditorGUILayout.Space();
+            //m_ShowOriginalContents = EditorUtilities.Foldout(m_ShowOriginalContents, "Original Contents");
+            //if (m_ShowOriginalContents) base.OnInspectorGUI();
         }
     }
 }
