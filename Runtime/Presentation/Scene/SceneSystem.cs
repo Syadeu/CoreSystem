@@ -202,6 +202,14 @@ namespace Syadeu.Presentation
                 SetupLoadingScene();
             }
 
+            IEnumerable<ObjectBase> iter = EntityDataList.Instance.GetData(GetSceneAssetNotifier);
+            foreach (var item in iter)
+            {
+                INotifySceneAsset notifySceneAsset = (INotifySceneAsset)item;
+
+                RegisterSceneAsset(notifySceneAsset.TargetScene, notifySceneAsset);
+            }
+
             PresentationManager.Instance.PostUpdate += Instance_PostUpdate;
 
             RequestSystem<DefaultPresentationGroup, EventSystem>(Bind);
@@ -298,18 +306,6 @@ namespace Syadeu.Presentation
                 }
             }
             #endregion
-        }
-        protected override PresentationResult OnInitializeAsync()
-        {
-            IEnumerable<ObjectBase> iter = EntityDataList.Instance.GetData(GetSceneAssetNotifier);
-            foreach (var item in iter)
-            {
-                INotifySceneAsset notifySceneAsset = (INotifySceneAsset)item;
-
-                RegisterSceneAsset(notifySceneAsset.TargetScene, notifySceneAsset);
-            }
-
-            return base.OnInitializeAsync();
         }
         protected override void OnShutDown()
         {

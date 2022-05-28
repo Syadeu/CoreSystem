@@ -76,12 +76,17 @@ namespace Syadeu.Collections
             get
             {
 #if UNITY_EDITOR
+                if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread() ||
+                    Application.isPlaying)
+                {
+                    return scenePath;
+                }
                 // In editor we always use the asset's path
                 return GetScenePathFromAsset();
 #else
-            // At runtime we rely on the stored path value which we assume was serialized correctly at build time.
-            // See OnBeforeSerialize and OnAfterDeserialize
-            return scenePath;
+                // At runtime we rely on the stored path value which we assume was serialized correctly at build time.
+                // See OnBeforeSerialize and OnAfterDeserialize
+                return scenePath;
 #endif
             }
             set

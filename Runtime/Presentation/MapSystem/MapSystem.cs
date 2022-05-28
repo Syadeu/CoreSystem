@@ -50,17 +50,12 @@ namespace Syadeu.Presentation.Map
         protected override PresentationResult OnInitialize()
         {
             CreateConsoleCommands();
-            //UnityEngine.Object.Instantiate(m_MapEditorPrefab);
-
-            return base.OnInitialize();
-        }
-        protected override PresentationResult OnInitializeAsync()
-        {
+            
             RequestSystem<DefaultPresentationGroup, SceneSystem>(Bind);
             RequestSystem<DefaultPresentationGroup, EntitySystem>(Bind);
             RequestSystem<DefaultPresentationGroup, Render.RenderSystem>(Bind);
 
-            return base.OnInitializeAsync();
+            return base.OnInitialize();
         }
 
         #region Bind
