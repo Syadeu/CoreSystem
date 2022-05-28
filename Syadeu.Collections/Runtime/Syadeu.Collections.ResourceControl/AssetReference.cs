@@ -25,6 +25,7 @@
 #endif
 #endif
 
+using Newtonsoft.Json;
 using System;
 using System.Text.RegularExpressions;
 using Unity.Collections;
@@ -46,6 +47,7 @@ namespace Syadeu.Collections.ResourceControl
         [SerializeField] private FixedString128Bytes m_Key;
         [SerializeField] private FixedString128Bytes m_SubAssetName;
 
+        [JsonIgnore]
         object IKeyEvaluator.RuntimeKey
         {
             get
@@ -60,9 +62,12 @@ namespace Syadeu.Collections.ResourceControl
                 return m_Key.ToString();
             }
         }
+        [JsonIgnore]
         public AssetRuntimeKey RuntimeKey => new AssetRuntimeKey(FNV1a32.Calculate(((IKeyEvaluator)this).RuntimeKey.ToString()));
+        [JsonIgnore]
         public bool IsSubAsset => !m_SubAssetName.IsEmpty;
 
+        [JsonIgnore]
         public AsyncOperationHandle<IResourceLocation> Location => ResourceManager.GetLocation(this, TypeHelper.TypeOf<UnityEngine.Object>.Type);
 
         public AssetReference(FixedString128Bytes key) : this(key, default) { }

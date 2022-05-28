@@ -25,6 +25,7 @@
 #endif
 #endif
 
+using Newtonsoft.Json;
 using System;
 using Unity.Mathematics;
 using UnityEngine;
@@ -32,13 +33,14 @@ using UnityEngine;
 namespace Syadeu.Collections.ResourceControl
 {
     [Serializable]
-    public struct AssetIndex : IEmpty, IValidation
+    public struct AssetIndex : IEmpty, IValidation, IAssetIndex
     {
-        public static AssetIndex Empty = default(AssetIndex);
+        public static AssetIndex Empty => new AssetIndex(-1);
 
         [SerializeField] internal int2 m_Index;
         [SerializeField] private bool m_IsCreated;
 
+        [JsonIgnore]
         public AssetReference AssetReference
         {
             get
@@ -47,30 +49,32 @@ namespace Syadeu.Collections.ResourceControl
                 return asset;
             }
         }
+        int2 IAssetIndex.Index => m_Index;
 
         public AssetIndex(int2 index)
         {
             m_Index = index;
-            m_IsCreated = true;
+            m_IsCreated = index.x >= 0 && index.y >= 0;
         }
         public AssetIndex(int x, int y)
         {
             m_Index = new int2(x, y);
-            m_IsCreated = true;
+            m_IsCreated = x >= 0 && y >= 0;
         }
 
         public bool IsEmpty() => !m_IsCreated;
         public bool IsValid() => ResourceHashMap.Instance.TryGetAssetReference(this, out _);
     }
     [Serializable]
-    public struct AssetIndex<TObject> : IEmpty, IValidation
+    public struct AssetIndex<TObject> : IEmpty, IValidation, IAssetIndex
         where TObject : UnityEngine.Object
     {
-        public static AssetIndex<TObject> Empty = default(AssetIndex<TObject>);
+        public static AssetIndex<TObject> Empty => new AssetIndex<TObject>(-1);
 
         [SerializeField] internal int2 m_Index;
         [SerializeField] private bool m_IsCreated;
 
+        [JsonIgnore]
         public AssetReference AssetReference
         {
             get
@@ -79,16 +83,17 @@ namespace Syadeu.Collections.ResourceControl
                 return asset;
             }
         }
+        int2 IAssetIndex.Index => m_Index;
 
         public AssetIndex(int2 index)
         {
             m_Index = index;
-            m_IsCreated = true;
+            m_IsCreated = index.x >= 0 && index.y >= 0;
         }
         public AssetIndex(int x, int y)
         {
             m_Index = new int2(x, y);
-            m_IsCreated = true;
+            m_IsCreated = x >= 0 && y >= 0;
         }
 
         public bool IsEmpty() => !m_IsCreated;
@@ -98,6 +103,12 @@ namespace Syadeu.Collections.ResourceControl
         {
             return new AssetIndex(t.m_Index);
         }
+    }
+
+    [JsonConverter(typeof(Converters.AssetIndexJsonConverter))]
+    public interface IAssetIndex
+    {
+        int2 Index { get; }
     }
 }
 

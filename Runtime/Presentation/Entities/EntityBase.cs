@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Utilities;
 using Syadeu.Collections;
 using Syadeu.Collections.Proxy;
+using Syadeu.Collections.ResourceControl;
 using Syadeu.Presentation.Proxy;
 using System;
 using System.ComponentModel;
@@ -41,6 +42,8 @@ namespace Syadeu.Presentation.Entities
         /// </summary>
         [SerializeField, JsonProperty(Order = -800, PropertyName = "Prefab")] 
         public PrefabReference<GameObject> Prefab = PrefabReference<GameObject>.None;
+        [SerializeField, JsonProperty(Order = -800, PropertyName = "Asset")] 
+        public AssetIndex<GameObject> m_Asset = AssetIndex<GameObject>.Empty;
 
         [SerializeField, JsonProperty(Order = -799, PropertyName = "StaticBatching")]
         public bool StaticBatching;

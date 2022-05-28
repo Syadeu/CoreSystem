@@ -14,7 +14,6 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using System;
 using System.Reflection;
 using UnityEngine.Scripting;
@@ -60,7 +59,6 @@ namespace Syadeu.Collections.Converters
                 null)
                 .Invoke(new object[] { value, subAssetName });
         }
-
         public override void WriteJson(JsonWriter writer, IPrefabReference value, JsonSerializer serializer)
         {
             writer.WriteStartObject();

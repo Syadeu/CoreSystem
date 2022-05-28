@@ -256,6 +256,17 @@ namespace Syadeu.Collections.ResourceControl
             }
         }
 
+        public AssetIndex FindAsset(string key, string subAssetName)
+        {
+            for (int i = 0; i < m_ResourceLists.Count; i++)
+            {
+                int index = m_ResourceLists[i].IndexOf(key, subAssetName);
+                if (index < 0) continue;
+
+                return new AssetIndex(i, index);
+            }
+            return AssetIndex.Empty;
+        }
         public bool TryGetAssetReference(AssetIndex index, out AssetReference asset)
         {
             asset = AssetReference.Empty;

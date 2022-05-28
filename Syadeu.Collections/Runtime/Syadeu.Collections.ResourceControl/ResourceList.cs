@@ -44,7 +44,7 @@ namespace Syadeu.Collections.ResourceControl
         [SerializeField] private GroupReference m_Group;
         [SerializeField] private List<AddressableAsset> m_AssetList = new List<AddressableAsset>();
 
-        [NonSerialized] private IList<AddressableReference> m_AssetReferences;
+        //[NonSerialized] private IList<AddressableReference> m_AssetReferences;
 
         public int Count => m_AssetList.Count;
         public AssetReference this[int index]
@@ -68,7 +68,7 @@ namespace Syadeu.Collections.ResourceControl
 
         private void OnEnable()
         {
-            m_AssetReferences = m_AssetList.Select(t => t.AssetReference).ToArray();
+            //m_AssetReferences = m_AssetList.Select(t => t.AssetReference).ToArray();
         }
 
 #if UNITY_EDITOR
@@ -135,19 +135,45 @@ namespace Syadeu.Collections.ResourceControl
         {
             return m_AssetList[index];
         }
-
-        public AsyncOperationHandle<IList<UnityEngine.Object>> LoadAssetsAsync(Action<UnityEngine.Object> callback)
+        public int IndexOf(string key, string subAssetName)
         {
-            if (m_AssetReferences.Count == 0)
+            if (subAssetName.IsNullOrEmpty())
             {
-                IList<UnityEngine.Object> temp = Array.Empty<UnityEngine.Object>();
-                return ResourceManager.CreateCompletedOperation(temp);
+                for (int i = 0; i < m_AssetList.Count; i++)
+                {
+                    var refAsset = m_AssetList[i].AssetReference;
+                    if (refAsset.AssetGUID.Equals(key))
+                    {
+                        return i;
+                    }
+                }
+                return -1;
             }
 
-            var result = Addressables.LoadAssetsAsync<UnityEngine.Object>(m_AssetReferences, callback);
-
-            return result;
+            for (int i = 0; i < m_AssetList.Count; i++)
+            {
+                var refAsset = m_AssetList[i].AssetReference;
+                if (refAsset.AssetGUID.Equals(key) &&
+                    refAsset.SubObjectName.Equals(subAssetName))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
+
+        //public AsyncOperationHandle<IList<UnityEngine.Object>> LoadAssetsAsync(Action<UnityEngine.Object> callback)
+        //{
+        //    if (m_AssetReferences.Count == 0)
+        //    {
+        //        IList<UnityEngine.Object> temp = Array.Empty<UnityEngine.Object>();
+        //        return ResourceManager.CreateCompletedOperation(temp);
+        //    }
+
+        //    var result = Addressables.LoadAssetsAsync<UnityEngine.Object>(m_AssetReferences, callback);
+
+        //    return result;
+        //}
     }
     [Serializable]
     public sealed class AddressableAsset

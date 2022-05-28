@@ -14,6 +14,11 @@ namespace SyadeuEditor.Presentation
             const string c_Str = nameof(EntityBase.Prefab);
             return property.FindPropertyRelative(c_Str);
         }
+        protected SerializedProperty GetAssetProperty(SerializedProperty property)
+        {
+            const string c_Str = nameof(EntityBase.m_Asset);
+            return property.FindPropertyRelative(c_Str);
+        }
         protected SerializedProperty GetStaticBatchingProperty(SerializedProperty property)
         {
             const string c_Str = nameof(EntityBase.StaticBatching);
@@ -91,6 +96,7 @@ namespace SyadeuEditor.Presentation
                 enableCullProp = GetEnableCullProperty(property),
                 staticBatchingProp = GetStaticBatchingProperty(property),
                 prefabProp = GetPrefabProperty(property),
+                assetProp = GetAssetProperty(property),
 
                 centerProp = GetCenterProperty(property),
                 sizeProp = GetSizeProperty(property);
@@ -99,8 +105,10 @@ namespace SyadeuEditor.Presentation
             {
                 AutoRect modelAutoRect = new AutoRect(
                     rect.Pop(
-                    15 + 6 + CoreGUI.GetLineHeight(1) + EditorGUI.GetPropertyHeight(prefabProp) + 6 +
-                    EditorGUI.GetPropertyHeight(centerProp) + EditorGUI.GetPropertyHeight(sizeProp)
+                    15 + 6 + CoreGUI.GetLineHeight(1) + 
+                    EditorGUI.GetPropertyHeight(prefabProp) + 
+                    EditorGUI.GetPropertyHeight(assetProp) +
+                    6 + EditorGUI.GetPropertyHeight(centerProp) + EditorGUI.GetPropertyHeight(sizeProp)
                     ));
                 modelAutoRect.Pop(3);
                 modelAutoRect.Indent(3);
@@ -137,10 +145,9 @@ namespace SyadeuEditor.Presentation
                 // Prefab
                 {
                     Rect prefabRect = modelAutoRect.Pop(EditorGUI.GetPropertyHeight(prefabProp));
-                    EditorGUI.PropertyField(
-                        prefabRect,
-                        prefabProp
-                        );
+                    Rect assetRect = modelAutoRect.Pop(EditorGUI.GetPropertyHeight(prefabProp));
+                    EditorGUI.PropertyField(prefabRect, prefabProp);
+                    EditorGUI.PropertyField(assetRect, assetProp);
                 }
 
                 // Center / Size
