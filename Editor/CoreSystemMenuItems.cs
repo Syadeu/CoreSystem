@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Syadeu;
 using Syadeu.Collections;
+using Syadeu.Collections.Editor;
 using Syadeu.Mono;
 using UnityEditor;
 using UnityEngine;
@@ -105,19 +106,8 @@ namespace SyadeuEditor
         }
 #endif
 
-        static CoreSystemSetupWizard m_SetupWizard;
         [MenuItem("CoreSystem/Setup Wizard")]
-        public static void CoreSystemSetupWizard()
-        {
-            m_SetupWizard = (CoreSystemSetupWizard)GetWindow(typeof(CoreSystemSetupWizard), true, "CoreSystem Setup Wizard");
-            m_SetupWizard.ShowUtility();
-            m_SetupWizard.minSize = new Vector2(600, 500);
-            m_SetupWizard.maxSize = m_SetupWizard.minSize;
-            var position = new Rect(Vector2.zero, m_SetupWizard.minSize);
-            Vector2 screenCenter = new Vector2(Screen.currentResolution.width, Screen.currentResolution.height) / 2;
-            position.center = screenCenter / EditorGUIUtility.pixelsPerPoint;
-            m_SetupWizard.position = position;
-        }
+        public static void OpenCoreSystemSetupWizard() => CoreSystemSetupWizard.Open();
     }
 
     public sealed class CoreSystemGameobjectMenuItems

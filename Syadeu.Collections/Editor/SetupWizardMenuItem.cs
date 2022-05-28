@@ -5,7 +5,7 @@ using Syadeu.FMOD;
 
 using System;
 
-namespace SyadeuEditor
+namespace Syadeu.Collections.Editor
 {
     /// <summary>
     /// <see cref="CoreSystemSetupWizard"/> 에 새로운 메뉴탭을 추가할 수 있는 <see langword="abstract"/> 입니다.

@@ -711,5 +711,12 @@ namespace Syadeu.Collections.Editor
 
 
         #endregion
+
+        public static T LoadAsset<T>(string name, string label) where T : UnityEngine.Object
+        {
+            string guid = AssetDatabase.FindAssets($"{name} l:{label} t:{typeof(T).Name}")[0];
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            return AssetDatabase.LoadAssetAtPath<T>(path);
+        }
     }
 }
