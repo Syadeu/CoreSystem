@@ -91,9 +91,11 @@ namespace Syadeu.Presentation.Actor
 
         [NonSerialized, JsonIgnore]
         private UIDocument m_UIDocument;
+        [NonSerialized, JsonIgnore]
+        private ActorInventory m_ActorInventory;
 
-        [JsonIgnore]
-        public UIDocument UIDocument => m_UIDocument;
+        [JsonIgnore] public UIDocument UIDocument => m_UIDocument;
+        [JsonIgnore] public ActorInventory Inventory => m_ActorInventory;
 
         #region Initialize
 
@@ -105,6 +107,7 @@ namespace Syadeu.Presentation.Actor
         }
         protected override void OnInitialize(in Entity<IEntityData> parent, ref ActorInventoryComponent component)
         {
+            m_ActorInventory = new ActorInventory(parent, this);
             UIDocumentConstantData mainData = m_GraphicsInfo.m_UXMLAsset.GetObject();
             if (mainData.m_BindInputSystem)
             {
@@ -367,7 +370,9 @@ namespace Syadeu.Presentation.Actor
 
                         });
 
-                    ctx.AddContextMenu("test menu 2", null);
+                    ctx.AddContextMenu(string.Empty, null).SetEnabled(false);
+                    ctx.AddContextMenu("test menu DELETE", null)
+                        .RegisterCallback<MouseDownEvent, ContextData>(Debug_OnItemContextDeleteEventHandler, new ContextData(data));
                     ctx.AddContextMenu("test menu 3", null);
                 }
                 ));
@@ -403,9 +408,9 @@ namespace Syadeu.Presentation.Actor
 
         private void OnItemMouseDownEventHandler(MouseDownEvent e, ItemData data)
         {
-            data.inventory.Peek(data.key, out FixedReference refer, out ActorItemComponent component);
+            //data.inventory.Peek(data.key, out FixedReference refer, out ActorItemComponent component);
 
-            $"clicked {refer.GetObject().Name}".ToLog();
+            //$"clicked {refer.GetObject().Name}".ToLog();
             
             switch ((MouseButton)e.button)
             {
@@ -432,12 +437,22 @@ namespace Syadeu.Presentation.Actor
 
         private void OnItemContextEquipEventHandler(MouseDownEvent e, ContextData data)
         {
-            ref var actor = ref data.itemData.inventory.Owner.GetComponent<ActorComponent>();
-            InstanceID item = data.itemData.inventory.Pop(data.itemData.key);
+            //ref var actor = ref data.itemData.inventory.Owner.GetComponent<ActorComponent>();
+            //InstanceID item = data.itemData.inventory.Pop(data.itemData.key);
 
-            actor.equipedItems.Add(item);
+            //actor.equipedItems.Add(item);
 
-            $"Equip item {item.GetEntity().Name}".ToLog();
+            $"Equip item".ToLog();
+        }
+
+        private void Debug_OnItemContextDeleteEventHandler(MouseDownEvent e, ContextData data)
+        {
+            //ref var actor = ref data.itemData.inventory.Owner.GetComponent<ActorComponent>();
+            //InstanceID item = data.itemData.inventory.Pop(data.itemData.key);
+
+            //actor.equipedItems.Add(item);
+
+            //$"Equip item".ToLog();
         }
 
         #endregion
@@ -455,8 +470,8 @@ namespace Syadeu.Presentation.Actor
         }
         public struct ItemData
         {
-            public ItemInventory inventory;
-            public ItemInventory.Key key;
+            //public ItemInventory inventory;
+            //public ItemInventory.Key key;
         }
     }
 
@@ -483,7 +498,7 @@ namespace Syadeu.Presentation.Actor
     public struct ActorInventoryComponent : IActorProviderComponent, IDisposable
     {
         private InstanceID<ActorInventoryProvider> m_Provider;
-        private ItemInventory m_Inventory;
+        //private ItemInventory m_Inventory;
 
         //public ItemInventory Inventory => m_Inventory;
 
@@ -491,47 +506,18 @@ namespace Syadeu.Presentation.Actor
             InstanceID owner, InstanceID<ActorInventoryProvider> provider, LinkedBlock block)
         {
             m_Provider = provider;
-            m_Inventory = new ItemInventory(owner, block, Allocator.Persistent);
+            //m_Inventory = new ItemInventory(owner, block, Allocator.Persistent);
         }
 
         void IDisposable.Dispose()
         {
-            m_Inventory.Dispose();
+            //m_Inventory.Dispose();
         }
 
         public void Add(InstanceID item)
         {
-            if (!item.HasComponent<ActorItemComponent>())
-            {
-                CoreSystem.Logger.LogError(LogChannel.Entity,
-                    $"Item({item.GetEntity().Name}) doesnt have {nameof(ActorItemComponent)}.");
-                return;
-            }
-
-            ActorItemComponent itemComponent = item.GetComponentReadOnly<ActorItemComponent>();
-
-            ItemInventory.Key key = m_Inventory.Add(item);
             ActorInventoryProvider provider = m_Provider.GetObject();
-
-            var itemType = itemComponent.ItemType.GetObject();
-            string itemName = item.GetEntity().Name;
-
-            ActorInventoryProvider.UxmlWrapper uxmlContainer = provider.GetOrCreateItemContainer(
-                itemType
-                );
-            ActorInventoryProvider.UxmlWrapper uxmlItem = provider.GetOrCreateItem(
-                itemType,
-                itemName,
-                itemComponent.Icon,
-                new ActorInventoryProvider.ItemData
-                {
-                    inventory = m_Inventory,
-                    key = key
-                }
-                );
-
-            uxmlContainer.quantity += 1;
-            uxmlItem.quantity += 1;
+            provider.Inventory.Add(item);
         }
     }
 }

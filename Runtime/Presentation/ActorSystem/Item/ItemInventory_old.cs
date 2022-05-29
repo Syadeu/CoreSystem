@@ -22,7 +22,6 @@ using Syadeu.Collections.LowLevel;
 using Syadeu.Presentation.Components;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -31,8 +30,9 @@ using Unity.Mathematics;
 namespace Syadeu.Presentation.Actor
 {
     [BurstCompatible]
-    public struct ItemInventory : IDisposable, INativeDisposable, 
-        IEquatable<ItemInventory>
+    [System.Obsolete("", true)]
+    public struct ItemInventory_old : IDisposable, INativeDisposable, 
+        IEquatable<ItemInventory_old>
     {
         public readonly struct Key : IValidation, IEmpty, IEquatable<Key>
         {
@@ -73,7 +73,7 @@ namespace Syadeu.Presentation.Actor
 
         public InstanceID Owner => m_Owner;
 
-        public ItemInventory(InstanceID owner, LinkedBlock linkedBlock, Allocator allocator)
+        public ItemInventory_old(InstanceID owner, LinkedBlock linkedBlock, Allocator allocator)
         {
             m_Owner = owner;
             m_Hash = Hash.NewHash();
@@ -279,6 +279,6 @@ namespace Syadeu.Presentation.Actor
             return inputDeps;
         }
 
-        public bool Equals(ItemInventory other) => m_Hash.Equals(other.m_Hash);
+        public bool Equals(ItemInventory_old other) => m_Hash.Equals(other.m_Hash);
     }
 }
