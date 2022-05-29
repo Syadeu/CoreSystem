@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using Syadeu.Collections.PropertyDrawers;
 using Syadeu.Collections.Editor;
+using Syadeu.Collections.Diagnostics;
 
 namespace SyadeuEditor.Presentation
 {
@@ -109,6 +110,18 @@ namespace SyadeuEditor.Presentation
             SerializedProperty guidField = GetGuidField(property);
             bool clicked = CoreGUI.BoxButton(EditorGUI.IndentedRect(middleRect), targetName, ColorPalettes.PastelDreams.Mint, () =>
             {
+                GenericMenu menu = new GenericMenu();
+                menu.AddDisabledItem(new GUIContent(targetName));
+                menu.AddSeparator(String.Empty);
+
+                if (currentActionType != null)
+                {
+                    menu.AddItem(new GUIContent("Edit Script"), false, delegate
+                    {
+                        var scr = ScriptUtilities.FindScriptFromClassName(currentActionType.Name);
+                        AssetDatabase.OpenAsset(scr.GetInstanceID(), 0, 0);
+                    });
+                }
             });
 
             bool disabled = currentActionType == null ||
@@ -191,6 +204,7 @@ namespace SyadeuEditor.Presentation
             }
         }
 
+        //private sealed class Pup 
         static void DrawSelectionWindow(ConstActionOptionsAttribute option, Action<Type> setter, Type targetType)
         {
             Rect rect = GUILayoutUtility.GetRect(150, 300);

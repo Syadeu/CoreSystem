@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 782f629a2df6243629ea8fe2873666a4, type: 3}
   m_Name: Default Panel Settings
   m_EditorClassIdentifier: 
-  themeUss: {fileID: -4733365628477956816, guid: 64612d7bd2376754da3ef9fab3b15b47, type: 3}
+  themeUss: {fileID: -4733365628477956816, guid: 0a93aee24f676af4ab8aa9f609f7ba6d, type: 3}
   m_TargetTexture: {fileID: 0}
   m_ScaleMode: 2
   m_Scale: 1
@@ -34,4 +34,4 @@ MonoBehaviour:
   m_AtlasBlitShader: {fileID: 4800000, guid: 662b00f569c02f84bbc426d4c41ceb5e, type: 3}
   m_RuntimeShader: {fileID: 4800000, guid: 1e5f18a346ed454418f93aa7eaf55791, type: 3}
   m_RuntimeWorldShader: {fileID: 4800000, guid: 7082954141e3ccc43bc3b217cf12e2e0, type: 3}
-  textSettings: {fileID: 11400000, guid: 0c22954cf60853346821f9ed38e62193, type: 2}
+  textSettings: {fileID: 11400000, guid: bc3dd5299a77731409e2bfbc2c7820ca, type: 2}

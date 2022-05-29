@@ -98,47 +98,52 @@
     align-items: stretch;
     justify-content: space-between;
     background-color: rgba(0, 168, 232, 0.42);
-    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
     -unity-text-align: middle-left;
     color: rgb(255, 255, 255);
+    -unity-font: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Resources/Fonts/Electronic Highway Sign.TTF');
+    -unity-font-definition: resource('Fonts/UI/Electronic Highway Sign SDF');
 }
 
 .item-container.header {
-    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Rajdhani-Regular SDF.asset');
     color: rgb(255, 255, 255);
     font-size: 20px;
     -unity-text-align: middle-left;
     padding-top: 0;
+    -unity-font: resource('Fonts/Rajdhani-Regular');
+    -unity-font-definition: resource('Fonts/UI/Rajdhani-Regular SDF');
 }
 
 .item-container.quantity {
-    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
     color: rgb(255, 255, 255);
     font-size: 15px;
     padding-top: 0;
     -unity-text-align: middle-left;
+    -unity-font: resource('Fonts/Electronic Highway Sign');
+    -unity-font-definition: resource('Fonts/UI/Electronic Highway Sign SDF');
 }
 
 .item-header {
-    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Rajdhani-Regular SDF.asset');
     -unity-text-align: middle-left;
     padding-top: 0;
     font-size: 20px;
+    -unity-font: resource('Fonts/Rajdhani-Regular');
+    -unity-font-definition: resource('Fonts/UI/Rajdhani-Regular SDF');
 }
 
 .item-quantity {
-    -unity-font-definition: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Fonts/UI/Electronic Highway Sign SDF.asset');
     font-size: 15px;
     -unity-text-align: middle-left;
     color: rgb(255, 255, 255);
     padding-top: 0;
+    -unity-font: url('/Assets/CoreSystem/Runtime/Presentation/DefaultAssets/Resources/Fonts/Electronic Highway Sign.TTF');
+    -unity-font-definition: resource('Fonts/UI/Electronic Highway Sign SDF');
 }
 
 .loadout-item {
-    border-left-color: rgba(255, 255, 255, 255);
-    border-right-color: rgba(255, 255, 255, 255);
-    border-top-color: rgba(255, 255, 255, 255);
-    border-bottom-color: rgba(255, 255, 255, 255);
+    border-left-color: rgb(255, 255, 255);
+    border-right-color: rgb(255, 255, 255);
+    border-top-color: rgb(255, 255, 255);
+    border-bottom-color: rgb(255, 255, 255);
     border-left-width: 1px;
     border-right-width: 1px;
     border-top-width: 1px;

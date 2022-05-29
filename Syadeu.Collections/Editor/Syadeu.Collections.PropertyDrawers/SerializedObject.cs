@@ -22,11 +22,28 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
+using UnityEditor.Compilation;
 
 namespace Syadeu.Collections.PropertyDrawers
 {
+    [InitializeOnLoad]
     public sealed class SerializedObject<T> : IDisposable
     {
+        static SerializedObject()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload -= AssemblyReloadEvents_beforeAssemblyReload;
+            AssemblyReloadEvents.beforeAssemblyReload += AssemblyReloadEvents_beforeAssemblyReload;
+        }
+        private static void AssemblyReloadEvents_beforeAssemblyReload()
+        {
+            if (s_Shared.Count == 0) return;
+
+            foreach (var item in s_Shared)
+            {
+                item.Value.Dispose();
+            }
+        }
+
         private static Dictionary<T, SerializedObject<T>> s_Shared = new Dictionary<T, SerializedObject<T>>();
         public static SerializedObject<T> GetSharedObject(T obj)
         {
@@ -96,12 +113,14 @@ namespace Syadeu.Collections.PropertyDrawers
         {
             if (m_Object == null) throw new Exception("already disposed.");
 
+            UnityEngine.Object.DestroyImmediate(m_Editor);
             UnityEngine.Object.DestroyImmediate(m_Object);
 
             m_Object = null;
             m_SerializedObject = null;
         }
 
+        private UnityEditor.Editor m_Editor;
         public void GetCachedEditor(ref UnityEditor.Editor editor)
         {
             var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<InspectorEditor<T>>.Type.IsAssignableFrom(t));
@@ -115,13 +134,17 @@ namespace Syadeu.Collections.PropertyDrawers
         }
         public UnityEditor.Editor GetEditor()
         {
+            if (m_Editor != null) return m_Editor;
+
             var iter = TypeHelper.GetTypesIter((t) => !t.IsAbstract && !t.IsInterface && TypeHelper.TypeOf<InspectorEditor<T>>.Type.IsAssignableFrom(t));
             if (iter.Any())
             {
-                return (InspectorEditor<T>)UnityEditor.Editor.CreateEditor(m_Object, iter.First());
+                m_Editor = (InspectorEditor<T>)UnityEditor.Editor.CreateEditor(m_Object, iter.First());
+                return m_Editor;
             }
 
-            return UnityEditor.Editor.CreateEditor(m_Object, TypeHelper.TypeOf<DefaultSerializedObjectEditor>.Type);
+            m_Editor = UnityEditor.Editor.CreateEditor(m_Object, TypeHelper.TypeOf<DefaultSerializedObjectEditor>.Type);
+            return m_Editor;
         }
 
         #region Property Utils

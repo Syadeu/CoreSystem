@@ -343,7 +343,8 @@ namespace Syadeu.Collections.Editor
                 case EventType.ContextClick:
                     if (!GUI.enabled || !rect.Contains(Event.current.mousePosition)) break;
 
-                    onContextClick?.Invoke();
+                    //onContextClick?.Invoke();
+                    "in".ToLog();
                     Event.current.Use();
 
                     break;
@@ -356,6 +357,14 @@ namespace Syadeu.Collections.Editor
                         clicked = true;
                         GUI.changed = true;
                         Event.current.Use();
+                    }
+                    else if (Event.current.button == 1)
+                    {
+                        if (onContextClick != null)
+                        {
+                            onContextClick?.Invoke();
+                            Event.current.Use();
+                        }
                     }
 
                     break;

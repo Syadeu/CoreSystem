@@ -64,6 +64,13 @@ namespace Syadeu.Collections.ResourceControl
 
         public bool IsEmpty() => !m_IsCreated;
         public bool IsValid() => ResourceHashMap.Instance.TryGetAssetReference(this, out _);
+
+        public override string ToString()
+        {
+            AssetReference temp = AssetReference;
+            if (temp.IsValid()) return temp.ToString();
+            return $"INVALID({m_Index.x}:{m_Index.y})";
+        }
     }
     [Serializable]
     public struct AssetIndex<TObject> : IEmpty, IValidation, IAssetIndex
@@ -98,6 +105,13 @@ namespace Syadeu.Collections.ResourceControl
 
         public bool IsEmpty() => !m_IsCreated;
         public bool IsValid() => ResourceHashMap.Instance.TryGetAssetReference(this, out _);
+
+        public override string ToString()
+        {
+            AssetReference temp = AssetReference;
+            if (temp.IsValid()) return temp.ToString();
+            return $"INVALID({m_Index.x}:{m_Index.y})";
+        }
 
         public static implicit operator AssetIndex(AssetIndex<TObject> t)
         {

@@ -17,6 +17,7 @@
 #endif
 
 using Syadeu.Collections;
+using Syadeu.Collections.ResourceControl;
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
@@ -26,10 +27,12 @@ namespace Syadeu.Presentation
     public sealed class PrefabPreloader : IDisposable
     {
         private List<PrefabReference> m_Writer;
+        private List<AssetIndex> m_Assets;
 
-        internal PrefabPreloader(List<PrefabReference> wr)
+        internal PrefabPreloader(List<PrefabReference> wr, List<AssetIndex> assetIndices)
         {
             m_Writer = wr;
+            m_Assets = assetIndices;
         }
 
         public void Add(PrefabReference prefab)
@@ -44,11 +47,30 @@ namespace Syadeu.Presentation
 #endif
             m_Writer.Add(prefab);
         }
+        public void Add(AssetIndex asset)
+        {
+#if DEBUG_MODE
+            if (asset.IsEmpty() || !asset.IsValid())
+            {
+                CoreSystem.Logger.LogError(LogChannel.Core,
+                    $"Cannot add invalid prefab({asset}) to preload");
+                return;
+            }
+#endif
+            m_Assets.Add(asset);
+        }
         public void Add(params PrefabReference[] prefabs)
         {
             for (int i = 0; i < prefabs.Length; i++)
             {
-                m_Writer.Add(prefabs[i]);
+                Add(prefabs[i]);
+            }
+        }
+        public void Add(params AssetIndex[] prefabs)
+        {
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                Add(prefabs[i]);
             }
         }
 

@@ -18,6 +18,7 @@
 
 using Syadeu.Collections;
 using Syadeu.Collections.Buffer.LowLevel;
+using Syadeu.Collections.ResourceControl;
 using Syadeu.Collections.Threading;
 using Syadeu.Internal;
 using Syadeu.Mono;
@@ -822,8 +823,9 @@ namespace Syadeu.Presentation
             #region Prefab Preloader
 
             var m_PrefabPreloadStream = new List<PrefabReference>();
+            var assetPreloadStream = new List<AssetIndex>();
             {
-                using (PrefabPreloader prefabPreloader = new PrefabPreloader(m_PrefabPreloadStream))
+                using (PrefabPreloader prefabPreloader = new PrefabPreloader(m_PrefabPreloadStream, assetPreloadStream))
                 {
                     foreach (var item in EntityDataList.Instance.GetData(t => t is IPrefabPreloader).Select(t => (IPrefabPreloader)t))
                     {
@@ -849,6 +851,22 @@ namespace Syadeu.Presentation
 #if DEBUG_MODE
                     CoreSystem.Logger.Log(LogChannel.Entity,
                         $"Preloading prefab({prefab.GetObjectSetting().Name}).");
+#endif
+                }
+                for (int i = 0; i < assetPreloadStream.Count; i++)
+                {
+                    var asset = assetPreloadStream[i].AssetReference;
+
+                    var promise = asset.LoadAssetAsync();
+                    promise.OnCompleted += t =>
+                    {
+                        m_PrefabPreloadCounter.Increment();
+                    };
+                    m_ExpectedPrefabPreloadCount++;
+
+#if DEBUG_MODE
+                    CoreSystem.Logger.Log(LogChannel.Entity,
+                        $"Preloading prefab({asset}).");
 #endif
                 }
             }

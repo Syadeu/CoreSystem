@@ -1,0 +1,6 @@
+@import url("unity-theme://default");
+
+@import url("Styles/color-palatte.uss");
+@import url("Styles/context-styles.uss");
+@import url("Styles/inventory-style.uss");
+VisualElement {}

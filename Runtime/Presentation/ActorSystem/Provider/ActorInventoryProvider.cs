@@ -436,6 +436,8 @@ namespace Syadeu.Presentation.Actor
             InstanceID item = data.itemData.inventory.Pop(data.itemData.key);
 
             actor.equipedItems.Add(item);
+
+            $"Equip item {item.GetEntity().Name}".ToLog();
         }
 
         #endregion
