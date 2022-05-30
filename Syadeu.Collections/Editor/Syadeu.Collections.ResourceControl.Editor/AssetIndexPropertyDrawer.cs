@@ -224,15 +224,12 @@ namespace Syadeu.Collections.ResourceControl.Editor
                     for (int j = 0; j < resourceList.Count; j++)
                     {
                         AddressableAsset asset = resourceList.GetAddressableAsset(j);
-                        if (m_Predicate == null || !m_Predicate.Invoke(asset))
-                        {
-                            continue;
-                        }
-
                         string displayName = AssetIndexPropertyDrawer.NicifyDisplayName(asset);
+                        Texture icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset.EditorAsset));
+                        if (icon == null) icon = CoreGUI.EmptyIcon;
 
                         SearchTreeEntry entry = new SearchTreeEntry(
-                            new GUIContent(displayName, CoreGUI.EmptyIcon))
+                            new GUIContent(displayName, icon))
                         {
                             userData = new int2(i, j),
                             level = 2

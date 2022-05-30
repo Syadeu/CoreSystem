@@ -104,16 +104,15 @@ namespace Syadeu.Collections.ResourceControl.Editor
                 });
 
                 var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
-                var groupNames = settings.groups.Select(t => t.Name);
-                foreach (string groupName in groupNames)
+                foreach (var group in settings.groups)
                 {
-                    if (groupName.Equals(c_BuiltInData)) continue;
+                    if (group.Name.Equals(c_BuiltInData)) continue;
 
                     SearchTreeEntry entry = new SearchTreeEntry(
-                        new GUIContent(groupName, CoreGUI.EmptyIcon))
+                        new GUIContent(group.Name, CoreGUI.EmptyIcon))
                     {
                         level = 1,
-                        userData = groupName
+                        userData = group.Name
                     };
                     list.Add(entry);
                 }
