@@ -410,8 +410,8 @@ namespace Syadeu.Presentation.Actor
         {
             //data.inventory.Peek(data.key, out FixedReference refer, out ActorItemComponent component);
 
-            //$"clicked {refer.GetObject().Name}".ToLog();
-            
+            $"clicked {data.item.GetObject().Name}".ToLog();
+
             switch ((MouseButton)e.button)
             {
                 case MouseButton.LeftMouse:
@@ -452,7 +452,11 @@ namespace Syadeu.Presentation.Actor
 
             //actor.equipedItems.Add(item);
 
-            //$"Equip item".ToLog();
+            $"delete item".ToLog();
+
+            m_ActorInventory.Remove(data.itemData.item);
+
+            data.itemData.item.Destroy();
         }
 
         #endregion
@@ -470,8 +474,12 @@ namespace Syadeu.Presentation.Actor
         }
         public struct ItemData
         {
-            //public ItemInventory inventory;
-            //public ItemInventory.Key key;
+            public readonly InstanceID item;
+
+            public ItemData(InstanceID item)
+            {
+                this.item = item;
+            }
         }
     }
 

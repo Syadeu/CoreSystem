@@ -61,9 +61,7 @@ namespace Syadeu.Presentation.Actor
                 itemType,
                 itemName,
                 itemComponent.Icon,
-                new ActorInventoryProvider.ItemData
-                {
-                }
+                new ActorInventoryProvider.ItemData(item)
                 );
 
             uxmlContainer.quantity += 1;
