@@ -24,10 +24,10 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Syadeu.Internal;
 using Syadeu.Collections;
+using Unity.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
-using Unity.Collections;
 #endif
 
 namespace Syadeu.Mono
