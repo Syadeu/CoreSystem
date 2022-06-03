@@ -39,11 +39,11 @@ using Syadeu.Presentation.Map;
 using Syadeu.Presentation.Events;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Threading;
+using Unity.Mathematics;
+using Syadeu.Collections.ResourceControl;
 
 #if UNITY_EDITOR
 using UnityEditor.VersionControl;
-using Unity.Mathematics;
-using Syadeu.Collections.ResourceControl;
 #endif
 
 namespace Syadeu.Presentation
